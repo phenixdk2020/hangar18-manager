@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "plugin": "hangar18-manager",
+  "version": "0.4.1",
+  "min_wp": "6.4",
+  "min_php": "8.0",
+  "published_utc": "2026-08-13T20:55:00Z",
+  "package_path": "dist/hangar18-manager.zip",
+  "package_sha256": "ae6a873759b1a3a07ae068a59d97af7b701d470b5ccc84dab36b72e45477130c",
+  "changelog": [
+    "Bruger-uploadede JSON-filer er nu autoritativ konfigurationsbaseline.",
+    "HeaderDesign bruger schema 2.3 og StickyOnScroll=false som uploadet.",
+    "MenuOrder bruger schema 1.0/Order og den uploadede rækkefølge.",
+    "VehicleRegister bruger schema 1.2, Center/Auto.",
+    "Engangs-migration opdaterer plugin-options og central Configuration Store uden automatisk frontend-ændring.",
+    "Forkert web-schema MenuOrder 2.0 konverteres bagudkompatibelt til schema 1.0.",
+    "GitHub updater og WhatIf=fra som standard er bevaret."
+  ],
+  "package_parts": [
+    "package-parts/part-001.b64",
+    "package-parts/part-002.b64",
+    "package-parts/part-003.b64",
+    "package-parts/part-004.b64",
+    "package-parts/part-005.b64",
+    "package-parts/part-006.b64",
+    "package-parts/part-007.b64",
+    "package-parts/part-008.b64",
+    "package-parts/part-009.b64",
+    "package-parts/part-010.b64"
+  ],
+  "package_materialization": "GitHub Actions reconstructs dist/hangar18-manager.zip from Base64 text parts."
+}
