@@ -124,10 +124,11 @@
          ];
  
          $files = [];
-@@ -2051,6 +2104,19 @@
+@@ -2050,6 +2103,19 @@
+ .wp-site-blocks,
  .entry-content {
      overflow-x:clip !important;
- }
++}
 +.h18-site-header.h18-scroll-sticky {
 +    position:sticky !important;
 +    top:0 !important;
@@ -140,10 +141,9 @@
 +    body.admin-bar .h18-site-header.h18-scroll-sticky {
 +        top:46px !important;
 +    }
-+}
+ }
  .h18-desktop-nav .h18-web-menu-root > .h18-menu-item {
      position:relative !important;
- }
 @@ -2967,6 +3033,9 @@
      private function build_event_core($page_id, array $data) {
          $id = (int) $page_id;
@@ -206,4 +206,4 @@
 @@ -3123,6 +3196,7 @@
  
          $media_id = $post ? (int) get_post_thumbnail_id($post->ID) : absint($data['MainMediaId'] ?? 0);
-         $media_url = $media_id ? wp_ge
+         $media_url = $m
