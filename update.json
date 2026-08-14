@@ -4,16 +4,15 @@
   "version": "0.4.4",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-14T16:28:21Z",
+  "published_utc": "2026-08-14T16:23:00Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "7f70ad3f26167647019d99d50a5d30dd89fcd2abd4c51459de295846d62c7edf",
+  "package_sha256": "7a618fcfd4385e26e0da29a99ab0093da4381d62965de0daf01951bc0c641546",
   "changelog": [
     "Køretøjer: separat Venstre/Midtstillet for oversigtssiden og de enkelte køretøjssider.",
     "Events: separat Venstre/Midtstillet for eventoversigten og de enkelte eventsider.",
     "Billedgalleri: separat Venstre/Midtstillet for gallerioversigten og de enkelte albumsider.",
-    "VehicleRegister opgraderet til schema 1.3.",
-    "ContentLayout opgraderet til schema 1.1.",
-    "Eksisterende v0.4.3-indstillinger migreres automatisk som udgangspunkt.",
+    "VehicleRegister opgraderet til schema 1.3 med migration af eksisterende indstillinger.",
+    "ContentLayout opgraderet til schema 1.1 med migration fra v0.4.3.",
     "WhatIf er fortsat slået fra som standard."
   ]
 }

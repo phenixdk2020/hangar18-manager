@@ -5020,7 +5020,7 @@ HTML;
             $this->set_notice(
                 'success',
                 $pinned
-                     ? "Menu/header er pinnet og opdateret på {$count} sider."
+                    ? "Menu/header er pinnet og opdateret på {$count} sider."
                     : "Menu/header er frigivet og opdateret på {$count} sider."
             );
 
