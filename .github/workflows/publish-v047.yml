@@ -1,0 +1,280 @@
+name: Publish Hangar18 Manager 0.4.7
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/publish-v047.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply v0.4.7 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/v047.patch <<'PATCH'
+--- a/hangar18-manager.php
++++ b/hangar18-manager.php
+@@ -3,7 +3,7 @@
+  * Plugin Name: Hangar18 Manager
+  * Plugin URI: https://hangar18.dk/
+  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+- * Version: 0.4.6
++ * Version: 0.4.7
+  * Author: Hangar18
+  * Requires at least: 6.4
+  * Requires PHP: 8.0
+@@ -15,7 +15,7 @@
+ }
+ 
+ final class Hangar18_Manager {
+-    const VERSION = '0.4.6';
++    const VERSION = '0.4.7';
+ 
+     const MENU_SLUG = 'hangar18-manager';
+ 
+@@ -42,6 +42,7 @@
+     const AUTHORITATIVE_BASELINE_OPTION = 'hangar18_manager_authoritative_baseline_20260813';
+     const ACTIVE_MENU_OPTION       = 'hangar18_manager_active_menu';
+     const FRONTEND_REPAIR_046_OPTION = 'hangar18_manager_frontend_repair_046';
++    const ASTRA_BANNER_REPAIR_047_OPTION = 'hangar18_manager_astra_banner_repair_047';
+     const NOTICE_PREFIX            = 'hangar18_manager_notice_';
+ 
+     const CONFIG_STORE_SLUG  = 'hangar18-configuration-store';
+@@ -70,7 +71,9 @@
+         add_action('admin_init', [$this, 'maybe_apply_authoritative_config_baseline'], 5);
+         add_action('admin_init', [$this, 'maybe_import_power_shell_configuration'], 10);
+         add_action('admin_init', [$this, 'maybe_run_frontend_repair_046'], 15);
++        add_action('admin_init', [$this, 'maybe_repair_astra_banner_047'], 16);
+         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
++        add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
+         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
+         add_action('admin_menu', [$this, 'register_admin_menu']);
+         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+@@ -148,6 +151,102 @@
+         );
+     }
+ 
++    public function disable_astra_banner_for_managed_pages() {
++        if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
++            return;
++        }
++
++        /*
++         * Astra 4.x kan generere en separat Banner Area før entry-content.
++         * Det er denne wrapper der har givet den lilla/blå bjælke.
++         * Brug Astra's egne filtre i stedet for at forsøge at skjule
++         * stadig flere CSS-selectors.
++         */
++        add_filter('astra_the_title_enabled', '__return_false', 999);
++        add_filter('astra_advanced_header_title', '__return_false', 999);
++        add_filter('astra_apply_hero_header_banner', '__return_false', 999);
++        add_filter('astra_remove_entry_header_content', '__return_true', 999);
++        add_filter('astra_single_layout_one_banner_visibility', '__return_false', 999);
++        add_filter('astra_banner_title_area_visibility', [$this, 'disable_astra_banner_visibility_047'], 999);
++    }
++
++    public function disable_astra_banner_visibility_047($visibility) {
++        return 'disabled';
++    }
++
++    private function get_hangar18_managed_page_ids_047() {
++        $ids = [];
++
++        foreach ($this->get_managed_pages() as $page) {
++            if ($page instanceof WP_Post) {
++                $ids[] = (int) $page->ID;
++            }
++        }
++
++        return array_values(array_unique(array_filter($ids)));
++    }
++
++    public function maybe_repair_astra_banner_047() {
++        if (!is_admin() || !current_user_can('edit_pages')) {
++            return;
++        }
++
++        if (get_option(self::ASTRA_BANNER_REPAIR_047_OPTION, false)) {
++            return;
++        }
++
++        try {
++            $this->create_full_managed_backup(
++                'Før v0.4.7 Astra Banner Area-reparation'
++            );
++
++            $updated = 0;
++
++            foreach ($this->get_hangar18_managed_page_ids_047() as $page_id) {
++                /*
++                 * Astra's egne sidemeta-felter:
++                 * site-post-title          = Disable Title
++                 * ast-title-bar-display    = ældre title-bar toggle
++                 * ast-banner-title-visibility = nyere Banner Area toggle
++                 *
++                 * Vi ændrer ikke Hangar18-indhold, Events, køretøjer,
++                 * galleri eller HeaderDesign her.
++                 */
++                update_post_meta($page_id, 'site-post-title', 'disabled');
++                update_post_meta($page_id, 'ast-title-bar-display', 'disabled');
++                update_post_meta($page_id, 'ast-banner-title-visibility', 'disabled');
++
++                $updated++;
++            }
++
++            update_option(
++                self::ASTRA_BANNER_REPAIR_047_OPTION,
++                [
++                    'CompletedUtc' => gmdate('c'),
++                    'Pages'        => $updated,
++                ],
++                false
++            );
++
++            $this->log(
++                'INFO',
++                'ASTRA_BANNER_REPAIR_047_COMPLETE',
++                "Astra Banner Area er deaktiveret på {$updated} Hangar18-styrede sider."
++            );
++
++            $this->set_notice(
++                'success',
++                "v0.4.7: Astra Banner Area er slået fra på {$updated} Hangar18-styrede sider."
++            );
++        } catch (Throwable $e) {
++            $this->log(
++                'ERROR',
++                'ASTRA_BANNER_REPAIR_047_FAILED',
++                $e->getMessage()
++            );
++        }
++    }
++
+     public function render_frontend_runtime_fixes() {
+         if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
+             return;
+@@ -164,6 +263,10 @@
+         body.page .page-header,
+         body.page .ast-page-title,
+         body.page .ast-page-title-wrap,
++        body.page .ast-single-entry-banner,
++        body.page .ast-single-entry-banner[data-post-type="page"],
++        body.page .ast-banner-title,
++        body.page .ast-banner-title-area,
+         body.page .ast-page-title-bar,
+         body.page .ast-title-bar-wrap,
+         body.page .ast-archive-description,
+@@ -2364,6 +2467,10 @@
+ body.page .page-header,
+ body.page .ast-page-title,
+ body.page .ast-page-title-wrap,
++body.page .ast-single-entry-banner,
++body.page .ast-single-entry-banner[data-post-type="page"],
++body.page .ast-banner-title,
++body.page .ast-banner-title-area,
+ body.page .ast-page-title-bar,
+ body.page .ast-title-bar-wrap,
+ body.page .ast-archive-description,
+--- a/readme.txt
++++ b/readme.txt
+@@ -1,5 +1,5 @@
+ === Hangar18 Manager ===
+-Version: 0.4.6
++Version: 0.4.7
+ 
+ Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+ 
+@@ -495,3 +495,16 @@
+ - Gutenberg-klassen has-text-align-center fjernes fra køretøjernes leadtekst.
+ - Gallerialbums bruger eksplicit h18-align-left/h18-align-center på selve billedgrid'et.
+ - Første wp-admin-side efter opdatering genbygger automatisk køretøjer, køretøjsoversigt, gallerialbums og gallerioversigt.
++
++
++== Version 0.4.7 – Astra Banner Area ==
++
++- Den resterende lilla/blå bjælke er identificeret som Astra 4.x Banner Area.
++- Hangar18 bruger nu Astra's egne frontend-filtre til at deaktivere banner/title-området.
++- astra_apply_hero_header_banner sættes false på Hangar18-styrede sider.
++- astra_remove_entry_header_content sættes true.
++- astra_single_layout_one_banner_visibility sættes false.
++- astra_the_title_enabled og astra_advanced_header_title deaktiveres.
++- Astra-meta site-post-title, ast-title-bar-display og ast-banner-title-visibility sættes til disabled på styrede sider én gang efter opdatering.
++- Ekstra CSS fallback dækker .ast-single-entry-banner og relaterede Astra 4 selectors.
++- Events, køretøjer, billedgalleri og deres layoutdata ændres ikke.
+PATCH
+          git apply --check /tmp/v047.patch
+          git apply /tmp/v047.patch
+
+      - name: Validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          grep -F 'Version: 0.4.7' hangar18-manager.php
+          grep -F "const VERSION = '0.4.7';" hangar18-manager.php
+          grep -F "astra_apply_hero_header_banner" hangar18-manager.php
+          grep -F "astra_remove_entry_header_content" hangar18-manager.php
+          grep -F "astra_single_layout_one_banner_visibility" hangar18-manager.php
+          grep -F "ast-banner-title-visibility" hangar18-manager.php
+
+      - name: Build package and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist .build
+          mkdir -p dist .build/hangar18-manager/assets
+          cp hangar18-manager.php .build/hangar18-manager/
+          cp readme.txt .build/hangar18-manager/
+          cp assets/admin.css .build/hangar18-manager/assets/
+          cp assets/admin.js .build/hangar18-manager/assets/
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"
+          export SHA
+          python3 - <<'PY'
+          import json, os
+          manifest = {
+              "schema_version": "1.0",
+              "plugin": "hangar18-manager",
+              "version": "0.4.7",
+              "min_wp": "6.4",
+              "min_php": "8.0",
+              "published_utc": "2026-08-14T17:36:00Z",
+              "package_path": "dist/hangar18-manager.zip",
+              "package_sha256": os.environ["SHA"],
+              "changelog": [
+                  "Fjerner den resterende Astra 4.x Banner Area-bjælke via Astras egne filtre.",
+                  "Sætter Astra title/banner-meta til disabled på Hangar18-styrede sider.",
+                  "Tilføjer Astra 4 CSS fallback for ast-single-entry-banner.",
+                  "Events, køretøjer og billedgalleri ændres ikke."
+              ]
+          }
+          with open("update.json", "w", encoding="utf-8") as f:
+              json.dump(manifest, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+          PY
+          echo "Package SHA-256: $SHA"
+
+      - name: Commit v0.4.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          git config user.name "hangar18-build"
+          git config user.email "actions@users.noreply.github.com"
+          git add hangar18-manager.php readme.txt update.json
+          git add -f dist/hangar18-manager.zip
+          git commit -m "Publish Hangar18 Manager 0.4.7"
+          git push
