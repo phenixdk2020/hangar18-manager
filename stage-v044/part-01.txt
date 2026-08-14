@@ -1,0 +1,159 @@
+--- a/hangar18-manager.php
++++ b/hangar18-manager.php
+@@ -3,7 +3,7 @@
+  * Plugin Name: Hangar18 Manager
+  * Plugin URI: https://hangar18.dk/
+  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+- * Version: 0.4.3
++ * Version: 0.4.4
+  * Author: Hangar18
+  * Requires at least: 6.4
+  * Requires PHP: 8.0
+@@ -15,7 +15,7 @@
+ }
+ 
+ final class Hangar18_Manager {
+-    const VERSION = '0.4.3';
++    const VERSION = '0.4.4';
+ 
+     const MENU_SLUG = 'hangar18-manager';
+ 
+@@ -320,70 +320,76 @@
+ 
+     private function default_vehicle_register_settings() {
+         return [
+-            'Version' => '1.2',
+-            'Saved' => '2026-08-13T08:19:43.3711647+02:00',
+-            'CardAlignment' => 'Center',
+-            'DetailAlignment' => 'Auto'
++            'Version'           => '1.3',
++            'Saved'             => '2026-08-13T08:19:43.3711647+02:00',
++            'RegisterAlignment' => 'Center',
++            'CardAlignment'     => 'Center',
++            'DetailAlignment'   => 'Center',
+         ];
+     }
+ 
+     private function normalize_vehicle_register_settings(array $saved) {
+         $default = $this->default_vehicle_register_settings();
+ 
+-        $card = in_array(
+-            (string) ($saved['CardAlignment'] ?? ''),
+-            ['Left', 'Center'],
+-            true
+-        )
+-            ? (string) $saved['CardAlignment']
+-            : $default['CardAlignment'];
+-
+-        $detail = in_array(
+-            (string) ($saved['DetailAlignment'] ?? ''),
+-            ['Left', 'Center', 'Auto'],
+-            true
+-        )
+-            ? (string) $saved['DetailAlignment']
++        $legacy_card = (string) ($saved['CardAlignment'] ?? '');
++        $register_source = (string) ($saved['RegisterAlignment'] ?? $legacy_card);
++
++        $register = in_array($register_source, ['Left', 'Center'], true)
++            ? $register_source
++            : $default['RegisterAlignment'];
++
++        $detail_source = (string) ($saved['DetailAlignment'] ?? '');
++        if ($detail_source === 'Auto') {
++            // v1.2 Auto var centreret på desktop; bevar derfor det visuelle udgangspunkt.
++            $detail_source = 'Center';
++        }
++
++        $detail = in_array($detail_source, ['Left', 'Center'], true)
++            ? $detail_source
+             : $default['DetailAlignment'];
+ 
+         return [
+-            'Version'         => '1.2',
+-            'CardAlignment'   => $card,
+-            'DetailAlignment' => $detail,
++            'Version'           => '1.3',
++            'RegisterAlignment' => $register,
++            // Legacy alias bevares, så den gamle PowerShell-normalisering stadig kan læse filen.
++            'CardAlignment'     => $register,
++            'DetailAlignment'   => $detail,
+         ];
+     }
+ 
+     private function default_content_layout_settings() {
+         return [
+-            'Version'          => '1.0',
+-            'EventAlignment'   => 'Left',
+-            'GalleryAlignment' => 'Left',
++            'Version'                => '1.1',
++            'EventIndexAlignment'    => 'Left',
++            'EventDetailAlignment'   => 'Left',
++            'GalleryIndexAlignment'  => 'Left',
++            'GalleryDetailAlignment' => 'Left',
+         ];
+     }
+ 
+     private function normalize_content_layout_settings(array $saved) {
+         $default = $this->default_content_layout_settings();
+ 
+-        $event_alignment = in_array(
+-            (string) ($saved['EventAlignment'] ?? ''),
+-            ['Left', 'Center'],
+-            true
+-        )
+-            ? (string) $saved['EventAlignment']
+-            : $default['EventAlignment'];
+-
+-        $gallery_alignment = in_array(
+-            (string) ($saved['GalleryAlignment'] ?? ''),
+-            ['Left', 'Center'],
+-            true
+-        )
+-            ? (string) $saved['GalleryAlignment']
+-            : $default['GalleryAlignment'];
++        $legacy_event = (string) ($saved['EventAlignment'] ?? '');
++        $legacy_gallery = (string) ($saved['GalleryAlignment'] ?? '');
++
++        $event_index_source = (string) ($saved['EventIndexAlignment'] ?? $legacy_event);
++        $event_detail_source = (string) ($saved['EventDetailAlignment'] ?? $legacy_event);
++        $gallery_index_source = (string) ($saved['GalleryIndexAlignment'] ?? $legacy_gallery);
++        $gallery_detail_source = (string) ($saved['GalleryDetailAlignment'] ?? $legacy_gallery);
++
++        $normalize_alignment = static function($value, $fallback) {
++            return in_array((string) $value, ['Left', 'Center'], true)
++                ? (string) $value
++                : $fallback;
++        };
+ 
+         return [
+-            'Version'          => '1.0',
+-            'EventAlignment'   => $event_alignment,
+-            'GalleryAlignment' => $gallery_alignment,
++            'Version'                => '1.1',
++            'EventIndexAlignment'    => $normalize_alignment($event_index_source, $default['EventIndexAlignment']),
++            'EventDetailAlignment'   => $normalize_alignment($event_detail_source, $default['EventDetailAlignment']),
++            'GalleryIndexAlignment'  => $normalize_alignment($gallery_index_source, $default['GalleryIndexAlignment']),
++            'GalleryDetailAlignment' => $normalize_alignment($gallery_detail_source, $default['GalleryDetailAlignment']),
+         ];
+     }
+ 
+@@ -2405,11 +2411,11 @@
+ 
+         $detail_class = in_array(
+             $detail_alignment,
+-            ['left', 'center', 'auto'],
++            ['left', 'center'],
+             true
+         )
+             ? 'avpf-vehicle-detail-' . $detail_alignment
+-            : 'avpf-vehicle-detail-auto';
++            : 'avpf-vehicle-detail-center';
+ 
+         $image = '<div class="avpf-photo-placeholder"><p>Hovedbillede mangler</p></div>';
+         if ($media_id > 0) {
+@@ -2441,8 +2447,6 @@
+ body.page-id-{$id} .h18-vehicle-main-layout{width:min(1100px,100%)!important;max-width:1100px!important;box-sizing:border-box!important}
+ body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-left{margin-left:0!important;margin-right:auto!important}
+ body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-center{margin-left:auto!important;margin-right:auto!important}
+-body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-auto{margin-left:auto!important;margin-right:auto!important}
+-@media(max-width:900px){body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-auto{margin-left:0!important;margi
