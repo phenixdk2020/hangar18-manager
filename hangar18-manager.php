@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.5
+ * Version: 0.4.6
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.5';
+    const VERSION = '0.4.6';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -41,6 +41,7 @@ final class Hangar18_Manager {
     const UPDATE_LOCK_OPTION        = 'hangar18_manager_update_lock_v1';
     const AUTHORITATIVE_BASELINE_OPTION = 'hangar18_manager_authoritative_baseline_20260813';
     const ACTIVE_MENU_OPTION       = 'hangar18_manager_active_menu';
+    const FRONTEND_REPAIR_046_OPTION = 'hangar18_manager_frontend_repair_046';
     const NOTICE_PREFIX            = 'hangar18_manager_notice_';
 
     const CONFIG_STORE_SLUG  = 'hangar18-configuration-store';
@@ -68,7 +69,9 @@ final class Hangar18_Manager {
     private function __construct() {
         add_action('admin_init', [$this, 'maybe_apply_authoritative_config_baseline'], 5);
         add_action('admin_init', [$this, 'maybe_import_power_shell_configuration'], 10);
+        add_action('admin_init', [$this, 'maybe_run_frontend_repair_046'], 15);
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
+        add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
 
@@ -101,6 +104,249 @@ final class Hangar18_Manager {
         add_action('admin_post_h18_install_update', [$this, 'handle_install_update']);
 
         add_action('admin_post_h18_clear_log', [$this, 'handle_clear_log']);
+    }
+
+    private function is_hangar18_managed_frontend_page() {
+        if (!is_page()) {
+            return false;
+        }
+
+        $page_id = (int) get_queried_object_id();
+        if ($page_id <= 0) {
+            return false;
+        }
+
+        $post = get_post($page_id);
+        if (!$post instanceof WP_Post) {
+            return false;
+        }
+
+        $content = (string) $post->post_content;
+
+        if (
+            strpos($content, self::HEADER_START) !== false ||
+            strpos($content, self::VEHICLE_MARKER) !== false ||
+            strpos($content, self::EVENT_MARKER) !== false ||
+            strpos($content, self::GALLERY_MARKER) !== false
+        ) {
+            return true;
+        }
+
+        $slug = (string) $post->post_name;
+        return in_array(
+            $slug,
+            [
+                self::HOME_SLUG,
+                self::VEHICLE_PARENT_SLUG,
+                self::EVENT_PARENT_SLUG,
+                self::GALLERY_PARENT_SLUG,
+                'om-foreningen',
+                'bliv-medlem',
+                'kontakt',
+            ],
+            true
+        );
+    }
+
+    public function render_frontend_runtime_fixes() {
+        if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
+            return;
+        }
+
+        ?>
+        <style id="hangar18-manager-runtime-fixes">
+        /*
+         * Hangar18 tegner sin egen header inde i sideindholdet.
+         * Astra/WordPress' native sidetitel skal derfor ikke vises ovenover.
+         */
+        body.page .entry-header,
+        body.page header.entry-header,
+        body.page .page-header,
+        body.page .ast-page-title,
+        body.page .ast-page-title-wrap,
+        body.page .ast-page-title-bar,
+        body.page .ast-title-bar-wrap,
+        body.page .ast-archive-description,
+        body.page .ast-advanced-headers-wrap,
+        body.page .ast-advanced-headers-layout,
+        body.page .ast-single-post-order > .entry-title,
+        body.page .entry-title,
+        body.page h1.entry-title,
+        body.page .wp-block-post-title {
+            display:none !important;
+            visibility:hidden !important;
+            height:0 !important;
+            min-height:0 !important;
+            max-height:0 !important;
+            margin:0 !important;
+            padding:0 !important;
+            border:0 !important;
+            overflow:hidden !important;
+        }
+
+        body.page .site-content,
+        body.page .site-content > .ast-container,
+        body.page .content-area,
+        body.page .site-main,
+        body.page article.page,
+        body.page .ast-article-single,
+        body.page .entry-content {
+            margin-top:0 !important;
+            padding-top:0 !important;
+        }
+
+        /* H18-align klasser vinder over Astra/Gutenberg auto-margin. */
+        body.page .h18-align-left {
+            margin-left:0 !important;
+            margin-right:auto !important;
+            text-align:left !important;
+        }
+
+        body.page .h18-align-left.h18-vehicle-inner,
+        body.page .h18-align-left.h18-gallery-grid {
+            margin-left:0 !important;
+            margin-right:auto !important;
+        }
+
+        body.page .h18-align-left.h18-gallery-grid {
+            justify-content:start !important;
+            justify-items:start !important;
+        }
+
+        body.page .h18-align-center {
+            margin-left:auto !important;
+            margin-right:auto !important;
+            text-align:center !important;
+        }
+
+        body.page .h18-align-center.h18-gallery-grid {
+            justify-content:center !important;
+        }
+        </style>
+        <?php
+    }
+
+    private function rebuild_vehicle_detail_pages_046() {
+        $updated = 0;
+
+        foreach ($this->get_vehicle_pages(false) as $page) {
+            $data = $this->decode_marker(
+                self::VEHICLE_MARKER,
+                $page->post_content
+            );
+
+            if (!$data) {
+                continue;
+            }
+
+            $result = wp_update_post(
+                [
+                    'ID'           => $page->ID,
+                    'post_content' => $this->wrap_with_shell(
+                        $this->build_vehicle_core($page->ID, $data),
+                        $page->ID
+                    ),
+                ],
+                true
+            );
+
+            if (is_wp_error($result)) {
+                throw new RuntimeException(
+                    "Køretøj ID {$page->ID}: " .
+                    $result->get_error_message()
+                );
+            }
+
+            $updated++;
+        }
+
+        return $updated;
+    }
+
+    private function rebuild_gallery_detail_pages_046() {
+        $updated = 0;
+
+        foreach ($this->get_gallery_pages(false) as $page) {
+            $data = $this->decode_marker(
+                self::GALLERY_MARKER,
+                $page->post_content
+            );
+
+            if (!$data) {
+                continue;
+            }
+
+            $result = wp_update_post(
+                [
+                    'ID'           => $page->ID,
+                    'post_content' => $this->wrap_with_shell(
+                        $this->build_gallery_album_core($page->ID, $data),
+                        $page->ID
+                    ),
+                ],
+                true
+            );
+
+            if (is_wp_error($result)) {
+                throw new RuntimeException(
+                    "Gallerialbum ID {$page->ID}: " .
+                    $result->get_error_message()
+                );
+            }
+
+            $updated++;
+        }
+
+        return $updated;
+    }
+
+    public function maybe_run_frontend_repair_046() {
+        if (!is_admin() || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        if (get_option(self::FRONTEND_REPAIR_046_OPTION, false)) {
+            return;
+        }
+
+        try {
+            $this->create_full_managed_backup(
+                'Automatisk v0.4.6 frontend-reparation'
+            );
+
+            $vehicles = $this->rebuild_vehicle_detail_pages_046();
+            $albums = $this->rebuild_gallery_detail_pages_046();
+
+            $this->rebuild_vehicle_register();
+            $this->rebuild_gallery_index();
+
+            update_option(
+                self::FRONTEND_REPAIR_046_OPTION,
+                [
+                    'CompletedUtc' => gmdate('c'),
+                    'Vehicles'     => $vehicles,
+                    'Albums'       => $albums,
+                ],
+                false
+            );
+
+            $this->log(
+                'INFO',
+                'FRONTEND_REPAIR_046_COMPLETE',
+                "v0.4.6 frontend-reparation fuldført. Vehicles={$vehicles}; Albums={$albums}; Events=unchanged."
+            );
+
+            $this->set_notice(
+                'success',
+                "v0.4.6 frontend-reparation er kørt: {$vehicles} køretøjer og {$albums} albums er genbygget. Events er ikke ændret."
+            );
+        } catch (Throwable $e) {
+            $this->log(
+                'ERROR',
+                'FRONTEND_REPAIR_046_FAILED',
+                $e->getMessage()
+            );
+        }
     }
 
     public function register_admin_menu() {
@@ -2117,9 +2363,25 @@ body.page .entry-header,
 body.page header.entry-header,
 body.page .page-header,
 body.page .ast-page-title,
+body.page .ast-page-title-wrap,
+body.page .ast-page-title-bar,
+body.page .ast-title-bar-wrap,
 body.page .ast-archive-description,
+body.page .ast-advanced-headers-wrap,
+body.page .ast-advanced-headers-layout,
+body.page .ast-single-post-order > .entry-title,
+body.page .entry-title,
+body.page h1.entry-title,
 body.page .wp-block-post-title {
     display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    min-height:0 !important;
+    max-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    overflow:hidden !important;
 }
 body.page .site-content,
 body.page .site-content > .ast-container,
@@ -2431,6 +2693,7 @@ HTML;
         );
         $detail_text_alignment = $detail_alignment === 'left' ? 'left' : 'center';
         $detail_outer_margin = $detail_alignment === 'left' ? '0 auto 0 0' : '0 auto';
+        $detail_root_class = $detail_alignment === 'left' ? 'h18-align-left' : 'h18-align-center';
 
         $detail_class = in_array(
             $detail_alignment,
@@ -2453,7 +2716,7 @@ HTML;
         }
 
         $lead = $short !== ''
-            ? '<p class="has-text-align-center h18-vehicle-lead">' . $short . '</p>'
+            ? '<p class="h18-vehicle-lead">' . $short . '</p>'
             : '';
 
         $marker = $this->encode_marker(self::VEHICLE_MARKER, $data);
@@ -2466,7 +2729,7 @@ body.page-id-{$id} .entry-title, body.page-id-{$id} .wp-block-post-title{display
 body.page-id-{$id} .h18-vehicle-hero{background:#30382a;color:#f2f0e8;padding:48px 22px;text-align:{$detail_text_alignment}}
 body.page-id-{$id} .h18-vehicle-hero h1, body.page-id-{$id} .h18-vehicle-hero p{color:#f2f0e8;text-align:{$detail_text_alignment}!important}
 body.page-id-{$id} .h18-vehicle-content{padding:42px 20px}
-body.page-id-{$id} .h18-vehicle-inner{max-width:1100px;margin:{$detail_outer_margin};text-align:{$detail_text_alignment}}
+body.page-id-{$id} .h18-vehicle-inner{width:min(1100px,100%);max-width:1100px;margin:{$detail_outer_margin}!important;text-align:{$detail_text_alignment}!important;box-sizing:border-box} body.page-id-{$id} .h18-vehicle-inner.h18-align-left{margin-left:0!important;margin-right:auto!important} body.page-id-{$id} .h18-vehicle-inner.h18-align-center{margin-left:auto!important;margin-right:auto!important}
 body.page-id-{$id} .h18-vehicle-main-layout{width:min(1100px,100%)!important;max-width:1100px!important;box-sizing:border-box!important}
 body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-left{margin-left:0!important;margin-right:auto!important}
 body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-center{margin-left:auto!important;margin-right:auto!important}
@@ -2484,7 +2747,7 @@ body.page-id-{$id} .h18-vehicle-section{margin-top:32px}
 {$lead}
 </div>
 <div class="h18-vehicle-content">
-<div class="h18-vehicle-inner">
+<div class="h18-vehicle-inner {$detail_root_class}">
 <div class="wp-block-columns h18-vehicle-main-layout {$detail_class}">
 <div class="wp-block-column" style="flex-basis:55%">{$image}</div>
 <div class="wp-block-column" style="flex-basis:45%">
@@ -2865,34 +3128,25 @@ HTML;
     }
 
     private function apply_vehicle_detail_alignment_to_existing_pages(array $settings) {
-        $alignment = strtolower((string) $settings['DetailAlignment']);
-
-        if (!in_array($alignment, ['left', 'center'], true)) {
-            $alignment = 'center';
-        }
-
-        $replacement = 'avpf-vehicle-detail-' . $alignment;
         $count = 0;
 
         foreach ($this->get_vehicle_pages(false) as $page) {
-            $content = (string) $page->post_content;
-
-            $new_content = preg_replace(
-                '/avpf-vehicle-detail-(?:left|center|auto)/',
-                $replacement,
-                $content,
-                -1,
-                $replace_count
+            $data = $this->decode_marker(
+                self::VEHICLE_MARKER,
+                $page->post_content
             );
 
-            if ($replace_count <= 0 || $new_content === $content) {
+            if (!$data) {
                 continue;
             }
 
             $result = wp_update_post(
                 [
                     'ID'           => $page->ID,
-                    'post_content' => $new_content,
+                    'post_content' => $this->wrap_with_shell(
+                        $this->build_vehicle_core($page->ID, $data),
+                        $page->ID
+                    ),
                 ],
                 true
             );
@@ -3677,6 +3931,7 @@ HTML;
         $alignment = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'left';
         $justify = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'start';
         $grid_margin = $alignment === 'center' ? '36px auto' : '36px 0';
+        $grid_class = $alignment === 'center' ? 'h18-align-center' : 'h18-align-left';
 
         $name = $this->h($this->value($data, 'AlbumName'));
         $type = $this->h($this->value($data, 'AlbumType'));
@@ -3714,14 +3969,14 @@ HTML;
 body.page-id-{$id} .entry-title,body.page-id-{$id} .wp-block-post-title{display:none}
 body.page-id-{$id} .h18-gallery-hero{padding:46px 20px;background:#30382a;color:#f2f0e8;text-align:{$alignment}}
 body.page-id-{$id} .h18-gallery-hero h1,body.page-id-{$id} .h18-gallery-hero p{color:#f2f0e8}
-body.page-id-{$id} .h18-gallery-grid{max-width:1200px;margin:{$grid_margin};display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,360px));gap:16px;padding:0;justify-content:{$justify}}
+body.page-id-{$id} .h18-gallery-grid{width:min(1200px,100%);max-width:1200px;margin:{$grid_margin}!important;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,360px));gap:16px;padding:0;justify-content:{$justify}!important;box-sizing:border-box} body.page-id-{$id} .h18-gallery-grid.h18-align-left{margin-left:0!important;margin-right:auto!important;justify-content:start!important} body.page-id-{$id} .h18-gallery-grid.h18-align-center{margin-left:auto!important;margin-right:auto!important;justify-content:center!important}
 body.page-id-{$id} .h18-gallery-item{margin:0;background:#f2f0e8;border-radius:7px;overflow:hidden}
 body.page-id-{$id} .h18-gallery-item img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 body.page-id-{$id} .h18-gallery-item figcaption{padding:8px 10px;text-align:{$alignment}}
 </style>
 <!-- /wp:html -->
 <div class="h18-gallery-hero"><h1>{$name}</h1><p>{$type}</p><p>{$description}</p></div>
-<div class="h18-gallery-grid">{$images}</div>
+<div class="h18-gallery-grid {$grid_class}">{$images}</div>
 HTML;
     }
 

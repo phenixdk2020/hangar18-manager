@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.5
+Version: 0.4.6
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -484,3 +484,14 @@ AUTHORITATIVE_BASELINE_FAILED
 - Eventbilleder er gendannet på Events-oversigten.
 - Eventdetaljer bruger featured image som fallback, hvis ældre marker-data mangler MainMediaId.
 - Header-knapper omdøbt til tydeligere funktioner.
+
+
+== Version 0.4.6 – køretøj/galleri frontend-fix ==
+
+- Events er bevidst ikke ændret i denne version.
+- Astra/WordPress' native blå/lilla sidetitelbjælke fjernes via wp_head på Hangar18-styrede sider.
+- Native entry-title/page-header/advanced-header wrappers får nul højde og ingen margin/padding.
+- Køretøjsdetaljer bruger eksplicit h18-align-left/h18-align-center og fuld genbygning ved layoutændring.
+- Gutenberg-klassen has-text-align-center fjernes fra køretøjernes leadtekst.
+- Gallerialbums bruger eksplicit h18-align-left/h18-align-center på selve billedgrid'et.
+- Første wp-admin-side efter opdatering genbygger automatisk køretøjer, køretøjsoversigt, gallerialbums og gallerioversigt.
