@@ -24,13 +24,42 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist .build
-          : > dist/hangar18-manager.zip
-          for part in package-v043/part-*.b64; do
-            tr -cd 'A-Za-z0-9+/=' < "$part" | base64 --decode >> dist/hangar18-manager.zip
-          done
-          echo 'Actual package SHA-256:'
-          sha256sum dist/hangar18-manager.zip
-          echo "296b41c6f7dc56b41ec3dcda7f336072025b60d20dab9fbcf61ae2f1375b65f2  dist/hangar18-manager.zip" | sha256sum -c -
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64, re, hashlib
+
+          out = bytearray()
+          for path in sorted(Path('package-v043').glob('part-*.b64')):
+              text = path.read_text(encoding='utf-8', errors='ignore')
+              clean = ''.join(ch for ch in text if ch.isalnum() or ch in '+/=')
+              pos = 0
+              segments = []
+              for m in re.finditer(r'=+', clean):
+                  end = m.end()
+                  segment = clean[pos:end]
+                  if segment:
+                      segments.append(segment)
+                  pos = end
+              if pos < len(clean):
+                  segments.append(clean[pos:])
+
+              print(f'{path}: clean={len(clean)} segments={len(segments)}')
+              for index, segment in enumerate(segments, 1):
+                  segment += '=' * ((4 - len(segment) % 4) % 4)
+                  try:
+                      decoded = base64.b64decode(segment, validate=True)
+                  except Exception as exc:
+                      raise SystemExit(f'{path} segment {index} invalid: len={len(segment)} error={exc}')
+                  out.extend(decoded)
+
+          target = Path('dist/hangar18-manager.zip')
+          target.write_bytes(out)
+          digest = hashlib.sha256(out).hexdigest()
+          print('Actual package SHA-256:', digest)
+          expected = '296b41c6f7dc56b41ec3dcda7f336072025b60d20dab9fbcf61ae2f1375b65f2'
+          if digest != expected:
+              raise SystemExit(f'SHA mismatch: expected {expected}, actual {digest}')
+          PY
 
       - name: Extract repository source
         shell: bash
