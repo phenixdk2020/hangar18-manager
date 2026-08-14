@@ -1,0 +1,209 @@
+--- a/hangar18-manager.php
++++ b/hangar18-manager.php
+@@ -3,7 +3,7 @@
+  * Plugin Name: Hangar18 Manager
+  * Plugin URI: https://hangar18.dk/
+  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+- * Version: 0.4.2
++ * Version: 0.4.3
+  * Author: Hangar18
+  * Requires at least: 6.4
+  * Requires PHP: 8.0
+@@ -15,7 +15,7 @@
+ }
+ 
+ final class Hangar18_Manager {
+-    const VERSION = '0.4.2';
++    const VERSION = '0.4.3';
+ 
+     const MENU_SLUG = 'hangar18-manager';
+ 
+@@ -32,6 +32,7 @@
+     const DESIGN_OPTION            = 'hangar18_manager_design'; // v0.3.0 legacy
+     const HEADER_DESIGN_OPTION     = 'hangar18_manager_header_design_v25';
+     const VEHICLE_REGISTER_OPTION  = 'hangar18_manager_vehicle_register_v12';
++    const CONTENT_LAYOUT_OPTION     = 'hangar18_manager_content_layout_v1';
+     const MENU_ORDER_OPTION        = 'hangar18_manager_menu_order_v20';
+     const CONFIG_IMPORT_META_OPTION= 'hangar18_manager_config_import_meta';
+     const CONFIG_BOOTSTRAP_OPTION   = 'hangar18_manager_config_bootstrap_v032';
+@@ -76,13 +77,16 @@
+         add_action('admin_post_h18_rebuild_vehicle_register', [$this, 'handle_rebuild_vehicle_register']);
+ 
+         add_action('admin_post_h18_save_event', [$this, 'handle_save_event']);
++        add_action('admin_post_h18_save_event_layout', [$this, 'handle_save_event_layout']);
+         add_action('admin_post_h18_rebuild_event_register', [$this, 'handle_rebuild_event_register']);
+ 
+         add_action('admin_post_h18_save_gallery_album', [$this, 'handle_save_gallery_album']);
++        add_action('admin_post_h18_save_gallery_layout', [$this, 'handle_save_gallery_layout']);
+         add_action('admin_post_h18_rebuild_gallery_index', [$this, 'handle_rebuild_gallery_index']);
+ 
+         add_action('admin_post_h18_create_menu', [$this, 'handle_create_menu']);
+         add_action('admin_post_h18_save_menu', [$this, 'handle_save_menu']);
++        add_action('admin_post_h18_save_menu_pin', [$this, 'handle_save_menu_pin']);
+         add_action('admin_post_h18_add_menu_page', [$this, 'handle_add_menu_page']);
+         add_action('admin_post_h18_repair_menu', [$this, 'handle_repair_menu']);
+ 
+@@ -349,6 +353,40 @@
+         ];
+     }
+ 
++    private function default_content_layout_settings() {
++        return [
++            'Version'          => '1.0',
++            'EventAlignment'   => 'Left',
++            'GalleryAlignment' => 'Left',
++        ];
++    }
++
++    private function normalize_content_layout_settings(array $saved) {
++        $default = $this->default_content_layout_settings();
++
++        $event_alignment = in_array(
++            (string) ($saved['EventAlignment'] ?? ''),
++            ['Left', 'Center'],
++            true
++        )
++            ? (string) $saved['EventAlignment']
++            : $default['EventAlignment'];
++
++        $gallery_alignment = in_array(
++            (string) ($saved['GalleryAlignment'] ?? ''),
++            ['Left', 'Center'],
++            true
++        )
++            ? (string) $saved['GalleryAlignment']
++            : $default['GalleryAlignment'];
++
++        return [
++            'Version'          => '1.0',
++            'EventAlignment'   => $event_alignment,
++            'GalleryAlignment' => $gallery_alignment,
++        ];
++    }
++
+     private function default_menu_order_settings() {
+         return [
+             'Version' => '1.0',
+@@ -1143,6 +1181,16 @@
+         return $this->normalize_vehicle_register_settings($stored);
+     }
+ 
++    private function get_content_layout_settings() {
++        $stored = get_option(self::CONTENT_LAYOUT_OPTION, []);
++
++        if (!is_array($stored) || !$stored) {
++            return $this->default_content_layout_settings();
++        }
++
++        return $this->normalize_content_layout_settings($stored);
++    }
++
+     private function get_menu_order_settings() {
+         $stored = get_option(self::MENU_ORDER_OPTION, []);
+ 
+@@ -1175,10 +1223,14 @@
+         $vehicle = $this->get_vehicle_register_settings();
+         $vehicle['Saved'] = gmdate('c');
+ 
++        $content_layout = $this->get_content_layout_settings();
++        $content_layout['Saved'] = gmdate('c');
++
+         return [
+             'Hangar18-HeaderDesign.json'    => $header,
+             'Hangar18-MenuOrder.json'       => $menu,
+             'Hangar18-VehicleRegister.json' => $vehicle,
++            'Hangar18-ContentLayout.json'   => $content_layout,
+         ];
+     }
+ 
+@@ -1253,6 +1305,7 @@
+             'Hangar18-HeaderDesign.json',
+             'Hangar18-MenuOrder.json',
+             'Hangar18-VehicleRegister.json',
++            'Hangar18-ContentLayout.json',
+         ];
+ 
+         $files = [];
+@@ -2051,6 +2104,19 @@
+ .entry-content {
+     overflow-x:clip !important;
+ }
++.h18-site-header.h18-scroll-sticky {
++    position:sticky !important;
++    top:0 !important;
++    z-index:10050 !important;
++}
++body.admin-bar .h18-site-header.h18-scroll-sticky {
++    top:32px !important;
++}
++@media (max-width:782px) {
++    body.admin-bar .h18-site-header.h18-scroll-sticky {
++        top:46px !important;
++    }
++}
+ .h18-desktop-nav .h18-web-menu-root > .h18-menu-item {
+     position:relative !important;
+ }
+@@ -2967,6 +3033,9 @@
+     private function build_event_core($page_id, array $data) {
+         $id = (int) $page_id;
+ 
++        $layout = $this->get_content_layout_settings();
++        $alignment = $layout['EventAlignment'] === 'Center' ? 'center' : 'left';
++
+         $name      = $this->h($this->value($data, 'EventName'));
+         $short     = $this->h($this->value($data, 'ShortDescription'));
+         $date      = $this->h($this->value($data, 'DisplayDate'));
+@@ -3006,14 +3075,14 @@
+ <!-- wp:html -->
+ <style>
+ body.page-id-{$id} .entry-title,body.page-id-{$id} .wp-block-post-title{display:none}
+-body.page-id-{$id} .h18-event-hero{padding:48px 22px;background:#30382a;color:#f2f0e8;text-align:center}
++body.page-id-{$id} .h18-event-hero{padding:48px 22px;background:#30382a;color:#f2f0e8;text-align:{$alignment}}
+ body.page-id-{$id} .h18-event-hero h1,body.page-id-{$id} .h18-event-hero p{color:#f2f0e8}
+-body.page-id-{$id} .h18-event-main{max-width:1050px;margin:0 auto;padding:42px 20px}
++body.page-id-{$id} .h18-event-main{max-width:1050px;margin:0 auto;padding:42px 20px;text-align:{$alignment}}
+ body.page-id-{$id} .h18-event-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:24px 0}
+-body.page-id-{$id} .h18-event-meta>div{padding:14px;background:#f2f0e8;border-left:4px solid #c3ae83}
++body.page-id-{$id} .h18-event-meta>div{padding:14px;background:#f2f0e8;border-left:4px solid #c3ae83;text-align:{$alignment}}
+ body.page-id-{$id} .h18-event-section{margin-top:30px}
+ body.page-id-{$id} .h18-event-image img{width:100%;height:auto;max-height:540px;object-fit:cover;border-radius:8px}
+-body.page-id-{$id} .h18-event-gallery-link{text-align:center;margin-top:34px}
++body.page-id-{$id} .h18-event-gallery-link{text-align:{$alignment};margin-top:34px}
+ body.page-id-{$id} .h18-event-gallery-link a{display:inline-block;padding:13px 22px;background:#30382a;color:#f2f0e8!important;text-decoration:none;border-radius:6px;font-weight:700}
+ body.page-id-{$id} .h18-event-gallery-link a:hover{background:#8b4a2b}
+ </style>
+@@ -3042,6 +3111,10 @@
+             throw new RuntimeException("Siden 'Events' blev ikke fundet.");
+         }
+ 
++        $layout = $this->get_content_layout_settings();
++        $alignment = $layout['EventAlignment'] === 'Center' ? 'center' : 'left';
++        $justify = $layout['EventAlignment'] === 'Center' ? 'center' : 'start';
++
+         $events = [];
+         foreach ($this->get_event_pages(true) as $page) {
+             $data = $this->decode_marker(self::EVENT_MARKER, $page->post_content);
+@@ -3090,14 +3163,14 @@
+         $core = <<<HTML
+ <!-- wp:html -->
+ <style>
+-.h18-event-register{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin:20px 0 34px}
++.h18-event-register{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,360px));gap:18px;margin:20px 0 34px;justify-content:{$justify}}
+ .h18-event-card{background:#f2f0e8;border:1px solid rgba(48,56,42,.14);border-radius:8px}
+-.h18-event-card a{display:block;padding:20px;color:#30382a;text-decoration:none}
++.h18-event-card a{display:block;padding:20px;color:#30382a;text-decoration:none;text-align:{$alignment}}
+ .h18-event-card h3{margin-top:0}.h18-event-card span{color:#8b4a2b;font-weight:700}
+ </style>
+-<h2>Kommende arrangementer</h2>
++<div style="text-align:{$alignment}"><h2>Kommende arrangementer</h2></div>
+ <div class="h18-event-register">{$upcoming}</div>
+-<h2>Tidligere arrangementer</h2>
++<div style="text-align:{$alignment}"><h2>Tidligere arrangementer</h2></div>
+ <div class="h18-event-register">{$past}</div>
+ <!-- /wp:html -->
+ HTML;
+@@ -3123,6 +3196,7 @@
+ 
+         $media_id = $post ? (int) get_post_thumbnail_id($post->ID) : absint($data['MainMediaId'] ?? 0);
+         $media_url = $media_id ? wp_ge
