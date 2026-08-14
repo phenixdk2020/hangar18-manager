@@ -1,0 +1,134 @@
+id;
+         $layout = $this->get_content_layout_settings();
+-        $alignment = $layout['GalleryAlignment'] === 'Center' ? 'center' : 'left';
+-        $justify = $layout['GalleryAlignment'] === 'Center' ? 'center' : 'start';
++        $alignment = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'left';
++        $justify = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'start';
+ 
+         $name = $this->h($this->value($data, 'AlbumName'));
+         $type = $this->h($this->value($data, 'AlbumType'));
+@@ -3660,8 +3669,8 @@
+         }
+ 
+         $layout = $this->get_content_layout_settings();
+-        $alignment = $layout['GalleryAlignment'] === 'Center' ? 'center' : 'left';
+-        $justify = $layout['GalleryAlignment'] === 'Center' ? 'center' : 'start';
++        $alignment = $layout['GalleryIndexAlignment'] === 'Center' ? 'center' : 'left';
++        $justify = $layout['GalleryIndexAlignment'] === 'Center' ? 'center' : 'start';
+ 
+         $groups = [
+             'Køretøj'     => [],
+@@ -3774,12 +3783,20 @@
+                 <input type="hidden" name="action" value="h18_save_gallery_layout" />
+                 <div class="h18-menu-settings-row">
+                     <div class="h18-field">
+-                        <label><strong>Placering af Billedgalleri</strong></label>
+-                        <select name="gallery_alignment">
+-                            <option value="Left" <?php selected($content_layout['GalleryAlignment'], 'Left'); ?>>Venstre</option>
+-                            <option value="Center" <?php selected($content_layout['GalleryAlignment'], 'Center'); ?>>Midtstillet</option>
++                        <label><strong>Billedgalleri-siden / oversigten</strong></label>
++                        <select name="gallery_index_alignment">
++                            <option value="Left" <?php selected($content_layout['GalleryIndexAlignment'], 'Left'); ?>>Venstre</option>
++                            <option value="Center" <?php selected($content_layout['GalleryIndexAlignment'], 'Center'); ?>>Midtstillet</option>
+                         </select>
+-                        <p class="description">Gælder både Billedgalleri-oversigten og alle albumsider.</p>
++                        <p class="description">Kun siden med oversigten over albums.</p>
++                    </div>
++                    <div class="h18-field">
++                        <label><strong>Selve albums / detaljesider</strong></label>
++                        <select name="gallery_detail_alignment">
++                            <option value="Left" <?php selected($content_layout['GalleryDetailAlignment'], 'Left'); ?>>Venstre</option>
++                            <option value="Center" <?php selected($content_layout['GalleryDetailAlignment'], 'Center'); ?>>Midtstillet</option>
++                        </select>
++                        <p class="description">Kun de enkelte albumsider.</p>
+                     </div>
+                     <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                     <button class="button button-secondary" type="submit">Gem galleri-layout og anvend</button>
+@@ -3892,54 +3909,47 @@
+         check_admin_referer('h18_save_gallery_layout');
+ 
+         $settings = $this->get_content_layout_settings();
+-        $alignment = $this->post_text('gallery_alignment');
+-
+-        if (!in_array($alignment, ['Left', 'Center'], true)) {
+-            $alignment = 'Left';
+-        }
+-
+-        $settings['GalleryAlignment'] = $alignment;
++        $index_alignment = $this->post_text('gallery_index_alignment');
++        $detail_alignment = $this->post_text('gallery_detail_alignment');
++
++        if (!in_array($index_alignment, ['Left', 'Center'], true)) {
++            $index_alignment = 'Left';
++        }
++        if (!in_array($detail_alignment, ['Left', 'Center'], true)) {
++            $detail_alignment = 'Left';
++        }
++
++        $settings['GalleryIndexAlignment'] = $index_alignment;
++        $settings['GalleryDetailAlignment'] = $detail_alignment;
+         $settings = $this->normalize_content_layout_settings($settings);
+ 
+         if (!empty($_POST['whatif'])) {
+             $this->log(
+                 'WARN',
+                 'WHATIF_GALLERY_LAYOUT',
+-                "[WHATIF] GalleryAlignment={$alignment}; eksisterende albums og Billedgalleri-indeks ville blive genbygget."
++                "[WHATIF] GalleryIndexAlignment={$index_alignment}; GalleryDetailAlignment={$detail_alignment}."
+             );
+             $this->set_notice(
+                 'warning',
+-                "WHATIF: Galleri-layout ville blive sat til {$alignment}. Ingen data blev ændret."
++                'WHATIF: Gallerioversigt og albumsider ville få hver sin valgte placering. Ingen data blev ændret.'
+             );
+             $this->redirect('hangar18-gallery');
+         }
+ 
+         try {
+             $this->create_full_managed_backup(
+-                "Før ændring af galleri-layout til {$alignment}"
+-            );
+-
+-            update_option(
+-                self::CONTENT_LAYOUT_OPTION,
+-                $settings,
+-                false
+-            );
++                "Før ændring af galleri-layout: oversigt={$index_alignment}; detaljer={$detail_alignment}"
++            );
++
++            update_option(self::CONTENT_LAYOUT_OPTION, $settings, false);
+ 
+             $published = $settings;
+             $published['Saved'] = gmdate('c');
+-            $this->publish_configuration_file(
+-                'Hangar18-ContentLayout.json',
+-                $published
+-            );
++            $this->publish_configuration_file('Hangar18-ContentLayout.json', $published);
+ 
+             $updated = 0;
+-
+             foreach ($this->get_gallery_pages(false) as $page) {
+-                $data = $this->decode_marker(
+-                    self::GALLERY_MARKER,
+-                    $page->post_content
+-                );
+-
++                $data = $this->decode_marker(self::GALLERY_MARKER, $page->post_content);
+                 if (!$data) {
+                     continue;
+                 }
+@@ -3960,7 +3970,6 @@
+                         "Gallerialbum ID {$page->ID}: " . $result->get_error_message()
+                     );
+                 }
+-
+                 $updated++;
+             }
+ 
+@@ -3969,14 +3978,13 @@
+             $this->log(
+                 'INFO',
+                 'GALLERY_LAYOUT_SAVED',
+-                "GalleryAlignment={$alignment}; {$updated} albumsider 
