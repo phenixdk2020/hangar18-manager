@@ -26,7 +26,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           cat package-parts/part-*.b64 | base64 --decode > dist/hangar18-manager.zip
-          echo "ae6a873759b1a3a07ae068a59d97af7b701d470b5ccc84dab36b72e45477130c  dist/hangar18-manager.zip" | sha256sum -c -
+          echo "cb11767868b409f3573cd87ad1e8634a3a83e04e3c729728e4cfdaea710be774  dist/hangar18-manager.zip" | sha256sum -c -
 
       - name: Commit materialized package
         shell: bash
@@ -34,10 +34,10 @@ jobs:
           set -euo pipefail
           git config user.name "hangar18-build"
           git config user.email "actions@users.noreply.github.com"
-          git add dist/hangar18-manager.zip
+          git add -f dist/hangar18-manager.zip
           if git diff --cached --quiet; then
             echo "Package is already current."
             exit 0
           fi
-          git commit -m "Materialize Hangar18 Manager 0.4.1 package"
+          git commit -m "Materialize Hangar18 Manager 0.4.2 package"
           git push
