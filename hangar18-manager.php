@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.6
+ * Version: 0.4.7
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.6';
+    const VERSION = '0.4.7';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -42,6 +42,7 @@ final class Hangar18_Manager {
     const AUTHORITATIVE_BASELINE_OPTION = 'hangar18_manager_authoritative_baseline_20260813';
     const ACTIVE_MENU_OPTION       = 'hangar18_manager_active_menu';
     const FRONTEND_REPAIR_046_OPTION = 'hangar18_manager_frontend_repair_046';
+    const ASTRA_BANNER_REPAIR_047_OPTION = 'hangar18_manager_astra_banner_repair_047';
     const NOTICE_PREFIX            = 'hangar18_manager_notice_';
 
     const CONFIG_STORE_SLUG  = 'hangar18-configuration-store';
@@ -70,7 +71,9 @@ final class Hangar18_Manager {
         add_action('admin_init', [$this, 'maybe_apply_authoritative_config_baseline'], 5);
         add_action('admin_init', [$this, 'maybe_import_power_shell_configuration'], 10);
         add_action('admin_init', [$this, 'maybe_run_frontend_repair_046'], 15);
+        add_action('admin_init', [$this, 'maybe_repair_astra_banner_047'], 16);
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
+        add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
@@ -148,6 +151,65 @@ final class Hangar18_Manager {
         );
     }
 
+    public function disable_astra_banner_for_managed_pages() {
+    if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
+        return;
+    }
+
+    add_filter('astra_the_title_enabled', '__return_false', 999);
+    add_filter('astra_advanced_header_title', '__return_false', 999);
+    add_filter('astra_apply_hero_header_banner', '__return_false', 999);
+    add_filter('astra_remove_entry_header_content', '__return_true', 999);
+    add_filter('astra_single_layout_one_banner_visibility', '__return_false', 999);
+    add_filter('astra_banner_title_area_visibility', [$this, 'disable_astra_banner_visibility_047'], 999);
+}
+
+public function disable_astra_banner_visibility_047($visibility) {
+    return 'disabled';
+}
+
+private function get_hangar18_managed_page_ids_047() {
+    $ids = [];
+    foreach ($this->get_managed_pages() as $page) {
+        if ($page instanceof WP_Post) {
+            $ids[] = (int) $page->ID;
+        }
+    }
+    return array_values(array_unique(array_filter($ids)));
+}
+
+public function maybe_repair_astra_banner_047() {
+    if (!is_admin() || !current_user_can('edit_pages')) {
+        return;
+    }
+    if (get_option(self::ASTRA_BANNER_REPAIR_047_OPTION, false)) {
+        return;
+    }
+
+    try {
+        $this->create_full_managed_backup('Før v0.4.7 Astra Banner Area-reparation');
+        $updated = 0;
+        foreach ($this->get_hangar18_managed_page_ids_047() as $page_id) {
+            update_post_meta($page_id, 'site-post-title', 'disabled');
+            update_post_meta($page_id, 'ast-title-bar-display', 'disabled');
+            update_post_meta($page_id, 'ast-banner-title-visibility', 'disabled');
+            $updated++;
+        }
+        update_option(
+            self::ASTRA_BANNER_REPAIR_047_OPTION,
+            ['CompletedUtc' => gmdate('c'), 'Pages' => $updated],
+            false
+        );
+        $this->rebuild_vehicle_register();
+        $this->rebuild_event_register();
+        $this->rebuild_gallery_index();
+        $this->log('INFO', 'ASTRA_BANNER_REPAIR_047_COMPLETE', "Astra Banner Area er deaktiveret på {$updated} Hangar18-styrede sider, og oversigtssiderne er genbygget.");
+        $this->set_notice('success', "v0.4.7: Astra Banner Area er slået fra på {$updated} sider. Overskrifterne er gendannet på Køretøjer, Events og Billedgalleri.");
+    } catch (Throwable $e) {
+        $this->log('ERROR', 'ASTRA_BANNER_REPAIR_047_FAILED', $e->getMessage());
+    }
+}
+
     public function render_frontend_runtime_fixes() {
         if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
             return;
@@ -164,6 +226,10 @@ final class Hangar18_Manager {
         body.page .page-header,
         body.page .ast-page-title,
         body.page .ast-page-title-wrap,
+        body.page .ast-single-entry-banner,
+        body.page .ast-single-entry-banner[data-post-type="page"],
+        body.page .ast-banner-title,
+        body.page .ast-banner-title-area,
         body.page .ast-page-title-bar,
         body.page .ast-title-bar-wrap,
         body.page .ast-archive-description,
@@ -2364,6 +2430,10 @@ body.page header.entry-header,
 body.page .page-header,
 body.page .ast-page-title,
 body.page .ast-page-title-wrap,
+body.page .ast-single-entry-banner,
+body.page .ast-single-entry-banner[data-post-type="page"],
+body.page .ast-banner-title,
+body.page .ast-banner-title-area,
 body.page .ast-page-title-bar,
 body.page .ast-title-bar-wrap,
 body.page .ast-archive-description,
@@ -2824,7 +2894,7 @@ HTML;
         return <<<HTML
 <!-- wp:html -->
 <style>
-.h18-vehicle-register{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,350px));gap:24px;margin-top:30px;width:100%}
+.h18-overview-title{margin:0 0 22px;font-size:clamp(2rem,4vw,3.2rem);line-height:1.08;color:#30382a}.h18-vehicle-register{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,350px));gap:24px;margin-top:30px;width:100%}
 .h18-register-align-left{justify-content:start}
 .h18-register-align-center{justify-content:center}
 .h18-vehicle-card{width:100%;max-width:350px;overflow:hidden;border-radius:8px;background:#f2f0e8;border:1px solid rgba(48,56,42,.14);box-shadow:0 4px 16px rgba(0,0,0,.07)}
@@ -2842,6 +2912,7 @@ HTML;
 @media(max-width:600px){.h18-vehicle-register{grid-template-columns:1fr;justify-content:stretch}.h18-vehicle-card{max-width:none}}
 </style>
 <div class="h18-register-intro" style="text-align:{$register_alignment}">
+<h1 class="h18-overview-title">Køretøjer og materiel</h1>
 <h2>Historisk materiel</h2>
 <p>Her finder du foreningens dokumenterede køretøjer og øvrige militærhistoriske materiel.</p>
 </div>
@@ -3486,7 +3557,7 @@ HTML;
         $core = <<<HTML
 <!-- wp:html -->
 <style>
-.h18-event-register{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,360px));gap:18px;margin:20px 0 34px;justify-content:{$justify}}
+.h18-overview-heading h1{margin:0 0 28px;font-size:clamp(2rem,4vw,3.2rem);line-height:1.08;color:#30382a}.h18-event-register{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,360px));gap:18px;margin:20px 0 34px;justify-content:{$justify}}
 .h18-event-card{background:#f2f0e8;border:1px solid rgba(48,56,42,.14);border-radius:8px;overflow:hidden}
 .h18-event-card a{display:block;color:#30382a;text-decoration:none;text-align:{$alignment};height:100%}
 .h18-event-card-image{aspect-ratio:16/10;overflow:hidden;background:#525a5f}
@@ -3494,6 +3565,7 @@ HTML;
 .h18-event-card-body{padding:20px}
 .h18-event-card h3{margin-top:0}.h18-event-card span{color:#8b4a2b;font-weight:700}
 </style>
+<div class="h18-overview-heading" style="text-align:{$alignment}"><h1>Events</h1></div>
 <div style="text-align:{$alignment}"><h2>Kommende arrangementer</h2></div>
 <div class="h18-event-register">{$upcoming}</div>
 <div style="text-align:{$alignment}"><h2>Tidligere arrangementer</h2></div>
@@ -4020,7 +4092,9 @@ HTML;
             'Andet'        => 'Andet',
         ];
 
-        $html = '<!-- wp:html --><style>.h18-gallery-index{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,360px));gap:18px;margin:18px 0 32px;justify-content:' . $justify . '}.h18-album-card{background:#f2f0e8;border-radius:8px;overflow:hidden;border:1px solid rgba(48,56,42,.14)}.h18-album-card a{display:block;color:#30382a;text-decoration:none}.h18-album-card img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}.h18-album-card-body{padding:18px;text-align:' . $alignment . '}.h18-album-card h3{margin:0 0 8px}.h18-album-placeholder{aspect-ratio:16/10;background:#525a5f;color:#f2f0e8;display:flex;align-items:center;justify-content:center}</style>';
+        $html = '<!-- wp:html --><style>.h18-overview-heading h1{margin:0 0 28px;font-size:clamp(2rem,4vw,3.2rem);line-height:1.08;color:#30382a}.h18-gallery-index{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,360px));gap:18px;margin:18px 0 32px;justify-content:' . $justify . '}.h18-album-card{background:#f2f0e8;border-radius:8px;overflow:hidden;border:1px solid rgba(48,56,42,.14)}.h18-album-card a{display:block;color:#30382a;text-decoration:none}.h18-album-card img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}.h18-album-card-body{padding:18px;text-align:' . $alignment . '}.h18-album-card h3{margin:0 0 8px}.h18-album-placeholder{aspect-ratio:16/10;background:#525a5f;color:#f2f0e8;display:flex;align-items:center;justify-content:center}</style>';
+
+        $html .= '<div class="h18-overview-heading" style="text-align:' . esc_attr($alignment) . '"><h1>Billedgalleri</h1></div>';
 
         foreach ($groups as $type => $items) {
             if (!$items) {

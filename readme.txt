@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.6
+Version: 0.4.7
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -495,3 +495,11 @@ AUTHORITATIVE_BASELINE_FAILED
 - Gutenberg-klassen has-text-align-center fjernes fra køretøjernes leadtekst.
 - Gallerialbums bruger eksplicit h18-align-left/h18-align-center på selve billedgrid'et.
 - Første wp-admin-side efter opdatering genbygger automatisk køretøjer, køretøjsoversigt, gallerialbums og gallerioversigt.
+
+
+== Version 0.4.7 – Astra Banner Area og egne overskrifter ==
+
+- Den resterende lilla/blå bjælke fjernes via Astra's egne Banner Area-filtre og sidemeta.
+- Oversigtssiderne får egne Hangar18-overskrifter: Køretøjer og materiel, Events og Billedgalleri.
+- Overskrifterne følger oversigtssidens Venstre/Midtstillet-indstilling.
+- Køretøjs-, event- og galleriindhold ændres ikke ud over genbygning af de tre oversigtssider.
