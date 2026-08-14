@@ -26,5 +26,6 @@
     "package-parts/part-007.b64",
     "package-parts/part-008.b64"
   ],
+  "package_part_count": 8,
   "package_materialization": "GitHub Actions reconstructs dist/hangar18-manager.zip from Base64 text parts."
 }
