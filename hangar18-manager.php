@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.4
+ * Version: 0.4.5
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.4';
+    const VERSION = '0.4.5';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -2110,6 +2110,27 @@ body,
 .entry-content {
     overflow-x:clip !important;
 }
+
+/* Hangar18 bruger sin egen header inde i sideindholdet.
+   Skjul Astra/WordPress' native sidetitel/header og fjern den reserverede topafstand. */
+body.page .entry-header,
+body.page header.entry-header,
+body.page .page-header,
+body.page .ast-page-title,
+body.page .ast-archive-description,
+body.page .wp-block-post-title {
+    display:none !important;
+}
+body.page .site-content,
+body.page .site-content > .ast-container,
+body.page .content-area,
+body.page .site-main,
+body.page article.page,
+body.page .ast-article-single,
+body.page .entry-content {
+    margin-top:0 !important;
+    padding-top:0 !important;
+}
 .h18-site-header.h18-scroll-sticky {
     position:sticky !important;
     top:0 !important;
@@ -2408,6 +2429,8 @@ HTML;
         $detail_alignment = strtolower(
             (string) $register_settings['DetailAlignment']
         );
+        $detail_text_alignment = $detail_alignment === 'left' ? 'left' : 'center';
+        $detail_outer_margin = $detail_alignment === 'left' ? '0 auto 0 0' : '0 auto';
 
         $detail_class = in_array(
             $detail_alignment,
@@ -2440,10 +2463,10 @@ HTML;
 <!-- wp:html -->
 <style>
 body.page-id-{$id} .entry-title, body.page-id-{$id} .wp-block-post-title{display:none}
-body.page-id-{$id} .h18-vehicle-hero{background:#30382a;color:#f2f0e8;padding:48px 22px}
-body.page-id-{$id} .h18-vehicle-hero h1, body.page-id-{$id} .h18-vehicle-hero p{color:#f2f0e8}
+body.page-id-{$id} .h18-vehicle-hero{background:#30382a;color:#f2f0e8;padding:48px 22px;text-align:{$detail_text_alignment}}
+body.page-id-{$id} .h18-vehicle-hero h1, body.page-id-{$id} .h18-vehicle-hero p{color:#f2f0e8;text-align:{$detail_text_alignment}!important}
 body.page-id-{$id} .h18-vehicle-content{padding:42px 20px}
-body.page-id-{$id} .h18-vehicle-inner{max-width:1100px;margin:0 auto}
+body.page-id-{$id} .h18-vehicle-inner{max-width:1100px;margin:{$detail_outer_margin};text-align:{$detail_text_alignment}}
 body.page-id-{$id} .h18-vehicle-main-layout{width:min(1100px,100%)!important;max-width:1100px!important;box-sizing:border-box!important}
 body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-left{margin-left:0!important;margin-right:auto!important}
 body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-center{margin-left:auto!important;margin-right:auto!important}
@@ -3045,6 +3068,7 @@ HTML;
 
         $layout = $this->get_content_layout_settings();
         $alignment = $layout['EventDetailAlignment'] === 'Center' ? 'center' : 'left';
+        $detail_margin = $alignment === 'center' ? '0 auto' : '0 auto 0 0';
 
         $name      = $this->h($this->value($data, 'EventName'));
         $short     = $this->h($this->value($data, 'ShortDescription'));
@@ -3059,6 +3083,11 @@ HTML;
         $practical = $this->hm($this->value($data, 'Practical'));
 
         $media_id = absint($data['MainMediaId'] ?? 0);
+        if ($media_id <= 0) {
+            // Ældre events kan have featured image uden MainMediaId i markøren.
+            $media_id = (int) get_post_thumbnail_id($id);
+        }
+
         $media_url = esc_url((string) ($data['MainMediaUrl'] ?? ''));
         if ($media_id > 0 && wp_get_attachment_url($media_id)) {
             $media_url = esc_url(wp_get_attachment_url($media_id));
@@ -3087,7 +3116,7 @@ HTML;
 body.page-id-{$id} .entry-title,body.page-id-{$id} .wp-block-post-title{display:none}
 body.page-id-{$id} .h18-event-hero{padding:48px 22px;background:#30382a;color:#f2f0e8;text-align:{$alignment}}
 body.page-id-{$id} .h18-event-hero h1,body.page-id-{$id} .h18-event-hero p{color:#f2f0e8}
-body.page-id-{$id} .h18-event-main{max-width:1050px;margin:0 auto;padding:42px 20px;text-align:{$alignment}}
+body.page-id-{$id} .h18-event-main{max-width:1050px;margin:{$detail_margin};padding:42px 20px;text-align:{$alignment}}
 body.page-id-{$id} .h18-event-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:24px 0}
 body.page-id-{$id} .h18-event-meta>div{padding:14px;background:#f2f0e8;border-left:4px solid #c3ae83;text-align:{$alignment}}
 body.page-id-{$id} .h18-event-section{margin-top:30px}
@@ -3149,12 +3178,42 @@ HTML;
             $date = (string) ($data['EventDate'] ?? '');
             $target = ($date >= $today) ? 'upcoming' : 'past';
 
+            $event_image = '';
+            $featured = (int) get_post_thumbnail_id($page->ID);
+            $image_url = '';
+
+            if ($featured > 0) {
+                $image_url = (string) wp_get_attachment_image_url($featured, 'large');
+            }
+
+            if ($image_url === '') {
+                $marker_media_id = absint($data['MainMediaId'] ?? 0);
+                if ($marker_media_id > 0) {
+                    $image_url = (string) wp_get_attachment_image_url($marker_media_id, 'large');
+                    if ($image_url === '') {
+                        $image_url = (string) wp_get_attachment_url($marker_media_id);
+                    }
+                }
+            }
+
+            if ($image_url === '') {
+                $image_url = (string) ($data['MainMediaUrl'] ?? '');
+            }
+
+            if ($image_url !== '') {
+                $event_image = '<div class="h18-event-card-image"><img src="' .
+                    esc_url($image_url) . '" alt="' . esc_attr($page->post_title) .
+                    '" loading="lazy" /></div>';
+            }
+
             $card = '<article class="h18-event-card"><a href="' . esc_url(get_permalink($page)) . '">' .
+                $event_image .
+                '<div class="h18-event-card-body">' .
                 '<h3>' . esc_html($page->post_title) . '</h3>' .
                 '<p><strong>' . esc_html($data['DisplayDate'] ?? $date) . '</strong>' .
                 ($data['Venue'] ?? '' ? ' · ' . esc_html($data['Venue']) : '') .
                 '</p><p>' . esc_html($data['ShortDescription'] ?? '') . '</p>' .
-                '<span>Læs mere →</span></a></article>';
+                '<span>Læs mere →</span></div></a></article>';
 
             if ($target === 'upcoming') {
                 $upcoming .= $card;
@@ -3174,8 +3233,11 @@ HTML;
 <!-- wp:html -->
 <style>
 .h18-event-register{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,360px));gap:18px;margin:20px 0 34px;justify-content:{$justify}}
-.h18-event-card{background:#f2f0e8;border:1px solid rgba(48,56,42,.14);border-radius:8px}
-.h18-event-card a{display:block;padding:20px;color:#30382a;text-decoration:none;text-align:{$alignment}}
+.h18-event-card{background:#f2f0e8;border:1px solid rgba(48,56,42,.14);border-radius:8px;overflow:hidden}
+.h18-event-card a{display:block;color:#30382a;text-decoration:none;text-align:{$alignment};height:100%}
+.h18-event-card-image{aspect-ratio:16/10;overflow:hidden;background:#525a5f}
+.h18-event-card-image img{width:100%;height:100%;object-fit:cover;display:block}
+.h18-event-card-body{padding:20px}
 .h18-event-card h3{margin-top:0}.h18-event-card span{color:#8b4a2b;font-weight:700}
 </style>
 <div style="text-align:{$alignment}"><h2>Kommende arrangementer</h2></div>
@@ -3614,6 +3676,7 @@ HTML;
         $layout = $this->get_content_layout_settings();
         $alignment = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'left';
         $justify = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'start';
+        $grid_margin = $alignment === 'center' ? '36px auto' : '36px 0';
 
         $name = $this->h($this->value($data, 'AlbumName'));
         $type = $this->h($this->value($data, 'AlbumType'));
@@ -3651,7 +3714,7 @@ HTML;
 body.page-id-{$id} .entry-title,body.page-id-{$id} .wp-block-post-title{display:none}
 body.page-id-{$id} .h18-gallery-hero{padding:46px 20px;background:#30382a;color:#f2f0e8;text-align:{$alignment}}
 body.page-id-{$id} .h18-gallery-hero h1,body.page-id-{$id} .h18-gallery-hero p{color:#f2f0e8}
-body.page-id-{$id} .h18-gallery-grid{max-width:1200px;margin:36px auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,360px));gap:16px;padding:0 18px;justify-content:{$justify}}
+body.page-id-{$id} .h18-gallery-grid{max-width:1200px;margin:{$grid_margin};display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,360px));gap:16px;padding:0;justify-content:{$justify}}
 body.page-id-{$id} .h18-gallery-item{margin:0;background:#f2f0e8;border-radius:7px;overflow:hidden}
 body.page-id-{$id} .h18-gallery-item img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 body.page-id-{$id} .h18-gallery-item figcaption{padding:8px 10px;text-align:{$alignment}}
@@ -5943,7 +6006,7 @@ HTML;
                 </div>
 
                 <div class="h18-form-actions">
-                    <button class="button button-primary button-hero" type="submit">Gem HeaderDesign 1:1 og anvend</button>
+                    <button class="button button-primary button-hero" type="submit">Gem HeaderDesign og opdater alle sider</button>
                     <span class="description">Ved rigtig gemning opdateres både web-manager-option, central Configuration Store og de styrede sider.</span>
                 </div>
             </form>
@@ -5952,7 +6015,8 @@ HTML;
                 <?php wp_nonce_field('h18_sync_shell'); ?>
                 <input type="hidden" name="action" value="h18_sync_shell" />
                 <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                <button class="button button-secondary" type="submit">Synkroniser header/footer fra Hjem til alle sider</button>
+                <button class="button button-secondary" type="submit">Kopiér header/footer fra Hjem til alle sider</button>
+                <span class="description">Reparation: bruges kun hvis Hjem er korrekt, men andre sider er kommet ud af sync.</span>
             </form>
         </div>
         <?php
