@@ -1,31 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-14T08:35:00Z",
+  "published_utc": "2026-08-14T10:56:42Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "cb11767868b409f3573cd87ad1e8634a3a83e04e3c729728e4cfdaea710be774",
+  "package_sha256": "00415d73ba4832deec2123b6e9ee8e7bdcd999fe986eaaaa90178574e6afcb1e",
   "changelog": [
-    "Forbedret GitHub 404-diagnostik.",
-    "Public repository fungerer uden token.",
-    "Opdateringssiden viser GitHub adgangstilstand.",
-    "PowerShell-konfigurationsbaseline fra v0.4.1 er bevaret.",
-    "WhatIf er fortsat slået fra som standard."
-  ],
-  "package_parts": [
-    "package-parts/part-001.b64",
-    "package-parts/part-002.b64",
-    "package-parts/part-003.b64",
-    "package-parts/part-004.b64",
-    "package-parts/part-005.b64",
-    "package-parts/part-006.b64",
-    "package-parts/part-007.b64",
-    "package-parts/part-008.b64",
-    "package-parts/part-009.b64",
-    "package-parts/part-010.b64"
-  ],
-  "package_part_count": 10,
-  "package_materialization": "GitHub Actions reconstructs dist/hangar18-manager.zip from Base64 text parts."
+    "Events: global venstre/midtstillet placering for oversigt og detaljesider.",
+    "Billedgalleri: global venstre/midtstillet placering for oversigt og albumsider.",
+    "Menu: ny Pin menu/header ved scroll-indstilling.",
+    "Sticky CSS-fallback gør pinning uafhængig af den gamle PowerShell-shell.",
+    "Ny Hangar18-ContentLayout.json schema 1.0.",
+    "Eksisterende event- og galleri-sider genbygges efter layoutændring med backup først."
+  ]
 }
