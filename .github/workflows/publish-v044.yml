@@ -1,0 +1,118 @@
+name: Publish Hangar18 Manager 0.4.4
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/publish-v044.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Apply v0.4.4 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat stage-v044/part-01.txt stage-v044/part-02.txt stage-v044/part-03.txt stage-v044/part-04.txt stage-v044/part-05.txt > /tmp/h18-v044.patch
+          patch --batch --fuzz=3 -p1 < /tmp/h18-v044.patch
+
+      - name: Validate plugin source
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          grep -F 'Version: 0.4.4' hangar18-manager.php
+          grep -F "const VERSION = '0.4.4';" hangar18-manager.php
+          grep -F "'Version'           => '1.3'" hangar18-manager.php
+          grep -F "'Version'                => '1.1'" hangar18-manager.php
+          grep -F 'RegisterAlignment' hangar18-manager.php
+          grep -F 'EventIndexAlignment' hangar18-manager.php
+          grep -F 'EventDetailAlignment' hangar18-manager.php
+          grep -F 'GalleryIndexAlignment' hangar18-manager.php
+          grep -F 'GalleryDetailAlignment' hangar18-manager.php
+          grep -F 'Køretøjssiden / oversigten' hangar18-manager.php
+          grep -F 'Selve køretøjerne / detaljesider' hangar18-manager.php
+          grep -F 'Eventsiden / oversigten' hangar18-manager.php
+          grep -F 'Selve events / detaljesider' hangar18-manager.php
+          grep -F 'Billedgalleri-siden / oversigten' hangar18-manager.php
+          grep -F 'Selve albums / detaljesider' hangar18-manager.php
+
+      - name: Build and verify install ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager/assets dist
+          cp hangar18-manager.php .build/hangar18-manager/hangar18-manager.php
+          cp readme.txt .build/hangar18-manager/readme.txt
+          cp assets/admin.css .build/hangar18-manager/assets/admin.css
+          cp assets/admin.js .build/hangar18-manager/assets/admin.js
+          rm -f dist/hangar18-manager.zip
+          (
+            cd .build
+            zip -qr ../dist/hangar18-manager.zip hangar18-manager
+          )
+          unzip -t dist/hangar18-manager.zip
+          rm -rf .verify
+          mkdir -p .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'Version: 0.4.4' .verify/hangar18-manager/hangar18-manager.php
+          sha256sum dist/hangar18-manager.zip
+
+      - name: Generate update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          from datetime import datetime, timezone
+
+          package = Path('dist/hangar18-manager.zip')
+          digest = hashlib.sha256(package.read_bytes()).hexdigest()
+          manifest = {
+              'schema_version': '1.0',
+              'plugin': 'hangar18-manager',
+              'version': '0.4.4',
+              'min_wp': '6.4',
+              'min_php': '8.0',
+              'published_utc': datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z'),
+              'package_path': 'dist/hangar18-manager.zip',
+              'package_sha256': digest,
+              'changelog': [
+                  'Køretøjer: separat Venstre/Midtstillet for oversigtssiden og de enkelte køretøjssider.',
+                  'Events: separat Venstre/Midtstillet for eventoversigten og de enkelte eventsider.',
+                  'Billedgalleri: separat Venstre/Midtstillet for gallerioversigten og de enkelte albumsider.',
+                  'VehicleRegister opgraderet til schema 1.3.',
+                  'ContentLayout opgraderet til schema 1.1.',
+                  'Eksisterende v0.4.3-indstillinger migreres automatisk som udgangspunkt.',
+                  'WhatIf er fortsat slået fra som standard.'
+              ]
+          }
+          Path('update.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print('Published SHA-256:', digest)
+          PY
+
+      - name: Commit release and clean staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify stage-v044
+          rm -f .github/workflows/publish-v044.yml
+          git config user.name "hangar18-build"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git add -f dist/hangar18-manager.zip
+          git commit -m "Publish Hangar18 Manager 0.4.4"
+          git push
