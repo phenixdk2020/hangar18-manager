@@ -1,0 +1,49 @@
+         ? "Menu/header er pinnet og opdateret på {$count} sider."
++                    : "Menu/header er frigivet og opdateret på {$count} sider."
++            );
++
++        } catch (Throwable $e) {
++            $this->log('ERROR', 'MENU_PIN_FAILED', $e->getMessage());
++            $this->set_notice('error', 'Pinning kunne ikke gemmes: ' . $e->getMessage());
++        }
++
++        $this->redirect('hangar18-menu');
+     }
+ 
+     public function handle_create_menu() {
+@@ -5421,7 +5817,7 @@
+                             'Floating' => 'Floating',
+                             'Overlay'  => 'Overlay',
+                         ], 'PowerShell schema 2.3 gemmer Sticky separat som StickyOnScroll.');
+-                        $this->render_checkbox_setting('StickyOnScroll', 'StickyOnScroll', $s['StickyOnScroll']);
++                        $this->render_checkbox_setting('StickyOnScroll', 'Pin menu/header ved scroll (StickyOnScroll)', $s['StickyOnScroll']);
+                         $this->select_field('BackgroundMode', 'BackgroundMode', $s['BackgroundMode'], [
+                             'None'  => 'None',
+                             'Bar'   => 'Bar',
+--- a/readme.txt
++++ b/readme.txt
+@@ -1,5 +1,5 @@
+ === Hangar18 Manager ===
+-Version: 0.4.2
++Version: 0.4.3
+ 
+ Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+ 
+@@ -445,3 +445,17 @@
+ - Opdateringssiden viser adgangstilstand: PUBLIC eller TOKEN.
+ - Den autoritative PowerShell-konfigurationsbaseline fra v0.4.1 er uændret.
+ - WhatIf er fortsat FRA som standard.
++
++
++== Version 0.4.3 – Event/galleri-placering og menu-pinning ==
++
++- Events har nu global placering: Venstre eller Midtstillet.
++- Eventplaceringen anvendes på både eventoversigt og eventdetaljer.
++- Billedgalleri har nu global placering: Venstre eller Midtstillet.
++- Galleriplaceringen anvendes på både albumoversigt og albumsider.
++- Ny central Hangar18-ContentLayout.json schema 1.0.
++- Menu-siden har nu en tydelig "Pin menu/header ved scroll"-funktion.
++- Pinning synkroniserer StickyOnScroll i Hangar18-HeaderDesign.json.
++- Web-override indeholder sticky CSS-fallback med korrekt WordPress admin-bar offset.
++- Layoutændringer tager fuld backup før eksisterende sider genbygges.
++- WhatIf er fortsat FRA som standard.
