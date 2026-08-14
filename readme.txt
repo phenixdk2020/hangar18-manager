@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.8
+Version: 0.4.9
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -524,3 +524,12 @@ AUTHORITATIVE_BASELINE_FAILED
 - Eksisterende legacy-felter migreres logisk til CustomFields og spejles fortsat til de gamle nøgler for bagudkompatibilitet.
 - Ny central konfigurationsfil: Hangar18-VehicleFields.json schema 1.0.
 - Gem af feltopsætning tager backup og genbygger alle køretøjssider samt køretøjsoversigten.
+
+
+== Version 0.4.9 – Køretøjets billede og tekniske data ==
+
+- Køretøjets detaljeside bruger nu sit eget eksplicitte layout og er ikke afhængig af Astra eller WordPress' blok-CSS.
+- På computer står hovedbilledet fast i venstre kolonne og Tekniske data i højre kolonne.
+- På mobil stables billedet øverst og Tekniske data nedenunder.
+- Venstre/Midtstillet-indstillingen styrer fortsat placeringen af det samlede detaljeindhold.
+- Alle eksisterende køretøjssider genbygges automatisk én gang efter opdateringen.

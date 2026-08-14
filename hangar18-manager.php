@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.8
+ * Version: 0.4.9
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.8';
+    const VERSION = '0.4.9';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -44,6 +44,7 @@ final class Hangar18_Manager {
     const ACTIVE_MENU_OPTION       = 'hangar18_manager_active_menu';
     const FRONTEND_REPAIR_046_OPTION = 'hangar18_manager_frontend_repair_046';
     const ASTRA_BANNER_REPAIR_047_OPTION = 'hangar18_manager_astra_banner_repair_047';
+    const VEHICLE_LAYOUT_REPAIR_049_OPTION = 'hangar18_manager_vehicle_layout_repair_049';
     const NOTICE_PREFIX            = 'hangar18_manager_notice_';
 
     const CONFIG_STORE_SLUG  = 'hangar18-configuration-store';
@@ -73,6 +74,7 @@ final class Hangar18_Manager {
         add_action('admin_init', [$this, 'maybe_import_power_shell_configuration'], 10);
         add_action('admin_init', [$this, 'maybe_run_frontend_repair_046'], 15);
         add_action('admin_init', [$this, 'maybe_repair_astra_banner_047'], 16);
+        add_action('admin_init', [$this, 'maybe_repair_vehicle_layout_049'], 17);
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
         add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
@@ -248,6 +250,51 @@ final class Hangar18_Manager {
             $this->log(
                 'ERROR',
                 'ASTRA_BANNER_REPAIR_047_FAILED',
+                $e->getMessage()
+            );
+        }
+    }
+
+    public function maybe_repair_vehicle_layout_049() {
+        if (!is_admin() || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        if (get_option(self::VEHICLE_LAYOUT_REPAIR_049_OPTION, false)) {
+            return;
+        }
+
+        try {
+            $this->create_full_managed_backup(
+                'Automatisk v0.4.9 reparation af køretøjslayout'
+            );
+
+            $vehicles = $this->rebuild_vehicle_detail_pages_046();
+            $this->rebuild_vehicle_register();
+
+            update_option(
+                self::VEHICLE_LAYOUT_REPAIR_049_OPTION,
+                [
+                    'CompletedUtc' => gmdate('c'),
+                    'Vehicles'     => $vehicles,
+                ],
+                false
+            );
+
+            $this->log(
+                'INFO',
+                'VEHICLE_LAYOUT_REPAIR_049_COMPLETE',
+                "v0.4.9: {$vehicles} køretøjssider er genbygget med billede til venstre og tekniske data til højre."
+            );
+
+            $this->set_notice(
+                'success',
+                "v0.4.9: {$vehicles} køretøjssider er genbygget med det korrekte to-kolonne-layout."
+            );
+        } catch (Throwable $e) {
+            $this->log(
+                'ERROR',
+                'VEHICLE_LAYOUT_REPAIR_049_FAILED',
                 $e->getMessage()
             );
         }
@@ -3145,7 +3192,8 @@ body.page-id-{$id} .h18-vehicle-hero{background:#30382a;color:#f2f0e8;padding:48
 body.page-id-{$id} .h18-vehicle-hero h1, body.page-id-{$id} .h18-vehicle-hero p{color:#f2f0e8;text-align:{$detail_text_alignment}!important}
 body.page-id-{$id} .h18-vehicle-content{padding:42px 20px}
 body.page-id-{$id} .h18-vehicle-inner{width:min(1100px,100%);max-width:1100px;margin:{$detail_outer_margin}!important;text-align:{$detail_text_alignment}!important;box-sizing:border-box} body.page-id-{$id} .h18-vehicle-inner.h18-align-left{margin-left:0!important;margin-right:auto!important} body.page-id-{$id} .h18-vehicle-inner.h18-align-center{margin-left:auto!important;margin-right:auto!important}
-body.page-id-{$id} .h18-vehicle-main-layout{width:min(1100px,100%)!important;max-width:1100px!important;box-sizing:border-box!important}
+body.page-id-{$id} .h18-vehicle-main-layout{display:grid!important;grid-template-columns:minmax(0,55fr) minmax(0,45fr)!important;gap:32px!important;align-items:start!important;width:min(1100px,100%)!important;max-width:1100px!important;box-sizing:border-box!important}
+body.page-id-{$id} .h18-vehicle-main-layout>.wp-block-column{min-width:0!important;margin:0!important}
 body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-left{margin-left:0!important;margin-right:auto!important}
 body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-center{margin-left:auto!important;margin-right:auto!important}
 body.page-id-{$id} .h18-vehicle-main-image img{width:100%;height:auto;border-radius:7px}
@@ -3155,7 +3203,7 @@ body.page-id-{$id} .h18-vehicle-table th,body.page-id-{$id} .h18-vehicle-table t
 body.page-id-{$id} .h18-vehicle-table th{width:40%;background:#f2f0e8}
 body.page-id-{$id} .h18-color-value{display:inline-flex;align-items:center;gap:8px}.h18-color-swatch{display:inline-block;width:18px;height:18px;border:1px solid rgba(48,56,42,.35);border-radius:4px}.h18-field-empty{opacity:.65}
 body.page-id-{$id} .h18-vehicle-section{margin-top:32px}
-@media(max-width:782px){body.page-id-{$id} .h18-vehicle-content{padding:30px 15px}}
+@media(max-width:782px){body.page-id-{$id} .h18-vehicle-content{padding:30px 15px}body.page-id-{$id} .h18-vehicle-main-layout{grid-template-columns:minmax(0,1fr)!important;gap:24px!important}body.page-id-{$id} .h18-vehicle-main-layout>.wp-block-column{width:100%!important;flex-basis:auto!important}}
 </style>
 <!-- /wp:html -->
 <div class="h18-vehicle-hero">
