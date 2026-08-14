@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.7
+ * Version: 0.4.8
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.7';
+    const VERSION = '0.4.8';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -32,6 +32,7 @@ final class Hangar18_Manager {
     const DESIGN_OPTION            = 'hangar18_manager_design'; // v0.3.0 legacy
     const HEADER_DESIGN_OPTION     = 'hangar18_manager_header_design_v25';
     const VEHICLE_REGISTER_OPTION  = 'hangar18_manager_vehicle_register_v12';
+    const VEHICLE_FIELDS_OPTION    = 'hangar18_manager_vehicle_fields_v1';
     const CONTENT_LAYOUT_OPTION     = 'hangar18_manager_content_layout_v1';
     const MENU_ORDER_OPTION        = 'hangar18_manager_menu_order_v20';
     const CONFIG_IMPORT_META_OPTION= 'hangar18_manager_config_import_meta';
@@ -80,6 +81,7 @@ final class Hangar18_Manager {
 
         add_action('admin_post_h18_save_vehicle', [$this, 'handle_save_vehicle']);
         add_action('admin_post_h18_save_vehicle_register_settings', [$this, 'handle_save_vehicle_register_settings']);
+        add_action('admin_post_h18_save_vehicle_fields', [$this, 'handle_save_vehicle_fields']);
         add_action('admin_post_h18_rebuild_vehicle_register', [$this, 'handle_rebuild_vehicle_register']);
 
         add_action('admin_post_h18_save_event', [$this, 'handle_save_event']);
@@ -152,63 +154,104 @@ final class Hangar18_Manager {
     }
 
     public function disable_astra_banner_for_managed_pages() {
-    if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
-        return;
+        if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
+            return;
+        }
+
+        /*
+         * Astra 4.x kan generere en separat Banner Area før entry-content.
+         * Det er denne wrapper der har givet den lilla/blå bjælke.
+         * Brug Astra's egne filtre i stedet for at forsøge at skjule
+         * stadig flere CSS-selectors.
+         */
+        add_filter('astra_the_title_enabled', '__return_false', 999);
+        add_filter('astra_advanced_header_title', '__return_false', 999);
+        add_filter('astra_apply_hero_header_banner', '__return_false', 999);
+        add_filter('astra_remove_entry_header_content', '__return_true', 999);
+        add_filter('astra_single_layout_one_banner_visibility', '__return_false', 999);
+        add_filter('astra_banner_title_area_visibility', [$this, 'disable_astra_banner_visibility_047'], 999);
     }
 
-    add_filter('astra_the_title_enabled', '__return_false', 999);
-    add_filter('astra_advanced_header_title', '__return_false', 999);
-    add_filter('astra_apply_hero_header_banner', '__return_false', 999);
-    add_filter('astra_remove_entry_header_content', '__return_true', 999);
-    add_filter('astra_single_layout_one_banner_visibility', '__return_false', 999);
-    add_filter('astra_banner_title_area_visibility', [$this, 'disable_astra_banner_visibility_047'], 999);
-}
+    public function disable_astra_banner_visibility_047($visibility) {
+        return 'disabled';
+    }
 
-public function disable_astra_banner_visibility_047($visibility) {
-    return 'disabled';
-}
+    private function get_hangar18_managed_page_ids_047() {
+        $ids = [];
 
-private function get_hangar18_managed_page_ids_047() {
-    $ids = [];
-    foreach ($this->get_managed_pages() as $page) {
-        if ($page instanceof WP_Post) {
-            $ids[] = (int) $page->ID;
+        foreach ($this->get_managed_pages() as $page) {
+            if ($page instanceof WP_Post) {
+                $ids[] = (int) $page->ID;
+            }
+        }
+
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    public function maybe_repair_astra_banner_047() {
+        if (!is_admin() || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        if (get_option(self::ASTRA_BANNER_REPAIR_047_OPTION, false)) {
+            return;
+        }
+
+        try {
+            $this->create_full_managed_backup(
+                'Før v0.4.7 Astra Banner Area-reparation'
+            );
+
+            $updated = 0;
+
+            foreach ($this->get_hangar18_managed_page_ids_047() as $page_id) {
+                /*
+                 * Astra's egne sidemeta-felter:
+                 * site-post-title          = Disable Title
+                 * ast-title-bar-display    = ældre title-bar toggle
+                 * ast-banner-title-visibility = nyere Banner Area toggle
+                 *
+                 * Vi ændrer ikke Hangar18-indhold, Events, køretøjer,
+                 * galleri eller HeaderDesign her.
+                 */
+                update_post_meta($page_id, 'site-post-title', 'disabled');
+                update_post_meta($page_id, 'ast-title-bar-display', 'disabled');
+                update_post_meta($page_id, 'ast-banner-title-visibility', 'disabled');
+
+                $updated++;
+            }
+
+            update_option(
+                self::ASTRA_BANNER_REPAIR_047_OPTION,
+                [
+                    'CompletedUtc' => gmdate('c'),
+                    'Pages'        => $updated,
+                ],
+                false
+            );
+
+            $this->rebuild_vehicle_register();
+            $this->rebuild_event_register();
+            $this->rebuild_gallery_index();
+
+            $this->log(
+                'INFO',
+                'ASTRA_BANNER_REPAIR_047_COMPLETE',
+                "Astra Banner Area er deaktiveret på {$updated} Hangar18-styrede sider, og oversigtssiderne er genbygget."
+            );
+
+            $this->set_notice(
+                'success',
+                "v0.4.7: Astra Banner Area er slået fra på {$updated} Hangar18-styrede sider."
+            );
+        } catch (Throwable $e) {
+            $this->log(
+                'ERROR',
+                'ASTRA_BANNER_REPAIR_047_FAILED',
+                $e->getMessage()
+            );
         }
     }
-    return array_values(array_unique(array_filter($ids)));
-}
-
-public function maybe_repair_astra_banner_047() {
-    if (!is_admin() || !current_user_can('edit_pages')) {
-        return;
-    }
-    if (get_option(self::ASTRA_BANNER_REPAIR_047_OPTION, false)) {
-        return;
-    }
-
-    try {
-        $this->create_full_managed_backup('Før v0.4.7 Astra Banner Area-reparation');
-        $updated = 0;
-        foreach ($this->get_hangar18_managed_page_ids_047() as $page_id) {
-            update_post_meta($page_id, 'site-post-title', 'disabled');
-            update_post_meta($page_id, 'ast-title-bar-display', 'disabled');
-            update_post_meta($page_id, 'ast-banner-title-visibility', 'disabled');
-            $updated++;
-        }
-        update_option(
-            self::ASTRA_BANNER_REPAIR_047_OPTION,
-            ['CompletedUtc' => gmdate('c'), 'Pages' => $updated],
-            false
-        );
-        $this->rebuild_vehicle_register();
-        $this->rebuild_event_register();
-        $this->rebuild_gallery_index();
-        $this->log('INFO', 'ASTRA_BANNER_REPAIR_047_COMPLETE', "Astra Banner Area er deaktiveret på {$updated} Hangar18-styrede sider, og oversigtssiderne er genbygget.");
-        $this->set_notice('success', "v0.4.7: Astra Banner Area er slået fra på {$updated} sider. Overskrifterne er gendannet på Køretøjer, Events og Billedgalleri.");
-    } catch (Throwable $e) {
-        $this->log('ERROR', 'ASTRA_BANNER_REPAIR_047_FAILED', $e->getMessage());
-    }
-}
 
     public function render_frontend_runtime_fixes() {
         if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
@@ -430,6 +473,7 @@ public function maybe_repair_astra_banner_047() {
 
         add_submenu_page(self::MENU_SLUG, 'Dashboard', 'Dashboard', $capability, self::MENU_SLUG, [$this, 'render_dashboard']);
         add_submenu_page(self::MENU_SLUG, 'Køretøjer', 'Køretøjer', $capability, 'hangar18-vehicles', [$this, 'render_vehicles']);
+        add_submenu_page(self::MENU_SLUG, 'Køretøjsfelter', 'Køretøjsfelter', $capability, 'hangar18-vehicle-fields', [$this, 'render_vehicle_fields']);
         add_submenu_page(self::MENU_SLUG, 'Events', 'Events', $capability, 'hangar18-events', [$this, 'render_events']);
         add_submenu_page(self::MENU_SLUG, 'Billedgalleri', 'Billedgalleri', $capability, 'hangar18-gallery', [$this, 'render_gallery']);
         add_submenu_page(self::MENU_SLUG, 'Menu', 'Menu', $capability, 'hangar18-menu', [$this, 'render_menu']);
@@ -667,6 +711,280 @@ public function maybe_repair_astra_banner_047() {
             'CardAlignment'     => $register,
             'DetailAlignment'   => $detail,
         ];
+    }
+
+    private function vehicle_legacy_field_map() {
+        return [
+            'type'               => 'Type',
+            'manufacturer'       => 'Manufacturer',
+            'production_year'    => 'ProductionYear',
+            'engine'             => 'Engine',
+            'weight'             => 'Weight',
+            'crew'               => 'Crew',
+            'service_period'     => 'ServicePeriod',
+            'restoration_status' => 'RestorationStatus',
+        ];
+    }
+
+    private function vehicle_field_type_labels() {
+        return [
+            'text'     => 'Kort tekst',
+            'textarea' => 'Lang tekst',
+            'number'   => 'Tal',
+            'boolean'  => 'Ja / Nej',
+            'select'   => 'Dropdown',
+            'date'     => 'Dato',
+            'url'      => 'URL / link',
+            'color'    => 'Farvevælger',
+        ];
+    }
+
+    private function default_vehicle_field_settings() {
+        return [
+            'Version' => '1.0',
+            'Fields'  => [
+                ['Key'=>'type',               'Label'=>'Type',                  'Type'=>'text', 'Active'=>true,  'ShowOnRegister'=>true,  'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>10],
+                ['Key'=>'manufacturer',       'Label'=>'Producent',             'Type'=>'text', 'Active'=>true,  'ShowOnRegister'=>true,  'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>20],
+                ['Key'=>'production_year',    'Label'=>'Produktionsår',         'Type'=>'text', 'Active'=>true,  'ShowOnRegister'=>true,  'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>30],
+                ['Key'=>'engine',             'Label'=>'Motor',                 'Type'=>'text', 'Active'=>true,  'ShowOnRegister'=>false, 'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>40],
+                ['Key'=>'weight',             'Label'=>'Vægt',                  'Type'=>'text', 'Active'=>true,  'ShowOnRegister'=>true,  'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>50],
+                ['Key'=>'crew',               'Label'=>'Besætning',             'Type'=>'text', 'Active'=>true,  'ShowOnRegister'=>false, 'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>60],
+                ['Key'=>'service_period',     'Label'=>'Tjenesteperiode',       'Type'=>'text', 'Active'=>true,  'ShowOnRegister'=>false, 'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>70],
+                ['Key'=>'restoration_status', 'Label'=>'Restaureringsstatus',   'Type'=>'text', 'Active'=>true,  'ShowOnRegister'=>true,  'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>80],
+                ['Key'=>'color',              'Label'=>'Farve',                 'Type'=>'text', 'Active'=>false, 'ShowOnRegister'=>false, 'ShowOnDetail'=>true,  'Options'=>[], 'Order'=>90],
+            ],
+        ];
+    }
+
+    private function normalize_vehicle_field_settings(array $saved) {
+        $types = array_keys($this->vehicle_field_type_labels());
+        $source_fields = isset($saved['Fields']) && is_array($saved['Fields'])
+            ? $saved['Fields']
+            : [];
+
+        $fields = [];
+        $seen = [];
+        $order_fallback = 10;
+
+        foreach ($source_fields as $source) {
+            if (!is_array($source)) {
+                continue;
+            }
+
+            $key = sanitize_key((string) ($source['Key'] ?? ''));
+            $label = trim((string) ($source['Label'] ?? ''));
+
+            if ($key === '' || $label === '' || isset($seen[$key])) {
+                continue;
+            }
+
+            $type = sanitize_key((string) ($source['Type'] ?? 'text'));
+            if (!in_array($type, $types, true)) {
+                $type = 'text';
+            }
+
+            $options = $source['Options'] ?? [];
+            if (is_string($options)) {
+                $options = preg_split('/[\r\n,;]+/', $options);
+            }
+            if (!is_array($options)) {
+                $options = [];
+            }
+            $options = array_values(array_filter(array_map(static function($value) {
+                return sanitize_text_field((string) $value);
+            }, $options), static function($value) {
+                return $value !== '';
+            }));
+
+            $order = is_numeric($source['Order'] ?? null)
+                ? max(1, (int) $source['Order'])
+                : $order_fallback;
+
+            $fields[] = [
+                'Key'            => $key,
+                'Label'          => sanitize_text_field($label),
+                'Type'           => $type,
+                'Active'         => $this->bool_value($source['Active'] ?? false),
+                'ShowOnRegister' => $this->bool_value($source['ShowOnRegister'] ?? false),
+                'ShowOnDetail'   => $this->bool_value($source['ShowOnDetail'] ?? true, true),
+                'Options'        => $options,
+                'Order'          => $order,
+            ];
+
+            $seen[$key] = true;
+            $order_fallback += 10;
+        }
+
+        usort($fields, static function($a, $b) {
+            $cmp = ((int) $a['Order']) <=> ((int) $b['Order']);
+            return $cmp !== 0 ? $cmp : strcmp((string) $a['Label'], (string) $b['Label']);
+        });
+
+        foreach ($fields as $index => &$field) {
+            $field['Order'] = ($index + 1) * 10;
+        }
+        unset($field);
+
+        return [
+            'Version' => '1.0',
+            'Fields'  => $fields,
+        ];
+    }
+
+    private function get_vehicle_field_settings() {
+        $stored = get_option(self::VEHICLE_FIELDS_OPTION, null);
+
+        if (!is_array($stored)) {
+            return $this->default_vehicle_field_settings();
+        }
+
+        return $this->normalize_vehicle_field_settings($stored);
+    }
+
+    private function get_vehicle_fields($active_only = false) {
+        $settings = $this->get_vehicle_field_settings();
+        $fields = is_array($settings['Fields'] ?? null) ? $settings['Fields'] : [];
+
+        if (!$active_only) {
+            return $fields;
+        }
+
+        return array_values(array_filter($fields, static function($field) {
+            return !empty($field['Active']);
+        }));
+    }
+
+    private function vehicle_field_value(array $data, $key, $default = '') {
+        $key = sanitize_key((string) $key);
+        $custom = isset($data['CustomFields']) && is_array($data['CustomFields'])
+            ? $data['CustomFields']
+            : [];
+
+        if (array_key_exists($key, $custom)) {
+            return (string) $custom[$key];
+        }
+
+        $legacy_map = $this->vehicle_legacy_field_map();
+        if (isset($legacy_map[$key]) && array_key_exists($legacy_map[$key], $data)) {
+            return (string) $data[$legacy_map[$key]];
+        }
+
+        return (string) $default;
+    }
+
+    private function sanitize_vehicle_field_value(array $field, $raw) {
+        $type = (string) ($field['Type'] ?? 'text');
+        $raw = is_scalar($raw) ? (string) wp_unslash($raw) : '';
+
+        switch ($type) {
+            case 'textarea':
+                return sanitize_textarea_field($raw);
+            case 'number':
+                $value = trim($raw);
+                return preg_match('/^-?[0-9]+(?:[\.,][0-9]+)?$/', $value)
+                    ? str_replace(',', '.', $value)
+                    : sanitize_text_field($value);
+            case 'boolean':
+                return in_array(strtolower(trim($raw)), ['1','true','yes','ja','on'], true) ? '1' : '0';
+            case 'date':
+                $value = sanitize_text_field($raw);
+                return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) ? $value : '';
+            case 'url':
+                return esc_url_raw($raw);
+            case 'color':
+                $value = sanitize_hex_color($raw);
+                return $value ?: '';
+            case 'select':
+                $value = sanitize_text_field($raw);
+                $options = is_array($field['Options'] ?? null) ? $field['Options'] : [];
+                return in_array($value, $options, true) ? $value : '';
+            case 'text':
+            default:
+                return sanitize_text_field($raw);
+        }
+    }
+
+    private function format_vehicle_field_value(array $field, $value) {
+        $value = (string) $value;
+        if ($value === '') {
+            return '<span class="h18-field-empty">—</span>';
+        }
+
+        switch ((string) ($field['Type'] ?? 'text')) {
+            case 'textarea':
+                return nl2br(esc_html($value), false);
+            case 'boolean':
+                return $value === '1' ? 'Ja' : 'Nej';
+            case 'url':
+                return '<a href="' . esc_url($value) . '" target="_blank" rel="noopener">' . esc_html($value) . '</a>';
+            case 'color':
+                $safe = sanitize_hex_color($value);
+                if (!$safe) {
+                    return esc_html($value);
+                }
+                return '<span class="h18-color-value"><span class="h18-color-swatch" style="background:' . esc_attr($safe) . '"></span>' . esc_html($safe) . '</span>';
+            default:
+                return esc_html($value);
+        }
+    }
+
+    private function build_vehicle_field_rows(array $data, $context) {
+        $rows = '';
+        foreach ($this->get_vehicle_fields(true) as $field) {
+            $show = $context === 'register'
+                ? !empty($field['ShowOnRegister'])
+                : !empty($field['ShowOnDetail']);
+
+            if (!$show) {
+                continue;
+            }
+
+            $value = $this->vehicle_field_value($data, $field['Key']);
+            $rows .= '<tr><th>' . esc_html($field['Label']) . '</th><td>' .
+                $this->format_vehicle_field_value($field, $value) . '</td></tr>';
+        }
+
+        if ($rows === '') {
+            $rows = '<tr><td colspan="2"><span class="h18-field-empty">Ingen aktive felter er valgt til denne visning.</span></td></tr>';
+        }
+
+        return $rows;
+    }
+
+    private function render_vehicle_dynamic_field(array $field, $value) {
+        $key = (string) $field['Key'];
+        $label = (string) $field['Label'];
+        $type = (string) $field['Type'];
+        $name = 'vehicle_fields[' . $key . ']';
+        $id = 'h18-vehicle-field-' . $key;
+        ?>
+        <div class="h18-field">
+            <label for="<?php echo esc_attr($id); ?>"><strong><?php echo esc_html($label); ?></strong></label>
+            <?php if ($type === 'textarea') : ?>
+                <textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>" rows="4"><?php echo esc_textarea($value); ?></textarea>
+            <?php elseif ($type === 'boolean') : ?>
+                <input type="hidden" name="<?php echo esc_attr($name); ?>" value="0" />
+                <label class="h18-inline-check"><input id="<?php echo esc_attr($id); ?>" type="checkbox" name="<?php echo esc_attr($name); ?>" value="1" <?php checked((string) $value, '1'); ?> /> Ja</label>
+            <?php elseif ($type === 'select') : ?>
+                <select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($name); ?>">
+                    <option value="">— Vælg —</option>
+                    <?php foreach (($field['Options'] ?? []) as $option) : ?>
+                        <option value="<?php echo esc_attr($option); ?>" <?php selected((string) $value, (string) $option); ?>><?php echo esc_html($option); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            <?php else : ?>
+                <?php
+                $html_type = 'text';
+                if ($type === 'number') { $html_type = 'text'; }
+                elseif ($type === 'date') { $html_type = 'date'; }
+                elseif ($type === 'url') { $html_type = 'url'; }
+                elseif ($type === 'color') { $html_type = 'color'; }
+                ?>
+                <input id="<?php echo esc_attr($id); ?>" type="<?php echo esc_attr($html_type); ?>" name="<?php echo esc_attr($name); ?>" value="<?php echo esc_attr($value); ?>" />
+            <?php endif; ?>
+            <p class="description">Nøgle: <code><?php echo esc_html($key); ?></code></p>
+        </div>
+        <?php
     }
 
     private function default_content_layout_settings() {
@@ -1023,10 +1341,12 @@ public function maybe_repair_astra_banner_047() {
         $header = $this->extract_header_design_from_live_shell();
         $menu = $this->bootstrap_menu_order_from_current_site();
         $vehicle = $this->bootstrap_vehicle_register_from_current_site();
+        $vehicle_fields = $this->default_vehicle_field_settings();
 
         update_option(self::HEADER_DESIGN_OPTION, $header, false);
         update_option(self::MENU_ORDER_OPTION, $menu, false);
         update_option(self::VEHICLE_REGISTER_OPTION, $vehicle, false);
+        update_option(self::VEHICLE_FIELDS_OPTION, $vehicle_fields, false);
 
         $header_file = $header;
         $header_file['Saved'] = gmdate('c');
@@ -1036,6 +1356,9 @@ public function maybe_repair_astra_banner_047() {
 
         $vehicle_file = $vehicle;
         $vehicle_file['Saved'] = gmdate('c');
+
+        $vehicle_fields_file = $vehicle_fields;
+        $vehicle_fields_file['Saved'] = gmdate('c');
 
         // publish_configuration_file() auto-creates the private page when absent.
         $this->publish_configuration_file(
@@ -1049,6 +1372,10 @@ public function maybe_repair_astra_banner_047() {
         $this->publish_configuration_file(
             'Hangar18-VehicleRegister.json',
             $vehicle_file
+        );
+        $this->publish_configuration_file(
+            'Hangar18-VehicleFields.json',
+            $vehicle_fields_file
         );
 
         $page = $this->get_configuration_store_page();
@@ -1066,6 +1393,7 @@ public function maybe_repair_astra_banner_047() {
                 'Hangar18-HeaderDesign.json',
                 'Hangar18-MenuOrder.json',
                 'Hangar18-VehicleRegister.json',
+                'Hangar18-VehicleFields.json',
             ],
             'success'                  => true,
             'bootstrapped'             => true,
@@ -1383,6 +1711,10 @@ public function maybe_repair_astra_banner_047() {
             $manifest,
             'Hangar18-VehicleRegister.json'
         );
+        $vehicle_fields = $this->decode_remote_configuration_file(
+            $manifest,
+            'Hangar18-VehicleFields.json'
+        );
 
         $imported = [];
         $hashes = [];
@@ -1406,6 +1738,13 @@ public function maybe_repair_astra_banner_047() {
             update_option(self::VEHICLE_REGISTER_OPTION, $normalized, false);
             $imported[] = 'Hangar18-VehicleRegister.json';
             $hashes['Hangar18-VehicleRegister.json'] = $vehicle['hash'];
+        }
+
+        if ($vehicle_fields) {
+            $normalized = $this->normalize_vehicle_field_settings($vehicle_fields['data']);
+            update_option(self::VEHICLE_FIELDS_OPTION, $normalized, false);
+            $imported[] = 'Hangar18-VehicleFields.json';
+            $hashes['Hangar18-VehicleFields.json'] = $vehicle_fields['hash'];
         }
 
         $meta = [
@@ -1541,6 +1880,9 @@ public function maybe_repair_astra_banner_047() {
         $vehicle = $this->get_vehicle_register_settings();
         $vehicle['Saved'] = gmdate('c');
 
+        $vehicle_fields = $this->get_vehicle_field_settings();
+        $vehicle_fields['Saved'] = gmdate('c');
+
         $content_layout = $this->get_content_layout_settings();
         $content_layout['Saved'] = gmdate('c');
 
@@ -1548,6 +1890,7 @@ public function maybe_repair_astra_banner_047() {
             'Hangar18-HeaderDesign.json'    => $header,
             'Hangar18-MenuOrder.json'       => $menu,
             'Hangar18-VehicleRegister.json' => $vehicle,
+            'Hangar18-VehicleFields.json'   => $vehicle_fields,
             'Hangar18-ContentLayout.json'   => $content_layout,
         ];
     }
@@ -1623,6 +1966,7 @@ public function maybe_repair_astra_banner_047() {
             'Hangar18-HeaderDesign.json',
             'Hangar18-MenuOrder.json',
             'Hangar18-VehicleRegister.json',
+            'Hangar18-VehicleFields.json',
             'Hangar18-ContentLayout.json',
         ];
 
@@ -2751,6 +3095,7 @@ HTML;
         $crew      = $this->h($this->value($data, 'Crew'));
         $period    = $this->h($this->value($data, 'ServicePeriod'));
         $state     = $this->h($this->value($data, 'RestorationStatus'));
+        $technical_rows = $this->build_vehicle_field_rows($data, 'detail');
         $history   = $this->hm($this->value($data, 'History'));
         $aalborg   = $this->hm($this->value($data, 'AalborgService'));
         $restore   = $this->hm($this->value($data, 'RestorationText'));
@@ -2808,6 +3153,7 @@ body.page-id-{$id} .avpf-photo-placeholder{min-height:260px;background:#f2f0e8;b
 body.page-id-{$id} .h18-vehicle-table{width:100%;border-collapse:collapse;text-align:left}
 body.page-id-{$id} .h18-vehicle-table th,body.page-id-{$id} .h18-vehicle-table td{padding:9px 11px;border-bottom:1px solid rgba(48,56,42,.14);vertical-align:top}
 body.page-id-{$id} .h18-vehicle-table th{width:40%;background:#f2f0e8}
+body.page-id-{$id} .h18-color-value{display:inline-flex;align-items:center;gap:8px}.h18-color-swatch{display:inline-block;width:18px;height:18px;border:1px solid rgba(48,56,42,.35);border-radius:4px}.h18-field-empty{opacity:.65}
 body.page-id-{$id} .h18-vehicle-section{margin-top:32px}
 @media(max-width:782px){body.page-id-{$id} .h18-vehicle-content{padding:30px 15px}}
 </style>
@@ -2823,14 +3169,7 @@ body.page-id-{$id} .h18-vehicle-section{margin-top:32px}
 <div class="wp-block-column" style="flex-basis:45%">
 <h2>Tekniske data</h2>
 <table class="h18-vehicle-table"><tbody>
-<tr><th>Type</th><td>{$type}</td></tr>
-<tr><th>Producent</th><td>{$maker}</td></tr>
-<tr><th>Produktionsår</th><td>{$year}</td></tr>
-<tr><th>Motor</th><td>{$engine}</td></tr>
-<tr><th>Vægt</th><td>{$weight}</td></tr>
-<tr><th>Besætning</th><td>{$crew}</td></tr>
-<tr><th>Tjenesteperiode</th><td>{$period}</td></tr>
-<tr><th>Restaureringsstatus</th><td>{$state}</td></tr>
+{$technical_rows}
 </tbody></table>
 </div>
 </div>
@@ -2867,23 +3206,14 @@ HTML;
                 }
             }
 
-            $v = static function($x) {
-                $x = trim((string) $x);
-                return $x === '' ? '—' : esc_html($x);
-            };
+            $field_rows = $this->build_vehicle_field_rows($data, 'register');
 
             $cards .= '<article class="h18-vehicle-card">' .
                 '<a href="' . esc_url(get_permalink($vehicle)) . '">' .
                 '<div class="h18-vehicle-card-image">' . $image . '</div>' .
                 '<div class="h18-vehicle-card-body">' .
                 '<h3>' . esc_html($vehicle->post_title) . '</h3>' .
-                '<table><tbody>' .
-                '<tr><th>Type</th><td>' . $v($data['Type'] ?? '') . '</td></tr>' .
-                '<tr><th>Producent</th><td>' . $v($data['Manufacturer'] ?? '') . '</td></tr>' .
-                '<tr><th>Produktionsår</th><td>' . $v($data['ProductionYear'] ?? '') . '</td></tr>' .
-                '<tr><th>Vægt</th><td>' . $v($data['Weight'] ?? '') . '</td></tr>' .
-                '<tr><th>Status</th><td>' . $v($data['RestorationStatus'] ?? '') . '</td></tr>' .
-                '</tbody></table><span class="h18-card-link">Se køretøjet →</span>' .
+                '<table><tbody>' . $field_rows . '</tbody></table><span class="h18-card-link">Se køretøjet →</span>' .
                 '</div></a></article>';
         }
 
@@ -2907,6 +3237,7 @@ HTML;
 .h18-vehicle-card table{width:100%;border-collapse:collapse;table-layout:fixed}
 .h18-vehicle-card th,.h18-vehicle-card td{padding:7px 8px;border-bottom:1px solid rgba(48,56,42,.12);vertical-align:top}
 .h18-vehicle-card th{width:42%;text-align:left;background:rgba(195,174,131,.18)}
+.h18-color-value{display:inline-flex;align-items:center;gap:7px}.h18-color-swatch{display:inline-block;width:16px;height:16px;border:1px solid rgba(48,56,42,.35);border-radius:4px}.h18-field-empty{opacity:.65}
 .h18-card-link{display:inline-block;margin-top:12px;color:#8b4a2b;font-weight:700}
 .h18-register-empty{grid-column:1/-1;padding:26px;background:#f2f0e8;text-align:center}
 @media(max-width:600px){.h18-vehicle-register{grid-template-columns:1fr;justify-content:stretch}.h18-vehicle-card{max-width:none}}
@@ -2956,7 +3287,8 @@ HTML;
             <div class="h18-help-box">
                 <strong>Sådan styres køretøjer:</strong>
                 Vælg et eksisterende køretøj eller opret et nyt. WhatIf er slået fra som standard.
-                <strong>Registerlayout</strong> er – præcis som i PowerShell – en global indstilling for hele køretøjsregisteret og alle køretøjs-detaljesider.
+                <strong>Registerlayout</strong> er en global indstilling for køretøjsoversigten og detaljesiderne.
+                Tekniske felter styres nu under <strong>Køretøjsfelter</strong>; de kan aktiveres/deaktiveres, omdøbes, flyttes og udvides uden at slette eksisterende værdier.
             </div>
 
             <?php $vehicle_layout = $this->get_vehicle_register_settings(); ?>
@@ -3012,6 +3344,7 @@ HTML;
                         <a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($vehicle)); ?>">Åbn side</a>
                     <?php endif; ?>
                 </form>
+                <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-vehicle-fields')); ?>">Feltopsætning</a>
             </div>
 
             <form class="h18-editor-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -3033,14 +3366,6 @@ HTML;
                         $this->field('name', 'Navn', $vehicle ? $vehicle->post_title : $this->value($data, 'Name'), 'text', true);
                         $this->field('slug', 'Slug', $vehicle ? $vehicle->post_name : $this->value($data, 'Slug'));
                         $this->field('short_description', 'Kort beskrivelse', $this->value($data, 'ShortDescription'));
-                        $this->field('type', 'Type', $this->value($data, 'Type'));
-                        $this->field('manufacturer', 'Producent', $this->value($data, 'Manufacturer'));
-                        $this->field('production_year', 'Produktionsår', $this->value($data, 'ProductionYear'));
-                        $this->field('engine', 'Motor', $this->value($data, 'Engine'));
-                        $this->field('weight', 'Vægt', $this->value($data, 'Weight'));
-                        $this->field('crew', 'Besætning', $this->value($data, 'Crew'));
-                        $this->field('service_period', 'Tjenesteperiode', $this->value($data, 'ServicePeriod'));
-                        $this->field('restoration_status', 'Restaureringsstatus', $this->value($data, 'RestorationStatus'));
                         $this->field('technical_source_url', 'Teknisk kilde-URL', $this->value($data, 'TechnicalSourceUrl'), 'url');
 
                         $this->select_field(
@@ -3055,6 +3380,28 @@ HTML;
                     <section class="h18-panel">
                         <h3>Hovedbillede</h3>
                         <?php $this->render_media_field($media_id, $media_url, 'main'); ?>
+                    </section>
+
+                    <section class="h18-panel h18-panel-wide">
+                        <div class="h18-panel-heading-row">
+                            <h3>Tekniske felter</h3>
+                            <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-vehicle-fields')); ?>">Feltopsætning</a>
+                        </div>
+                        <div class="h18-dynamic-fields-grid">
+                            <?php
+                            $active_vehicle_fields = $this->get_vehicle_fields(true);
+                            if (!$active_vehicle_fields) {
+                                echo '<p>Ingen tekniske felter er aktive.</p>';
+                            } else {
+                                foreach ($active_vehicle_fields as $vehicle_field) {
+                                    $this->render_vehicle_dynamic_field(
+                                        $vehicle_field,
+                                        $this->vehicle_field_value($data, $vehicle_field['Key'])
+                                    );
+                                }
+                            }
+                            ?>
+                        </div>
                     </section>
 
                     <section class="h18-panel h18-panel-wide">
@@ -3084,6 +3431,205 @@ HTML;
         <?php
     }
 
+    public function render_vehicle_fields() {
+        $this->require_capability();
+        $settings = $this->get_vehicle_field_settings();
+        $fields = $settings['Fields'] ?? [];
+        $types = $this->vehicle_field_type_labels();
+        ?>
+        <div class="wrap h18-admin">
+            <h1>Køretøjsfelter</h1>
+            <?php $this->render_notice(); ?>
+
+            <div class="h18-help-box">
+                <strong>Feltregister:</strong>
+                Her bestemmer du hvilke tekniske oplysninger et køretøj har. Felter kan deaktiveres, omdøbes, flyttes, vises separat på oversigt/detaljeside eller fjernes fra opsætningen.
+                <strong>Eksisterende køretøjsdata slettes aldrig</strong>, når et felt deaktiveres eller fjernes. Genopretter du samme nøgle senere, kan værdien bruges igen.
+            </div>
+
+            <div class="h18-toolbar">
+                <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-vehicles')); ?>">← Tilbage til Køretøjer</a>
+                <span><strong>Systemfelter</strong> som Navn, Slug, hovedbillede, publiceringsstatus, Historik, Tjeneste ved Aalborg og Restaurering/status ligger fast og slettes ikke her.</span>
+            </div>
+
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="h18-editor-form">
+                <?php wp_nonce_field('h18_save_vehicle_fields'); ?>
+                <input type="hidden" name="action" value="h18_save_vehicle_fields" />
+
+                <section class="h18-panel h18-panel-wide">
+                    <h2>Aktive og gemte felter</h2>
+                    <p class="description">Træk i ↕ for at ændre rækkefølge. Feltnøglen kan ikke omdøbes efter oprettelse, fordi den identificerer de gemte værdier.</p>
+                    <div class="h18-vehicle-fields-table-wrap">
+                        <table class="widefat striped h18-vehicle-fields-table">
+                            <thead>
+                                <tr>
+                                    <th class="h18-field-drag-col">↕</th>
+                                    <th>Aktiv</th>
+                                    <th>Feltnavn</th>
+                                    <th>Nøgle</th>
+                                    <th>Type</th>
+                                    <th>Oversigt</th>
+                                    <th>Detalje</th>
+                                    <th>Dropdown-valg</th>
+                                    <th>Fjern</th>
+                                </tr>
+                            </thead>
+                            <tbody id="h18-vehicle-fields-sortable">
+                            <?php foreach ($fields as $index => $field) : ?>
+                                <tr class="h18-vehicle-field-row">
+                                    <td><span class="dashicons dashicons-move h18-vehicle-field-drag-handle" title="Flyt"></span><input class="h18-vehicle-field-order" type="hidden" name="fields[<?php echo esc_attr($index); ?>][order]" value="<?php echo esc_attr($field['Order']); ?>" /></td>
+                                    <td><input type="checkbox" name="fields[<?php echo esc_attr($index); ?>][active]" value="1" <?php checked(!empty($field['Active'])); ?> /></td>
+                                    <td><input type="text" name="fields[<?php echo esc_attr($index); ?>][label]" value="<?php echo esc_attr($field['Label']); ?>" required /></td>
+                                    <td><code><?php echo esc_html($field['Key']); ?></code><input type="hidden" name="fields[<?php echo esc_attr($index); ?>][key]" value="<?php echo esc_attr($field['Key']); ?>" /></td>
+                                    <td>
+                                        <select name="fields[<?php echo esc_attr($index); ?>][type]">
+                                            <?php foreach ($types as $type_key => $type_label) : ?>
+                                                <option value="<?php echo esc_attr($type_key); ?>" <?php selected($field['Type'], $type_key); ?>><?php echo esc_html($type_label); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                    <td><input type="checkbox" name="fields[<?php echo esc_attr($index); ?>][show_register]" value="1" <?php checked(!empty($field['ShowOnRegister'])); ?> /></td>
+                                    <td><input type="checkbox" name="fields[<?php echo esc_attr($index); ?>][show_detail]" value="1" <?php checked(!empty($field['ShowOnDetail'])); ?> /></td>
+                                    <td><input type="text" name="fields[<?php echo esc_attr($index); ?>][options]" value="<?php echo esc_attr(implode(', ', $field['Options'] ?? [])); ?>" placeholder="Kun dropdown: valg 1, valg 2" /></td>
+                                    <td><label><input type="checkbox" name="fields[<?php echo esc_attr($index); ?>][remove]" value="1" /> Fjern</label></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="h18-panel h18-panel-wide">
+                    <h2>Tilføj nyt felt</h2>
+                    <div class="h18-new-field-grid">
+                        <div class="h18-field"><label><strong>Feltnavn</strong></label><input id="h18-new-vehicle-field-label" type="text" name="new_field[label]" placeholder="Fx Farve" /></div>
+                        <div class="h18-field"><label><strong>Nøgle</strong></label><input id="h18-new-vehicle-field-key" type="text" name="new_field[key]" placeholder="fx farve" /><p class="description">Genereres automatisk fra navnet, hvis den er tom.</p></div>
+                        <div class="h18-field"><label><strong>Type</strong></label><select name="new_field[type]">
+                            <?php foreach ($types as $type_key => $type_label) : ?><option value="<?php echo esc_attr($type_key); ?>"><?php echo esc_html($type_label); ?></option><?php endforeach; ?>
+                        </select></div>
+                        <div class="h18-field"><label><strong>Dropdown-valg</strong></label><input type="text" name="new_field[options]" placeholder="Fx Grøn, Sand, Sort" /></div>
+                    </div>
+                    <p>
+                        <label><input type="checkbox" name="new_field[active]" value="1" checked /> Aktiv</label>&nbsp;&nbsp;
+                        <label><input type="checkbox" name="new_field[show_register]" value="1" /> Vis på køretøjsoversigt</label>&nbsp;&nbsp;
+                        <label><input type="checkbox" name="new_field[show_detail]" value="1" checked /> Vis på køretøjsdetalje</label>
+                    </p>
+                </section>
+
+                <div class="h18-form-actions">
+                    <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
+                    <button class="button button-primary button-hero" type="submit">Gem feltopsætning og opdater køretøjssider</button>
+                </div>
+            </form>
+        </div>
+        <?php
+    }
+
+    public function handle_save_vehicle_fields() {
+        $this->require_capability();
+        check_admin_referer('h18_save_vehicle_fields');
+
+        $submitted = isset($_POST['fields']) && is_array($_POST['fields'])
+            ? wp_unslash($_POST['fields'])
+            : [];
+        $new_field = isset($_POST['new_field']) && is_array($_POST['new_field'])
+            ? wp_unslash($_POST['new_field'])
+            : [];
+
+        $raw_fields = [];
+        $seen_keys = [];
+        $order = 10;
+
+        foreach ($submitted as $row) {
+            if (!is_array($row) || !empty($row['remove'])) {
+                continue;
+            }
+
+            $key = sanitize_key((string) ($row['key'] ?? ''));
+            $label = sanitize_text_field((string) ($row['label'] ?? ''));
+            if ($key === '' || $label === '') {
+                continue;
+            }
+            if (isset($seen_keys[$key])) {
+                $this->set_notice('error', "Feltnøglen '{$key}' findes mere end én gang.");
+                $this->redirect('hangar18-vehicle-fields');
+            }
+            $seen_keys[$key] = true;
+
+            $raw_fields[] = [
+                'Key'            => $key,
+                'Label'          => $label,
+                'Type'           => sanitize_key((string) ($row['type'] ?? 'text')),
+                'Active'         => !empty($row['active']),
+                'ShowOnRegister' => !empty($row['show_register']),
+                'ShowOnDetail'   => !empty($row['show_detail']),
+                'Options'        => (string) ($row['options'] ?? ''),
+                'Order'          => is_numeric($row['order'] ?? null) ? (int) $row['order'] : $order,
+            ];
+            $order += 10;
+        }
+
+        $new_label = sanitize_text_field((string) ($new_field['label'] ?? ''));
+        if ($new_label !== '') {
+            $new_key = sanitize_key((string) ($new_field['key'] ?? ''));
+            if ($new_key === '') {
+                $new_key = sanitize_key(str_replace('-', '_', sanitize_title($new_label)));
+            }
+            if ($new_key === '') {
+                $this->set_notice('error', 'Det nye felt kunne ikke få en gyldig nøgle.');
+                $this->redirect('hangar18-vehicle-fields');
+            }
+            if (isset($seen_keys[$new_key])) {
+                $this->set_notice('error', "Feltnøglen '{$new_key}' findes allerede.");
+                $this->redirect('hangar18-vehicle-fields');
+            }
+
+            $raw_fields[] = [
+                'Key'            => $new_key,
+                'Label'          => $new_label,
+                'Type'           => sanitize_key((string) ($new_field['type'] ?? 'text')),
+                'Active'         => !empty($new_field['active']),
+                'ShowOnRegister' => !empty($new_field['show_register']),
+                'ShowOnDetail'   => !empty($new_field['show_detail']),
+                'Options'        => (string) ($new_field['options'] ?? ''),
+                'Order'          => $order,
+            ];
+        }
+
+        $settings = $this->normalize_vehicle_field_settings([
+            'Version' => '1.0',
+            'Fields'  => $raw_fields,
+        ]);
+
+        if (!empty($_POST['whatif'])) {
+            $this->log('WARN', 'WHATIF_VEHICLE_FIELDS_SAVE', '[WHATIF] Ville gemme ' . count($settings['Fields']) . ' køretøjsfelter og genbygge køretøjssiderne.');
+            $this->set_notice('warning', 'WHATIF: Feltopsætningen blev valideret, men intet blev gemt eller genbygget.');
+            $this->redirect('hangar18-vehicle-fields');
+        }
+
+        try {
+            $this->create_full_managed_backup('Før køretøjsfeltopsætning blev ændret');
+            update_option(self::VEHICLE_FIELDS_OPTION, $settings, false);
+
+            $published = $settings;
+            $published['Saved'] = gmdate('c');
+            $this->publish_configuration_file('Hangar18-VehicleFields.json', $published);
+
+            $detail_pages = $this->apply_vehicle_detail_alignment_to_existing_pages(
+                $this->get_vehicle_register_settings()
+            );
+            $this->rebuild_vehicle_register();
+
+            $this->log('INFO', 'VEHICLE_FIELDS_SAVE_SUCCESS', 'Køretøjsfelter gemt: ' . count($settings['Fields']) . "; genbygget {$detail_pages} detaljesider.");
+            $this->set_notice('success', 'Feltopsætningen er gemt. ' . count($settings['Fields']) . " felter er registreret, og {$detail_pages} køretøjssider er genbygget. Fjernede/deaktiverede feltværdier er bevaret.");
+            $this->redirect('hangar18-vehicle-fields');
+        } catch (Throwable $e) {
+            $this->log('ERROR', 'VEHICLE_FIELDS_SAVE_FAILED', $e->getMessage());
+            $this->set_notice('error', 'Kunne ikke gemme feltopsætningen: ' . $e->getMessage());
+            $this->redirect('hangar18-vehicle-fields');
+        }
+    }
+
     public function handle_save_vehicle() {
         $this->require_capability();
         check_admin_referer('h18_save_vehicle');
@@ -3108,27 +3654,6 @@ HTML;
         $media_id = absint($_POST['main_media_id'] ?? 0);
         $media_url = $media_id ? wp_get_attachment_url($media_id) : $this->post_url('main_media_url');
 
-        $data = [
-            'DataVersion'       => '1.1',
-            'Name'              => $name,
-            'Slug'              => $slug,
-            'Type'              => $this->post_text('type'),
-            'Manufacturer'      => $this->post_text('manufacturer'),
-            'ProductionYear'    => $this->post_text('production_year'),
-            'Engine'            => $this->post_text('engine'),
-            'Weight'            => $this->post_text('weight'),
-            'Crew'              => $this->post_text('crew'),
-            'ServicePeriod'     => $this->post_text('service_period'),
-            'RestorationStatus' => $this->post_text('restoration_status'),
-            'ShortDescription'  => $this->post_text('short_description'),
-            'MainMediaId'       => $media_id,
-            'MainMediaUrl'      => $media_url ?: '',
-            'History'           => $this->post_textarea('history'),
-            'AalborgService'    => $this->post_textarea('aalborg_service'),
-            'RestorationText'   => $this->post_textarea('restoration_text'),
-            'TechnicalSourceUrl'=> $this->post_url('technical_source_url'),
-        ];
-
         if ($whatif) {
             $this->log('WARN', 'WHATIF_VEHICLE_SAVE', "[WHATIF] Ville gemme '{$name}' ({$slug}) status {$status}.");
             $this->set_notice('warning', "WHATIF: Ville gemme '{$name}'. Ingen data blev ændret.");
@@ -3144,6 +3669,53 @@ HTML;
                         $target = $candidate;
                         break;
                     }
+                }
+            }
+
+            $existing_data = $target
+                ? ($this->decode_marker(self::VEHICLE_MARKER, $target->post_content) ?: [])
+                : [];
+
+            $data = is_array($existing_data) ? $existing_data : [];
+            $custom_fields = isset($data['CustomFields']) && is_array($data['CustomFields'])
+                ? $data['CustomFields']
+                : [];
+
+            // Flyt gamle hårdkodede værdier ind i CustomFields uden at slette legacy-data.
+            foreach ($this->vehicle_legacy_field_map() as $field_key => $legacy_key) {
+                if (!array_key_exists($field_key, $custom_fields) && array_key_exists($legacy_key, $data)) {
+                    $custom_fields[$field_key] = (string) $data[$legacy_key];
+                }
+            }
+
+            $posted_vehicle_fields = isset($_POST['vehicle_fields']) && is_array($_POST['vehicle_fields'])
+                ? $_POST['vehicle_fields']
+                : [];
+
+            foreach ($this->get_vehicle_fields(true) as $field) {
+                $field_key = (string) $field['Key'];
+                $raw = array_key_exists($field_key, $posted_vehicle_fields)
+                    ? $posted_vehicle_fields[$field_key]
+                    : '';
+                $custom_fields[$field_key] = $this->sanitize_vehicle_field_value($field, $raw);
+            }
+
+            $data['DataVersion']        = '1.2';
+            $data['Name']               = $name;
+            $data['Slug']               = $slug;
+            $data['ShortDescription']   = $this->post_text('short_description');
+            $data['MainMediaId']        = $media_id;
+            $data['MainMediaUrl']       = $media_url ?: '';
+            $data['History']            = $this->post_textarea('history');
+            $data['AalborgService']     = $this->post_textarea('aalborg_service');
+            $data['RestorationText']    = $this->post_textarea('restoration_text');
+            $data['TechnicalSourceUrl'] = $this->post_url('technical_source_url');
+            $data['CustomFields']       = $custom_fields;
+
+            // Legacy aliases bevares for bagudkompatibilitet med eksisterende PowerShell/data.
+            foreach ($this->vehicle_legacy_field_map() as $field_key => $legacy_key) {
+                if (array_key_exists($field_key, $custom_fields)) {
+                    $data[$legacy_key] = (string) $custom_fields[$field_key];
                 }
             }
 

@@ -194,4 +194,44 @@ jQuery(function ($) {
         syncMenuJson();
     });
 
+
+
+    const $vehicleFieldSortable = $('#h18-vehicle-fields-sortable');
+
+    function syncVehicleFieldOrder() {
+        if (!$vehicleFieldSortable.length) {
+            return;
+        }
+
+        $vehicleFieldSortable.children('.h18-vehicle-field-row').each(function (index) {
+            $(this).find('.h18-vehicle-field-order').val((index + 1) * 10);
+        });
+    }
+
+    if ($vehicleFieldSortable.length) {
+        $vehicleFieldSortable.sortable({
+            items: '> tr.h18-vehicle-field-row',
+            handle: '.h18-vehicle-field-drag-handle',
+            axis: 'y',
+            tolerance: 'pointer',
+            helper: function (event, row) {
+                const originals = row.children();
+                const helper = row.clone();
+                helper.children().each(function (index) {
+                    $(this).width(originals.eq(index).width());
+                });
+                return helper;
+            },
+            update: syncVehicleFieldOrder
+        });
+        syncVehicleFieldOrder();
+    }
+
+    $('#h18-new-vehicle-field-label').on('blur', function () {
+        const $key = $('#h18-new-vehicle-field-key');
+        if ($key.length && !$key.val().trim()) {
+            $key.val(slugify($(this).val()).replace(/-/g, '_'));
+        }
+    });
+
 });

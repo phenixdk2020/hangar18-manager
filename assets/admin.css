@@ -188,3 +188,18 @@
         grid-template-columns:1fr;
     }
 }
+
+
+/* Vehicle field registry */
+.h18-vehicle-fields-table-wrap{overflow:auto;margin-top:14px}
+.h18-vehicle-fields-table{min-width:1120px}
+.h18-vehicle-fields-table th,.h18-vehicle-fields-table td{vertical-align:middle}
+.h18-vehicle-fields-table input[type=text],.h18-vehicle-fields-table select{width:100%;min-width:120px}
+.h18-field-drag-col{width:42px}
+.h18-vehicle-field-drag-handle{cursor:move;color:#646970}
+.h18-vehicle-fields-table .ui-sortable-helper{background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.12)}
+.h18-new-field-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:1100px){.h18-new-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:782px){.h18-new-field-grid{grid-template-columns:1fr}}
+
+.h18-panel-heading-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.h18-panel-heading-row h3{margin:0}.h18-dynamic-fields-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px 18px}.h18-dynamic-fields-grid .h18-field{margin:0}

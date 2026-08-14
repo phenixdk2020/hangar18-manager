@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.7
+Version: 0.4.8
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -497,9 +497,30 @@ AUTHORITATIVE_BASELINE_FAILED
 - Første wp-admin-side efter opdatering genbygger automatisk køretøjer, køretøjsoversigt, gallerialbums og gallerioversigt.
 
 
-== Version 0.4.7 – Astra Banner Area og egne overskrifter ==
+== Version 0.4.7 – Astra Banner Area ==
 
-- Den resterende lilla/blå bjælke fjernes via Astra's egne Banner Area-filtre og sidemeta.
+- Den resterende lilla/blå bjælke er identificeret som Astra 4.x Banner Area.
+- Hangar18 bruger nu Astra's egne frontend-filtre til at deaktivere banner/title-området.
+- astra_apply_hero_header_banner sættes false på Hangar18-styrede sider.
+- astra_remove_entry_header_content sættes true.
+- astra_single_layout_one_banner_visibility sættes false.
+- astra_the_title_enabled og astra_advanced_header_title deaktiveres.
+- Astra-meta site-post-title, ast-title-bar-display og ast-banner-title-visibility sættes til disabled på styrede sider én gang efter opdatering.
+- Ekstra CSS fallback dækker .ast-single-entry-banner og relaterede Astra 4 selectors.
+- Events, køretøjer, billedgalleri og deres layoutdata ændres ikke.
 - Oversigtssiderne får egne Hangar18-overskrifter: Køretøjer og materiel, Events og Billedgalleri.
 - Overskrifterne følger oversigtssidens Venstre/Midtstillet-indstilling.
-- Køretøjs-, event- og galleriindhold ændres ikke ud over genbygning af de tre oversigtssider.
+
+
+== Version 0.4.8 – Dynamiske køretøjsfelter ==
+
+- Ny undermenu: Hangar18 Manager -> Køretøjsfelter.
+- Tekniske køretøjsfelter kan aktiveres/deaktiveres, omdøbes, flyttes og fjernes fra opsætningen.
+- Hvert felt har separat valg for visning på køretøjsoversigten og på den enkelte køretøjsside.
+- Nye felter kan tilføjes uden kodeændring.
+- Felttyper: kort tekst, lang tekst, tal, ja/nej, dropdown, dato, URL og farvevælger.
+- Standardfeltet Farve er oprettet som inaktivt felt og kan aktiveres med ét klik.
+- Eksisterende feltværdier slettes ikke, når et felt deaktiveres eller fjernes.
+- Eksisterende legacy-felter migreres logisk til CustomFields og spejles fortsat til de gamle nøgler for bagudkompatibilitet.
+- Ny central konfigurationsfil: Hangar18-VehicleFields.json schema 1.0.
+- Gem af feltopsætning tager backup og genbygger alle køretøjssider samt køretøjsoversigten.
