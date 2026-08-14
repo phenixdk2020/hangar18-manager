@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.3
+ * Version: 0.4.4
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.3';
+    const VERSION = '0.4.4';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -320,70 +320,76 @@ final class Hangar18_Manager {
 
     private function default_vehicle_register_settings() {
         return [
-            'Version' => '1.2',
-            'Saved' => '2026-08-13T08:19:43.3711647+02:00',
-            'CardAlignment' => 'Center',
-            'DetailAlignment' => 'Auto'
+            'Version'           => '1.3',
+            'Saved'             => '2026-08-13T08:19:43.3711647+02:00',
+            'RegisterAlignment' => 'Center',
+            'CardAlignment'     => 'Center',
+            'DetailAlignment'   => 'Center',
         ];
     }
 
     private function normalize_vehicle_register_settings(array $saved) {
         $default = $this->default_vehicle_register_settings();
 
-        $card = in_array(
-            (string) ($saved['CardAlignment'] ?? ''),
-            ['Left', 'Center'],
-            true
-        )
-            ? (string) $saved['CardAlignment']
-            : $default['CardAlignment'];
+        $legacy_card = (string) ($saved['CardAlignment'] ?? '');
+        $register_source = (string) ($saved['RegisterAlignment'] ?? $legacy_card);
 
-        $detail = in_array(
-            (string) ($saved['DetailAlignment'] ?? ''),
-            ['Left', 'Center', 'Auto'],
-            true
-        )
-            ? (string) $saved['DetailAlignment']
+        $register = in_array($register_source, ['Left', 'Center'], true)
+            ? $register_source
+            : $default['RegisterAlignment'];
+
+        $detail_source = (string) ($saved['DetailAlignment'] ?? '');
+        if ($detail_source === 'Auto') {
+            // v1.2 Auto var centreret på desktop; bevar derfor det visuelle udgangspunkt.
+            $detail_source = 'Center';
+        }
+
+        $detail = in_array($detail_source, ['Left', 'Center'], true)
+            ? $detail_source
             : $default['DetailAlignment'];
 
         return [
-            'Version'         => '1.2',
-            'CardAlignment'   => $card,
-            'DetailAlignment' => $detail,
+            'Version'           => '1.3',
+            'RegisterAlignment' => $register,
+            // Legacy alias bevares, så den gamle PowerShell-normalisering stadig kan læse filen.
+            'CardAlignment'     => $register,
+            'DetailAlignment'   => $detail,
         ];
     }
 
     private function default_content_layout_settings() {
         return [
-            'Version'          => '1.0',
-            'EventAlignment'   => 'Left',
-            'GalleryAlignment' => 'Left',
+            'Version'                => '1.1',
+            'EventIndexAlignment'    => 'Left',
+            'EventDetailAlignment'   => 'Left',
+            'GalleryIndexAlignment'  => 'Left',
+            'GalleryDetailAlignment' => 'Left',
         ];
     }
 
     private function normalize_content_layout_settings(array $saved) {
         $default = $this->default_content_layout_settings();
 
-        $event_alignment = in_array(
-            (string) ($saved['EventAlignment'] ?? ''),
-            ['Left', 'Center'],
-            true
-        )
-            ? (string) $saved['EventAlignment']
-            : $default['EventAlignment'];
+        $legacy_event = (string) ($saved['EventAlignment'] ?? '');
+        $legacy_gallery = (string) ($saved['GalleryAlignment'] ?? '');
 
-        $gallery_alignment = in_array(
-            (string) ($saved['GalleryAlignment'] ?? ''),
-            ['Left', 'Center'],
-            true
-        )
-            ? (string) $saved['GalleryAlignment']
-            : $default['GalleryAlignment'];
+        $event_index_source = (string) ($saved['EventIndexAlignment'] ?? $legacy_event);
+        $event_detail_source = (string) ($saved['EventDetailAlignment'] ?? $legacy_event);
+        $gallery_index_source = (string) ($saved['GalleryIndexAlignment'] ?? $legacy_gallery);
+        $gallery_detail_source = (string) ($saved['GalleryDetailAlignment'] ?? $legacy_gallery);
+
+        $normalize_alignment = static function($value, $fallback) {
+            return in_array((string) $value, ['Left', 'Center'], true)
+                ? (string) $value
+                : $fallback;
+        };
 
         return [
-            'Version'          => '1.0',
-            'EventAlignment'   => $event_alignment,
-            'GalleryAlignment' => $gallery_alignment,
+            'Version'                => '1.1',
+            'EventIndexAlignment'    => $normalize_alignment($event_index_source, $default['EventIndexAlignment']),
+            'EventDetailAlignment'   => $normalize_alignment($event_detail_source, $default['EventDetailAlignment']),
+            'GalleryIndexAlignment'  => $normalize_alignment($gallery_index_source, $default['GalleryIndexAlignment']),
+            'GalleryDetailAlignment' => $normalize_alignment($gallery_detail_source, $default['GalleryDetailAlignment']),
         ];
     }
 
@@ -2405,11 +2411,11 @@ HTML;
 
         $detail_class = in_array(
             $detail_alignment,
-            ['left', 'center', 'auto'],
+            ['left', 'center'],
             true
         )
             ? 'avpf-vehicle-detail-' . $detail_alignment
-            : 'avpf-vehicle-detail-auto';
+            : 'avpf-vehicle-detail-center';
 
         $image = '<div class="avpf-photo-placeholder"><p>Hovedbillede mangler</p></div>';
         if ($media_id > 0) {
@@ -2441,8 +2447,6 @@ body.page-id-{$id} .h18-vehicle-inner{max-width:1100px;margin:0 auto}
 body.page-id-{$id} .h18-vehicle-main-layout{width:min(1100px,100%)!important;max-width:1100px!important;box-sizing:border-box!important}
 body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-left{margin-left:0!important;margin-right:auto!important}
 body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-center{margin-left:auto!important;margin-right:auto!important}
-body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-auto{margin-left:auto!important;margin-right:auto!important}
-@media(max-width:900px){body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-auto{margin-left:0!important;margin-right:auto!important}}
 body.page-id-{$id} .h18-vehicle-main-image img{width:100%;height:auto;border-radius:7px}
 body.page-id-{$id} .avpf-photo-placeholder{min-height:260px;background:#f2f0e8;border:1px dashed #8b4a2b;display:flex;align-items:center;justify-content:center;border-radius:7px}
 body.page-id-{$id} .h18-vehicle-table{width:100%;border-collapse:collapse;text-align:left}
@@ -2486,8 +2490,12 @@ HTML;
         $cards = '';
 
         $register_settings = $this->get_vehicle_register_settings();
+        $register_alignment =
+            ((string) $register_settings['RegisterAlignment'] === 'Left')
+                ? 'left'
+                : 'center';
         $register_alignment_class =
-            ((string) $register_settings['CardAlignment'] === 'Left')
+            $register_alignment === 'left'
                 ? 'h18-register-align-left'
                 : 'h18-register-align-center';
 
@@ -2547,7 +2555,7 @@ HTML;
 .h18-register-empty{grid-column:1/-1;padding:26px;background:#f2f0e8;text-align:center}
 @media(max-width:600px){.h18-vehicle-register{grid-template-columns:1fr;justify-content:stretch}.h18-vehicle-card{max-width:none}}
 </style>
-<div class="h18-register-intro">
+<div class="h18-register-intro" style="text-align:{$register_alignment}">
 <h2>Historisk materiel</h2>
 <p>Her finder du foreningens dokumenterede køretøjer og øvrige militærhistoriske materiel.</p>
 </div>
@@ -2600,25 +2608,26 @@ HTML;
                 <input type="hidden" name="action" value="h18_save_vehicle_register_settings" />
 
                 <div class="h18-config-strip-title">
-                    <strong>Hangar18-VehicleRegister.json · schema 1.2</strong>
-                    <span>Central 1:1-konfiguration</span>
+                    <strong>Hangar18-VehicleRegister.json · schema 1.3</strong>
+                    <span>To uafhængige placeringer</span>
                 </div>
 
                 <div class="h18-field">
-                    <label><strong>Kortplacering</strong></label>
-                    <select name="card_alignment">
-                        <option value="Left" <?php selected($vehicle_layout['CardAlignment'], 'Left'); ?>>Venstre</option>
-                        <option value="Center" <?php selected($vehicle_layout['CardAlignment'], 'Center'); ?>>Midt</option>
+                    <label><strong>Køretøjssiden / oversigten</strong></label>
+                    <select name="register_alignment">
+                        <option value="Left" <?php selected($vehicle_layout['RegisterAlignment'], 'Left'); ?>>Venstre</option>
+                        <option value="Center" <?php selected($vehicle_layout['RegisterAlignment'], 'Center'); ?>>Midtstillet</option>
                     </select>
+                    <p class="description">Placering af indhold og køretøjskort på siden Køretøjer og materiel.</p>
                 </div>
 
                 <div class="h18-field">
-                    <label><strong>Detaljeside-placering</strong></label>
+                    <label><strong>Selve køretøjerne / detaljesider</strong></label>
                     <select name="detail_alignment">
                         <option value="Left" <?php selected($vehicle_layout['DetailAlignment'], 'Left'); ?>>Venstre</option>
-                        <option value="Center" <?php selected($vehicle_layout['DetailAlignment'], 'Center'); ?>>Midt</option>
-                        <option value="Auto" <?php selected($vehicle_layout['DetailAlignment'], 'Auto'); ?>>Auto</option>
+                        <option value="Center" <?php selected($vehicle_layout['DetailAlignment'], 'Center'); ?>>Midtstillet</option>
                     </select>
+                    <p class="description">Placering på de enkelte køretøjssider.</p>
                 </div>
 
                 <label class="h18-inline-check">
@@ -2835,8 +2844,8 @@ HTML;
     private function apply_vehicle_detail_alignment_to_existing_pages(array $settings) {
         $alignment = strtolower((string) $settings['DetailAlignment']);
 
-        if (!in_array($alignment, ['left', 'center', 'auto'], true)) {
-            $alignment = 'auto';
+        if (!in_array($alignment, ['left', 'center'], true)) {
+            $alignment = 'center';
         }
 
         $replacement = 'avpf-vehicle-detail-' . $alignment;
@@ -2883,9 +2892,10 @@ HTML;
         check_admin_referer('h18_save_vehicle_register_settings');
 
         $settings = $this->normalize_vehicle_register_settings([
-            'Version'         => '1.2',
-            'CardAlignment'   => $this->post_text('card_alignment'),
-            'DetailAlignment' => $this->post_text('detail_alignment'),
+            'Version'           => '1.3',
+            'RegisterAlignment' => $this->post_text('register_alignment'),
+            'CardAlignment'     => $this->post_text('register_alignment'),
+            'DetailAlignment'   => $this->post_text('detail_alignment'),
         ]);
 
         if (!empty($_POST['whatif'])) {
@@ -2893,7 +2903,7 @@ HTML;
                 'WARN',
                 'WHATIF_VEHICLE_REGISTER_SETTINGS',
                 '[WHATIF] Ville gemme Hangar18-VehicleRegister.json: ' .
-                'CardAlignment=' . $settings['CardAlignment'] .
+                'RegisterAlignment=' . $settings['RegisterAlignment'] .
                 '; DetailAlignment=' . $settings['DetailAlignment'] . '.'
             );
 
@@ -2942,7 +2952,7 @@ HTML;
                 'INFO',
                 'VEHICLE_REGISTER_SETTINGS_SAVED',
                 'Globalt køretøjslayout gemt 1:1. ' .
-                'CardAlignment=' . $settings['CardAlignment'] .
+                'RegisterAlignment=' . $settings['RegisterAlignment'] .
                 '; DetailAlignment=' . $settings['DetailAlignment'] .
                 "; DetailPagesUpdated={$detail_pages}."
             );
@@ -3034,7 +3044,7 @@ HTML;
         $id = (int) $page_id;
 
         $layout = $this->get_content_layout_settings();
-        $alignment = $layout['EventAlignment'] === 'Center' ? 'center' : 'left';
+        $alignment = $layout['EventDetailAlignment'] === 'Center' ? 'center' : 'left';
 
         $name      = $this->h($this->value($data, 'EventName'));
         $short     = $this->h($this->value($data, 'ShortDescription'));
@@ -3112,8 +3122,8 @@ HTML;
         }
 
         $layout = $this->get_content_layout_settings();
-        $alignment = $layout['EventAlignment'] === 'Center' ? 'center' : 'left';
-        $justify = $layout['EventAlignment'] === 'Center' ? 'center' : 'start';
+        $alignment = $layout['EventIndexAlignment'] === 'Center' ? 'center' : 'left';
+        $justify = $layout['EventIndexAlignment'] === 'Center' ? 'center' : 'start';
 
         $events = [];
         foreach ($this->get_event_pages(true) as $page) {
@@ -3214,12 +3224,20 @@ HTML;
                 <input type="hidden" name="action" value="h18_save_event_layout" />
                 <div class="h18-menu-settings-row">
                     <div class="h18-field">
-                        <label><strong>Placering af Events</strong></label>
-                        <select name="event_alignment">
-                            <option value="Left" <?php selected($content_layout['EventAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['EventAlignment'], 'Center'); ?>>Midtstillet</option>
+                        <label><strong>Eventsiden / oversigten</strong></label>
+                        <select name="event_index_alignment">
+                            <option value="Left" <?php selected($content_layout['EventIndexAlignment'], 'Left'); ?>>Venstre</option>
+                            <option value="Center" <?php selected($content_layout['EventIndexAlignment'], 'Center'); ?>>Midtstillet</option>
                         </select>
-                        <p class="description">Gælder både eventoversigten og alle eventdetaljesider.</p>
+                        <p class="description">Kun siden med listen over kommende og tidligere events.</p>
+                    </div>
+                    <div class="h18-field">
+                        <label><strong>Selve events / detaljesider</strong></label>
+                        <select name="event_detail_alignment">
+                            <option value="Left" <?php selected($content_layout['EventDetailAlignment'], 'Left'); ?>>Venstre</option>
+                            <option value="Center" <?php selected($content_layout['EventDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                        </select>
+                        <p class="description">Kun de enkelte eventsider.</p>
                     </div>
                     <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
                     <button class="button button-secondary" type="submit">Gem event-layout og anvend</button>
@@ -3312,54 +3330,47 @@ HTML;
         check_admin_referer('h18_save_event_layout');
 
         $settings = $this->get_content_layout_settings();
-        $alignment = $this->post_text('event_alignment');
+        $index_alignment = $this->post_text('event_index_alignment');
+        $detail_alignment = $this->post_text('event_detail_alignment');
 
-        if (!in_array($alignment, ['Left', 'Center'], true)) {
-            $alignment = 'Left';
+        if (!in_array($index_alignment, ['Left', 'Center'], true)) {
+            $index_alignment = 'Left';
+        }
+        if (!in_array($detail_alignment, ['Left', 'Center'], true)) {
+            $detail_alignment = 'Left';
         }
 
-        $settings['EventAlignment'] = $alignment;
+        $settings['EventIndexAlignment'] = $index_alignment;
+        $settings['EventDetailAlignment'] = $detail_alignment;
         $settings = $this->normalize_content_layout_settings($settings);
 
         if (!empty($_POST['whatif'])) {
             $this->log(
                 'WARN',
                 'WHATIF_EVENT_LAYOUT',
-                "[WHATIF] EventAlignment={$alignment}; eksisterende events og eventregister ville blive genbygget."
+                "[WHATIF] EventIndexAlignment={$index_alignment}; EventDetailAlignment={$detail_alignment}."
             );
             $this->set_notice(
                 'warning',
-                "WHATIF: Event-layout ville blive sat til {$alignment}. Ingen data blev ændret."
+                'WHATIF: Eventoversigt og eventdetaljesider ville få hver sin valgte placering. Ingen data blev ændret.'
             );
             $this->redirect('hangar18-events');
         }
 
         try {
             $this->create_full_managed_backup(
-                "Før ændring af event-layout til {$alignment}"
+                "Før ændring af event-layout: oversigt={$index_alignment}; detaljer={$detail_alignment}"
             );
 
-            update_option(
-                self::CONTENT_LAYOUT_OPTION,
-                $settings,
-                false
-            );
+            update_option(self::CONTENT_LAYOUT_OPTION, $settings, false);
 
             $published = $settings;
             $published['Saved'] = gmdate('c');
-            $this->publish_configuration_file(
-                'Hangar18-ContentLayout.json',
-                $published
-            );
+            $this->publish_configuration_file('Hangar18-ContentLayout.json', $published);
 
             $updated = 0;
-
             foreach ($this->get_event_pages(false) as $page) {
-                $data = $this->decode_marker(
-                    self::EVENT_MARKER,
-                    $page->post_content
-                );
-
+                $data = $this->decode_marker(self::EVENT_MARKER, $page->post_content);
                 if (!$data) {
                     continue;
                 }
@@ -3380,7 +3391,6 @@ HTML;
                         "Event ID {$page->ID}: " . $result->get_error_message()
                     );
                 }
-
                 $updated++;
             }
 
@@ -3389,14 +3399,13 @@ HTML;
             $this->log(
                 'INFO',
                 'EVENT_LAYOUT_SAVED',
-                "EventAlignment={$alignment}; {$updated} eventdetaljesider og eventregister opdateret."
+                "EventIndexAlignment={$index_alignment}; EventDetailAlignment={$detail_alignment}; DetailPagesUpdated={$updated}."
             );
 
             $this->set_notice(
                 'success',
-                "Event-layout er gemt som {$alignment}. {$updated} events og eventregisteret er opdateret."
+                "Event-layout gemt: oversigt={$index_alignment}, detaljesider={$detail_alignment}. {$updated} events er opdateret."
             );
-
         } catch (Throwable $e) {
             $this->log('ERROR', 'EVENT_LAYOUT_FAILED', $e->getMessage());
             $this->set_notice('error', 'Event-layout kunne ikke gemmes: ' . $e->getMessage());
@@ -3603,8 +3612,8 @@ HTML;
     private function build_gallery_album_core($page_id, array $data) {
         $id = (int) $page_id;
         $layout = $this->get_content_layout_settings();
-        $alignment = $layout['GalleryAlignment'] === 'Center' ? 'center' : 'left';
-        $justify = $layout['GalleryAlignment'] === 'Center' ? 'center' : 'start';
+        $alignment = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'left';
+        $justify = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'start';
 
         $name = $this->h($this->value($data, 'AlbumName'));
         $type = $this->h($this->value($data, 'AlbumType'));
@@ -3660,8 +3669,8 @@ HTML;
         }
 
         $layout = $this->get_content_layout_settings();
-        $alignment = $layout['GalleryAlignment'] === 'Center' ? 'center' : 'left';
-        $justify = $layout['GalleryAlignment'] === 'Center' ? 'center' : 'start';
+        $alignment = $layout['GalleryIndexAlignment'] === 'Center' ? 'center' : 'left';
+        $justify = $layout['GalleryIndexAlignment'] === 'Center' ? 'center' : 'start';
 
         $groups = [
             'Køretøj'     => [],
@@ -3774,12 +3783,20 @@ HTML;
                 <input type="hidden" name="action" value="h18_save_gallery_layout" />
                 <div class="h18-menu-settings-row">
                     <div class="h18-field">
-                        <label><strong>Placering af Billedgalleri</strong></label>
-                        <select name="gallery_alignment">
-                            <option value="Left" <?php selected($content_layout['GalleryAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['GalleryAlignment'], 'Center'); ?>>Midtstillet</option>
+                        <label><strong>Billedgalleri-siden / oversigten</strong></label>
+                        <select name="gallery_index_alignment">
+                            <option value="Left" <?php selected($content_layout['GalleryIndexAlignment'], 'Left'); ?>>Venstre</option>
+                            <option value="Center" <?php selected($content_layout['GalleryIndexAlignment'], 'Center'); ?>>Midtstillet</option>
                         </select>
-                        <p class="description">Gælder både Billedgalleri-oversigten og alle albumsider.</p>
+                        <p class="description">Kun siden med oversigten over albums.</p>
+                    </div>
+                    <div class="h18-field">
+                        <label><strong>Selve albums / detaljesider</strong></label>
+                        <select name="gallery_detail_alignment">
+                            <option value="Left" <?php selected($content_layout['GalleryDetailAlignment'], 'Left'); ?>>Venstre</option>
+                            <option value="Center" <?php selected($content_layout['GalleryDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                        </select>
+                        <p class="description">Kun de enkelte albumsider.</p>
                     </div>
                     <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
                     <button class="button button-secondary" type="submit">Gem galleri-layout og anvend</button>
@@ -3892,54 +3909,47 @@ HTML;
         check_admin_referer('h18_save_gallery_layout');
 
         $settings = $this->get_content_layout_settings();
-        $alignment = $this->post_text('gallery_alignment');
+        $index_alignment = $this->post_text('gallery_index_alignment');
+        $detail_alignment = $this->post_text('gallery_detail_alignment');
 
-        if (!in_array($alignment, ['Left', 'Center'], true)) {
-            $alignment = 'Left';
+        if (!in_array($index_alignment, ['Left', 'Center'], true)) {
+            $index_alignment = 'Left';
+        }
+        if (!in_array($detail_alignment, ['Left', 'Center'], true)) {
+            $detail_alignment = 'Left';
         }
 
-        $settings['GalleryAlignment'] = $alignment;
+        $settings['GalleryIndexAlignment'] = $index_alignment;
+        $settings['GalleryDetailAlignment'] = $detail_alignment;
         $settings = $this->normalize_content_layout_settings($settings);
 
         if (!empty($_POST['whatif'])) {
             $this->log(
                 'WARN',
                 'WHATIF_GALLERY_LAYOUT',
-                "[WHATIF] GalleryAlignment={$alignment}; eksisterende albums og Billedgalleri-indeks ville blive genbygget."
+                "[WHATIF] GalleryIndexAlignment={$index_alignment}; GalleryDetailAlignment={$detail_alignment}."
             );
             $this->set_notice(
                 'warning',
-                "WHATIF: Galleri-layout ville blive sat til {$alignment}. Ingen data blev ændret."
+                'WHATIF: Gallerioversigt og albumsider ville få hver sin valgte placering. Ingen data blev ændret.'
             );
             $this->redirect('hangar18-gallery');
         }
 
         try {
             $this->create_full_managed_backup(
-                "Før ændring af galleri-layout til {$alignment}"
+                "Før ændring af galleri-layout: oversigt={$index_alignment}; detaljer={$detail_alignment}"
             );
 
-            update_option(
-                self::CONTENT_LAYOUT_OPTION,
-                $settings,
-                false
-            );
+            update_option(self::CONTENT_LAYOUT_OPTION, $settings, false);
 
             $published = $settings;
             $published['Saved'] = gmdate('c');
-            $this->publish_configuration_file(
-                'Hangar18-ContentLayout.json',
-                $published
-            );
+            $this->publish_configuration_file('Hangar18-ContentLayout.json', $published);
 
             $updated = 0;
-
             foreach ($this->get_gallery_pages(false) as $page) {
-                $data = $this->decode_marker(
-                    self::GALLERY_MARKER,
-                    $page->post_content
-                );
-
+                $data = $this->decode_marker(self::GALLERY_MARKER, $page->post_content);
                 if (!$data) {
                     continue;
                 }
@@ -3960,7 +3970,6 @@ HTML;
                         "Gallerialbum ID {$page->ID}: " . $result->get_error_message()
                     );
                 }
-
                 $updated++;
             }
 
@@ -3969,14 +3978,13 @@ HTML;
             $this->log(
                 'INFO',
                 'GALLERY_LAYOUT_SAVED',
-                "GalleryAlignment={$alignment}; {$updated} albumsider og Billedgalleri-indeks opdateret."
+                "GalleryIndexAlignment={$index_alignment}; GalleryDetailAlignment={$detail_alignment}; DetailPagesUpdated={$updated}."
             );
 
             $this->set_notice(
                 'success',
-                "Galleri-layout er gemt som {$alignment}. {$updated} albumsider og Billedgalleri-indekset er opdateret."
+                "Galleri-layout gemt: oversigt={$index_alignment}, albumsider={$detail_alignment}. {$updated} albumsider er opdateret."
             );
-
         } catch (Throwable $e) {
             $this->log('ERROR', 'GALLERY_LAYOUT_FAILED', $e->getMessage());
             $this->set_notice('error', 'Galleri-layout kunne ikke gemmes: ' . $e->getMessage());

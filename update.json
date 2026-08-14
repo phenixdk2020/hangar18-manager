@@ -1,18 +1,19 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-14T10:56:42Z",
+  "published_utc": "2026-08-14T16:28:21Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "00415d73ba4832deec2123b6e9ee8e7bdcd999fe986eaaaa90178574e6afcb1e",
+  "package_sha256": "7f70ad3f26167647019d99d50a5d30dd89fcd2abd4c51459de295846d62c7edf",
   "changelog": [
-    "Events: global venstre/midtstillet placering for oversigt og detaljesider.",
-    "Billedgalleri: global venstre/midtstillet placering for oversigt og albumsider.",
-    "Menu: ny Pin menu/header ved scroll-indstilling.",
-    "Sticky CSS-fallback gør pinning uafhængig af den gamle PowerShell-shell.",
-    "Ny Hangar18-ContentLayout.json schema 1.0.",
-    "Eksisterende event- og galleri-sider genbygges efter layoutændring med backup først."
+    "Køretøjer: separat Venstre/Midtstillet for oversigtssiden og de enkelte køretøjssider.",
+    "Events: separat Venstre/Midtstillet for eventoversigten og de enkelte eventsider.",
+    "Billedgalleri: separat Venstre/Midtstillet for gallerioversigten og de enkelte albumsider.",
+    "VehicleRegister opgraderet til schema 1.3.",
+    "ContentLayout opgraderet til schema 1.1.",
+    "Eksisterende v0.4.3-indstillinger migreres automatisk som udgangspunkt.",
+    "WhatIf er fortsat slået fra som standard."
   ]
 }

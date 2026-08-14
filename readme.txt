@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.3
+Version: 0.4.4
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -458,4 +458,17 @@ AUTHORITATIVE_BASELINE_FAILED
 - Pinning synkroniserer StickyOnScroll i Hangar18-HeaderDesign.json.
 - Web-override indeholder sticky CSS-fallback med korrekt WordPress admin-bar offset.
 - Layoutændringer tager fuld backup før eksisterende sider genbygges.
+- WhatIf er fortsat FRA som standard.
+
+
+== Version 0.4.4 – Separate oversigts- og detaljeplaceringer ==
+
+- Køretøjer har nu to uafhængige valg: Køretøjer og materiel-oversigten samt de enkelte køretøjssider.
+- Events har nu to uafhængige valg: eventoversigten samt de enkelte eventsider.
+- Billedgalleri har nu to uafhængige valg: gallerioversigten samt de enkelte albumsider.
+- Alle seks valg er Venstre eller Midtstillet.
+- Hangar18-VehicleRegister.json er opgraderet til schema 1.3 og bevarer CardAlignment som legacy-alias.
+- Hangar18-ContentLayout.json er opgraderet til schema 1.1.
+- Eksisterende v0.4.3 EventAlignment/GalleryAlignment migreres automatisk til begge nye valg.
+- Eksisterende Vehicle DetailAlignment=Auto migreres til Center for at bevare desktop-udseendet.
 - WhatIf er fortsat FRA som standard.
