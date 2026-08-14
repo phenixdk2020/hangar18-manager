@@ -1,0 +1,234 @@
+ex">';
++            $html .= '<h2 style="text-align:' . esc_attr($alignment) . '">' . esc_html($titles[$type]) . '</h2><div class="h18-gallery-index">';
+ 
+             foreach ($items as $item) {
+                 $page = $item['page'];
+@@ -3558,6 +3755,7 @@
+ 
+         $items = is_array($data['Items'] ?? null) ? $data['Items'] : [];
+         $items_json = wp_json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
++        $content_layout = $this->get_content_layout_settings();
+ 
+         ?>
+         <div class="wrap h18-admin">
+@@ -3570,6 +3768,23 @@
+                 og træk derefter billederne med musen for at ændre rækkefølgen.
+                 Events kan bagefter linke til publicerede albums af typen Event.
+             </div>
++
++            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
++                <?php wp_nonce_field('h18_save_gallery_layout'); ?>
++                <input type="hidden" name="action" value="h18_save_gallery_layout" />
++                <div class="h18-menu-settings-row">
++                    <div class="h18-field">
++                        <label><strong>Placering af Billedgalleri</strong></label>
++                        <select name="gallery_alignment">
++                            <option value="Left" <?php selected($content_layout['GalleryAlignment'], 'Left'); ?>>Venstre</option>
++                            <option value="Center" <?php selected($content_layout['GalleryAlignment'], 'Center'); ?>>Midtstillet</option>
++                        </select>
++                        <p class="description">Gælder både Billedgalleri-oversigten og alle albumsider.</p>
++                    </div>
++                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
++                    <button class="button button-secondary" type="submit">Gem galleri-layout og anvend</button>
++                </div>
++            </form>
+ 
+             <div class="h18-toolbar">
+                 <form method="get">
+@@ -3672,6 +3887,104 @@
+         <?php
+     }
+ 
++    public function handle_save_gallery_layout() {
++        $this->require_capability();
++        check_admin_referer('h18_save_gallery_layout');
++
++        $settings = $this->get_content_layout_settings();
++        $alignment = $this->post_text('gallery_alignment');
++
++        if (!in_array($alignment, ['Left', 'Center'], true)) {
++            $alignment = 'Left';
++        }
++
++        $settings['GalleryAlignment'] = $alignment;
++        $settings = $this->normalize_content_layout_settings($settings);
++
++        if (!empty($_POST['whatif'])) {
++            $this->log(
++                'WARN',
++                'WHATIF_GALLERY_LAYOUT',
++                "[WHATIF] GalleryAlignment={$alignment}; eksisterende albums og Billedgalleri-indeks ville blive genbygget."
++            );
++            $this->set_notice(
++                'warning',
++                "WHATIF: Galleri-layout ville blive sat til {$alignment}. Ingen data blev ændret."
++            );
++            $this->redirect('hangar18-gallery');
++        }
++
++        try {
++            $this->create_full_managed_backup(
++                "Før ændring af galleri-layout til {$alignment}"
++            );
++
++            update_option(
++                self::CONTENT_LAYOUT_OPTION,
++                $settings,
++                false
++            );
++
++            $published = $settings;
++            $published['Saved'] = gmdate('c');
++            $this->publish_configuration_file(
++                'Hangar18-ContentLayout.json',
++                $published
++            );
++
++            $updated = 0;
++
++            foreach ($this->get_gallery_pages(false) as $page) {
++                $data = $this->decode_marker(
++                    self::GALLERY_MARKER,
++                    $page->post_content
++                );
++
++                if (!$data) {
++                    continue;
++                }
++
++                $result = wp_update_post(
++                    [
++                        'ID'           => $page->ID,
++                        'post_content' => $this->wrap_with_shell(
++                            $this->build_gallery_album_core($page->ID, $data),
++                            $page->ID
++                        ),
++                    ],
++                    true
++                );
++
++                if (is_wp_error($result)) {
++                    throw new RuntimeException(
++                        "Gallerialbum ID {$page->ID}: " . $result->get_error_message()
++                    );
++                }
++
++                $updated++;
++            }
++
++            $this->rebuild_gallery_index();
++
++            $this->log(
++                'INFO',
++                'GALLERY_LAYOUT_SAVED',
++                "GalleryAlignment={$alignment}; {$updated} albumsider og Billedgalleri-indeks opdateret."
++            );
++
++            $this->set_notice(
++                'success',
++                "Galleri-layout er gemt som {$alignment}. {$updated} albumsider og Billedgalleri-indekset er opdateret."
++            );
++
++        } catch (Throwable $e) {
++            $this->log('ERROR', 'GALLERY_LAYOUT_FAILED', $e->getMessage());
++            $this->set_notice('error', 'Galleri-layout kunne ikke gemmes: ' . $e->getMessage());
++        }
++
++        $this->redirect('hangar18-gallery');
++    }
++
+     public function handle_save_gallery_album() {
+         $this->require_capability();
+         check_admin_referer('h18_save_gallery_album');
+@@ -4401,6 +4714,8 @@
+             ];
+ 
+         $items = $analysis['items'];
++        $header_design = $this->get_header_design_settings();
++        $menu_pinned = !empty($header_design['StickyOnScroll']);
+ 
+         $item_payload = [];
+         foreach ($items as $item) {
+@@ -4447,6 +4762,20 @@
+                 Først når WhatIf slås fra og du trykker <strong>Gem menu</strong>,
+                 ændres WordPress. Derefter opdateres Hangar18-headeren automatisk på alle styrede sider.
+             </div>
++
++            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
++                <?php wp_nonce_field('h18_save_menu_pin'); ?>
++                <input type="hidden" name="action" value="h18_save_menu_pin" />
++                <div class="h18-menu-settings-row">
++                    <label class="h18-safe-switch">
++                        <input type="checkbox" name="pin_menu" value="1" <?php checked($menu_pinned); ?> />
++                        <span><strong>Pin menu/header ved scroll</strong></span>
++                    </label>
++                    <span class="description">Når den er slået til, bliver Hangar18-headeren siddende øverst på alle styrede sider.</span>
++                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
++                    <button class="button button-secondary" type="submit">Gem pinning</button>
++                </div>
++            </form>
+ 
+             <?php if (!$menus) : ?>
+                 <div class="notice notice-warning">
+@@ -4626,6 +4955,73 @@
+             <?php endif; ?>
+         </div>
+         <?php
++    }
++
++    public function handle_save_menu_pin() {
++        $this->require_capability();
++        check_admin_referer('h18_save_menu_pin');
++
++        $settings = $this->get_header_design_settings();
++        $pinned = !empty($_POST['pin_menu']);
++        $settings['StickyOnScroll'] = $pinned;
++        $settings = $this->normalize_header_design($settings);
++
++        if (!empty($_POST['whatif'])) {
++            $this->log(
++                'WARN',
++                'WHATIF_MENU_PIN',
++                '[WHATIF] Menu/header ville blive ' . ($pinned ? 'pinnet' : 'frigivet') . ' på alle styrede sider.'
++            );
++            $this->set_notice(
++                'warning',
++                'WHATIF: Menu/header ville blive ' . ($pinned ? 'pinnet' : 'frigivet') . '. Ingen data blev ændret.'
++            );
++            $this->redirect('hangar18-menu');
++        }
++
++        try {
++            $this->create_full_managed_backup(
++                'Før ændring af menu/header pinning'
++            );
++
++            update_option(
++                self::HEADER_DESIGN_OPTION,
++                $settings,
++                false
++            );
++
++            $published = $settings;
++            $published['Saved'] = gmdate('c');
++
++            $this->publish_configuration_file(
++                'Hangar18-HeaderDesign.json',
++                $published
++            );
++
++            $count = $this->apply_header_design_to_managed_pages(
++                $settings
++            );
++
++            $this->log(
++                'INFO',
++                'MENU_PIN_SAVED',
++                'Pinning=' . ($pinned ? 'True' : 'False') .
++                "; header opdateret på {$count} sider."
++            );
++
++            $this->set_notice(
++                'success',
++                $pinned
++            
