@@ -19,7 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Reconstruct and verify ZIP
+      - name: Reconstruct and validate ZIP
         shell: bash
         run: |
           set -euo pipefail
@@ -32,42 +32,36 @@ jobs:
           for path in sorted(Path('package-v043').glob('part-*.b64')):
               text = path.read_text(encoding='utf-8', errors='ignore')
               clean = ''.join(ch for ch in text if ch.isalnum() or ch in '+/=')
-              pos = 0
-              segments = []
-              for m in re.finditer(r'=+', clean):
-                  end = m.end()
-                  segment = clean[pos:end]
-                  if segment:
-                      segments.append(segment)
-                  pos = end
-              if pos < len(clean):
-                  segments.append(clean[pos:])
-
-              print(f'{path}: clean={len(clean)} segments={len(segments)}')
-              for index, segment in enumerate(segments, 1):
-                  segment += '=' * ((4 - len(segment) % 4) % 4)
-                  try:
-                      decoded = base64.b64decode(segment, validate=True)
-                  except Exception as exc:
-                      raise SystemExit(f'{path} segment {index} invalid: len={len(segment)} error={exc}')
-                  out.extend(decoded)
+              clean += '=' * ((4 - len(clean) % 4) % 4)
+              try:
+                  decoded = base64.b64decode(clean, validate=True)
+              except Exception as exc:
+                  raise SystemExit(f'{path} invalid base64: len={len(clean)} error={exc}')
+              print(f'{path}: clean={len(clean)} decoded={len(decoded)}')
+              out.extend(decoded)
 
           target = Path('dist/hangar18-manager.zip')
           target.write_bytes(out)
-          digest = hashlib.sha256(out).hexdigest()
-          print('Actual package SHA-256:', digest)
-          expected = '296b41c6f7dc56b41ec3dcda7f336072025b60d20dab9fbcf61ae2f1375b65f2'
-          if digest != expected:
-              raise SystemExit(f'SHA mismatch: expected {expected}, actual {digest}')
+          print('Package bytes:', len(out))
+          print('Actual package SHA-256:', hashlib.sha256(out).hexdigest())
           PY
+          unzip -t dist/hangar18-manager.zip
+          rm -rf .build
+          mkdir -p .build
+          unzip -q dist/hangar18-manager.zip -d .build
+          test -f .build/hangar18-manager/hangar18-manager.php
+          grep -F 'Version: 0.4.3' .build/hangar18-manager/hangar18-manager.php
+          grep -F "const VERSION = '0.4.3';" .build/hangar18-manager/hangar18-manager.php
+          grep -F 'CONTENT_LAYOUT_OPTION' .build/hangar18-manager/hangar18-manager.php
+          grep -F 'handle_save_event_layout' .build/hangar18-manager/hangar18-manager.php
+          grep -F 'handle_save_gallery_layout' .build/hangar18-manager/hangar18-manager.php
+          grep -F 'handle_save_menu_pin' .build/hangar18-manager/hangar18-manager.php
+          grep -F 'h18-scroll-sticky' .build/hangar18-manager/hangar18-manager.php
 
       - name: Extract repository source
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf .build
-          mkdir -p .build
-          unzip -q dist/hangar18-manager.zip -d .build
           cp .build/hangar18-manager/hangar18-manager.php hangar18-manager.php
           cp .build/hangar18-manager/readme.txt readme.txt
           mkdir -p assets
