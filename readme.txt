@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.9
+Version: 0.4.10
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -533,3 +533,12 @@ AUTHORITATIVE_BASELINE_FAILED
 - På mobil stables billedet øverst og Tekniske data nedenunder.
 - Venstre/Midtstillet-indstillingen styrer fortsat placeringen af det samlede detaljeindhold.
 - Alle eksisterende køretøjssider genbygges automatisk én gang efter opdateringen.
+
+
+== Version 0.4.10 – Korrekt sidebredde og topplacering ==
+
+- Header, sideindhold og footer bruger nu de gemte Desktop/Laptop-bredder i stedet for den gamle faste v2.0.39-formel.
+- MaximumDesktopContentWidthPercent kan ikke længere gøre desktopbredden mindre end DesktopContentWidthPercent.
+- Med DesktopContentWidthPercent 90 og MaximumDesktopContentWidthPercent 88 bliver den effektive maksimumsbredde derfor 90 procent.
+- På mobil bruges fortsat 100 procent bredde.
+- Headeren nulstilles målrettet til 0 topmargin og 0 toppadding på Hangar18 Base Theme og Astra.

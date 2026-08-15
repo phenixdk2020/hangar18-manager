@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.9
+ * Version: 0.4.10
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.9';
+    const VERSION = '0.4.10';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -305,6 +305,29 @@ final class Hangar18_Manager {
             return;
         }
 
+        $design = $this->get_header_design_settings();
+        $desktop_width = (int) $design['DesktopContentWidthPercent'];
+        $maximum_width = max(
+            $desktop_width,
+            (int) $design['MaximumDesktopContentWidthPercent']
+        );
+        $laptop_width = min(
+            (int) $design['LaptopContentWidthPercent'],
+            $maximum_width
+        );
+        $desktop_width = min($desktop_width, $maximum_width);
+        $laptop_breakpoint = (int) $design['ResponsiveLaptopWidthPx'];
+        $content_max_width = $design['ContentMaxWidth'] === 'None'
+            ? ''
+            : ((int) $design['ContentMaxWidth']) . 'px';
+
+        $desktop_max_width = $content_max_width === ''
+            ? $desktop_width . 'vw'
+            : 'min(' . $desktop_width . 'vw, ' . $content_max_width . ')';
+        $laptop_max_width = $content_max_width === ''
+            ? $laptop_width . 'vw'
+            : 'min(' . $laptop_width . 'vw, ' . $content_max_width . ')';
+
         ?>
         <style id="hangar18-manager-runtime-fixes">
         /*
@@ -349,6 +372,55 @@ final class Hangar18_Manager {
         body.page .entry-content {
             margin-top:0 !important;
             padding-top:0 !important;
+        }
+
+        /*
+         * Brug de gemte HeaderDesign-bredder direkte. Den gamle importerede
+         * shell indeholder stadig en fast v2.0.39-formel; disse mere specifikke
+         * regler gør indstillingerne autoritative uden at ændre sideindholdet.
+         */
+        body.page .h18-site-header,
+        body.page .h18-page-frame,
+        body.page .h18-site-footer {
+            width:<?php echo esc_html($desktop_width); ?>vw !important;
+            max-width:<?php echo esc_html($desktop_max_width); ?> !important;
+            margin-left:auto !important;
+            margin-right:auto !important;
+        }
+
+        /* Headeren skal være det første synlige element helt oppe ved kanten. */
+        html,
+        body.page,
+        body.page #page,
+        body.page .h18-theme-main,
+        body.page article.h18-theme-page,
+        body.page .h18-theme-entry-content,
+        body.page .entry-content,
+        body.page .entry-content > .h18-site-header:first-child {
+            margin-top:0 !important;
+            margin-block-start:0 !important;
+            padding-top:0 !important;
+            padding-block-start:0 !important;
+        }
+
+        @media (max-width:<?php echo esc_html($laptop_breakpoint); ?>px) and (min-width:783px) {
+            body.page .h18-site-header,
+            body.page .h18-page-frame,
+            body.page .h18-site-footer {
+                width:<?php echo esc_html($laptop_width); ?>vw !important;
+                max-width:<?php echo esc_html($laptop_max_width); ?> !important;
+            }
+        }
+
+        @media (max-width:782px) {
+            body.page .h18-site-header,
+            body.page .h18-page-frame,
+            body.page .h18-site-footer {
+                width:100% !important;
+                max-width:100% !important;
+                margin-left:0 !important;
+                margin-right:0 !important;
+            }
         }
 
         /* H18-align klasser vinder over Astra/Gutenberg auto-margin. */
@@ -715,7 +787,10 @@ final class Hangar18_Manager {
             'ResponsiveMinimumScalePercent'     => $this->clamp_int($saved['ResponsiveMinimumScalePercent'] ?? $default['ResponsiveMinimumScalePercent'], 50, 100, $default['ResponsiveMinimumScalePercent']),
             'DesktopContentWidthPercent'        => $this->clamp_int($saved['DesktopContentWidthPercent'] ?? $default['DesktopContentWidthPercent'], 50, 100, $default['DesktopContentWidthPercent']),
             'LaptopContentWidthPercent'         => $this->clamp_int($saved['LaptopContentWidthPercent'] ?? $default['LaptopContentWidthPercent'], 70, 98, $default['LaptopContentWidthPercent']),
-            'MaximumDesktopContentWidthPercent' => $this->clamp_int($saved['MaximumDesktopContentWidthPercent'] ?? $default['MaximumDesktopContentWidthPercent'], 70, 100, $default['MaximumDesktopContentWidthPercent']),
+            'MaximumDesktopContentWidthPercent' => max(
+                $this->clamp_int($saved['DesktopContentWidthPercent'] ?? $default['DesktopContentWidthPercent'], 50, 100, $default['DesktopContentWidthPercent']),
+                $this->clamp_int($saved['MaximumDesktopContentWidthPercent'] ?? $default['MaximumDesktopContentWidthPercent'], 70, 100, $default['MaximumDesktopContentWidthPercent'])
+            ),
             'ContentMaxWidth'                   => $content_max_width,
             'FooterWidthPercent'                => $this->clamp_int($saved['FooterWidthPercent'] ?? $default['FooterWidthPercent'], 50, 100, $default['FooterWidthPercent']),
         ];
@@ -2709,12 +2784,9 @@ final class Hangar18_Manager {
             ? 'none'
             : ((int) $design['ContentMaxWidth']) . 'px';
 
-        // IMPORTANT: This is intentionally the exact v2.0.39 effective
-        // site-width expression. PowerShell currently logs the stored width
-        // percentages, but the runtime variable itself is fixed to this.
         return '<style id="hangar18-layout-runtime">' . "\n" .
             ':root {' . "\n" .
-            '    --h18-site-width:min(100vw,calc(50vw + 700px));' . "\n" .
+            '    --h18-site-width:' . (int) $design['DesktopContentWidthPercent'] . 'vw;' . "\n" .
             '    --h18-site-max-width:' . esc_attr($max_width) . ';' . "\n" .
             '    --h18-global-root-font-size:' . esc_attr($runtime['root_font']) . ';' . "\n" .
             '    --h18-footer-content-width:' . (int) $design['FooterWidthPercent'] . '%;' . "\n" .
@@ -6947,9 +7019,8 @@ HTML;
                         $this->field('FooterWidthPercent', 'FooterWidthPercent (%)', $s['FooterWidthPercent'], 'number');
                         ?>
                         <div class="h18-runtime-note">
-                            <strong>Aktuel v2.0.39 runtime:</strong><br>
-                            <code>--h18-site-width:min(100vw,calc(50vw + 700px));</code><br>
-                            Den bevares 1:1. De lagrede Desktop/Laptop-width-felter bevares stadig i schemaet.
+                            <strong>Aktuel runtime:</strong><br>
+                            Desktop-, laptop- og maksimumsbredderne anvendes direkte på header, indhold og footer. På mobil bruges 100 % bredde.
                         </div>
                     </section>
                 </div>

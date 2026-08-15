@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-14T19:02:43Z",
+  "published_utc": "2026-08-15T11:19:41Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "eb033b4e859a184acd07234d974411c5e04723b783b331f25081f3f0089fcc85",
+  "package_sha256": "d5f9b6886e2a263db4470f0504571933ad3262b72970c72721c0eba714b395d3",
   "changelog": [
-    "Gendanner to-kolonne-layoutet på de enkelte køretøjssider.",
-    "På computer står hovedbilledet til venstre og Tekniske data til højre.",
-    "På mobil stables billedet øverst og Tekniske data nedenunder.",
-    "Layoutet er ikke længere afhængigt af Astra eller WordPress' blok-CSS.",
-    "Alle eksisterende køretøjssider genbygges automatisk én gang efter opdateringen."
+    "Header, indhold og footer bruger nu de gemte procentbredder i HeaderDesign.",
+    "DesktopContentWidthPercent 90 giver reelt 90 procent sidebredde.",
+    "MaximumDesktopContentWidthPercent kan ikke længere gøre desktopbredden mindre end DesktopContentWidthPercent.",
+    "Headerens topmargin og toppadding nulstilles målrettet.",
+    "Mobilvisningen beholder 100 procent bredde."
   ]
 }
