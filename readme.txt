@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.21
+Version: 0.4.22
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -675,3 +675,12 @@ AUTHORITATIVE_BASELINE_FAILED
 - Bevarer heroens godkendte højde, beskæring og responsive baggrundsvisning.
 - Genkender også ældre CSS, der blev gemt som en tekstsektion, og renderer den som side-CSS i stedet for synlig tekst.
 - Sikrer, at Venstre/Midtstillet for desktop og mobil styrer både overskrifter, tekst og handlingsknapper uden at blive tilsidesat af importerede Gutenberg-klasser.
+
+
+== Version 0.4.22 – Sammenligningskladde fra backup ==
+
+- Backupoversigten viser nu backupgrund og om filen indeholder den oprindelige Hjem-side eller en nyere sideeditor-version.
+- En oprindelig Hjem-backup kan oprettes som en separat WordPress-kladde direkte fra backuplisten.
+- Kladden bliver ikke aktiv forside, tilføjes ikke til menuen og kan ikke overskrive Hjem-side ID 9.
+- En allerede oprettet sammenligningskladde genbruges, så samme backup ikke opretter dubletter.
+- Sidespecifik CSS tilpasses kladdens nye side-ID, så den gamle side kan forhåndsvises retvisende.

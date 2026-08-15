@@ -1,16 +1,16 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.21",
+  "version": "0.4.22",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T18:33:27Z",
+  "published_utc": "2026-08-15T20:46:37Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "c7e6faed5eaf8f13f98894d106987a5489f95319bd27b79926f382f6c7a322fb",
+  "package_sha256": "2ce9f6ca9ced3d907c6f11f608ff1c0cc3f8d875d3444ec95642be978ef715eb",
   "changelog": [
-    "Fjerner det dobbelte billede i forsidens hero, når det samme Cover-billede også bruges som hero-baggrund.",
-    "Bevarer bannerets eksisterende højde, beskæring og responsive visning.",
-    "Genkender ældre CSS-tekstsektioner som side-CSS uden at omskrive gemte sidedata.",
-    "Lader sektionernes valgte desktop- og mobilplacering styre overskrifter, tekst og knapper."
+    "Viser backupgrund og Hjem-version direkte i backupoversigten.",
+    "Opretter den oprindelige Hjem-side som en separat sammenligningskladde fra en valgt JSON-backup.",
+    "Ændrer ikke aktiv forside, menu eller den eksisterende Hjem-side ID 9.",
+    "Forhindrer dubletter og tilpasser sidespecifik CSS til kladdens nye side-ID."
   ]
 }
