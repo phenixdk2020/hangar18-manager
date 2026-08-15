@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.17
+Version: 0.4.18
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -76,18 +76,26 @@ Funktioner:
 - første billede bliver featured image / album-cover
 - automatisk genbygning af Billedgalleri-indekset
 
-== Sideindhold ==
+== Sider ==
 
-Hangar18 Manager -> Sideindhold
+Hangar18 Manager -> Sider
 
-Styring af indholdssektioner på Om foreningen:
-- vis eller skjul en sektion uden at slette teksten
-- drag-and-drop rækkefølge
-- tilføj nye sektioner
-- permanent fjernelse, når en sektion ikke længere skal kunne genaktiveres
-- separat luft før første kasse, mellem kasser og inde i kasser på desktop og mobil
-- styring af hjørneafrunding
-- WhatIf-simulering og automatisk backup før rigtig gemning
+Egen sektionseditor til Hjem, Om foreningen, Bliv medlem og Kontakt:
+- eksisterende sideindhold bevares sikkert, indtil redaktøren selv fjerner det
+- vis, skjul, duplikér, fjern og drag-and-drop-sortér sektioner
+- tekst, tekst og billede, stort billede, handlingsknapper, indholdskort, fremhævet tekst og afstand
+- separat placering, luft og indvendig luft på desktop og mobil
+- editorvisning i desktop-, tablet- og mobilbredde
+- billeder vælges fra WordPress Media Library
+- header og footer ligger uden for editoren og kan ikke slettes her
+
+Funktionsmoduler:
+- Mailformular med modtager, bekræftelse, valgfri samtykketekst, spambegrænsning og testmail
+- valgfri lagring af de seneste 200 henvendelser og CSV-eksport
+- Afstemning med 2-20 svarmuligheder, enkelt/flere svar, start/slut, resultatvisning, nulstilling og CSV-eksport
+- dobbeltstemmer begrænses uden lagring af rå IP-adresser
+- dynamisk frontend-rendering, så modulrettelser gælder alle forekomster
+- WhatIf-simulering, automatisk backup og WordPress-revision
 
 
 == Menu ==
@@ -624,3 +632,16 @@ AUTHORITATIVE_BASELINE_FAILED
 - Hjørneafrunding kan indstilles, og det godkendte kortdesign bruges som standard.
 - WhatIf simulerer ændringen uden skrivning, og en rigtig gemning tager automatisk backup først.
 - Tilføjer DESIGN-MANUAL.md med de godkendte valg for farver, bredde, typografi, afstande, kort og mobilvisning.
+
+
+== Version 0.4.18 – Egen sideeditor og funktionsmoduler ==
+
+- Udvider Sideindhold til Sider med en samlet editor til Hjem, Om foreningen, Bliv medlem og Kontakt.
+- Bevarer eksisterende ukendt sideindhold som en sikker legacy-sektion, indtil redaktøren selv vælger at fjerne det.
+- Tilføjer genbrugelige sektionstyper til tekst, billeder, knapper, kort, fremhævelser og afstand.
+- Tilføjer mailformular med servervalidering, nonce, spambegrænsning, testmail, valgfri lagring og CSV-eksport.
+- Tilføjer afstemning med svarmuligheder, enkelt/flere svar, tidsrum, resultater, nulstilling og CSV-eksport.
+- Begrænser dobbeltstemmer med cookie og saltet hash uden at gemme rå IP-adresser.
+- Tilføjer responsive desktop-, tablet- og mobilvisninger samt separat luft og placering.
+- Gemmer sider som dynamiske Hangar18-moduler, så en kodeopdatering gælder alle forekomster.
+- Opdaterer designmanualen med regler for sideeditor, mailformularer og afstemninger.

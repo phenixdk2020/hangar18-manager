@@ -257,4 +257,218 @@ jQuery(function ($) {
         syncStaticSectionOrder();
     }
 
+    const $pageSections = $('#h18-page-sections-sortable');
+    const pageSectionTemplate = document.getElementById('h18-page-section-template');
+    let pageSectionNextIndex = 0;
+
+    $pageSections.children('.h18-page-section-row').each(function () {
+        const value = parseInt($(this).attr('data-section-index'), 10);
+        if (!Number.isNaN(value)) {
+            pageSectionNextIndex = Math.max(pageSectionNextIndex, value + 1);
+        }
+    });
+
+    function newSectionKey() {
+        return 'sektion-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+    }
+
+    function syncPageSectionOrder() {
+        if (!$pageSections.length) {
+            return;
+        }
+        let visibleIndex = 0;
+        $pageSections.children('.h18-page-section-row').each(function () {
+            if (!$(this).hasClass('h18-page-section-removed')) {
+                visibleIndex += 1;
+                $(this).find('.h18-page-section-order').val(visibleIndex * 10);
+            }
+        });
+    }
+
+    function refreshPageSectionType($row) {
+        const type = String($row.find('.h18-page-section-type').val() || $row.find('input[name$="[Type]"]').val() || 'text');
+        $row.find('.h18-section-type-field').each(function () {
+            const types = String($(this).attr('data-types') || '').split(/\s+/);
+            $(this).toggle(types.includes(type));
+        });
+        const labels = {
+            text: 'Tekst',
+            text_image: 'Tekst og billede',
+            image: 'Stort billede',
+            buttons: 'Handlingsknapper',
+            card: 'Indholdskort',
+            highlight: 'Fremhævet tekst',
+            spacer: 'Afstand',
+            mail_form: 'Mailformular',
+            poll: 'Afstemning',
+            legacy: 'Eksisterende indhold'
+        };
+        $row.find('.h18-page-section-summary').text(labels[type] || 'Sektion');
+        $row.find('.h18-section-title-label').text(type === 'poll' ? 'Spørgsmål' : 'Overskrift');
+    }
+
+    function reindexPageSection($row, index) {
+        $row.attr('data-section-index', index);
+        $row.find('[name]').each(function () {
+            const name = String($(this).attr('name') || '');
+            $(this).attr('name', name.replace(/sections\[(?:\d+|__INDEX__)\]/, 'sections[' + index + ']'));
+        });
+        $row.find('.h18-page-section-key').val(newSectionKey());
+        $row.find('.h18-page-section-remove').val('0');
+        $row.removeClass('h18-page-section-removed');
+        $row.find('input[name$="[ResetVotes]"]').prop('checked', false);
+        $row.find('.h18-module-status').html('<em>Gem siden for at oprette modulet.</em>');
+    }
+
+    function applyNewSectionDefaults($row, type) {
+        const setValue = function (field, value) {
+            $row.find('[name$="[' + field + ']"]').val(value);
+        };
+        if (type === 'card') {
+            setValue('Background', 'OffWhite');
+            setValue('PaddingPx', 26);
+            setValue('MobilePaddingPx', 20);
+        } else if (type === 'highlight') {
+            setValue('Background', 'OffWhite');
+            setValue('PaddingPx', 22);
+            setValue('MobilePaddingPx', 18);
+        } else if (type === 'mail_form' || type === 'poll') {
+            setValue('Background', 'OffWhite');
+            setValue('PaddingPx', 26);
+            setValue('MobilePaddingPx', 20);
+        } else if (type === 'spacer') {
+            setValue('BottomSpacingPx', 0);
+            setValue('MobileBottomSpacingPx', 0);
+        }
+    }
+
+    if ($pageSections.length) {
+        $pageSections.sortable({
+            items: '> .h18-page-section-row:not(.h18-page-section-removed)',
+            handle: '.h18-page-section-drag',
+            axis: 'y',
+            tolerance: 'pointer',
+            update: syncPageSectionOrder
+        });
+        $pageSections.children('.h18-page-section-row').each(function () {
+            refreshPageSectionType($(this));
+        });
+        syncPageSectionOrder();
+    }
+
+    $(document).on('change', '.h18-page-section-type', function () {
+        refreshPageSectionType($(this).closest('.h18-page-section-row'));
+    });
+
+    $(document).on('input', '.h18-section-title-input', function () {
+        $(this).closest('.h18-page-section-row').find('.h18-page-section-title-summary').text($(this).val());
+    });
+
+    $('#h18-add-page-section').on('click', function (event) {
+        event.preventDefault();
+        if (!pageSectionTemplate || !$pageSections.length) {
+            return;
+        }
+        if ($pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').length >= 25) {
+            window.alert('En side kan højst have 25 aktive editorsektioner. Fjern en sektion, før du tilføjer en ny.');
+            return;
+        }
+        const index = pageSectionNextIndex++;
+        const html = pageSectionTemplate.innerHTML.replaceAll('__INDEX__', String(index));
+        const $row = $(html.trim());
+        reindexPageSection($row, index);
+        const type = String($('#h18-new-section-type').val() || 'text');
+        $row.find('.h18-page-section-type').val(type);
+        applyNewSectionDefaults($row, type);
+        refreshPageSectionType($row);
+        $pageSections.append($row);
+        syncPageSectionOrder();
+        $('html, body').animate({ scrollTop: $row.offset().top - 60 }, 250);
+    });
+
+    $(document).on('click', '.h18-page-section-duplicate', function (event) {
+        event.preventDefault();
+        const $source = $(this).closest('.h18-page-section-row');
+        const $copy = $source.clone(false, false);
+        const index = pageSectionNextIndex++;
+        reindexPageSection($copy, index);
+        $copy.find('.h18-page-section-title-summary').text($copy.find('.h18-section-title-input').val() || '');
+        refreshPageSectionType($copy);
+        $source.after($copy);
+        syncPageSectionOrder();
+    });
+
+    $(document).on('click', '.h18-page-section-delete', function (event) {
+        event.preventDefault();
+        const $row = $(this).closest('.h18-page-section-row');
+        const removing = !$row.hasClass('h18-page-section-removed');
+        $row.toggleClass('h18-page-section-removed', removing);
+        $row.find('.h18-page-section-remove').val(removing ? '1' : '0');
+        $(this).text(removing ? 'Fortryd fjernelse' : 'Fjern');
+        syncPageSectionOrder();
+    });
+
+    $(document).on('click', '.h18-page-select-media', function (event) {
+        event.preventDefault();
+        const $row = $(this).closest('.h18-page-section-row');
+        const frame = wp.media({
+            title: Hangar18Manager.chooseImage,
+            button: { text: Hangar18Manager.useImage },
+            multiple: false,
+            library: { type: 'image' }
+        });
+        frame.on('select', function () {
+            const image = frame.state().get('selection').first().toJSON();
+            const preview = image.sizes && image.sizes.thumbnail ? image.sizes.thumbnail.url : image.url;
+            $row.find('.h18-section-media-id').val(image.id || '');
+            $row.find('.h18-section-media-url').val(image.url || '');
+            $row.find('.h18-section-media-preview').html($('<img>', { src: preview, alt: image.alt || '' }));
+        });
+        frame.open();
+    });
+
+    $(document).on('click', '.h18-page-remove-media', function (event) {
+        event.preventDefault();
+        const $row = $(this).closest('.h18-page-section-row');
+        $row.find('.h18-section-media-id, .h18-section-media-url').val('');
+        $row.find('.h18-section-media-preview').empty();
+    });
+
+    $(document).on('click', '.h18-mini-format', function (event) {
+        event.preventDefault();
+        const textarea = $(this).closest('.h18-page-section-content').find('textarea').get(0);
+        if (!textarea) {
+            return;
+        }
+        const start = textarea.selectionStart || 0;
+        const end = textarea.selectionEnd || start;
+        const selected = textarea.value.slice(start, end);
+        const format = String($(this).data('format') || '');
+        let replacement = selected;
+        if (format === 'bold') {
+            replacement = '<strong>' + (selected || 'fed tekst') + '</strong>';
+        } else if (format === 'italic') {
+            replacement = '<em>' + (selected || 'kursiv tekst') + '</em>';
+        } else if (format === 'link') {
+            const url = window.prompt('Indtast linkadresse', 'https://');
+            if (!url) {
+                return;
+            }
+            replacement = '<a href="' + url.replace(/"/g, '&quot;') + '">' + (selected || 'linktekst') + '</a>';
+        } else if (format === 'list') {
+            const lines = (selected || 'Punkt 1\nPunkt 2').split(/\r?\n/).filter(Boolean);
+            replacement = '<ul>\n' + lines.map(function (line) { return '<li>' + line + '</li>'; }).join('\n') + '\n</ul>';
+        }
+        textarea.setRangeText(replacement, start, end, 'end');
+        $(textarea).trigger('input');
+        textarea.focus();
+    });
+
+    $('.h18-preview-device').on('click', function () {
+        const device = String($(this).data('device') || 'desktop');
+        $('.h18-preview-device').removeClass('is-active');
+        $(this).addClass('is-active');
+        $pageSections.removeClass('h18-preview-desktop h18-preview-tablet h18-preview-mobile').addClass('h18-preview-' + device);
+    });
+
 });

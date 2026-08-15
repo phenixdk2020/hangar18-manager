@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.17
+ * Version: 0.4.18
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.17';
+    const VERSION = '0.4.18';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -28,6 +28,7 @@ final class Hangar18_Manager {
     const EVENT_MARKER   = 'HANGAR18-EVENT-DATA';
     const GALLERY_MARKER = 'HANGAR18-GALLERY-ALBUM-DATA';
     const STATIC_CONTENT_MARKER = 'HANGAR18-STATIC-CONTENT-DATA';
+    const PAGE_EDITOR_MARKER = 'HANGAR18-PAGE-EDITOR-DATA';
 
     const LOG_OPTION               = 'hangar18_manager_log';
     const DESIGN_OPTION            = 'hangar18_manager_design'; // v0.3.0 legacy
@@ -36,6 +37,9 @@ final class Hangar18_Manager {
     const VEHICLE_FIELDS_OPTION    = 'hangar18_manager_vehicle_fields_v1';
     const CONTENT_LAYOUT_OPTION     = 'hangar18_manager_content_layout_v1';
     const STATIC_CONTENT_OPTION     = 'hangar18_manager_static_content_v1';
+    const PAGE_EDITOR_OPTION        = 'hangar18_manager_pages_v1';
+    const FORM_SUBMISSIONS_OPTION   = 'hangar18_manager_form_submissions_v1';
+    const POLL_VOTES_OPTION         = 'hangar18_manager_poll_votes_v1';
     const MENU_ORDER_OPTION        = 'hangar18_manager_menu_order_v20';
     const CONFIG_IMPORT_META_OPTION= 'hangar18_manager_config_import_meta';
     const CONFIG_BOOTSTRAP_OPTION   = 'hangar18_manager_config_bootstrap_v032';
@@ -87,6 +91,7 @@ final class Hangar18_Manager {
         add_action('wp_footer', [$this, 'render_header_origin_guard'], PHP_INT_MAX);
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+        add_shortcode('hangar18_page_editor', [$this, 'shortcode_page_editor']);
 
         add_action('admin_post_h18_save_vehicle', [$this, 'handle_save_vehicle']);
         add_action('admin_post_h18_save_vehicle_register_settings', [$this, 'handle_save_vehicle_register_settings']);
@@ -102,6 +107,14 @@ final class Hangar18_Manager {
         add_action('admin_post_h18_rebuild_gallery_index', [$this, 'handle_rebuild_gallery_index']);
 
         add_action('admin_post_h18_save_static_content', [$this, 'handle_save_static_content']);
+        add_action('admin_post_h18_save_page_editor', [$this, 'handle_save_page_editor']);
+        add_action('admin_post_h18_send_page_form', [$this, 'handle_send_page_form']);
+        add_action('admin_post_nopriv_h18_send_page_form', [$this, 'handle_send_page_form']);
+        add_action('admin_post_h18_submit_poll', [$this, 'handle_submit_poll']);
+        add_action('admin_post_nopriv_h18_submit_poll', [$this, 'handle_submit_poll']);
+        add_action('admin_post_h18_export_poll', [$this, 'handle_export_poll']);
+        add_action('admin_post_h18_export_form_submissions', [$this, 'handle_export_form_submissions']);
+        add_action('admin_post_h18_test_page_form', [$this, 'handle_test_page_form']);
 
         add_action('admin_post_h18_create_menu', [$this, 'handle_create_menu']);
         add_action('admin_post_h18_save_menu', [$this, 'handle_save_menu']);
@@ -142,7 +155,8 @@ final class Hangar18_Manager {
             strpos($content, self::HEADER_START) !== false ||
             strpos($content, self::VEHICLE_MARKER) !== false ||
             strpos($content, self::EVENT_MARKER) !== false ||
-            strpos($content, self::GALLERY_MARKER) !== false
+            strpos($content, self::GALLERY_MARKER) !== false ||
+            strpos($content, self::PAGE_EDITOR_MARKER) !== false
         ) {
             return true;
         }
@@ -912,7 +926,7 @@ final class Hangar18_Manager {
         add_submenu_page(self::MENU_SLUG, 'Køretøjsfelter', 'Køretøjsfelter', $capability, 'hangar18-vehicle-fields', [$this, 'render_vehicle_fields']);
         add_submenu_page(self::MENU_SLUG, 'Events', 'Events', $capability, 'hangar18-events', [$this, 'render_events']);
         add_submenu_page(self::MENU_SLUG, 'Billedgalleri', 'Billedgalleri', $capability, 'hangar18-gallery', [$this, 'render_gallery']);
-        add_submenu_page(self::MENU_SLUG, 'Sideindhold', 'Sideindhold', $capability, 'hangar18-static-content', [$this, 'render_static_content']);
+        add_submenu_page(self::MENU_SLUG, 'Sider', 'Sider', $capability, 'hangar18-pages', [$this, 'render_pages']);
         add_submenu_page(self::MENU_SLUG, 'Menu', 'Menu', $capability, 'hangar18-menu', [$this, 'render_menu']);
         add_submenu_page(self::MENU_SLUG, 'Header / Footer og design', 'Header / Footer', $capability, 'hangar18-header-footer', [$this, 'render_header_footer']);
         add_submenu_page(self::MENU_SLUG, 'Backup', 'Backup', $capability, 'hangar18-backup', [$this, 'render_backup']);
@@ -2552,6 +2566,12 @@ final class Hangar18_Manager {
         $static_content = $this->get_static_content_settings();
         $static_content['Saved'] = gmdate('c');
 
+        $pages = [
+            'Version' => '1.0',
+            'Saved'   => gmdate('c'),
+            'Pages'   => $this->get_page_editor_store(),
+        ];
+
         return [
             'Hangar18-HeaderDesign.json'    => $header,
             'Hangar18-MenuOrder.json'       => $menu,
@@ -2559,6 +2579,7 @@ final class Hangar18_Manager {
             'Hangar18-VehicleFields.json'   => $vehicle_fields,
             'Hangar18-ContentLayout.json'   => $content_layout,
             'Hangar18-StaticContent.json'   => $static_content,
+            'Hangar18-Pages.json'           => $pages,
         ];
     }
 
@@ -2635,6 +2656,7 @@ final class Hangar18_Manager {
             'Hangar18-VehicleFields.json',
             'Hangar18-ContentLayout.json',
             'Hangar18-StaticContent.json',
+            'Hangar18-Pages.json',
         ];
 
         $files = [];
@@ -2951,6 +2973,8 @@ final class Hangar18_Manager {
             'reason'         => (string) $reason,
             'plugin_version' => self::VERSION,
             'design'         => $this->get_design_settings(),
+            'page_editor'    => $this->get_page_editor_store(),
+            'poll_votes'     => get_option(self::POLL_VOTES_OPTION, []),
             'posts'          => [],
         ];
 
@@ -3713,7 +3737,7 @@ HTML;
                     ['hangar18-vehicles', 'dashicons-car', 'Køretøjer', 'Opret og redigér køretøjer, billeder, tekniske data og placering.', 'Aktiv'],
                     ['hangar18-events', 'dashicons-calendar-alt', 'Events', 'Opret arrangementer og forbind dem til et album i Billedgalleri.', 'Aktiv'],
                     ['hangar18-gallery', 'dashicons-format-gallery', 'Billedgalleri', 'Opret albums, vælg flere billeder og sortér med drag-and-drop.', 'Aktiv'],
-                    ['hangar18-static-content', 'dashicons-screenoptions', 'Sideindhold', 'Vis, skjul, tilføj og sortér indholdssektioner på Om foreningen.', 'Aktiv'],
+                    ['hangar18-pages', 'dashicons-layout', 'Sider', 'Redigér almindelige sider med indholdssektioner, mailformularer og afstemninger.', 'Aktiv'],
                     ['hangar18-menu', 'dashicons-menu', 'Menu', 'WordPress-menu, drag-and-drop, undermenuer, Hjem, dubletkontrol og Hangar18-header-synkronisering.', 'Aktiv'],
                     ['hangar18-header-footer', 'dashicons-layout', 'Header / Footer', 'Sticky header, bredde, skalaer, placering og global shell-synkronisering.', 'Aktiv'],
                     ['hangar18-backup', 'dashicons-backup', 'Backup', 'Manuel samlet backup og oversigt over automatisk oprettede JSON-backups.', 'Aktiv'],
@@ -5958,7 +5982,1138 @@ HTML;
 
 
     /* ================================================================
-       STATIC PAGE CONTENT
+       PAGE EDITOR AND FUNCTION MODULES
+       ================================================================ */
+
+    private function editable_page_definitions() {
+        return [
+            self::HOME_SLUG => 'Hjem',
+            'om-foreningen' => 'Om foreningen',
+            'bliv-medlem'   => 'Bliv medlem',
+            'kontakt'       => 'Kontakt',
+        ];
+    }
+
+    private function page_section_type_labels() {
+        return [
+            'text'       => 'Tekst',
+            'text_image' => 'Tekst og billede',
+            'image'      => 'Stort billede',
+            'buttons'    => 'Handlingsknapper',
+            'card'       => 'Indholdskort',
+            'highlight'  => 'Fremhævet tekst',
+            'spacer'     => 'Afstand',
+            'mail_form'  => 'Mailformular',
+            'poll'       => 'Afstemning',
+            'legacy'     => 'Eksisterende indhold',
+        ];
+    }
+
+    private function default_page_section($type = 'text', $order = 10) {
+        $types = $this->page_section_type_labels();
+        if (!isset($types[$type])) {
+            $type = 'text';
+        }
+
+        return [
+            'Key'                   => 'sektion-' . wp_generate_uuid4(),
+            'Type'                  => $type,
+            'Active'                => true,
+            'Order'                 => (int) $order,
+            'Title'                 => '',
+            'Content'               => '',
+            'MediaId'               => 0,
+            'MediaUrl'              => '',
+            'ImagePosition'         => 'Right',
+            'Button1Label'          => '',
+            'Button1Url'            => '',
+            'Button2Label'          => '',
+            'Button2Url'            => '',
+            'RecipientEmail'        => sanitize_email((string) get_option('admin_email')),
+            'SuccessMessage'        => 'Tak for din besked. Vi vender tilbage hurtigst muligt.',
+            'StoreSubmissions'      => false,
+            'ConsentLabel'          => '',
+            'PollOptions'           => ['Ja', 'Nej'],
+            'AllowMultiple'         => false,
+            'ResultsMode'           => 'after_vote',
+            'StartUtc'              => '',
+            'EndUtc'                => '',
+            'DesktopAlignment'      => 'Left',
+            'MobileAlignment'       => 'Center',
+            'Background'            => 'White',
+            'TopSpacingPx'          => 0,
+            'BottomSpacingPx'       => 24,
+            'MobileTopSpacingPx'    => 0,
+            'MobileBottomSpacingPx' => 18,
+            'PaddingPx'             => 0,
+            'MobilePaddingPx'       => 0,
+            'RadiusPx'              => 7,
+            'SpacerPx'              => 32,
+            'MobileSpacerPx'        => 24,
+            'LegacyHtml'            => '',
+        ];
+    }
+
+    private function normalize_page_section(array $raw, $index = 0, array $legacy_source = []) {
+        $types = $this->page_section_type_labels();
+        $type = sanitize_key((string) ($raw['Type'] ?? 'text'));
+        if (!isset($types[$type])) {
+            $type = 'text';
+        }
+
+        $section = $this->default_page_section($type, ((int) $index + 1) * 10);
+        $key = sanitize_key((string) ($raw['Key'] ?? ''));
+        if ($key === '') {
+            $key = 'sektion-' . substr(md5(wp_generate_uuid4()), 0, 12);
+        }
+
+        $alignment = (string) ($raw['DesktopAlignment'] ?? 'Left');
+        if (!in_array($alignment, ['Left', 'Center'], true)) {
+            $alignment = 'Left';
+        }
+        $mobile_alignment = (string) ($raw['MobileAlignment'] ?? 'Center');
+        if (!in_array($mobile_alignment, ['Left', 'Center'], true)) {
+            $mobile_alignment = 'Center';
+        }
+        $background = (string) ($raw['Background'] ?? 'White');
+        if (!in_array($background, ['White', 'OffWhite', 'Olive'], true)) {
+            $background = 'White';
+        }
+        $image_position = (string) ($raw['ImagePosition'] ?? 'Right');
+        if (!in_array($image_position, ['Left', 'Right'], true)) {
+            $image_position = 'Right';
+        }
+        $results_mode = (string) ($raw['ResultsMode'] ?? 'after_vote');
+        if (!in_array($results_mode, ['always', 'after_vote', 'after_close'], true)) {
+            $results_mode = 'after_vote';
+        }
+
+        $poll_options = $raw['PollOptions'] ?? $section['PollOptions'];
+        if (is_string($poll_options)) {
+            $poll_options = preg_split('/\r\n|\r|\n/', $poll_options);
+        }
+        if (!is_array($poll_options)) {
+            $poll_options = $section['PollOptions'];
+        }
+        $clean_options = [];
+        foreach (array_slice($poll_options, 0, 20) as $option) {
+            $option = sanitize_text_field((string) $option);
+            if ($option !== '' && !in_array($option, $clean_options, true)) {
+                $clean_options[] = $option;
+            }
+        }
+        if (count($clean_options) < 2) {
+            $clean_options = ['Ja', 'Nej'];
+        }
+
+        $legacy_html = '';
+        if ($type === 'legacy') {
+            $legacy_html = (string) ($legacy_source['LegacyHtml'] ?? $raw['LegacyHtml'] ?? '');
+        }
+
+        $title = sanitize_text_field((string) ($raw['Title'] ?? ''));
+        if ($title === '' && $type === 'poll') {
+            $title = 'Afstemning';
+        } elseif ($title === '' && $type === 'mail_form') {
+            $title = 'Kontakt os';
+        }
+        $recipient = sanitize_email((string) ($raw['RecipientEmail'] ?? $section['RecipientEmail']));
+        if ($recipient === '') {
+            $recipient = sanitize_email((string) get_option('admin_email'));
+        }
+        $success_message = sanitize_text_field((string) ($raw['SuccessMessage'] ?? $section['SuccessMessage']));
+        if ($success_message === '') {
+            $success_message = $section['SuccessMessage'];
+        }
+
+        return [
+            'Key'                   => $key,
+            'Type'                  => $type,
+            'Active'                => array_key_exists('Active', $raw) ? $this->bool_value($raw['Active'], false) : true,
+            'Order'                 => $this->clamp_int($raw['Order'] ?? $section['Order'], 1, 10000, $section['Order']),
+            'Title'                 => $title,
+            'Content'               => wp_kses_post((string) ($raw['Content'] ?? '')),
+            'MediaId'               => absint($raw['MediaId'] ?? 0),
+            'MediaUrl'              => esc_url_raw((string) ($raw['MediaUrl'] ?? '')),
+            'ImagePosition'         => $image_position,
+            'Button1Label'          => sanitize_text_field((string) ($raw['Button1Label'] ?? '')),
+            'Button1Url'            => esc_url_raw((string) ($raw['Button1Url'] ?? '')),
+            'Button2Label'          => sanitize_text_field((string) ($raw['Button2Label'] ?? '')),
+            'Button2Url'            => esc_url_raw((string) ($raw['Button2Url'] ?? '')),
+            'RecipientEmail'        => $recipient,
+            'SuccessMessage'        => $success_message,
+            'StoreSubmissions'      => !empty($raw['StoreSubmissions']),
+            'ConsentLabel'          => sanitize_text_field((string) ($raw['ConsentLabel'] ?? '')),
+            'PollOptions'           => $clean_options,
+            'AllowMultiple'         => !empty($raw['AllowMultiple']),
+            'ResultsMode'           => $results_mode,
+            'StartUtc'              => sanitize_text_field((string) ($raw['StartUtc'] ?? '')),
+            'EndUtc'                => sanitize_text_field((string) ($raw['EndUtc'] ?? '')),
+            'DesktopAlignment'      => $alignment,
+            'MobileAlignment'       => $mobile_alignment,
+            'Background'            => $background,
+            'TopSpacingPx'          => $this->clamp_int($raw['TopSpacingPx'] ?? 0, 0, 160, 0),
+            'BottomSpacingPx'       => $this->clamp_int($raw['BottomSpacingPx'] ?? 24, 0, 160, 24),
+            'MobileTopSpacingPx'    => $this->clamp_int($raw['MobileTopSpacingPx'] ?? 0, 0, 100, 0),
+            'MobileBottomSpacingPx' => $this->clamp_int($raw['MobileBottomSpacingPx'] ?? 18, 0, 100, 18),
+            'PaddingPx'             => $this->clamp_int($raw['PaddingPx'] ?? 0, 0, 100, 0),
+            'MobilePaddingPx'       => $this->clamp_int($raw['MobilePaddingPx'] ?? 0, 0, 80, 0),
+            'RadiusPx'              => $this->clamp_int($raw['RadiusPx'] ?? 7, 0, 30, 7),
+            'SpacerPx'              => $this->clamp_int($raw['SpacerPx'] ?? 32, 0, 200, 32),
+            'MobileSpacerPx'        => $this->clamp_int($raw['MobileSpacerPx'] ?? 24, 0, 140, 24),
+            'LegacyHtml'            => $legacy_html,
+        ];
+    }
+
+    private function normalize_page_editor_data(array $raw, $page = null) {
+        $slug = sanitize_title((string) ($raw['PageSlug'] ?? ($page ? $page->post_name : '')));
+        $definitions = $this->editable_page_definitions();
+        if (!isset($definitions[$slug])) {
+            $slug = self::HOME_SLUG;
+        }
+
+        $sections = [];
+        $used_keys = [];
+        $raw_sections = isset($raw['Sections']) && is_array($raw['Sections']) ? $raw['Sections'] : [];
+        foreach (array_slice($raw_sections, 0, 25) as $index => $raw_section) {
+            if (!is_array($raw_section)) {
+                continue;
+            }
+            $section = $this->normalize_page_section($raw_section, $index);
+            $base_key = $section['Key'];
+            $suffix = 2;
+            while (isset($used_keys[$section['Key']])) {
+                $section['Key'] = $base_key . '-' . $suffix++;
+            }
+            $used_keys[$section['Key']] = true;
+            $sections[] = $section;
+        }
+        usort($sections, static function($a, $b) {
+            return ((int) $a['Order']) <=> ((int) $b['Order']);
+        });
+
+        $title = sanitize_text_field((string) ($raw['PageTitle'] ?? ($page ? $page->post_title : $definitions[$slug])));
+        if ($title === '') {
+            $title = $definitions[$slug];
+        }
+
+        return [
+            'Version'   => '1.0',
+            'PageSlug'  => $slug,
+            'PageTitle' => $title,
+            'Sections'  => $sections,
+        ];
+    }
+
+    private function get_page_editor_store() {
+        $stored = get_option(self::PAGE_EDITOR_OPTION, []);
+        return is_array($stored) ? $stored : [];
+    }
+
+    private function extract_page_core_content($content) {
+        $content = (string) $content;
+        $start_marker = '<!-- HANGAR18-PAGE-FRAME-START -->';
+        $end_marker = '<!-- HANGAR18-PAGE-FRAME-END -->';
+        $start = strpos($content, $start_marker);
+        $end = strpos($content, $end_marker);
+
+        if ($start !== false && $end !== false && $end > $start) {
+            $frame = substr($content, $start + strlen($start_marker), $end - $start - strlen($start_marker));
+            $frame = preg_replace('/^\s*<!-- wp:group.*?-->\s*<div[^>]*class="[^"]*h18-page-frame[^"]*"[^>]*>/s', '', $frame, 1);
+            $frame = preg_replace('/<\/div>\s*<!-- \/wp:group -->\s*$/s', '', (string) $frame, 1);
+            return trim((string) $frame);
+        }
+
+        $core = $this->strip_block($content, self::HEADER_START, self::HEADER_END);
+        $core = $this->strip_block($core, self::CSS_START, self::CSS_END);
+        $core = $this->strip_block($core, self::OVERRIDE_START, self::OVERRIDE_END);
+        $core = $this->strip_block($core, self::FOOTER_START, self::FOOTER_END);
+        return trim($core);
+    }
+
+    private function migrate_static_content_to_page_editor($page, array $static) {
+        $sections = [];
+        $order = 10;
+        $intro = $this->default_page_section('text', $order);
+        $intro['Key'] = 'introduktion';
+        $intro['Title'] = sanitize_text_field((string) ($static['Heading'] ?? ''));
+        $intro['Content'] = nl2br(esc_html((string) ($static['Intro'] ?? '')));
+        $intro['BottomSpacingPx'] = (int) ($static['CardsTopSpacingPx'] ?? 24);
+        $intro['MobileBottomSpacingPx'] = (int) ($static['MobileCardsTopSpacingPx'] ?? 18);
+        $sections[] = $intro;
+
+        foreach (($static['Sections'] ?? []) as $static_section) {
+            if (!is_array($static_section)) {
+                continue;
+            }
+            $order += 10;
+            $section = $this->default_page_section('card', $order);
+            $section['Key'] = sanitize_key((string) ($static_section['Key'] ?? 'sektion-' . $order));
+            $section['Title'] = sanitize_text_field((string) ($static_section['Title'] ?? ''));
+            $section['Content'] = nl2br(esc_html((string) ($static_section['Body'] ?? '')));
+            $section['Active'] = !empty($static_section['Active']);
+            $section['Background'] = 'OffWhite';
+            $section['PaddingPx'] = (int) ($static['CardPaddingPx'] ?? 26);
+            $section['MobilePaddingPx'] = (int) ($static['MobileCardPaddingPx'] ?? 20);
+            $section['RadiusPx'] = (int) ($static['CardRadiusPx'] ?? 7);
+            $section['BottomSpacingPx'] = (int) ($static['CardGapPx'] ?? 20);
+            $section['MobileBottomSpacingPx'] = (int) ($static['MobileCardGapPx'] ?? 14);
+            $sections[] = $section;
+        }
+
+        return $this->normalize_page_editor_data([
+            'PageSlug'  => $page->post_name,
+            'PageTitle' => $page->post_title,
+            'Sections'  => $sections,
+        ], $page);
+    }
+
+    private function get_page_editor_data($slug, $page = null) {
+        $slug = sanitize_title((string) $slug);
+        if (!$page) {
+            $page = $this->post_by_slug($slug);
+        }
+
+        $store = $this->get_page_editor_store();
+        if (isset($store[$slug]) && is_array($store[$slug])) {
+            return $this->normalize_page_editor_data($store[$slug], $page);
+        }
+
+        if ($page) {
+            $marker_data = $this->decode_marker(self::PAGE_EDITOR_MARKER, $page->post_content);
+            if (is_array($marker_data)) {
+                return $this->normalize_page_editor_data($marker_data, $page);
+            }
+
+            $static_data = $this->decode_marker(self::STATIC_CONTENT_MARKER, $page->post_content);
+            if ($slug === 'om-foreningen' && is_array($static_data)) {
+                return $this->migrate_static_content_to_page_editor($page, $static_data);
+            }
+
+            $legacy = $this->extract_page_core_content($page->post_content);
+            if ($legacy !== '') {
+                $section = $this->default_page_section('legacy', 10);
+                $section['Key'] = 'eksisterende-indhold';
+                $section['Title'] = 'Eksisterende sideindhold';
+                $section['LegacyHtml'] = $legacy;
+                return $this->normalize_page_editor_data([
+                    'PageSlug'  => $slug,
+                    'PageTitle' => $page->post_title,
+                    'Sections'  => [$section],
+                ], $page);
+            }
+        }
+
+        return $this->normalize_page_editor_data([
+            'PageSlug'  => $slug,
+            'PageTitle' => $page ? $page->post_title : ($this->editable_page_definitions()[$slug] ?? 'Side'),
+            'Sections'  => [],
+        ], $page);
+    }
+
+    private function save_page_editor_data($slug, array $data) {
+        $store = $this->get_page_editor_store();
+        $store[$slug] = $data;
+        update_option(self::PAGE_EDITOR_OPTION, $store, false);
+    }
+
+    private function page_module_storage_key($page_id, $section_key) {
+        return substr(hash('sha256', (int) $page_id . '|' . sanitize_key((string) $section_key)), 0, 24);
+    }
+
+    private function find_page_module($page_id, $section_key, $expected_type, $must_be_active = true) {
+        $page = get_post((int) $page_id);
+        if (!$page instanceof WP_Post) {
+            return [null, null];
+        }
+        $data = $this->get_page_editor_data($page->post_name, $page);
+        foreach ($data['Sections'] as $section) {
+            if (
+                $section['Key'] === sanitize_key((string) $section_key) &&
+                $section['Type'] === $expected_type &&
+                (!$must_be_active || !empty($section['Active']))
+            ) {
+                return [$page, $section];
+            }
+        }
+        return [$page, null];
+    }
+
+    private function page_editor_frontend_css($page_id) {
+        $id = (int) $page_id;
+        return '<style id="h18-page-editor-style-' . $id . '">' .
+            '.h18-editor-page{width:100%;box-sizing:border-box}.h18-editor-section{box-sizing:border-box;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0);border-radius:var(--h18-radius,0);text-align:var(--h18-align,left)}' .
+            '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3{color:#fff}' .
+            '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}.h18-editor-section p:last-child{margin-bottom:0}' .
+            '.h18-editor-card{border-top:4px solid #c3ae83}.h18-editor-highlight{border-left:5px solid #c3ae83}' .
+            '.h18-editor-text-image{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:28px;align-items:center}.h18-editor-text-image--left .h18-editor-media{order:-1}' .
+            '.h18-editor-media img,.h18-editor-image img{display:block;width:100%;height:auto;border-radius:inherit}.h18-editor-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:var(--h18-justify,flex-start)}' .
+            '.h18-editor-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:1px solid #c3ae83;border-radius:5px;background:#c3ae83;color:#20261d;text-decoration:none;font-weight:700}.h18-editor-button--secondary{background:transparent;color:inherit}' .
+            '.h18-page-form,.h18-page-poll{max-width:760px;margin-inline:auto;text-align:left}.h18-page-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.h18-page-form-field{display:flex;flex-direction:column;gap:6px}.h18-page-form-field--wide{grid-column:1/-1}.h18-page-form input,.h18-page-form textarea{box-sizing:border-box;width:100%;padding:11px;border:1px solid #8c8f94;border-radius:4px}.h18-page-form input[type=checkbox]{width:auto;padding:0}.h18-page-form button,.h18-page-poll button{min-height:44px;padding:10px 20px;border:0;border-radius:5px;background:#c3ae83;color:#20261d;font-weight:700;cursor:pointer}' .
+            '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
+            '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
+            '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
+            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0);text-align:var(--h18-mobile-align,center)}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:center}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}}' .
+            '</style>';
+    }
+
+    private function format_page_section_content($content) {
+        return wpautop(wp_kses_post((string) $content));
+    }
+
+    private function poll_option_id($label) {
+        return substr(hash('sha256', (string) $label), 0, 16);
+    }
+
+    private function get_poll_state($storage_key, array $options) {
+        $all = get_option(self::POLL_VOTES_OPTION, []);
+        $state = is_array($all) && isset($all[$storage_key]) && is_array($all[$storage_key])
+            ? $all[$storage_key]
+            : [];
+        $counts = isset($state['Counts']) && is_array($state['Counts']) ? $state['Counts'] : [];
+        foreach ($options as $option) {
+            $id = $this->poll_option_id($option);
+            if (!isset($counts[$id])) {
+                $counts[$id] = 0;
+            }
+        }
+        return [
+            'Counts' => $counts,
+            'Voters' => isset($state['Voters']) && is_array($state['Voters']) ? $state['Voters'] : [],
+            'UpdatedUtc' => (string) ($state['UpdatedUtc'] ?? ''),
+        ];
+    }
+
+    private function is_poll_closed(array $section) {
+        $now = time();
+        $start = $section['StartUtc'] !== '' ? strtotime($section['StartUtc']) : false;
+        $end = $section['EndUtc'] !== '' ? strtotime($section['EndUtc']) : false;
+        return ($start !== false && $now < $start) || ($end !== false && $now > $end);
+    }
+
+    private function render_poll_results(array $section, array $state) {
+        $total = 0;
+        foreach ($section['PollOptions'] as $option) {
+            $total += (int) ($state['Counts'][$this->poll_option_id($option)] ?? 0);
+        }
+        $html = '<div class="h18-poll-results"><strong>Resultat – ' . esc_html($total) . ' stemmer</strong>';
+        foreach ($section['PollOptions'] as $option) {
+            $count = (int) ($state['Counts'][$this->poll_option_id($option)] ?? 0);
+            $percent = $total > 0 ? round(($count / $total) * 100, 1) : 0;
+            $html .= '<div><div><span>' . esc_html($option) . '</span> <strong>' . esc_html($count) . ' (' . esc_html($percent) . '%)</strong></div>' .
+                '<div class="h18-poll-result-bar"><span style="width:' . esc_attr($percent) . '%"></span></div></div>';
+        }
+        return $html . '</div>';
+    }
+
+    private function render_page_editor_section_front($page_id, array $section) {
+        if (empty($section['Active'])) {
+            return '';
+        }
+        if ($section['Type'] === 'legacy') {
+            return (string) $section['LegacyHtml'];
+        }
+
+        $background_class = strtolower((string) $section['Background']);
+        $style = '--h18-top:' . (int) $section['TopSpacingPx'] . 'px;' .
+            '--h18-bottom:' . (int) $section['BottomSpacingPx'] . 'px;' .
+            '--h18-mobile-top:' . (int) $section['MobileTopSpacingPx'] . 'px;' .
+            '--h18-mobile-bottom:' . (int) $section['MobileBottomSpacingPx'] . 'px;' .
+            '--h18-pad:' . (int) $section['PaddingPx'] . 'px;' .
+            '--h18-mobile-pad:' . (int) $section['MobilePaddingPx'] . 'px;' .
+            '--h18-radius:' . (int) $section['RadiusPx'] . 'px;' .
+            '--h18-align:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'left') . ';' .
+            '--h18-mobile-align:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'left') . ';' .
+            '--h18-justify:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'flex-start') . ';';
+        $classes = 'h18-editor-section h18-editor-section--' . $background_class;
+        if ($section['Type'] === 'card') {
+            $classes .= ' h18-editor-card';
+        } elseif ($section['Type'] === 'highlight') {
+            $classes .= ' h18-editor-highlight';
+        }
+        $id = 'h18-section-' . sanitize_html_class($section['Key']);
+        $title = $section['Title'] !== '' ? '<h2>' . esc_html($section['Title']) . '</h2>' : '';
+        $content = $this->format_page_section_content($section['Content']);
+        $inner = $title . $content;
+
+        if ($section['Type'] === 'text_image') {
+            $image = $section['MediaId'] ? wp_get_attachment_image($section['MediaId'], 'large', false, ['loading' => 'lazy']) : '';
+            if ($image === '' && $section['MediaUrl'] !== '') {
+                $image = '<img src="' . esc_url($section['MediaUrl']) . '" alt="" loading="lazy" />';
+            }
+            $position = $section['ImagePosition'] === 'Left' ? ' h18-editor-text-image--left' : '';
+            $inner = '<div class="h18-editor-text-image' . $position . '"><div class="h18-editor-copy">' . $title . $content . '</div><div class="h18-editor-media">' . $image . '</div></div>';
+        } elseif ($section['Type'] === 'image') {
+            $image = $section['MediaId'] ? wp_get_attachment_image($section['MediaId'], 'full', false, ['loading' => 'lazy']) : '';
+            if ($image === '' && $section['MediaUrl'] !== '') {
+                $image = '<img src="' . esc_url($section['MediaUrl']) . '" alt="" loading="lazy" />';
+            }
+            $inner = $title . '<figure class="h18-editor-image">' . $image . ($section['Content'] !== '' ? '<figcaption>' . wp_kses_post($section['Content']) . '</figcaption>' : '') . '</figure>';
+        } elseif ($section['Type'] === 'buttons') {
+            $buttons = '';
+            if ($section['Button1Label'] !== '' && $section['Button1Url'] !== '') {
+                $buttons .= '<a class="h18-editor-button" href="' . esc_url($section['Button1Url']) . '">' . esc_html($section['Button1Label']) . '</a>';
+            }
+            if ($section['Button2Label'] !== '' && $section['Button2Url'] !== '') {
+                $buttons .= '<a class="h18-editor-button h18-editor-button--secondary" href="' . esc_url($section['Button2Url']) . '">' . esc_html($section['Button2Label']) . '</a>';
+            }
+            $inner = $title . $content . '<div class="h18-editor-actions">' . $buttons . '</div>';
+        } elseif ($section['Type'] === 'spacer') {
+            return '<div class="h18-editor-spacer" aria-hidden="true" style="--h18-spacer:' . (int) $section['SpacerPx'] . 'px;--h18-mobile-spacer:' . (int) $section['MobileSpacerPx'] . 'px"></div>';
+        } elseif ($section['Type'] === 'mail_form') {
+            $module_key = isset($_GET['h18_module']) ? sanitize_key(wp_unslash($_GET['h18_module'])) : '';
+            $status = $module_key === $section['Key'] && isset($_GET['h18_form']) ? sanitize_key(wp_unslash($_GET['h18_form'])) : '';
+            $message = '';
+            if ($status === 'success') {
+                $message = '<div class="h18-module-message h18-module-message--success">' . esc_html($section['SuccessMessage']) . '</div>';
+            } elseif ($status === 'error') {
+                $message = '<div class="h18-module-message h18-module-message--error">Beskeden kunne ikke sendes. Kontrollér felterne og prøv igen.</div>';
+            }
+            $consent = $section['ConsentLabel'] !== ''
+                ? '<label class="h18-page-form-field h18-page-form-field--wide"><span><input type="checkbox" name="consent" value="1" required /> ' . esc_html($section['ConsentLabel']) . '</span></label>'
+                : '';
+            $inner = $title . $content . $message . '<form class="h18-page-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">' .
+                '<input type="hidden" name="action" value="h18_send_page_form" /><input type="hidden" name="page_id" value="' . (int) $page_id . '" /><input type="hidden" name="section_key" value="' . esc_attr($section['Key']) . '" />' .
+                wp_nonce_field('h18_send_page_form_' . (int) $page_id . '_' . $section['Key'], 'h18_form_nonce', true, false) .
+                '<input type="hidden" name="started" value="' . time() . '" /><div style="position:absolute;left:-10000px" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>' .
+                '<div class="h18-page-form-grid"><label class="h18-page-form-field"><span>Navn</span><input type="text" name="sender_name" required /></label><label class="h18-page-form-field"><span>E-mail</span><input type="email" name="sender_email" required /></label>' .
+                '<label class="h18-page-form-field h18-page-form-field--wide"><span>Emne</span><input type="text" name="sender_subject" required /></label><label class="h18-page-form-field h18-page-form-field--wide"><span>Besked</span><textarea name="sender_message" rows="7" required></textarea></label>' . $consent .
+                '<div class="h18-page-form-field h18-page-form-field--wide"><button type="submit">Send besked</button></div></div></form>';
+        } elseif ($section['Type'] === 'poll') {
+            $storage_key = $this->page_module_storage_key($page_id, $section['Key']);
+            $state = $this->get_poll_state($storage_key, $section['PollOptions']);
+            $cookie_name = 'h18_poll_' . $storage_key;
+            $voted = !empty($_COOKIE[$cookie_name]);
+            $closed = $this->is_poll_closed($section);
+            $module_key = isset($_GET['h18_module']) ? sanitize_key(wp_unslash($_GET['h18_module'])) : '';
+            $status = $module_key === $section['Key'] && isset($_GET['h18_poll']) ? sanitize_key(wp_unslash($_GET['h18_poll'])) : '';
+            $message = $status === 'success' ? '<div class="h18-module-message h18-module-message--success">Tak for din stemme.</div>' : '';
+            if ($status === 'duplicate') {
+                $message = '<div class="h18-module-message">Du har allerede stemt i denne afstemning.</div>';
+            } elseif ($status === 'error') {
+                $message = '<div class="h18-module-message h18-module-message--error">Stemmen kunne ikke registreres.</div>';
+            }
+            $input_type = !empty($section['AllowMultiple']) ? 'checkbox' : 'radio';
+            $options_html = '';
+            foreach ($section['PollOptions'] as $option) {
+                $options_html .= '<label class="h18-poll-option"><input type="' . $input_type . '" name="answers[]" value="' . esc_attr($this->poll_option_id($option)) . '" /> <span>' . esc_html($option) . '</span></label>';
+            }
+            $form = '';
+            if (!$closed && !$voted) {
+                $form = '<form class="h18-page-poll" method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="h18_submit_poll" /><input type="hidden" name="page_id" value="' . (int) $page_id . '" /><input type="hidden" name="section_key" value="' . esc_attr($section['Key']) . '" />' .
+                    wp_nonce_field('h18_submit_poll_' . (int) $page_id . '_' . $section['Key'], 'h18_poll_nonce', true, false) . '<input type="hidden" name="started" value="' . time() . '" /><div style="position:absolute;left:-10000px" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div><div class="h18-poll-options">' . $options_html . '</div><button type="submit">Afgiv stemme</button></form>';
+            } elseif ($closed) {
+                $form = '<p><strong>Afstemningen er ikke åben.</strong></p>';
+            }
+            $show_results = $section['ResultsMode'] === 'always' || ($section['ResultsMode'] === 'after_vote' && ($voted || in_array($status, ['success', 'duplicate'], true))) || ($section['ResultsMode'] === 'after_close' && $closed);
+            $inner = $title . $content . $message . $form . ($show_results ? $this->render_poll_results($section, $state) : '');
+        }
+
+        return '<section id="' . esc_attr($id) . '" class="' . esc_attr($classes) . '" style="' . esc_attr($style) . '">' . $inner . '</section>';
+    }
+
+    private function render_page_editor_front($page_id, array $data) {
+        $html = $this->page_editor_frontend_css($page_id) . '<div class="h18-editor-page">';
+        foreach ($data['Sections'] as $section) {
+            $html .= $this->render_page_editor_section_front($page_id, $section);
+        }
+        return $html . '</div>';
+    }
+
+    private function build_page_editor_core($slug, array $data) {
+        $marker = $this->encode_marker(self::PAGE_EDITOR_MARKER, $data);
+        return $marker . "\n<!-- wp:shortcode -->\n[hangar18_page_editor slug=\"" . esc_attr($slug) . "\"]\n<!-- /wp:shortcode -->";
+    }
+
+    public function shortcode_page_editor($atts) {
+        $atts = shortcode_atts(['slug' => ''], $atts, 'hangar18_page_editor');
+        $slug = sanitize_title((string) $atts['slug']);
+        $page_id = (int) get_the_ID();
+        $page = $page_id ? get_post($page_id) : $this->post_by_slug($slug);
+        if (!$page instanceof WP_Post) {
+            return '';
+        }
+        if ($slug === '') {
+            $slug = $page->post_name;
+        }
+        $data = $this->get_page_editor_data($slug, $page);
+        return $this->render_page_editor_front($page->ID, $data);
+    }
+
+    private function page_form_submission_count($page_id, $section_key) {
+        $all = get_option(self::FORM_SUBMISSIONS_OPTION, []);
+        $storage_key = $this->page_module_storage_key($page_id, $section_key);
+        return is_array($all) && isset($all[$storage_key]) && is_array($all[$storage_key])
+            ? count($all[$storage_key])
+            : 0;
+    }
+
+    private function page_poll_vote_count($page_id, array $section) {
+        $storage_key = $this->page_module_storage_key($page_id, $section['Key']);
+        $state = $this->get_poll_state($storage_key, $section['PollOptions']);
+        return array_sum(array_map('intval', $state['Counts']));
+    }
+
+    private function render_page_editor_section_admin($page, array $section, $index, $is_template = false) {
+        $prefix = 'sections[' . $index . ']';
+        $type_labels = $this->page_section_type_labels();
+        $export_poll = '';
+        $export_forms = '';
+        $test_form = '';
+        if (!$is_template && $section['Type'] === 'poll') {
+            $export_poll = wp_nonce_url(
+                admin_url('admin-post.php?action=h18_export_poll&page_id=' . (int) $page->ID . '&section_key=' . rawurlencode($section['Key'])),
+                'h18_export_poll_' . (int) $page->ID . '_' . $section['Key']
+            );
+        }
+        if (!$is_template && $section['Type'] === 'mail_form') {
+            $export_forms = wp_nonce_url(
+                admin_url('admin-post.php?action=h18_export_form_submissions&page_id=' . (int) $page->ID . '&section_key=' . rawurlencode($section['Key'])),
+                'h18_export_form_submissions_' . (int) $page->ID . '_' . $section['Key']
+            );
+            $test_form = wp_nonce_url(
+                admin_url('admin-post.php?action=h18_test_page_form&page_id=' . (int) $page->ID . '&section_key=' . rawurlencode($section['Key'])),
+                'h18_test_page_form_' . (int) $page->ID . '_' . $section['Key']
+            );
+        }
+        ?>
+        <article class="h18-page-section-row" data-section-index="<?php echo esc_attr($index); ?>">
+            <input class="h18-page-section-order" type="hidden" name="<?php echo esc_attr($prefix); ?>[Order]" value="<?php echo esc_attr($section['Order']); ?>" />
+            <input class="h18-page-section-key" type="hidden" name="<?php echo esc_attr($prefix); ?>[Key]" value="<?php echo esc_attr($section['Key']); ?>" />
+            <input class="h18-page-section-remove" type="hidden" name="<?php echo esc_attr($prefix); ?>[Remove]" value="0" />
+
+            <header class="h18-page-section-header">
+                <span class="dashicons dashicons-move h18-page-section-drag" title="Flyt sektion"></span>
+                <div>
+                    <strong class="h18-page-section-summary"><?php echo esc_html($type_labels[$section['Type']] ?? 'Sektion'); ?></strong>
+                    <span class="h18-page-section-title-summary"><?php echo esc_html($section['Title']); ?></span>
+                </div>
+                <div class="h18-page-section-header-actions">
+                    <label><input class="h18-section-active" type="checkbox" name="<?php echo esc_attr($prefix); ?>[Active]" value="1" <?php checked(!empty($section['Active'])); ?> /> Vis</label>
+                    <?php if ($section['Type'] !== 'legacy') : ?><button class="button h18-page-section-duplicate" type="button">Duplikér</button><?php endif; ?>
+                    <button class="button-link-delete h18-page-section-delete" type="button">Fjern</button>
+                </div>
+            </header>
+
+            <div class="h18-page-section-body">
+                <?php if ($section['Type'] === 'legacy') : ?>
+                    <input type="hidden" name="<?php echo esc_attr($prefix); ?>[Type]" value="legacy" />
+                    <div class="h18-legacy-content-note">
+                        <strong>Eksisterende indhold er bevaret uændret</strong>
+                        <p>Dette er sidens indhold fra før den nye editor. Tilføj nye sektioner omkring det, eller fjern sektionen, når siden er bygget færdig i editoren.</p>
+                    </div>
+                <?php else : ?>
+                    <div class="h18-page-section-main-grid">
+                        <div class="h18-field">
+                            <label><strong>Sektionstype</strong></label>
+                            <select class="h18-page-section-type" name="<?php echo esc_attr($prefix); ?>[Type]">
+                                <?php foreach ($type_labels as $value => $label) : if ($value === 'legacy') { continue; } ?>
+                                    <option value="<?php echo esc_attr($value); ?>" <?php selected($section['Type'], $value); ?>><?php echo esc_html($label); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="h18-field h18-section-type-field" data-types="text text_image image buttons card highlight mail_form poll">
+                            <label><strong class="h18-section-title-label"><?php echo $section['Type'] === 'poll' ? 'Spørgsmål' : 'Overskrift'; ?></strong></label>
+                            <input class="h18-section-title-input" type="text" name="<?php echo esc_attr($prefix); ?>[Title]" value="<?php echo esc_attr($section['Title']); ?>" />
+                        </div>
+
+                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="text text_image image buttons card highlight mail_form poll">
+                            <label><strong><?php echo $section['Type'] === 'image' ? 'Billedtekst' : 'Tekst'; ?></strong></label>
+                            <div class="h18-mini-editor-toolbar"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
+                            <textarea name="<?php echo esc_attr($prefix); ?>[Content]" rows="5"><?php echo esc_textarea($section['Content']); ?></textarea>
+                            <p class="description">Almindelig tekst samt enkel formatering som fed, kursiv, links og lister er tilladt.</p>
+                        </div>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box" data-types="text_image image">
+                        <h4>Billede</h4>
+                        <div class="h18-module-fields-grid">
+                            <div class="h18-field">
+                                <label><strong>Mediebibliotek</strong></label>
+                                <input class="h18-section-media-id" type="hidden" name="<?php echo esc_attr($prefix); ?>[MediaId]" value="<?php echo esc_attr($section['MediaId']); ?>" />
+                                <input class="h18-section-media-url" type="hidden" name="<?php echo esc_attr($prefix); ?>[MediaUrl]" value="<?php echo esc_attr($section['MediaUrl']); ?>" />
+                                <div class="h18-section-media-preview"><?php if ($section['MediaId']) { echo wp_get_attachment_image($section['MediaId'], 'thumbnail'); } ?></div>
+                                <button class="button h18-page-select-media" type="button">Vælg billede</button>
+                                <button class="button-link-delete h18-page-remove-media" type="button">Fjern billede</button>
+                            </div>
+                            <div class="h18-field h18-section-type-field" data-types="text_image">
+                                <label><strong>Billedplacering på desktop</strong></label>
+                                <select name="<?php echo esc_attr($prefix); ?>[ImagePosition]"><option value="Left" <?php selected($section['ImagePosition'], 'Left'); ?>>Venstre</option><option value="Right" <?php selected($section['ImagePosition'], 'Right'); ?>>Højre</option></select>
+                                <p class="description">På mobil vises billedet automatisk over teksten.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box" data-types="buttons">
+                        <h4>Knapper</h4>
+                        <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                            <div class="h18-field"><label><strong>Knap 1 – tekst</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[Button1Label]" value="<?php echo esc_attr($section['Button1Label']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Knap 1 – link</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[Button1Url]" value="<?php echo esc_attr($section['Button1Url']); ?>" placeholder="https:// eller /kontakt/" /></div>
+                            <div class="h18-field"><label><strong>Knap 2 – tekst</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[Button2Label]" value="<?php echo esc_attr($section['Button2Label']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Knap 2 – link</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[Button2Url]" value="<?php echo esc_attr($section['Button2Url']); ?>" placeholder="https:// eller /bliv-medlem/" /></div>
+                        </div>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box" data-types="mail_form">
+                        <h4>Mailformular</h4>
+                        <p>Modtageradressen læses kun fra den gemte opsætning og sendes aldrig med formularen til besøgerens browser.</p>
+                        <div class="h18-module-fields-grid">
+                            <div class="h18-field"><label><strong>Modtageradresse</strong></label><input type="email" name="<?php echo esc_attr($prefix); ?>[RecipientEmail]" value="<?php echo esc_attr($section['RecipientEmail']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Bekræftelse efter afsendelse</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[SuccessMessage]" value="<?php echo esc_attr($section['SuccessMessage']); ?>" /></div>
+                            <div class="h18-field h18-field-wide"><label><strong>Samtykketekst (valgfri)</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[ConsentLabel]" value="<?php echo esc_attr($section['ConsentLabel']); ?>" placeholder="Jeg accepterer, at foreningen behandler min henvendelse." /></div>
+                            <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[StoreSubmissions]" value="1" <?php checked(!empty($section['StoreSubmissions'])); ?> /> Gem også henvendelser i WordPress</label>
+                        </div>
+                        <?php if (!$is_template) : ?>
+                            <div class="h18-module-status"><strong><?php echo esc_html($this->page_form_submission_count($page->ID, $section['Key'])); ?> gemte henvendelser</strong><?php if ($export_forms) : ?> · <a href="<?php echo esc_url($export_forms); ?>">Eksportér CSV</a><?php endif; ?><?php if ($test_form) : ?> · <a href="<?php echo esc_url($test_form); ?>">Send testmail</a><?php endif; ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box" data-types="poll">
+                        <h4>Afstemning</h4>
+                        <div class="h18-module-fields-grid">
+                            <div class="h18-field h18-field-wide"><label><strong>Svarmuligheder – én pr. linje</strong></label><textarea name="<?php echo esc_attr($prefix); ?>[PollOptions]" rows="5"><?php echo esc_textarea(implode("\n", $section['PollOptions'])); ?></textarea></div>
+                            <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[AllowMultiple]" value="1" <?php checked(!empty($section['AllowMultiple'])); ?> /> Tillad flere svar</label>
+                            <div class="h18-field"><label><strong>Vis resultat</strong></label><select name="<?php echo esc_attr($prefix); ?>[ResultsMode]"><option value="after_vote" <?php selected($section['ResultsMode'], 'after_vote'); ?>>Efter besøgeren har stemt</option><option value="always" <?php selected($section['ResultsMode'], 'always'); ?>>Altid</option><option value="after_close" <?php selected($section['ResultsMode'], 'after_close'); ?>>Efter afslutning</option></select></div>
+                            <div class="h18-field"><label><strong>Start (valgfri)</strong></label><input type="datetime-local" name="<?php echo esc_attr($prefix); ?>[StartUtc]" value="<?php echo esc_attr($section['StartUtc']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Slut (valgfri)</strong></label><input type="datetime-local" name="<?php echo esc_attr($prefix); ?>[EndUtc]" value="<?php echo esc_attr($section['EndUtc']); ?>" /></div>
+                            <?php if (!$is_template) : ?><label class="h18-remove-choice"><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[ResetVotes]" value="1" /> Nulstil alle stemmer ved næste gemning</label><?php endif; ?>
+                        </div>
+                        <?php if (!$is_template) : ?>
+                            <div class="h18-module-status"><strong><?php echo esc_html($this->page_poll_vote_count($page->ID, $section)); ?> registrerede stemmer</strong><?php if ($export_poll) : ?> · <a href="<?php echo esc_url($export_poll); ?>">Eksportér CSV</a><?php endif; ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box" data-types="spacer">
+                        <h4>Afstand</h4>
+                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Desktop (px)</strong></label><input type="number" min="0" max="200" name="<?php echo esc_attr($prefix); ?>[SpacerPx]" value="<?php echo esc_attr($section['SpacerPx']); ?>" /></div><div class="h18-field"><label><strong>Mobil (px)</strong></label><input type="number" min="0" max="140" name="<?php echo esc_attr($prefix); ?>[MobileSpacerPx]" value="<?php echo esc_attr($section['MobileSpacerPx']); ?>" /></div></div>
+                    </div>
+
+                    <details class="h18-page-section-layout">
+                        <summary>Luft, baggrund og placering</summary>
+                        <div class="h18-layout-devices">
+                            <fieldset class="h18-layout-device"><legend>Desktop</legend><div class="h18-layout-fields">
+                                <div class="h18-field"><label><strong>Placering</strong></label><select name="<?php echo esc_attr($prefix); ?>[DesktopAlignment]"><option value="Left" <?php selected($section['DesktopAlignment'], 'Left'); ?>>Venstre</option><option value="Center" <?php selected($section['DesktopAlignment'], 'Center'); ?>>Midtstillet</option></select></div>
+                                <div class="h18-field"><label><strong>Luft før (px)</strong></label><input type="number" min="0" max="160" name="<?php echo esc_attr($prefix); ?>[TopSpacingPx]" value="<?php echo esc_attr($section['TopSpacingPx']); ?>" /></div>
+                                <div class="h18-field"><label><strong>Luft efter (px)</strong></label><input type="number" min="0" max="160" name="<?php echo esc_attr($prefix); ?>[BottomSpacingPx]" value="<?php echo esc_attr($section['BottomSpacingPx']); ?>" /></div>
+                                <div class="h18-field"><label><strong>Indvendig luft (px)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[PaddingPx]" value="<?php echo esc_attr($section['PaddingPx']); ?>" /></div>
+                            </div></fieldset>
+                            <fieldset class="h18-layout-device"><legend>Mobil</legend><div class="h18-layout-fields">
+                                <div class="h18-field"><label><strong>Placering</strong></label><select name="<?php echo esc_attr($prefix); ?>[MobileAlignment]"><option value="Left" <?php selected($section['MobileAlignment'], 'Left'); ?>>Venstre</option><option value="Center" <?php selected($section['MobileAlignment'], 'Center'); ?>>Midtstillet</option></select></div>
+                                <div class="h18-field"><label><strong>Luft før (px)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[MobileTopSpacingPx]" value="<?php echo esc_attr($section['MobileTopSpacingPx']); ?>" /></div>
+                                <div class="h18-field"><label><strong>Luft efter (px)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[MobileBottomSpacingPx]" value="<?php echo esc_attr($section['MobileBottomSpacingPx']); ?>" /></div>
+                                <div class="h18-field"><label><strong>Indvendig luft (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[MobilePaddingPx]" value="<?php echo esc_attr($section['MobilePaddingPx']); ?>" /></div>
+                            </div></fieldset>
+                        </div>
+                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option></select></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /></div></div>
+                    </details>
+                <?php endif; ?>
+            </div>
+        </article>
+        <?php
+    }
+
+    public function render_pages() {
+        $this->require_capability();
+        $definitions = $this->editable_page_definitions();
+        $slug = isset($_GET['page_slug']) ? sanitize_title(wp_unslash($_GET['page_slug'])) : self::HOME_SLUG;
+        if (!isset($definitions[$slug])) {
+            $slug = self::HOME_SLUG;
+        }
+        $page = $this->post_by_slug($slug);
+        $data = $page ? $this->get_page_editor_data($slug, $page) : null;
+        ?>
+        <div class="wrap h18-admin h18-pages-admin">
+            <h1>Sider</h1>
+            <?php $this->render_notice(); ?>
+
+            <div class="h18-help-box"><strong>Hangar18 sideeditor:</strong> Byg almindelige sider af indholdssektioner og funktionsmoduler. Header og footer ligger uden for editoren og kan derfor ikke slettes her. Køretøjer, Events og Billedgalleri har fortsat deres egne redigeringssider.</div>
+
+            <nav class="h18-page-tabs" aria-label="Vælg side">
+                <?php foreach ($definitions as $page_slug => $label) : ?>
+                    <a class="<?php echo $page_slug === $slug ? 'is-active' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-pages&page_slug=' . rawurlencode($page_slug))); ?>"><?php echo esc_html($label); ?></a>
+                <?php endforeach; ?>
+            </nav>
+
+            <?php if (!$page) : ?>
+                <div class="notice notice-error"><p>Siden <strong><?php echo esc_html($definitions[$slug]); ?></strong> blev ikke fundet.</p></div>
+            <?php else : ?>
+                <div class="h18-toolbar"><div><strong>Redigerer:</strong> <?php echo esc_html($page->post_title); ?></div><p class="h18-toolbar-note">Eksisterende indhold bevares som en samlet sektion, indtil du selv vælger at fjerne det.</p><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($page)); ?>">Åbn offentlig side</a></div>
+
+                <form id="h18-page-editor-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <?php wp_nonce_field('h18_save_page_editor'); ?>
+                    <input type="hidden" name="action" value="h18_save_page_editor" />
+                    <input type="hidden" name="page_slug" value="<?php echo esc_attr($slug); ?>" />
+
+                    <div class="h18-form-header">
+                        <div><h2><?php echo esc_html($definitions[$slug]); ?></h2><p>Tilføj sektioner, træk dem i den ønskede rækkefølge, og kontrollér desktop- og mobilvisningen.</p></div>
+                        <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
+                    </div>
+
+                    <div class="h18-page-editor-title h18-layout-card">
+                        <div class="h18-field"><label><strong>WordPress-sidetitel</strong></label><input type="text" name="editor_page_title" value="<?php echo esc_attr($data['PageTitle']); ?>" required /><p class="description">Menupunktets viste navn ændres fortsat under Menu.</p></div>
+                    </div>
+
+                    <div class="h18-page-preview-toolbar">
+                        <strong>Editorvisning:</strong>
+                        <button type="button" class="button h18-preview-device is-active" data-device="desktop">Desktop</button>
+                        <button type="button" class="button h18-preview-device" data-device="tablet">Tablet</button>
+                        <button type="button" class="button h18-preview-device" data-device="mobile">Mobil</button>
+                        <span>Visningen gør arbejdsområdet smallere. Den offentlige side åbnes med knappen ovenfor.</span>
+                    </div>
+
+                    <div id="h18-page-sections-sortable" class="h18-page-sections h18-preview-desktop">
+                        <?php foreach ($data['Sections'] as $index => $section) { $this->render_page_editor_section_admin($page, $section, $index); } ?>
+                    </div>
+
+                    <div class="h18-add-section-bar">
+                        <div><strong>Tilføj ny sektion eller funktion</strong><p>Den nye sektion indsættes nederst og kan derefter trækkes på plads.</p></div>
+                        <select id="h18-new-section-type"><?php foreach ($this->page_section_type_labels() as $value => $label) : if ($value === 'legacy') { continue; } ?><option value="<?php echo esc_attr($value); ?>"><?php echo esc_html($label); ?></option><?php endforeach; ?></select>
+                        <button id="h18-add-page-section" class="button button-secondary" type="button">Tilføj sektion</button>
+                    </div>
+
+                    <div class="h18-form-actions h18-explained-action">
+                        <div class="h18-whatif-help"><div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Simulering kontrollerer opsætningen uden at gemme siden, nulstille stemmer eller sende noget.</span></div></div>
+                        <div class="h18-action-submit"><button class="button button-primary button-hero" type="submit">Gem siden</button><div class="h18-action-copy"><strong>Backup og WordPress-revision</strong><span>Gemmer sektionsdata og bygger siden igen med den fælles header, footer og designmanual.</span></div></div>
+                    </div>
+                </form>
+
+                <template id="h18-page-section-template"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    private function redirect_page_editor($slug) {
+        $this->redirect('hangar18-pages', ['page_slug' => sanitize_title((string) $slug)]);
+    }
+
+    private function reset_poll_storage($page_id, $section_key) {
+        $all = get_option(self::POLL_VOTES_OPTION, []);
+        if (!is_array($all)) {
+            $all = [];
+        }
+        unset($all[$this->page_module_storage_key($page_id, $section_key)]);
+        update_option(self::POLL_VOTES_OPTION, $all, false);
+    }
+
+    public function handle_save_page_editor() {
+        $this->require_capability();
+        check_admin_referer('h18_save_page_editor');
+
+        $slug = sanitize_title($this->post_text('page_slug'));
+        $definitions = $this->editable_page_definitions();
+        if (!isset($definitions[$slug])) {
+            $this->set_notice('error', 'Den valgte side kan ikke redigeres i Hangar18 sideeditor.');
+            $this->redirect_page_editor(self::HOME_SLUG);
+        }
+        $page = $this->post_by_slug($slug);
+        if (!$page) {
+            $this->set_notice('error', 'Siden blev ikke fundet.');
+            $this->redirect_page_editor($slug);
+        }
+
+        $current = $this->get_page_editor_data($slug, $page);
+        $legacy_by_key = [];
+        foreach ($current['Sections'] as $existing) {
+            if ($existing['Type'] === 'legacy') {
+                $legacy_by_key[$existing['Key']] = $existing;
+            }
+        }
+
+        $submitted = isset($_POST['sections']) && is_array($_POST['sections'])
+            ? wp_unslash($_POST['sections'])
+            : [];
+        $sections = [];
+        $reset_keys = [];
+        foreach (array_slice($submitted, 0, 25) as $index => $raw) {
+            if (!is_array($raw) || !empty($raw['Remove'])) {
+                continue;
+            }
+            $raw['Active'] = !empty($raw['Active']);
+            $raw['StoreSubmissions'] = !empty($raw['StoreSubmissions']);
+            $raw['AllowMultiple'] = !empty($raw['AllowMultiple']);
+            $key = sanitize_key((string) ($raw['Key'] ?? ''));
+            $legacy = isset($legacy_by_key[$key]) ? $legacy_by_key[$key] : [];
+            $section = $this->normalize_page_section($raw, $index, $legacy);
+            $sections[] = $section;
+            if ($section['Type'] === 'poll' && !empty($raw['ResetVotes'])) {
+                $reset_keys[] = $section['Key'];
+            }
+        }
+
+        $data = $this->normalize_page_editor_data([
+            'Version'   => '1.0',
+            'PageSlug'  => $slug,
+            'PageTitle' => $this->post_text('editor_page_title'),
+            'Sections'  => $sections,
+        ], $page);
+
+        if (!empty($_POST['whatif'])) {
+            $active = count(array_filter($data['Sections'], static function($section) { return !empty($section['Active']); }));
+            $this->log('WARN', 'WHATIF_PAGE_EDITOR_SAVE', "[WHATIF] {$slug} ville få {$active} aktive sektioner.");
+            $this->set_notice('warning', "WHATIF: Siden ville få {$active} aktive sektioner. Ingen side, stemmer eller data blev ændret.");
+            $this->redirect_page_editor($slug);
+        }
+
+        try {
+            $this->create_full_managed_backup("Før sideeditor gemte {$slug}");
+            foreach ($reset_keys as $reset_key) {
+                $this->reset_poll_storage($page->ID, $reset_key);
+            }
+
+            $this->save_page_editor_data($slug, $data);
+            $store = $this->get_page_editor_store();
+            $published = [
+                'Version' => '1.0',
+                'Saved'   => gmdate('c'),
+                'Pages'   => $store,
+            ];
+            $this->publish_configuration_file('Hangar18-Pages.json', $published);
+
+            $result = wp_update_post([
+                'ID'            => $page->ID,
+                'post_title'    => $data['PageTitle'],
+                'page_template' => 'default',
+                'post_content'  => $this->wrap_with_shell($this->build_page_editor_core($slug, $data), $page->ID),
+            ], true);
+            if (is_wp_error($result)) {
+                throw new RuntimeException($result->get_error_message());
+            }
+
+            $active = count(array_filter($data['Sections'], static function($section) { return !empty($section['Active']); }));
+            $this->log('INFO', 'PAGE_EDITOR_SAVE_SUCCESS', "Sideeditor gemte {$slug}. AktiveSektioner={$active}; NulstilledeAfstemninger=" . count($reset_keys) . '.');
+            $this->set_notice('success', "Siden er gemt med {$active} aktive sektioner. Backup og WordPress-revision er oprettet.");
+        } catch (Throwable $e) {
+            $this->log('ERROR', 'PAGE_EDITOR_SAVE_FAILED', $e->getMessage());
+            $this->set_notice('error', 'Siden kunne ikke gemmes: ' . $e->getMessage());
+        }
+        $this->redirect_page_editor($slug);
+    }
+
+    private function public_module_redirect($page, $section_key, $parameter, $status) {
+        $url = add_query_arg([
+            sanitize_key($parameter) => sanitize_key($status),
+            'h18_module'              => sanitize_key((string) $section_key),
+        ], get_permalink($page));
+        $url .= '#h18-section-' . sanitize_html_class((string) $section_key);
+        wp_safe_redirect($url);
+        exit;
+    }
+
+    private function request_fingerprint() {
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+        $agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+        return hash_hmac('sha256', $ip . '|' . $agent, wp_salt('nonce'));
+    }
+
+    public function handle_send_page_form() {
+        $page_id = absint($_POST['page_id'] ?? 0);
+        $section_key = sanitize_key((string) wp_unslash($_POST['section_key'] ?? ''));
+        [$page, $section] = $this->find_page_module($page_id, $section_key, 'mail_form');
+        if (!$page || !$section) {
+            wp_die('Mailformularen findes ikke længere.', 'Hangar18', ['response' => 404]);
+        }
+
+        $nonce = isset($_POST['h18_form_nonce']) ? sanitize_text_field(wp_unslash($_POST['h18_form_nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'h18_send_page_form_' . $page_id . '_' . $section_key)) {
+            $this->public_module_redirect($page, $section_key, 'h18_form', 'error');
+        }
+        if (!empty($_POST['website'])) {
+            $this->public_module_redirect($page, $section_key, 'h18_form', 'success');
+        }
+        $started = absint($_POST['started'] ?? 0);
+        if ($started <= 0 || time() - $started < 2 || time() - $started > 7200) {
+            $this->public_module_redirect($page, $section_key, 'h18_form', 'error');
+        }
+
+        $fingerprint = $this->request_fingerprint();
+        $rate_key = 'h18_form_rate_' . substr(hash('sha256', $page_id . '|' . $section_key . '|' . $fingerprint), 0, 32);
+        if (get_transient($rate_key)) {
+            $this->public_module_redirect($page, $section_key, 'h18_form', 'error');
+        }
+
+        $name = sanitize_text_field((string) wp_unslash($_POST['sender_name'] ?? ''));
+        $email = sanitize_email((string) wp_unslash($_POST['sender_email'] ?? ''));
+        $subject = sanitize_text_field((string) wp_unslash($_POST['sender_subject'] ?? ''));
+        $message = sanitize_textarea_field((string) wp_unslash($_POST['sender_message'] ?? ''));
+        if ($name === '' || !is_email($email) || $subject === '' || $message === '') {
+            $this->public_module_redirect($page, $section_key, 'h18_form', 'error');
+        }
+        if ($section['ConsentLabel'] !== '' && empty($_POST['consent'])) {
+            $this->public_module_redirect($page, $section_key, 'h18_form', 'error');
+        }
+
+        $recipient = is_email($section['RecipientEmail']) ? $section['RecipientEmail'] : sanitize_email((string) get_option('admin_email'));
+        $mail_subject = '[' . wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES) . '] ' . $subject;
+        $mail_body = "Ny henvendelse fra hjemmesiden\n\nNavn: {$name}\nE-mail: {$email}\nSide: " . get_permalink($page) . "\n\nEmne: {$subject}\n\nBesked:\n{$message}\n";
+        $headers = ['Reply-To: ' . $name . ' <' . $email . '>'];
+        set_transient($rate_key, 1, MINUTE_IN_SECONDS);
+        $sent = wp_mail($recipient, $mail_subject, $mail_body, $headers);
+        if (!$sent) {
+            $this->log('ERROR', 'PAGE_FORM_MAIL_FAILED', "Mailformular kunne ikke sende fra side ID {$page_id}, sektion {$section_key}.");
+            $this->public_module_redirect($page, $section_key, 'h18_form', 'error');
+        }
+
+        if (!empty($section['StoreSubmissions'])) {
+            $all = get_option(self::FORM_SUBMISSIONS_OPTION, []);
+            if (!is_array($all)) {
+                $all = [];
+            }
+            $storage_key = $this->page_module_storage_key($page_id, $section_key);
+            $items = isset($all[$storage_key]) && is_array($all[$storage_key]) ? $all[$storage_key] : [];
+            $items[] = ['ReceivedUtc' => gmdate('c'), 'Name' => $name, 'Email' => $email, 'Subject' => $subject, 'Message' => $message];
+            $all[$storage_key] = array_slice($items, -200);
+            update_option(self::FORM_SUBMISSIONS_OPTION, $all, false);
+        }
+
+        $this->log('INFO', 'PAGE_FORM_MAIL_SENT', "Mailformular sendte fra side ID {$page_id}, sektion {$section_key}.");
+        $this->public_module_redirect($page, $section_key, 'h18_form', 'success');
+    }
+
+    public function handle_submit_poll() {
+        $page_id = absint($_POST['page_id'] ?? 0);
+        $section_key = sanitize_key((string) wp_unslash($_POST['section_key'] ?? ''));
+        [$page, $section] = $this->find_page_module($page_id, $section_key, 'poll');
+        if (!$page || !$section) {
+            wp_die('Afstemningen findes ikke længere.', 'Hangar18', ['response' => 404]);
+        }
+        $nonce = isset($_POST['h18_poll_nonce']) ? sanitize_text_field(wp_unslash($_POST['h18_poll_nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'h18_submit_poll_' . $page_id . '_' . $section_key) || $this->is_poll_closed($section)) {
+            $this->public_module_redirect($page, $section_key, 'h18_poll', 'error');
+        }
+        $started = absint($_POST['started'] ?? 0);
+        if (!empty($_POST['website']) || $started <= 0 || time() - $started < 1 || time() - $started > 7200) {
+            $this->public_module_redirect($page, $section_key, 'h18_poll', 'error');
+        }
+
+        $answers = isset($_POST['answers']) && is_array($_POST['answers']) ? array_map('sanitize_key', wp_unslash($_POST['answers'])) : [];
+        $answers = array_values(array_unique($answers));
+        $allowed = [];
+        foreach ($section['PollOptions'] as $option) {
+            $allowed[$this->poll_option_id($option)] = $option;
+        }
+        $answers = array_values(array_filter($answers, static function($answer) use ($allowed) { return isset($allowed[$answer]); }));
+        if (!$answers || (empty($section['AllowMultiple']) && count($answers) !== 1)) {
+            $this->public_module_redirect($page, $section_key, 'h18_poll', 'error');
+        }
+
+        $storage_key = $this->page_module_storage_key($page_id, $section_key);
+        $state = $this->get_poll_state($storage_key, $section['PollOptions']);
+        $fingerprint = $this->request_fingerprint();
+        $cookie_name = 'h18_poll_' . $storage_key;
+        if (isset($state['Voters'][$fingerprint]) || !empty($_COOKIE[$cookie_name])) {
+            $this->public_module_redirect($page, $section_key, 'h18_poll', 'duplicate');
+        }
+        foreach ($answers as $answer) {
+            $state['Counts'][$answer] = (int) ($state['Counts'][$answer] ?? 0) + 1;
+        }
+        $state['Voters'][$fingerprint] = gmdate('c');
+        if (count($state['Voters']) > 5000) {
+            $state['Voters'] = array_slice($state['Voters'], -5000, null, true);
+        }
+        $state['UpdatedUtc'] = gmdate('c');
+        $all = get_option(self::POLL_VOTES_OPTION, []);
+        if (!is_array($all)) {
+            $all = [];
+        }
+        $all[$storage_key] = $state;
+        update_option(self::POLL_VOTES_OPTION, $all, false);
+        setcookie($cookie_name, '1', ['expires' => time() + YEAR_IN_SECONDS, 'path' => COOKIEPATH ?: '/', 'secure' => is_ssl(), 'httponly' => true, 'samesite' => 'Lax']);
+        $this->public_module_redirect($page, $section_key, 'h18_poll', 'success');
+    }
+
+    private function csv_safe_cell($value) {
+        $value = (string) $value;
+        return preg_match('/^\s*[=+\-@]/', $value) ? "'" . $value : $value;
+    }
+
+    private function start_csv_download($filename) {
+        nocache_headers();
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . sanitize_file_name($filename) . '"');
+        echo "\xEF\xBB\xBF";
+        return fopen('php://output', 'w');
+    }
+
+    public function handle_test_page_form() {
+        $this->require_capability();
+        $page_id = absint($_GET['page_id'] ?? 0);
+        $section_key = sanitize_key((string) wp_unslash($_GET['section_key'] ?? ''));
+        check_admin_referer('h18_test_page_form_' . $page_id . '_' . $section_key);
+        [$page, $section] = $this->find_page_module($page_id, $section_key, 'mail_form', false);
+        if (!$page || !$section) {
+            wp_die('Mailformularen blev ikke fundet.');
+        }
+        $recipient = is_email($section['RecipientEmail']) ? $section['RecipientEmail'] : sanitize_email((string) get_option('admin_email'));
+        $subject = '[Hangar18] Test af mailformular';
+        $message = "Dette er en test fra Hangar18 sideeditor.\n\nSide: " . get_permalink($page) . "\nSektion: {$section_key}\nTid UTC: " . gmdate('c');
+        if (wp_mail($recipient, $subject, $message)) {
+            $this->log('INFO', 'PAGE_FORM_TEST_SENT', "Testmail sendt til {$recipient} fra side ID {$page_id}.");
+            $this->set_notice('success', "Testmailen er afleveret til WordPress' mailsystem for {$recipient}.");
+        } else {
+            $this->log('ERROR', 'PAGE_FORM_TEST_FAILED', "Testmail kunne ikke sendes til {$recipient} fra side ID {$page_id}.");
+            $this->set_notice('error', 'Testmailen kunne ikke afleveres. Kontrollér SMTP/mailopsætningen på WordPress-serveren.');
+        }
+        $this->redirect_page_editor($page->post_name);
+    }
+
+    public function handle_export_poll() {
+        $this->require_capability();
+        $page_id = absint($_GET['page_id'] ?? 0);
+        $section_key = sanitize_key((string) wp_unslash($_GET['section_key'] ?? ''));
+        check_admin_referer('h18_export_poll_' . $page_id . '_' . $section_key);
+        [$page, $section] = $this->find_page_module($page_id, $section_key, 'poll', false);
+        if (!$page || !$section) {
+            wp_die('Afstemningen blev ikke fundet.');
+        }
+        $state = $this->get_poll_state($this->page_module_storage_key($page_id, $section_key), $section['PollOptions']);
+        $total = 0;
+        foreach ($section['PollOptions'] as $option) {
+            $total += (int) ($state['Counts'][$this->poll_option_id($option)] ?? 0);
+        }
+        $out = $this->start_csv_download('Hangar18-Afstemning-' . $page->post_name . '-' . gmdate('Ymd-His') . '.csv');
+        fputcsv($out, ['Spørgsmål', $this->csv_safe_cell($section['Title'])], ';');
+        fputcsv($out, ['Eksporteret UTC', gmdate('c')], ';');
+        fputcsv($out, ['Svar', 'Stemmer', 'Procent'], ';');
+        foreach ($section['PollOptions'] as $option) {
+            $count = (int) ($state['Counts'][$this->poll_option_id($option)] ?? 0);
+            $percent = $total > 0 ? round(($count / $total) * 100, 1) : 0;
+            fputcsv($out, [$this->csv_safe_cell($option), $count, $percent], ';');
+        }
+        fclose($out);
+        exit;
+    }
+
+    public function handle_export_form_submissions() {
+        $this->require_capability();
+        $page_id = absint($_GET['page_id'] ?? 0);
+        $section_key = sanitize_key((string) wp_unslash($_GET['section_key'] ?? ''));
+        check_admin_referer('h18_export_form_submissions_' . $page_id . '_' . $section_key);
+        [$page, $section] = $this->find_page_module($page_id, $section_key, 'mail_form', false);
+        if (!$page || !$section) {
+            wp_die('Mailformularen blev ikke fundet.');
+        }
+        $all = get_option(self::FORM_SUBMISSIONS_OPTION, []);
+        $storage_key = $this->page_module_storage_key($page_id, $section_key);
+        $items = is_array($all) && isset($all[$storage_key]) && is_array($all[$storage_key]) ? $all[$storage_key] : [];
+        $out = $this->start_csv_download('Hangar18-Henvendelser-' . $page->post_name . '-' . gmdate('Ymd-His') . '.csv');
+        fputcsv($out, ['Modtaget UTC', 'Navn', 'E-mail', 'Emne', 'Besked'], ';');
+        foreach ($items as $item) {
+            fputcsv($out, [
+                $this->csv_safe_cell($item['ReceivedUtc'] ?? ''),
+                $this->csv_safe_cell($item['Name'] ?? ''),
+                $this->csv_safe_cell($item['Email'] ?? ''),
+                $this->csv_safe_cell($item['Subject'] ?? ''),
+                $this->csv_safe_cell($item['Message'] ?? ''),
+            ], ';');
+        }
+        fclose($out);
+        exit;
+    }
+
+    /* ================================================================
+       STATIC PAGE CONTENT (legacy compatibility)
        ================================================================ */
 
     private function build_static_content_core($page_id, array $settings) {

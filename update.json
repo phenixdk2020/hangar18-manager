@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.17",
+  "version": "0.4.18",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T14:45:01Z",
+  "published_utc": "2026-08-15T17:07:07Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "b31e1d560b6ff6cd625c29cc80d4344ac383123ca5db847f0768e4c232e8c6f8",
+  "package_sha256": "c7607c7ffefb29c76863018487a7b9e88c284667dddc98364828dc2b2a7d9f66",
   "changelog": [
-    "Tilføjer Sideindhold til styring af indholdssektioner på Om foreningen.",
-    "Sektioner kan vises, skjules, tilføjes, sorteres med musen eller fjernes permanent.",
-    "Luft før første kasse, mellem kasser og inde i kasser kan styres separat på desktop og mobil.",
-    "WhatIf simulerer ændringen uden skrivning, og en rigtig gemning tager automatisk backup først.",
-    "Tilføjer en samlet designmanual med de godkendte valg for farver, bredde, typografi, afstande, kort og mobilvisning."
+    "Udvider Sideindhold til en samlet sideeditor for Hjem, Om foreningen, Bliv medlem og Kontakt.",
+    "Tilføjer genbrugelige sektioner til tekst, billeder, knapper, kort, fremhævelser og afstand med separate desktop- og mobilvalg.",
+    "Tilføjer mailformular med testmail, spambegrænsning, valgfri lagring og CSV-eksport.",
+    "Tilføjer afstemning med enkelt/flere svar, tidsrum, resultatvisning, nulstilling og CSV-eksport.",
+    "Bevarer eksisterende sideindhold sikkert og opdaterer designmanualen med editor- og modulregler."
   ]
 }

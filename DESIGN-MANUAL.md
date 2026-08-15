@@ -1,7 +1,7 @@
 # Designmanual for Hangar18
 
 Senest opdateret: 15. august 2026  
-Gælder fra: Hangar18 Manager 0.4.17
+Gælder fra: Hangar18 Manager 0.4.18
 
 ## Formål
 
@@ -54,7 +54,7 @@ De generelle standarder er:
 | Luft mellem indholdskort på Om foreningen | 20 px | 14 px |
 | Indvendig luft i indholdskort | 26 px | 20 px |
 
-De generelle afstande styres under **Header / Footer → Indhold / bredde / footer**. Afstandene for indholdskort på siden Om foreningen styres under **Sideindhold → Luft og udseende**.
+De generelle afstande styres under **Header / Footer → Indhold / bredde / footer**. Afstande for den enkelte redigerbare sektion styres under **Sider → Luft, baggrund og placering**.
 
 ## Indholdssektioner og kort
 
@@ -66,7 +66,7 @@ De lyse kasser på Om foreningen kaldes **indholdssektioner**. Standardudseendet
 - 7 px afrundede hjørner;
 - overskrift og tekst venstrestilles inde i kortet.
 
-I **Sideindhold** kan en redaktør:
+I **Sider** kan en redaktør:
 
 - slå **Vis på siden** fra for at skjule en sektion uden at miste teksten;
 - trække sektioner for at ændre rækkefølgen;
@@ -75,6 +75,47 @@ I **Sideindhold** kan en redaktør:
 - styre luft før første kort, mellem kortene og inde i kortene separat for desktop og mobil.
 
 En rigtig gemning tager backup først. **WhatIf / simulering** bruges til at afprøve handlingen uden at gemme eller ændre siden.
+
+## Hangar18 sideeditor
+
+De almindelige sider **Hjem**, **Om foreningen**, **Bliv medlem** og **Kontakt** redigeres under **Hangar18 Manager → Sider**. Køretøjer, Events og Billedgalleri beholder deres specialiserede editorer.
+
+Editoren arbejder med følgende indholdssektioner:
+
+- Tekst
+- Tekst og billede
+- Stort billede
+- Handlingsknapper
+- Indholdskort
+- Fremhævet tekst
+- Afstand
+
+Sektioner kan vises eller skjules, duplikeres, flyttes med musen og fjernes. Desktop- og mobilplacering samt luft før, efter og inde i sektionen styres separat.
+
+Indhold fra før sideeditoren bevares som **Eksisterende indhold**. Denne sektion må først fjernes, når det ønskede indhold er bygget færdigt med de nye sektioner.
+
+Header og footer ligger uden for sideeditoren og kan ikke slettes fra en almindelig side.
+
+## Funktionsmoduler
+
+Funktionsmoduler er dynamiske sektioner, der udfører en handling og samtidig følger designmanualens farver, bredde og mobilregler.
+
+### Mailformular
+
+- Standardfelter er navn, e-mail, emne og besked.
+- Modtageradressen gemmes i WordPress og må aldrig sendes som et skjult felt til besøgeren.
+- Formularen bruger nonce-kontrol, skjult spamfelt og hastighedsbegrænsning.
+- Henvendelser gemmes kun i WordPress, når redaktøren aktivt vælger det.
+- Gemte henvendelser begrænses til de seneste 200 pr. formular og kan eksporteres som semikolonsepareret CSV.
+- SMTP-adgangsoplysninger må aldrig lægges i kildekoden eller GitHub.
+
+### Afstemning
+
+- Afstemningen kan have 2–20 unikke svarmuligheder.
+- Redaktøren vælger enkelt eller flere svar, tidsrum og hvornår resultatet vises.
+- Dobbeltstemmer begrænses med browsercookie og en saltet envejs-hash; rå IP-adresser gemmes ikke.
+- Resultater kan nulstilles fra editoren og eksporteres som semikolonsepareret CSV.
+- En offentlig anonym afstemning kan begrænse almindelig dobbeltstemning, men er ikke en juridisk identitetskontrol.
 
 ## Placering på desktop og mobil
 
@@ -142,6 +183,7 @@ Før en designændring godkendes, kontrolleres:
 | 0.4.15 | Køretøjer fik særskilt mobilplacering, og ældre PowerShell-/baselineflow blev ryddet op. |
 | 0.4.16 | Administrationslayout og knapforklaringer blev gjort ensartede. |
 | 0.4.17 | Sideindhold, indholdssektioner og deres afstande blev gjort redigerbare; designmanualen blev oprettet. |
+| 0.4.18 | Sideindhold blev udvidet til en samlet sideeditor med genbrugelige sektioner, mailformular, afstemning og responsive editorvisninger. |
 
 ## Sådan opdateres manualen
 
