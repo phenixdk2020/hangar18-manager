@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.15
+ * Version: 0.4.16
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.15';
+    const VERSION = '0.4.16';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -3829,57 +3829,71 @@ HTML;
             </div>
 
             <?php $vehicle_layout = $this->get_vehicle_register_settings(); ?>
-            <form class="h18-config-strip" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-layout-card" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_save_vehicle_register_settings'); ?>
                 <input type="hidden" name="action" value="h18_save_vehicle_register_settings" />
 
-                <div class="h18-config-strip-title">
-                    <strong>Placering af køretøjer</strong>
-                    <span>Separate indstillinger for desktop og mobil</span>
+                <div class="h18-layout-card-header">
+                    <h2>Placering af køretøjer</h2>
+                    <p>Vælg placeringen særskilt for oversigten og de enkelte køretøjssider.</p>
                 </div>
 
-                <div class="h18-field">
-                    <label><strong>Køretøjssiden / oversigten – desktop</strong></label>
-                    <select name="register_alignment">
-                        <option value="Left" <?php selected($vehicle_layout['RegisterAlignment'], 'Left'); ?>>Venstre</option>
-                        <option value="Center" <?php selected($vehicle_layout['RegisterAlignment'], 'Center'); ?>>Midtstillet</option>
-                    </select>
-                    <p class="description">Placering af indhold og køretøjskort på desktop.</p>
+                <div class="h18-layout-devices">
+                    <fieldset class="h18-layout-device">
+                        <legend>Desktop</legend>
+                        <div class="h18-layout-fields">
+                            <div class="h18-field">
+                                <label><strong>Oversigten</strong></label>
+                                <select name="register_alignment">
+                                    <option value="Left" <?php selected($vehicle_layout['RegisterAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($vehicle_layout['RegisterAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Overskrift, introduktion og køretøjskort.</p>
+                            </div>
+                            <div class="h18-field">
+                                <label><strong>De enkelte køretøjer</strong></label>
+                                <select name="detail_alignment">
+                                    <option value="Left" <?php selected($vehicle_layout['DetailAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($vehicle_layout['DetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Indholdet på hver køretøjsside.</p>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="h18-layout-device">
+                        <legend>Mobil</legend>
+                        <div class="h18-layout-fields">
+                            <div class="h18-field">
+                                <label><strong>Oversigten</strong></label>
+                                <select name="mobile_register_alignment">
+                                    <option value="Left" <?php selected($vehicle_layout['MobileRegisterAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($vehicle_layout['MobileRegisterAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Overskrift, introduktion og køretøjskort.</p>
+                            </div>
+                            <div class="h18-field">
+                                <label><strong>De enkelte køretøjer</strong></label>
+                                <select name="mobile_detail_alignment">
+                                    <option value="Left" <?php selected($vehicle_layout['MobileDetailAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($vehicle_layout['MobileDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Indholdet på hver køretøjsside.</p>
+                            </div>
+                        </div>
+                    </fieldset>
                 </div>
 
-                <div class="h18-field">
-                    <label><strong>Selve køretøjerne / detaljesider – desktop</strong></label>
-                    <select name="detail_alignment">
-                        <option value="Left" <?php selected($vehicle_layout['DetailAlignment'], 'Left'); ?>>Venstre</option>
-                        <option value="Center" <?php selected($vehicle_layout['DetailAlignment'], 'Center'); ?>>Midtstillet</option>
-                    </select>
-                    <p class="description">Placering på de enkelte køretøjssider på desktop.</p>
+                <div class="h18-layout-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér kun for at kontrollere valgene uden at gemme eller ændre sider.</span></div>
+                    </div>
+                    <div class="h18-action-submit">
+                        <button class="button button-secondary" type="submit">Gem layout og anvend</button>
+                        <div class="h18-action-copy"><strong>Gemmer placeringerne</strong><span>Opdaterer køretøjsoversigten og alle eksisterende køretøjssider.</span></div>
+                    </div>
                 </div>
-
-                <div class="h18-field">
-                    <label><strong>Køretøjssiden / oversigten – mobil</strong></label>
-                    <select name="mobile_register_alignment">
-                        <option value="Left" <?php selected($vehicle_layout['MobileRegisterAlignment'], 'Left'); ?>>Venstre</option>
-                        <option value="Center" <?php selected($vehicle_layout['MobileRegisterAlignment'], 'Center'); ?>>Midtstillet</option>
-                    </select>
-                    <p class="description">Placering af indhold og køretøjskort på mobil.</p>
-                </div>
-
-                <div class="h18-field">
-                    <label><strong>Selve køretøjerne / detaljesider – mobil</strong></label>
-                    <select name="mobile_detail_alignment">
-                        <option value="Left" <?php selected($vehicle_layout['MobileDetailAlignment'], 'Left'); ?>>Venstre</option>
-                        <option value="Center" <?php selected($vehicle_layout['MobileDetailAlignment'], 'Center'); ?>>Midtstillet</option>
-                    </select>
-                    <p class="description">Placering på de enkelte køretøjssider på mobil.</p>
-                </div>
-
-                <label class="h18-inline-check">
-                    <input type="checkbox" name="whatif" value="1" />
-                    WhatIf
-                </label>
-
-                <button class="button button-secondary" type="submit">Gem køretøjslayout og anvend</button>
             </form>
 
             <div class="h18-toolbar">
@@ -3899,6 +3913,7 @@ HTML;
                         <a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($vehicle)); ?>">Åbn side</a>
                     <?php endif; ?>
                 </form>
+                <p class="h18-toolbar-note"><strong>Nyt</strong> åbner en tom formular. <strong>Åbn side</strong> viser køretøjet på hjemmesiden. <strong>Feltopsætning</strong> styrer de tekniske felter.</p>
                 <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-vehicle-fields')); ?>">Feltopsætning</a>
             </div>
 
@@ -3970,17 +3985,28 @@ HTML;
                     </section>
                 </div>
 
-                <div class="h18-form-actions">
-                    <button class="button button-primary button-hero" type="submit">Gem / opdater køretøj</button>
-                    <span class="description">WhatIf = ingen skrivning. Slå den fra, når simuleringen er godkendt.</span>
+                <div class="h18-form-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, vises resultatet uden at noget bliver gemt.</span></div>
+                    </div>
+                    <div class="h18-action-submit">
+                        <button class="button button-primary button-hero" type="submit">Gem / opdater køretøj</button>
+                        <div class="h18-action-copy"><strong>Gemmer hele køretøjet</strong><span>Gemmer data, billede og status og opdaterer derefter køretøjsoversigten.</span></div>
+                    </div>
                 </div>
             </form>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_rebuild_vehicle_register'); ?>
                 <input type="hidden" name="action" value="h18_rebuild_vehicle_register" />
-                <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                <button class="button" type="submit">Genbyg køretøjsregister</button>
+                <div class="h18-whatif-help">
+                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                    <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere handlingen uden at skrive ændringer.</span></div>
+                </div>
+                <div class="h18-action-submit">
+                    <button class="button" type="submit">Genbyg køretøjsoversigten</button>
+                    <div class="h18-action-copy"><strong>Reparation</strong><span>Brug kun hvis oversigten mangler eller ikke viser de gemte køretøjer korrekt. Køretøjsdata ændres ikke.</span></div>
+                </div>
             </form>
         </div>
         <?php
@@ -4071,9 +4097,15 @@ HTML;
                     </p>
                 </section>
 
-                <div class="h18-form-actions">
-                    <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
-                    <button class="button button-primary button-hero" type="submit">Gem feltopsætning og opdater køretøjssider</button>
+                <div class="h18-form-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere feltændringerne uden at gemme dem.</span></div>
+                    </div>
+                    <div class="h18-action-submit">
+                        <button class="button button-primary button-hero" type="submit">Gem feltopsætning</button>
+                        <div class="h18-action-copy"><strong>Opdaterer alle køretøjssider</strong><span>Gemmer aktive felter, navne, rækkefølge og visning. Eksisterende feltværdier slettes ikke.</span></div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -4747,44 +4779,66 @@ HTML;
                 Eventsiden indeholder ikke selv billederne; den viser kun knappen <strong>Se billeder fra arrangementet</strong>.
             </div>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-layout-card" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_save_event_layout'); ?>
                 <input type="hidden" name="action" value="h18_save_event_layout" />
-                <div class="h18-menu-settings-row">
-                    <div class="h18-field">
-                        <label><strong>Eventsiden / oversigten – desktop</strong></label>
-                        <select name="event_index_alignment">
-                            <option value="Left" <?php selected($content_layout['EventIndexAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['EventIndexAlignment'], 'Center'); ?>>Midtstillet</option>
-                        </select>
-                        <p class="description">Placering på desktop.</p>
+                <div class="h18-layout-card-header">
+                    <h2>Placering af events</h2>
+                    <p>Vælg placeringen særskilt for eventoversigten og de enkelte eventsider.</p>
+                </div>
+                <div class="h18-layout-devices">
+                    <fieldset class="h18-layout-device">
+                        <legend>Desktop</legend>
+                        <div class="h18-layout-fields">
+                            <div class="h18-field">
+                                <label><strong>Oversigten</strong></label>
+                                <select name="event_index_alignment">
+                                    <option value="Left" <?php selected($content_layout['EventIndexAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($content_layout['EventIndexAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Overskrifter og eventkort.</p>
+                            </div>
+                            <div class="h18-field">
+                                <label><strong>De enkelte events</strong></label>
+                                <select name="event_detail_alignment">
+                                    <option value="Left" <?php selected($content_layout['EventDetailAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($content_layout['EventDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Indholdet på hver eventside.</p>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="h18-layout-device">
+                        <legend>Mobil</legend>
+                        <div class="h18-layout-fields">
+                            <div class="h18-field">
+                                <label><strong>Oversigten</strong></label>
+                                <select name="mobile_event_index_alignment">
+                                    <option value="Left" <?php selected($content_layout['MobileEventIndexAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($content_layout['MobileEventIndexAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Overskrifter og eventkort.</p>
+                            </div>
+                            <div class="h18-field">
+                                <label><strong>De enkelte events</strong></label>
+                                <select name="mobile_event_detail_alignment">
+                                    <option value="Left" <?php selected($content_layout['MobileEventDetailAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($content_layout['MobileEventDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Indholdet på hver eventside.</p>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+                <div class="h18-layout-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér kun for at kontrollere valgene uden at gemme eller ændre sider.</span></div>
                     </div>
-                    <div class="h18-field">
-                        <label><strong>Selve events / detaljesider – desktop</strong></label>
-                        <select name="event_detail_alignment">
-                            <option value="Left" <?php selected($content_layout['EventDetailAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['EventDetailAlignment'], 'Center'); ?>>Midtstillet</option>
-                        </select>
-                        <p class="description">Placering på desktop.</p>
+                    <div class="h18-action-submit">
+                        <button class="button button-secondary" type="submit">Gem layout og anvend</button>
+                        <div class="h18-action-copy"><strong>Gemmer placeringerne</strong><span>Opdaterer eventoversigten og alle eksisterende eventsider.</span></div>
                     </div>
-                    <div class="h18-field">
-                        <label><strong>Eventsiden / oversigten – mobil</strong></label>
-                        <select name="mobile_event_index_alignment">
-                            <option value="Left" <?php selected($content_layout['MobileEventIndexAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['MobileEventIndexAlignment'], 'Center'); ?>>Midtstillet</option>
-                        </select>
-                        <p class="description">Placering på skærme op til 782 px.</p>
-                    </div>
-                    <div class="h18-field">
-                        <label><strong>Selve events / detaljesider – mobil</strong></label>
-                        <select name="mobile_event_detail_alignment">
-                            <option value="Left" <?php selected($content_layout['MobileEventDetailAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['MobileEventDetailAlignment'], 'Center'); ?>>Midtstillet</option>
-                        </select>
-                        <p class="description">Placering på skærme op til 782 px.</p>
-                    </div>
-                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                    <button class="button button-secondary" type="submit">Gem event-layout og anvend</button>
                 </div>
             </form>
 
@@ -4803,6 +4857,7 @@ HTML;
                     <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-events')); ?>">Nyt</a>
                     <?php if ($post) : ?><a class="button" target="_blank" href="<?php echo esc_url(get_permalink($post)); ?>">Åbn side</a><?php endif; ?>
                 </form>
+                <p class="h18-toolbar-note"><strong>Nyt</strong> åbner en tom eventformular. <strong>Åbn side</strong> viser det valgte event på hjemmesiden.</p>
             </div>
 
             <form class="h18-editor-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -4856,14 +4911,28 @@ HTML;
                     <section class="h18-panel h18-panel-wide"><?php $this->textarea('practical', 'Praktiske oplysninger', $this->value($data, 'Practical'), 8); ?></section>
                 </div>
 
-                <div class="h18-form-actions"><button class="button button-primary button-hero" type="submit">Gem / opdater event</button></div>
+                <div class="h18-form-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, vises resultatet uden at noget bliver gemt.</span></div>
+                    </div>
+                    <div class="h18-action-submit">
+                        <button class="button button-primary button-hero" type="submit">Gem / opdater event</button>
+                        <div class="h18-action-copy"><strong>Gemmer hele eventet</strong><span>Gemmer data, billede, albumlink og status og opdaterer eventoversigten.</span></div>
+                    </div>
+                </div>
             </form>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_rebuild_event_register'); ?>
                 <input type="hidden" name="action" value="h18_rebuild_event_register" />
-                <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                <button class="button" type="submit">Genbyg eventregister</button>
+                <div class="h18-whatif-help">
+                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                    <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere handlingen uden at skrive ændringer.</span></div>
+                </div>
+                <div class="h18-action-submit">
+                    <button class="button" type="submit">Genbyg eventoversigten</button>
+                    <div class="h18-action-copy"><strong>Reparation</strong><span>Brug kun hvis kommende eller tidligere events mangler på oversigten. Eventdata ændres ikke.</span></div>
+                </div>
             </form>
         </div>
         <?php
@@ -5345,44 +5414,66 @@ HTML;
                 Events kan bagefter linke til publicerede albums af typen Event.
             </div>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-layout-card" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_save_gallery_layout'); ?>
                 <input type="hidden" name="action" value="h18_save_gallery_layout" />
-                <div class="h18-menu-settings-row">
-                    <div class="h18-field">
-                        <label><strong>Billedgalleri-siden / oversigten – desktop</strong></label>
-                        <select name="gallery_index_alignment">
-                            <option value="Left" <?php selected($content_layout['GalleryIndexAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['GalleryIndexAlignment'], 'Center'); ?>>Midtstillet</option>
-                        </select>
-                        <p class="description">Placering på desktop.</p>
+                <div class="h18-layout-card-header">
+                    <h2>Placering af billedgalleri</h2>
+                    <p>Vælg placeringen særskilt for albumoversigten og billederne i de enkelte albums.</p>
+                </div>
+                <div class="h18-layout-devices">
+                    <fieldset class="h18-layout-device">
+                        <legend>Desktop</legend>
+                        <div class="h18-layout-fields">
+                            <div class="h18-field">
+                                <label><strong>Albumoversigten</strong></label>
+                                <select name="gallery_index_alignment">
+                                    <option value="Left" <?php selected($content_layout['GalleryIndexAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($content_layout['GalleryIndexAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Overskrifter og albumkort.</p>
+                            </div>
+                            <div class="h18-field">
+                                <label><strong>De enkelte albums</strong></label>
+                                <select name="gallery_detail_alignment">
+                                    <option value="Left" <?php selected($content_layout['GalleryDetailAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($content_layout['GalleryDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Albumtekst, billeder og billedtekster.</p>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="h18-layout-device">
+                        <legend>Mobil</legend>
+                        <div class="h18-layout-fields">
+                            <div class="h18-field">
+                                <label><strong>Albumoversigten</strong></label>
+                                <select name="mobile_gallery_index_alignment">
+                                    <option value="Left" <?php selected($content_layout['MobileGalleryIndexAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($content_layout['MobileGalleryIndexAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Overskrifter og albumkort.</p>
+                            </div>
+                            <div class="h18-field">
+                                <label><strong>De enkelte albums</strong></label>
+                                <select name="mobile_gallery_detail_alignment">
+                                    <option value="Left" <?php selected($content_layout['MobileGalleryDetailAlignment'], 'Left'); ?>>Venstre</option>
+                                    <option value="Center" <?php selected($content_layout['MobileGalleryDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                                </select>
+                                <p class="description">Albumtekst, billeder og billedtekster.</p>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+                <div class="h18-layout-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér kun for at kontrollere valgene uden at gemme eller ændre sider.</span></div>
                     </div>
-                    <div class="h18-field">
-                        <label><strong>Selve albums / detaljesider – desktop</strong></label>
-                        <select name="gallery_detail_alignment">
-                            <option value="Left" <?php selected($content_layout['GalleryDetailAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['GalleryDetailAlignment'], 'Center'); ?>>Midtstillet</option>
-                        </select>
-                        <p class="description">Placering på desktop.</p>
+                    <div class="h18-action-submit">
+                        <button class="button button-secondary" type="submit">Gem layout og anvend</button>
+                        <div class="h18-action-copy"><strong>Gemmer placeringerne</strong><span>Opdaterer albumoversigten og alle eksisterende albumsider.</span></div>
                     </div>
-                    <div class="h18-field">
-                        <label><strong>Billedgalleri-siden / oversigten – mobil</strong></label>
-                        <select name="mobile_gallery_index_alignment">
-                            <option value="Left" <?php selected($content_layout['MobileGalleryIndexAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['MobileGalleryIndexAlignment'], 'Center'); ?>>Midtstillet</option>
-                        </select>
-                        <p class="description">Placering på skærme op til 782 px.</p>
-                    </div>
-                    <div class="h18-field">
-                        <label><strong>Selve albums / detaljesider – mobil</strong></label>
-                        <select name="mobile_gallery_detail_alignment">
-                            <option value="Left" <?php selected($content_layout['MobileGalleryDetailAlignment'], 'Left'); ?>>Venstre</option>
-                            <option value="Center" <?php selected($content_layout['MobileGalleryDetailAlignment'], 'Center'); ?>>Midtstillet</option>
-                        </select>
-                        <p class="description">Billeder og albumtekst på skærme op til 782 px.</p>
-                    </div>
-                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                    <button class="button button-secondary" type="submit">Gem galleri-layout og anvend</button>
                 </div>
             </form>
 
@@ -5401,6 +5492,7 @@ HTML;
                     <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-gallery')); ?>">Nyt</a>
                     <?php if ($post) : ?><a class="button" target="_blank" href="<?php echo esc_url(get_permalink($post)); ?>">Åbn album</a><?php endif; ?>
                 </form>
+                <p class="h18-toolbar-note"><strong>Nyt</strong> åbner en tom albumformular. <strong>Åbn album</strong> viser det valgte album på hjemmesiden.</p>
             </div>
 
             <form class="h18-editor-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -5474,14 +5566,28 @@ HTML;
                     </section>
                 </div>
 
-                <div class="h18-form-actions"><button class="button button-primary button-hero" type="submit">Gem / opdater album</button></div>
+                <div class="h18-form-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, vises resultatet uden at noget bliver gemt.</span></div>
+                    </div>
+                    <div class="h18-action-submit">
+                        <button class="button button-primary button-hero" type="submit">Gem / opdater album</button>
+                        <div class="h18-action-copy"><strong>Gemmer hele albummet</strong><span>Gemmer albumdata, billedrækkefølge og status og opdaterer gallerioversigten.</span></div>
+                    </div>
+                </div>
             </form>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_rebuild_gallery_index'); ?>
                 <input type="hidden" name="action" value="h18_rebuild_gallery_index" />
-                <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                <button class="button" type="submit">Genbyg Billedgalleri-indeks</button>
+                <div class="h18-whatif-help">
+                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                    <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere handlingen uden at skrive ændringer.</span></div>
+                </div>
+                <div class="h18-action-submit">
+                    <button class="button" type="submit">Genbyg gallerioversigten</button>
+                    <div class="h18-action-copy"><strong>Reparation</strong><span>Brug kun hvis albumkort mangler eller står forkert. Albumdata og billeder ændres ikke.</span></div>
+                </div>
             </form>
         </div>
         <?php
@@ -6367,17 +6473,19 @@ HTML;
                 ændres WordPress. Derefter opdateres Hangar18-headeren automatisk på alle styrede sider.
             </div>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_save_menu_pin'); ?>
                 <input type="hidden" name="action" value="h18_save_menu_pin" />
-                <div class="h18-menu-settings-row">
+                <div class="h18-whatif-help">
                     <label class="h18-safe-switch">
                         <input type="checkbox" name="pin_menu" value="1" <?php checked($menu_pinned); ?> />
                         <span><strong>Pin menu/header ved scroll</strong></span>
                     </label>
-                    <span class="description">Når den er slået til, bliver Hangar18-headeren siddende øverst på alle styrede sider.</span>
-                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                    <div class="h18-action-copy"><span>Slå til, hvis headeren skal blive siddende øverst, mens siden ruller.</span></div>
+                </div>
+                <div class="h18-action-submit">
                     <button class="button button-secondary" type="submit">Gem pinning</button>
+                    <div class="h18-action-copy"><strong>Anvendes på alle sider</strong><span><label><input type="checkbox" name="whatif" value="1" /> WhatIf – kontrollér først uden at gemme</label></span></div>
                 </div>
             </form>
 
@@ -6386,11 +6494,17 @@ HTML;
                     <p>Der findes ingen klassisk WordPress-menu endnu. Opret Hangar18 Hovedmenu nedenfor.</p>
                 </div>
 
-                <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <?php wp_nonce_field('h18_create_menu'); ?>
                     <input type="hidden" name="action" value="h18_create_menu" />
-                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                    <button class="button button-primary" type="submit">Opret Hangar18 Hovedmenu med standardsider</button>
+                    <div class="h18-whatif-help">
+                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at se hvad der ville blive oprettet.</span></div>
+                    </div>
+                    <div class="h18-action-submit">
+                        <button class="button button-primary" type="submit">Opret Hangar18 Hovedmenu</button>
+                        <div class="h18-action-copy"><strong>Kun når ingen menu findes</strong><span>Opretter hovedmenuen med Hangar18-standardsiderne.</span></div>
+                    </div>
                 </form>
             <?php else : ?>
 
@@ -6505,9 +6619,14 @@ HTML;
                         </div>
                     </section>
 
-                    <div class="h18-form-actions">
-                        <button class="button button-primary button-hero" type="submit">Gem menu</button>
-                        <span class="description">Gemmer rækkefølge, viste navne, undermenuer, fjernelser og opdaterer Hangar18-headeren.</span>
+                    <div class="h18-form-actions h18-explained-action">
+                        <div class="h18-whatif-help">
+                            <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, ændres hverken menuen eller siderne.</span></div>
+                        </div>
+                        <div class="h18-action-submit">
+                            <button class="button button-primary button-hero" type="submit">Gem menu</button>
+                            <div class="h18-action-copy"><strong>Gemmer hele menustrukturen</strong><span>Gemmer rækkefølge, navne, undermenuer og fjernelser og opdaterer headeren.</span></div>
+                        </div>
                     </div>
                 </form>
 
@@ -7513,18 +7632,28 @@ HTML;
                     </section>
                 </div>
 
-                <div class="h18-form-actions">
-                    <button class="button button-primary button-hero" type="submit">Gem HeaderDesign og opdater alle sider</button>
-                    <span class="description">Ved rigtig gemning opdateres både web-manager-option, central Configuration Store og de styrede sider.</span>
+                <div class="h18-form-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Brug simulering til at kontrollere indstillingerne uden at ændre siderne.</span></div>
+                    </div>
+                    <div class="h18-action-submit">
+                        <button class="button button-primary button-hero" type="submit">Gem design og opdater alle sider</button>
+                        <div class="h18-action-copy"><strong>Normal gemning</strong><span>Gemmer header, footer, bredder og afstande og anvender dem på alle styrede sider.</span></div>
+                    </div>
                 </div>
             </form>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_sync_shell'); ?>
                 <input type="hidden" name="action" value="h18_sync_shell" />
-                <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                <button class="button button-secondary" type="submit">Kopiér header/footer fra Hjem til alle sider</button>
-                <span class="description">Reparation: bruges kun hvis Hjem er korrekt, men andre sider er kommet ud af sync.</span>
+                <div class="h18-whatif-help">
+                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+                    <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere hvor mange sider der ville blive synkroniseret.</span></div>
+                </div>
+                <div class="h18-action-submit">
+                    <button class="button button-secondary" type="submit">Kopiér header/footer fra Hjem</button>
+                    <div class="h18-action-copy"><strong>Reparation</strong><span>Brug kun hvis Hjem er korrekt, men header eller footer på andre sider er kommet ud af sync.</span></div>
+                </div>
             </form>
         </div>
         <?php
@@ -8451,10 +8580,11 @@ HTML;
                 <strong><?php echo esc_html((string) ($state['checked_at_utc'] ?? 'aldrig')); ?></strong>
             </div>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_check_updates'); ?>
                 <input type="hidden" name="action" value="h18_check_updates" />
-                <button class="button button-secondary" type="submit">Kontrollér GitHub nu</button>
+                <div class="h18-action-copy"><strong>Manuel kontrol</strong><span>Brug når du vil undersøge GitHub med det samme i stedet for at vente på næste automatiske kontrol.</span></div>
+                <div class="h18-action-submit"><button class="button button-secondary" type="submit">Kontrollér GitHub nu</button></div>
             </form>
 
             <?php if (!empty($manifest)) : ?>
@@ -8492,6 +8622,7 @@ HTML;
                                 >
                                     Tag backup og opdater til <?php echo esc_html($manifest['version']); ?>
                                 </button>
+                                <p class="description">Brug når en nyere kompatibel version er fundet. Der tages automatisk backup før installationen.</p>
                             </form>
                         <?php endif; ?>
                     <?php else : ?>
@@ -8544,8 +8675,12 @@ HTML;
                     </section>
                 </div>
 
-                <div class="h18-form-actions">
-                    <button class="button button-primary" type="submit">Gem GitHub-indstillinger</button>
+                <div class="h18-form-actions h18-explained-action">
+                    <div class="h18-action-copy"><strong>Normalt ikke nødvendig</strong><span>Ret kun disse felter hvis repository, branch eller kontrolinterval skal ændres.</span></div>
+                    <div class="h18-action-submit">
+                        <button class="button button-primary" type="submit">Gem GitHub-indstillinger</button>
+                        <div class="h18-action-copy"><strong>Gemmer updaterens forbindelse</strong><span>Nulstiller seneste kontrol, så de nye indstillinger bruges ved næste opslag.</span></div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -8840,10 +8975,11 @@ HTML;
                 Filerne ligger i <code>wp-content/uploads/hangar18-manager-backups/</code>.
             </div>
 
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_create_full_backup'); ?>
                 <input type="hidden" name="action" value="h18_create_full_backup" />
-                <button class="button button-primary" type="submit">Opret samlet backup nu</button>
+                <div class="h18-action-copy"><strong>Ekstra manuel sikkerhedskopi</strong><span>Brug før større manuelle ændringer. Web-manageren tager allerede automatisk backup før sine egne ændringer.</span></div>
+                <div class="h18-action-submit"><button class="button button-primary" type="submit">Opret samlet backup nu</button></div>
             </form>
 
             <div class="h18-log-table-wrap">

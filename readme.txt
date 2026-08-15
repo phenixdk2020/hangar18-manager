@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.15
+Version: 0.4.16
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -592,3 +592,12 @@ AUTHORITATIVE_BASELINE_FAILED
 - Køretøjsoversigten og de enkelte køretøjssider får separate placeringer på desktop og mobil.
 - Mobilstandard er Midtstillet, og eksisterende køretøjssider genbygges automatisk én gang efter opdateringen.
 - Den interne køretøjslayout-konfiguration er opgraderet fra schema 1.3 til 1.4.
+
+
+== Version 0.4.16 – Ensartede layouts og knapforklaringer ==
+
+- Samler layoutindstillinger for Køretøjer, Events og Billedgalleri i ens kort med tydelige Desktop- og Mobil-sektioner.
+- Holder relaterede felter i faste kolonner og tilpasser dem automatisk til tablet og mobil.
+- Giver layout-, gemme- og reparationsknapper synlige forklaringer om hvad de gør, og hvornår de skal bruges.
+- Forklarer WhatIf som en frivillig simulering, der ikke gemmer eller ændrer sider.
+- Gør handlingslinjerne ens på Køretøjer, Køretøjsfelter, Events, Billedgalleri, Menu, Header/Footer, Opdateringer og Backup.
