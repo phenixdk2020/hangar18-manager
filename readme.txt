@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.16
+Version: 0.4.17
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -75,6 +75,19 @@ Funktioner:
 - drag-and-drop rækkefølge
 - første billede bliver featured image / album-cover
 - automatisk genbygning af Billedgalleri-indekset
+
+== Sideindhold ==
+
+Hangar18 Manager -> Sideindhold
+
+Styring af indholdssektioner på Om foreningen:
+- vis eller skjul en sektion uden at slette teksten
+- drag-and-drop rækkefølge
+- tilføj nye sektioner
+- permanent fjernelse, når en sektion ikke længere skal kunne genaktiveres
+- separat luft før første kasse, mellem kasser og inde i kasser på desktop og mobil
+- styring af hjørneafrunding
+- WhatIf-simulering og automatisk backup før rigtig gemning
 
 
 == Menu ==
@@ -601,3 +614,13 @@ AUTHORITATIVE_BASELINE_FAILED
 - Giver layout-, gemme- og reparationsknapper synlige forklaringer om hvad de gør, og hvornår de skal bruges.
 - Forklarer WhatIf som en frivillig simulering, der ikke gemmer eller ændrer sider.
 - Gør handlingslinjerne ens på Køretøjer, Køretøjsfelter, Events, Billedgalleri, Menu, Header/Footer, Opdateringer og Backup.
+
+
+== Version 0.4.17 – Sideindhold og designmanual ==
+
+- Tilføjer modulet Sideindhold til styring af indholdssektioner på Om foreningen.
+- Sektioner kan vises, skjules, tilføjes, sorteres med musen eller fjernes permanent.
+- Luft før første indholdskasse, mellem kasser og inde i kasser kan styres separat på desktop og mobil.
+- Hjørneafrunding kan indstilles, og det godkendte kortdesign bruges som standard.
+- WhatIf simulerer ændringen uden skrivning, og en rigtig gemning tager automatisk backup først.
+- Tilføjer DESIGN-MANUAL.md med de godkendte valg for farver, bredde, typografi, afstande, kort og mobilvisning.
