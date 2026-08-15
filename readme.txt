@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.13
+Version: 0.4.14
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -569,3 +569,12 @@ AUTHORITATIVE_BASELINE_FAILED
 - Standardafstanden er 32 px på desktop og 24 px på mobil.
 - Afstanden oprettes som indvendig luft i indholdsrammen, så headeren fortsat starter ved 0 px.
 - Den eksisterende sektionsafstand styrer fortsat afstanden mellem indholdets hovedsektioner.
+
+
+== Version 0.4.14 – Mobilplacering for Events og Billedgalleri ==
+
+- Events har nu separate indstillinger for placering af oversigt og detaljesider på desktop og mobil.
+- Billedgalleri har nu separate indstillinger for placering af albumoversigt og billeder i albums på desktop og mobil.
+- Mobilstandard er Midtstillet for alle fire visninger; desktopindstillingerne bevares uændret.
+- Eksisterende events, albumsider og oversigter genbygges automatisk én gang efter opdateringen.
+- Hangar18-ContentLayout.json er opgraderet fra schema 1.1 til 1.2.

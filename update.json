@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.13",
+  "version": "0.4.14",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T12:01:14Z",
+  "published_utc": "2026-08-15T12:18:22Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "1c0ee5f29e7c4f17591da4fef6db47569dcbcbbd2da5e3bc1de865d9000c9ff1",
+  "package_sha256": "8e8b874e26ab8f3f94470a15851c8776a709ad4aea98d06e43a40a756d931a85",
   "changelog": [
-    "Tilføjer separat styring af afstanden fra header til sideindhold på desktop og mobil.",
-    "Tilføjer separat styring af afstanden fra sideindhold til footer på desktop og mobil.",
-    "Bruger 32 px som Astra-lignende standard på desktop og 24 px på mobil.",
-    "Lægger afstanden inde i indholdsrammen, så headeren fortsat starter ved 0 px.",
-    "Bevarer den eksisterende styring af afstand mellem hovedsektioner."
+    "Tilføjer separate mobilindstillinger for eventoversigten og de enkelte eventsider.",
+    "Tilføjer separate mobilindstillinger for gallerioversigten og billederne i albums.",
+    "Bruger Midtstillet som mobilstandard, mens desktopplaceringerne bevares.",
+    "Opgraderer Hangar18-ContentLayout.json fra schema 1.1 til 1.2.",
+    "Genbygger automatisk eksisterende events, albumsider og oversigter én gang efter opdateringen."
   ]
 }

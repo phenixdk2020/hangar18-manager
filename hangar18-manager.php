@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.13
+ * Version: 0.4.14
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.13';
+    const VERSION = '0.4.14';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -46,6 +46,7 @@ final class Hangar18_Manager {
     const ASTRA_BANNER_REPAIR_047_OPTION = 'hangar18_manager_astra_banner_repair_047';
     const VEHICLE_LAYOUT_REPAIR_049_OPTION = 'hangar18_manager_vehicle_layout_repair_049';
     const LEGACY_PAGE_TEMPLATE_REPAIR_0411_OPTION = 'hangar18_manager_legacy_page_template_repair_0411';
+    const MOBILE_CONTENT_LAYOUT_REPAIR_0414_OPTION = 'hangar18_manager_mobile_content_layout_repair_0414';
     const NOTICE_PREFIX            = 'hangar18_manager_notice_';
 
     const CONFIG_STORE_SLUG  = 'hangar18-configuration-store';
@@ -77,6 +78,7 @@ final class Hangar18_Manager {
         add_action('admin_init', [$this, 'maybe_repair_astra_banner_047'], 16);
         add_action('admin_init', [$this, 'maybe_repair_vehicle_layout_049'], 17);
         add_action('admin_init', [$this, 'maybe_repair_legacy_page_templates_0411'], 18);
+        add_action('admin_init', [$this, 'maybe_repair_mobile_content_layout_0414'], 19);
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
         add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
@@ -359,6 +361,113 @@ final class Hangar18_Manager {
             $this->log(
                 'ERROR',
                 'LEGACY_PAGE_TEMPLATE_REPAIR_0411_FAILED',
+                $e->getMessage()
+            );
+        }
+    }
+
+    public function maybe_repair_mobile_content_layout_0414() {
+        if (!is_admin() || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        if (get_option(self::MOBILE_CONTENT_LAYOUT_REPAIR_0414_OPTION, false)) {
+            return;
+        }
+
+        try {
+            $this->create_full_managed_backup(
+                'Før automatisk v0.4.14 mobilcentrering af Events og Billedgalleri'
+            );
+
+            $settings = $this->get_content_layout_settings();
+            update_option(self::CONTENT_LAYOUT_OPTION, $settings, false);
+
+            $published = $settings;
+            $published['Saved'] = gmdate('c');
+            $this->publish_configuration_file('Hangar18-ContentLayout.json', $published);
+
+            $events = 0;
+            foreach ($this->get_event_pages(false) as $page) {
+                $data = $this->decode_marker(self::EVENT_MARKER, $page->post_content);
+                if (!$data) {
+                    continue;
+                }
+
+                $result = wp_update_post(
+                    [
+                        'ID'           => $page->ID,
+                        'page_template'=> 'default',
+                        'post_content' => $this->wrap_with_shell(
+                            $this->build_event_core($page->ID, $data),
+                            $page->ID
+                        ),
+                    ],
+                    true
+                );
+
+                if (is_wp_error($result)) {
+                    throw new RuntimeException(
+                        "Event ID {$page->ID}: " . $result->get_error_message()
+                    );
+                }
+                $events++;
+            }
+
+            $albums = 0;
+            foreach ($this->get_gallery_pages(false) as $page) {
+                $data = $this->decode_marker(self::GALLERY_MARKER, $page->post_content);
+                if (!$data) {
+                    continue;
+                }
+
+                $result = wp_update_post(
+                    [
+                        'ID'           => $page->ID,
+                        'page_template'=> 'default',
+                        'post_content' => $this->wrap_with_shell(
+                            $this->build_gallery_album_core($page->ID, $data),
+                            $page->ID
+                        ),
+                    ],
+                    true
+                );
+
+                if (is_wp_error($result)) {
+                    throw new RuntimeException(
+                        "Gallerialbum ID {$page->ID}: " . $result->get_error_message()
+                    );
+                }
+                $albums++;
+            }
+
+            $this->rebuild_event_register();
+            $this->rebuild_gallery_index();
+
+            update_option(
+                self::MOBILE_CONTENT_LAYOUT_REPAIR_0414_OPTION,
+                [
+                    'CompletedUtc' => gmdate('c'),
+                    'Events'       => $events,
+                    'Albums'       => $albums,
+                ],
+                false
+            );
+
+            $this->log(
+                'INFO',
+                'MOBILE_CONTENT_LAYOUT_REPAIR_0414_COMPLETE',
+                "v0.4.14: Mobilvisning er midtstillet for Events og Billedgalleri. Events={$events}; Albums={$albums}."
+            );
+
+            $this->set_notice(
+                'success',
+                "v0.4.14: Events og Billedgalleri er midtstillet på mobil. {$events} events og {$albums} albumsider er opdateret."
+            );
+        } catch (Throwable $e) {
+            $this->log(
+                'ERROR',
+                'MOBILE_CONTENT_LAYOUT_REPAIR_0414_FAILED',
                 $e->getMessage()
             );
         }
@@ -1262,11 +1371,15 @@ final class Hangar18_Manager {
 
     private function default_content_layout_settings() {
         return [
-            'Version'                => '1.1',
-            'EventIndexAlignment'    => 'Left',
-            'EventDetailAlignment'   => 'Left',
-            'GalleryIndexAlignment'  => 'Left',
-            'GalleryDetailAlignment' => 'Left',
+            'Version'                      => '1.2',
+            'EventIndexAlignment'          => 'Left',
+            'EventDetailAlignment'         => 'Left',
+            'GalleryIndexAlignment'        => 'Left',
+            'GalleryDetailAlignment'       => 'Left',
+            'MobileEventIndexAlignment'    => 'Center',
+            'MobileEventDetailAlignment'   => 'Center',
+            'MobileGalleryIndexAlignment'  => 'Center',
+            'MobileGalleryDetailAlignment' => 'Center',
         ];
     }
 
@@ -1280,6 +1393,10 @@ final class Hangar18_Manager {
         $event_detail_source = (string) ($saved['EventDetailAlignment'] ?? $legacy_event);
         $gallery_index_source = (string) ($saved['GalleryIndexAlignment'] ?? $legacy_gallery);
         $gallery_detail_source = (string) ($saved['GalleryDetailAlignment'] ?? $legacy_gallery);
+        $mobile_event_index_source = (string) ($saved['MobileEventIndexAlignment'] ?? '');
+        $mobile_event_detail_source = (string) ($saved['MobileEventDetailAlignment'] ?? '');
+        $mobile_gallery_index_source = (string) ($saved['MobileGalleryIndexAlignment'] ?? '');
+        $mobile_gallery_detail_source = (string) ($saved['MobileGalleryDetailAlignment'] ?? '');
 
         $normalize_alignment = static function($value, $fallback) {
             return in_array((string) $value, ['Left', 'Center'], true)
@@ -1288,11 +1405,15 @@ final class Hangar18_Manager {
         };
 
         return [
-            'Version'                => '1.1',
-            'EventIndexAlignment'    => $normalize_alignment($event_index_source, $default['EventIndexAlignment']),
-            'EventDetailAlignment'   => $normalize_alignment($event_detail_source, $default['EventDetailAlignment']),
-            'GalleryIndexAlignment'  => $normalize_alignment($gallery_index_source, $default['GalleryIndexAlignment']),
-            'GalleryDetailAlignment' => $normalize_alignment($gallery_detail_source, $default['GalleryDetailAlignment']),
+            'Version'                      => '1.2',
+            'EventIndexAlignment'          => $normalize_alignment($event_index_source, $default['EventIndexAlignment']),
+            'EventDetailAlignment'         => $normalize_alignment($event_detail_source, $default['EventDetailAlignment']),
+            'GalleryIndexAlignment'        => $normalize_alignment($gallery_index_source, $default['GalleryIndexAlignment']),
+            'GalleryDetailAlignment'       => $normalize_alignment($gallery_detail_source, $default['GalleryDetailAlignment']),
+            'MobileEventIndexAlignment'    => $normalize_alignment($mobile_event_index_source, $default['MobileEventIndexAlignment']),
+            'MobileEventDetailAlignment'   => $normalize_alignment($mobile_event_detail_source, $default['MobileEventDetailAlignment']),
+            'MobileGalleryIndexAlignment'  => $normalize_alignment($mobile_gallery_index_source, $default['MobileGalleryIndexAlignment']),
+            'MobileGalleryDetailAlignment' => $normalize_alignment($mobile_gallery_detail_source, $default['MobileGalleryDetailAlignment']),
         ];
     }
 
@@ -4311,6 +4432,8 @@ HTML;
         $layout = $this->get_content_layout_settings();
         $alignment = $layout['EventDetailAlignment'] === 'Center' ? 'center' : 'left';
         $detail_margin = $alignment === 'center' ? '0 auto' : '0 auto 0 0';
+        $mobile_alignment = $layout['MobileEventDetailAlignment'] === 'Center' ? 'center' : 'left';
+        $mobile_detail_margin = $mobile_alignment === 'center' ? '0 auto' : '0 auto 0 0';
 
         $name      = $this->h($this->value($data, 'EventName'));
         $short     = $this->h($this->value($data, 'ShortDescription'));
@@ -4366,6 +4489,7 @@ body.page-id-{$id} .h18-event-image img{width:100%;height:auto;max-height:540px;
 body.page-id-{$id} .h18-event-gallery-link{text-align:{$alignment};margin-top:34px}
 body.page-id-{$id} .h18-event-gallery-link a{display:inline-block;padding:13px 22px;background:#30382a;color:#f2f0e8!important;text-decoration:none;border-radius:6px;font-weight:700}
 body.page-id-{$id} .h18-event-gallery-link a:hover{background:#8b4a2b}
+@media (max-width:782px){body.page-id-{$id} .h18-event-hero,body.page-id-{$id} .h18-event-main,body.page-id-{$id} .h18-event-meta>div,body.page-id-{$id} .h18-event-gallery-link{text-align:{$mobile_alignment}!important}body.page-id-{$id} .h18-event-main{margin:{$mobile_detail_margin}!important}body.page-id-{$id} .h18-event-image{margin-left:auto!important;margin-right:auto!important}}
 </style>
 <!-- /wp:html -->
 <div class="h18-event-hero"><h1>{$name}</h1><p>{$short}</p></div>
@@ -4395,6 +4519,9 @@ HTML;
         $layout = $this->get_content_layout_settings();
         $alignment = $layout['EventIndexAlignment'] === 'Center' ? 'center' : 'left';
         $justify = $layout['EventIndexAlignment'] === 'Center' ? 'center' : 'start';
+        $mobile_alignment = $layout['MobileEventIndexAlignment'] === 'Center' ? 'center' : 'left';
+        $mobile_justify = $layout['MobileEventIndexAlignment'] === 'Center' ? 'center' : 'start';
+        $parent_id = (int) $parent->ID;
 
         $events = [];
         foreach ($this->get_event_pages(true) as $page) {
@@ -4481,11 +4608,12 @@ HTML;
 .h18-event-card-image img{width:100%;height:100%;object-fit:cover;display:block}
 .h18-event-card-body{padding:20px}
 .h18-event-card h3{margin-top:0}.h18-event-card span{color:#8b4a2b;font-weight:700}
+@media (max-width:782px){body.page-id-{$parent_id} .h18-overview-heading,body.page-id-{$parent_id} .h18-event-section-heading,body.page-id-{$parent_id} .h18-event-card a,body.page-id-{$parent_id} .h18-event-register>p{text-align:{$mobile_alignment}!important}body.page-id-{$parent_id} .h18-event-register{justify-content:{$mobile_justify}!important}}
 </style>
 <div class="h18-overview-heading" style="text-align:{$alignment}"><h1>Events</h1></div>
-<div style="text-align:{$alignment}"><h2>Kommende arrangementer</h2></div>
+<div class="h18-event-section-heading" style="text-align:{$alignment}"><h2>Kommende arrangementer</h2></div>
 <div class="h18-event-register">{$upcoming}</div>
-<div style="text-align:{$alignment}"><h2>Tidligere arrangementer</h2></div>
+<div class="h18-event-section-heading" style="text-align:{$alignment}"><h2>Tidligere arrangementer</h2></div>
 <div class="h18-event-register">{$past}</div>
 <!-- /wp:html -->
 HTML;
@@ -4529,20 +4657,36 @@ HTML;
                 <input type="hidden" name="action" value="h18_save_event_layout" />
                 <div class="h18-menu-settings-row">
                     <div class="h18-field">
-                        <label><strong>Eventsiden / oversigten</strong></label>
+                        <label><strong>Eventsiden / oversigten – desktop</strong></label>
                         <select name="event_index_alignment">
                             <option value="Left" <?php selected($content_layout['EventIndexAlignment'], 'Left'); ?>>Venstre</option>
                             <option value="Center" <?php selected($content_layout['EventIndexAlignment'], 'Center'); ?>>Midtstillet</option>
                         </select>
-                        <p class="description">Kun siden med listen over kommende og tidligere events.</p>
+                        <p class="description">Placering på desktop.</p>
                     </div>
                     <div class="h18-field">
-                        <label><strong>Selve events / detaljesider</strong></label>
+                        <label><strong>Selve events / detaljesider – desktop</strong></label>
                         <select name="event_detail_alignment">
                             <option value="Left" <?php selected($content_layout['EventDetailAlignment'], 'Left'); ?>>Venstre</option>
                             <option value="Center" <?php selected($content_layout['EventDetailAlignment'], 'Center'); ?>>Midtstillet</option>
                         </select>
-                        <p class="description">Kun de enkelte eventsider.</p>
+                        <p class="description">Placering på desktop.</p>
+                    </div>
+                    <div class="h18-field">
+                        <label><strong>Eventsiden / oversigten – mobil</strong></label>
+                        <select name="mobile_event_index_alignment">
+                            <option value="Left" <?php selected($content_layout['MobileEventIndexAlignment'], 'Left'); ?>>Venstre</option>
+                            <option value="Center" <?php selected($content_layout['MobileEventIndexAlignment'], 'Center'); ?>>Midtstillet</option>
+                        </select>
+                        <p class="description">Placering på skærme op til 782 px.</p>
+                    </div>
+                    <div class="h18-field">
+                        <label><strong>Selve events / detaljesider – mobil</strong></label>
+                        <select name="mobile_event_detail_alignment">
+                            <option value="Left" <?php selected($content_layout['MobileEventDetailAlignment'], 'Left'); ?>>Venstre</option>
+                            <option value="Center" <?php selected($content_layout['MobileEventDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                        </select>
+                        <p class="description">Placering på skærme op til 782 px.</p>
                     </div>
                     <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
                     <button class="button button-secondary" type="submit">Gem event-layout og anvend</button>
@@ -4637,6 +4781,8 @@ HTML;
         $settings = $this->get_content_layout_settings();
         $index_alignment = $this->post_text('event_index_alignment');
         $detail_alignment = $this->post_text('event_detail_alignment');
+        $mobile_index_alignment = $this->post_text('mobile_event_index_alignment');
+        $mobile_detail_alignment = $this->post_text('mobile_event_detail_alignment');
 
         if (!in_array($index_alignment, ['Left', 'Center'], true)) {
             $index_alignment = 'Left';
@@ -4644,27 +4790,35 @@ HTML;
         if (!in_array($detail_alignment, ['Left', 'Center'], true)) {
             $detail_alignment = 'Left';
         }
+        if (!in_array($mobile_index_alignment, ['Left', 'Center'], true)) {
+            $mobile_index_alignment = 'Center';
+        }
+        if (!in_array($mobile_detail_alignment, ['Left', 'Center'], true)) {
+            $mobile_detail_alignment = 'Center';
+        }
 
         $settings['EventIndexAlignment'] = $index_alignment;
         $settings['EventDetailAlignment'] = $detail_alignment;
+        $settings['MobileEventIndexAlignment'] = $mobile_index_alignment;
+        $settings['MobileEventDetailAlignment'] = $mobile_detail_alignment;
         $settings = $this->normalize_content_layout_settings($settings);
 
         if (!empty($_POST['whatif'])) {
             $this->log(
                 'WARN',
                 'WHATIF_EVENT_LAYOUT',
-                "[WHATIF] EventIndexAlignment={$index_alignment}; EventDetailAlignment={$detail_alignment}."
+                "[WHATIF] EventIndexAlignment={$index_alignment}; EventDetailAlignment={$detail_alignment}; MobileEventIndexAlignment={$mobile_index_alignment}; MobileEventDetailAlignment={$mobile_detail_alignment}."
             );
             $this->set_notice(
                 'warning',
-                'WHATIF: Eventoversigt og eventdetaljesider ville få hver sin valgte placering. Ingen data blev ændret.'
+                'WHATIF: Eventoversigt og eventdetaljesider ville få de valgte desktop- og mobilplaceringer. Ingen data blev ændret.'
             );
             $this->redirect('hangar18-events');
         }
 
         try {
             $this->create_full_managed_backup(
-                "Før ændring af event-layout: oversigt={$index_alignment}; detaljer={$detail_alignment}"
+                "Før ændring af event-layout: desktop oversigt={$index_alignment}; desktop detaljer={$detail_alignment}; mobil oversigt={$mobile_index_alignment}; mobil detaljer={$mobile_detail_alignment}"
             );
 
             update_option(self::CONTENT_LAYOUT_OPTION, $settings, false);
@@ -4704,12 +4858,12 @@ HTML;
             $this->log(
                 'INFO',
                 'EVENT_LAYOUT_SAVED',
-                "EventIndexAlignment={$index_alignment}; EventDetailAlignment={$detail_alignment}; DetailPagesUpdated={$updated}."
+                "EventIndexAlignment={$index_alignment}; EventDetailAlignment={$detail_alignment}; MobileEventIndexAlignment={$mobile_index_alignment}; MobileEventDetailAlignment={$mobile_detail_alignment}; DetailPagesUpdated={$updated}."
             );
 
             $this->set_notice(
                 'success',
-                "Event-layout gemt: oversigt={$index_alignment}, detaljesider={$detail_alignment}. {$updated} events er opdateret."
+                "Event-layout gemt: desktop oversigt={$index_alignment}, desktop detaljesider={$detail_alignment}, mobil oversigt={$mobile_index_alignment}, mobil detaljesider={$mobile_detail_alignment}. {$updated} events er opdateret."
             );
         } catch (Throwable $e) {
             $this->log('ERROR', 'EVENT_LAYOUT_FAILED', $e->getMessage());
@@ -4921,6 +5075,9 @@ HTML;
         $justify = $layout['GalleryDetailAlignment'] === 'Center' ? 'center' : 'start';
         $grid_margin = $alignment === 'center' ? '36px auto' : '36px 0';
         $grid_class = $alignment === 'center' ? 'h18-align-center' : 'h18-align-left';
+        $mobile_alignment = $layout['MobileGalleryDetailAlignment'] === 'Center' ? 'center' : 'left';
+        $mobile_justify = $layout['MobileGalleryDetailAlignment'] === 'Center' ? 'center' : 'start';
+        $mobile_grid_margin = $mobile_alignment === 'center' ? '36px auto' : '36px 0';
 
         $name = $this->h($this->value($data, 'AlbumName'));
         $type = $this->h($this->value($data, 'AlbumType'));
@@ -4962,6 +5119,7 @@ body.page-id-{$id} .h18-gallery-grid{width:min(1200px,100%);max-width:1200px;mar
 body.page-id-{$id} .h18-gallery-item{margin:0;background:#f2f0e8;border-radius:7px;overflow:hidden}
 body.page-id-{$id} .h18-gallery-item img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
 body.page-id-{$id} .h18-gallery-item figcaption{padding:8px 10px;text-align:{$alignment}}
+@media (max-width:782px){body.page-id-{$id} .h18-gallery-hero,body.page-id-{$id} .h18-gallery-item figcaption,body.page-id-{$id} .h18-gallery-grid>p{text-align:{$mobile_alignment}!important}body.page-id-{$id} .h18-gallery-grid,body.page-id-{$id} .h18-gallery-grid.h18-align-left,body.page-id-{$id} .h18-gallery-grid.h18-align-center{margin:{$mobile_grid_margin}!important;justify-content:{$mobile_justify}!important}}
 </style>
 <!-- /wp:html -->
 <div class="h18-gallery-hero"><h1>{$name}</h1><p>{$type}</p><p>{$description}</p></div>
@@ -4978,6 +5136,9 @@ HTML;
         $layout = $this->get_content_layout_settings();
         $alignment = $layout['GalleryIndexAlignment'] === 'Center' ? 'center' : 'left';
         $justify = $layout['GalleryIndexAlignment'] === 'Center' ? 'center' : 'start';
+        $mobile_alignment = $layout['MobileGalleryIndexAlignment'] === 'Center' ? 'center' : 'left';
+        $mobile_justify = $layout['MobileGalleryIndexAlignment'] === 'Center' ? 'center' : 'start';
+        $parent_id = (int) $parent->ID;
 
         $groups = [
             'Køretøj'     => [],
@@ -5009,7 +5170,8 @@ HTML;
             'Andet'        => 'Andet',
         ];
 
-        $html = '<!-- wp:html --><style>.h18-overview-heading h1{margin:0 0 28px;font-size:clamp(2rem,4vw,3.2rem);line-height:1.08;color:#30382a}.h18-gallery-index{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,360px));gap:18px;margin:18px 0 32px;justify-content:' . $justify . '}.h18-album-card{background:#f2f0e8;border-radius:8px;overflow:hidden;border:1px solid rgba(48,56,42,.14)}.h18-album-card a{display:block;color:#30382a;text-decoration:none}.h18-album-card img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}.h18-album-card-body{padding:18px;text-align:' . $alignment . '}.h18-album-card h3{margin:0 0 8px}.h18-album-placeholder{aspect-ratio:16/10;background:#525a5f;color:#f2f0e8;display:flex;align-items:center;justify-content:center}</style>';
+        $html = '<!-- wp:html --><style>.h18-overview-heading h1{margin:0 0 28px;font-size:clamp(2rem,4vw,3.2rem);line-height:1.08;color:#30382a}.h18-gallery-index{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,360px));gap:18px;margin:18px 0 32px;justify-content:' . $justify . '}.h18-album-card{background:#f2f0e8;border-radius:8px;overflow:hidden;border:1px solid rgba(48,56,42,.14)}.h18-album-card a{display:block;color:#30382a;text-decoration:none}.h18-album-card img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}.h18-album-card-body{padding:18px;text-align:' . $alignment . '}.h18-album-card h3{margin:0 0 8px}.h18-album-placeholder{aspect-ratio:16/10;background:#525a5f;color:#f2f0e8;display:flex;align-items:center;justify-content:center}';
+        $html .= '@media (max-width:782px){body.page-id-' . $parent_id . ' .h18-overview-heading,body.page-id-' . $parent_id . ' .h18-gallery-group-heading,body.page-id-' . $parent_id . ' .h18-album-card-body{text-align:' . $mobile_alignment . '!important}body.page-id-' . $parent_id . ' .h18-gallery-index{justify-content:' . $mobile_justify . '!important}}</style>';
 
         $html .= '<div class="h18-overview-heading" style="text-align:' . esc_attr($alignment) . '"><h1>Billedgalleri</h1></div>';
 
@@ -5018,7 +5180,7 @@ HTML;
                 continue;
             }
 
-            $html .= '<h2 style="text-align:' . esc_attr($alignment) . '">' . esc_html($titles[$type]) . '</h2><div class="h18-gallery-index">';
+            $html .= '<h2 class="h18-gallery-group-heading" style="text-align:' . esc_attr($alignment) . '">' . esc_html($titles[$type]) . '</h2><div class="h18-gallery-index">';
 
             foreach ($items as $item) {
                 $page = $item['page'];
@@ -5093,20 +5255,36 @@ HTML;
                 <input type="hidden" name="action" value="h18_save_gallery_layout" />
                 <div class="h18-menu-settings-row">
                     <div class="h18-field">
-                        <label><strong>Billedgalleri-siden / oversigten</strong></label>
+                        <label><strong>Billedgalleri-siden / oversigten – desktop</strong></label>
                         <select name="gallery_index_alignment">
                             <option value="Left" <?php selected($content_layout['GalleryIndexAlignment'], 'Left'); ?>>Venstre</option>
                             <option value="Center" <?php selected($content_layout['GalleryIndexAlignment'], 'Center'); ?>>Midtstillet</option>
                         </select>
-                        <p class="description">Kun siden med oversigten over albums.</p>
+                        <p class="description">Placering på desktop.</p>
                     </div>
                     <div class="h18-field">
-                        <label><strong>Selve albums / detaljesider</strong></label>
+                        <label><strong>Selve albums / detaljesider – desktop</strong></label>
                         <select name="gallery_detail_alignment">
                             <option value="Left" <?php selected($content_layout['GalleryDetailAlignment'], 'Left'); ?>>Venstre</option>
                             <option value="Center" <?php selected($content_layout['GalleryDetailAlignment'], 'Center'); ?>>Midtstillet</option>
                         </select>
-                        <p class="description">Kun de enkelte albumsider.</p>
+                        <p class="description">Placering på desktop.</p>
+                    </div>
+                    <div class="h18-field">
+                        <label><strong>Billedgalleri-siden / oversigten – mobil</strong></label>
+                        <select name="mobile_gallery_index_alignment">
+                            <option value="Left" <?php selected($content_layout['MobileGalleryIndexAlignment'], 'Left'); ?>>Venstre</option>
+                            <option value="Center" <?php selected($content_layout['MobileGalleryIndexAlignment'], 'Center'); ?>>Midtstillet</option>
+                        </select>
+                        <p class="description">Placering på skærme op til 782 px.</p>
+                    </div>
+                    <div class="h18-field">
+                        <label><strong>Selve albums / detaljesider – mobil</strong></label>
+                        <select name="mobile_gallery_detail_alignment">
+                            <option value="Left" <?php selected($content_layout['MobileGalleryDetailAlignment'], 'Left'); ?>>Venstre</option>
+                            <option value="Center" <?php selected($content_layout['MobileGalleryDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                        </select>
+                        <p class="description">Billeder og albumtekst på skærme op til 782 px.</p>
                     </div>
                     <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
                     <button class="button button-secondary" type="submit">Gem galleri-layout og anvend</button>
@@ -5221,6 +5399,8 @@ HTML;
         $settings = $this->get_content_layout_settings();
         $index_alignment = $this->post_text('gallery_index_alignment');
         $detail_alignment = $this->post_text('gallery_detail_alignment');
+        $mobile_index_alignment = $this->post_text('mobile_gallery_index_alignment');
+        $mobile_detail_alignment = $this->post_text('mobile_gallery_detail_alignment');
 
         if (!in_array($index_alignment, ['Left', 'Center'], true)) {
             $index_alignment = 'Left';
@@ -5228,27 +5408,35 @@ HTML;
         if (!in_array($detail_alignment, ['Left', 'Center'], true)) {
             $detail_alignment = 'Left';
         }
+        if (!in_array($mobile_index_alignment, ['Left', 'Center'], true)) {
+            $mobile_index_alignment = 'Center';
+        }
+        if (!in_array($mobile_detail_alignment, ['Left', 'Center'], true)) {
+            $mobile_detail_alignment = 'Center';
+        }
 
         $settings['GalleryIndexAlignment'] = $index_alignment;
         $settings['GalleryDetailAlignment'] = $detail_alignment;
+        $settings['MobileGalleryIndexAlignment'] = $mobile_index_alignment;
+        $settings['MobileGalleryDetailAlignment'] = $mobile_detail_alignment;
         $settings = $this->normalize_content_layout_settings($settings);
 
         if (!empty($_POST['whatif'])) {
             $this->log(
                 'WARN',
                 'WHATIF_GALLERY_LAYOUT',
-                "[WHATIF] GalleryIndexAlignment={$index_alignment}; GalleryDetailAlignment={$detail_alignment}."
+                "[WHATIF] GalleryIndexAlignment={$index_alignment}; GalleryDetailAlignment={$detail_alignment}; MobileGalleryIndexAlignment={$mobile_index_alignment}; MobileGalleryDetailAlignment={$mobile_detail_alignment}."
             );
             $this->set_notice(
                 'warning',
-                'WHATIF: Gallerioversigt og albumsider ville få hver sin valgte placering. Ingen data blev ændret.'
+                'WHATIF: Gallerioversigt og albumsider ville få de valgte desktop- og mobilplaceringer. Ingen data blev ændret.'
             );
             $this->redirect('hangar18-gallery');
         }
 
         try {
             $this->create_full_managed_backup(
-                "Før ændring af galleri-layout: oversigt={$index_alignment}; detaljer={$detail_alignment}"
+                "Før ændring af galleri-layout: desktop oversigt={$index_alignment}; desktop detaljer={$detail_alignment}; mobil oversigt={$mobile_index_alignment}; mobil detaljer={$mobile_detail_alignment}"
             );
 
             update_option(self::CONTENT_LAYOUT_OPTION, $settings, false);
@@ -5289,12 +5477,12 @@ HTML;
             $this->log(
                 'INFO',
                 'GALLERY_LAYOUT_SAVED',
-                "GalleryIndexAlignment={$index_alignment}; GalleryDetailAlignment={$detail_alignment}; DetailPagesUpdated={$updated}."
+                "GalleryIndexAlignment={$index_alignment}; GalleryDetailAlignment={$detail_alignment}; MobileGalleryIndexAlignment={$mobile_index_alignment}; MobileGalleryDetailAlignment={$mobile_detail_alignment}; DetailPagesUpdated={$updated}."
             );
 
             $this->set_notice(
                 'success',
-                "Galleri-layout gemt: oversigt={$index_alignment}, albumsider={$detail_alignment}. {$updated} albumsider er opdateret."
+                "Galleri-layout gemt: desktop oversigt={$index_alignment}, desktop albumsider={$detail_alignment}, mobil oversigt={$mobile_index_alignment}, mobil albumsider={$mobile_detail_alignment}. {$updated} albumsider er opdateret."
             );
         } catch (Throwable $e) {
             $this->log('ERROR', 'GALLERY_LAYOUT_FAILED', $e->getMessage());
