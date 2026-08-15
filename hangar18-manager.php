@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.12
+ * Version: 0.4.13
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.12';
+    const VERSION = '0.4.13';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -393,6 +393,10 @@ final class Hangar18_Manager {
             : 'min(' . $laptop_width . 'vw, ' . $content_max_width . ')';
         $section_spacing = (int) $design['SectionSpacingPx'];
         $mobile_section_spacing = (int) $design['MobileSectionSpacingPx'];
+        $content_top_spacing = (int) $design['ContentTopSpacingPx'];
+        $content_bottom_spacing = (int) $design['ContentBottomSpacingPx'];
+        $mobile_content_top_spacing = (int) $design['MobileContentTopSpacingPx'];
+        $mobile_content_bottom_spacing = (int) $design['MobileContentBottomSpacingPx'];
 
         ?>
         <style id="hangar18-manager-runtime-fixes">
@@ -461,8 +465,15 @@ final class Hangar18_Manager {
          */
         body.page .h18-page-frame {
             --h18-section-spacing:<?php echo esc_html($section_spacing); ?>px;
+            --h18-content-top-spacing:<?php echo esc_html($content_top_spacing); ?>px;
+            --h18-content-bottom-spacing:<?php echo esc_html($content_bottom_spacing); ?>px;
             margin-top:0 !important;
             margin-block-start:0 !important;
+            padding-top:var(--h18-content-top-spacing) !important;
+            padding-bottom:var(--h18-content-bottom-spacing) !important;
+            padding-block-start:var(--h18-content-top-spacing) !important;
+            padding-block-end:var(--h18-content-bottom-spacing) !important;
+            box-sizing:border-box !important;
         }
 
         body.page .h18-page-frame > :not(style):not(script) {
@@ -510,6 +521,8 @@ final class Hangar18_Manager {
 
             body.page .h18-page-frame {
                 --h18-section-spacing:<?php echo esc_html($mobile_section_spacing); ?>px;
+                --h18-content-top-spacing:<?php echo esc_html($mobile_content_top_spacing); ?>px;
+                --h18-content-bottom-spacing:<?php echo esc_html($mobile_content_bottom_spacing); ?>px;
             }
         }
 
@@ -839,7 +852,11 @@ final class Hangar18_Manager {
             'ContentMaxWidth' => 'None',
             'FooterWidthPercent' => 100,
             'SectionSpacingPx' => 32,
-            'MobileSectionSpacingPx' => 24
+            'MobileSectionSpacingPx' => 24,
+            'ContentTopSpacingPx' => 32,
+            'ContentBottomSpacingPx' => 32,
+            'MobileContentTopSpacingPx' => 24,
+            'MobileContentBottomSpacingPx' => 24
         ];
     }
 
@@ -923,6 +940,10 @@ final class Hangar18_Manager {
             'FooterWidthPercent'                => $this->clamp_int($saved['FooterWidthPercent'] ?? $default['FooterWidthPercent'], 50, 100, $default['FooterWidthPercent']),
             'SectionSpacingPx'                  => $this->clamp_int($saved['SectionSpacingPx'] ?? $default['SectionSpacingPx'], 0, 120, $default['SectionSpacingPx']),
             'MobileSectionSpacingPx'            => $this->clamp_int($saved['MobileSectionSpacingPx'] ?? $default['MobileSectionSpacingPx'], 0, 80, $default['MobileSectionSpacingPx']),
+            'ContentTopSpacingPx'               => $this->clamp_int($saved['ContentTopSpacingPx'] ?? $default['ContentTopSpacingPx'], 0, 120, $default['ContentTopSpacingPx']),
+            'ContentBottomSpacingPx'            => $this->clamp_int($saved['ContentBottomSpacingPx'] ?? $default['ContentBottomSpacingPx'], 0, 120, $default['ContentBottomSpacingPx']),
+            'MobileContentTopSpacingPx'         => $this->clamp_int($saved['MobileContentTopSpacingPx'] ?? $default['MobileContentTopSpacingPx'], 0, 80, $default['MobileContentTopSpacingPx']),
+            'MobileContentBottomSpacingPx'      => $this->clamp_int($saved['MobileContentBottomSpacingPx'] ?? $default['MobileContentBottomSpacingPx'], 0, 80, $default['MobileContentBottomSpacingPx']),
         ];
     }
 
@@ -1559,6 +1580,46 @@ final class Hangar18_Manager {
                 );
             }
 
+            $content_top_spacing = $this->extract_css_custom_property($runtime, '--h18-content-top-spacing');
+            if ($content_top_spacing !== '') {
+                $saved['ContentTopSpacingPx'] = $this->clamp_int(
+                    $this->extract_int_from_css_value($content_top_spacing, $defaults['ContentTopSpacingPx']),
+                    0,
+                    120,
+                    $defaults['ContentTopSpacingPx']
+                );
+            }
+
+            $content_bottom_spacing = $this->extract_css_custom_property($runtime, '--h18-content-bottom-spacing');
+            if ($content_bottom_spacing !== '') {
+                $saved['ContentBottomSpacingPx'] = $this->clamp_int(
+                    $this->extract_int_from_css_value($content_bottom_spacing, $defaults['ContentBottomSpacingPx']),
+                    0,
+                    120,
+                    $defaults['ContentBottomSpacingPx']
+                );
+            }
+
+            $mobile_content_top_spacing = $this->extract_css_custom_property($runtime, '--h18-mobile-content-top-spacing');
+            if ($mobile_content_top_spacing !== '') {
+                $saved['MobileContentTopSpacingPx'] = $this->clamp_int(
+                    $this->extract_int_from_css_value($mobile_content_top_spacing, $defaults['MobileContentTopSpacingPx']),
+                    0,
+                    80,
+                    $defaults['MobileContentTopSpacingPx']
+                );
+            }
+
+            $mobile_content_bottom_spacing = $this->extract_css_custom_property($runtime, '--h18-mobile-content-bottom-spacing');
+            if ($mobile_content_bottom_spacing !== '') {
+                $saved['MobileContentBottomSpacingPx'] = $this->clamp_int(
+                    $this->extract_int_from_css_value($mobile_content_bottom_spacing, $defaults['MobileContentBottomSpacingPx']),
+                    0,
+                    80,
+                    $defaults['MobileContentBottomSpacingPx']
+                );
+            }
+
             $max_width = $this->extract_css_custom_property($runtime, '--h18-site-max-width');
             if ($max_width !== '') {
                 if (strtolower(trim($max_width)) === 'none') {
@@ -1723,7 +1784,11 @@ final class Hangar18_Manager {
             'ContentMaxWidth' => 'None',
             'FooterWidthPercent' => 100,
             'SectionSpacingPx' => 32,
-            'MobileSectionSpacingPx' => 24
+            'MobileSectionSpacingPx' => 24,
+            'ContentTopSpacingPx' => 32,
+            'ContentBottomSpacingPx' => 32,
+            'MobileContentTopSpacingPx' => 24,
+            'MobileContentBottomSpacingPx' => 24
         ];
     }
 
@@ -2946,6 +3011,10 @@ final class Hangar18_Manager {
             '    --h18-footer-content-width:' . (int) $design['FooterWidthPercent'] . '%;' . "\n" .
             '    --h18-section-spacing:' . (int) $design['SectionSpacingPx'] . 'px;' . "\n" .
             '    --h18-mobile-section-spacing:' . (int) $design['MobileSectionSpacingPx'] . 'px;' . "\n" .
+            '    --h18-content-top-spacing:' . (int) $design['ContentTopSpacingPx'] . 'px;' . "\n" .
+            '    --h18-content-bottom-spacing:' . (int) $design['ContentBottomSpacingPx'] . 'px;' . "\n" .
+            '    --h18-mobile-content-top-spacing:' . (int) $design['MobileContentTopSpacingPx'] . 'px;' . "\n" .
+            '    --h18-mobile-content-bottom-spacing:' . (int) $design['MobileContentBottomSpacingPx'] . 'px;' . "\n" .
             '    --h18-footer-body-font-size:' . esc_attr($runtime['footer_body']) . ';' . "\n" .
             '    --h18-footer-title-font-size:' . esc_attr($runtime['footer_title']) . ';' . "\n" .
             '    --h18-footer-heading-font-size:' . esc_attr($runtime['footer_heading']) . ';' . "\n" .
@@ -6883,6 +6952,10 @@ HTML;
             'FooterWidthPercent'                => $_POST['FooterWidthPercent'] ?? 100,
             'SectionSpacingPx'                  => $_POST['SectionSpacingPx'] ?? 32,
             'MobileSectionSpacingPx'            => $_POST['MobileSectionSpacingPx'] ?? 24,
+            'ContentTopSpacingPx'               => $_POST['ContentTopSpacingPx'] ?? 32,
+            'ContentBottomSpacingPx'            => $_POST['ContentBottomSpacingPx'] ?? 32,
+            'MobileContentTopSpacingPx'         => $_POST['MobileContentTopSpacingPx'] ?? 24,
+            'MobileContentBottomSpacingPx'      => $_POST['MobileContentBottomSpacingPx'] ?? 24,
         ]);
     }
 
@@ -7181,6 +7254,10 @@ HTML;
                         $this->field('FooterWidthPercent', 'FooterWidthPercent (%)', $s['FooterWidthPercent'], 'number');
                         $this->field('SectionSpacingPx', 'Afstand mellem hovedsektioner – desktop (px)', $s['SectionSpacingPx'], 'number', false, 'Astra-lignende standard: 32 px. Første sektion får ingen ekstra topafstand.');
                         $this->field('MobileSectionSpacingPx', 'Afstand mellem hovedsektioner – mobil (px)', $s['MobileSectionSpacingPx'], 'number', false, 'Standard: 24 px på skærme op til 782 px.');
+                        $this->field('ContentTopSpacingPx', 'Afstand fra header til indhold – desktop (px)', $s['ContentTopSpacingPx'], 'number', false, 'Luft under headeren uden at flytte headeren væk fra 0 px. Standard: 32 px.');
+                        $this->field('ContentBottomSpacingPx', 'Afstand fra indhold til footer – desktop (px)', $s['ContentBottomSpacingPx'], 'number', false, 'Luft over footeren. Standard: 32 px.');
+                        $this->field('MobileContentTopSpacingPx', 'Afstand fra header til indhold – mobil (px)', $s['MobileContentTopSpacingPx'], 'number', false, 'Mobil luft under headeren. Standard: 24 px.');
+                        $this->field('MobileContentBottomSpacingPx', 'Afstand fra indhold til footer – mobil (px)', $s['MobileContentBottomSpacingPx'], 'number', false, 'Mobil luft over footeren. Standard: 24 px.');
                         ?>
                         <div class="h18-runtime-note">
                             <strong>Aktuel runtime:</strong><br>

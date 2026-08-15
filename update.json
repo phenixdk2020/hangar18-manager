@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T11:44:59Z",
+  "published_utc": "2026-08-15T12:01:14Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "e4d60310060fc91f3f8475b5dc90afc2e2d0c54bbdc042c97a98775a1f2b6a04",
+  "package_sha256": "1c0ee5f29e7c4f17591da4fef6db47569dcbcbbd2da5e3bc1de865d9000c9ff1",
   "changelog": [
-    "Fjerner WordPress' skjulte admin-bar-afstand på 32 px på desktop og 46 px på mobil.",
-    "Headerens top, margin og sticky-position fastholdes på 0 px som sidste CSS-regel.",
-    "Sektionsafstanden påvirker kun indholdet og kan ikke længere flytte headeren.",
-    "Bevarer rettelserne til Billedgalleri og Configuration Store fra 0.4.11.",
-    "Bevarer styring af sektionsafstand separat for desktop og mobil."
+    "Tilføjer separat styring af afstanden fra header til sideindhold på desktop og mobil.",
+    "Tilføjer separat styring af afstanden fra sideindhold til footer på desktop og mobil.",
+    "Bruger 32 px som Astra-lignende standard på desktop og 24 px på mobil.",
+    "Lægger afstanden inde i indholdsrammen, så headeren fortsat starter ved 0 px.",
+    "Bevarer den eksisterende styring af afstand mellem hovedsektioner."
   ]
 }

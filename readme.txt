@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.12
+Version: 0.4.13
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -561,3 +561,11 @@ AUTHORITATIVE_BASELINE_FAILED
 - En afsluttende CSS-regel i footeren sikrer, at senere WordPress- eller blok-CSS ikke kan flytte headeren ned.
 - Headerens top, margin-top og sticky-position fastholdes på 0 px.
 - Indstillingen for sektionsafstand påvirker fortsat kun sektionerne inde i indholdsrammen.
+
+
+== Version 0.4.13 – Styrbar luft omkring sideindholdet ==
+
+- Fire nye HeaderDesign-felter styrer luften fra header til indhold og fra indhold til footer separat på desktop og mobil.
+- Standardafstanden er 32 px på desktop og 24 px på mobil.
+- Afstanden oprettes som indvendig luft i indholdsrammen, så headeren fortsat starter ved 0 px.
+- Den eksisterende sektionsafstand styrer fortsat afstanden mellem indholdets hovedsektioner.
