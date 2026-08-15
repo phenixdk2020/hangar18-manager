@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "theme": "hangar18-base",
+  "version": "1.2.0",
+  "requires": "6.4",
+  "requires_php": "8.0",
+  "last_updated": "2026-08-15T10:48:54Z",
+  "details_url": "https://github.com/phenixdk2020/hangar18-manager",
+  "package_url": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-base-theme.zip.b64",
+  "package_encoding": "base64",
+  "package_sha256": "6d3c7a2e45d249e31a74a3703844364ed79c3122798b6e916ddaa1116e62e6bf",
+  "changelog": "<h4>Hangar18 Base Theme 1.2.0</h4><ul><li>Automatisk temaopdatering fra GitHub gennem WordPress.</li><li>Separat versionsfil og temapakke.</li><li>SHA-256-kontrol før installation.</li><li>Det eksisterende desktop- og mobildesign bevares.</li></ul>"
+}
