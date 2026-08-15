@@ -234,4 +234,27 @@ jQuery(function ($) {
         }
     });
 
+    const $staticSections = $('#h18-static-sections-sortable');
+
+    function syncStaticSectionOrder() {
+        if (!$staticSections.length) {
+            return;
+        }
+
+        $staticSections.children('.h18-static-section-row').each(function (index) {
+            $(this).find('.h18-static-section-order').val((index + 1) * 10);
+        });
+    }
+
+    if ($staticSections.length) {
+        $staticSections.sortable({
+            items: '> .h18-static-section-row',
+            handle: '.h18-static-section-drag',
+            axis: 'y',
+            tolerance: 'pointer',
+            update: syncStaticSectionOrder
+        });
+        syncStaticSectionOrder();
+    }
+
 });

@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.16",
+  "version": "0.4.17",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T14:13:00Z",
+  "published_utc": "2026-08-15T14:45:01Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "ca70facb4a1e9e9f4493155f2b331b266717672f3590ea1f99ae9cbd90402008",
+  "package_sha256": "b31e1d560b6ff6cd625c29cc80d4344ac383123ca5db847f0768e4c232e8c6f8",
   "changelog": [
-    "Samler layoutindstillinger for Køretøjer, Events og Billedgalleri i ens Desktop- og Mobil-kort.",
-    "Holder relaterede felter i faste responsive kolonner, så indstillingerne ikke står hulter til bulter.",
-    "Giver layout-, gemme- og reparationsknapper synlige forklaringer om hvad de gør, og hvornår de skal bruges.",
-    "Forklarer WhatIf som en frivillig simulering, der ikke gemmer eller ændrer sider.",
-    "Gør handlingslinjerne ens på tværs af web-managerens vigtigste administrationssider."
+    "Tilføjer Sideindhold til styring af indholdssektioner på Om foreningen.",
+    "Sektioner kan vises, skjules, tilføjes, sorteres med musen eller fjernes permanent.",
+    "Luft før første kasse, mellem kasser og inde i kasser kan styres separat på desktop og mobil.",
+    "WhatIf simulerer ændringen uden skrivning, og en rigtig gemning tager automatisk backup først.",
+    "Tilføjer en samlet designmanual med de godkendte valg for farver, bredde, typografi, afstande, kort og mobilvisning."
   ]
 }

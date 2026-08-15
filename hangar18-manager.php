@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.16
+ * Version: 0.4.17
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.16';
+    const VERSION = '0.4.17';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -27,6 +27,7 @@ final class Hangar18_Manager {
     const VEHICLE_MARKER = 'HANGAR18-VEHICLE-DATA';
     const EVENT_MARKER   = 'HANGAR18-EVENT-DATA';
     const GALLERY_MARKER = 'HANGAR18-GALLERY-ALBUM-DATA';
+    const STATIC_CONTENT_MARKER = 'HANGAR18-STATIC-CONTENT-DATA';
 
     const LOG_OPTION               = 'hangar18_manager_log';
     const DESIGN_OPTION            = 'hangar18_manager_design'; // v0.3.0 legacy
@@ -34,6 +35,7 @@ final class Hangar18_Manager {
     const VEHICLE_REGISTER_OPTION  = 'hangar18_manager_vehicle_register_v12';
     const VEHICLE_FIELDS_OPTION    = 'hangar18_manager_vehicle_fields_v1';
     const CONTENT_LAYOUT_OPTION     = 'hangar18_manager_content_layout_v1';
+    const STATIC_CONTENT_OPTION     = 'hangar18_manager_static_content_v1';
     const MENU_ORDER_OPTION        = 'hangar18_manager_menu_order_v20';
     const CONFIG_IMPORT_META_OPTION= 'hangar18_manager_config_import_meta';
     const CONFIG_BOOTSTRAP_OPTION   = 'hangar18_manager_config_bootstrap_v032';
@@ -98,6 +100,8 @@ final class Hangar18_Manager {
         add_action('admin_post_h18_save_gallery_album', [$this, 'handle_save_gallery_album']);
         add_action('admin_post_h18_save_gallery_layout', [$this, 'handle_save_gallery_layout']);
         add_action('admin_post_h18_rebuild_gallery_index', [$this, 'handle_rebuild_gallery_index']);
+
+        add_action('admin_post_h18_save_static_content', [$this, 'handle_save_static_content']);
 
         add_action('admin_post_h18_create_menu', [$this, 'handle_create_menu']);
         add_action('admin_post_h18_save_menu', [$this, 'handle_save_menu']);
@@ -908,6 +912,7 @@ final class Hangar18_Manager {
         add_submenu_page(self::MENU_SLUG, 'Køretøjsfelter', 'Køretøjsfelter', $capability, 'hangar18-vehicle-fields', [$this, 'render_vehicle_fields']);
         add_submenu_page(self::MENU_SLUG, 'Events', 'Events', $capability, 'hangar18-events', [$this, 'render_events']);
         add_submenu_page(self::MENU_SLUG, 'Billedgalleri', 'Billedgalleri', $capability, 'hangar18-gallery', [$this, 'render_gallery']);
+        add_submenu_page(self::MENU_SLUG, 'Sideindhold', 'Sideindhold', $capability, 'hangar18-static-content', [$this, 'render_static_content']);
         add_submenu_page(self::MENU_SLUG, 'Menu', 'Menu', $capability, 'hangar18-menu', [$this, 'render_menu']);
         add_submenu_page(self::MENU_SLUG, 'Header / Footer og design', 'Header / Footer', $capability, 'hangar18-header-footer', [$this, 'render_header_footer']);
         add_submenu_page(self::MENU_SLUG, 'Backup', 'Backup', $capability, 'hangar18-backup', [$this, 'render_backup']);
@@ -1494,6 +1499,125 @@ final class Hangar18_Manager {
             'MobileGalleryIndexAlignment'  => $normalize_alignment($mobile_gallery_index_source, $default['MobileGalleryIndexAlignment']),
             'MobileGalleryDetailAlignment' => $normalize_alignment($mobile_gallery_detail_source, $default['MobileGalleryDetailAlignment']),
         ];
+    }
+
+    private function default_static_content_settings() {
+        return [
+            'Version'                 => '1.0',
+            'PageSlug'                => 'om-foreningen',
+            'Heading'                 => 'Foreningens formål',
+            'Intro'                   => "Foreningens formål er at indsamle, restaurere, vedligeholde og bevare militærhistorisk materiel samt formidle materiellets historie.\n\nDer lægges særlig vægt på bælte-, hjul- og hestekøretøjer samt andre effekter, der gennem tiden har været i brug ved Aalborg Kaserner.",
+            'CardsTopSpacingPx'       => 24,
+            'CardGapPx'               => 20,
+            'MobileCardsTopSpacingPx' => 18,
+            'MobileCardGapPx'         => 14,
+            'CardPaddingPx'           => 26,
+            'MobileCardPaddingPx'     => 20,
+            'CardRadiusPx'            => 7,
+            'Sections'                => [
+                [
+                    'Key'    => 'bevaring',
+                    'Title'  => 'Bevaring',
+                    'Body'   => 'Materiellet bevares som en del af den lokale og militære historie omkring Aalborg Kaserner.',
+                    'Active' => true,
+                    'Order'  => 10,
+                ],
+                [
+                    'Key'    => 'restaurering',
+                    'Title'  => 'Restaurering',
+                    'Body'   => 'Historiske køretøjer og effekter vedligeholdes og restaureres med fokus på at bevare deres historiske udtryk og funktion.',
+                    'Active' => true,
+                    'Order'  => 20,
+                ],
+                [
+                    'Key'    => 'formidling',
+                    'Title'  => 'Formidling',
+                    'Body'   => 'Foreningen arbejder for at gøre historien om materiellet tilgængelig gennem aktiviteter, billeder, fortællinger og arrangementer.',
+                    'Active' => true,
+                    'Order'  => 30,
+                ],
+            ],
+        ];
+    }
+
+    private function normalize_static_content_settings(array $saved) {
+        $default = $this->default_static_content_settings();
+        $heading = sanitize_text_field((string) ($saved['Heading'] ?? ''));
+        if ($heading === '') {
+            $heading = $default['Heading'];
+        }
+
+        $raw_sections = array_key_exists('Sections', $saved) && is_array($saved['Sections'])
+            ? $saved['Sections']
+            : $default['Sections'];
+        $sections = [];
+        $used_keys = [];
+        $fallback_order = 10;
+
+        foreach (array_slice($raw_sections, 0, 30) as $index => $raw) {
+            if (!is_array($raw)) {
+                continue;
+            }
+
+            $title = sanitize_text_field((string) ($raw['Title'] ?? ''));
+            $body = sanitize_textarea_field((string) ($raw['Body'] ?? ''));
+            if ($title === '' && $body === '') {
+                continue;
+            }
+
+            $key = sanitize_key((string) ($raw['Key'] ?? ''));
+            if ($key === '') {
+                $key = sanitize_key(sanitize_title($title));
+            }
+            if ($key === '') {
+                $key = 'sektion_' . ((int) $index + 1);
+            }
+
+            $base_key = $key;
+            $suffix = 2;
+            while (isset($used_keys[$key])) {
+                $key = $base_key . '_' . $suffix++;
+            }
+            $used_keys[$key] = true;
+
+            $sections[] = [
+                'Key'    => $key,
+                'Title'  => $title,
+                'Body'   => $body,
+                'Active' => array_key_exists('Active', $raw)
+                    ? $this->bool_value($raw['Active'], false)
+                    : true,
+                'Order'  => $this->clamp_int($raw['Order'] ?? $fallback_order, 1, 10000, $fallback_order),
+            ];
+            $fallback_order += 10;
+        }
+
+        usort($sections, static function($a, $b) {
+            return ((int) $a['Order']) <=> ((int) $b['Order']);
+        });
+
+        return [
+            'Version'                 => '1.0',
+            'PageSlug'                => 'om-foreningen',
+            'Heading'                 => $heading,
+            'Intro'                   => sanitize_textarea_field((string) ($saved['Intro'] ?? $default['Intro'])),
+            'CardsTopSpacingPx'       => $this->clamp_int($saved['CardsTopSpacingPx'] ?? $default['CardsTopSpacingPx'], 0, 120, $default['CardsTopSpacingPx']),
+            'CardGapPx'               => $this->clamp_int($saved['CardGapPx'] ?? $default['CardGapPx'], 0, 80, $default['CardGapPx']),
+            'MobileCardsTopSpacingPx' => $this->clamp_int($saved['MobileCardsTopSpacingPx'] ?? $default['MobileCardsTopSpacingPx'], 0, 80, $default['MobileCardsTopSpacingPx']),
+            'MobileCardGapPx'         => $this->clamp_int($saved['MobileCardGapPx'] ?? $default['MobileCardGapPx'], 0, 60, $default['MobileCardGapPx']),
+            'CardPaddingPx'           => $this->clamp_int($saved['CardPaddingPx'] ?? $default['CardPaddingPx'], 0, 80, $default['CardPaddingPx']),
+            'MobileCardPaddingPx'     => $this->clamp_int($saved['MobileCardPaddingPx'] ?? $default['MobileCardPaddingPx'], 0, 60, $default['MobileCardPaddingPx']),
+            'CardRadiusPx'            => $this->clamp_int($saved['CardRadiusPx'] ?? $default['CardRadiusPx'], 0, 30, $default['CardRadiusPx']),
+            'Sections'                => $sections,
+        ];
+    }
+
+    private function get_static_content_settings() {
+        $stored = get_option(self::STATIC_CONTENT_OPTION, []);
+        if (!is_array($stored) || !$stored) {
+            return $this->default_static_content_settings();
+        }
+        return $this->normalize_static_content_settings($stored);
     }
 
     private function default_menu_order_settings() {
@@ -2425,12 +2549,16 @@ final class Hangar18_Manager {
         $content_layout = $this->get_content_layout_settings();
         $content_layout['Saved'] = gmdate('c');
 
+        $static_content = $this->get_static_content_settings();
+        $static_content['Saved'] = gmdate('c');
+
         return [
             'Hangar18-HeaderDesign.json'    => $header,
             'Hangar18-MenuOrder.json'       => $menu,
             'Hangar18-VehicleRegister.json' => $vehicle,
             'Hangar18-VehicleFields.json'   => $vehicle_fields,
             'Hangar18-ContentLayout.json'   => $content_layout,
+            'Hangar18-StaticContent.json'   => $static_content,
         ];
     }
 
@@ -2506,6 +2634,7 @@ final class Hangar18_Manager {
             'Hangar18-VehicleRegister.json',
             'Hangar18-VehicleFields.json',
             'Hangar18-ContentLayout.json',
+            'Hangar18-StaticContent.json',
         ];
 
         $files = [];
@@ -3584,6 +3713,7 @@ HTML;
                     ['hangar18-vehicles', 'dashicons-car', 'Køretøjer', 'Opret og redigér køretøjer, billeder, tekniske data og placering.', 'Aktiv'],
                     ['hangar18-events', 'dashicons-calendar-alt', 'Events', 'Opret arrangementer og forbind dem til et album i Billedgalleri.', 'Aktiv'],
                     ['hangar18-gallery', 'dashicons-format-gallery', 'Billedgalleri', 'Opret albums, vælg flere billeder og sortér med drag-and-drop.', 'Aktiv'],
+                    ['hangar18-static-content', 'dashicons-screenoptions', 'Sideindhold', 'Vis, skjul, tilføj og sortér indholdssektioner på Om foreningen.', 'Aktiv'],
                     ['hangar18-menu', 'dashicons-menu', 'Menu', 'WordPress-menu, drag-and-drop, undermenuer, Hjem, dubletkontrol og Hangar18-header-synkronisering.', 'Aktiv'],
                     ['hangar18-header-footer', 'dashicons-layout', 'Header / Footer', 'Sticky header, bredde, skalaer, placering og global shell-synkronisering.', 'Aktiv'],
                     ['hangar18-backup', 'dashicons-backup', 'Backup', 'Manuel samlet backup og oversigt over automatisk oprettede JSON-backups.', 'Aktiv'],
@@ -5824,6 +5954,286 @@ HTML;
         }
 
         $this->redirect('hangar18-gallery');
+    }
+
+
+    /* ================================================================
+       STATIC PAGE CONTENT
+       ================================================================ */
+
+    private function build_static_content_core($page_id, array $settings) {
+        $settings = $this->normalize_static_content_settings($settings);
+        $id = (int) $page_id;
+        $heading = esc_html((string) $settings['Heading']);
+        $intro = wpautop(esc_html((string) $settings['Intro']));
+        $cards = '';
+
+        foreach ($settings['Sections'] as $section) {
+            if (empty($section['Active'])) {
+                continue;
+            }
+
+            $title = esc_html((string) $section['Title']);
+            $body = wpautop(esc_html((string) $section['Body']));
+            $key = esc_attr((string) $section['Key']);
+
+            $cards .= '<section class="h18-content-card" data-section="' . $key . '">' .
+                '<h2>' . $title . '</h2>' . $body . '</section>';
+        }
+
+        $marker = $this->encode_marker(self::STATIC_CONTENT_MARKER, $settings);
+        $top = (int) $settings['CardsTopSpacingPx'];
+        $gap = (int) $settings['CardGapPx'];
+        $mobile_top = (int) $settings['MobileCardsTopSpacingPx'];
+        $mobile_gap = (int) $settings['MobileCardGapPx'];
+        $padding = (int) $settings['CardPaddingPx'];
+        $mobile_padding = (int) $settings['MobileCardPaddingPx'];
+        $radius = (int) $settings['CardRadiusPx'];
+
+        return <<<HTML
+{$marker}
+<!-- wp:html -->
+<style>
+body.page-id-{$id} .h18-static-content{width:100%;box-sizing:border-box}
+body.page-id-{$id} .h18-static-intro h1{margin:0 0 10px;color:#30382a;font-size:clamp(2rem,4vw,3.2rem);line-height:1.08}
+body.page-id-{$id} .h18-static-intro p{margin:0 0 8px}
+body.page-id-{$id} .h18-content-section-list{display:grid;grid-template-columns:minmax(0,1fr);gap:{$gap}px;margin-top:{$top}px}
+body.page-id-{$id} .h18-content-card{box-sizing:border-box;margin:0;padding:{$padding}px;background:#f2f0e8;border-top:4px solid #c3ae83;border-radius:{$radius}px}
+body.page-id-{$id} .h18-content-card h2{margin:0 0 8px;color:#30382a}
+body.page-id-{$id} .h18-content-card p{margin:0}
+body.page-id-{$id} .h18-content-card p+p{margin-top:8px}
+@media(max-width:782px){body.page-id-{$id} .h18-content-section-list{gap:{$mobile_gap}px;margin-top:{$mobile_top}px}body.page-id-{$id} .h18-content-card{padding:{$mobile_padding}px}}
+</style>
+<!-- /wp:html -->
+<div class="h18-static-content">
+<div class="h18-static-intro"><h1>{$heading}</h1>{$intro}</div>
+<div class="h18-content-section-list">{$cards}</div>
+</div>
+HTML;
+    }
+
+    public function render_static_content() {
+        $this->require_capability();
+        $settings = $this->get_static_content_settings();
+        $page = $this->post_by_slug('om-foreningen');
+        ?>
+        <div class="wrap h18-admin">
+            <h1>Sideindhold</h1>
+            <?php $this->render_notice(); ?>
+
+            <div class="h18-help-box">
+                <strong>Indholdssektioner på Om foreningen:</strong>
+                Hver kasse er en sektion. Slå <strong>Vis på siden</strong> fra for at skjule den uden at slette teksten,
+                træk sektionerne for at ændre rækkefølgen, eller tilføj en ny sektion nederst.
+                <strong>Fjern permanent</strong> bruges kun, når sektionen ikke længere skal kunne genaktiveres.
+            </div>
+
+            <div class="h18-toolbar">
+                <div><strong>Styret side:</strong> Om foreningen</div>
+                <p class="h18-toolbar-note">Version 0.4.17 starter med denne side. Samme model kan senere udvides til Hjem, Bliv medlem og Kontakt.</p>
+                <?php if ($page) : ?><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($page)); ?>">Åbn siden</a><?php endif; ?>
+            </div>
+
+            <?php if (!$page) : ?>
+                <div class="notice notice-error"><p>Siden <strong>Om foreningen</strong> blev ikke fundet.</p></div>
+            <?php else : ?>
+            <form class="h18-editor-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <?php wp_nonce_field('h18_save_static_content'); ?>
+                <input type="hidden" name="action" value="h18_save_static_content" />
+
+                <div class="h18-form-header">
+                    <div>
+                        <h2>Introduktion og indholdskasser</h2>
+                        <p>Ændringerne gælder kun siden Om foreningen.</p>
+                    </div>
+                    <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
+                </div>
+
+                <div class="h18-form-grid">
+                    <section class="h18-panel h18-panel-wide">
+                        <h3>Introduktion over kasserne</h3>
+                        <?php $this->field('static_heading', 'Overskrift', $settings['Heading'], 'text', true); ?>
+                        <?php $this->textarea('static_intro', 'Introduktion', $settings['Intro'], 5); ?>
+                    </section>
+
+                    <section class="h18-panel h18-panel-wide">
+                        <div class="h18-panel-heading-row">
+                            <h3>Indholdssektioner – træk for at ændre rækkefølge</h3>
+                            <span><?php echo esc_html(count($settings['Sections'])); ?> sektioner</span>
+                        </div>
+                        <div id="h18-static-sections-sortable" class="h18-static-sections-sortable">
+                            <?php foreach ($settings['Sections'] as $index => $section) : ?>
+                                <div class="h18-static-section-row">
+                                    <span class="dashicons dashicons-move h18-static-section-drag" title="Flyt sektion"></span>
+                                    <input class="h18-static-section-order" type="hidden" name="sections[<?php echo esc_attr($index); ?>][Order]" value="<?php echo esc_attr($section['Order']); ?>" />
+                                    <input type="hidden" name="sections[<?php echo esc_attr($index); ?>][Key]" value="<?php echo esc_attr($section['Key']); ?>" />
+                                    <div class="h18-field">
+                                        <label><strong>Overskrift</strong></label>
+                                        <input type="text" name="sections[<?php echo esc_attr($index); ?>][Title]" value="<?php echo esc_attr($section['Title']); ?>" required />
+                                    </div>
+                                    <div class="h18-field h18-static-section-body">
+                                        <label><strong>Tekst</strong></label>
+                                        <textarea name="sections[<?php echo esc_attr($index); ?>][Body]" rows="3"><?php echo esc_textarea($section['Body']); ?></textarea>
+                                    </div>
+                                    <div class="h18-static-section-controls">
+                                        <label><input type="checkbox" name="sections[<?php echo esc_attr($index); ?>][Active]" value="1" <?php checked(!empty($section['Active'])); ?> /> Vis på siden</label>
+                                        <label class="h18-remove-choice"><input type="checkbox" name="sections[<?php echo esc_attr($index); ?>][Remove]" value="1" /> Fjern permanent</label>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
+
+                    <section class="h18-panel h18-panel-wide">
+                        <h3>Tilføj ny sektion</h3>
+                        <div class="h18-static-new-section">
+                            <div class="h18-field"><label><strong>Overskrift</strong></label><input type="text" name="new_section[Title]" value="" placeholder="Fx Aktiviteter" /></div>
+                            <div class="h18-field"><label><strong>Tekst</strong></label><textarea name="new_section[Body]" rows="3" placeholder="Skriv teksten til den nye indholdskasse"></textarea></div>
+                            <label><input type="checkbox" name="new_section[Active]" value="1" checked /> Vis på siden med det samme</label>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="h18-layout-card h18-static-spacing-card">
+                    <div class="h18-layout-card-header">
+                        <h2>Luft og udseende</h2>
+                        <p>Disse værdier styrer kun indholdskasserne på Om foreningen.</p>
+                    </div>
+                    <div class="h18-layout-devices">
+                        <fieldset class="h18-layout-device">
+                            <legend>Desktop</legend>
+                            <div class="h18-layout-fields">
+                                <?php $this->field('cards_top_spacing_px', 'Luft før første kasse (px)', $settings['CardsTopSpacingPx'], 'number'); ?>
+                                <?php $this->field('card_gap_px', 'Luft mellem kasser (px)', $settings['CardGapPx'], 'number'); ?>
+                                <?php $this->field('card_padding_px', 'Luft inde i kasser (px)', $settings['CardPaddingPx'], 'number'); ?>
+                                <?php $this->field('card_radius_px', 'Hjørneafrunding (px)', $settings['CardRadiusPx'], 'number'); ?>
+                            </div>
+                        </fieldset>
+                        <fieldset class="h18-layout-device">
+                            <legend>Mobil</legend>
+                            <div class="h18-layout-fields">
+                                <?php $this->field('mobile_cards_top_spacing_px', 'Luft før første kasse (px)', $settings['MobileCardsTopSpacingPx'], 'number'); ?>
+                                <?php $this->field('mobile_card_gap_px', 'Luft mellem kasser (px)', $settings['MobileCardGapPx'], 'number'); ?>
+                                <?php $this->field('mobile_card_padding_px', 'Luft inde i kasser (px)', $settings['MobileCardPaddingPx'], 'number'); ?>
+                                <div class="h18-runtime-note"><strong>Hjørneafrunding</strong><br>Samme værdi som desktop bruges på mobil.</div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </section>
+
+                <div class="h18-form-actions h18-explained-action">
+                    <div class="h18-whatif-help">
+                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, ændres hverken indhold, rækkefølge eller luft.</span></div>
+                    </div>
+                    <div class="h18-action-submit">
+                        <button class="button button-primary button-hero" type="submit">Gem sideindhold og opdater siden</button>
+                        <div class="h18-action-copy"><strong>Gemmer hele opsætningen</strong><span>Tager backup og opdaterer introduktion, synlige sektioner, rækkefølge og afstande.</span></div>
+                    </div>
+                </div>
+            </form>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    public function handle_save_static_content() {
+        $this->require_capability();
+        check_admin_referer('h18_save_static_content');
+
+        $submitted = isset($_POST['sections']) && is_array($_POST['sections'])
+            ? wp_unslash($_POST['sections'])
+            : [];
+        $sections = [];
+
+        foreach ($submitted as $row) {
+            if (!is_array($row) || !empty($row['Remove'])) {
+                continue;
+            }
+            $sections[] = [
+                'Key'    => sanitize_key((string) ($row['Key'] ?? '')),
+                'Title'  => sanitize_text_field((string) ($row['Title'] ?? '')),
+                'Body'   => sanitize_textarea_field((string) ($row['Body'] ?? '')),
+                'Active' => !empty($row['Active']),
+                'Order'  => $row['Order'] ?? 10,
+            ];
+        }
+
+        $new = isset($_POST['new_section']) && is_array($_POST['new_section'])
+            ? wp_unslash($_POST['new_section'])
+            : [];
+        $new_title = sanitize_text_field((string) ($new['Title'] ?? ''));
+        $new_body = sanitize_textarea_field((string) ($new['Body'] ?? ''));
+        if ($new_title !== '' || $new_body !== '') {
+            $sections[] = [
+                'Key'    => sanitize_key(sanitize_title($new_title)),
+                'Title'  => $new_title,
+                'Body'   => $new_body,
+                'Active' => !empty($new['Active']),
+                'Order'  => (count($sections) + 1) * 10,
+            ];
+        }
+
+        $settings = $this->normalize_static_content_settings([
+            'Version'                 => '1.0',
+            'PageSlug'                => 'om-foreningen',
+            'Heading'                 => $this->post_text('static_heading'),
+            'Intro'                   => $this->post_textarea('static_intro'),
+            'CardsTopSpacingPx'       => $_POST['cards_top_spacing_px'] ?? 24,
+            'CardGapPx'               => $_POST['card_gap_px'] ?? 20,
+            'MobileCardsTopSpacingPx' => $_POST['mobile_cards_top_spacing_px'] ?? 18,
+            'MobileCardGapPx'         => $_POST['mobile_card_gap_px'] ?? 14,
+            'CardPaddingPx'           => $_POST['card_padding_px'] ?? 26,
+            'MobileCardPaddingPx'     => $_POST['mobile_card_padding_px'] ?? 20,
+            'CardRadiusPx'            => $_POST['card_radius_px'] ?? 7,
+            'Sections'                => $sections,
+        ]);
+
+        if (!empty($_POST['whatif'])) {
+            $active = count(array_filter($settings['Sections'], static function($section) {
+                return !empty($section['Active']);
+            }));
+            $this->log('WARN', 'WHATIF_STATIC_CONTENT', "[WHATIF] Om foreningen ville få {$active} synlige indholdssektioner.");
+            $this->set_notice('warning', "WHATIF: Om foreningen ville få {$active} synlige indholdssektioner. Ingen data blev ændret.");
+            $this->redirect('hangar18-static-content');
+        }
+
+        try {
+            $page = $this->post_by_slug('om-foreningen');
+            if (!$page) {
+                throw new RuntimeException("Siden 'Om foreningen' blev ikke fundet.");
+            }
+
+            $this->create_full_managed_backup('Før ændring af indholdssektioner på Om foreningen');
+            update_option(self::STATIC_CONTENT_OPTION, $settings, false);
+
+            $central = $settings;
+            $central['Saved'] = gmdate('c');
+            $this->publish_configuration_file('Hangar18-StaticContent.json', $central);
+
+            $result = wp_update_post([
+                'ID'            => $page->ID,
+                'page_template' => 'default',
+                'post_content'  => $this->wrap_with_shell(
+                    $this->build_static_content_core($page->ID, $settings),
+                    $page->ID
+                ),
+            ], true);
+
+            if (is_wp_error($result)) {
+                throw new RuntimeException($result->get_error_message());
+            }
+
+            $active = count(array_filter($settings['Sections'], static function($section) {
+                return !empty($section['Active']);
+            }));
+            $this->log('INFO', 'STATIC_CONTENT_SAVED', "Om foreningen opdateret med {$active} synlige indholdssektioner.");
+            $this->set_notice('success', "Sideindholdet er gemt. Om foreningen viser nu {$active} aktive sektioner.");
+        } catch (Throwable $e) {
+            $this->log('ERROR', 'STATIC_CONTENT_SAVE_FAILED', $e->getMessage());
+            $this->set_notice('error', 'Sideindholdet kunne ikke gemmes: ' . $e->getMessage());
+        }
+
+        $this->redirect('hangar18-static-content');
     }
 
 
