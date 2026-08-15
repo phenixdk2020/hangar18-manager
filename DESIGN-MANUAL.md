@@ -1,7 +1,7 @@
 # Designmanual for Hangar18
 
 Senest opdateret: 15. august 2026  
-Gælder fra: Hangar18 Manager 0.4.19
+Gælder fra: Hangar18 Manager 0.4.20
 
 ## Formål
 
@@ -91,10 +91,11 @@ Editoren arbejder med følgende indholdssektioner:
 - Fremhævet tekst
 - Afstand
 - Importeret blok / HTML
+- Side-CSS (avanceret)
 
 Sektioner kan vises eller skjules, duplikeres, flyttes med musen og fjernes. Desktop- og mobilplacering samt luft før, efter og inde i sektionen styres separat.
 
-Indhold fra før sideeditoren indlæses automatisk som en **ikke-gemt redigerbar kladde**. Kendte Gutenberg-blokke opdeles i passende sektionstyper. Ukendte blokke bevares som **Importeret blok / HTML**, så det eksisterende indhold og udseende ikke kasseres. Den offentlige side ændres først, når redaktøren aktivt vælger **Gem siden**. Før gemningen oprettes en fuld backup og en WordPress-revision.
+Indhold fra før sideeditoren indlæses automatisk som en **ikke-gemt redigerbar kladde**. Kendte Gutenberg-blokke opdeles i passende sektionstyper. Designgrupper med egne klasser bevares samlet som **Importeret blok / HTML**, så kolonner, kort og wrappers ikke skilles ad. Eksisterende sidespecifikke regler bevares som **Side-CSS (avanceret)** og må ikke vises som tekst på siden. Den offentlige side ændres først, når redaktøren aktivt vælger **Gem siden**. Før gemningen oprettes en fuld backup og en WordPress-revision.
 
 Header og footer ligger uden for sideeditoren og kan ikke slettes fra en almindelig side.
 
@@ -187,6 +188,7 @@ Før en designændring godkendes, kontrolleres:
 | 0.4.17 | Sideindhold, indholdssektioner og deres afstande blev gjort redigerbare; designmanualen blev oprettet. |
 | 0.4.18 | Sideindhold blev udvidet til en samlet sideeditor med genbrugelige sektioner, mailformular, afstemning og responsive editorvisninger. |
 | 0.4.19 | Nuværende Gutenberg- og HTML-sideindhold blev gjort direkte redigerbart gennem sikker konvertering til sektionskladder. |
+| 0.4.20 | Importeret CSS, Gutenberg-grupper, kolonner og eksisterende sektionsafstande blev bevaret og repareret. |
 
 ## Sådan opdateres manualen
 

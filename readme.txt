@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.19
+Version: 0.4.20
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -656,3 +656,14 @@ AUTHORITATIVE_BASELINE_FAILED
 - Tilføjer en redigerbar Importeret blok / HTML-type til ukendte blokke, så intet indhold kasseres.
 - Bevarer den offentlige side uændret, indtil redaktøren aktivt vælger Gem siden.
 - Opretter fortsat fuld backup og WordPress-revision før den første konverterede gemning.
+
+
+== Version 0.4.20 – Bevaring af eksisterende layout ==
+
+- Retter fejlen, hvor importeret side-CSS blev vist som almindelig tekst øverst på siden.
+- Genkender og renderer eksisterende side-CSS som CSS i stedet for indhold.
+- Bevarer designgrupper med egne Gutenberg-klasser som samlede redigerbare HTML-sektioner ved nye importer.
+- Gendanner kolonnelayout for eksisterende kort, Events og Billedgalleri på desktop og stabler dem på mobil.
+- Samler tekst og tilhørende handlingsknap i samme luftsektion på allerede konverterede sider.
+- Gendanner topbilledets efterfølgende tagline og de oprindelige responsive afstandsregler.
+- Reparerer den allerede gemte 0.4.19-forside ved visning uden at kræve en ny konvertering eller automatisk dataskrivning.

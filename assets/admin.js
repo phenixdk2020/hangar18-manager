@@ -302,6 +302,7 @@ jQuery(function ($) {
             highlight: 'Fremhævet tekst',
             spacer: 'Afstand',
             html: 'Importeret blok / HTML',
+            css: 'Side-CSS (avanceret)',
             mail_form: 'Mailformular',
             poll: 'Afstemning',
             legacy: 'Eksisterende indhold'
@@ -349,6 +350,9 @@ jQuery(function ($) {
             setValue('PaddingPx', 26);
             setValue('MobilePaddingPx', 20);
         } else if (type === 'spacer') {
+            setValue('BottomSpacingPx', 0);
+            setValue('MobileBottomSpacingPx', 0);
+        } else if (type === 'css') {
             setValue('BottomSpacingPx', 0);
             setValue('MobileBottomSpacingPx', 0);
         }
