@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.10
+ * Version: 0.4.11
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.10';
+    const VERSION = '0.4.11';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -45,6 +45,7 @@ final class Hangar18_Manager {
     const FRONTEND_REPAIR_046_OPTION = 'hangar18_manager_frontend_repair_046';
     const ASTRA_BANNER_REPAIR_047_OPTION = 'hangar18_manager_astra_banner_repair_047';
     const VEHICLE_LAYOUT_REPAIR_049_OPTION = 'hangar18_manager_vehicle_layout_repair_049';
+    const LEGACY_PAGE_TEMPLATE_REPAIR_0411_OPTION = 'hangar18_manager_legacy_page_template_repair_0411';
     const NOTICE_PREFIX            = 'hangar18_manager_notice_';
 
     const CONFIG_STORE_SLUG  = 'hangar18-configuration-store';
@@ -75,6 +76,7 @@ final class Hangar18_Manager {
         add_action('admin_init', [$this, 'maybe_run_frontend_repair_046'], 15);
         add_action('admin_init', [$this, 'maybe_repair_astra_banner_047'], 16);
         add_action('admin_init', [$this, 'maybe_repair_vehicle_layout_049'], 17);
+        add_action('admin_init', [$this, 'maybe_repair_legacy_page_templates_0411'], 18);
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
         add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
@@ -300,6 +302,67 @@ final class Hangar18_Manager {
         }
     }
 
+    public function maybe_repair_legacy_page_templates_0411() {
+        if (!is_admin() || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        if (get_option(self::LEGACY_PAGE_TEMPLATE_REPAIR_0411_OPTION, false)) {
+            return;
+        }
+
+        $previous_templates = [];
+
+        try {
+            $pages = $this->get_managed_pages();
+            $configuration_store = $this->get_configuration_store_page();
+
+            if ($configuration_store) {
+                $pages[] = $configuration_store;
+            }
+
+            foreach ($pages as $page) {
+                $template = get_page_template_slug($page->ID);
+
+                if (!$template || $template === 'default') {
+                    continue;
+                }
+
+                $previous_templates[(int) $page->ID] = (string) $template;
+                update_post_meta($page->ID, '_wp_page_template', 'default');
+            }
+
+            update_option(
+                self::LEGACY_PAGE_TEMPLATE_REPAIR_0411_OPTION,
+                [
+                    'CompletedUtc'      => gmdate('c'),
+                    'PreviousTemplates'=> $previous_templates,
+                ],
+                false
+            );
+
+            $count = count($previous_templates);
+            $this->log(
+                'INFO',
+                'LEGACY_PAGE_TEMPLATE_REPAIR_0411_COMPLETE',
+                "v0.4.11: {$count} styrede sider inklusive Configuration Store er flyttet fra gamle Astra-sideskabeloner til temaets standardskabelon."
+            );
+
+            if ($count > 0) {
+                $this->set_notice(
+                    'success',
+                    "v0.4.11: {$count} gamle Astra-sideskabeloner er ryddet. HeaderDesign, Configuration Store, Billedgalleri og øvrige styrede sider kan nu gemmes igen."
+                );
+            }
+        } catch (Throwable $e) {
+            $this->log(
+                'ERROR',
+                'LEGACY_PAGE_TEMPLATE_REPAIR_0411_FAILED',
+                $e->getMessage()
+            );
+        }
+    }
+
     public function render_frontend_runtime_fixes() {
         if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
             return;
@@ -327,6 +390,8 @@ final class Hangar18_Manager {
         $laptop_max_width = $content_max_width === ''
             ? $laptop_width . 'vw'
             : 'min(' . $laptop_width . 'vw, ' . $content_max_width . ')';
+        $section_spacing = (int) $design['SectionSpacingPx'];
+        $mobile_section_spacing = (int) $design['MobileSectionSpacingPx'];
 
         ?>
         <style id="hangar18-manager-runtime-fixes">
@@ -388,6 +453,26 @@ final class Hangar18_Manager {
             margin-right:auto !important;
         }
 
+        /*
+         * Ensartet, brugerdefineret afstand mellem de synlige hovedsektioner.
+         * STYLE/SCRIPT-elementer tæller ikke som en sektion, og den første
+         * synlige sektion får derfor aldrig ekstra luft over sig.
+         */
+        body.page .h18-page-frame {
+            --h18-section-spacing:<?php echo esc_html($section_spacing); ?>px;
+            margin-top:0 !important;
+            margin-block-start:0 !important;
+        }
+
+        body.page .h18-page-frame > :not(style):not(script) {
+            margin-block-start:0 !important;
+            margin-block-end:0 !important;
+        }
+
+        body.page .h18-page-frame > :not(style):not(script) ~ :not(style):not(script) {
+            margin-block-start:var(--h18-section-spacing) !important;
+        }
+
         /* Headeren skal være det første synlige element helt oppe ved kanten. */
         html,
         body.page,
@@ -420,6 +505,10 @@ final class Hangar18_Manager {
                 max-width:100% !important;
                 margin-left:0 !important;
                 margin-right:0 !important;
+            }
+
+            body.page .h18-page-frame {
+                --h18-section-spacing:<?php echo esc_html($mobile_section_spacing); ?>px;
             }
         }
 
@@ -711,7 +800,9 @@ final class Hangar18_Manager {
             'LaptopContentWidthPercent' => 90,
             'MaximumDesktopContentWidthPercent' => 90,
             'ContentMaxWidth' => 'None',
-            'FooterWidthPercent' => 100
+            'FooterWidthPercent' => 100,
+            'SectionSpacingPx' => 32,
+            'MobileSectionSpacingPx' => 24
         ];
     }
 
@@ -793,6 +884,8 @@ final class Hangar18_Manager {
             ),
             'ContentMaxWidth'                   => $content_max_width,
             'FooterWidthPercent'                => $this->clamp_int($saved['FooterWidthPercent'] ?? $default['FooterWidthPercent'], 50, 100, $default['FooterWidthPercent']),
+            'SectionSpacingPx'                  => $this->clamp_int($saved['SectionSpacingPx'] ?? $default['SectionSpacingPx'], 0, 120, $default['SectionSpacingPx']),
+            'MobileSectionSpacingPx'            => $this->clamp_int($saved['MobileSectionSpacingPx'] ?? $default['MobileSectionSpacingPx'], 0, 80, $default['MobileSectionSpacingPx']),
         ];
     }
 
@@ -1409,6 +1502,26 @@ final class Hangar18_Manager {
                 );
             }
 
+            $section_spacing = $this->extract_css_custom_property($runtime, '--h18-section-spacing');
+            if ($section_spacing !== '') {
+                $saved['SectionSpacingPx'] = $this->clamp_int(
+                    $this->extract_int_from_css_value($section_spacing, $defaults['SectionSpacingPx']),
+                    0,
+                    120,
+                    $defaults['SectionSpacingPx']
+                );
+            }
+
+            $mobile_section_spacing = $this->extract_css_custom_property($runtime, '--h18-mobile-section-spacing');
+            if ($mobile_section_spacing !== '') {
+                $saved['MobileSectionSpacingPx'] = $this->clamp_int(
+                    $this->extract_int_from_css_value($mobile_section_spacing, $defaults['MobileSectionSpacingPx']),
+                    0,
+                    80,
+                    $defaults['MobileSectionSpacingPx']
+                );
+            }
+
             $max_width = $this->extract_css_custom_property($runtime, '--h18-site-max-width');
             if ($max_width !== '') {
                 if (strtolower(trim($max_width)) === 'none') {
@@ -1571,7 +1684,9 @@ final class Hangar18_Manager {
             'LaptopContentWidthPercent' => 90,
             'MaximumDesktopContentWidthPercent' => 90,
             'ContentMaxWidth' => 'None',
-            'FooterWidthPercent' => 100
+            'FooterWidthPercent' => 100,
+            'SectionSpacingPx' => 32,
+            'MobileSectionSpacingPx' => 24
         ];
     }
 
@@ -2122,6 +2237,7 @@ final class Hangar18_Manager {
             $result = wp_update_post(
                 [
                     'ID'             => $existing_page->ID,
+                    'page_template'  => 'default',
                     'post_title'     => self::CONFIG_STORE_TITLE,
                     'post_name'      => self::CONFIG_STORE_SLUG,
                     'post_status'    => 'private',
@@ -2135,6 +2251,7 @@ final class Hangar18_Manager {
             $result = wp_insert_post(
                 [
                     'post_type'      => 'page',
+                    'page_template'  => 'default',
                     'post_title'     => self::CONFIG_STORE_TITLE,
                     'post_name'      => self::CONFIG_STORE_SLUG,
                     'post_status'    => 'private',
@@ -2790,6 +2907,8 @@ final class Hangar18_Manager {
             '    --h18-site-max-width:' . esc_attr($max_width) . ';' . "\n" .
             '    --h18-global-root-font-size:' . esc_attr($runtime['root_font']) . ';' . "\n" .
             '    --h18-footer-content-width:' . (int) $design['FooterWidthPercent'] . '%;' . "\n" .
+            '    --h18-section-spacing:' . (int) $design['SectionSpacingPx'] . 'px;' . "\n" .
+            '    --h18-mobile-section-spacing:' . (int) $design['MobileSectionSpacingPx'] . 'px;' . "\n" .
             '    --h18-footer-body-font-size:' . esc_attr($runtime['footer_body']) . ';' . "\n" .
             '    --h18-footer-title-font-size:' . esc_attr($runtime['footer_title']) . ';' . "\n" .
             '    --h18-footer-heading-font-size:' . esc_attr($runtime['footer_heading']) . ';' . "\n" .
@@ -4829,6 +4948,7 @@ HTML;
 
         $result = wp_update_post([
             'ID' => $parent->ID,
+            'page_template' => 'default',
             'post_content' => $this->wrap_with_shell($html, $parent->ID),
         ], true);
 
@@ -5041,6 +5161,7 @@ HTML;
                 $result = wp_update_post(
                     [
                         'ID'           => $page->ID,
+                        'page_template'=> 'default',
                         'post_content' => $this->wrap_with_shell(
                             $this->build_gallery_album_core($page->ID, $data),
                             $page->ID
@@ -5143,6 +5264,7 @@ HTML;
                     'post_name'   => $slug,
                     'post_status' => 'draft',
                     'post_parent' => (int) $parent->ID,
+                    'page_template' => 'default',
                 ], true);
 
                 if (is_wp_error($id)) {
@@ -5152,6 +5274,7 @@ HTML;
 
             $result = wp_update_post([
                 'ID'           => $id,
+                'page_template'=> 'default',
                 'post_title'   => $name,
                 'post_name'    => $slug,
                 'post_status'  => $status,
@@ -6721,6 +6844,8 @@ HTML;
             'MaximumDesktopContentWidthPercent' => $_POST['MaximumDesktopContentWidthPercent'] ?? 90,
             'ContentMaxWidth'                   => $this->post_text('ContentMaxWidth'),
             'FooterWidthPercent'                => $_POST['FooterWidthPercent'] ?? 100,
+            'SectionSpacingPx'                  => $_POST['SectionSpacingPx'] ?? 32,
+            'MobileSectionSpacingPx'            => $_POST['MobileSectionSpacingPx'] ?? 24,
         ]);
     }
 
@@ -7017,6 +7142,8 @@ HTML;
                             '2000' => '2000 px',
                         ]);
                         $this->field('FooterWidthPercent', 'FooterWidthPercent (%)', $s['FooterWidthPercent'], 'number');
+                        $this->field('SectionSpacingPx', 'Afstand mellem hovedsektioner – desktop (px)', $s['SectionSpacingPx'], 'number', false, 'Astra-lignende standard: 32 px. Første sektion får ingen ekstra topafstand.');
+                        $this->field('MobileSectionSpacingPx', 'Afstand mellem hovedsektioner – mobil (px)', $s['MobileSectionSpacingPx'], 'number', false, 'Standard: 24 px på skærme op til 782 px.');
                         ?>
                         <div class="h18-runtime-note">
                             <strong>Aktuel runtime:</strong><br>

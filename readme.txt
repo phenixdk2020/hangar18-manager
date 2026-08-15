@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.10
+Version: 0.4.11
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -542,3 +542,14 @@ AUTHORITATIVE_BASELINE_FAILED
 - Med DesktopContentWidthPercent 90 og MaximumDesktopContentWidthPercent 88 bliver den effektive maksimumsbredde derfor 90 procent.
 - På mobil bruges fortsat 100 procent bredde.
 - Headeren nulstilles målrettet til 0 topmargin og 0 toppadding på Hangar18 Base Theme og Astra.
+
+
+== Version 0.4.11 – Sektionsafstand og galleri-skabelonfix ==
+
+- Nye HeaderDesign-felter styrer afstanden mellem sidens hovedsektioner separat på desktop og mobil.
+- Astra-lignende standardafstand er 32 px på desktop og 24 px på mobil.
+- Første synlige sektion får ingen ekstra topafstand, så headerens placering helt oppe bevares.
+- Gamle Astra-sideskabeloner fjernes automatisk fra alle Hangar18-styrede sider og den private Configuration Store én gang efter opdateringen.
+- Gallerialbums og Billedgalleri-oversigten gemmes eksplicit med Hangar18 Base Themes standardskabelon.
+- Fejlen "Ugyldig sideskabelon" ved gemning af billedgalleri er dermed rettet.
+- HeaderDesign kan igen publiceres til Configuration Store uden fejlen "Ugyldig sideskabelon".

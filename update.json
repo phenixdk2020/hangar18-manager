@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.10",
+  "version": "0.4.11",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T11:19:41Z",
+  "published_utc": "2026-08-15T11:29:32Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "d5f9b6886e2a263db4470f0504571933ad3262b72970c72721c0eba714b395d3",
+  "package_sha256": "586dc7b6658b0884f43eac49bec9d639bf495fa96edcba042a34767e69f925fb",
   "changelog": [
-    "Header, indhold og footer bruger nu de gemte procentbredder i HeaderDesign.",
-    "DesktopContentWidthPercent 90 giver reelt 90 procent sidebredde.",
-    "MaximumDesktopContentWidthPercent kan ikke længere gøre desktopbredden mindre end DesktopContentWidthPercent.",
-    "Headerens topmargin og toppadding nulstilles målrettet.",
-    "Mobilvisningen beholder 100 procent bredde."
+    "Ny styring af afstand mellem hovedsektioner: separat for desktop og mobil.",
+    "Standardafstanden er 32 px på desktop og 24 px på mobil.",
+    "Gamle Astra-sideskabeloner ryddes automatisk fra Hangar18-sider og Configuration Store.",
+    "Billedgalleri og Configuration Store bruger eksplicit basistemaets standardskabelon ved gemning.",
+    "Retter fejlen Ugyldig sideskabelon ved opdatering af gallerialbums og HeaderDesign."
   ]
 }
