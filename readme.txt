@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.18
+Version: 0.4.19
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -81,9 +81,10 @@ Funktioner:
 Hangar18 Manager -> Sider
 
 Egen sektionseditor til Hjem, Om foreningen, Bliv medlem og Kontakt:
-- eksisterende sideindhold bevares sikkert, indtil redaktøren selv fjerner det
+- nuværende Gutenberg- og HTML-indhold opdeles automatisk i redigerbare sektionskladder
+- den offentlige side ændres først, når redaktøren vælger Gem siden
 - vis, skjul, duplikér, fjern og drag-and-drop-sortér sektioner
-- tekst, tekst og billede, stort billede, handlingsknapper, indholdskort, fremhævet tekst og afstand
+- topbanner/hero, tekst, tekst og billede, stort billede, handlingsknapper, indholdskort, fremhævet tekst, afstand og importeret HTML
 - separat placering, luft og indvendig luft på desktop og mobil
 - editorvisning i desktop-, tablet- og mobilbredde
 - billeder vælges fra WordPress Media Library
@@ -645,3 +646,13 @@ AUTHORITATIVE_BASELINE_FAILED
 - Tilføjer responsive desktop-, tablet- og mobilvisninger samt separat luft og placering.
 - Gemmer sider som dynamiske Hangar18-moduler, så en kodeopdatering gælder alle forekomster.
 - Opdaterer designmanualen med regler for sideeditor, mailformularer og afstemninger.
+
+
+== Version 0.4.19 – Redigering af nuværende sider ==
+
+- Retter 0.4.18-fejlen, hvor eksisterende sideindhold kun blev vist som én låst legacy-sektion.
+- Indlæser nuværende Gutenberg- og HTML-indhold som en ikke-gemt, redigerbar sektionskladde.
+- Genkender overskrifter, tekst, billeder, knapper, afstande, to-kolonneindhold og topbanner/hero.
+- Tilføjer en redigerbar Importeret blok / HTML-type til ukendte blokke, så intet indhold kasseres.
+- Bevarer den offentlige side uændret, indtil redaktøren aktivt vælger Gem siden.
+- Opretter fortsat fuld backup og WordPress-revision før den første konverterede gemning.

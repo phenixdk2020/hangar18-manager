@@ -287,11 +287,13 @@ jQuery(function ($) {
 
     function refreshPageSectionType($row) {
         const type = String($row.find('.h18-page-section-type').val() || $row.find('input[name$="[Type]"]').val() || 'text');
+        $row.attr('data-section-type', type);
         $row.find('.h18-section-type-field').each(function () {
             const types = String($(this).attr('data-types') || '').split(/\s+/);
             $(this).toggle(types.includes(type));
         });
         const labels = {
+            hero: 'Topbanner / hero',
             text: 'Tekst',
             text_image: 'Tekst og billede',
             image: 'Stort billede',
@@ -299,6 +301,7 @@ jQuery(function ($) {
             card: 'Indholdskort',
             highlight: 'Fremhævet tekst',
             spacer: 'Afstand',
+            html: 'Importeret blok / HTML',
             mail_form: 'Mailformular',
             poll: 'Afstemning',
             legacy: 'Eksisterende indhold'
@@ -324,7 +327,16 @@ jQuery(function ($) {
         const setValue = function (field, value) {
             $row.find('[name$="[' + field + ']"]').val(value);
         };
-        if (type === 'card') {
+        if (type === 'hero') {
+            setValue('Background', 'Olive');
+            setValue('DesktopAlignment', 'Center');
+            setValue('MobileAlignment', 'Center');
+            setValue('PaddingPx', 36);
+            setValue('MobilePaddingPx', 22);
+            setValue('HeroHeightPx', 320);
+            setValue('MobileHeroHeightPx', 220);
+            setValue('OverlayOpacityPercent', 35);
+        } else if (type === 'card') {
             setValue('Background', 'OffWhite');
             setValue('PaddingPx', 26);
             setValue('MobilePaddingPx', 20);

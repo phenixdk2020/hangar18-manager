@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.18",
+  "version": "0.4.19",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T17:07:07Z",
+  "published_utc": "2026-08-15T17:42:47Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "c7607c7ffefb29c76863018487a7b9e88c284667dddc98364828dc2b2a7d9f66",
+  "package_sha256": "b63afedbb4b951175f4c2b098c95a17ac91f51aa3c9146ccfd38f7e2cbae2337",
   "changelog": [
-    "Udvider Sideindhold til en samlet sideeditor for Hjem, Om foreningen, Bliv medlem og Kontakt.",
-    "Tilføjer genbrugelige sektioner til tekst, billeder, knapper, kort, fremhævelser og afstand med separate desktop- og mobilvalg.",
-    "Tilføjer mailformular med testmail, spambegrænsning, valgfri lagring og CSV-eksport.",
-    "Tilføjer afstemning med enkelt/flere svar, tidsrum, resultatvisning, nulstilling og CSV-eksport.",
-    "Bevarer eksisterende sideindhold sikkert og opdaterer designmanualen med editor- og modulregler."
+    "Gør nuværende indhold på Hjem, Om foreningen, Bliv medlem og Kontakt direkte redigerbart i Hangar18 sideeditor.",
+    "Genkender Gutenberg-overskrifter, tekst, billeder, knapper, afstande, to-kolonneindhold og topbanner/hero.",
+    "Bevarer ukendte blokke som redigerbar importeret HTML, så eksisterende indhold ikke kasseres.",
+    "Viser konverteringen som en ikke-gemt kladde; den offentlige side ændres først ved Gem siden.",
+    "Bevarer fuld backup og WordPress-revision før den første konverterede gemning."
   ]
 }
