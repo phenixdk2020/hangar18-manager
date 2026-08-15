@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.11
+ * Version: 0.4.12
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.11';
+    const VERSION = '0.4.12';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -80,6 +80,7 @@ final class Hangar18_Manager {
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
         add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
+        add_action('wp_footer', [$this, 'render_header_origin_guard'], PHP_INT_MAX);
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
 
@@ -538,6 +539,42 @@ final class Hangar18_Manager {
 
         body.page .h18-align-center.h18-gallery-grid {
             justify-content:center !important;
+        }
+        </style>
+        <?php
+    }
+
+    public function render_header_origin_guard() {
+        if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
+            return;
+        }
+
+        ?>
+        <style id="hangar18-header-origin-guard">
+        /*
+         * WordPress reserverer 32 px til admin-baren på desktop og 46 px på
+         * mobil. Hangar18 skjuler admin-baren på frontend, så reservationen
+         * skal fjernes som sidens sidste CSS-regel.
+         */
+        html,
+        html:has(body.admin-bar),
+        html body.admin-bar,
+        body.admin-bar #page,
+        body.admin-bar .h18-theme-main,
+        body.admin-bar article.h18-theme-page,
+        body.admin-bar .h18-theme-entry-content {
+            margin-top:0 !important;
+            margin-block-start:0 !important;
+            padding-top:0 !important;
+            padding-block-start:0 !important;
+        }
+
+        body.admin-bar .h18-site-header,
+        body.admin-bar .h18-site-header.h18-scroll-sticky {
+            top:0 !important;
+            inset-block-start:0 !important;
+            margin-top:0 !important;
+            margin-block-start:0 !important;
         }
         </style>
         <?php

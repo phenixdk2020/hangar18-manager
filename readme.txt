@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.11
+Version: 0.4.12
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -553,3 +553,11 @@ AUTHORITATIVE_BASELINE_FAILED
 - Gallerialbums og Billedgalleri-oversigten gemmes eksplicit med Hangar18 Base Themes standardskabelon.
 - Fejlen "Ugyldig sideskabelon" ved gemning af billedgalleri er dermed rettet.
 - HeaderDesign kan igen publiceres til Configuration Store uden fejlen "Ugyldig sideskabelon".
+
+
+== Version 0.4.12 – Header starter ved 0 px for indloggede brugere ==
+
+- Fjerner WordPress' resterende 32 px desktopafstand og 46 px mobilafstand, når admin-baren er skjult.
+- En afsluttende CSS-regel i footeren sikrer, at senere WordPress- eller blok-CSS ikke kan flytte headeren ned.
+- Headerens top, margin-top og sticky-position fastholdes på 0 px.
+- Indstillingen for sektionsafstand påvirker fortsat kun sektionerne inde i indholdsrammen.
