@@ -1,7 +1,7 @@
 # Designmanual for Hangar18
 
 Senest opdateret: 15. august 2026  
-Gælder fra: Hangar18 Manager 0.4.21
+Gælder fra: Hangar18 Manager 0.4.22
 
 ## Formål
 
@@ -190,6 +190,7 @@ Før en designændring godkendes, kontrolleres:
 | 0.4.19 | Nuværende Gutenberg- og HTML-sideindhold blev gjort direkte redigerbart gennem sikker konvertering til sektionskladder. |
 | 0.4.20 | Importeret CSS, Gutenberg-grupper, kolonner og eksisterende sektionsafstande blev bevaret og repareret. |
 | 0.4.21 | Forsidens hero blev sikret mod et gentaget Cover-billede, ældre CSS-tekstsektioner blev genkendt som side-CSS, og sektionernes valgte desktop-/mobilplacering blev gjort autoritativ. |
+| 0.4.22 | Backupoversigten fik sikker oprettelse af en separat Hjem-sammenligningskladde fra den oprindelige JSON-backup uden ændring af aktiv forside eller menu. |
 
 ## Sådan opdateres manualen
 

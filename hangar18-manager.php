@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.21
+ * Version: 0.4.22
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.21';
+    const VERSION = '0.4.22';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -126,6 +126,7 @@ final class Hangar18_Manager {
         add_action('admin_post_h18_sync_shell', [$this, 'handle_sync_shell']);
 
         add_action('admin_post_h18_create_full_backup', [$this, 'handle_create_full_backup']);
+        add_action('admin_post_h18_create_home_comparison', [$this, 'handle_create_home_comparison']);
 
         add_action('admin_post_h18_save_update_settings', [$this, 'handle_save_update_settings']);
         add_action('admin_post_h18_check_updates', [$this, 'handle_check_updates']);
@@ -11041,6 +11042,97 @@ HTML;
        BACKUP / LOG
        ================================================================ */
 
+    private function read_managed_backup_file($filename) {
+        $filename = sanitize_file_name((string) $filename);
+        if (
+            $filename === '' ||
+            !preg_match('/^Hangar18-Web-(?:Full-Backup|Backup)-\d{8}-\d{6}(?:-Post-\d+)?\.json$/', $filename)
+        ) {
+            throw new RuntimeException('Det valgte backupfilnavn er ugyldigt.');
+        }
+
+        $dir = realpath($this->backup_dir());
+        $path = $dir ? realpath(trailingslashit($dir) . $filename) : false;
+        if (
+            !$dir ||
+            !$path ||
+            wp_normalize_path(dirname($path)) !== wp_normalize_path($dir) ||
+            !is_readable($path)
+        ) {
+            throw new RuntimeException('Den valgte backupfil kunne ikke findes eller læses.');
+        }
+
+        $size = filesize($path);
+        if ($size === false || $size <= 0 || $size > 20 * MB_IN_BYTES) {
+            throw new RuntimeException('Backupfilens størrelse er ugyldig.');
+        }
+
+        $json = file_get_contents($path);
+        $payload = is_string($json) ? json_decode($json, true) : null;
+        if (!is_array($payload) || json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('Backupfilen indeholder ikke gyldig JSON.');
+        }
+
+        return $payload;
+    }
+
+    private function home_post_from_backup(array $payload) {
+        $posts = [];
+        if (isset($payload['posts']) && is_array($payload['posts'])) {
+            $posts = $payload['posts'];
+        } elseif (isset($payload['post']) && is_array($payload['post'])) {
+            $posts = [$payload['post']];
+        }
+
+        foreach ($posts as $post) {
+            if (!is_array($post)) {
+                continue;
+            }
+            if (sanitize_title((string) ($post['post_name'] ?? '')) === self::HOME_SLUG) {
+                return $post;
+            }
+        }
+        return null;
+    }
+
+    private function backup_home_summary($filename) {
+        try {
+            $payload = $this->read_managed_backup_file($filename);
+            $home = $this->home_post_from_backup($payload);
+            $content = is_array($home) ? (string) ($home['post_content'] ?? '') : '';
+            $reason = sanitize_text_field((string) ($payload['reason'] ?? 'Ikke angivet'));
+            $is_original = is_array($home) && strpos($content, self::PAGE_EDITOR_MARKER) === false;
+            return [
+                'reason'      => $reason,
+                'created_utc' => sanitize_text_field((string) ($payload['created_utc'] ?? '')),
+                'has_home'    => is_array($home),
+                'is_original' => $is_original,
+                'recommended' => $is_original && stripos($reason, 'Før sideeditor gemte hjem') !== false,
+            ];
+        } catch (Throwable $e) {
+            return [
+                'reason'      => 'Kunne ikke læse backupen',
+                'created_utc' => '',
+                'has_home'    => false,
+                'is_original' => false,
+                'recommended' => false,
+            ];
+        }
+    }
+
+    private function comparison_page_for_backup($filename) {
+        $posts = get_posts([
+            'post_type'      => 'page',
+            'post_status'    => ['draft', 'pending', 'private', 'publish'],
+            'posts_per_page' => 1,
+            'meta_key'       => '_h18_comparison_backup_file',
+            'meta_value'     => sanitize_file_name((string) $filename),
+            'orderby'        => 'ID',
+            'order'          => 'DESC',
+        ]);
+        return isset($posts[0]) && $posts[0] instanceof WP_Post ? $posts[0] : null;
+    }
+
     public function render_backup() {
         $this->require_capability();
 
@@ -11054,10 +11146,13 @@ HTML;
             });
 
             foreach (array_slice($paths, 0, 100) as $path) {
+                $name = basename($path);
                 $files[] = [
-                    'name' => basename($path),
-                    'size' => size_format(filesize($path)),
-                    'time' => wp_date('d-m-Y H:i:s', filemtime($path)),
+                    'name'       => $name,
+                    'size'       => size_format(filesize($path)),
+                    'time'       => wp_date('d-m-Y H:i:s', filemtime($path)),
+                    'summary'    => $this->backup_home_summary($name),
+                    'comparison' => $this->comparison_page_for_backup($name),
                 ];
             }
         } catch (Throwable $e) {
@@ -11076,6 +11171,13 @@ HTML;
                 Filerne ligger i <code>wp-content/uploads/hangar18-manager-backups/</code>.
             </div>
 
+            <div class="h18-help-box">
+                <strong>Sammenlign den gamle Hjem-side:</strong>
+                Brug kun knappen ved en backup markeret <strong>Oprindelig Hjem</strong>.
+                Der oprettes en separat WordPress-kladde med backupens gamle indhold. Den aktive forside,
+                menuen og side ID 9 ændres ikke.
+            </div>
+
             <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_create_full_backup'); ?>
                 <input type="hidden" name="action" value="h18_create_full_backup" />
@@ -11085,15 +11187,39 @@ HTML;
 
             <div class="h18-log-table-wrap">
                 <table class="widefat striped">
-                    <thead><tr><th>Tid</th><th>Fil</th><th>Størrelse</th></tr></thead>
+                    <thead><tr><th>Tid</th><th>Fil</th><th>Backupgrund</th><th>Hjem-indhold</th><th>Størrelse</th><th>Handling</th></tr></thead>
                     <tbody>
                     <?php if (!$files) : ?>
-                        <tr><td colspan="3">Ingen backup-filer fundet endnu.</td></tr>
+                        <tr><td colspan="6">Ingen backup-filer fundet endnu.</td></tr>
                     <?php else : foreach ($files as $file) : ?>
                         <tr>
                             <td><?php echo esc_html($file['time']); ?></td>
                             <td><code><?php echo esc_html($file['name']); ?></code></td>
+                            <td><?php echo esc_html($file['summary']['reason']); ?></td>
+                            <td>
+                                <?php if ($file['summary']['is_original']) : ?>
+                                    <strong>Oprindelig Hjem<?php echo $file['summary']['recommended'] ? ' – anbefalet' : ''; ?></strong>
+                                <?php elseif ($file['summary']['has_home']) : ?>
+                                    Hjem fra sideeditor
+                                <?php else : ?>
+                                    Ingen Hjem-side
+                                <?php endif; ?>
+                            </td>
                             <td><?php echo esc_html($file['size']); ?></td>
+                            <td>
+                                <?php if ($file['comparison'] instanceof WP_Post) : ?>
+                                    <a class="button" href="<?php echo esc_url(get_edit_post_link($file['comparison']->ID, '')); ?>">Åbn sammenligningskladde</a>
+                                <?php elseif ($file['summary']['is_original']) : ?>
+                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                                        <?php wp_nonce_field('h18_create_home_comparison_' . $file['name']); ?>
+                                        <input type="hidden" name="action" value="h18_create_home_comparison" />
+                                        <input type="hidden" name="backup_file" value="<?php echo esc_attr($file['name']); ?>" />
+                                        <button class="button button-primary" type="submit">Opret Hjem som sammenligningskladde</button>
+                                    </form>
+                                <?php else : ?>
+                                    <span aria-hidden="true">—</span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
@@ -11116,6 +11242,80 @@ HTML;
         }
 
         $this->redirect('hangar18-backup');
+    }
+
+    public function handle_create_home_comparison() {
+        $this->require_capability();
+        $filename = isset($_POST['backup_file']) ? sanitize_file_name(wp_unslash($_POST['backup_file'])) : '';
+        check_admin_referer('h18_create_home_comparison_' . $filename);
+
+        try {
+            $existing = $this->comparison_page_for_backup($filename);
+            if ($existing instanceof WP_Post) {
+                wp_safe_redirect(admin_url('post.php?post=' . (int) $existing->ID . '&action=edit'));
+                exit;
+            }
+
+            $payload = $this->read_managed_backup_file($filename);
+            $home = $this->home_post_from_backup($payload);
+            if (!is_array($home)) {
+                throw new RuntimeException('Backupen indeholder ikke Hjem-siden.');
+            }
+
+            $content = (string) ($home['post_content'] ?? '');
+            if ($content === '' || strpos($content, self::PAGE_EDITOR_MARKER) !== false) {
+                throw new RuntimeException('Backupen er ikke en oprindelig Hjem-side fra før sideeditoren.');
+            }
+
+            $source_id = absint($home['ID'] ?? 0);
+            $created = sanitize_text_field((string) ($payload['created_utc'] ?? ''));
+            $created_timestamp = $created !== '' ? strtotime($created) : false;
+            $display_time = $created_timestamp
+                ? wp_date('d-m-Y H:i:s', $created_timestamp)
+                : preg_replace('/\D+/', '-', $filename);
+            $draft_id = wp_insert_post([
+                'post_type'      => 'page',
+                'post_status'    => 'draft',
+                'post_title'     => 'Hjem – gammel backup til sammenligning (' . $display_time . ')',
+                'post_content'   => $content,
+                'post_excerpt'   => (string) ($home['post_excerpt'] ?? ''),
+                'post_parent'    => 0,
+                'comment_status' => 'closed',
+                'ping_status'    => 'closed',
+                'page_template'  => 'default',
+            ], true);
+            if (is_wp_error($draft_id)) {
+                throw new RuntimeException($draft_id->get_error_message());
+            }
+
+            $draft_id = (int) $draft_id;
+            if ($source_id > 0) {
+                $adapted = str_replace('page-id-' . $source_id, 'page-id-' . $draft_id, $content);
+                if ($adapted !== $content) {
+                    $updated = wp_update_post(['ID' => $draft_id, 'post_content' => $adapted], true);
+                    if (is_wp_error($updated)) {
+                        wp_delete_post($draft_id, true);
+                        throw new RuntimeException($updated->get_error_message());
+                    }
+                }
+            }
+
+            $featured_id = absint($home['featured_id'] ?? 0);
+            if ($featured_id > 0 && get_post($featured_id) instanceof WP_Post) {
+                set_post_thumbnail($draft_id, $featured_id);
+            }
+            update_post_meta($draft_id, '_h18_comparison_backup_file', $filename);
+            update_post_meta($draft_id, '_h18_comparison_source_id', $source_id);
+            update_post_meta($draft_id, '_h18_comparison_created_utc', $created);
+
+            $this->log('INFO', 'HOME_COMPARISON_CREATED', 'Sammenligningskladde oprettet fra ' . $filename . '. KladdeID=' . $draft_id . '.');
+            wp_safe_redirect(admin_url('post.php?post=' . $draft_id . '&action=edit'));
+            exit;
+        } catch (Throwable $e) {
+            $this->log('ERROR', 'HOME_COMPARISON_FAILED', $e->getMessage());
+            $this->set_notice('error', 'Sammenligningskladden kunne ikke oprettes: ' . $e->getMessage());
+            $this->redirect('hangar18-backup');
+        }
     }
 
     public function render_log() {
