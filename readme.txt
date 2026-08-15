@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.14
+Version: 0.4.15
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -7,7 +7,7 @@ Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køret�
 
 1. Tag gerne en WordPress-backup.
 2. WordPress -> Plugins -> Tilføj plugin -> Upload plugin.
-3. Upload hangar18-manager-v0.4.1.zip.
+3. Upload den nyeste hangar18-manager.zip.
 4. Hvis v0.1.0 allerede er installeret, vælg at erstatte den eksisterende version.
 5. Aktivér Hangar18 Manager.
 6. Åbn Hangar18 Manager i venstre wp-admin-menu.
@@ -35,8 +35,8 @@ Funktioner:
 - tjeneste ved Aalborg
 - restaureringsstatus
 - draft / publiceret
-- Placering i køretøjsregister: Venstre / Midt
-- Indholdsjustering på køretøjssiden: Auto / Venstre / Midt
+- Placering i køretøjsregister: Venstre / Midt, separat på desktop og mobil
+- Indholdsjustering på køretøjssiden: Venstre / Midt, separat på desktop og mobil
 - automatisk genbygning af Køretøjer og materiel
 
 == Events ==
@@ -157,14 +157,18 @@ Hangar18 Manager -> Log
 
 Checkpoints for WhatIf, saves, registeropdateringer, shell/design og fejl.
 
-== Kompatibilitet ==
+== Intern lagring og kompatibilitet ==
 
 v0.2.0 bruger fortsat:
 HANGAR18-VEHICLE-DATA
 HANGAR18-EVENT-DATA
 HANGAR18-GALLERY-ALBUM-DATA
 
-PowerShell- og webmanageren kan derfor fortsat læse de samme datamarkører.
+Web-manageren bruger fortsat de samme datamarkører på eksisterende sider.
+Indstillinger gemmes centralt i WordPress, og JSON anvendes kun internt til konfiguration og backup.
+Den tidligere automatiske PowerShell-import og baseline-genindlæsning er fjernet fra den aktive arbejdsgang i v0.4.15.
+
+Bemærk: Versionsafsnittene nedenfor beskriver også historisk funktionalitet i ældre udgaver.
 
 
 == Version 0.3.0 ==
@@ -578,3 +582,13 @@ AUTHORITATIVE_BASELINE_FAILED
 - Mobilstandard er Midtstillet for alle fire visninger; desktopindstillingerne bevares uændret.
 - Eksisterende events, albumsider og oversigter genbygges automatisk én gang efter opdateringen.
 - Hangar18-ContentLayout.json er opgraderet fra schema 1.1 til 1.2.
+
+
+== Version 0.4.15 – Oprydning og mobilplacering for køretøjer ==
+
+- Fjerner den gamle PowerShell-import, baseline-genindlæsning, importstatus og importknap fra den aktive web-manager.
+- Bevarer den private centrale WordPress-konfiguration og JSON-backups, fordi de bruges til sikker lagring og gendannelse.
+- Forenkler administrationssiderne, så tekniske JSON-filnavne og schemanumre ikke vises i den normale arbejdsgang.
+- Køretøjsoversigten og de enkelte køretøjssider får separate placeringer på desktop og mobil.
+- Mobilstandard er Midtstillet, og eksisterende køretøjssider genbygges automatisk én gang efter opdateringen.
+- Den interne køretøjslayout-konfiguration er opgraderet fra schema 1.3 til 1.4.
