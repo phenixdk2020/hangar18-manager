@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.20
+Version: 0.4.21
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -667,3 +667,11 @@ AUTHORITATIVE_BASELINE_FAILED
 - Samler tekst og tilhørende handlingsknap i samme luftsektion på allerede konverterede sider.
 - Gendanner topbilledets efterfølgende tagline og de oprindelige responsive afstandsregler.
 - Reparerer den allerede gemte 0.4.19-forside ved visning uden at kræve en ny konvertering eller automatisk dataskrivning.
+
+
+== Version 0.4.21 – Ét korrekt hero-billede ==
+
+- Fjerner det gamle Gutenberg Cover-billede fra heroens indhold, når samme billede allerede bruges som hero-baggrund.
+- Bevarer heroens godkendte højde, beskæring og responsive baggrundsvisning.
+- Genkender også ældre CSS, der blev gemt som en tekstsektion, og renderer den som side-CSS i stedet for synlig tekst.
+- Sikrer, at Venstre/Midtstillet for desktop og mobil styrer både overskrifter, tekst og handlingsknapper uden at blive tilsidesat af importerede Gutenberg-klasser.

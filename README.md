@@ -4,7 +4,7 @@ Webbaseret WordPress-administrationsværktøj til Aalborg Kaserners Veteran Pans
 
 Repositoryet bruges som versionskilde for Hangar18 Managers indbyggede GitHub-updater.
 
-Fra version 0.4.20 indeholder manageren en egen sektionseditor til almindelige sider, layoutbevarende konvertering af nuværende Gutenberg-/HTML-indhold samt dynamiske funktionsmoduler til mailformularer og afstemninger.
+Fra version 0.4.21 indeholder manageren en egen sektionseditor til almindelige sider, layoutbevarende konvertering af nuværende Gutenberg-/HTML-indhold samt dynamiske funktionsmoduler til mailformularer og afstemninger.
 
 ## Dokumentation
 

@@ -1,17 +1,16 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.20",
+  "version": "0.4.21",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T18:13:56Z",
+  "published_utc": "2026-08-15T18:33:27Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "8c8fb8f9369293295e5d77183cfbb71960b3693851ba99865860e58981867674",
+  "package_sha256": "c7e6faed5eaf8f13f98894d106987a5489f95319bd27b79926f382f6c7a322fb",
   "changelog": [
-    "Retter fejlen, hvor importeret side-CSS blev vist som almindelig tekst på siden.",
-    "Bevarer Gutenberg-designgrupper, wrappers og kolonner samlet ved fremtidige importer.",
-    "Gendanner desktopkolonner, mobilstabling, tagline og sektionsafstande på den allerede gemte forside.",
-    "Reparerer 0.4.19-visningen uden automatisk at omskrive de gemte sidedata.",
-    "Bevarer fuld backup og WordPress-revision ved efterfølgende gemninger i editoren."
+    "Fjerner det dobbelte billede i forsidens hero, når det samme Cover-billede også bruges som hero-baggrund.",
+    "Bevarer bannerets eksisterende højde, beskæring og responsive visning.",
+    "Genkender ældre CSS-tekstsektioner som side-CSS uden at omskrive gemte sidedata.",
+    "Lader sektionernes valgte desktop- og mobilplacering styre overskrifter, tekst og knapper."
   ]
 }

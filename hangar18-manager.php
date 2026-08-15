@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.20
+ * Version: 0.4.21
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.20';
+    const VERSION = '0.4.21';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -6085,7 +6085,7 @@ HTML;
         if (!isset($types[$type])) {
             $type = 'text';
         }
-        if ($type === 'html' && $this->looks_like_page_css((string) ($raw['Content'] ?? ''))) {
+        if (in_array($type, ['html', 'text'], true) && $this->looks_like_page_css((string) ($raw['Content'] ?? ''))) {
             $type = 'css';
         }
 
@@ -6403,6 +6403,15 @@ HTML;
         return $this->sanitize_page_section_css($css);
     }
 
+    private function clean_page_hero_content($content) {
+        $content = (string) $content;
+        $content = (string) preg_replace_callback('/<img\b[^>]*>/i', static function ($match) {
+            return stripos((string) $match[0], 'wp-block-cover__image-background') !== false ? '' : (string) $match[0];
+        }, $content);
+        $content = (string) preg_replace('/<span\b[^>]*(?:wp-block-cover__background|has-background-dim)[^>]*>\s*<\/span>/is', '', $content);
+        return trim($content);
+    }
+
     private function page_import_section($type, $order, array $values = []) {
         $section = $this->default_page_section($type, $order);
         $section['Key'] = 'importeret-' . str_pad((string) max(1, (int) ($order / 10)), 2, '0', STR_PAD_LEFT);
@@ -6469,6 +6478,7 @@ HTML;
             $copy = $inner_html !== '' ? $inner_html : $html;
             $title = $this->page_import_extract_heading($copy);
             $buttons = $this->page_import_extract_buttons($copy);
+            $copy = $this->clean_page_hero_content($copy);
             $image = $this->page_import_image_data($block, $html);
             $order = (count($sections) + 1) * 10;
             $section = $this->page_import_section('hero', $order, [
@@ -6773,19 +6783,19 @@ HTML;
         return '<style id="h18-page-editor-style-' . $id . '">' .
             '.h18-editor-page{width:100%;box-sizing:border-box}.h18-editor-section{box-sizing:border-box;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0);border-radius:var(--h18-radius,0);text-align:var(--h18-align,left)}' .
             '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3{color:#fff}' .
-            '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}.h18-editor-section p:last-child{margin-bottom:0}' .
+            '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}.h18-editor-section p:last-child{margin-bottom:0}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{text-align:var(--h18-align,left)!important}' .
             '.h18-editor-card{border-top:4px solid #c3ae83}.h18-editor-highlight{border-left:5px solid #c3ae83}' .
             '.h18-editor-text-image{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:28px;align-items:center}.h18-editor-text-image--left .h18-editor-media{order:-1}' .
             '.h18-editor-media img,.h18-editor-image img{display:block;width:100%;height:auto;border-radius:inherit}.h18-editor-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:var(--h18-justify,flex-start)}' .
-            '.h18-editor-hero{position:relative;display:grid;min-height:var(--h18-hero-height,320px);place-items:center;overflow:hidden;background-position:center;background-repeat:no-repeat;background-size:cover}.h18-editor-hero:before{position:absolute;inset:0;content:"";background:#20261d;opacity:var(--h18-overlay-opacity,.35)}.h18-editor-hero-inner{position:relative;z-index:1;width:min(100%,920px)}.h18-editor-hero .h18-editor-actions{margin-top:20px}' .
+            '.h18-editor-hero{position:relative;display:grid;min-height:var(--h18-hero-height,320px);place-items:center;overflow:hidden;background-position:center;background-repeat:no-repeat;background-size:cover}.h18-editor-hero:before{position:absolute;inset:0;content:"";background:#20261d;opacity:var(--h18-overlay-opacity,.35)}.h18-editor-hero-inner{position:relative;z-index:1;width:min(100%,920px)}.h18-editor-hero .h18-editor-actions{margin-top:20px}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover{display:block!important;min-height:0!important;padding:0!important;background:none!important}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__image-background,.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__background{display:none!important}' .
             '.h18-editor-page .wp-block-columns{display:flex;align-items:stretch;gap:16px}.h18-editor-page .wp-block-column{flex:1 1 0;min-width:0}.h18-editor-page .wp-block-button__link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}' .
-            '.h18-imported-composite,.h18-imported-columns{box-sizing:border-box;width:100%}.h18-imported-composite{text-align:center}.h18-imported-composite>.h18-editor-section{margin:0!important;text-align:center!important}.h18-imported-composite .h18-editor-actions{justify-content:center!important;margin-top:22px}.h18-imported-columns>.h18-editor-section,.h18-imported-tagline>.h18-editor-section{margin:0!important}.h18-imported-tagline>.h18-editor-section{padding:0!important}' .
+            '.h18-imported-composite,.h18-imported-columns{box-sizing:border-box;width:100%}.h18-imported-composite>.h18-editor-section{margin:0!important;text-align:var(--h18-align,left)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-justify,flex-start)!important;margin-top:22px}.h18-imported-columns>.h18-editor-section,.h18-imported-tagline>.h18-editor-section{margin:0!important}.h18-imported-tagline>.h18-editor-section{padding:0!important}' .
             '.h18-editor-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:1px solid #c3ae83;border-radius:5px;background:#c3ae83;color:#20261d;text-decoration:none;font-weight:700}.h18-editor-button--secondary{background:transparent;color:inherit}' .
             '.h18-page-form,.h18-page-poll{max-width:760px;margin-inline:auto;text-align:left}.h18-page-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.h18-page-form-field{display:flex;flex-direction:column;gap:6px}.h18-page-form-field--wide{grid-column:1/-1}.h18-page-form input,.h18-page-form textarea{box-sizing:border-box;width:100%;padding:11px;border:1px solid #8c8f94;border-radius:4px}.h18-page-form input[type=checkbox]{width:auto;padding:0}.h18-page-form button,.h18-page-poll button{min-height:44px;padding:10px 20px;border:0;border-radius:5px;background:#c3ae83;color:#20261d;font-weight:700;cursor:pointer}' .
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0);text-align:var(--h18-mobile-align,center)}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:center}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
+            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0);text-align:var(--h18-mobile-align,center)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
     }
 
@@ -6860,7 +6870,8 @@ HTML;
             '--h18-radius:' . (int) $section['RadiusPx'] . 'px;' .
             '--h18-align:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'left') . ';' .
             '--h18-mobile-align:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'left') . ';' .
-            '--h18-justify:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'flex-start') . ';';
+            '--h18-justify:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'flex-start') . ';' .
+            '--h18-mobile-justify:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'flex-start') . ';';
         $classes = 'h18-editor-section h18-editor-section--' . $background_class;
         if ($section['Type'] === 'card') {
             $classes .= ' h18-editor-card';
@@ -6869,9 +6880,13 @@ HTML;
         }
         $id = 'h18-section-' . sanitize_html_class($section['Key']);
         $title = $section['Title'] !== '' ? '<h2>' . esc_html($section['Title']) . '</h2>' : '';
+        $content_source = (string) $section['Content'];
+        if ($section['Type'] === 'hero') {
+            $content_source = $this->clean_page_hero_content($content_source);
+        }
         $content = $section['Type'] === 'html'
-            ? do_shortcode(wp_kses_post((string) $section['Content']))
-            : $this->format_page_section_content($section['Content']);
+            ? do_shortcode(wp_kses_post($content_source))
+            : $this->format_page_section_content($content_source);
         $inner = $title . $content;
 
         if ($section['Type'] === 'hero') {
