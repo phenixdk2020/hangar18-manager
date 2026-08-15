@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.18
+ * Version: 0.4.19
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.18';
+    const VERSION = '0.4.19';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -5996,6 +5996,7 @@ HTML;
 
     private function page_section_type_labels() {
         return [
+            'hero'       => 'Topbanner / hero',
             'text'       => 'Tekst',
             'text_image' => 'Tekst og billede',
             'image'      => 'Stort billede',
@@ -6003,6 +6004,7 @@ HTML;
             'card'       => 'Indholdskort',
             'highlight'  => 'Fremhævet tekst',
             'spacer'     => 'Afstand',
+            'html'       => 'Importeret blok / HTML',
             'mail_form'  => 'Mailformular',
             'poll'       => 'Afstemning',
             'legacy'     => 'Eksisterende indhold',
@@ -6050,6 +6052,9 @@ HTML;
             'RadiusPx'              => 7,
             'SpacerPx'              => 32,
             'MobileSpacerPx'        => 24,
+            'HeroHeightPx'          => 320,
+            'MobileHeroHeightPx'    => 220,
+            'OverlayOpacityPercent' => 35,
             'LegacyHtml'            => '',
         ];
     }
@@ -6161,6 +6166,9 @@ HTML;
             'RadiusPx'              => $this->clamp_int($raw['RadiusPx'] ?? 7, 0, 30, 7),
             'SpacerPx'              => $this->clamp_int($raw['SpacerPx'] ?? 32, 0, 200, 32),
             'MobileSpacerPx'        => $this->clamp_int($raw['MobileSpacerPx'] ?? 24, 0, 140, 24),
+            'HeroHeightPx'          => $this->clamp_int($raw['HeroHeightPx'] ?? 320, 140, 800, 320),
+            'MobileHeroHeightPx'    => $this->clamp_int($raw['MobileHeroHeightPx'] ?? 220, 100, 600, 220),
+            'OverlayOpacityPercent' => $this->clamp_int($raw['OverlayOpacityPercent'] ?? 35, 0, 90, 35),
             'LegacyHtml'            => $legacy_html,
         ];
     }
@@ -6198,7 +6206,7 @@ HTML;
         }
 
         return [
-            'Version'   => '1.0',
+            'Version'   => '1.1',
             'PageSlug'  => $slug,
             'PageTitle' => $title,
             'Sections'  => $sections,
@@ -6265,6 +6273,366 @@ HTML;
             'PageSlug'  => $page->post_name,
             'PageTitle' => $page->post_title,
             'Sections'  => $sections,
+        ], $page);
+    }
+
+    private function page_import_block_html(array $block) {
+        $inner_content = isset($block['innerContent']) && is_array($block['innerContent'])
+            ? $block['innerContent']
+            : [];
+        $inner_blocks = isset($block['innerBlocks']) && is_array($block['innerBlocks'])
+            ? $block['innerBlocks']
+            : [];
+
+        if (!$inner_content) {
+            return trim((string) ($block['innerHTML'] ?? ''));
+        }
+
+        $html = '';
+        $child_index = 0;
+        foreach ($inner_content as $piece) {
+            if ($piece === null) {
+                if (isset($inner_blocks[$child_index]) && is_array($inner_blocks[$child_index])) {
+                    $html .= $this->page_import_block_html($inner_blocks[$child_index]);
+                }
+                $child_index++;
+                continue;
+            }
+            $html .= (string) $piece;
+        }
+        return trim($html);
+    }
+
+    private function page_import_inner_blocks_html(array $block) {
+        $html = '';
+        foreach (($block['innerBlocks'] ?? []) as $inner_block) {
+            if (is_array($inner_block)) {
+                $html .= $this->page_import_block_html($inner_block);
+            }
+        }
+        return trim($html);
+    }
+
+    private function page_import_extract_heading(&$html) {
+        $html = (string) $html;
+        if (!preg_match('/<h([1-6])\b[^>]*>(.*?)<\/h\1>/is', $html, $match)) {
+            return '';
+        }
+
+        $title = sanitize_text_field(wp_strip_all_tags((string) $match[2]));
+        $html = trim((string) preg_replace('/<h([1-6])\b[^>]*>.*?<\/h\1>/is', '', $html, 1));
+        return $title;
+    }
+
+    private function page_import_image_data(array $block, $html = '') {
+        $attrs = isset($block['attrs']) && is_array($block['attrs']) ? $block['attrs'] : [];
+        $media_id = absint($attrs['id'] ?? $attrs['backgroundImageId'] ?? 0);
+        $url = esc_url_raw((string) ($attrs['url'] ?? $attrs['backgroundImageUrl'] ?? ''));
+        $html = (string) $html;
+
+        if (!$media_id && preg_match('/\bwp-image-([0-9]+)\b/i', $html, $id_match)) {
+            $media_id = absint($id_match[1]);
+        }
+        if ($url === '' && preg_match('/<img\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1/is', $html, $url_match)) {
+            $url = esc_url_raw(html_entity_decode((string) $url_match[2], ENT_QUOTES, 'UTF-8'));
+        }
+
+        return ['id' => $media_id, 'url' => $url];
+    }
+
+    private function page_import_extract_buttons(&$html) {
+        $html = (string) $html;
+        $buttons = [];
+        if (preg_match_all('/<a\b([^>]*)>(.*?)<\/a>/is', $html, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                if (count($buttons) >= 2 || !preg_match('/\bhref\s*=\s*(["\'])(.*?)\1/is', (string) $match[1], $href_match)) {
+                    continue;
+                }
+                $label = sanitize_text_field(wp_strip_all_tags((string) $match[2]));
+                $url = esc_url_raw(html_entity_decode((string) $href_match[2], ENT_QUOTES, 'UTF-8'));
+                if ($label === '' || $url === '') {
+                    continue;
+                }
+                $buttons[] = ['label' => $label, 'url' => $url];
+                $html = str_replace((string) $match[0], '', $html);
+            }
+        }
+
+        for ($pass = 0; $pass < 3; $pass++) {
+            $html = (string) preg_replace('/<(div|p)\b[^>]*class=(["\'])[^"\']*wp-block-(buttons|button)[^"\']*\2[^>]*>\s*<\/\1>/is', '', $html);
+        }
+        $html = trim($html);
+        return $buttons;
+    }
+
+    private function page_import_section($type, $order, array $values = []) {
+        $section = $this->default_page_section($type, $order);
+        $section['Key'] = 'importeret-' . str_pad((string) max(1, (int) ($order / 10)), 2, '0', STR_PAD_LEFT);
+        foreach ($values as $key => $value) {
+            if (array_key_exists($key, $section)) {
+                $section[$key] = $value;
+            }
+        }
+        return $section;
+    }
+
+    private function page_import_append_text(array &$sections, $html, $title = '', $type = 'text') {
+        $html = trim((string) $html);
+        $title = sanitize_text_field((string) $title);
+        if ($html === '' && $title === '') {
+            return;
+        }
+
+        $last_index = count($sections) - 1;
+        if (
+            $type === 'text' &&
+            $last_index >= 0 &&
+            ($sections[$last_index]['Type'] ?? '') === 'text' &&
+            $title === ''
+        ) {
+            $sections[$last_index]['Content'] = trim((string) $sections[$last_index]['Content'] . "\n" . $html);
+            return;
+        }
+
+        $order = (count($sections) + 1) * 10;
+        $sections[] = $this->page_import_section($type, $order, [
+            'Title'   => $title,
+            'Content' => $html,
+        ]);
+    }
+
+    private function page_import_block(array $block, array &$sections) {
+        if (count($sections) >= 25) {
+            return;
+        }
+
+        $name = (string) ($block['blockName'] ?? '');
+        $attrs = isset($block['attrs']) && is_array($block['attrs']) ? $block['attrs'] : [];
+        $html = $this->page_import_block_html($block);
+        $inner_html = $this->page_import_inner_blocks_html($block);
+
+        if ($name === 'core/cover') {
+            $copy = $inner_html !== '' ? $inner_html : $html;
+            $title = $this->page_import_extract_heading($copy);
+            $buttons = $this->page_import_extract_buttons($copy);
+            $image = $this->page_import_image_data($block, $html);
+            $order = (count($sections) + 1) * 10;
+            $section = $this->page_import_section('hero', $order, [
+                'Title'                 => $title,
+                'Content'               => $copy,
+                'MediaId'               => $image['id'],
+                'MediaUrl'              => $image['url'],
+                'DesktopAlignment'      => 'Center',
+                'MobileAlignment'       => 'Center',
+                'Background'            => 'Olive',
+                'PaddingPx'             => 36,
+                'MobilePaddingPx'       => 22,
+                'HeroHeightPx'          => $this->clamp_int($attrs['minHeight'] ?? 320, 140, 800, 320),
+                'MobileHeroHeightPx'    => $this->clamp_int($attrs['minHeight'] ?? 220, 100, 600, 220),
+                'OverlayOpacityPercent' => $this->clamp_int($attrs['dimRatio'] ?? 35, 0, 90, 35),
+            ]);
+            if (isset($buttons[0])) {
+                $section['Button1Label'] = $buttons[0]['label'];
+                $section['Button1Url'] = $buttons[0]['url'];
+            }
+            if (isset($buttons[1])) {
+                $section['Button2Label'] = $buttons[1]['label'];
+                $section['Button2Url'] = $buttons[1]['url'];
+            }
+            $sections[] = $section;
+            return;
+        }
+
+        if ($name === 'core/heading') {
+            $heading_html = $html;
+            $title = $this->page_import_extract_heading($heading_html);
+            $this->page_import_append_text($sections, $heading_html, $title, 'text');
+            return;
+        }
+
+        if (in_array($name, ['core/paragraph', 'core/list', 'core/quote', 'core/table', 'core/preformatted'], true)) {
+            $this->page_import_append_text($sections, $html);
+            return;
+        }
+
+        if ($name === 'core/image') {
+            $image = $this->page_import_image_data($block, $html);
+            $caption = '';
+            if (preg_match('/<figcaption\b[^>]*>(.*?)<\/figcaption>/is', $html, $caption_match)) {
+                $caption = wp_kses_post((string) $caption_match[1]);
+            }
+            $sections[] = $this->page_import_section('image', (count($sections) + 1) * 10, [
+                'Content'  => $caption,
+                'MediaId'  => $image['id'],
+                'MediaUrl' => $image['url'],
+            ]);
+            return;
+        }
+
+        if ($name === 'core/buttons' || $name === 'core/button') {
+            $button_html = $html;
+            $buttons = $this->page_import_extract_buttons($button_html);
+            $section = $this->page_import_section('buttons', (count($sections) + 1) * 10);
+            if (isset($buttons[0])) {
+                $section['Button1Label'] = $buttons[0]['label'];
+                $section['Button1Url'] = $buttons[0]['url'];
+            }
+            if (isset($buttons[1])) {
+                $section['Button2Label'] = $buttons[1]['label'];
+                $section['Button2Url'] = $buttons[1]['url'];
+            }
+            $sections[] = $section;
+            return;
+        }
+
+        if ($name === 'core/spacer' || $name === 'core/separator') {
+            $height = $name === 'core/separator' ? 24 : $this->clamp_int($attrs['height'] ?? 32, 0, 200, 32);
+            $sections[] = $this->page_import_section('spacer', (count($sections) + 1) * 10, [
+                'SpacerPx'       => $height,
+                'MobileSpacerPx' => min($height, 140),
+            ]);
+            return;
+        }
+
+        if ($name === 'core/columns') {
+            $columns = isset($block['innerBlocks']) && is_array($block['innerBlocks']) ? $block['innerBlocks'] : [];
+            if (count($columns) === 2) {
+                $column_html = [
+                    $this->page_import_block_html($columns[0]),
+                    $this->page_import_block_html($columns[1]),
+                ];
+                $image_index = preg_match('/<img\b/i', $column_html[0]) ? 0 : (preg_match('/<img\b/i', $column_html[1]) ? 1 : -1);
+                if ($image_index >= 0) {
+                    $copy_index = $image_index === 0 ? 1 : 0;
+                    $copy = $column_html[$copy_index];
+                    $title = $this->page_import_extract_heading($copy);
+                    $image = $this->page_import_image_data($columns[$image_index], $column_html[$image_index]);
+                    $sections[] = $this->page_import_section('text_image', (count($sections) + 1) * 10, [
+                        'Title'         => $title,
+                        'Content'       => $copy,
+                        'MediaId'       => $image['id'],
+                        'MediaUrl'      => $image['url'],
+                        'ImagePosition' => $image_index === 0 ? 'Left' : 'Right',
+                    ]);
+                    return;
+                }
+            }
+
+            $this->page_import_append_text($sections, $html, '', 'html');
+            return;
+        }
+
+        if ($name === 'core/group' || $name === 'core/column') {
+            $class_name = strtolower((string) ($attrs['className'] ?? ''));
+            $background = strtolower((string) ($attrs['backgroundColor'] ?? ''));
+            if (strpos($class_name, 'card') !== false || strpos($class_name, 'kort') !== false || $background !== '') {
+                $copy = $inner_html !== '' ? $inner_html : $html;
+                $title = $this->page_import_extract_heading($copy);
+                $sections[] = $this->page_import_section('card', (count($sections) + 1) * 10, [
+                    'Title'             => $title,
+                    'Content'           => $copy,
+                    'Background'        => 'OffWhite',
+                    'PaddingPx'         => 26,
+                    'MobilePaddingPx'   => 20,
+                    'BottomSpacingPx'   => 20,
+                    'MobileBottomSpacingPx' => 14,
+                ]);
+                return;
+            }
+
+            if (!empty($block['innerBlocks'])) {
+                foreach ($block['innerBlocks'] as $inner_block) {
+                    if (is_array($inner_block)) {
+                        $this->page_import_block($inner_block, $sections);
+                    }
+                }
+                return;
+            }
+        }
+
+        if ($html !== '') {
+            $copy = $html;
+            $title = $this->page_import_extract_heading($copy);
+            $this->page_import_append_text($sections, $copy, $title, 'html');
+        }
+    }
+
+    private function import_page_html_to_editor_sections($html) {
+        $html = trim((string) $html);
+        if ($html === '') {
+            return [];
+        }
+
+        $sections = [];
+        $blocks = function_exists('parse_blocks') ? parse_blocks($html) : [];
+        if (is_array($blocks) && $blocks) {
+            foreach ($blocks as $block) {
+                if (is_array($block)) {
+                    $this->page_import_block($block, $sections);
+                }
+            }
+        }
+
+        // Bevar altid hele siden. Meget komplekse sider samles i én redigerbar
+        // HTML-sektion i stedet for at blive afkortet ved editorens grænse på 25.
+        if (count($sections) >= 25) {
+            $sections = [];
+            $this->page_import_append_text($sections, $html, '', 'html');
+        }
+
+        if (!$sections) {
+            $copy = $html;
+            $title = $this->page_import_extract_heading($copy);
+            $this->page_import_append_text($sections, $copy, $title, 'html');
+        }
+
+        foreach ($sections as $index => &$section) {
+            $section['Order'] = ($index + 1) * 10;
+            $section['Key'] = 'importeret-' . str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
+        }
+        unset($section);
+        return array_slice($sections, 0, 25);
+    }
+
+    private function get_page_editor_data_for_admin($slug, $page, &$converted_sections = 0) {
+        $data = $this->get_page_editor_data($slug, $page);
+        $sections = [];
+        $converted_sections = 0;
+
+        foreach ($data['Sections'] as $section) {
+            if (($section['Type'] ?? '') !== 'legacy') {
+                $sections[] = $section;
+                continue;
+            }
+
+            $imported = $this->import_page_html_to_editor_sections((string) ($section['LegacyHtml'] ?? ''));
+            if (!$imported) {
+                $sections[] = $section;
+                continue;
+            }
+            foreach ($imported as $imported_section) {
+                if (count($sections) >= 25) {
+                    break;
+                }
+                $imported_section['Active'] = !empty($section['Active']);
+                $sections[] = $imported_section;
+                $converted_sections++;
+            }
+        }
+
+        foreach ($sections as $index => &$section) {
+            $section['Order'] = ($index + 1) * 10;
+            if (strpos((string) ($section['Key'] ?? ''), 'importeret-') === 0) {
+                $section['Key'] = 'importeret-' . str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
+            }
+        }
+        unset($section);
+
+        return $this->normalize_page_editor_data([
+            'Version'   => '1.1',
+            'PageSlug'  => $data['PageSlug'],
+            'PageTitle' => $data['PageTitle'],
+            'Sections'  => array_slice($sections, 0, 25),
         ], $page);
     }
 
@@ -6348,12 +6716,13 @@ HTML;
             '.h18-editor-card{border-top:4px solid #c3ae83}.h18-editor-highlight{border-left:5px solid #c3ae83}' .
             '.h18-editor-text-image{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:28px;align-items:center}.h18-editor-text-image--left .h18-editor-media{order:-1}' .
             '.h18-editor-media img,.h18-editor-image img{display:block;width:100%;height:auto;border-radius:inherit}.h18-editor-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:var(--h18-justify,flex-start)}' .
+            '.h18-editor-hero{position:relative;display:grid;min-height:var(--h18-hero-height,320px);place-items:center;overflow:hidden;background-position:center;background-repeat:no-repeat;background-size:cover}.h18-editor-hero:before{position:absolute;inset:0;content:"";background:#20261d;opacity:var(--h18-overlay-opacity,.35)}.h18-editor-hero-inner{position:relative;z-index:1;width:min(100%,920px)}.h18-editor-hero .h18-editor-actions{margin-top:20px}' .
             '.h18-editor-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:1px solid #c3ae83;border-radius:5px;background:#c3ae83;color:#20261d;text-decoration:none;font-weight:700}.h18-editor-button--secondary{background:transparent;color:inherit}' .
             '.h18-page-form,.h18-page-poll{max-width:760px;margin-inline:auto;text-align:left}.h18-page-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.h18-page-form-field{display:flex;flex-direction:column;gap:6px}.h18-page-form-field--wide{grid-column:1/-1}.h18-page-form input,.h18-page-form textarea{box-sizing:border-box;width:100%;padding:11px;border:1px solid #8c8f94;border-radius:4px}.h18-page-form input[type=checkbox]{width:auto;padding:0}.h18-page-form button,.h18-page-poll button{min-height:44px;padding:10px 20px;border:0;border-radius:5px;background:#c3ae83;color:#20261d;font-weight:700;cursor:pointer}' .
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0);text-align:var(--h18-mobile-align,center)}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:center}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}}' .
+            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0);text-align:var(--h18-mobile-align,center)}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:center}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}}' .
             '</style>';
     }
 
@@ -6433,10 +6802,32 @@ HTML;
         }
         $id = 'h18-section-' . sanitize_html_class($section['Key']);
         $title = $section['Title'] !== '' ? '<h2>' . esc_html($section['Title']) . '</h2>' : '';
-        $content = $this->format_page_section_content($section['Content']);
+        $content = $section['Type'] === 'html'
+            ? do_shortcode(wp_kses_post((string) $section['Content']))
+            : $this->format_page_section_content($section['Content']);
         $inner = $title . $content;
 
-        if ($section['Type'] === 'text_image') {
+        if ($section['Type'] === 'hero') {
+            $image_url = $section['MediaId'] ? wp_get_attachment_image_url($section['MediaId'], 'full') : '';
+            if (!$image_url) {
+                $image_url = $section['MediaUrl'];
+            }
+            $style .= '--h18-hero-height:' . (int) $section['HeroHeightPx'] . 'px;' .
+                '--h18-mobile-hero-height:' . (int) $section['MobileHeroHeightPx'] . 'px;' .
+                '--h18-overlay-opacity:' . ((int) $section['OverlayOpacityPercent'] / 100) . ';';
+            if ($image_url !== '') {
+                $style .= 'background-image:url(' . wp_json_encode(esc_url_raw((string) $image_url)) . ');';
+            }
+            $classes .= ' h18-editor-hero';
+            $buttons = '';
+            if ($section['Button1Label'] !== '' && $section['Button1Url'] !== '') {
+                $buttons .= '<a class="h18-editor-button" href="' . esc_url($section['Button1Url']) . '">' . esc_html($section['Button1Label']) . '</a>';
+            }
+            if ($section['Button2Label'] !== '' && $section['Button2Url'] !== '') {
+                $buttons .= '<a class="h18-editor-button h18-editor-button--secondary" href="' . esc_url($section['Button2Url']) . '">' . esc_html($section['Button2Label']) . '</a>';
+            }
+            $inner = '<div class="h18-editor-hero-inner">' . $title . $content . ($buttons !== '' ? '<div class="h18-editor-actions">' . $buttons . '</div>' : '') . '</div>';
+        } elseif ($section['Type'] === 'text_image') {
             $image = $section['MediaId'] ? wp_get_attachment_image($section['MediaId'], 'large', false, ['loading' => 'lazy']) : '';
             if ($image === '' && $section['MediaUrl'] !== '') {
                 $image = '<img src="' . esc_url($section['MediaUrl']) . '" alt="" loading="lazy" />';
@@ -6613,20 +7004,21 @@ HTML;
                             </select>
                         </div>
 
-                        <div class="h18-field h18-section-type-field" data-types="text text_image image buttons card highlight mail_form poll">
+                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card highlight html mail_form poll">
                             <label><strong class="h18-section-title-label"><?php echo $section['Type'] === 'poll' ? 'Spørgsmål' : 'Overskrift'; ?></strong></label>
                             <input class="h18-section-title-input" type="text" name="<?php echo esc_attr($prefix); ?>[Title]" value="<?php echo esc_attr($section['Title']); ?>" />
                         </div>
 
-                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="text text_image image buttons card highlight mail_form poll">
+                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card highlight html mail_form poll">
                             <label><strong><?php echo $section['Type'] === 'image' ? 'Billedtekst' : 'Tekst'; ?></strong></label>
                             <div class="h18-mini-editor-toolbar"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
                             <textarea name="<?php echo esc_attr($prefix); ?>[Content]" rows="5"><?php echo esc_textarea($section['Content']); ?></textarea>
-                            <p class="description">Almindelig tekst samt enkel formatering som fed, kursiv, links og lister er tilladt.</p>
+                            <p class="description h18-standard-content-help">Almindelig tekst samt enkel formatering som fed, kursiv, links og lister er tilladt.</p>
+                            <p class="description h18-section-type-field" data-types="html"><strong>Importeret blok:</strong> HTML-koden er bevaret for at fastholde det nuværende udseende. Tekst og links kan redigeres direkte her.</p>
                         </div>
                     </div>
 
-                    <div class="h18-section-type-field h18-section-module-box" data-types="text_image image">
+                    <div class="h18-section-type-field h18-section-module-box" data-types="hero text_image image">
                         <h4>Billede</h4>
                         <div class="h18-module-fields-grid">
                             <div class="h18-field">
@@ -6645,13 +7037,23 @@ HTML;
                         </div>
                     </div>
 
-                    <div class="h18-section-type-field h18-section-module-box" data-types="buttons">
+                    <div class="h18-section-type-field h18-section-module-box" data-types="hero buttons">
                         <h4>Knapper</h4>
                         <div class="h18-module-fields-grid h18-module-fields-grid--four">
                             <div class="h18-field"><label><strong>Knap 1 – tekst</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[Button1Label]" value="<?php echo esc_attr($section['Button1Label']); ?>" /></div>
                             <div class="h18-field"><label><strong>Knap 1 – link</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[Button1Url]" value="<?php echo esc_attr($section['Button1Url']); ?>" placeholder="https:// eller /kontakt/" /></div>
                             <div class="h18-field"><label><strong>Knap 2 – tekst</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[Button2Label]" value="<?php echo esc_attr($section['Button2Label']); ?>" /></div>
                             <div class="h18-field"><label><strong>Knap 2 – link</strong></label><input type="text" name="<?php echo esc_attr($prefix); ?>[Button2Url]" value="<?php echo esc_attr($section['Button2Url']); ?>" placeholder="https:// eller /bliv-medlem/" /></div>
+                        </div>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box" data-types="hero">
+                        <h4>Topbanner / hero</h4>
+                        <p>Billedet bruges som baggrund. Mørkningen gør den hvide tekst læsbar oven på billedet.</p>
+                        <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                            <div class="h18-field"><label><strong>Højde desktop (px)</strong></label><input type="number" min="140" max="800" name="<?php echo esc_attr($prefix); ?>[HeroHeightPx]" value="<?php echo esc_attr($section['HeroHeightPx']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Højde mobil (px)</strong></label><input type="number" min="100" max="600" name="<?php echo esc_attr($prefix); ?>[MobileHeroHeightPx]" value="<?php echo esc_attr($section['MobileHeroHeightPx']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Mørkning (%)</strong></label><input type="number" min="0" max="90" name="<?php echo esc_attr($prefix); ?>[OverlayOpacityPercent]" value="<?php echo esc_attr($section['OverlayOpacityPercent']); ?>" /></div>
                         </div>
                     </div>
 
@@ -6721,7 +7123,8 @@ HTML;
             $slug = self::HOME_SLUG;
         }
         $page = $this->post_by_slug($slug);
-        $data = $page ? $this->get_page_editor_data($slug, $page) : null;
+        $converted_sections = 0;
+        $data = $page ? $this->get_page_editor_data_for_admin($slug, $page, $converted_sections) : null;
         ?>
         <div class="wrap h18-admin h18-pages-admin">
             <h1>Sider</h1>
@@ -6738,7 +7141,11 @@ HTML;
             <?php if (!$page) : ?>
                 <div class="notice notice-error"><p>Siden <strong><?php echo esc_html($definitions[$slug]); ?></strong> blev ikke fundet.</p></div>
             <?php else : ?>
-                <div class="h18-toolbar"><div><strong>Redigerer:</strong> <?php echo esc_html($page->post_title); ?></div><p class="h18-toolbar-note">Eksisterende indhold bevares som en samlet sektion, indtil du selv vælger at fjerne det.</p><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($page)); ?>">Åbn offentlig side</a></div>
+                <div class="h18-toolbar"><div><strong>Redigerer:</strong> <?php echo esc_html($page->post_title); ?></div><p class="h18-toolbar-note">Nuværende indhold indlæses som redigerbare sektioner. Den offentlige side ændres først, når du vælger Gem siden.</p><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($page)); ?>">Åbn offentlig side</a></div>
+
+                <?php if ($converted_sections > 0) : ?>
+                    <div class="notice notice-info inline h18-page-import-notice"><p><strong>Nuværende sideindhold er gjort redigerbart.</strong> Editorens kladde indeholder <?php echo esc_html($converted_sections); ?> importerede sektioner. Gennemgå desktop og mobil, og vælg først <strong>Gem siden</strong>, når opdelingen ser rigtig ud. Indtil da er den offentlige side helt uændret.</p></div>
+                <?php endif; ?>
 
                 <form id="h18-page-editor-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <?php wp_nonce_field('h18_save_page_editor'); ?>
@@ -6843,7 +7250,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'   => '1.0',
+            'Version'   => '1.1',
             'PageSlug'  => $slug,
             'PageTitle' => $this->post_text('editor_page_title'),
             'Sections'  => $sections,
@@ -6865,7 +7272,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.0',
+                'Version' => '1.1',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

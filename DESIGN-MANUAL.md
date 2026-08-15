@@ -1,7 +1,7 @@
 # Designmanual for Hangar18
 
 Senest opdateret: 15. august 2026  
-Gælder fra: Hangar18 Manager 0.4.18
+Gælder fra: Hangar18 Manager 0.4.19
 
 ## Formål
 
@@ -82,6 +82,7 @@ De almindelige sider **Hjem**, **Om foreningen**, **Bliv medlem** og **Kontakt**
 
 Editoren arbejder med følgende indholdssektioner:
 
+- Topbanner / hero
 - Tekst
 - Tekst og billede
 - Stort billede
@@ -89,10 +90,11 @@ Editoren arbejder med følgende indholdssektioner:
 - Indholdskort
 - Fremhævet tekst
 - Afstand
+- Importeret blok / HTML
 
 Sektioner kan vises eller skjules, duplikeres, flyttes med musen og fjernes. Desktop- og mobilplacering samt luft før, efter og inde i sektionen styres separat.
 
-Indhold fra før sideeditoren bevares som **Eksisterende indhold**. Denne sektion må først fjernes, når det ønskede indhold er bygget færdigt med de nye sektioner.
+Indhold fra før sideeditoren indlæses automatisk som en **ikke-gemt redigerbar kladde**. Kendte Gutenberg-blokke opdeles i passende sektionstyper. Ukendte blokke bevares som **Importeret blok / HTML**, så det eksisterende indhold og udseende ikke kasseres. Den offentlige side ændres først, når redaktøren aktivt vælger **Gem siden**. Før gemningen oprettes en fuld backup og en WordPress-revision.
 
 Header og footer ligger uden for sideeditoren og kan ikke slettes fra en almindelig side.
 
@@ -184,6 +186,7 @@ Før en designændring godkendes, kontrolleres:
 | 0.4.16 | Administrationslayout og knapforklaringer blev gjort ensartede. |
 | 0.4.17 | Sideindhold, indholdssektioner og deres afstande blev gjort redigerbare; designmanualen blev oprettet. |
 | 0.4.18 | Sideindhold blev udvidet til en samlet sideeditor med genbrugelige sektioner, mailformular, afstemning og responsive editorvisninger. |
+| 0.4.19 | Nuværende Gutenberg- og HTML-sideindhold blev gjort direkte redigerbart gennem sikker konvertering til sektionskladder. |
 
 ## Sådan opdateres manualen
 

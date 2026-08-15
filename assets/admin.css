@@ -322,6 +322,7 @@
 .h18-page-section-main-grid{display:grid;grid-template-columns:minmax(180px,.28fr) minmax(240px,.55fr) minmax(360px,1fr);gap:16px;align-items:start}
 .h18-page-section-main-grid .h18-field{margin:0}
 .h18-page-section-content textarea{width:100%;min-height:118px}
+.h18-page-section-row[data-section-type="html"] .h18-page-section-content textarea{min-height:220px;font-family:Consolas,Monaco,monospace;font-size:12px;line-height:1.55}
 .h18-mini-editor-toolbar{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
 .h18-mini-editor-toolbar .button{min-width:34px;padding-inline:9px}
 .h18-section-module-box{margin-top:16px;padding:16px;border:1px solid #dcdcde;border-radius:7px;background:#f9f9f9}
@@ -341,6 +342,7 @@
 .h18-page-section-layout>.h18-layout-devices,.h18-page-section-layout>.h18-module-fields-grid{margin:14px}
 .h18-legacy-content-note{padding:16px;border-left:5px solid #c3ae83;background:#fff8e5}
 .h18-legacy-content-note p{margin-bottom:0}
+.h18-page-import-notice{margin:14px 0 18px!important;border-left-color:#3858e9!important}
 .h18-page-section-removed{opacity:.58;border-color:#b32d2e}
 .h18-page-section-removed .h18-page-section-body{display:none}
 .h18-page-section-removed .h18-page-section-header{background:#fcf0f1}
