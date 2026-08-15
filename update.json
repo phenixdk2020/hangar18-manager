@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.14",
+  "version": "0.4.15",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T12:18:22Z",
+  "published_utc": "2026-08-15T13:50:50Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "8e8b874e26ab8f3f94470a15851c8776a709ad4aea98d06e43a40a756d931a85",
+  "package_sha256": "bb47f6a40f717f9f6bd5141ae3b074d9034f620fa00cb232cce100c410ab21da",
   "changelog": [
-    "Tilføjer separate mobilindstillinger for eventoversigten og de enkelte eventsider.",
-    "Tilføjer separate mobilindstillinger for gallerioversigten og billederne i albums.",
+    "Rydder den gamle aktive PowerShell-import, baseline-genindlæsning og tekniske importstatus væk fra web-manageren.",
+    "Bevarer den private WordPress-konfiguration og JSON-backups til sikker lagring og gendannelse.",
+    "Tilføjer separate mobilindstillinger for køretøjsoversigten og de enkelte køretøjssider.",
     "Bruger Midtstillet som mobilstandard, mens desktopplaceringerne bevares.",
-    "Opgraderer Hangar18-ContentLayout.json fra schema 1.1 til 1.2.",
-    "Genbygger automatisk eksisterende events, albumsider og oversigter én gang efter opdateringen."
+    "Opgraderer den interne køretøjslayout-konfiguration fra schema 1.3 til 1.4 og genbygger eksisterende køretøjssider én gang."
   ]
 }

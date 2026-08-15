@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.14
+ * Version: 0.4.15
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.14';
+    const VERSION = '0.4.15';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -47,6 +47,7 @@ final class Hangar18_Manager {
     const VEHICLE_LAYOUT_REPAIR_049_OPTION = 'hangar18_manager_vehicle_layout_repair_049';
     const LEGACY_PAGE_TEMPLATE_REPAIR_0411_OPTION = 'hangar18_manager_legacy_page_template_repair_0411';
     const MOBILE_CONTENT_LAYOUT_REPAIR_0414_OPTION = 'hangar18_manager_mobile_content_layout_repair_0414';
+    const LEGACY_STARTUP_CLEANUP_0415_OPTION = 'hangar18_manager_legacy_startup_cleanup_0415';
     const NOTICE_PREFIX            = 'hangar18_manager_notice_';
 
     const CONFIG_STORE_SLUG  = 'hangar18-configuration-store';
@@ -72,13 +73,12 @@ final class Hangar18_Manager {
     }
 
     private function __construct() {
-        add_action('admin_init', [$this, 'maybe_apply_authoritative_config_baseline'], 5);
-        add_action('admin_init', [$this, 'maybe_import_power_shell_configuration'], 10);
         add_action('admin_init', [$this, 'maybe_run_frontend_repair_046'], 15);
         add_action('admin_init', [$this, 'maybe_repair_astra_banner_047'], 16);
         add_action('admin_init', [$this, 'maybe_repair_vehicle_layout_049'], 17);
         add_action('admin_init', [$this, 'maybe_repair_legacy_page_templates_0411'], 18);
         add_action('admin_init', [$this, 'maybe_repair_mobile_content_layout_0414'], 19);
+        add_action('admin_init', [$this, 'maybe_cleanup_legacy_startup_and_vehicle_mobile_0415'], 19);
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
         add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
@@ -105,7 +105,6 @@ final class Hangar18_Manager {
         add_action('admin_post_h18_add_menu_page', [$this, 'handle_add_menu_page']);
         add_action('admin_post_h18_repair_menu', [$this, 'handle_repair_menu']);
 
-        add_action('admin_post_h18_import_power_shell_config', [$this, 'handle_import_power_shell_config']);
         add_action('admin_post_h18_save_design', [$this, 'handle_save_design']);
         add_action('admin_post_h18_sync_shell', [$this, 'handle_sync_shell']);
 
@@ -468,6 +467,72 @@ final class Hangar18_Manager {
             $this->log(
                 'ERROR',
                 'MOBILE_CONTENT_LAYOUT_REPAIR_0414_FAILED',
+                $e->getMessage()
+            );
+        }
+    }
+
+    public function maybe_cleanup_legacy_startup_and_vehicle_mobile_0415() {
+        if (!is_admin() || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        if (get_option(self::LEGACY_STARTUP_CLEANUP_0415_OPTION, false)) {
+            return;
+        }
+
+        try {
+            $this->create_full_managed_backup(
+                'Før v0.4.15 oprydning og mobilplacering for køretøjer'
+            );
+
+            /*
+             * De tre options tilhørte den oprindelige PowerShell/bootstrap-
+             * arbejdsgang. Den nuværende web-manager bruger sine egne
+             * WordPress-options og den private Configuration Store.
+             */
+            delete_option(self::CONFIG_IMPORT_META_OPTION);
+            delete_option(self::CONFIG_BOOTSTRAP_OPTION);
+            delete_option(self::AUTHORITATIVE_BASELINE_OPTION);
+
+            $settings = $this->get_vehicle_register_settings();
+            update_option(self::VEHICLE_REGISTER_OPTION, $settings, false);
+
+            $central = $settings;
+            $central['Saved'] = gmdate('c');
+            $this->publish_configuration_file(
+                'Hangar18-VehicleRegister.json',
+                $central
+            );
+
+            $vehicles = $this->apply_vehicle_detail_alignment_to_existing_pages(
+                $settings
+            );
+            $this->rebuild_vehicle_register();
+
+            update_option(
+                self::LEGACY_STARTUP_CLEANUP_0415_OPTION,
+                [
+                    'CompletedUtc' => gmdate('c'),
+                    'Vehicles'     => $vehicles,
+                ],
+                false
+            );
+
+            $this->log(
+                'INFO',
+                'LEGACY_STARTUP_CLEANUP_0415_COMPLETE',
+                "v0.4.15: Gammel PowerShell/bootstrap-status er ryddet, og {$vehicles} køretøjssider er genbygget med mobilplacering."
+            );
+
+            $this->set_notice(
+                'success',
+                "v0.4.15: Den gamle opstartsimport er ryddet, og {$vehicles} køretøjssider er opdateret med mobilplacering."
+            );
+        } catch (Throwable $e) {
+            $this->log(
+                'ERROR',
+                'LEGACY_STARTUP_CLEANUP_0415_FAILED',
                 $e->getMessage()
             );
         }
@@ -1058,11 +1123,13 @@ final class Hangar18_Manager {
 
     private function default_vehicle_register_settings() {
         return [
-            'Version'           => '1.3',
-            'Saved'             => '2026-08-13T08:19:43.3711647+02:00',
-            'RegisterAlignment' => 'Center',
-            'CardAlignment'     => 'Center',
-            'DetailAlignment'   => 'Center',
+            'Version'                   => '1.4',
+            'Saved'                     => '2026-08-13T08:19:43.3711647+02:00',
+            'RegisterAlignment'         => 'Center',
+            'CardAlignment'             => 'Center',
+            'DetailAlignment'           => 'Center',
+            'MobileRegisterAlignment'   => 'Center',
+            'MobileDetailAlignment'     => 'Center',
         ];
     }
 
@@ -1086,12 +1153,24 @@ final class Hangar18_Manager {
             ? $detail_source
             : $default['DetailAlignment'];
 
+        $mobile_register_source = (string) ($saved['MobileRegisterAlignment'] ?? '');
+        $mobile_register = in_array($mobile_register_source, ['Left', 'Center'], true)
+            ? $mobile_register_source
+            : $default['MobileRegisterAlignment'];
+
+        $mobile_detail_source = (string) ($saved['MobileDetailAlignment'] ?? '');
+        $mobile_detail = in_array($mobile_detail_source, ['Left', 'Center'], true)
+            ? $mobile_detail_source
+            : $default['MobileDetailAlignment'];
+
         return [
-            'Version'           => '1.3',
-            'RegisterAlignment' => $register,
-            // Legacy alias bevares, så den gamle PowerShell-normalisering stadig kan læse filen.
-            'CardAlignment'     => $register,
-            'DetailAlignment'   => $detail,
+            'Version'                   => '1.4',
+            'RegisterAlignment'         => $register,
+            // CardAlignment bevares som data-alias for eksisterende installationer.
+            'CardAlignment'             => $register,
+            'DetailAlignment'           => $detail,
+            'MobileRegisterAlignment'   => $mobile_register,
+            'MobileDetailAlignment'     => $mobile_detail,
         ];
     }
 
@@ -2394,8 +2473,7 @@ final class Hangar18_Manager {
         $all_current = $this->current_configuration_files_for_manifest();
         $all_current[$file_name] = $data;
 
-        // Guarantee that the central manifest remains complete with all
-        // three PowerShell-managed files.
+        // Hold den interne WordPress-konfiguration komplet.
         foreach ($all_current as $name => $file_data) {
             if ($name !== $file_name && isset($files_by_name[$name])) {
                 continue;
@@ -2498,14 +2576,6 @@ final class Hangar18_Manager {
             'CONFIG_REMOTE_FILE_PUBLISHED',
             "'{$file_name}' gemt i central WordPress Configuration Store. Page ID {$result}."
         );
-
-        // Refresh import metadata so the UI shows the new central state.
-        try {
-            $this->import_power_shell_configuration(true);
-        } catch (Throwable $ignored) {
-            // The write already succeeded. Import metadata failure must not
-            // roll back a valid central configuration update.
-        }
 
         return (int) $result;
     }
@@ -3496,18 +3566,9 @@ HTML;
                 <div>
                     <span class="h18-kicker">Web Manager v<?php echo esc_html(self::VERSION); ?></span>
                     <h2>Aalborg Kaserners Veteran Panser- og Køretøjsforening</h2>
-                    <p>Web-manageren arbejder direkte på de eksisterende WordPress-sider og bruger de samme Hangar18-datamarkører som PowerShell-versionen.</p>
+                    <p>Web-manageren arbejder direkte på de eksisterende WordPress-sider og gemmer indstillingerne centralt i WordPress.</p>
                 </div>
                 <div class="h18-safe-badge">WhatIf er FRA som standard</div>
-            </div>
-
-            <?php $config_meta = get_option(self::CONFIG_IMPORT_META_OPTION, []); ?>
-            <div class="h18-config-mini-status <?php echo !empty($config_meta['success']) ? 'is-ok' : 'is-warn'; ?>">
-                <strong>1:1 PowerShell-konfiguration:</strong>
-                <?php echo !empty($config_meta['success']) ? 'Indlæst' : 'Ikke bekræftet'; ?>
-                <?php if (!empty($config_meta['manifest_program_version'])) : ?>
-                    · Kildeversion <?php echo esc_html($config_meta['manifest_program_version']); ?>
-                <?php endif; ?>
             </div>
 
             <div class="h18-stat-grid">
@@ -3574,6 +3635,11 @@ HTML;
         $detail_text_alignment = $detail_alignment === 'left' ? 'left' : 'center';
         $detail_outer_margin = $detail_alignment === 'left' ? '0 auto 0 0' : '0 auto';
         $detail_root_class = $detail_alignment === 'left' ? 'h18-align-left' : 'h18-align-center';
+        $mobile_detail_alignment = strtolower(
+            (string) $register_settings['MobileDetailAlignment']
+        );
+        $mobile_detail_text_alignment = $mobile_detail_alignment === 'left' ? 'left' : 'center';
+        $mobile_detail_outer_margin = $mobile_detail_alignment === 'left' ? '0 auto 0 0' : '0 auto';
 
         $detail_class = in_array(
             $detail_alignment,
@@ -3621,7 +3687,7 @@ body.page-id-{$id} .h18-vehicle-table th,body.page-id-{$id} .h18-vehicle-table t
 body.page-id-{$id} .h18-vehicle-table th{width:40%;background:#f2f0e8}
 body.page-id-{$id} .h18-color-value{display:inline-flex;align-items:center;gap:8px}.h18-color-swatch{display:inline-block;width:18px;height:18px;border:1px solid rgba(48,56,42,.35);border-radius:4px}.h18-field-empty{opacity:.65}
 body.page-id-{$id} .h18-vehicle-section{margin-top:32px}
-@media(max-width:782px){body.page-id-{$id} .h18-vehicle-content{padding:30px 15px}body.page-id-{$id} .h18-vehicle-main-layout{grid-template-columns:minmax(0,1fr)!important;gap:24px!important}body.page-id-{$id} .h18-vehicle-main-layout>.wp-block-column{width:100%!important;flex-basis:auto!important}}
+@media(max-width:782px){body.page-id-{$id} .h18-vehicle-content{padding:30px 15px}body.page-id-{$id} .h18-vehicle-hero,body.page-id-{$id} .h18-vehicle-hero h1,body.page-id-{$id} .h18-vehicle-hero p,body.page-id-{$id} .h18-vehicle-inner{text-align:{$mobile_detail_text_alignment}!important}body.page-id-{$id} .h18-vehicle-inner,body.page-id-{$id} .h18-vehicle-inner.h18-align-left,body.page-id-{$id} .h18-vehicle-inner.h18-align-center{margin:{$mobile_detail_outer_margin}!important}body.page-id-{$id} .h18-vehicle-main-layout,body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-left,body.page-id-{$id} .h18-vehicle-main-layout.avpf-vehicle-detail-center{grid-template-columns:minmax(0,1fr)!important;gap:24px!important;margin:{$mobile_detail_outer_margin}!important}body.page-id-{$id} .h18-vehicle-main-layout>.wp-block-column{width:100%!important;flex-basis:auto!important}}
 </style>
 <!-- /wp:html -->
 <div class="h18-vehicle-hero">
@@ -3659,6 +3725,11 @@ HTML;
             $register_alignment === 'left'
                 ? 'h18-register-align-left'
                 : 'h18-register-align-center';
+        $mobile_register_alignment =
+            ((string) $register_settings['MobileRegisterAlignment'] === 'Left')
+                ? 'left'
+                : 'center';
+        $mobile_register_justify = $mobile_register_alignment === 'left' ? 'start' : 'center';
 
         foreach ($vehicles as $vehicle) {
             $data = $this->decode_marker(self::VEHICLE_MARKER, $vehicle->post_content) ?: [];
@@ -3706,7 +3777,7 @@ HTML;
 .h18-color-value{display:inline-flex;align-items:center;gap:7px}.h18-color-swatch{display:inline-block;width:16px;height:16px;border:1px solid rgba(48,56,42,.35);border-radius:4px}.h18-field-empty{opacity:.65}
 .h18-card-link{display:inline-block;margin-top:12px;color:#8b4a2b;font-weight:700}
 .h18-register-empty{grid-column:1/-1;padding:26px;background:#f2f0e8;text-align:center}
-@media(max-width:600px){.h18-vehicle-register{grid-template-columns:1fr;justify-content:stretch}.h18-vehicle-card{max-width:none}}
+@media(max-width:782px){.h18-register-intro{text-align:{$mobile_register_alignment}!important}.h18-vehicle-register,.h18-vehicle-register.h18-register-align-left,.h18-vehicle-register.h18-register-align-center{grid-template-columns:1fr;justify-content:{$mobile_register_justify}!important}.h18-vehicle-card{max-width:none}.h18-vehicle-card-body{text-align:{$mobile_register_alignment}!important}.h18-vehicle-card table{text-align:left!important}}
 </style>
 <div class="h18-register-intro" style="text-align:{$register_alignment}">
 <h1 class="h18-overview-title">Køretøjer og materiel</h1>
@@ -3763,26 +3834,44 @@ HTML;
                 <input type="hidden" name="action" value="h18_save_vehicle_register_settings" />
 
                 <div class="h18-config-strip-title">
-                    <strong>Hangar18-VehicleRegister.json · schema 1.3</strong>
-                    <span>To uafhængige placeringer</span>
+                    <strong>Placering af køretøjer</strong>
+                    <span>Separate indstillinger for desktop og mobil</span>
                 </div>
 
                 <div class="h18-field">
-                    <label><strong>Køretøjssiden / oversigten</strong></label>
+                    <label><strong>Køretøjssiden / oversigten – desktop</strong></label>
                     <select name="register_alignment">
                         <option value="Left" <?php selected($vehicle_layout['RegisterAlignment'], 'Left'); ?>>Venstre</option>
                         <option value="Center" <?php selected($vehicle_layout['RegisterAlignment'], 'Center'); ?>>Midtstillet</option>
                     </select>
-                    <p class="description">Placering af indhold og køretøjskort på siden Køretøjer og materiel.</p>
+                    <p class="description">Placering af indhold og køretøjskort på desktop.</p>
                 </div>
 
                 <div class="h18-field">
-                    <label><strong>Selve køretøjerne / detaljesider</strong></label>
+                    <label><strong>Selve køretøjerne / detaljesider – desktop</strong></label>
                     <select name="detail_alignment">
                         <option value="Left" <?php selected($vehicle_layout['DetailAlignment'], 'Left'); ?>>Venstre</option>
                         <option value="Center" <?php selected($vehicle_layout['DetailAlignment'], 'Center'); ?>>Midtstillet</option>
                     </select>
-                    <p class="description">Placering på de enkelte køretøjssider.</p>
+                    <p class="description">Placering på de enkelte køretøjssider på desktop.</p>
+                </div>
+
+                <div class="h18-field">
+                    <label><strong>Køretøjssiden / oversigten – mobil</strong></label>
+                    <select name="mobile_register_alignment">
+                        <option value="Left" <?php selected($vehicle_layout['MobileRegisterAlignment'], 'Left'); ?>>Venstre</option>
+                        <option value="Center" <?php selected($vehicle_layout['MobileRegisterAlignment'], 'Center'); ?>>Midtstillet</option>
+                    </select>
+                    <p class="description">Placering af indhold og køretøjskort på mobil.</p>
+                </div>
+
+                <div class="h18-field">
+                    <label><strong>Selve køretøjerne / detaljesider – mobil</strong></label>
+                    <select name="mobile_detail_alignment">
+                        <option value="Left" <?php selected($vehicle_layout['MobileDetailAlignment'], 'Left'); ?>>Venstre</option>
+                        <option value="Center" <?php selected($vehicle_layout['MobileDetailAlignment'], 'Center'); ?>>Midtstillet</option>
+                    </select>
+                    <p class="description">Placering på de enkelte køretøjssider på mobil.</p>
                 </div>
 
                 <label class="h18-inline-check">
@@ -3790,7 +3879,7 @@ HTML;
                     WhatIf
                 </label>
 
-                <button class="button button-secondary" type="submit">Gem globalt registerlayout</button>
+                <button class="button button-secondary" type="submit">Gem køretøjslayout og anvend</button>
             </form>
 
             <div class="h18-toolbar">
@@ -4178,7 +4267,7 @@ HTML;
             $data['TechnicalSourceUrl'] = $this->post_url('technical_source_url');
             $data['CustomFields']       = $custom_fields;
 
-            // Legacy aliases bevares for bagudkompatibilitet med eksisterende PowerShell/data.
+            // Legacy aliases bevares for bagudkompatibilitet med eksisterende køretøjsdata.
             foreach ($this->vehicle_legacy_field_map() as $field_key => $legacy_key) {
                 if (array_key_exists($field_key, $custom_fields)) {
                     $data[$legacy_key] = (string) $custom_fields[$field_key];
@@ -4278,24 +4367,28 @@ HTML;
         check_admin_referer('h18_save_vehicle_register_settings');
 
         $settings = $this->normalize_vehicle_register_settings([
-            'Version'           => '1.3',
-            'RegisterAlignment' => $this->post_text('register_alignment'),
-            'CardAlignment'     => $this->post_text('register_alignment'),
-            'DetailAlignment'   => $this->post_text('detail_alignment'),
+            'Version'                   => '1.4',
+            'RegisterAlignment'         => $this->post_text('register_alignment'),
+            'CardAlignment'             => $this->post_text('register_alignment'),
+            'DetailAlignment'           => $this->post_text('detail_alignment'),
+            'MobileRegisterAlignment'   => $this->post_text('mobile_register_alignment'),
+            'MobileDetailAlignment'     => $this->post_text('mobile_detail_alignment'),
         ]);
 
         if (!empty($_POST['whatif'])) {
             $this->log(
                 'WARN',
                 'WHATIF_VEHICLE_REGISTER_SETTINGS',
-                '[WHATIF] Ville gemme Hangar18-VehicleRegister.json: ' .
-                'RegisterAlignment=' . $settings['RegisterAlignment'] .
-                '; DetailAlignment=' . $settings['DetailAlignment'] . '.'
+                '[WHATIF] Ville gemme køretøjslayout: ' .
+                'DesktopRegister=' . $settings['RegisterAlignment'] .
+                '; DesktopDetail=' . $settings['DetailAlignment'] .
+                '; MobileRegister=' . $settings['MobileRegisterAlignment'] .
+                '; MobileDetail=' . $settings['MobileDetailAlignment'] . '.'
             );
 
             $this->set_notice(
                 'warning',
-                'WHATIF: Det globale køretøjslayout ville blive gemt og synkroniseret til PowerShell-konfigurationen. Ingen data blev ændret.'
+                'WHATIF: Køretøjslayoutet ville blive gemt for desktop og mobil. Ingen data blev ændret.'
             );
 
             $this->redirect('hangar18-vehicles');
@@ -4337,15 +4430,17 @@ HTML;
             $this->log(
                 'INFO',
                 'VEHICLE_REGISTER_SETTINGS_SAVED',
-                'Globalt køretøjslayout gemt 1:1. ' .
-                'RegisterAlignment=' . $settings['RegisterAlignment'] .
-                '; DetailAlignment=' . $settings['DetailAlignment'] .
+                'Køretøjslayout gemt. ' .
+                'DesktopRegister=' . $settings['RegisterAlignment'] .
+                '; DesktopDetail=' . $settings['DetailAlignment'] .
+                '; MobileRegister=' . $settings['MobileRegisterAlignment'] .
+                '; MobileDetail=' . $settings['MobileDetailAlignment'] .
                 "; DetailPagesUpdated={$detail_pages}."
             );
 
             $this->set_notice(
                 'success',
-                'Det globale køretøjslayout er gemt og central PowerShell-konfiguration er opdateret.'
+                'Køretøjslayoutet er gemt for desktop og mobil, og de eksisterende køretøjssider er opdateret.'
             );
 
         } catch (Throwable $e) {
@@ -6453,7 +6548,7 @@ HTML;
                         <input type="hidden" name="menu_id" value="<?php echo esc_attr($menu_id); ?>" />
 
                         <h3>Sikr central menu-konfiguration</h3>
-                        <p>Sikrer de sider, rækkefølge og rækkefølge der er importeret fra <code>Hangar18-MenuOrder.json</code> schema 1.0.</p>
+                        <p>Sikrer standardsiderne og den ønskede rækkefølge i hovedmenuen.</p>
                         <p><strong><?php echo esc_html(implode(' · ', array_map(static function($definition) { return $definition['title']; }, $this->get_default_menu_page_definitions()))); ?></strong></p>
                         <p>Dubletter af de samme WordPress-sider fjernes. Andre/manuelle menupunkter bevares bagefter.</p>
 
@@ -7247,7 +7342,6 @@ HTML;
 
         $s = $this->get_header_design_settings();
         $shell = $this->get_shell_source();
-        $meta = get_option(self::CONFIG_IMPORT_META_OPTION, []);
 
         $logo_media_id = (int) $s['LogoMediaId'];
         $logo_url = (string) $s['LogoUrl'];
@@ -7258,53 +7352,18 @@ HTML;
 
         ?>
         <div class="wrap h18-admin">
-            <h1>Header / Footer og design · 1:1</h1>
+            <h1>Header / Footer og design</h1>
             <?php $this->render_notice(); ?>
 
-            <div class="h18-config-status <?php echo !empty($meta['success']) ? 'h18-config-status-ok' : 'h18-config-status-warn'; ?>">
-                <div>
-                    <strong>Central konfiguration:</strong>
-                    <?php echo esc_html((string) ($meta['source'] ?? 'Ikke importeret')); ?>
-                </div>
-                <div>
-                    <strong>Manifest:</strong>
-                    <?php echo esc_html((string) ($meta['manifest_program'] ?? '')); ?>
-                    <?php echo esc_html((string) ($meta['manifest_program_version'] ?? '')); ?>
-                </div>
-                <div>
-                    <strong>Gemmet UTC:</strong>
-                    <?php echo esc_html((string) ($meta['manifest_saved_utc'] ?? 'ukendt')); ?>
-                </div>
-                <div>
-                    <strong>Importerede filer:</strong>
-                    <?php echo esc_html(implode(', ', (array) ($meta['imported_files'] ?? []))); ?>
-                </div>
-                <?php if (!empty($meta['bootstrapped'])) : ?>
-                    <div><strong>Status:</strong> Configuration Store blev automatisk oprettet fra det eksisterende live site.</div>
-                <?php endif; ?>
-                <?php if (!empty($meta['error'])) : ?>
-                    <div><strong>Importfejl:</strong> <?php echo esc_html($meta['error']); ?></div>
-                <?php endif; ?>
-            </div>
-
             <div class="h18-help-box">
-                <strong>1:1 betyder her:</strong>
-                alle felter i <code>Hangar18-HeaderDesign.json</code> schema 2.3 er repræsenteret ud fra den uploadede autoritative konfiguration.
-                Web-manageren læser den centrale private WordPress Configuration Store automatisk og skriver tilbage til samme store ved rigtige ændringer.
+                <strong>Sådan styres designet:</strong>
+                Ændringer gemmes centralt i WordPress og anvendes på alle styrede sider. Der oprettes automatisk backup før rigtige ændringer.
             </div>
-
-            <form class="h18-secondary-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-                <?php wp_nonce_field('h18_import_power_shell_config'); ?>
-                <input type="hidden" name="action" value="h18_import_power_shell_config" />
-                <button class="button button-secondary" type="submit">Genindlæs / opret central 1:1-konfiguration</button>
-                <span class="description">Hvis central store mangler, oprettes den automatisk ud fra det eksisterende live Hangar18-site. Frontend-sider ændres ikke af denne knap.</span>
-            </form>
 
             <div class="h18-status-line">
                 Shell-kilde:
                 <strong><?php echo $shell ? esc_html($shell['source']->post_title . ' (ID ' . $shell['source']->ID . ')') : 'IKKE FUNDET'; ?></strong>
                 · Styrede sider: <strong><?php echo esc_html(count($this->get_managed_pages())); ?></strong>
-                · HeaderDesign schema: <strong><?php echo esc_html($s['Version']); ?></strong>
             </div>
 
             <form class="h18-editor-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -7313,8 +7372,8 @@ HTML;
 
                 <div class="h18-form-header">
                     <div>
-                        <h2>Hangar18-HeaderDesign.json · schema 2.3</h2>
-                        <p>Feltnavne og værdier følger den uploadede autoritative Hangar18-HeaderDesign.json.</p>
+                        <h2>Designindstillinger</h2>
+                        <p>Indstillinger for header, menu, sidebredde, afstande og footer.</p>
                     </div>
                     <label class="h18-safe-switch">
                         <input type="checkbox" name="whatif" value="1" />
@@ -7331,7 +7390,7 @@ HTML;
                             'Normal'   => 'Normal',
                             'Floating' => 'Floating',
                             'Overlay'  => 'Overlay',
-                        ], 'PowerShell schema 2.3 gemmer Sticky separat som StickyOnScroll.');
+                        ], 'Sticky ved scroll styres separat med feltet nedenfor.');
                         $this->render_checkbox_setting('StickyOnScroll', 'Pin menu/header ved scroll (StickyOnScroll)', $s['StickyOnScroll']);
                         $this->select_field('BackgroundMode', 'BackgroundMode', $s['BackgroundMode'], [
                             'None'  => 'None',
@@ -7370,7 +7429,7 @@ HTML;
                         $this->field('LogoWidthPx', 'LogoWidthPx', $s['LogoWidthPx'], 'number');
                         $this->field('LogoSizePercent', 'LogoSizePercent (%)', $s['LogoSizePercent'], 'number');
                         ?>
-                        <p class="description">LogoMediaId og LogoUrl gemmes begge i schema 2.3.</p>
+                        <p class="description">Det valgte logo gemmes og anvendes på alle styrede sider.</p>
                     </section>
 
                     <section class="h18-panel">
@@ -7422,7 +7481,7 @@ HTML;
                         $this->field('ResponsiveLargeWidthPx', 'ResponsiveLargeWidthPx', $s['ResponsiveLargeWidthPx'], 'number');
                         $this->field('ResponsiveLaptopWidthPx', 'ResponsiveLaptopWidthPx', $s['ResponsiveLaptopWidthPx'], 'number');
                         $this->field('ResponsiveLaptopScalePercent', 'ResponsiveLaptopScalePercent (%)', $s['ResponsiveLaptopScalePercent'], 'number');
-                        $this->field('ResponsiveMinimumScalePercent', 'ResponsiveMinimumScalePercent (%)', $s['ResponsiveMinimumScalePercent'], 'number', false, 'Gemmes direkte som angivet i den autoritative HeaderDesign 2.3-konfiguration.');
+                        $this->field('ResponsiveMinimumScalePercent', 'ResponsiveMinimumScalePercent (%)', $s['ResponsiveMinimumScalePercent'], 'number', false, 'Mindste tilladte responsive skalering.');
                         ?>
                     </section>
 
@@ -7431,7 +7490,7 @@ HTML;
                         <?php
                         $this->field('DesktopContentWidthPercent', 'DesktopContentWidthPercent (%)', $s['DesktopContentWidthPercent'], 'number');
                         $this->field('LaptopContentWidthPercent', 'LaptopContentWidthPercent (%)', $s['LaptopContentWidthPercent'], 'number');
-                        $this->field('MaximumDesktopContentWidthPercent', 'MaximumDesktopContentWidthPercent (%)', $s['MaximumDesktopContentWidthPercent'], 'number', false, 'Gemmes direkte som angivet i den autoritative HeaderDesign 2.3-konfiguration.');
+                        $this->field('MaximumDesktopContentWidthPercent', 'MaximumDesktopContentWidthPercent (%)', $s['MaximumDesktopContentWidthPercent'], 'number', false, 'Øvre grænse for indholdets bredde på desktop.');
                         $this->select_field('ContentMaxWidth', 'ContentMaxWidth', $s['ContentMaxWidth'], [
                             'None' => 'None',
                             '1400' => '1400 px',
@@ -7500,7 +7559,7 @@ HTML;
 
             $this->set_notice(
                 'warning',
-                'WHATIF: HeaderDesign schema 2.3 ville blive gemt 1:1 og anvendt på alle styrede sider. Ingen data blev ændret.'
+                'WHATIF: Designindstillingerne ville blive gemt og anvendt på alle styrede sider. Ingen data blev ændret.'
             );
 
             $this->redirect('hangar18-header-footer');
@@ -7547,7 +7606,7 @@ HTML;
 
             $this->set_notice(
                 'success',
-                "HeaderDesign schema 2.3 er gemt 1:1, central PowerShell-konfiguration er opdateret, og {$count} sider er opdateret."
+                "Designindstillingerne er gemt centralt i WordPress, og {$count} sider er opdateret."
             );
 
         } catch (Throwable $e) {
