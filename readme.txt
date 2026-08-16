@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.22
+Version: 0.4.23
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -684,3 +684,15 @@ AUTHORITATIVE_BASELINE_FAILED
 - Kladden bliver ikke aktiv forside, tilføjes ikke til menuen og kan ikke overskrive Hjem-side ID 9.
 - En allerede oprettet sammenligningskladde genbruges, så samme backup ikke opretter dubletter.
 - Sidespecifik CSS tilpasses kladdens nye side-ID, så den gamle side kan forhåndsvises retvisende.
+
+
+== Version 0.4.23 – Gendannet Hjem-design i sideeditoren ==
+
+- Gendanner Hjem-sidens oprindelige sektionsfarver: knækket hvid, hvid, olivengrøn og sandfarvet.
+- Gendanner 32 px luft mellem hovedsektionerne på desktop og 24 px på mobil.
+- Tilføjer særskilt styring af lodret og vandret indvendig luft på desktop og mobil.
+- Gendanner 24 px vandret indvendig luft på desktop samt 18 px på mobil.
+- Gendanner de oprindelige runde knapper og deres farver i importerede Hjem-sektioner.
+- Sætter mobilbanneret til 180 px og sikrer fortsat, at bannerbilledet kun vises én gang.
+- Bevarer venstrestilling på desktop og midterstilling på mobil efter de valgte indstillinger.
+- Tager automatisk fuld backup før engangsreparationen af den aktive Hjem-side.

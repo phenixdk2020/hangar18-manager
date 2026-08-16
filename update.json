@@ -1,16 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.22",
+  "version": "0.4.23",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-15T20:46:37Z",
+  "published_utc": "2026-08-16T05:14:31Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "2ce9f6ca9ced3d907c6f11f608ff1c0cc3f8d875d3444ec95642be978ef715eb",
+  "package_sha256": "8d649a3ea7c9831760f1d7bd15264267c6cae1de87878de90106cee376110b86",
   "changelog": [
-    "Viser backupgrund og Hjem-version direkte i backupoversigten.",
-    "Opretter den oprindelige Hjem-side som en separat sammenligningskladde fra en valgt JSON-backup.",
-    "Ændrer ikke aktiv forside, menu eller den eksisterende Hjem-side ID 9.",
-    "Forhindrer dubletter og tilpasser sidespecifik CSS til kladdens nye side-ID."
+    "Gendanner Hjem-sidens oprindelige sektionsfarver og runde knapper i den nye editor.",
+    "Gendanner 32 px sektionsafstand på desktop og 24 px på mobil.",
+    "Tilføjer særskilt styring af lodret og vandret indvendig luft på desktop og mobil.",
+    "Sætter mobilbanneret til 180 px og bevarer venstrestilling på desktop samt midterstilling på mobil.",
+    "Tager automatisk fuld backup før engangsreparationen af den aktive Hjem-side."
   ]
 }

@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.22
+ * Version: 0.4.23
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.22';
+    const VERSION = '0.4.23';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -54,6 +54,7 @@ final class Hangar18_Manager {
     const LEGACY_PAGE_TEMPLATE_REPAIR_0411_OPTION = 'hangar18_manager_legacy_page_template_repair_0411';
     const MOBILE_CONTENT_LAYOUT_REPAIR_0414_OPTION = 'hangar18_manager_mobile_content_layout_repair_0414';
     const LEGACY_STARTUP_CLEANUP_0415_OPTION = 'hangar18_manager_legacy_startup_cleanup_0415';
+    const HOME_EDITOR_DESIGN_REPAIR_0423_OPTION = 'hangar18_manager_home_editor_design_repair_0423';
     const NOTICE_PREFIX            = 'hangar18_manager_notice_';
 
     const CONFIG_STORE_SLUG  = 'hangar18-configuration-store';
@@ -85,6 +86,7 @@ final class Hangar18_Manager {
         add_action('admin_init', [$this, 'maybe_repair_legacy_page_templates_0411'], 18);
         add_action('admin_init', [$this, 'maybe_repair_mobile_content_layout_0414'], 19);
         add_action('admin_init', [$this, 'maybe_cleanup_legacy_startup_and_vehicle_mobile_0415'], 19);
+        add_action('admin_init', [$this, 'maybe_restore_home_editor_design_0423'], 20);
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
         add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
@@ -553,6 +555,170 @@ final class Hangar18_Manager {
                 'ERROR',
                 'LEGACY_STARTUP_CLEANUP_0415_FAILED',
                 $e->getMessage()
+            );
+        }
+    }
+
+    public function maybe_restore_home_editor_design_0423() {
+        if (!is_admin() || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        if (get_option(self::HOME_EDITOR_DESIGN_REPAIR_0423_OPTION, false)) {
+            return;
+        }
+
+        try {
+            $page = $this->post_by_slug(self::HOME_SLUG);
+            if (!$page instanceof WP_Post) {
+                return;
+            }
+
+            $data = $this->get_page_editor_data(self::HOME_SLUG, $page);
+            $has_imported_sections = false;
+            foreach ((array) $data['Sections'] as $section) {
+                if (strpos((string) ($section['Key'] ?? ''), 'importeret-') === 0) {
+                    $has_imported_sections = true;
+                    break;
+                }
+            }
+            if (!$has_imported_sections) {
+                return;
+            }
+
+            $this->create_full_managed_backup(
+                'Før v0.4.23 gendannede Hjem-sidens sektionsdesign'
+            );
+
+            $changed = 0;
+            $previous_type = '';
+            foreach ($data['Sections'] as &$section) {
+                $type = (string) ($section['Type'] ?? '');
+                $title = trim((string) ($section['Title'] ?? ''));
+                $plain_content = trim(wp_strip_all_tags((string) ($section['Content'] ?? '')));
+                $values = [];
+
+                if ($type === 'hero') {
+                    $values = [
+                        'TopSpacingPx' => 0,
+                        'BottomSpacingPx' => 0,
+                        'MobileTopSpacingPx' => 0,
+                        'MobileBottomSpacingPx' => 0,
+                        'HorizontalPaddingPx' => 0,
+                        'MobileHorizontalPaddingPx' => 0,
+                        'MobileHeroHeightPx' => 180,
+                    ];
+                } elseif (
+                    $previous_type === 'hero' &&
+                    $type === 'text' &&
+                    $title === ''
+                ) {
+                    $values = [
+                        'Background' => 'Sand',
+                        'TopSpacingPx' => 32,
+                        'BottomSpacingPx' => 0,
+                        'MobileTopSpacingPx' => 24,
+                        'MobileBottomSpacingPx' => 0,
+                        'PaddingPx' => 16,
+                        'HorizontalPaddingPx' => 24,
+                        'MobilePaddingPx' => 13,
+                        'MobileHorizontalPaddingPx' => 18,
+                        'RadiusPx' => 0,
+                        'DesktopAlignment' => 'Center',
+                        'MobileAlignment' => 'Center',
+                    ];
+                } else {
+                    $background = '';
+                    if ($title === 'Om foreningen' || $title === 'Kontakt os') {
+                        $background = 'OffWhite';
+                    } elseif ($title === 'Køretøjer og materiel') {
+                        $background = 'Olive';
+                    } elseif ($title === 'Bliv en del af foreningen') {
+                        $background = 'Sand';
+                    } elseif (
+                        $type === 'html' &&
+                        (
+                            strpos($plain_content, 'Bevaring') !== false ||
+                            strpos($plain_content, 'Events') !== false ||
+                            strpos($plain_content, 'Billedgalleri') !== false
+                        )
+                    ) {
+                        $background = 'White';
+                    }
+
+                    if ($background !== '') {
+                        $values = [
+                            'Background' => $background,
+                            'TopSpacingPx' => 32,
+                            'BottomSpacingPx' => 0,
+                            'MobileTopSpacingPx' => 24,
+                            'MobileBottomSpacingPx' => 0,
+                            'PaddingPx' => 64,
+                            'HorizontalPaddingPx' => 24,
+                            'MobilePaddingPx' => 38,
+                            'MobileHorizontalPaddingPx' => 18,
+                            'RadiusPx' => 0,
+                            'DesktopAlignment' => 'Left',
+                            'MobileAlignment' => 'Center',
+                        ];
+                    }
+                }
+
+                foreach ($values as $key => $value) {
+                    if (!array_key_exists($key, $section) || $section[$key] !== $value) {
+                        $section[$key] = $value;
+                        $changed++;
+                    }
+                }
+                $previous_type = $type;
+            }
+            unset($section);
+
+            $data = $this->normalize_page_editor_data($data, $page);
+            $this->save_page_editor_data(self::HOME_SLUG, $data);
+
+            $store = $this->get_page_editor_store();
+            $this->publish_configuration_file('Hangar18-Pages.json', [
+                'Version' => '1.3',
+                'Saved'   => gmdate('c'),
+                'Pages'   => $store,
+            ]);
+
+            $result = wp_update_post([
+                'ID'            => $page->ID,
+                'page_template' => 'default',
+                'post_content'  => $this->wrap_with_shell(
+                    $this->build_page_editor_core(self::HOME_SLUG, $data),
+                    $page->ID
+                ),
+            ], true);
+            if (is_wp_error($result)) {
+                throw new RuntimeException($result->get_error_message());
+            }
+
+            update_option(self::HOME_EDITOR_DESIGN_REPAIR_0423_OPTION, [
+                'CompletedUtc' => gmdate('c'),
+                'ChangedValues' => $changed,
+            ], false);
+
+            $this->log(
+                'INFO',
+                'HOME_EDITOR_DESIGN_REPAIR_0423_COMPLETE',
+                "v0.4.23: Hjem-sidens farver, sektionsafstand, indvendige luft, knapper og mobilbanner er gendannet. Ændrede værdier={$changed}."
+            );
+            $this->set_notice(
+                'success',
+                'v0.4.23: Hjem-sidens oprindelige sektionsdesign er gendannet. Der blev taget backup før ændringen.'
+            );
+        } catch (Throwable $e) {
+            $this->log(
+                'ERROR',
+                'HOME_EDITOR_DESIGN_REPAIR_0423_FAILED',
+                $e->getMessage()
+            );
+            $this->set_notice(
+                'error',
+                'v0.4.23 kunne ikke gendanne Hjem-sidens design: ' . $e->getMessage()
             );
         }
     }
@@ -6069,7 +6235,9 @@ HTML;
             'MobileTopSpacingPx'    => 0,
             'MobileBottomSpacingPx' => 18,
             'PaddingPx'             => 0,
+            'HorizontalPaddingPx'   => 0,
             'MobilePaddingPx'       => 0,
+            'MobileHorizontalPaddingPx' => 0,
             'RadiusPx'              => 7,
             'SpacerPx'              => 32,
             'MobileSpacerPx'        => 24,
@@ -6105,7 +6273,7 @@ HTML;
             $mobile_alignment = 'Center';
         }
         $background = (string) ($raw['Background'] ?? 'White');
-        if (!in_array($background, ['White', 'OffWhite', 'Olive'], true)) {
+        if (!in_array($background, ['White', 'OffWhite', 'Olive', 'Sand'], true)) {
             $background = 'White';
         }
         $image_position = (string) ($raw['ImagePosition'] ?? 'Right');
@@ -6188,7 +6356,9 @@ HTML;
             'MobileTopSpacingPx'    => $this->clamp_int($raw['MobileTopSpacingPx'] ?? 0, 0, 100, 0),
             'MobileBottomSpacingPx' => $this->clamp_int($raw['MobileBottomSpacingPx'] ?? 18, 0, 100, 18),
             'PaddingPx'             => $this->clamp_int($raw['PaddingPx'] ?? 0, 0, 100, 0),
+            'HorizontalPaddingPx'   => $this->clamp_int($raw['HorizontalPaddingPx'] ?? ($raw['PaddingPx'] ?? 0), 0, 100, 0),
             'MobilePaddingPx'       => $this->clamp_int($raw['MobilePaddingPx'] ?? 0, 0, 80, 0),
+            'MobileHorizontalPaddingPx' => $this->clamp_int($raw['MobileHorizontalPaddingPx'] ?? ($raw['MobilePaddingPx'] ?? 0), 0, 80, 0),
             'RadiusPx'              => $this->clamp_int($raw['RadiusPx'] ?? 7, 0, 30, 7),
             'SpacerPx'              => $this->clamp_int($raw['SpacerPx'] ?? 32, 0, 200, 32),
             'MobileSpacerPx'        => $this->clamp_int($raw['MobileSpacerPx'] ?? 24, 0, 140, 24),
@@ -6232,7 +6402,7 @@ HTML;
         }
 
         return [
-            'Version'   => '1.2',
+            'Version'   => '1.3',
             'PageSlug'  => $slug,
             'PageTitle' => $title,
             'Sections'  => $sections,
@@ -6701,7 +6871,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'   => '1.2',
+            'Version'   => '1.3',
             'PageSlug'  => $data['PageSlug'],
             'PageTitle' => $data['PageTitle'],
             'Sections'  => array_slice($sections, 0, 25),
@@ -6779,24 +6949,50 @@ HTML;
         return [$page, null];
     }
 
+    private function page_editor_section_style(array $section) {
+        return '--h18-top:' . (int) $section['TopSpacingPx'] . 'px;' .
+            '--h18-bottom:' . (int) $section['BottomSpacingPx'] . 'px;' .
+            '--h18-mobile-top:' . (int) $section['MobileTopSpacingPx'] . 'px;' .
+            '--h18-mobile-bottom:' . (int) $section['MobileBottomSpacingPx'] . 'px;' .
+            '--h18-pad:' . (int) $section['PaddingPx'] . 'px;' .
+            '--h18-pad-x:' . (int) $section['HorizontalPaddingPx'] . 'px;' .
+            '--h18-mobile-pad:' . (int) $section['MobilePaddingPx'] . 'px;' .
+            '--h18-mobile-pad-x:' . (int) $section['MobileHorizontalPaddingPx'] . 'px;' .
+            '--h18-radius:' . (int) $section['RadiusPx'] . 'px;' .
+            '--h18-align:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'left') . ';' .
+            '--h18-mobile-align:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'left') . ';' .
+            '--h18-justify:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'flex-start') . ';' .
+            '--h18-mobile-justify:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'flex-start') . ';';
+    }
+
+    private function render_page_editor_imported_group(array $section, $inner, $extra_class) {
+        $background_class = strtolower((string) $section['Background']);
+        $classes = 'h18-imported-group ' . implode(' ', array_map('sanitize_html_class', preg_split('/\s+/', trim((string) $extra_class)))) .
+            ' h18-editor-section h18-editor-section--' . sanitize_html_class($background_class);
+
+        return '<div class="' . esc_attr($classes) . '" style="' .
+            esc_attr($this->page_editor_section_style($section)) . '">' .
+            (string) $inner . '</div>';
+    }
+
     private function page_editor_frontend_css($page_id) {
         $id = (int) $page_id;
         return '<style id="h18-page-editor-style-' . $id . '">' .
-            '.h18-editor-page{width:100%;box-sizing:border-box}.h18-editor-section{box-sizing:border-box;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0);border-radius:var(--h18-radius,0);text-align:var(--h18-align,left)}' .
-            '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3{color:#fff}' .
+            '.h18-editor-page{width:100%;box-sizing:border-box}.h18-editor-section{box-sizing:border-box;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0) var(--h18-pad-x,var(--h18-pad,0));border-radius:var(--h18-radius,0);text-align:var(--h18-align,left)}' .
+            '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--sand{background:#c3ae83;color:#30382a}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3{color:#fff}' .
             '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}.h18-editor-section p:last-child{margin-bottom:0}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{text-align:var(--h18-align,left)!important}' .
             '.h18-editor-card{border-top:4px solid #c3ae83}.h18-editor-highlight{border-left:5px solid #c3ae83}' .
             '.h18-editor-text-image{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:28px;align-items:center}.h18-editor-text-image--left .h18-editor-media{order:-1}' .
             '.h18-editor-media img,.h18-editor-image img{display:block;width:100%;height:auto;border-radius:inherit}.h18-editor-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:var(--h18-justify,flex-start)}' .
             '.h18-editor-hero{position:relative;display:grid;min-height:var(--h18-hero-height,320px);place-items:center;overflow:hidden;background-position:center;background-repeat:no-repeat;background-size:cover}.h18-editor-hero:before{position:absolute;inset:0;content:"";background:#20261d;opacity:var(--h18-overlay-opacity,.35)}.h18-editor-hero-inner{position:relative;z-index:1;width:min(100%,920px)}.h18-editor-hero .h18-editor-actions{margin-top:20px}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover{display:block!important;min-height:0!important;padding:0!important;background:none!important}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__image-background,.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__background{display:none!important}' .
             '.h18-editor-page .wp-block-columns{display:flex;align-items:stretch;gap:16px}.h18-editor-page .wp-block-column{flex:1 1 0;min-width:0}.h18-editor-page .wp-block-button__link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}' .
-            '.h18-imported-composite,.h18-imported-columns{box-sizing:border-box;width:100%}.h18-imported-composite>.h18-editor-section{margin:0!important;text-align:var(--h18-align,left)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-justify,flex-start)!important;margin-top:22px}.h18-imported-columns>.h18-editor-section,.h18-imported-tagline>.h18-editor-section{margin:0!important}.h18-imported-tagline>.h18-editor-section{padding:0!important}' .
+            '.h18-imported-group{box-sizing:border-box;width:100%}.h18-imported-group>.h18-editor-section{margin:0!important;padding:0!important;border-radius:0!important;background:transparent!important;text-align:var(--h18-align,left)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-justify,flex-start)!important;margin-top:22px}.h18-editor-page .h18-imported-tagline.h18-imported-group{margin-top:var(--h18-top,0)!important;margin-bottom:var(--h18-bottom,0)!important}.h18-imported-group .h18-editor-button{min-height:52px;padding:13px 24px;border:0;border-radius:29px}.h18-imported-group.h18-editor-section--offwhite .h18-editor-button,.h18-imported-group.h18-editor-section--sand .h18-editor-button{background:#30382a;color:#fff}.h18-imported-group.h18-editor-section--olive .h18-editor-button{background:#c3ae83;color:#30382a}' .
             '.h18-editor-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:1px solid #c3ae83;border-radius:5px;background:#c3ae83;color:#20261d;text-decoration:none;font-weight:700}.h18-editor-button--secondary{background:transparent;color:inherit}' .
             '.h18-page-form,.h18-page-poll{max-width:760px;margin-inline:auto;text-align:left}.h18-page-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.h18-page-form-field{display:flex;flex-direction:column;gap:6px}.h18-page-form-field--wide{grid-column:1/-1}.h18-page-form input,.h18-page-form textarea{box-sizing:border-box;width:100%;padding:11px;border:1px solid #8c8f94;border-radius:4px}.h18-page-form input[type=checkbox]{width:auto;padding:0}.h18-page-form button,.h18-page-poll button{min-height:44px;padding:10px 20px;border:0;border-radius:5px;background:#c3ae83;color:#20261d;font-weight:700;cursor:pointer}' .
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0);text-align:var(--h18-mobile-align,center)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
+            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
     }
 
@@ -6862,17 +7058,7 @@ HTML;
         }
 
         $background_class = strtolower((string) $section['Background']);
-        $style = '--h18-top:' . (int) $section['TopSpacingPx'] . 'px;' .
-            '--h18-bottom:' . (int) $section['BottomSpacingPx'] . 'px;' .
-            '--h18-mobile-top:' . (int) $section['MobileTopSpacingPx'] . 'px;' .
-            '--h18-mobile-bottom:' . (int) $section['MobileBottomSpacingPx'] . 'px;' .
-            '--h18-pad:' . (int) $section['PaddingPx'] . 'px;' .
-            '--h18-mobile-pad:' . (int) $section['MobilePaddingPx'] . 'px;' .
-            '--h18-radius:' . (int) $section['RadiusPx'] . 'px;' .
-            '--h18-align:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'left') . ';' .
-            '--h18-mobile-align:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'left') . ';' .
-            '--h18-justify:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'flex-start') . ';' .
-            '--h18-mobile-justify:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'flex-start') . ';';
+        $style = $this->page_editor_section_style($section);
         $classes = 'h18-editor-section h18-editor-section--' . $background_class;
         if ($section['Type'] === 'card') {
             $classes .= ' h18-editor-card';
@@ -7002,9 +7188,11 @@ HTML;
                 $index > 0 &&
                 ($sections[$index - 1]['Type'] ?? '') === 'hero'
             ) {
-                $html .= '<div class="avpf-home-tagline h18-imported-tagline">' .
-                    $this->render_page_editor_section_front($page_id, $section) .
-                    '</div>';
+                $html .= $this->render_page_editor_imported_group(
+                    $section,
+                    $this->render_page_editor_section_front($page_id, $section),
+                    'avpf-home-tagline h18-imported-tagline'
+                );
                 continue;
             }
 
@@ -7013,9 +7201,11 @@ HTML;
                 ($section['Type'] ?? '') === 'html' &&
                 strpos((string) ($section['Content'] ?? ''), 'wp-block-columns') !== false
             ) {
-                $html .= '<div class="avpf-section h18-imported-columns">' .
-                    $this->render_page_editor_section_front($page_id, $section) .
-                    '</div>';
+                $html .= $this->render_page_editor_imported_group(
+                    $section,
+                    $this->render_page_editor_section_front($page_id, $section),
+                    'avpf-section h18-imported-columns'
+                );
                 continue;
             }
 
@@ -7027,10 +7217,12 @@ HTML;
                 strpos((string) ($next['Key'] ?? ''), 'importeret-') === 0 &&
                 ($next['Type'] ?? '') === 'buttons'
             ) {
-                $html .= '<div class="avpf-section h18-imported-composite">' .
+                $html .= $this->render_page_editor_imported_group(
+                    $section,
                     $this->render_page_editor_section_front($page_id, $section) .
-                    $this->render_page_editor_section_front($page_id, $next) .
-                    '</div>';
+                        $this->render_page_editor_section_front($page_id, $next),
+                    'avpf-section h18-imported-composite'
+                );
                 $index++;
                 continue;
             }
@@ -7228,16 +7420,18 @@ HTML;
                                 <div class="h18-field"><label><strong>Placering</strong></label><select name="<?php echo esc_attr($prefix); ?>[DesktopAlignment]"><option value="Left" <?php selected($section['DesktopAlignment'], 'Left'); ?>>Venstre</option><option value="Center" <?php selected($section['DesktopAlignment'], 'Center'); ?>>Midtstillet</option></select></div>
                                 <div class="h18-field"><label><strong>Luft før (px)</strong></label><input type="number" min="0" max="160" name="<?php echo esc_attr($prefix); ?>[TopSpacingPx]" value="<?php echo esc_attr($section['TopSpacingPx']); ?>" /></div>
                                 <div class="h18-field"><label><strong>Luft efter (px)</strong></label><input type="number" min="0" max="160" name="<?php echo esc_attr($prefix); ?>[BottomSpacingPx]" value="<?php echo esc_attr($section['BottomSpacingPx']); ?>" /></div>
-                                <div class="h18-field"><label><strong>Indvendig luft (px)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[PaddingPx]" value="<?php echo esc_attr($section['PaddingPx']); ?>" /></div>
+                                <div class="h18-field"><label><strong>Indvendig luft – lodret (px)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[PaddingPx]" value="<?php echo esc_attr($section['PaddingPx']); ?>" /><p class="description">Luft over og under indholdet inde i sektionen.</p></div>
+                                <div class="h18-field"><label><strong>Indvendig luft – vandret (px)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[HorizontalPaddingPx]" value="<?php echo esc_attr($section['HorizontalPaddingPx']); ?>" /><p class="description">Luft i venstre og højre side inde i sektionen.</p></div>
                             </div></fieldset>
                             <fieldset class="h18-layout-device"><legend>Mobil</legend><div class="h18-layout-fields">
                                 <div class="h18-field"><label><strong>Placering</strong></label><select name="<?php echo esc_attr($prefix); ?>[MobileAlignment]"><option value="Left" <?php selected($section['MobileAlignment'], 'Left'); ?>>Venstre</option><option value="Center" <?php selected($section['MobileAlignment'], 'Center'); ?>>Midtstillet</option></select></div>
                                 <div class="h18-field"><label><strong>Luft før (px)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[MobileTopSpacingPx]" value="<?php echo esc_attr($section['MobileTopSpacingPx']); ?>" /></div>
                                 <div class="h18-field"><label><strong>Luft efter (px)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[MobileBottomSpacingPx]" value="<?php echo esc_attr($section['MobileBottomSpacingPx']); ?>" /></div>
-                                <div class="h18-field"><label><strong>Indvendig luft (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[MobilePaddingPx]" value="<?php echo esc_attr($section['MobilePaddingPx']); ?>" /></div>
+                                <div class="h18-field"><label><strong>Indvendig luft – lodret (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[MobilePaddingPx]" value="<?php echo esc_attr($section['MobilePaddingPx']); ?>" /><p class="description">Luft over og under indholdet på mobil.</p></div>
+                                <div class="h18-field"><label><strong>Indvendig luft – vandret (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[MobileHorizontalPaddingPx]" value="<?php echo esc_attr($section['MobileHorizontalPaddingPx']); ?>" /><p class="description">Luft i siderne på mobil.</p></div>
                             </div></fieldset>
                         </div>
-                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option></select></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /></div></div>
+                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Sand" <?php selected($section['Background'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option></select><p class="description">Farven på hele sektionen. Brug sandfarvet eller olivengrøn til at fremhæve vigtige områder.</p></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /><p class="description">0 giver lige kanter som på den oprindelige Hjem-side.</p></div></div>
                     </details>
                 <?php endif; ?>
             </div>
@@ -7380,7 +7574,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'   => '1.2',
+            'Version'   => '1.3',
             'PageSlug'  => $slug,
             'PageTitle' => $this->post_text('editor_page_title'),
             'Sections'  => $sections,
@@ -7402,7 +7596,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.2',
+                'Version' => '1.3',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

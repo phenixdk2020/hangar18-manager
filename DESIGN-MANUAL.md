@@ -1,7 +1,7 @@
 # Designmanual for Hangar18
 
-Senest opdateret: 15. august 2026  
-Gælder fra: Hangar18 Manager 0.4.22
+Senest opdateret: 16. august 2026  
+Gælder fra: Hangar18 Manager 0.4.23
 
 ## Formål
 
@@ -56,6 +56,23 @@ De generelle standarder er:
 
 De generelle afstande styres under **Header / Footer → Indhold / bredde / footer**. Afstande for den enkelte redigerbare sektion styres under **Sider → Luft, baggrund og placering**.
 
+I sideeditoren opdeles den indvendige luft i **lodret** og **vandret** luft. Dermed kan en sektion eksempelvis have 64 px over/under indholdet og 24 px i siderne uden at påvirke hele sidens 90 %-bredde.
+
+### Hjem-sidens sektionsdesign
+
+Den godkendte Hjem-side bruger 32 px luft før hver hovedsektion på desktop og 24 px på mobil. Hovedsektionerne har 64 px lodret og 24 px vandret indvendig luft på desktop samt 38 px lodret og 18 px vandret luft på mobil.
+
+| Sektion | Baggrund | Desktopplacering | Mobilplacering |
+|---|---|---|---|
+| Om foreningen | Knækket hvid | Venstre | Midtstillet |
+| Bevaring, Formidling og Fællesskab | Hvid | Venstre | Midtstillet |
+| Køretøjer og materiel | Mørk olivengrøn | Venstre | Midtstillet |
+| Events og Billedgalleri | Hvid | Venstre | Midtstillet |
+| Bliv en del af foreningen | Sandfarvet | Venstre | Midtstillet |
+| Kontakt os | Knækket hvid | Venstre | Midtstillet |
+
+Topbanneret er 260 px højt på desktop og 180 px på mobil. Det samme bannerbillede må kun vises én gang.
+
 ## Indholdssektioner og kort
 
 De lyse kasser på Om foreningen kaldes **indholdssektioner**. Standardudseendet er:
@@ -93,7 +110,7 @@ Editoren arbejder med følgende indholdssektioner:
 - Importeret blok / HTML
 - Side-CSS (avanceret)
 
-Sektioner kan vises eller skjules, duplikeres, flyttes med musen og fjernes. Desktop- og mobilplacering samt luft før, efter og inde i sektionen styres separat.
+Sektioner kan vises eller skjules, duplikeres, flyttes med musen og fjernes. Desktop- og mobilplacering samt luft før, efter og inde i sektionen styres separat. Indvendig luft kan styres særskilt lodret og vandret.
 
 Indhold fra før sideeditoren indlæses automatisk som en **ikke-gemt redigerbar kladde**. Kendte Gutenberg-blokke opdeles i passende sektionstyper. Designgrupper med egne klasser bevares samlet som **Importeret blok / HTML**, så kolonner, kort og wrappers ikke skilles ad. Eksisterende sidespecifikke regler bevares som **Side-CSS (avanceret)** og må ikke vises som tekst på siden. Den offentlige side ændres først, når redaktøren aktivt vælger **Gem siden**. Før gemningen oprettes en fuld backup og en WordPress-revision.
 
@@ -191,6 +208,7 @@ Før en designændring godkendes, kontrolleres:
 | 0.4.20 | Importeret CSS, Gutenberg-grupper, kolonner og eksisterende sektionsafstande blev bevaret og repareret. |
 | 0.4.21 | Forsidens hero blev sikret mod et gentaget Cover-billede, ældre CSS-tekstsektioner blev genkendt som side-CSS, og sektionernes valgte desktop-/mobilplacering blev gjort autoritativ. |
 | 0.4.22 | Backupoversigten fik sikker oprettelse af en separat Hjem-sammenligningskladde fra den oprindelige JSON-backup uden ændring af aktiv forside eller menu. |
+| 0.4.23 | Hjem-sidens sektionsfarver, 32/24 px sektionsafstand, lodrette/vandrette indvendige luft, oprindelige runde knapper og 180 px mobilbanner blev gendannet i den nye editor. |
 
 ## Sådan opdateres manualen
 
