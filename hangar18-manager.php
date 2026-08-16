@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.24
+ * Version: 0.4.25
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.24';
+    const VERSION = '0.4.25';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -112,6 +112,7 @@ final class Hangar18_Manager {
         add_action('admin_post_h18_save_static_content', [$this, 'handle_save_static_content']);
         add_action('admin_post_h18_save_page_editor', [$this, 'handle_save_page_editor']);
         add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);
+        add_action('admin_post_h18_restore_page_before_editor', [$this, 'handle_restore_page_before_editor']);
         add_action('admin_post_h18_send_page_form', [$this, 'handle_send_page_form']);
         add_action('admin_post_nopriv_h18_send_page_form', [$this, 'handle_send_page_form']);
         add_action('admin_post_h18_submit_poll', [$this, 'handle_submit_poll']);
@@ -7518,6 +7519,74 @@ HTML;
         return $data;
     }
 
+    private function page_snapshot_before_editor($page) {
+        if (!$page instanceof WP_Post) {
+            return null;
+        }
+
+        $revisions = function_exists('wp_get_post_revisions')
+            ? wp_get_post_revisions($page->ID, [
+                'posts_per_page' => 100,
+                'orderby'        => 'date ID',
+                'order'          => 'DESC',
+                'check_enabled'  => false,
+            ])
+            : [];
+        foreach ((array) $revisions as $revision) {
+            if (!$revision instanceof WP_Post) {
+                continue;
+            }
+            $content = (string) $revision->post_content;
+            if ($content === '' || strpos($content, self::PAGE_EDITOR_MARKER) !== false) {
+                continue;
+            }
+            return [
+                'source'       => 'WordPress-revision ' . (int) $revision->ID,
+                'revision_id'  => (int) $revision->ID,
+                'post_title'   => (string) $revision->post_title,
+                'post_excerpt' => (string) $revision->post_excerpt,
+                'post_content' => $content,
+                'featured_id'  => (int) get_post_thumbnail_id($page->ID),
+            ];
+        }
+
+        $paths = glob(trailingslashit($this->backup_dir()) . 'Hangar18-Web-*.json') ?: [];
+        usort($paths, static function($a, $b) {
+            return filemtime($b) <=> filemtime($a);
+        });
+        foreach (array_slice($paths, 0, 200) as $path) {
+            try {
+                $payload = $this->read_managed_backup_file(basename($path));
+            } catch (Throwable $ignored) {
+                continue;
+            }
+            $posts = isset($payload['posts']) && is_array($payload['posts'])
+                ? $payload['posts']
+                : (isset($payload['post']) && is_array($payload['post']) ? [$payload['post']] : []);
+            foreach ($posts as $post) {
+                if (!is_array($post)) {
+                    continue;
+                }
+                $same_page = absint($post['ID'] ?? 0) === (int) $page->ID ||
+                    sanitize_title((string) ($post['post_name'] ?? '')) === sanitize_title((string) $page->post_name);
+                $content = (string) ($post['post_content'] ?? '');
+                if (!$same_page || $content === '' || strpos($content, self::PAGE_EDITOR_MARKER) !== false) {
+                    continue;
+                }
+                return [
+                    'source'       => 'backup ' . basename($path),
+                    'revision_id'  => 0,
+                    'post_title'   => (string) ($post['post_title'] ?? $page->post_title),
+                    'post_excerpt' => (string) ($post['post_excerpt'] ?? ''),
+                    'post_content' => $content,
+                    'featured_id'  => absint($post['featured_id'] ?? 0),
+                ];
+            }
+        }
+
+        return null;
+    }
+
     public function render_pages() {
         $this->require_capability();
         $definitions = $this->editable_page_definitions();
@@ -7566,6 +7635,21 @@ HTML;
                                 <a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($conversion_test)); ?>">Åbn eksisterende test</a>
                             <?php endif; ?>
                             <button class="button button-secondary" type="submit"><?php echo $conversion_test instanceof WP_Post ? 'Opdatér konverteringstest' : 'Opret konverteringstest'; ?></button>
+                        </div>
+                    </form>
+                <?php endif; ?>
+
+                <?php if ($is_converted) : ?>
+                    <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                        <?php wp_nonce_field('h18_restore_page_before_editor_' . $slug); ?>
+                        <input type="hidden" name="action" value="h18_restore_page_before_editor" />
+                        <input type="hidden" name="page_slug" value="<?php echo esc_attr($slug); ?>" />
+                        <div class="h18-action-copy">
+                            <strong>Fortryd konverteringen af denne side</strong>
+                            <span>Finder den seneste WordPress-revision eller JSON-backup fra før sideeditoren, tager først en ny sikkerhedskopi og rydder derefter kun denne side fra editorlageret. Menu, header, footer og andre sider ændres ikke.</span>
+                        </div>
+                        <div class="h18-action-submit">
+                            <button class="button" type="submit" onclick="return confirm('Gendan denne side til versionen fra før Hangar18 sideeditor? Der tages først en ny backup af den nuværende version.');">Gendan siden fra før editoren</button>
                         </div>
                     </form>
                 <?php endif; ?>
@@ -7704,6 +7788,89 @@ HTML;
         } catch (Throwable $e) {
             $this->log('ERROR', 'PAGE_CONVERSION_TEST_FAILED', $e->getMessage());
             $this->set_notice('error', 'Konverteringstesten kunne ikke oprettes: ' . $e->getMessage());
+        }
+
+        $this->redirect_page_editor($slug);
+    }
+
+    public function handle_restore_page_before_editor() {
+        $this->require_capability();
+        $slug = sanitize_title($this->post_text('page_slug'));
+        check_admin_referer('h18_restore_page_before_editor_' . $slug);
+
+        $definitions = $this->editable_page_definitions();
+        if (!isset($definitions[$slug])) {
+            $this->set_notice('error', 'Den valgte side kan ikke gendannes her.');
+            $this->redirect_page_editor(self::HOME_SLUG);
+        }
+
+        try {
+            $page = $this->post_by_slug($slug);
+            if (!$page instanceof WP_Post) {
+                throw new RuntimeException('Siden blev ikke fundet.');
+            }
+            if (strpos((string) $page->post_content, self::PAGE_EDITOR_MARKER) === false) {
+                throw new RuntimeException('Siden bruger ikke Hangar18 sideeditor og skal derfor ikke gendannes.');
+            }
+
+            $snapshot = $this->page_snapshot_before_editor($page);
+            if (!is_array($snapshot)) {
+                throw new RuntimeException('Der blev ikke fundet en WordPress-revision eller JSON-backup fra før sideeditoren.');
+            }
+
+            $this->create_full_managed_backup("Før gendannelse af {$slug} fra sideeditor");
+            $this->backup_post($page->ID, "Konverteret {$slug} før gendannelse");
+
+            $result = wp_update_post([
+                'ID'            => $page->ID,
+                'post_title'    => sanitize_text_field((string) $snapshot['post_title']),
+                'post_excerpt'  => (string) $snapshot['post_excerpt'],
+                'post_content'  => (string) $snapshot['post_content'],
+                'page_template' => 'default',
+            ], true);
+            if (is_wp_error($result)) {
+                throw new RuntimeException($result->get_error_message());
+            }
+
+            $featured_id = absint($snapshot['featured_id'] ?? 0);
+            if ($featured_id > 0 && get_post($featured_id) instanceof WP_Post) {
+                set_post_thumbnail($page->ID, $featured_id);
+            }
+
+            $store = $this->get_page_editor_store();
+            unset($store[$slug]);
+            update_option(self::PAGE_EDITOR_OPTION, $store, false);
+            $central_warning = '';
+            try {
+                $this->publish_configuration_file('Hangar18-Pages.json', [
+                    'Version' => '1.3',
+                    'Saved'   => gmdate('c'),
+                    'Pages'   => $store,
+                ]);
+            } catch (Throwable $central_error) {
+                $central_warning = $central_error->getMessage();
+                $this->log('WARN', 'PAGE_EDITOR_RESTORE_CONFIG_WARNING', $central_warning);
+            }
+
+            $this->log(
+                'INFO',
+                'PAGE_EDITOR_RESTORE_SUCCESS',
+                "{$slug} er gendannet fra {$snapshot['source']}. SideID={$page->ID}. Editorlageret for siden er ryddet."
+            );
+            if ($central_warning !== '') {
+                $this->set_notice(
+                    'warning',
+                    $definitions[$slug] . ' er gendannet, men den centrale konfigurationskopi kunne ikke synkroniseres: ' . $central_warning
+                );
+            } else {
+                $this->set_notice(
+                    'success',
+                    $definitions[$slug] . ' er gendannet til versionen fra før sideeditoren. Den konverterede version blev sikkerhedskopieret først.'
+                );
+            }
+        } catch (Throwable $e) {
+            $this->log('ERROR', 'PAGE_EDITOR_RESTORE_FAILED', $e->getMessage());
+            $this->set_notice('error', 'Siden kunne ikke gendannes: ' . $e->getMessage());
         }
 
         $this->redirect_page_editor($slug);

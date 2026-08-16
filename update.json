@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.24",
+  "version": "0.4.25",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-16T06:01:28Z",
+  "published_utc": "2026-08-16T06:20:06Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "9ee37d96902a6ca33f5d89d5ba2e359b0e22d6259254d9691a65c77c8730e92c",
+  "package_sha256": "00b5f6a1b6517cd3be016d574cd6f5d3077ac572572b977d661aed4463a4fb7a",
   "changelog": [
-    "Tilføjer sikre konverteringstest-kopier til ukonverterede sider i Hangar18 sideeditor.",
-    "Originalsiden og menuen ændres ikke, når en test oprettes eller opdateres.",
-    "Testkopien bruger sin egen indlejrede sektionskladde og tilpasser sidespecifik CSS til testens side-ID.",
-    "Samme testside genbruges ved gentagne tests, så der ikke oprettes dubletter.",
-    "Testkopier skjules for søgemaskiner og kan ikke vælges i Hangar18-menuen."
+    "Tilføjer sikker gendannelse af en side til versionen fra før Hangar18 sideeditor.",
+    "Bruger seneste passende WordPress-revision og falder tilbage til en Hangar18 JSON-backup.",
+    "Tager ny fuld backup og sidebackup af den konverterede side før gendannelsen.",
+    "Rydder kun den valgte side fra editorens centrale lager efter gendannelsen.",
+    "Menu, header, footer, testkopier og andre sider ændres ikke."
   ]
 }
