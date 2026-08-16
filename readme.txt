@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.26
+Version: 0.4.27
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -84,7 +84,11 @@ Egen sektionseditor til Hjem, Om foreningen, Bliv medlem og Kontakt:
 - nuværende Gutenberg- og HTML-indhold opdeles automatisk i redigerbare sektionskladder
 - den offentlige side ændres først, når redaktøren vælger Gem siden
 - vis, skjul, duplikér, fjern og drag-and-drop-sortér sektioner
-- topbanner/hero, tekst, tekst og billede, stort billede, handlingsknapper, indholdskort, fremhævet tekst, afstand og importeret HTML
+- visuel sidebygger med elementpalette, sideopbygning og særskilt indstillingspanel
+- topbanner/hero, tekst, tekst og billede, stort billede, handlingsknapper, indholdskort, kort-rækker, fremhævet tekst, afstand og importeret HTML
+- kort-rækker med 1-4 desktopkolonner, 1-2 mobilkolonner og drag-and-drop-sortering af kasser
+- individuel baggrund, automatisk tekstkontrast, kant, luft, afrunding og placering for hver kasse
+- sikker opdeling af importerede WordPress-kolonner til redigerbare kasser
 - separat placering, luft og indvendig luft på desktop og mobil
 - editorvisning i desktop-, tablet- og mobilbredde
 - billeder vælges fra WordPress Media Library
@@ -728,3 +732,14 @@ AUTHORITATIVE_BASELINE_FAILED
 - Viser de seneste versioner nederst på den valgte sides editorside.
 - WhatIf viser næste versionsnummer, men opretter ingen version, backup eller historikpost.
 - Medtager versionshistorikken i fremtidige fulde Hangar18-backups.
+
+
+== Version 0.4.27 – Visuel sidebygger og redigerbare kasser ==
+
+- Ombygger sideeditoren til en visuel arbejdsflade med elementer til venstre, sideopbygning i midten og indstillinger til højre.
+- Elementer og funktionsmoduler kan klikkes eller trækkes ind i sideopbygningen.
+- Tilføjer Kort-række / kolonner med 1-4 kolonner på desktop og 1-2 kolonner på mobil.
+- Gør hver kasse selvstændigt redigerbar og flytbar med farve, tekstkontrast, kant, luft, afrunding og placering.
+- Tilføjer stålgrå til den godkendte farvepalette.
+- Tilføjer Opdel importerede kasser, som udskiller WordPress-kolonner uden at ændre den resterende importerede sektion.
+- Bevarer den offentlige side, indtil redaktøren gemmer som en ny version med ændringsbeskrivelse og automatisk backup.

@@ -1,7 +1,7 @@
 # Designmanual for Hangar18
 
 Senest opdateret: 16. august 2026  
-Gælder fra: Hangar18 Manager 0.4.26
+Gælder fra: Hangar18 Manager 0.4.27
 
 ## Formål
 
@@ -105,14 +105,17 @@ Editoren arbejder med følgende indholdssektioner:
 - Stort billede
 - Handlingsknapper
 - Indholdskort
+- Kort-række / kolonner
 - Fremhævet tekst
 - Afstand
 - Importeret blok / HTML
 - Side-CSS (avanceret)
 
-Sektioner kan vises eller skjules, duplikeres, flyttes med musen og fjernes. Desktop- og mobilplacering samt luft før, efter og inde i sektionen styres separat. Indvendig luft kan styres særskilt lodret og vandret.
+Sidebyggeren har en elementpalette til venstre, sidens rækkefølge i midten og indstillinger til højre. Elementer og funktioner kan klikkes eller trækkes ind i sideopbygningen. Sektioner kan vises eller skjules, duplikeres, flyttes med musen og fjernes. Desktop- og mobilplacering samt luft før, efter og inde i sektionen styres separat. Indvendig luft kan styres særskilt lodret og vandret.
 
-Indhold fra før sideeditoren indlæses automatisk som en **ikke-gemt redigerbar kladde**. Kendte Gutenberg-blokke opdeles i passende sektionstyper. Designgrupper med egne klasser bevares samlet som **Importeret blok / HTML**, så kolonner, kort og wrappers ikke skilles ad. Eksisterende sidespecifikke regler bevares som **Side-CSS (avanceret)** og må ikke vises som tekst på siden. Den offentlige side ændres først, når redaktøren aktivt vælger **Gem siden**. Før gemningen oprettes en fuld backup og en WordPress-revision.
+**Kort-række / kolonner** bruges, når flere kasser skal stå ved siden af hinanden. En række må have 1–4 kolonner på desktop og 1–2 på mobil. Hver kasse har sin egen baggrund, automatiske eller valgte tekstkontrast, kant, indvendige luft, hjørneafrunding og desktop-/mobilplacering. Standardfarverne er hvid, knækket hvid, sand, mørk olivengrøn og stålgrå. Kasserne skal som udgangspunkt stå under hinanden på mobil.
+
+Indhold fra før sideeditoren indlæses automatisk som en **ikke-gemt redigerbar kladde**. Kendte Gutenberg-blokke opdeles i passende sektionstyper. Designgrupper med egne klasser bevares først samlet som **Importeret blok / HTML**. Funktionen **Opdel importerede kasser** kan derefter udskille en WordPress-kolonneblok til selvstændige redigerbare kasser og lader den øvrige importerede sektion blive stående. Eksisterende sidespecifikke regler bevares som **Side-CSS (avanceret)** og må ikke vises som tekst på siden. Den offentlige side ændres først, når redaktøren aktivt vælger **Gem som ny version**. Før gemningen oprettes en fuld backup og en WordPress-revision.
 
 Header og footer ligger uden for sideeditoren og kan ikke slettes fra en almindelig side.
 
@@ -212,6 +215,7 @@ Før en designændring godkendes, kontrolleres:
 | 0.4.24 | Ukonverterede sider fik sikre offentlige konverteringstest-kopier, som ikke ændrer originalsiden eller menuen og skjules for søgemaskiner. |
 | 0.4.25 | Konverterede sider fik sikker gendannelse fra seneste revision eller JSON-backup fra før sideeditoren, inklusive oprydning i editorens centrale lager. |
 | 0.4.26 | Sideeditoren fik fortløbende sideversioner, obligatorisk ændringsbeskrivelse, fuld før-backup, sidekopi efter gemning og synlig versionshistorik. |
+| 0.4.27 | Sideeditoren fik visuel elementpalette, indstillingspanel, drag-and-drop-elementer, kort-rækker med individuelle designvalg og sikker opdeling af importerede kolonner. |
 
 ## Sådan opdateres manualen
 

@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.26
+ * Version: 0.4.27
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.26';
+    const VERSION = '0.4.27';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -702,7 +702,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.4',
+                'Version' => '1.5',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -2757,7 +2757,7 @@ final class Hangar18_Manager {
         $static_content['Saved'] = gmdate('c');
 
         $pages = [
-            'Version' => '1.4',
+            'Version' => '1.5',
             'Saved'   => gmdate('c'),
             'Pages'   => $this->get_page_editor_store(),
         ];
@@ -6193,6 +6193,7 @@ HTML;
             'image'      => 'Stort billede',
             'buttons'    => 'Handlingsknapper',
             'card'       => 'Indholdskort',
+            'card_grid'  => 'Kort-række / kolonner',
             'highlight'  => 'Fremhævet tekst',
             'spacer'     => 'Afstand',
             'html'       => 'Importeret blok / HTML',
@@ -6254,6 +6255,11 @@ HTML;
             'DesktopAlignment'      => 'Left',
             'MobileAlignment'       => 'Center',
             'Background'            => 'White',
+            'Columns'               => 3,
+            'MobileColumns'         => 1,
+            'ColumnGapPx'           => 16,
+            'MobileColumnGapPx'     => 14,
+            'Cards'                 => [],
             'TopSpacingPx'          => 0,
             'BottomSpacingPx'       => 24,
             'MobileTopSpacingPx'    => 0,
@@ -6268,7 +6274,72 @@ HTML;
             'HeroHeightPx'          => 320,
             'MobileHeroHeightPx'    => 220,
             'OverlayOpacityPercent' => 35,
+            'ImportedGroupType'     => '',
             'LegacyHtml'            => '',
+        ];
+    }
+
+    private function default_page_card($order = 10) {
+        return [
+            'Key'             => 'kort-' . wp_generate_uuid4(),
+            'Active'          => true,
+            'Order'           => (int) $order,
+            'Title'           => '',
+            'Content'         => '',
+            'Background'      => 'OffWhite',
+            'TextTone'        => 'Auto',
+            'BorderColor'     => 'Sand',
+            'BorderWidthPx'   => 0,
+            'PaddingPx'       => 26,
+            'MobilePaddingPx' => 20,
+            'RadiusPx'        => 7,
+            'DesktopAlignment'=> 'Left',
+            'MobileAlignment' => 'Left',
+        ];
+    }
+
+    private function normalize_page_card(array $raw, $index = 0) {
+        $card = $this->default_page_card(((int) $index + 1) * 10);
+        $key = sanitize_key((string) ($raw['Key'] ?? ''));
+        if ($key === '') {
+            $key = 'kort-' . substr(md5(wp_generate_uuid4()), 0, 12);
+        }
+        $background = (string) ($raw['Background'] ?? $card['Background']);
+        if (!in_array($background, ['White', 'OffWhite', 'Sand', 'Olive', 'Steel'], true)) {
+            $background = 'OffWhite';
+        }
+        $text_tone = (string) ($raw['TextTone'] ?? 'Auto');
+        if (!in_array($text_tone, ['Auto', 'Dark', 'Light'], true)) {
+            $text_tone = 'Auto';
+        }
+        $border_color = (string) ($raw['BorderColor'] ?? 'Sand');
+        if (!in_array($border_color, ['None', 'Sand', 'Olive', 'Steel'], true)) {
+            $border_color = 'Sand';
+        }
+        $desktop_alignment = (string) ($raw['DesktopAlignment'] ?? 'Left');
+        if (!in_array($desktop_alignment, ['Left', 'Center'], true)) {
+            $desktop_alignment = 'Left';
+        }
+        $mobile_alignment = (string) ($raw['MobileAlignment'] ?? 'Left');
+        if (!in_array($mobile_alignment, ['Left', 'Center'], true)) {
+            $mobile_alignment = 'Left';
+        }
+
+        return [
+            'Key'              => $key,
+            'Active'           => array_key_exists('Active', $raw) ? $this->bool_value($raw['Active'], false) : true,
+            'Order'            => $this->clamp_int($raw['Order'] ?? $card['Order'], 1, 10000, $card['Order']),
+            'Title'            => sanitize_text_field((string) ($raw['Title'] ?? '')),
+            'Content'          => wp_kses_post((string) ($raw['Content'] ?? '')),
+            'Background'       => $background,
+            'TextTone'         => $text_tone,
+            'BorderColor'      => $border_color,
+            'BorderWidthPx'    => $this->clamp_int($raw['BorderWidthPx'] ?? 0, 0, 8, 0),
+            'PaddingPx'        => $this->clamp_int($raw['PaddingPx'] ?? 26, 0, 80, 26),
+            'MobilePaddingPx'  => $this->clamp_int($raw['MobilePaddingPx'] ?? 20, 0, 60, 20),
+            'RadiusPx'         => $this->clamp_int($raw['RadiusPx'] ?? 7, 0, 30, 7),
+            'DesktopAlignment' => $desktop_alignment,
+            'MobileAlignment'  => $mobile_alignment,
         ];
     }
 
@@ -6297,7 +6368,7 @@ HTML;
             $mobile_alignment = 'Center';
         }
         $background = (string) ($raw['Background'] ?? 'White');
-        if (!in_array($background, ['White', 'OffWhite', 'Olive', 'Sand'], true)) {
+        if (!in_array($background, ['White', 'OffWhite', 'Olive', 'Sand', 'Steel'], true)) {
             $background = 'White';
         }
         $image_position = (string) ($raw['ImagePosition'] ?? 'Right');
@@ -6346,6 +6417,30 @@ HTML;
         if ($success_message === '') {
             $success_message = $section['SuccessMessage'];
         }
+        $imported_group_type = sanitize_key((string) ($raw['ImportedGroupType'] ?? ''));
+        if (!in_array($imported_group_type, ['', 'columns'], true)) {
+            $imported_group_type = '';
+        }
+
+        $cards = [];
+        $used_card_keys = [];
+        $raw_cards = isset($raw['Cards']) && is_array($raw['Cards']) ? $raw['Cards'] : [];
+        foreach (array_slice($raw_cards, 0, 12) as $card_index => $raw_card) {
+            if (!is_array($raw_card) || !empty($raw_card['Remove'])) {
+                continue;
+            }
+            $card = $this->normalize_page_card($raw_card, $card_index);
+            $base_card_key = $card['Key'];
+            $card_suffix = 2;
+            while (isset($used_card_keys[$card['Key']])) {
+                $card['Key'] = $base_card_key . '-' . $card_suffix++;
+            }
+            $used_card_keys[$card['Key']] = true;
+            $cards[] = $card;
+        }
+        usort($cards, static function($a, $b) {
+            return ((int) $a['Order']) <=> ((int) $b['Order']);
+        });
 
         return [
             'Key'                   => $key,
@@ -6375,6 +6470,11 @@ HTML;
             'DesktopAlignment'      => $alignment,
             'MobileAlignment'       => $mobile_alignment,
             'Background'            => $background,
+            'Columns'               => $this->clamp_int($raw['Columns'] ?? 3, 1, 4, 3),
+            'MobileColumns'         => $this->clamp_int($raw['MobileColumns'] ?? 1, 1, 2, 1),
+            'ColumnGapPx'           => $this->clamp_int($raw['ColumnGapPx'] ?? 16, 0, 80, 16),
+            'MobileColumnGapPx'     => $this->clamp_int($raw['MobileColumnGapPx'] ?? 14, 0, 60, 14),
+            'Cards'                 => $cards,
             'TopSpacingPx'          => $this->clamp_int($raw['TopSpacingPx'] ?? 0, 0, 160, 0),
             'BottomSpacingPx'       => $this->clamp_int($raw['BottomSpacingPx'] ?? 24, 0, 160, 24),
             'MobileTopSpacingPx'    => $this->clamp_int($raw['MobileTopSpacingPx'] ?? 0, 0, 100, 0),
@@ -6389,6 +6489,7 @@ HTML;
             'HeroHeightPx'          => $this->clamp_int($raw['HeroHeightPx'] ?? 320, 140, 800, 320),
             'MobileHeroHeightPx'    => $this->clamp_int($raw['MobileHeroHeightPx'] ?? 220, 100, 600, 220),
             'OverlayOpacityPercent' => $this->clamp_int($raw['OverlayOpacityPercent'] ?? 35, 0, 90, 35),
+            'ImportedGroupType'     => $imported_group_type,
             'LegacyHtml'            => $legacy_html,
         ];
     }
@@ -6435,7 +6536,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.4',
+            'Version'        => '1.5',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -6947,7 +7048,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.4',
+            'Version'        => '1.5',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7056,9 +7157,10 @@ HTML;
         $id = (int) $page_id;
         return '<style id="h18-page-editor-style-' . $id . '">' .
             '.h18-editor-page{width:100%;box-sizing:border-box}.h18-editor-section{box-sizing:border-box;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0) var(--h18-pad-x,var(--h18-pad,0));border-radius:var(--h18-radius,0);text-align:var(--h18-align,left)}' .
-            '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--sand{background:#c3ae83;color:#30382a}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3{color:#fff}' .
-            '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}.h18-editor-section p:last-child{margin-bottom:0}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{text-align:var(--h18-align,left)!important}' .
+            '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--sand{background:#c3ae83;color:#30382a}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--steel{background:#525a5f;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:#fff}' .
+            '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:#fff}.h18-editor-section p:last-child{margin-bottom:0}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{text-align:var(--h18-align,left)!important}' .
             '.h18-editor-card{border-top:4px solid #c3ae83}.h18-editor-highlight{border-left:5px solid #c3ae83}' .
+            '.h18-editor-card-grid{display:grid;grid-template-columns:repeat(var(--h18-grid-columns,3),minmax(0,1fr));gap:var(--h18-grid-gap,16px);align-items:stretch}.h18-editor-grid-card{box-sizing:border-box;padding:var(--h18-card-pad,26px);border:var(--h18-card-border-width,0) solid var(--h18-card-border,#c3ae83);border-radius:var(--h18-card-radius,7px);text-align:var(--h18-card-align,left)}.h18-editor-grid-card h3{margin:0 0 12px;color:inherit}.h18-editor-grid-card--white{background:#fff}.h18-editor-grid-card--offwhite{background:#f2f0e8}.h18-editor-grid-card--sand{background:#c3ae83}.h18-editor-grid-card--olive{background:#30382a}.h18-editor-grid-card--steel{background:#525a5f}.h18-editor-grid-card--tone-dark{color:#30382a}.h18-editor-grid-card--tone-light{color:#fff}.h18-editor-grid-card--tone-light h3{color:#fff}' .
             '.h18-editor-text-image{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:28px;align-items:center}.h18-editor-text-image--left .h18-editor-media{order:-1}' .
             '.h18-editor-media img,.h18-editor-image img{display:block;width:100%;height:auto;border-radius:inherit}.h18-editor-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:var(--h18-justify,flex-start)}' .
             '.h18-editor-hero{position:relative;display:grid;min-height:var(--h18-hero-height,320px);place-items:center;overflow:hidden;background-position:center;background-repeat:no-repeat;background-size:cover}.h18-editor-hero:before{position:absolute;inset:0;content:"";background:#20261d;opacity:var(--h18-overlay-opacity,.35)}.h18-editor-hero-inner{position:relative;z-index:1;width:min(100%,920px)}.h18-editor-hero .h18-editor-actions{margin-top:20px}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover{display:block!important;min-height:0!important;padding:0!important;background:none!important}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__image-background,.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__background{display:none!important}' .
@@ -7069,7 +7171,7 @@ HTML;
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
+            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
     }
 
@@ -7195,6 +7297,40 @@ HTML;
                 $buttons .= '<a class="h18-editor-button h18-editor-button--secondary" href="' . esc_url($section['Button2Url']) . '">' . esc_html($section['Button2Label']) . '</a>';
             }
             $inner = $title . $content . '<div class="h18-editor-actions">' . $buttons . '</div>';
+        } elseif ($section['Type'] === 'card_grid') {
+            $border_colors = [
+                'None'  => 'transparent',
+                'Sand'  => '#c3ae83',
+                'Olive' => '#30382a',
+                'Steel' => '#525a5f',
+            ];
+            $cards_html = '';
+            foreach ((array) $section['Cards'] as $card) {
+                if (empty($card['Active'])) {
+                    continue;
+                }
+                $card_background = strtolower((string) $card['Background']);
+                $tone = (string) $card['TextTone'];
+                if ($tone === 'Auto') {
+                    $tone = in_array($card['Background'], ['Olive', 'Steel'], true) ? 'Light' : 'Dark';
+                }
+                $card_border = $border_colors[$card['BorderColor']] ?? '#c3ae83';
+                $card_style = '--h18-card-pad:' . (int) $card['PaddingPx'] . 'px;' .
+                    '--h18-card-mobile-pad:' . (int) $card['MobilePaddingPx'] . 'px;' .
+                    '--h18-card-radius:' . (int) $card['RadiusPx'] . 'px;' .
+                    '--h18-card-border-width:' . (int) $card['BorderWidthPx'] . 'px;' .
+                    '--h18-card-border:' . $card_border . ';' .
+                    '--h18-card-align:' . ($card['DesktopAlignment'] === 'Center' ? 'center' : 'left') . ';' .
+                    '--h18-card-mobile-align:' . ($card['MobileAlignment'] === 'Center' ? 'center' : 'left') . ';';
+                $card_title = $card['Title'] !== '' ? '<h3>' . esc_html($card['Title']) . '</h3>' : '';
+                $cards_html .= '<article class="h18-editor-grid-card h18-editor-grid-card--' . esc_attr($card_background) . ' h18-editor-grid-card--tone-' . esc_attr(strtolower($tone)) . '" style="' . esc_attr($card_style) . '">' .
+                    $card_title . $this->format_page_section_content($card['Content']) . '</article>';
+            }
+            $style .= '--h18-grid-columns:' . (int) $section['Columns'] . ';' .
+                '--h18-mobile-grid-columns:' . (int) $section['MobileColumns'] . ';' .
+                '--h18-grid-gap:' . (int) $section['ColumnGapPx'] . 'px;' .
+                '--h18-mobile-grid-gap:' . (int) $section['MobileColumnGapPx'] . 'px;';
+            $inner = $title . $content . '<div class="h18-editor-card-grid">' . $cards_html . '</div>';
         } elseif ($section['Type'] === 'spacer') {
             return '<div class="h18-editor-spacer" aria-hidden="true" style="--h18-spacer:' . (int) $section['SpacerPx'] . 'px;--h18-mobile-spacer:' . (int) $section['MobileSpacerPx'] . 'px"></div>';
         } elseif ($section['Type'] === 'mail_form') {
@@ -7276,7 +7412,10 @@ HTML;
             if (
                 $is_imported &&
                 ($section['Type'] ?? '') === 'html' &&
-                strpos((string) ($section['Content'] ?? ''), 'wp-block-columns') !== false
+                (
+                    strpos((string) ($section['Content'] ?? ''), 'wp-block-columns') !== false ||
+                    ($section['ImportedGroupType'] ?? '') === 'columns'
+                )
             ) {
                 $html .= $this->render_page_editor_imported_group(
                     $section,
@@ -7360,6 +7499,37 @@ HTML;
         return array_sum(array_map('intval', $state['Counts']));
     }
 
+    private function render_page_editor_card_admin(array $card, $section_index, $card_index) {
+        $prefix = 'sections[' . $section_index . '][Cards][' . $card_index . ']';
+        ?>
+        <article class="h18-page-card-row" data-card-index="<?php echo esc_attr($card_index); ?>">
+            <input class="h18-page-card-order" type="hidden" name="<?php echo esc_attr($prefix); ?>[Order]" value="<?php echo esc_attr($card['Order']); ?>" />
+            <input class="h18-page-card-key" type="hidden" name="<?php echo esc_attr($prefix); ?>[Key]" value="<?php echo esc_attr($card['Key']); ?>" />
+            <input class="h18-page-card-remove" type="hidden" name="<?php echo esc_attr($prefix); ?>[Remove]" value="0" />
+            <header class="h18-page-card-header">
+                <span class="dashicons dashicons-move h18-page-card-drag" title="Flyt kasse"></span>
+                <strong>Kasse: <span class="h18-page-card-title-summary"><?php echo esc_html($card['Title'] !== '' ? $card['Title'] : 'Uden overskrift'); ?></span></strong>
+                <div class="h18-page-card-actions"><label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[Active]" value="1" <?php checked(!empty($card['Active'])); ?> /> Vis</label><button class="button h18-page-card-duplicate" type="button">Duplikér</button><button class="button-link-delete h18-page-card-delete" type="button">Fjern</button></div>
+            </header>
+            <div class="h18-page-card-body">
+                <div class="h18-module-fields-grid">
+                    <div class="h18-field"><label><strong>Overskrift</strong></label><input class="h18-page-card-title" type="text" name="<?php echo esc_attr($prefix); ?>[Title]" value="<?php echo esc_attr($card['Title']); ?>" /></div>
+                    <div class="h18-field h18-field-wide"><label><strong>Tekst</strong></label><textarea name="<?php echo esc_attr($prefix); ?>[Content]" rows="4"><?php echo esc_textarea($card['Content']); ?></textarea></div>
+                    <div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($card['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($card['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Sand" <?php selected($card['Background'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($card['Background'], 'Olive'); ?>>Mørk olivengrøn</option><option value="Steel" <?php selected($card['Background'], 'Steel'); ?>>Stålgrå</option></select></div>
+                    <div class="h18-field"><label><strong>Tekstfarve</strong></label><select name="<?php echo esc_attr($prefix); ?>[TextTone]"><option value="Auto" <?php selected($card['TextTone'], 'Auto'); ?>>Automatisk</option><option value="Dark" <?php selected($card['TextTone'], 'Dark'); ?>>Mørk</option><option value="Light" <?php selected($card['TextTone'], 'Light'); ?>>Lys</option></select></div>
+                    <div class="h18-field"><label><strong>Kantfarve</strong></label><select name="<?php echo esc_attr($prefix); ?>[BorderColor]"><option value="None" <?php selected($card['BorderColor'], 'None'); ?>>Ingen</option><option value="Sand" <?php selected($card['BorderColor'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($card['BorderColor'], 'Olive'); ?>>Mørk olivengrøn</option><option value="Steel" <?php selected($card['BorderColor'], 'Steel'); ?>>Stålgrå</option></select></div>
+                    <div class="h18-field"><label><strong>Kanttykkelse (px)</strong></label><input type="number" min="0" max="8" name="<?php echo esc_attr($prefix); ?>[BorderWidthPx]" value="<?php echo esc_attr($card['BorderWidthPx']); ?>" /></div>
+                    <div class="h18-field"><label><strong>Indvendig luft desktop (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[PaddingPx]" value="<?php echo esc_attr($card['PaddingPx']); ?>" /></div>
+                    <div class="h18-field"><label><strong>Indvendig luft mobil (px)</strong></label><input type="number" min="0" max="60" name="<?php echo esc_attr($prefix); ?>[MobilePaddingPx]" value="<?php echo esc_attr($card['MobilePaddingPx']); ?>" /></div>
+                    <div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($card['RadiusPx']); ?>" /></div>
+                    <div class="h18-field"><label><strong>Placering desktop</strong></label><select name="<?php echo esc_attr($prefix); ?>[DesktopAlignment]"><option value="Left" <?php selected($card['DesktopAlignment'], 'Left'); ?>>Venstre</option><option value="Center" <?php selected($card['DesktopAlignment'], 'Center'); ?>>Midtstillet</option></select></div>
+                    <div class="h18-field"><label><strong>Placering mobil</strong></label><select name="<?php echo esc_attr($prefix); ?>[MobileAlignment]"><option value="Left" <?php selected($card['MobileAlignment'], 'Left'); ?>>Venstre</option><option value="Center" <?php selected($card['MobileAlignment'], 'Center'); ?>>Midtstillet</option></select></div>
+                </div>
+            </div>
+        </article>
+        <?php
+    }
+
     private function render_page_editor_section_admin($page, array $section, $index, $is_template = false) {
         $prefix = 'sections[' . $index . ']';
         $type_labels = $this->page_section_type_labels();
@@ -7383,10 +7553,11 @@ HTML;
             );
         }
         ?>
-        <article class="h18-page-section-row" data-section-index="<?php echo esc_attr($index); ?>">
+        <article class="h18-page-section-row" data-section-index="<?php echo esc_attr($index); ?>" data-section-type="<?php echo esc_attr($section['Type']); ?>">
             <input class="h18-page-section-order" type="hidden" name="<?php echo esc_attr($prefix); ?>[Order]" value="<?php echo esc_attr($section['Order']); ?>" />
             <input class="h18-page-section-key" type="hidden" name="<?php echo esc_attr($prefix); ?>[Key]" value="<?php echo esc_attr($section['Key']); ?>" />
             <input class="h18-page-section-remove" type="hidden" name="<?php echo esc_attr($prefix); ?>[Remove]" value="0" />
+            <input class="h18-page-section-imported-group" type="hidden" name="<?php echo esc_attr($prefix); ?>[ImportedGroupType]" value="<?php echo esc_attr($section['ImportedGroupType']); ?>" />
 
             <header class="h18-page-section-header">
                 <span class="dashicons dashicons-move h18-page-section-drag" title="Flyt sektion"></span>
@@ -7395,6 +7566,7 @@ HTML;
                     <span class="h18-page-section-title-summary"><?php echo esc_html($section['Title']); ?></span>
                 </div>
                 <div class="h18-page-section-header-actions">
+                    <button class="button h18-page-section-edit" type="button">Rediger</button>
                     <label><input class="h18-section-active" type="checkbox" name="<?php echo esc_attr($prefix); ?>[Active]" value="1" <?php checked(!empty($section['Active'])); ?> /> Vis</label>
                     <?php if ($section['Type'] !== 'legacy') : ?><button class="button h18-page-section-duplicate" type="button">Duplikér</button><?php endif; ?>
                     <button class="button-link-delete h18-page-section-delete" type="button">Fjern</button>
@@ -7419,14 +7591,14 @@ HTML;
                             </select>
                         </div>
 
-                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card highlight html mail_form poll">
+                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight html mail_form poll">
                             <label><strong class="h18-section-title-label"><?php echo $section['Type'] === 'poll' ? 'Spørgsmål' : 'Overskrift'; ?></strong></label>
                             <input class="h18-section-title-input" type="text" name="<?php echo esc_attr($prefix); ?>[Title]" value="<?php echo esc_attr($section['Title']); ?>" />
                         </div>
 
-                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card highlight html css mail_form poll">
+                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card card_grid highlight html css mail_form poll">
                             <label><strong><?php echo $section['Type'] === 'image' ? 'Billedtekst' : ($section['Type'] === 'css' ? 'CSS' : 'Tekst'); ?></strong></label>
-                            <div class="h18-mini-editor-toolbar h18-section-type-field" data-types="hero text text_image image buttons card highlight html mail_form poll"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
+                            <div class="h18-mini-editor-toolbar h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight html mail_form poll"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
                             <textarea name="<?php echo esc_attr($prefix); ?>[Content]" rows="5"><?php echo esc_textarea($section['Content']); ?></textarea>
                             <p class="description h18-standard-content-help">Almindelig tekst samt enkel formatering som fed, kursiv, links og lister er tilladt.</p>
                             <p class="description h18-section-type-field" data-types="html"><strong>Importeret blok:</strong> HTML-koden er bevaret for at fastholde det nuværende udseende. Tekst og links kan redigeres direkte her.</p>
@@ -7473,6 +7645,27 @@ HTML;
                         </div>
                     </div>
 
+                    <div class="h18-section-type-field h18-section-module-box h18-card-grid-editor" data-types="card_grid">
+                        <h4>Kort-række / kolonner</h4>
+                        <p>Hver kasse kan flyttes, farves og tilpasses separat. På mobil placeres kasserne som standard under hinanden.</p>
+                        <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                            <div class="h18-field"><label><strong>Kolonner desktop</strong></label><select name="<?php echo esc_attr($prefix); ?>[Columns]"><?php for ($columns = 1; $columns <= 4; $columns++) : ?><option value="<?php echo esc_attr($columns); ?>" <?php selected($section['Columns'], $columns); ?>><?php echo esc_html($columns); ?></option><?php endfor; ?></select></div>
+                            <div class="h18-field"><label><strong>Kolonner mobil</strong></label><select name="<?php echo esc_attr($prefix); ?>[MobileColumns]"><option value="1" <?php selected($section['MobileColumns'], 1); ?>>1 – under hinanden</option><option value="2" <?php selected($section['MobileColumns'], 2); ?>>2 ved siden af hinanden</option></select></div>
+                            <div class="h18-field"><label><strong>Afstand mellem kasser desktop (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[ColumnGapPx]" value="<?php echo esc_attr($section['ColumnGapPx']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Afstand mellem kasser mobil (px)</strong></label><input type="number" min="0" max="60" name="<?php echo esc_attr($prefix); ?>[MobileColumnGapPx]" value="<?php echo esc_attr($section['MobileColumnGapPx']); ?>" /></div>
+                        </div>
+                        <div class="h18-page-cards-sortable">
+                            <?php foreach ((array) $section['Cards'] as $card_index => $card) { $this->render_page_editor_card_admin($card, $index, $card_index); } ?>
+                        </div>
+                        <button class="button h18-add-page-card" type="button">Tilføj kasse</button>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box" data-types="html">
+                        <h4>Importerede kolonner</h4>
+                        <p>Hvis blokken indeholder WordPress-kolonner, kan de udskilles som selvstændige kasser. Ændringen sker først på den offentlige side, når den gemmes som en ny version.</p>
+                        <button class="button h18-split-imported-cards" type="button">Opdel importerede kasser</button>
+                    </div>
+
                     <div class="h18-section-type-field h18-section-module-box" data-types="mail_form">
                         <h4>Mailformular</h4>
                         <p>Modtageradressen læses kun fra den gemte opsætning og sendes aldrig med formularen til besøgerens browser.</p>
@@ -7507,7 +7700,7 @@ HTML;
                         <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Desktop (px)</strong></label><input type="number" min="0" max="200" name="<?php echo esc_attr($prefix); ?>[SpacerPx]" value="<?php echo esc_attr($section['SpacerPx']); ?>" /></div><div class="h18-field"><label><strong>Mobil (px)</strong></label><input type="number" min="0" max="140" name="<?php echo esc_attr($prefix); ?>[MobileSpacerPx]" value="<?php echo esc_attr($section['MobileSpacerPx']); ?>" /></div></div>
                     </div>
 
-                    <details class="h18-page-section-layout h18-section-type-field" data-types="hero text text_image image buttons card highlight html mail_form poll spacer">
+                    <details class="h18-page-section-layout h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight html mail_form poll spacer">
                         <summary>Luft, baggrund og placering</summary>
                         <div class="h18-layout-devices">
                             <fieldset class="h18-layout-device"><legend>Desktop</legend><div class="h18-layout-fields">
@@ -7525,7 +7718,7 @@ HTML;
                                 <div class="h18-field"><label><strong>Indvendig luft – vandret (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[MobileHorizontalPaddingPx]" value="<?php echo esc_attr($section['MobileHorizontalPaddingPx']); ?>" /><p class="description">Luft i siderne på mobil.</p></div>
                             </div></fieldset>
                         </div>
-                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Sand" <?php selected($section['Background'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option></select><p class="description">Farven på hele sektionen. Brug sandfarvet eller olivengrøn til at fremhæve vigtige områder.</p></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /><p class="description">0 giver lige kanter som på den oprindelige Hjem-side.</p></div></div>
+                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Sand" <?php selected($section['Background'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option><option value="Steel" <?php selected($section['Background'], 'Steel'); ?>>Stålgrå</option></select><p class="description">Farven på hele sektionen. De samme designfarver bruges på tværs af siderne.</p></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /><p class="description">0 giver lige kanter som på den oprindelige Hjem-side.</p></div></div>
                     </details>
                 <?php endif; ?>
             </div>
@@ -7733,12 +7926,34 @@ HTML;
                         <span>Visningen gør arbejdsområdet smallere. Den offentlige side åbnes med knappen ovenfor.</span>
                     </div>
 
-                    <div id="h18-page-sections-sortable" class="h18-page-sections h18-preview-desktop">
-                        <?php foreach ($data['Sections'] as $index => $section) { $this->render_page_editor_section_admin($page, $section, $index); } ?>
+                    <div class="h18-visual-builder">
+                        <aside class="h18-builder-palette">
+                            <h3>Elementer og funktioner</h3>
+                            <p>Træk et element ind på siden, eller klik for at tilføje det nederst.</p>
+                            <div class="h18-builder-palette-list">
+                                <?php foreach ($this->page_section_type_labels() as $value => $label) : if (in_array($value, ['legacy', 'css'], true)) { continue; } ?>
+                                    <button class="h18-builder-palette-item" type="button" draggable="true" data-section-type="<?php echo esc_attr($value); ?>"><span class="dashicons dashicons-plus-alt2"></span><?php echo esc_html($label); ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                            <details><summary>Avanceret</summary><button class="h18-builder-palette-item" type="button" draggable="true" data-section-type="css"><span class="dashicons dashicons-editor-code"></span>Side-CSS</button></details>
+                        </aside>
+
+                        <div class="h18-builder-canvas">
+                            <div class="h18-builder-canvas-heading"><h3>Sideopbygning</h3><span>Træk sektionerne i den ønskede rækkefølge</span></div>
+                            <div id="h18-page-sections-sortable" class="h18-page-sections h18-preview-desktop">
+                                <?php foreach ($data['Sections'] as $index => $section) { $this->render_page_editor_section_admin($page, $section, $index); } ?>
+                            </div>
+                            <div class="h18-builder-drop-hint">Slip et nyt element her</div>
+                        </div>
+
+                        <aside id="h18-page-inspector" class="h18-builder-inspector">
+                            <div class="h18-builder-inspector-heading"><h3>Indstillinger</h3><span>Vælg en sektion i sideopbygningen</span></div>
+                            <div id="h18-page-inspector-target"><p class="description">Klik på <strong>Rediger</strong> ved en sektion for at ændre indhold, farver og luft.</p></div>
+                        </aside>
                     </div>
 
                     <div class="h18-add-section-bar">
-                        <div><strong>Tilføj ny sektion eller funktion</strong><p>Den nye sektion indsættes nederst og kan derefter trækkes på plads.</p></div>
+                        <div><strong>Alternativ til træk-og-slip</strong><p>Vælg en sektion eller funktion på listen, og tilføj den nederst.</p></div>
                         <select id="h18-new-section-type"><?php foreach ($this->page_section_type_labels() as $value => $label) : if ($value === 'legacy') { continue; } ?><option value="<?php echo esc_attr($value); ?>"><?php echo esc_html($label); ?></option><?php endforeach; ?></select>
                         <button id="h18-add-page-section" class="button button-secondary" type="button">Tilføj sektion</button>
                     </div>
@@ -7778,6 +7993,7 @@ HTML;
                 </section>
 
                 <template id="h18-page-section-template"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>
+                <template id="h18-page-card-template"><?php $this->render_page_editor_card_admin($this->default_page_card(10), '__SECTION_INDEX__', '__CARD_INDEX__'); ?></template>
             <?php endif; ?>
         </div>
         <?php
@@ -7928,7 +8144,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.4',
+                    'Version' => '1.5',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -8022,7 +8238,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.4',
+            'Version'        => '1.5',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -8052,7 +8268,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.4',
+                'Version' => '1.5',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];
