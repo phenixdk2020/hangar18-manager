@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.25",
+  "version": "0.4.26",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-16T06:20:06Z",
+  "published_utc": "2026-08-16T06:29:07Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "00b5f6a1b6517cd3be016d574cd6f5d3077ac572572b977d661aed4463a4fb7a",
+  "package_sha256": "684d0d372b7097d6b3137284cf0e9a4dda4d43a862a9336e65492fb61c18c205",
   "changelog": [
-    "Tilføjer sikker gendannelse af en side til versionen fra før Hangar18 sideeditor.",
-    "Bruger seneste passende WordPress-revision og falder tilbage til en Hangar18 JSON-backup.",
-    "Tager ny fuld backup og sidebackup af den konverterede side før gendannelsen.",
-    "Rydder kun den valgte side fra editorens centrale lager efter gendannelsen.",
-    "Menu, header, footer, testkopier og andre sider ændres ikke."
+    "Tilføjer fortløbende versionsnumre til hver side i Hangar18 sideeditor.",
+    "Kræver en ændringsbeskrivelse ved rigtig gemning og registrerer bruger samt tidspunkt.",
+    "Tager automatisk fuld før-backup og separat sidekopi af den nye version.",
+    "Viser versionshistorik med ændringsbeskrivelser og backupfiler nederst i editoren.",
+    "WhatIf opretter ingen version, backup eller historikpost."
   ]
 }

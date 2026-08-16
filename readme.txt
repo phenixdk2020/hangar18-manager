@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.25
+Version: 0.4.26
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -717,3 +717,14 @@ AUTHORITATIVE_BASELINE_FAILED
 - Gendanner kun den valgte sides titel, indhold, uddrag og eventuelle fremhævede billede.
 - Rydder den valgte side fra editorens centrale lager, så den ikke genindlæses som konverteret ved næste besøg.
 - Ændrer ikke menu, header, footer, testkopier eller andre sider.
+
+
+== Version 0.4.26 – Sideversionering og ændringsbeskrivelser ==
+
+- Kræver en kort ændringsbeskrivelse ved hver rigtig gemning i Hangar18 sideeditor.
+- Tildeler hver side sit eget fortløbende versionsnummer.
+- Tager automatisk en fuld før-backup og en separat sidekopi af den nye gemte version.
+- Gemmer tidspunkt, WordPress-bruger, ændringsbeskrivelse, antal aktive sektioner, backupfiler og indholdshash i versionshistorikken.
+- Viser de seneste versioner nederst på den valgte sides editorside.
+- WhatIf viser næste versionsnummer, men opretter ingen version, backup eller historikpost.
+- Medtager versionshistorikken i fremtidige fulde Hangar18-backups.

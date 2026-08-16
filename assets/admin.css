@@ -302,7 +302,8 @@
 .h18-page-tabs a.is-active{border-color:#3858e9;background:#3858e9;color:#fff}
 .h18-page-editor-title{margin:18px 0;padding:18px}
 .h18-page-editor-title .h18-field{margin:0;max-width:720px}
-.h18-page-editor-title input{width:100%}
+.h18-page-editor-title{display:grid;gap:16px}
+.h18-page-editor-title input,.h18-page-editor-title textarea{width:100%}
 .h18-page-preview-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0;padding:12px 14px;border:1px solid #dcdcde;border-radius:7px;background:#fff}
 .h18-page-preview-toolbar .button.is-active{border-color:#3858e9;background:#edf1ff;color:#1935a5}
 .h18-page-preview-toolbar span{margin-left:auto;color:#646970}

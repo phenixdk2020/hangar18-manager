@@ -487,4 +487,21 @@ jQuery(function ($) {
         $pageSections.removeClass('h18-preview-desktop h18-preview-tablet h18-preview-mobile').addClass('h18-preview-' + device);
     });
 
+    const $pageEditorForm = $('#h18-page-editor-form');
+    const $pageChangeNote = $pageEditorForm.find('[name="page_change_note"]');
+    const $pageWhatIf = $pageEditorForm.find('[name="whatif"]');
+
+    function syncPageChangeNoteRequirement() {
+        if (!$pageChangeNote.length) {
+            return;
+        }
+        const required = !$pageWhatIf.is(':checked');
+        $pageChangeNote.prop('required', required).attr('aria-required', required ? 'true' : 'false');
+    }
+
+    if ($pageEditorForm.length) {
+        $pageWhatIf.on('change', syncPageChangeNoteRequirement);
+        syncPageChangeNoteRequirement();
+    }
+
 });

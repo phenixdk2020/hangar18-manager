@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.25
+ * Version: 0.4.26
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.25';
+    const VERSION = '0.4.26';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -38,6 +38,7 @@ final class Hangar18_Manager {
     const CONTENT_LAYOUT_OPTION     = 'hangar18_manager_content_layout_v1';
     const STATIC_CONTENT_OPTION     = 'hangar18_manager_static_content_v1';
     const PAGE_EDITOR_OPTION        = 'hangar18_manager_pages_v1';
+    const PAGE_VERSION_HISTORY_OPTION = 'hangar18_manager_page_versions_v1';
     const FORM_SUBMISSIONS_OPTION   = 'hangar18_manager_form_submissions_v1';
     const POLL_VOTES_OPTION         = 'hangar18_manager_poll_votes_v1';
     const MENU_ORDER_OPTION        = 'hangar18_manager_menu_order_v20';
@@ -701,7 +702,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.3',
+                'Version' => '1.4',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -2756,7 +2757,7 @@ final class Hangar18_Manager {
         $static_content['Saved'] = gmdate('c');
 
         $pages = [
-            'Version' => '1.0',
+            'Version' => '1.4',
             'Saved'   => gmdate('c'),
             'Pages'   => $this->get_page_editor_store(),
         ];
@@ -3163,6 +3164,7 @@ final class Hangar18_Manager {
             'plugin_version' => self::VERSION,
             'design'         => $this->get_design_settings(),
             'page_editor'    => $this->get_page_editor_store(),
+            'page_versions'  => get_option(self::PAGE_VERSION_HISTORY_OPTION, []),
             'poll_votes'     => get_option(self::POLL_VOTES_OPTION, []),
             'posts'          => [],
         ];
@@ -6423,17 +6425,69 @@ HTML;
             $title = $definitions[$slug];
         }
 
+        $content_version = $this->clamp_int($raw['ContentVersion'] ?? 0, 0, 9999, 0);
+        if (
+            $content_version === 0 &&
+            $page instanceof WP_Post &&
+            strpos((string) $page->post_content, self::PAGE_EDITOR_MARKER) !== false
+        ) {
+            $content_version = 1;
+        }
+
         return [
-            'Version'   => '1.3',
-            'PageSlug'  => $slug,
-            'PageTitle' => $title,
-            'Sections'  => $sections,
+            'Version'        => '1.4',
+            'PageSlug'       => $slug,
+            'PageTitle'      => $title,
+            'ContentVersion' => $content_version,
+            'Sections'       => $sections,
         ];
     }
 
     private function get_page_editor_store() {
         $stored = get_option(self::PAGE_EDITOR_OPTION, []);
         return is_array($stored) ? $stored : [];
+    }
+
+    private function get_page_version_history($slug) {
+        $slug = sanitize_title((string) $slug);
+        $all = get_option(self::PAGE_VERSION_HISTORY_OPTION, []);
+        if (!is_array($all) || !isset($all[$slug]) || !is_array($all[$slug])) {
+            return [];
+        }
+
+        $history = [];
+        foreach (array_slice($all[$slug], 0, 100) as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            $history[] = [
+                'Version'          => $this->clamp_int($entry['Version'] ?? 0, 1, 9999, 1),
+                'SavedUtc'         => sanitize_text_field((string) ($entry['SavedUtc'] ?? '')),
+                'UserId'           => absint($entry['UserId'] ?? 0),
+                'UserDisplay'      => sanitize_text_field((string) ($entry['UserDisplay'] ?? 'Ukendt bruger')),
+                'ChangeNote'       => sanitize_textarea_field((string) ($entry['ChangeNote'] ?? '')),
+                'FullBackupFile'   => sanitize_file_name((string) ($entry['FullBackupFile'] ?? '')),
+                'SnapshotFile'     => sanitize_file_name((string) ($entry['SnapshotFile'] ?? '')),
+                'ContentHash'      => preg_replace('/[^a-f0-9]/i', '', (string) ($entry['ContentHash'] ?? '')),
+                'ActiveSections'   => absint($entry['ActiveSections'] ?? 0),
+            ];
+        }
+        usort($history, static function($a, $b) {
+            return ((int) $b['Version']) <=> ((int) $a['Version']);
+        });
+        return $history;
+    }
+
+    private function append_page_version_history($slug, array $entry) {
+        $slug = sanitize_title((string) $slug);
+        $all = get_option(self::PAGE_VERSION_HISTORY_OPTION, []);
+        if (!is_array($all)) {
+            $all = [];
+        }
+        $history = isset($all[$slug]) && is_array($all[$slug]) ? $all[$slug] : [];
+        array_unshift($history, $entry);
+        $all[$slug] = array_slice($history, 0, 100);
+        update_option(self::PAGE_VERSION_HISTORY_OPTION, $all, false);
     }
 
     private function extract_page_core_content($content) {
@@ -6893,10 +6947,11 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'   => '1.3',
-            'PageSlug'  => $data['PageSlug'],
-            'PageTitle' => $data['PageTitle'],
-            'Sections'  => array_slice($sections, 0, 25),
+            'Version'        => '1.4',
+            'PageSlug'       => $data['PageSlug'],
+            'PageTitle'      => $data['PageTitle'],
+            'ContentVersion' => $data['ContentVersion'] ?? 0,
+            'Sections'       => array_slice($sections, 0, 25),
         ], $page);
     }
 
@@ -7599,6 +7654,7 @@ HTML;
         $data = $page ? $this->get_page_editor_data_for_admin($slug, $page, $converted_sections) : null;
         $is_converted = $page instanceof WP_Post && strpos((string) $page->post_content, self::PAGE_EDITOR_MARKER) !== false;
         $conversion_test = $page instanceof WP_Post ? $this->conversion_test_page_for_source($page->ID) : null;
+        $versions = $page instanceof WP_Post ? $this->get_page_version_history($slug) : [];
         ?>
         <div class="wrap h18-admin h18-pages-admin">
             <h1>Sider</h1>
@@ -7615,7 +7671,7 @@ HTML;
             <?php if (!$page) : ?>
                 <div class="notice notice-error"><p>Siden <strong><?php echo esc_html($definitions[$slug]); ?></strong> blev ikke fundet.</p></div>
             <?php else : ?>
-                <div class="h18-toolbar"><div><strong>Redigerer:</strong> <?php echo esc_html($page->post_title); ?></div><p class="h18-toolbar-note">Nuværende indhold indlæses som redigerbare sektioner. Den offentlige side ændres først, når du vælger Gem siden.</p><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($page)); ?>">Åbn offentlig side</a></div>
+                <div class="h18-toolbar"><div><strong>Redigerer:</strong> <?php echo esc_html($page->post_title); ?> · <strong>Version:</strong> <?php echo (int) ($data['ContentVersion'] ?? 0) > 0 ? 'v' . esc_html($data['ContentVersion']) : 'Ikke versioneret endnu'; ?></div><p class="h18-toolbar-note">Nuværende indhold indlæses som redigerbare sektioner. Den offentlige side ændres først, når du vælger Gem siden.</p><a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($page)); ?>">Åbn offentlig side</a></div>
 
                 <?php if ($converted_sections > 0) : ?>
                     <div class="notice notice-info inline h18-page-import-notice"><p><strong>Nuværende sideindhold er gjort redigerbart.</strong> Editorens kladde indeholder <?php echo esc_html($converted_sections); ?> importerede sektioner. Gennemgå desktop og mobil, og vælg først <strong>Gem siden</strong>, når opdelingen ser rigtig ud. Indtil da er den offentlige side helt uændret.</p></div>
@@ -7666,6 +7722,7 @@ HTML;
 
                     <div class="h18-page-editor-title h18-layout-card">
                         <div class="h18-field"><label><strong>WordPress-sidetitel</strong></label><input type="text" name="editor_page_title" value="<?php echo esc_attr($data['PageTitle']); ?>" required /><p class="description">Menupunktets viste navn ændres fortsat under Menu.</p></div>
+                        <div class="h18-field"><label><strong>Hvad er ændret?</strong></label><textarea name="page_change_note" rows="3" maxlength="500" placeholder="Fx Rettet overskrift, ændret luft mellem kort og udskiftet kontaktknappen."></textarea><p class="description">Skal udfyldes ved en rigtig gemning. Teksten gemmes sammen med versionsnummer, tidspunkt, bruger og backup. Ved WhatIf er feltet valgfrit.</p></div>
                     </div>
 
                     <div class="h18-page-preview-toolbar">
@@ -7688,9 +7745,37 @@ HTML;
 
                     <div class="h18-form-actions h18-explained-action">
                         <div class="h18-whatif-help"><div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Simulering kontrollerer opsætningen uden at gemme siden, nulstille stemmer eller sende noget.</span></div></div>
-                        <div class="h18-action-submit"><button class="button button-primary button-hero" type="submit">Gem siden</button><div class="h18-action-copy"><strong>Backup og WordPress-revision</strong><span>Gemmer sektionsdata og bygger siden igen med den fælles header, footer og designmanual.</span></div></div>
+                        <div class="h18-action-submit"><button class="button button-primary button-hero" type="submit">Gem som ny version</button><div class="h18-action-copy"><strong>Backup, sidekopi og versionshistorik</strong><span>Gemmer ændringsbeskrivelsen, tager backup og bygger siden igen som næste versionsnummer.</span></div></div>
                     </div>
                 </form>
+
+                <section class="h18-layout-card" style="margin-top:18px;padding:18px;">
+                    <h2>Versionshistorik</h2>
+                    <p>Hver rigtig gemning får sit eget versionsnummer og en beskrivelse. WhatIf opretter ingen historik.</p>
+                    <?php if (!$versions) : ?>
+                        <p><em>Der er endnu ingen registrerede versioner. Den næste rigtige gemning bliver registreret her.</em></p>
+                    <?php else : ?>
+                        <div class="h18-log-table-wrap">
+                            <table class="widefat striped">
+                                <thead><tr><th>Version</th><th>Tid</th><th>Bruger</th><th>Ændringsbeskrivelse</th><th>Backup</th></tr></thead>
+                                <tbody>
+                                <?php foreach (array_slice($versions, 0, 30) as $version_entry) :
+                                    $saved_timestamp = $version_entry['SavedUtc'] !== '' ? strtotime($version_entry['SavedUtc']) : false;
+                                    $saved_display = $saved_timestamp ? wp_date('d-m-Y H:i:s', $saved_timestamp) : $version_entry['SavedUtc'];
+                                ?>
+                                    <tr>
+                                        <td><strong>v<?php echo esc_html($version_entry['Version']); ?></strong></td>
+                                        <td><?php echo esc_html($saved_display); ?></td>
+                                        <td><?php echo esc_html($version_entry['UserDisplay']); ?></td>
+                                        <td><?php echo nl2br(esc_html($version_entry['ChangeNote'])); ?></td>
+                                        <td><details><summary>Vis filer</summary><code><?php echo esc_html($version_entry['FullBackupFile']); ?></code><br><code><?php echo esc_html($version_entry['SnapshotFile']); ?></code></details></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </section>
 
                 <template id="h18-page-section-template"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>
             <?php endif; ?>
@@ -7843,7 +7928,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.3',
+                    'Version' => '1.4',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -7902,6 +7987,12 @@ HTML;
         }
 
         $current = $this->get_page_editor_data($slug, $page);
+        $change_note = sanitize_textarea_field((string) wp_unslash($_POST['page_change_note'] ?? ''));
+        $current_content_version = $this->clamp_int($current['ContentVersion'] ?? 0, 0, 9999, 0);
+        $next_content_version = min(9999, $current_content_version + 1);
+        if ($next_content_version < 1) {
+            $next_content_version = 1;
+        }
         $legacy_by_key = [];
         foreach ($current['Sections'] as $existing) {
             if ($existing['Type'] === 'legacy') {
@@ -7931,21 +8022,29 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'   => '1.3',
-            'PageSlug'  => $slug,
-            'PageTitle' => $this->post_text('editor_page_title'),
-            'Sections'  => $sections,
+            'Version'        => '1.4',
+            'PageSlug'       => $slug,
+            'PageTitle'      => $this->post_text('editor_page_title'),
+            'ContentVersion' => $next_content_version,
+            'Sections'       => $sections,
         ], $page);
 
         if (!empty($_POST['whatif'])) {
             $active = count(array_filter($data['Sections'], static function($section) { return !empty($section['Active']); }));
-            $this->log('WARN', 'WHATIF_PAGE_EDITOR_SAVE', "[WHATIF] {$slug} ville få {$active} aktive sektioner.");
-            $this->set_notice('warning', "WHATIF: Siden ville få {$active} aktive sektioner. Ingen side, stemmer eller data blev ændret.");
+            $this->log('WARN', 'WHATIF_PAGE_EDITOR_SAVE', "[WHATIF] {$slug} ville blive v{$next_content_version} med {$active} aktive sektioner.");
+            $this->set_notice('warning', "WHATIF: Siden ville blive v{$next_content_version} med {$active} aktive sektioner. Ingen version, backup, stemmer eller data blev oprettet eller ændret.");
+            $this->redirect_page_editor($slug);
+        }
+
+        if (trim($change_note) === '') {
+            $this->set_notice('error', 'Skriv kort, hvad du har ændret, før siden gemmes som en ny version.');
             $this->redirect_page_editor($slug);
         }
 
         try {
-            $this->create_full_managed_backup("Før sideeditor gemte {$slug}");
+            $full_backup = $this->create_full_managed_backup(
+                "Før sideeditor gemte {$slug} som v{$next_content_version}. Ændring: {$change_note}"
+            );
             foreach ($reset_keys as $reset_key) {
                 $this->reset_poll_storage($page->ID, $reset_key);
             }
@@ -7953,7 +8052,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.3',
+                'Version' => '1.4',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];
@@ -7970,8 +8069,46 @@ HTML;
             }
 
             $active = count(array_filter($data['Sections'], static function($section) { return !empty($section['Active']); }));
-            $this->log('INFO', 'PAGE_EDITOR_SAVE_SUCCESS', "Sideeditor gemte {$slug}. AktiveSektioner={$active}; NulstilledeAfstemninger=" . count($reset_keys) . '.');
-            $this->set_notice('success', "Siden er gemt med {$active} aktive sektioner. Backup og WordPress-revision er oprettet.");
+            $snapshot_file = '';
+            $snapshot_warning = '';
+            try {
+                $snapshot_path = $this->backup_post(
+                    $page->ID,
+                    "Sideeditor {$slug} v{$next_content_version}. Ændring: {$change_note}"
+                );
+                $snapshot_file = $snapshot_path ? basename($snapshot_path) : '';
+            } catch (Throwable $snapshot_error) {
+                $snapshot_warning = $snapshot_error->getMessage();
+                $this->log('WARN', 'PAGE_VERSION_SNAPSHOT_WARNING', $snapshot_warning);
+            }
+
+            $user = wp_get_current_user();
+            $user_display = trim((string) $user->display_name);
+            if ($user_display === '') {
+                $user_display = (string) $user->user_login;
+            }
+            $this->append_page_version_history($slug, [
+                'Version'        => $next_content_version,
+                'SavedUtc'       => gmdate('c'),
+                'UserId'         => (int) $user->ID,
+                'UserDisplay'    => $user_display !== '' ? $user_display : 'Ukendt bruger',
+                'ChangeNote'     => $change_note,
+                'FullBackupFile' => basename($full_backup),
+                'SnapshotFile'   => $snapshot_file,
+                'ContentHash'    => hash('sha256', wp_json_encode($data)),
+                'ActiveSections' => $active,
+            ]);
+
+            $this->log(
+                'INFO',
+                'PAGE_EDITOR_SAVE_SUCCESS',
+                "Sideeditor gemte {$slug} som v{$next_content_version}. Ændring={$change_note}; AktiveSektioner={$active}; NulstilledeAfstemninger=" . count($reset_keys) . '.'
+            );
+            if ($snapshot_warning !== '') {
+                $this->set_notice('warning', "Siden er gemt som v{$next_content_version}, og den fulde før-backup er oprettet. Sidekopien efter gemning fejlede: {$snapshot_warning}");
+            } else {
+                $this->set_notice('success', "Siden er gemt som v{$next_content_version} med {$active} aktive sektioner. Ændringsbeskrivelse, fuld backup, sidekopi og WordPress-revision er oprettet.");
+            }
         } catch (Throwable $e) {
             $this->log('ERROR', 'PAGE_EDITOR_SAVE_FAILED', $e->getMessage());
             $this->set_notice('error', 'Siden kunne ikke gemmes: ' . $e->getMessage());
