@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.23
+ * Version: 0.4.24
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.23';
+    const VERSION = '0.4.24';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -94,6 +94,7 @@ final class Hangar18_Manager {
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         add_shortcode('hangar18_page_editor', [$this, 'shortcode_page_editor']);
+        add_filter('wp_robots', [$this, 'filter_conversion_test_robots']);
 
         add_action('admin_post_h18_save_vehicle', [$this, 'handle_save_vehicle']);
         add_action('admin_post_h18_save_vehicle_register_settings', [$this, 'handle_save_vehicle_register_settings']);
@@ -110,6 +111,7 @@ final class Hangar18_Manager {
 
         add_action('admin_post_h18_save_static_content', [$this, 'handle_save_static_content']);
         add_action('admin_post_h18_save_page_editor', [$this, 'handle_save_page_editor']);
+        add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);
         add_action('admin_post_h18_send_page_form', [$this, 'handle_send_page_form']);
         add_action('admin_post_nopriv_h18_send_page_form', [$this, 'handle_send_page_form']);
         add_action('admin_post_h18_submit_poll', [$this, 'handle_submit_poll']);
@@ -178,6 +180,25 @@ final class Hangar18_Manager {
             ],
             true
         );
+    }
+
+    public function filter_conversion_test_robots($robots) {
+        if (!is_singular('page')) {
+            return $robots;
+        }
+
+        $page_id = (int) get_queried_object_id();
+        if ($page_id <= 0 || !get_post_meta($page_id, '_h18_conversion_test_source_id', true)) {
+            return $robots;
+        }
+
+        if (!is_array($robots)) {
+            $robots = [];
+        }
+        $robots['noindex'] = true;
+        $robots['nofollow'] = true;
+        $robots['noarchive'] = true;
+        return $robots;
     }
 
     public function disable_astra_banner_for_managed_pages() {
@@ -7237,8 +7258,13 @@ HTML;
         return $marker . "\n<!-- wp:shortcode -->\n[hangar18_page_editor slug=\"" . esc_attr($slug) . "\"]\n<!-- /wp:shortcode -->";
     }
 
+    private function build_page_editor_test_core($slug, array $data) {
+        $marker = $this->encode_marker(self::PAGE_EDITOR_MARKER, $data);
+        return $marker . "\n<!-- wp:shortcode -->\n[hangar18_page_editor slug=\"" . esc_attr($slug) . "\" test=\"1\"]\n<!-- /wp:shortcode -->";
+    }
+
     public function shortcode_page_editor($atts) {
-        $atts = shortcode_atts(['slug' => ''], $atts, 'hangar18_page_editor');
+        $atts = shortcode_atts(['slug' => '', 'test' => '0'], $atts, 'hangar18_page_editor');
         $slug = sanitize_title((string) $atts['slug']);
         $page_id = (int) get_the_ID();
         $page = $page_id ? get_post($page_id) : $this->post_by_slug($slug);
@@ -7248,7 +7274,19 @@ HTML;
         if ($slug === '') {
             $slug = $page->post_name;
         }
-        $data = $this->get_page_editor_data($slug, $page);
+        $is_test = in_array(strtolower((string) $atts['test']), ['1', 'true', 'yes'], true) &&
+            (int) get_post_meta($page->ID, '_h18_conversion_test_source_id', true) > 0;
+        if ($is_test) {
+            $marker_data = $this->decode_marker(self::PAGE_EDITOR_MARKER, $page->post_content);
+            if (!is_array($marker_data)) {
+                return '';
+            }
+            // En konverteringstest læser altid sin egen indlejrede kladde.
+            // Den må ikke falde tilbage til originalsiden eller det centrale store.
+            $data = $this->normalize_page_editor_data($marker_data, $page);
+        } else {
+            $data = $this->get_page_editor_data($slug, $page);
+        }
         return $this->render_page_editor_front($page->ID, $data);
     }
 
@@ -7439,6 +7477,47 @@ HTML;
         <?php
     }
 
+    private function conversion_test_page_for_source($source_id) {
+        $source_id = absint($source_id);
+        if ($source_id <= 0) {
+            return null;
+        }
+
+        $pages = get_posts([
+            'post_type'      => 'page',
+            'post_status'    => ['draft', 'pending', 'private', 'publish'],
+            'posts_per_page' => 1,
+            'meta_key'       => '_h18_conversion_test_source_id',
+            'meta_value'     => $source_id,
+            'orderby'        => 'ID',
+            'order'          => 'DESC',
+        ]);
+        return isset($pages[0]) && $pages[0] instanceof WP_Post ? $pages[0] : null;
+    }
+
+    private function adapt_page_editor_data_to_test_page(array $data, $source_id, $test_id) {
+        $source_id = absint($source_id);
+        $test_id = absint($test_id);
+        if ($source_id <= 0 || $test_id <= 0 || $source_id === $test_id) {
+            return $data;
+        }
+
+        foreach ($data['Sections'] as &$section) {
+            foreach (['Content', 'LegacyHtml'] as $field) {
+                if (!isset($section[$field]) || !is_string($section[$field])) {
+                    continue;
+                }
+                $section[$field] = str_replace(
+                    'page-id-' . $source_id,
+                    'page-id-' . $test_id,
+                    $section[$field]
+                );
+            }
+        }
+        unset($section);
+        return $data;
+    }
+
     public function render_pages() {
         $this->require_capability();
         $definitions = $this->editable_page_definitions();
@@ -7449,6 +7528,8 @@ HTML;
         $page = $this->post_by_slug($slug);
         $converted_sections = 0;
         $data = $page ? $this->get_page_editor_data_for_admin($slug, $page, $converted_sections) : null;
+        $is_converted = $page instanceof WP_Post && strpos((string) $page->post_content, self::PAGE_EDITOR_MARKER) !== false;
+        $conversion_test = $page instanceof WP_Post ? $this->conversion_test_page_for_source($page->ID) : null;
         ?>
         <div class="wrap h18-admin h18-pages-admin">
             <h1>Sider</h1>
@@ -7469,6 +7550,24 @@ HTML;
 
                 <?php if ($converted_sections > 0) : ?>
                     <div class="notice notice-info inline h18-page-import-notice"><p><strong>Nuværende sideindhold er gjort redigerbart.</strong> Editorens kladde indeholder <?php echo esc_html($converted_sections); ?> importerede sektioner. Gennemgå desktop og mobil, og vælg først <strong>Gem siden</strong>, når opdelingen ser rigtig ud. Indtil da er den offentlige side helt uændret.</p></div>
+                <?php endif; ?>
+
+                <?php if (!$is_converted && !empty($data['Sections'])) : ?>
+                    <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                        <?php wp_nonce_field('h18_create_page_conversion_test_' . $slug); ?>
+                        <input type="hidden" name="action" value="h18_create_page_conversion_test" />
+                        <input type="hidden" name="page_slug" value="<?php echo esc_attr($slug); ?>" />
+                        <div class="h18-action-copy">
+                            <strong>Test konverteringen uden at ændre originalsiden</strong>
+                            <span>Opretter eller opdaterer en separat offentlig testkopi. Kopien føjes ikke til menuen og skjules for søgemaskiner. Brug den til at sammenligne desktop og mobil før Gem siden.</span>
+                        </div>
+                        <div class="h18-action-submit">
+                            <?php if ($conversion_test instanceof WP_Post) : ?>
+                                <a class="button" target="_blank" rel="noopener" href="<?php echo esc_url(get_permalink($conversion_test)); ?>">Åbn eksisterende test</a>
+                            <?php endif; ?>
+                            <button class="button button-secondary" type="submit"><?php echo $conversion_test instanceof WP_Post ? 'Opdatér konverteringstest' : 'Opret konverteringstest'; ?></button>
+                        </div>
+                    </form>
                 <?php endif; ?>
 
                 <form id="h18-page-editor-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -7517,6 +7616,97 @@ HTML;
 
     private function redirect_page_editor($slug) {
         $this->redirect('hangar18-pages', ['page_slug' => sanitize_title((string) $slug)]);
+    }
+
+    public function handle_create_page_conversion_test() {
+        $this->require_capability();
+        $slug = sanitize_title($this->post_text('page_slug'));
+        check_admin_referer('h18_create_page_conversion_test_' . $slug);
+
+        $definitions = $this->editable_page_definitions();
+        if (!isset($definitions[$slug])) {
+            $this->set_notice('error', 'Den valgte side kan ikke bruges til en konverteringstest.');
+            $this->redirect_page_editor(self::HOME_SLUG);
+        }
+
+        try {
+            if (!current_user_can('publish_pages')) {
+                throw new RuntimeException('Din bruger må ikke udgive den offentlige testkopi.');
+            }
+
+            $source = $this->post_by_slug($slug);
+            if (!$source instanceof WP_Post) {
+                throw new RuntimeException('Originalsiden blev ikke fundet.');
+            }
+            if (strpos((string) $source->post_content, self::PAGE_EDITOR_MARKER) !== false) {
+                throw new RuntimeException('Siden er allerede konverteret til Hangar18 sideeditor.');
+            }
+
+            $converted_sections = 0;
+            $data = $this->get_page_editor_data_for_admin($slug, $source, $converted_sections);
+            if (empty($data['Sections'])) {
+                throw new RuntimeException('Der blev ikke fundet indhold, som kunne vises i testen.');
+            }
+
+            $test = $this->conversion_test_page_for_source($source->ID);
+            if ($test instanceof WP_Post) {
+                $test_id = (int) $test->ID;
+            } else {
+                $test_id = wp_insert_post([
+                    'post_type'      => 'page',
+                    'post_status'    => 'draft',
+                    'post_title'     => $source->post_title . ' – konverteringstest',
+                    'post_name'      => $slug . '-editor-test',
+                    'post_content'   => '<!-- Hangar18 konverteringstest oprettes -->',
+                    'post_excerpt'   => 'Sikker sammenligningskopi. Originalsiden og menuen ændres ikke.',
+                    'comment_status' => 'closed',
+                    'ping_status'    => 'closed',
+                    'page_template'  => 'default',
+                ], true);
+                if (is_wp_error($test_id)) {
+                    throw new RuntimeException($test_id->get_error_message());
+                }
+                $test_id = (int) $test_id;
+            }
+
+            $data = $this->adapt_page_editor_data_to_test_page($data, $source->ID, $test_id);
+            $content = $this->wrap_with_shell(
+                $this->build_page_editor_test_core($slug, $data),
+                $test_id
+            );
+            $updated = wp_update_post([
+                'ID'            => $test_id,
+                'post_status'   => 'publish',
+                'post_title'    => $source->post_title . ' – konverteringstest',
+                'post_name'     => $slug . '-editor-test',
+                'post_content'  => $content,
+                'post_excerpt'  => 'Sikker sammenligningskopi. Originalsiden og menuen ændres ikke.',
+                'page_template' => 'default',
+            ], true);
+            if (is_wp_error($updated)) {
+                throw new RuntimeException($updated->get_error_message());
+            }
+
+            update_post_meta($test_id, '_h18_conversion_test_source_id', (int) $source->ID);
+            update_post_meta($test_id, '_h18_conversion_test_source_slug', $slug);
+            update_post_meta($test_id, '_h18_conversion_test_updated_utc', gmdate('c'));
+            update_post_meta($test_id, '_h18_conversion_test_content_hash', hash('sha256', wp_json_encode($data)));
+
+            $this->log(
+                'INFO',
+                'PAGE_CONVERSION_TEST_READY',
+                "Konverteringstest klar for {$slug}. OriginalID={$source->ID}; TestID={$test_id}; Sektioner=" . count($data['Sections']) . ". Originalsiden er uændret."
+            );
+            $this->set_notice(
+                'success',
+                'Konverteringstesten er klar. Åbn den med knappen “Åbn eksisterende test”. Originalsiden og menuen er uændret.'
+            );
+        } catch (Throwable $e) {
+            $this->log('ERROR', 'PAGE_CONVERSION_TEST_FAILED', $e->getMessage());
+            $this->set_notice('error', 'Konverteringstesten kunne ikke oprettes: ' . $e->getMessage());
+        }
+
+        $this->redirect_page_editor($slug);
     }
 
     private function reset_poll_storage($page_id, $section_key) {
@@ -8276,7 +8466,8 @@ HTML;
         ]);
 
         return array_values(array_filter($pages, static function($page) {
-            return $page->post_name !== 'hangar18-configuration-store';
+            return $page->post_name !== 'hangar18-configuration-store' &&
+                !get_post_meta($page->ID, '_h18_conversion_test_source_id', true);
         }));
     }
 

@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.23",
+  "version": "0.4.24",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-16T05:14:31Z",
+  "published_utc": "2026-08-16T06:01:28Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "8d649a3ea7c9831760f1d7bd15264267c6cae1de87878de90106cee376110b86",
+  "package_sha256": "9ee37d96902a6ca33f5d89d5ba2e359b0e22d6259254d9691a65c77c8730e92c",
   "changelog": [
-    "Gendanner Hjem-sidens oprindelige sektionsfarver og runde knapper i den nye editor.",
-    "Gendanner 32 px sektionsafstand på desktop og 24 px på mobil.",
-    "Tilføjer særskilt styring af lodret og vandret indvendig luft på desktop og mobil.",
-    "Sætter mobilbanneret til 180 px og bevarer venstrestilling på desktop samt midterstilling på mobil.",
-    "Tager automatisk fuld backup før engangsreparationen af den aktive Hjem-side."
+    "Tilføjer sikre konverteringstest-kopier til ukonverterede sider i Hangar18 sideeditor.",
+    "Originalsiden og menuen ændres ikke, når en test oprettes eller opdateres.",
+    "Testkopien bruger sin egen indlejrede sektionskladde og tilpasser sidespecifik CSS til testens side-ID.",
+    "Samme testside genbruges ved gentagne tests, så der ikke oprettes dubletter.",
+    "Testkopier skjules for søgemaskiner og kan ikke vælges i Hangar18-menuen."
   ]
 }

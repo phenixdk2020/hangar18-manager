@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.23
+Version: 0.4.24
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -696,3 +696,14 @@ AUTHORITATIVE_BASELINE_FAILED
 - Sætter mobilbanneret til 180 px og sikrer fortsat, at bannerbilledet kun vises én gang.
 - Bevarer venstrestilling på desktop og midterstilling på mobil efter de valgte indstillinger.
 - Tager automatisk fuld backup før engangsreparationen af den aktive Hjem-side.
+
+
+== Version 0.4.24 – Sikre konverteringstests af sider ==
+
+- Tilføjer Opret konverteringstest på ukonverterede sider i Hangar18 sideeditor.
+- Opretter Om foreningen, Kontakt eller Bliv medlem som en separat offentlig testkopi uden at ændre originalsiden.
+- Genbruger og opdaterer samme testside, så der ikke oprettes dubletter ved gentagne tests.
+- Lader testkopien læse sin egen indlejrede sektionskladde i stedet for originalsiden eller den centrale editoropsætning.
+- Tilpasser sidespecifik CSS fra originalens side-ID til testkopiens side-ID.
+- Føjer ikke testkopier til Hangar18-menuen og udelader dem fra menuens sidevælger.
+- Markerer testkopier med noindex, nofollow og noarchive, så de ikke skal optages af søgemaskiner.

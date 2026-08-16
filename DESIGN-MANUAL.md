@@ -1,7 +1,7 @@
 # Designmanual for Hangar18
 
 Senest opdateret: 16. august 2026  
-Gælder fra: Hangar18 Manager 0.4.23
+Gælder fra: Hangar18 Manager 0.4.24
 
 ## Formål
 
@@ -209,6 +209,7 @@ Før en designændring godkendes, kontrolleres:
 | 0.4.21 | Forsidens hero blev sikret mod et gentaget Cover-billede, ældre CSS-tekstsektioner blev genkendt som side-CSS, og sektionernes valgte desktop-/mobilplacering blev gjort autoritativ. |
 | 0.4.22 | Backupoversigten fik sikker oprettelse af en separat Hjem-sammenligningskladde fra den oprindelige JSON-backup uden ændring af aktiv forside eller menu. |
 | 0.4.23 | Hjem-sidens sektionsfarver, 32/24 px sektionsafstand, lodrette/vandrette indvendige luft, oprindelige runde knapper og 180 px mobilbanner blev gendannet i den nye editor. |
+| 0.4.24 | Ukonverterede sider fik sikre offentlige konverteringstest-kopier, som ikke ændrer originalsiden eller menuen og skjules for søgemaskiner. |
 
 ## Sådan opdateres manualen
 
