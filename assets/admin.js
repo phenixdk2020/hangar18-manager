@@ -262,9 +262,35 @@ jQuery(function ($) {
     const pageCardTemplate = document.getElementById('h18-page-card-template');
     const $pageInspector = $('#h18-page-inspector');
     const $pageInspectorTarget = $('#h18-page-inspector-target');
+    const $pageInspectorAdvanced = $('#h18-inspector-advanced-panel');
+    const $pageNavigatorList = $('#h18-page-navigator-list');
+    const $pageNavigatorCount = $('#h18-page-navigator-count');
+    const $pageUserPresetsList = $('#h18-user-presets-list');
     let pageSectionNextIndex = 0;
     let pageCardSerial = 0;
     let $inspectedSection = $();
+    let currentInspectorPanel = 'content';
+    const pageUserPresets = {};
+
+    try {
+        const presetNode = document.getElementById('h18-page-presets-data');
+        const parsedPresets = presetNode ? JSON.parse(presetNode.textContent || '[]') : [];
+        (Array.isArray(parsedPresets) ? parsedPresets : []).forEach(function (preset) {
+            if (preset && preset.Id) {
+                pageUserPresets[String(preset.Id)] = preset;
+            }
+        });
+    } catch (presetError) {
+        window.console && console.warn('Hangar18: kunne ikke læse komponentbibliotek.', presetError);
+    }
+
+    const builtInSectionPresets = {
+        'hero-cta': { Type: 'hero', Title: 'Velkommen', Content: '<p>Skriv en kort introduktion, der fortæller hvad siden handler om.</p>', Background: 'Olive', DesktopAlignment: 'Center', MobileAlignment: 'Center', PaddingPx: 36, MobilePaddingPx: 22, HeroHeightPx: 320, MobileHeroHeightPx: 220, OverlayOpacityPercent: 35, Button1Label: 'Læs mere', Button1Url: '#', Active: true },
+        'text-image': { Type: 'text_image', Title: 'Overskrift', Content: '<p>Fortæl historien her. Vælg derefter et billede i Inspector.</p>', Background: 'White', ImagePosition: 'Right', DesktopAlignment: 'Left', MobileAlignment: 'Left', Active: true },
+        'info-cards': { Type: 'card_grid', Title: 'Kort fortalt', Content: '', Background: 'White', Columns: 3, MobileColumns: 1, ColumnGapPx: 16, MobileColumnGapPx: 14, Active: true, Cards: [ { Title: 'Punkt 1', Content: '<p>Beskrivelse af det første punkt.</p>', Background: 'OffWhite', TextTone: 'Auto', Active: true }, { Title: 'Punkt 2', Content: '<p>Beskrivelse af det andet punkt.</p>', Background: 'Sand', TextTone: 'Auto', Active: true }, { Title: 'Punkt 3', Content: '<p>Beskrivelse af det tredje punkt.</p>', Background: 'Steel', TextTone: 'Auto', Active: true } ] },
+        'cta-band': { Type: 'buttons', Title: 'Klar til næste skridt?', Content: '<p>Brug sektionen til en tydelig handling.</p>', Background: 'OffWhite', DesktopAlignment: 'Center', MobileAlignment: 'Center', PaddingPx: 24, MobilePaddingPx: 18, Button1Label: 'Læs mere', Button1Url: '#', Active: true },
+        'contact-form': { Type: 'mail_form', Title: 'Kontakt os', Content: '<p>Send os en besked, så vender vi tilbage hurtigst muligt.</p>', Background: 'OffWhite', PaddingPx: 26, MobilePaddingPx: 20, Active: true }
+    };
 
     $pageSections.children('.h18-page-section-row').each(function () {
         const value = parseInt($(this).attr('data-section-index'), 10);
@@ -282,6 +308,184 @@ jQuery(function ($) {
         return 'kort-' + Date.now().toString(36) + '-' + pageCardSerial.toString(36) + '-' + Math.random().toString(36).slice(2, 7);
     }
 
+
+    function inspectorTypeLabel(type) {
+        const labels = {
+            hero: 'Topbanner / hero', text: 'Tekst', text_image: 'Tekst og billede', image: 'Stort billede',
+            buttons: 'Handlingsknapper', card: 'Indholdskort', card_grid: 'Kort-række / kolonner', highlight: 'Fremhævet tekst',
+            spacer: 'Afstand', html: 'Importeret blok / HTML', css: 'Side-CSS', mail_form: 'Mailformular', poll: 'Afstemning', legacy: 'Eksisterende indhold'
+        };
+        return labels[String(type || '')] || 'Sektion';
+    }
+
+    function setInspectorPanel(panel) {
+        panel = ['content', 'design', 'advanced'].includes(String(panel)) ? String(panel) : 'content';
+        currentInspectorPanel = panel;
+        $pageInspector.attr('data-inspector-panel', panel);
+        $pageInspector.find('.h18-inspector-tab').removeClass('is-active').filter('[data-inspector-tab="' + panel + '"]').addClass('is-active');
+    }
+
+    function refreshInspectorMeta($row) {
+        const hasRow = $row && $row.length && !$row.hasClass('h18-page-section-removed');
+        const type = hasRow ? String($row.attr('data-section-type') || 'text') : '';
+        const key = hasRow ? String($row.find('.h18-page-section-key').val() || '') : '';
+        $('#h18-inspector-type').text(hasRow ? inspectorTypeLabel(type) : '–');
+        $('#h18-inspector-key').text(key || '–');
+        $('#h18-inspector-copy-key, #h18-inspector-duplicate, #h18-save-section-preset').prop('disabled', !hasRow || type === 'legacy');
+        if (hasRow && type === 'legacy') {
+            $('#h18-inspector-copy-key').prop('disabled', false);
+        }
+    }
+
+    function rebuildPageNavigator() {
+        if (!$pageNavigatorList.length || !$pageSections.length) {
+            return;
+        }
+        if ($pageNavigatorList.hasClass('ui-sortable')) {
+            $pageNavigatorList.sortable('destroy');
+        }
+        $pageNavigatorList.empty();
+        let count = 0;
+        $pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').each(function () {
+            const $row = $(this);
+            const index = String($row.attr('data-section-index') || '');
+            const type = String($row.attr('data-section-type') || 'text');
+            const title = String($row.find('.h18-page-section-title-summary').first().text() || '').trim();
+            const active = $row.find('.h18-section-active').is(':checked');
+            const selected = $inspectedSection.length && $inspectedSection.get(0) === $row.get(0);
+            const $item = $('<div>', { class: 'h18-navigator-item' + (selected ? ' is-selected' : ''), 'data-section-index': index });
+            $item.append($('<span>', { class: 'dashicons dashicons-menu h18-navigator-drag', title: 'Flyt lag' }));
+            const $button = $('<button>', { type: 'button', class: 'h18-navigator-select' });
+            $button.append($('<strong>', { text: inspectorTypeLabel(type) }));
+            $button.append($('<small>', { text: title || 'Uden overskrift' }));
+            $item.append($button);
+            $item.append($('<span>', { class: 'h18-navigator-visibility ' + (active ? 'is-visible' : 'is-hidden'), title: active ? 'Synlig' : 'Skjult' }).append($('<span>', { class: 'dashicons ' + (active ? 'dashicons-visibility' : 'dashicons-hidden') })));
+            $pageNavigatorList.append($item);
+            count += 1;
+        });
+        $pageNavigatorCount.text(count);
+        if (count > 1) {
+            $pageNavigatorList.sortable({
+                items: '> .h18-navigator-item', handle: '.h18-navigator-drag', axis: 'y', tolerance: 'pointer',
+                update: function () {
+                    const orderedRows = [];
+                    $pageNavigatorList.children('.h18-navigator-item').each(function () {
+                        const index = String($(this).attr('data-section-index') || '');
+                        const $row = $pageSections.children('.h18-page-section-row[data-section-index="' + index + '"]');
+                        if ($row.length) {
+                            orderedRows.push($row);
+                        }
+                    });
+                    orderedRows.forEach(function ($row) { $pageSections.append($row); });
+                    $pageSections.children('.h18-page-section-row.h18-page-section-removed').appendTo($pageSections);
+                    syncPageSectionOrder(true);
+                    window.setTimeout(rebuildPageNavigator, 0);
+                }
+            });
+        }
+    }
+
+    function renderUserPresets() {
+        if (!$pageUserPresetsList.length) {
+            return;
+        }
+        const presets = Object.values(pageUserPresets).sort(function (a, b) { return String(a.Name || '').localeCompare(String(b.Name || ''), 'da'); });
+        $pageUserPresetsList.empty();
+        if (!presets.length) {
+            $pageUserPresetsList.html('<p class="description">Vælg en sektion og brug “Gem som komponent” i Inspector.</p>');
+            return;
+        }
+        presets.forEach(function (preset) {
+            const $row = $('<div>', { class: 'h18-user-preset-row', 'data-preset-id': String(preset.Id) });
+            $row.append($('<button>', { type: 'button', class: 'h18-user-preset-insert' }).append($('<strong>', { text: String(preset.Name || 'Komponent') })).append($('<small>', { text: inspectorTypeLabel(preset.Section && preset.Section.Type) })));
+            $row.append($('<button>', { type: 'button', class: 'h18-user-preset-delete', title: 'Slet komponent', 'aria-label': 'Slet komponent' }).append($('<span>', { class: 'dashicons dashicons-trash' })));
+            $pageUserPresetsList.append($row);
+        });
+    }
+
+    function sectionPresetData($row) {
+        if (!$row || !$row.length) {
+            return null;
+        }
+        const data = { Type: String($row.attr('data-section-type') || 'text') };
+        const cards = {};
+        pageSectionControls($row, '[name]').each(function () {
+            const $field = $(this);
+            const name = String($field.attr('name') || '');
+            let match = name.match(/^sections\[[^\]]+\]\[Cards\]\[([^\]]+)\]\[([^\]]+)\]$/);
+            const value = $field.is(':checkbox') ? $field.is(':checked') : $field.val();
+            if (match) {
+                const cardIndex = String(match[1]);
+                const fieldName = String(match[2]);
+                if (['Key', 'Order', 'Remove'].includes(fieldName)) {
+                    return;
+                }
+                cards[cardIndex] = cards[cardIndex] || {};
+                cards[cardIndex][fieldName] = value;
+                return;
+            }
+            match = name.match(/^sections\[[^\]]+\]\[([^\]]+)\]$/);
+            if (!match) {
+                return;
+            }
+            const fieldName = String(match[1]);
+            if (['Key', 'Order', 'Remove', 'ResetVotes'].includes(fieldName)) {
+                return;
+            }
+            data[fieldName] = value;
+        });
+        data.Cards = Object.keys(cards).sort(function (a, b) { return Number(a) - Number(b); }).map(function (index) { return cards[index]; });
+        return data;
+    }
+
+    function setSectionPresetField($row, fieldName, value) {
+        const sectionIndex = String($row.attr('data-section-index') || '');
+        pageSectionControls($row, '[name]').filter(function () {
+            return String($(this).attr('name') || '') === 'sections[' + sectionIndex + '][' + fieldName + ']';
+        }).each(function () {
+            const $field = $(this);
+            if ($field.is(':checkbox')) {
+                $field.prop('checked', Boolean(value));
+            } else {
+                $field.val(value == null ? '' : value);
+            }
+        });
+    }
+
+    function setSectionTitleSummary($row) {
+        const title = String(pageSectionControls($row, '.h18-section-title-input').val() || '');
+        $row.find('.h18-page-section-title-summary').text(title);
+        return title;
+    }
+
+    function applySectionPreset(presetData) {
+        if (!presetData || typeof presetData !== 'object') {
+            return $();
+        }
+        const type = String(presetData.Type || 'text');
+        const $row = addPageSection(type);
+        if (!$row.length) {
+            return $row;
+        }
+        Object.keys(presetData).forEach(function (fieldName) {
+            if (['Type', 'Cards', 'Key', 'Order', 'Remove'].includes(fieldName)) {
+                return;
+            }
+            setSectionPresetField($row, fieldName, presetData[fieldName]);
+        });
+        $row.find('.h18-page-section-type').val(type);
+        if (Array.isArray(presetData.Cards) && type === 'card_grid') {
+            const $container = pageSectionControls($row, '.h18-page-cards-sortable');
+            $container.children('.h18-page-card-row').remove();
+            presetData.Cards.slice(0, 12).forEach(function (card) { addPageCard($row, card || {}); });
+        }
+        refreshPageSectionType($row);
+        setSectionTitleSummary($row);
+        syncPageSectionOrder();
+        inspectPageSection($row);
+        return $row;
+    }
+
     function restoreInspectedSection() {
         if (!$inspectedSection.length) {
             return;
@@ -293,7 +497,10 @@ jQuery(function ($) {
         $inspectedSection.removeClass('is-selected');
         $inspectedSection = $();
         $pageInspector.find('.h18-builder-inspector-heading span').text('Vælg en sektion i sideopbygningen');
-        $pageInspectorTarget.html('<p class="description">Klik på <strong>Rediger</strong> ved en sektion for at ændre indhold, farver og luft.</p>');
+        $pageInspectorTarget.html('<p class="description">Klik på <strong>Rediger</strong> ved en sektion for at ændre indhold, design og responsive indstillinger.</p>');
+        refreshInspectorMeta($());
+        setInspectorPanel('content');
+        rebuildPageNavigator();
     }
 
     function inspectPageSection($row) {
@@ -309,6 +516,9 @@ jQuery(function ($) {
         const label = String($row.find('.h18-page-section-summary').first().text() || 'Sektion');
         $pageInspector.find('.h18-builder-inspector-heading span').text(label);
         $pageInspectorTarget.empty().append($row.children('.h18-page-section-body'));
+        refreshInspectorMeta($row);
+        setInspectorPanel(currentInspectorPanel);
+        rebuildPageNavigator();
     }
 
     function pageSectionControls($row, selector) {
@@ -319,7 +529,7 @@ jQuery(function ($) {
         return $controls;
     }
 
-    function syncPageSectionOrder() {
+    function syncPageSectionOrder(skipNavigator) {
         if (!$pageSections.length) {
             return;
         }
@@ -330,6 +540,9 @@ jQuery(function ($) {
                 $(this).find('.h18-page-section-order').val(visibleIndex * 10);
             }
         });
+        if (!skipNavigator) {
+            rebuildPageNavigator();
+        }
     }
 
     function refreshPageSectionType($row) {
@@ -357,6 +570,8 @@ jQuery(function ($) {
         };
         $row.find('.h18-page-section-summary').text(labels[type] || 'Sektion');
         pageSectionControls($row, '.h18-section-title-label').text(type === 'poll' ? 'Spørgsmål' : 'Overskrift');
+        refreshInspectorMeta($row);
+        rebuildPageNavigator();
     }
 
     function syncPageCardOrder($container) {
@@ -516,6 +731,8 @@ jQuery(function ($) {
         if ($firstEditable.length) {
             inspectPageSection($firstEditable);
         }
+        renderUserPresets();
+        rebuildPageNavigator();
     }
 
     function pageSectionForElement(element) {
@@ -545,8 +762,12 @@ jQuery(function ($) {
     });
 
     $(document).on('input', '.h18-section-title-input', function () {
-        pageSectionForElement(this).find('.h18-page-section-title-summary').text($(this).val());
+        const $row = pageSectionForElement(this);
+        $row.find('.h18-page-section-title-summary').text($(this).val());
+        rebuildPageNavigator();
     });
+
+    $(document).on('change', '.h18-section-active', rebuildPageNavigator);
 
     function addPageSection(type, $before) {
         if (!pageSectionTemplate || !$pageSections.length) {
@@ -585,6 +806,115 @@ jQuery(function ($) {
     $(document).on('click', '.h18-builder-palette-item', function (event) {
         event.preventDefault();
         addPageSection(String($(this).data('section-type') || 'text'));
+    });
+
+
+    $(document).on('click', '.h18-builder-sidebar-tab', function () {
+        const tab = String($(this).data('builder-tab') || 'elements');
+        $('.h18-builder-sidebar-tab').removeClass('is-active');
+        $(this).addClass('is-active');
+        $('.h18-builder-sidebar-panel').removeClass('is-active').filter('[data-builder-panel="' + tab + '"]').addClass('is-active');
+        if (tab === 'layers') {
+            rebuildPageNavigator();
+        } else if (tab === 'components') {
+            renderUserPresets();
+        }
+    });
+
+    $(document).on('click', '.h18-navigator-select', function () {
+        const index = String($(this).closest('.h18-navigator-item').attr('data-section-index') || '');
+        const $row = $pageSections.children('.h18-page-section-row[data-section-index="' + index + '"]');
+        inspectPageSection($row);
+    });
+
+    $(document).on('click', '.h18-inspector-tab', function () {
+        setInspectorPanel(String($(this).data('inspector-tab') || 'content'));
+    });
+
+    $(document).on('click', '.h18-builder-component-item', function () {
+        const presetId = String($(this).data('section-preset') || '');
+        if (builtInSectionPresets[presetId]) {
+            applySectionPreset(builtInSectionPresets[presetId]);
+        }
+    });
+
+    $(document).on('click', '.h18-user-preset-insert', function () {
+        const presetId = String($(this).closest('.h18-user-preset-row').attr('data-preset-id') || '');
+        const preset = pageUserPresets[presetId];
+        if (preset && preset.Section) {
+            applySectionPreset(preset.Section);
+        }
+    });
+
+    $('#h18-inspector-copy-key').on('click', function () {
+        if (!$inspectedSection.length) { return; }
+        const key = String($inspectedSection.find('.h18-page-section-key').val() || '');
+        if (!key) { return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(key);
+        } else {
+            window.prompt('Kopiér elementnøglen:', key);
+        }
+    });
+
+    $('#h18-inspector-duplicate').on('click', function () {
+        if ($inspectedSection.length) {
+            $inspectedSection.find('.h18-page-section-duplicate').first().trigger('click');
+        }
+    });
+
+    $('#h18-save-section-preset').on('click', function () {
+        if (!$inspectedSection.length) {
+            return;
+        }
+        const data = sectionPresetData($inspectedSection);
+        if (!data || data.Type === 'legacy') {
+            window.alert('Denne sektion kan ikke gemmes som komponent.');
+            return;
+        }
+        const defaultName = String($inspectedSection.find('.h18-page-section-title-summary').text() || inspectorTypeLabel(data.Type)).trim();
+        const name = window.prompt('Navn på den genbrugelige komponent:', defaultName || 'Ny komponent');
+        if (!name) {
+            return;
+        }
+        const $button = $(this).prop('disabled', true).text('Gemmer…');
+        $.post(Hangar18Manager.ajaxUrl || window.ajaxurl, {
+            action: 'h18_save_page_preset', nonce: Hangar18Manager.pagePresetNonce, name: name, section: JSON.stringify(data)
+        }).done(function (response) {
+            if (!response || !response.success || !response.data || !response.data.preset) {
+                window.alert((response && response.data && response.data.message) || 'Komponenten kunne ikke gemmes.');
+                return;
+            }
+            const preset = response.data.preset;
+            pageUserPresets[String(preset.Id)] = preset;
+            renderUserPresets();
+            $('.h18-builder-sidebar-tab[data-builder-tab="components"]').trigger('click');
+        }).fail(function (xhr) {
+            const message = xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message ? xhr.responseJSON.data.message : 'Komponenten kunne ikke gemmes.';
+            window.alert(message);
+        }).always(function () {
+            $button.prop('disabled', false).text('Gem som komponent');
+        });
+    });
+
+    $(document).on('click', '.h18-user-preset-delete', function () {
+        const presetId = String($(this).closest('.h18-user-preset-row').attr('data-preset-id') || '');
+        const preset = pageUserPresets[presetId];
+        if (!preset || !window.confirm('Slet komponenten “' + String(preset.Name || 'Komponent') + '”?')) {
+            return;
+        }
+        $.post(Hangar18Manager.ajaxUrl || window.ajaxurl, {
+            action: 'h18_delete_page_preset', nonce: Hangar18Manager.pagePresetNonce, preset_id: presetId
+        }).done(function (response) {
+            if (!response || !response.success) {
+                window.alert((response && response.data && response.data.message) || 'Komponenten kunne ikke slettes.');
+                return;
+            }
+            delete pageUserPresets[presetId];
+            renderUserPresets();
+        }).fail(function () {
+            window.alert('Komponenten kunne ikke slettes.');
+        });
     });
 
     let draggedPaletteType = '';

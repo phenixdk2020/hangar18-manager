@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.5.0
+Version: 0.5.1
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -766,3 +766,15 @@ Kompatibilitet og sikkerhed:
 - Alle nye menueffekter er slået fra som standard.
 - HeaderDesign forbliver schema 2.3, så den eksisterende centrale konfiguration og ældre PowerShell-klienter fortsat kan læse de kendte felter.
 - Ingen sidekonvertering eller datamigration køres automatisk.
+
+
+== Version 0.5.1 – Navigator, avanceret Inspector og genbrugelige komponenter ==
+
+- Sidebuilderens venstre panel har faner til Elementer, Lag og Komponenter.
+- Navigator/Lag viser alle aktive sektioner, synlighedsstatus og understøtter drag-and-drop rækkefølge.
+- Inspector er opdelt i Indhold, Design og Avanceret.
+- Avanceret Inspector viser elementtype og elementnøgle samt genveje til duplikering og komponentlagring.
+- Fem indbyggede komponentpresets: Hero + handling, Tekst + billede, 3 informationskort, CTA-bånd og Kontaktblok.
+- Enhver ikke-legacy sektion kan gemmes som egen genbrugelig komponent. Egne komponenter gemmes centralt i WordPress og kan indsættes på alle redigerbare sider.
+- Egne komponenter kan slettes direkte fra komponentbiblioteket.
+- Eksisterende v0.5.0 sider, HeaderDesign schema 2.3 og Designer schema 1.0 bevares uændret.

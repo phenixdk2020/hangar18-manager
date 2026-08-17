@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.0
+ * Version: 0.5.1
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.0';
+    const VERSION = '0.5.1';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -39,6 +39,7 @@ final class Hangar18_Manager {
     const STATIC_CONTENT_OPTION     = 'hangar18_manager_static_content_v1';
     const PAGE_EDITOR_OPTION        = 'hangar18_manager_pages_v1';
     const PAGE_VERSION_HISTORY_OPTION = 'hangar18_manager_page_versions_v1';
+    const PAGE_PRESETS_OPTION         = 'hangar18_manager_page_presets_v1';
     const FORM_SUBMISSIONS_OPTION   = 'hangar18_manager_form_submissions_v1';
     const POLL_VOTES_OPTION         = 'hangar18_manager_poll_votes_v1';
     const MENU_ORDER_OPTION        = 'hangar18_manager_menu_order_v20';
@@ -113,6 +114,8 @@ final class Hangar18_Manager {
 
         add_action('admin_post_h18_save_static_content', [$this, 'handle_save_static_content']);
         add_action('admin_post_h18_save_page_editor', [$this, 'handle_save_page_editor']);
+        add_action('wp_ajax_h18_save_page_preset', [$this, 'ajax_save_page_preset']);
+        add_action('wp_ajax_h18_delete_page_preset', [$this, 'ajax_delete_page_preset']);
         add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);
         add_action('admin_post_h18_restore_page_before_editor', [$this, 'handle_restore_page_before_editor']);
         add_action('admin_post_h18_send_page_form', [$this, 'handle_send_page_form']);
@@ -1242,6 +1245,8 @@ final class Hangar18_Manager {
             'useGallery'        => 'Tilføj valgte billeder',
             'removeImage'       => 'Fjern',
             'galleryEmpty'      => 'Albummet har ingen billeder endnu.',
+            'ajaxUrl'           => admin_url('admin-ajax.php'),
+            'pagePresetNonce'   => wp_create_nonce('h18_page_presets_v051'),
         ]);
     }
 
@@ -7257,6 +7262,107 @@ HTML;
         update_option(self::PAGE_EDITOR_OPTION, $store, false);
     }
 
+
+    private function get_page_presets() {
+        $stored = get_option(self::PAGE_PRESETS_OPTION, []);
+        if (!is_array($stored)) {
+            return [];
+        }
+
+        $presets = [];
+        foreach (array_slice($stored, 0, 50, true) as $id => $entry) {
+            if (!is_array($entry) || !isset($entry['Section']) || !is_array($entry['Section'])) {
+                continue;
+            }
+            $preset_id = sanitize_key((string) ($entry['Id'] ?? $id));
+            $name = sanitize_text_field((string) ($entry['Name'] ?? 'Genbrugelig komponent'));
+            if ($preset_id === '' || $name === '') {
+                continue;
+            }
+            $section = $this->normalize_page_section($entry['Section'], 0);
+            if ($section['Type'] === 'legacy') {
+                continue;
+            }
+            $section['Key'] = '';
+            $section['Order'] = 10;
+            $presets[$preset_id] = [
+                'Id'         => $preset_id,
+                'Name'       => $name,
+                'UpdatedUtc' => sanitize_text_field((string) ($entry['UpdatedUtc'] ?? '')),
+                'Section'    => $section,
+            ];
+        }
+        return $presets;
+    }
+
+    public function ajax_save_page_preset() {
+        if (!current_user_can('edit_pages')) {
+            wp_send_json_error(['message' => 'Du har ikke rettigheder til at gemme komponenter.'], 403);
+        }
+        check_ajax_referer('h18_page_presets_v051', 'nonce');
+
+        $name = sanitize_text_field((string) wp_unslash($_POST['name'] ?? ''));
+        $name = function_exists('mb_substr') ? mb_substr($name, 0, 80) : substr($name, 0, 80);
+        $json = (string) wp_unslash($_POST['section'] ?? '');
+        if ($name === '') {
+            wp_send_json_error(['message' => 'Komponenten skal have et navn.'], 400);
+        }
+        if ($json === '' || strlen($json) > 120000) {
+            wp_send_json_error(['message' => 'Komponentdata mangler eller er for stor.'], 400);
+        }
+
+        $raw = json_decode($json, true);
+        if (!is_array($raw) || json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error(['message' => 'Komponentdata er ikke gyldig JSON.'], 400);
+        }
+
+        $section = $this->normalize_page_section($raw, 0);
+        if ($section['Type'] === 'legacy') {
+            wp_send_json_error(['message' => 'Eksisterende legacy-indhold kan ikke gemmes som komponent.'], 400);
+        }
+        $section['Key'] = '';
+        $section['Order'] = 10;
+
+        $presets = $this->get_page_presets();
+        $preset_id = sanitize_key((string) wp_unslash($_POST['preset_id'] ?? ''));
+        if ($preset_id === '' || !isset($presets[$preset_id])) {
+            $preset_id = 'preset-' . sanitize_key(wp_generate_uuid4());
+        }
+
+        $entry = [
+            'Id'         => $preset_id,
+            'Name'       => $name,
+            'UpdatedUtc' => gmdate('c'),
+            'Section'    => $section,
+        ];
+        $presets[$preset_id] = $entry;
+        if (count($presets) > 50) {
+            $presets = array_slice($presets, -50, null, true);
+        }
+        update_option(self::PAGE_PRESETS_OPTION, $presets, false);
+
+        $this->log('INFO', 'PAGE_PRESET_SAVED', "Genbrugelig komponent '{$name}' gemt som {$preset_id}.");
+        wp_send_json_success(['preset' => $entry]);
+    }
+
+    public function ajax_delete_page_preset() {
+        if (!current_user_can('edit_pages')) {
+            wp_send_json_error(['message' => 'Du har ikke rettigheder til at slette komponenter.'], 403);
+        }
+        check_ajax_referer('h18_page_presets_v051', 'nonce');
+
+        $preset_id = sanitize_key((string) wp_unslash($_POST['preset_id'] ?? ''));
+        $presets = $this->get_page_presets();
+        if ($preset_id === '' || !isset($presets[$preset_id])) {
+            wp_send_json_error(['message' => 'Komponenten blev ikke fundet.'], 404);
+        }
+        $name = (string) $presets[$preset_id]['Name'];
+        unset($presets[$preset_id]);
+        update_option(self::PAGE_PRESETS_OPTION, $presets, false);
+        $this->log('INFO', 'PAGE_PRESET_DELETED', "Genbrugelig komponent '{$name}' ({$preset_id}) blev slettet.");
+        wp_send_json_success(['preset_id' => $preset_id]);
+    }
+
     private function page_module_storage_key($page_id, $section_key) {
         return substr(hash('sha256', (int) $page_id . '|' . sanitize_key((string) $section_key)), 0, 24);
     }
@@ -8000,6 +8106,7 @@ HTML;
         $is_converted = $page instanceof WP_Post && strpos((string) $page->post_content, self::PAGE_EDITOR_MARKER) !== false;
         $conversion_test = $page instanceof WP_Post ? $this->conversion_test_page_for_source($page->ID) : null;
         $versions = $page instanceof WP_Post ? $this->get_page_version_history($slug) : [];
+        $page_presets = $this->get_page_presets();
         ?>
         <div class="wrap h18-admin h18-pages-admin">
             <h1>Sider</h1>
@@ -8080,14 +8187,42 @@ HTML;
 
                     <div class="h18-visual-builder">
                         <aside class="h18-builder-palette">
-                            <h3>Elementer og funktioner</h3>
-                            <p>Træk et element ind på siden, eller klik for at tilføje det nederst.</p>
-                            <div class="h18-builder-palette-list">
-                                <?php foreach ($this->page_section_type_labels() as $value => $label) : if (in_array($value, ['legacy', 'css'], true)) { continue; } ?>
-                                    <button class="h18-builder-palette-item" type="button" draggable="true" data-section-type="<?php echo esc_attr($value); ?>"><span class="dashicons dashicons-plus-alt2"></span><?php echo esc_html($label); ?></button>
-                                <?php endforeach; ?>
+                            <div class="h18-builder-sidebar-tabs" role="tablist" aria-label="Builderpanel">
+                                <button type="button" class="h18-builder-sidebar-tab is-active" data-builder-tab="elements">Elementer</button>
+                                <button type="button" class="h18-builder-sidebar-tab" data-builder-tab="layers">Lag</button>
+                                <button type="button" class="h18-builder-sidebar-tab" data-builder-tab="components">Komponenter</button>
                             </div>
-                            <details><summary>Avanceret</summary><button class="h18-builder-palette-item" type="button" draggable="true" data-section-type="css"><span class="dashicons dashicons-editor-code"></span>Side-CSS</button></details>
+
+                            <div class="h18-builder-sidebar-panel is-active" data-builder-panel="elements">
+                                <h3>Elementer og funktioner</h3>
+                                <p>Træk et element ind på siden, eller klik for at tilføje det nederst.</p>
+                                <div class="h18-builder-palette-list">
+                                    <?php foreach ($this->page_section_type_labels() as $value => $label) : if (in_array($value, ['legacy', 'css'], true)) { continue; } ?>
+                                        <button class="h18-builder-palette-item" type="button" draggable="true" data-section-type="<?php echo esc_attr($value); ?>"><span class="dashicons dashicons-plus-alt2"></span><?php echo esc_html($label); ?></button>
+                                    <?php endforeach; ?>
+                                </div>
+                                <details><summary>Avanceret</summary><button class="h18-builder-palette-item" type="button" draggable="true" data-section-type="css"><span class="dashicons dashicons-editor-code"></span>Side-CSS</button></details>
+                            </div>
+
+                            <div class="h18-builder-sidebar-panel" data-builder-panel="layers">
+                                <div class="h18-builder-panel-heading"><h3>Navigator / lag</h3><span id="h18-page-navigator-count">0</span></div>
+                                <p>Klik for at redigere. Træk lagene for at ændre rækkefølgen på siden.</p>
+                                <div id="h18-page-navigator-list" class="h18-page-navigator-list"></div>
+                            </div>
+
+                            <div class="h18-builder-sidebar-panel" data-builder-panel="components">
+                                <h3>Komponentbibliotek</h3>
+                                <p>Færdige kombinationer du kan indsætte og derefter tilpasse.</p>
+                                <div class="h18-builder-component-list">
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="hero-cta"><span class="dashicons dashicons-cover-image"></span><strong>Hero + handling</strong><small>Stor introduktion med knap</small></button>
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="text-image"><span class="dashicons dashicons-align-pull-left"></span><strong>Tekst + billede</strong><small>To-delt præsentation</small></button>
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="info-cards"><span class="dashicons dashicons-screenoptions"></span><strong>3 informationskort</strong><small>Responsivt kort-grid</small></button>
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="cta-band"><span class="dashicons dashicons-megaphone"></span><strong>CTA-bånd</strong><small>Fremhævet handlingssektion</small></button>
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="contact-form"><span class="dashicons dashicons-email-alt"></span><strong>Kontaktblok</strong><small>Tekst og mailformular</small></button>
+                                </div>
+                                <div class="h18-user-components-heading"><h4>Egne komponenter</h4><span>Gemmes i WordPress</span></div>
+                                <div id="h18-user-presets-list" class="h18-user-presets-list"><p class="description">Vælg en sektion og brug “Gem som komponent” i Inspector.</p></div>
+                            </div>
                         </aside>
 
                         <div class="h18-builder-canvas">
@@ -8098,9 +8233,26 @@ HTML;
                             <div class="h18-builder-drop-hint">Slip et nyt element her</div>
                         </div>
 
-                        <aside id="h18-page-inspector" class="h18-builder-inspector">
-                            <div class="h18-builder-inspector-heading"><h3>Indstillinger</h3><span>Vælg en sektion i sideopbygningen</span></div>
-                            <div id="h18-page-inspector-target"><p class="description">Klik på <strong>Rediger</strong> ved en sektion for at ændre indhold, farver og luft.</p></div>
+                        <aside id="h18-page-inspector" class="h18-builder-inspector" data-inspector-panel="content">
+                            <div class="h18-builder-inspector-heading"><h3>Inspector</h3><span>Vælg en sektion i sideopbygningen</span></div>
+                            <div class="h18-inspector-tabs" role="tablist" aria-label="Elementindstillinger">
+                                <button type="button" class="h18-inspector-tab is-active" data-inspector-tab="content">Indhold</button>
+                                <button type="button" class="h18-inspector-tab" data-inspector-tab="design">Design</button>
+                                <button type="button" class="h18-inspector-tab" data-inspector-tab="advanced">Avanceret</button>
+                            </div>
+                            <div id="h18-page-inspector-target"><p class="description">Klik på <strong>Rediger</strong> ved en sektion for at ændre indhold, design og responsive indstillinger.</p></div>
+                            <div id="h18-inspector-advanced-panel" class="h18-inspector-advanced-panel">
+                                <div class="h18-inspector-meta-grid">
+                                    <div><span>Type</span><strong id="h18-inspector-type">–</strong></div>
+                                    <div><span>Elementnøgle</span><code id="h18-inspector-key">–</code></div>
+                                </div>
+                                <div class="h18-inspector-advanced-actions">
+                                    <button type="button" class="button" id="h18-inspector-copy-key" disabled>Kopiér nøgle</button>
+                                    <button type="button" class="button" id="h18-inspector-duplicate" disabled>Duplikér element</button>
+                                    <button type="button" class="button button-primary" id="h18-save-section-preset" disabled>Gem som komponent</button>
+                                </div>
+                                <p class="description">Genbrugelige komponenter gemmes centralt i WordPress og kan indsættes på alle sider i Hangar18-editoren.</p>
+                            </div>
                         </aside>
                     </div>
 
@@ -8144,6 +8296,7 @@ HTML;
                     <?php endif; ?>
                 </section>
 
+                <script id="h18-page-presets-data" type="application/json"><?php echo wp_json_encode(array_values($page_presets), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
                 <template id="h18-page-section-template"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>
                 <template id="h18-page-card-template"><?php $this->render_page_editor_card_admin($this->default_page_card(10), '__SECTION_INDEX__', '__CARD_INDEX__'); ?></template>
             <?php endif; ?>

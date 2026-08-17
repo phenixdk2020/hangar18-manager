@@ -1,16 +1,16 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T17:33:36Z",
+  "published_utc": "2026-08-17T17:53:22Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "37af59568581e3bf5c1c65f351b21dfb20237d68297474b19c32320b35f32c6f",
+  "package_sha256": "7eb06146f08f51c44301953456e6bd8b93c3e042510e076f4a1d73cd99006816",
   "changelog": [
-    "Bygger direkte videre på v0.4.27 og bevarer den eksisterende visuelle builder.",
-    "Tilføjer Designer schema 1.0 med globale design tokens uden at bryde HeaderDesign schema 2.3.",
-    "Kobler sidebyggerens farvepresets til centrale designfarver.",
-    "Tilføjer valgfrie menupræsentationer, hover/active-effekter og undermenu-animationer."
+    "Tilføjer Navigator/Lag med drag-and-drop rækkefølge og synlighedsstatus.",
+    "Opdeler Inspector i Indhold, Design og Avanceret.",
+    "Tilføjer fem indbyggede komponentpresets.",
+    "Gør det muligt at gemme og genbruge egne sektioner centralt i WordPress."
   ]
 }
