@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.12",
+  "version": "0.5.13",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T20:28:26Z",
+  "published_utc": "2026-08-17T20:40:04Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "9496427a136a0e5ace2e65005373e1d801eee7b73c8edbb01a72bebc81e6ada7",
+  "package_sha256": "928481731c83f28b58aa98a845ddf72ef58219ccef4f8e43fb2511c3c9c641b7",
   "changelog": [
-    "Tilføjer lokal Undo/Redo-historik med op til 50 trin i den visuelle editor.",
-    "Tilføjer Fortryd/Gendan-knapper samt sikre tastaturgenveje.",
-    "Historikken dækker live-canvas, sektioner, Card Grid og rækkefølge.",
-    "Tilføjer status for ugemte ændringer og navigation-advarsel.",
-    "Page-editor schema forbliver 1.12; permanente revisioner og backups er uændrede."
+    "Tilføjer lokal browser-autosave af sideeditorens recovery-state.",
+    "Tilføjer Gendan kladde / Kassér kladde med versionskontrol mod WordPress-siden.",
+    "Kladder gendannes aldrig automatisk og permanente revisioner/backups er uændrede.",
+    "Autosave flusher ved pagehide/skjult fane og håndterer succesfulde Gem-submits sikkert.",
+    "Retter readme-versioneringen og dokumenterer v0.5.12; page-editor schema forbliver 1.12."
   ]
 }

@@ -1,7 +1,30 @@
 === Hangar18 Manager ===
-Version: 0.5.11
+Version: 0.5.13
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.5.13 – Lokal autosave og crash recovery ==
+
+Nyt:
+- lokal browser-autosave af sideeditorens aktuelle recovery-state
+- kladden gemmes pr. side og indeholder sideopbygning, Card Grid, design og aktuelle feltværdier
+- Gendan kladde / Kassér kladde vises kun, når der faktisk findes en relevant recovery-state
+- ældre kladder markeres tydeligt, hvis WordPress-siden er ændret siden kladden blev oprettet
+- ingen kladde gendannes automatisk; restore kræver altid et aktivt klik
+- autosave flusher ved skjult fane/pagehide og før browserens ugemte-ændringer-advarsel
+- permanent Gem, WhatIf, WordPress-revisioner og JSON-backups er uændrede
+- page-editor schema forbliver 1.12; ingen datamigrering er nødvendig
+
+== Version 0.5.12 – Undo / Redo og sikker redigeringshistorik ==
+
+Nyt:
+- lokal Undo/Redo-historik med op til 50 trin
+- Fortryd/Gendan-knapper og Ctrl/Cmd+Z samt Ctrl/Cmd+Shift+Z uden at overtage normal tekst-undo i inputfelter
+- historikken dækker live canvas, sektioner, Card Grid og rækkefølge
+- status for ugemte ændringer og browseradvarsel ved navigation
+- hurtige ændringer flusher før Undo/Redo, og Card Grid i Inspector indgår i historikken
+- page-editor schema forbliver 1.12; permanente revisioner og backups er uændrede
 
 
 == Version 0.5.11 – Elementstørrelse og design-clipboard ==

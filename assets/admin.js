@@ -2420,6 +2420,174 @@ jQuery(function ($) {
     let editorHistoryApplying = false;
     let editorHistorySubmitting = false;
     let editorHistorySavedSignature = '';
+    const editorDraftVersion = '1.0';
+    const editorDraftStoragePrefix = 'hangar18PageDraftV0513:';
+    const editorDraftMaxChars = 4000000;
+    const editorDraftSubmitSuccessWindowMs = 10 * 60 * 1000;
+    let editorDraftTimer = null;
+    let editorDraftCandidate = null;
+    let editorDraftServerSignature = '';
+    let editorDraftRecoveryPending = false;
+
+    function editorDraftPageSlug() {
+        const raw = String($('#h18-page-editor-form [name="page_slug"]').val() || '').trim().toLowerCase();
+        return raw.replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown';
+    }
+
+    function editorDraftStorageKey() {
+        return editorDraftStoragePrefix + editorDraftPageSlug();
+    }
+
+    function editorDraftSetStatus(text, state) {
+        const $status = $('#h18-editor-autosave-status');
+        if (!$status.length) { return; }
+        $status.removeClass('is-saved is-warning is-error');
+        if (state) { $status.addClass('is-' + state); }
+        $status.text(String(text || 'Lokal kladde: klar'));
+    }
+
+    function editorDraftFormatTime(iso) {
+        if (!iso) { return ''; }
+        const value = new Date(iso);
+        if (Number.isNaN(value.getTime())) { return ''; }
+        return value.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function editorDraftHideRecovery() {
+        $('#h18-editor-recovery-actions').prop('hidden', true);
+    }
+
+    function editorDraftShowRecovery() {
+        $('#h18-editor-recovery-actions').prop('hidden', false);
+    }
+
+    function editorDraftRead() {
+        try {
+            if (!window.localStorage) { return null; }
+            const raw = window.localStorage.getItem(editorDraftStorageKey());
+            if (!raw) { return null; }
+            const value = JSON.parse(raw);
+            if (!value || value.Version !== editorDraftVersion || value.PageSlug !== editorDraftPageSlug()) { return null; }
+            if (!value.Snapshot || typeof value.Snapshot !== 'object' || !value.Snapshot.html || !value.Snapshot.signature) { return null; }
+            return value;
+        } catch (error) {
+            editorDraftSetStatus('Lokal kladde kunne ikke læses', 'error');
+            return null;
+        }
+    }
+
+    function editorDraftRemove(updateStatus) {
+        try {
+            if (window.localStorage) { window.localStorage.removeItem(editorDraftStorageKey()); }
+            if (updateStatus !== false) { editorDraftSetStatus('Lokal kladde: ingen ændringer', ''); }
+            return true;
+        } catch (error) {
+            editorDraftSetStatus('Lokal kladde kunne ikke slettes', 'error');
+            return false;
+        }
+    }
+
+    function editorDraftSaveNow(markSubmitted) {
+        window.clearTimeout(editorDraftTimer);
+        editorDraftTimer = null;
+        if (!editorHistoryReady || editorHistoryApplying) { return false; }
+        if (editorDraftRecoveryPending && !markSubmitted) { return false; }
+        const snapshot = editorHistorySnapshot();
+        if (!snapshot) { return false; }
+        if (snapshot.signature === editorDraftServerSignature) {
+            editorDraftRemove(false);
+            editorDraftSetStatus('Lokal kladde: ingen ændringer', '');
+            return true;
+        }
+        const now = new Date().toISOString();
+        const payload = {
+            Version: editorDraftVersion,
+            PluginVersion: '0.5.13',
+            PageSlug: editorDraftPageSlug(),
+            BaseSignature: editorDraftServerSignature,
+            SavedAtUtc: now,
+            SubmittedAtUtc: markSubmitted ? now : '',
+            Snapshot: snapshot
+        };
+        let raw = '';
+        try {
+            raw = JSON.stringify(payload);
+            if (raw.length > editorDraftMaxChars) {
+                editorDraftSetStatus('Lokal kladde er for stor til browserlager', 'error');
+                return false;
+            }
+            if (!window.localStorage) { throw new Error('localStorage unavailable'); }
+            window.localStorage.setItem(editorDraftStorageKey(), raw);
+            editorDraftSetStatus('Lokal kladde gemt ' + editorDraftFormatTime(now), 'saved');
+            return true;
+        } catch (error) {
+            editorDraftSetStatus('Lokal kladde kunne ikke gemmes', 'error');
+            return false;
+        }
+    }
+
+    function editorDraftScheduleSave(delay) {
+        if (!editorHistoryReady || editorHistoryApplying || editorDraftRecoveryPending) { return; }
+        window.clearTimeout(editorDraftTimer);
+        editorDraftTimer = window.setTimeout(function () { editorDraftSaveNow(false); }, Math.max(150, Number(delay) || 1200));
+    }
+
+    function editorDraftInitializeRecovery(initial) {
+        if (!initial) { return; }
+        editorDraftServerSignature = initial.signature;
+        editorDraftHideRecovery();
+        const draft = editorDraftRead();
+        if (!draft) {
+            editorDraftSetStatus('Lokal kladde: klar', '');
+            return;
+        }
+        if (draft.Snapshot.signature === initial.signature) {
+            editorDraftRemove(false);
+            editorDraftSetStatus('Lokal kladde er allerede gemt', 'saved');
+            return;
+        }
+        const submittedAt = draft.SubmittedAtUtc ? new Date(draft.SubmittedAtUtc).getTime() : 0;
+        const recentlySubmitted = submittedAt > 0 && (Date.now() - submittedAt) >= 0 && (Date.now() - submittedAt) <= editorDraftSubmitSuccessWindowMs;
+        if (recentlySubmitted && draft.BaseSignature && draft.BaseSignature !== initial.signature) {
+            editorDraftRemove(false);
+            editorDraftSetStatus('Sidste lokale kladde er gemt i WordPress', 'saved');
+            return;
+        }
+        editorDraftCandidate = draft;
+        editorDraftRecoveryPending = true;
+        editorDraftShowRecovery();
+        const time = editorDraftFormatTime(draft.SavedAtUtc);
+        const stale = Boolean(draft.BaseSignature && draft.BaseSignature !== initial.signature);
+        editorDraftSetStatus(
+            'Kladde fundet' + (time ? ' ' + time : '') + (stale ? ' · ældre sideversion' : ' · kan gendannes'),
+            'warning'
+        );
+    }
+
+    function editorDraftRestoreCandidate() {
+        if (!editorDraftCandidate || !editorDraftCandidate.Snapshot || !editorHistoryReady) { return; }
+        const draft = editorDraftCandidate;
+        const serverEntry = editorHistoryEntries.find(function (entry) { return entry.signature === editorDraftServerSignature; }) || editorHistoryEntries[0];
+        editorDraftRecoveryPending = false;
+        editorDraftCandidate = null;
+        editorDraftHideRecovery();
+        editorHistoryEntries.splice(0, editorHistoryEntries.length);
+        if (serverEntry) { editorHistoryEntries.push(serverEntry); }
+        if (!serverEntry || draft.Snapshot.signature !== serverEntry.signature) { editorHistoryEntries.push(draft.Snapshot); }
+        editorHistoryIndex = editorHistoryEntries.length - 1;
+        editorHistoryRestore(draft.Snapshot);
+        editorDraftSaveNow(false);
+        editorHistoryUpdateUi();
+    }
+
+    function editorDraftDiscardCandidate() {
+        editorDraftRecoveryPending = false;
+        editorDraftCandidate = null;
+        editorDraftHideRecovery();
+        editorDraftRemove(false);
+        editorDraftSetStatus('Lokal kladde kasseret', '');
+        editorDraftScheduleSave(250);
+    }
 
     function editorHistoryNormalizeClone($root) {
         $root.find('.h18-canvas-preview, .ui-sortable-placeholder, .ui-sortable-helper').remove();
@@ -2500,6 +2668,7 @@ jQuery(function ($) {
         }
         editorHistoryIndex = editorHistoryEntries.length - 1;
         editorHistoryUpdateUi();
+        editorDraftScheduleSave();
     }
 
     function scheduleEditorHistoryCapture(delay) {
@@ -2544,6 +2713,7 @@ jQuery(function ($) {
         } finally {
             editorHistoryApplying = false;
             editorHistoryUpdateUi();
+            if (editorHistoryReady) { editorDraftScheduleSave(250); }
         }
     }
 
@@ -2575,8 +2745,10 @@ jQuery(function ($) {
         editorHistoryEntries.push(initial);
         editorHistoryIndex = 0;
         editorHistorySavedSignature = initial.signature;
+        editorDraftServerSignature = initial.signature;
         editorHistoryReady = true;
         editorHistoryUpdateUi();
+        editorDraftInitializeRecovery(initial);
 
         const originalCanvasSetField = canvasSetField;
         canvasSetField = function ($row, fieldName, value) {
@@ -2646,18 +2818,51 @@ jQuery(function ($) {
     if ($pageEditorForm.length) {
         $pageWhatIf.on('change', syncPageChangeNoteRequirement);
         syncPageChangeNoteRequirement();
-        $pageEditorForm.on('submit', function () { editorHistorySubmitting = true; });
+        $pageEditorForm.on('submit', function () {
+            editorHistoryFlushPending();
+            window.clearTimeout(editorDraftTimer);
+            editorDraftTimer = null;
+            editorDraftSaveNow(!$pageWhatIf.is(':checked'));
+            editorHistorySubmitting = true;
+        });
         window.setTimeout(initializeEditorHistory, 0);
     }
 
     $(window).on('beforeunload.h18EditorHistory', function (event) {
         if (!editorHistoryReady || editorHistorySubmitting || editorHistoryIndex < 0) { return; }
         editorHistoryFlushPending();
+        editorDraftSaveNow(false);
         const live = editorHistorySnapshot();
         if (!live || live.signature === editorHistorySavedSignature) { return; }
         event.preventDefault();
         event.returnValue = '';
         return '';
     });
+
+
+    $(document).on('click', '#h18-editor-restore-draft', function (event) {
+        event.preventDefault();
+        editorHistoryFlushPending();
+        editorDraftRestoreCandidate();
+    });
+
+    $(document).on('click', '#h18-editor-discard-draft', function (event) {
+        event.preventDefault();
+        editorDraftDiscardCandidate();
+    });
+
+    $(window).on('pagehide.h18EditorDraft', function () {
+        if (!editorHistoryReady || editorHistorySubmitting) { return; }
+        editorHistoryFlushPending();
+        editorDraftSaveNow(false);
+    });
+
+    if (document && document.addEventListener) {
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState !== 'hidden' || !editorHistoryReady || editorHistorySubmitting) { return; }
+            editorHistoryFlushPending();
+            editorDraftSaveNow(false);
+        });
+    }
 
 });
