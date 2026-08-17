@@ -6,7 +6,7 @@
   "min_php": "8.0",
   "published_utc": "2026-08-17T18:07:08Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "166646c1df81f90b939a879ea2b3d3ab7a7907c32f3fc2d4bba300f628e9b915",
+  "package_sha256": "52216b5a70e05a3cef2d98adfd661c5ae07305e0995f7ee2d00f4418bf83d58a",
   "changelog": [
     "Tilføjer brødtekstfont og overskriftsfont pr. element.",
     "Tilføjer individuelle størrelser for brødtekst samt H1, H2 og H3.",
