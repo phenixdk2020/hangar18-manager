@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.15",
+  "version": "0.5.16",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T22:17:09Z",
+  "published_utc": "2026-08-17T22:26:41Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "2d9d55836200e776a50c1f9cbd896a9972732aa09d2e700efa31e14e5dbe31dd",
+  "package_sha256": "53c369c932ad2e4eb60161f976062b87cde91a1b7d98565c54084ce636ef4c18",
   "changelog": [
-    "Afslutter E1 Editor Shell med UD-017 multi-select og fælles property editing.",
-    "Tilføjer UD-018 canvas zoom, Outline mode og Guides med lokale workspace-præferencer.",
-    "Tilføjer UD-019 keyboard-tilgængelig context menu via højreklik og Shift+F10.",
-    "Batch-redigering og context menu genbruger eksisterende editorfelter og Undo/Redo-historik.",
-    "Funktionerne er editor-only; page-editor schema forbliver 1.12."
+    "Tilføjer E2 primitive elementer: Icon/SVG, Divider, List, Badge og Quote.",
+    "Tilføjer sikkert Embed-element via WordPress oEmbed og separat capability-gated Shortcode-element.",
+    "Importerede Gutenberg lister, citater og separatorer bliver semantiske Hangar18-elementer.",
+    "HTML udfører ikke længere shortcodes implicit; eksekverbar shortcode kræver eksplicit autorisation.",
+    "Løfter page-editor schema bagudkompatibelt til 1.13."
   ]
 }

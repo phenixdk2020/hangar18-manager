@@ -1,8 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.5.15
+Version: 0.5.16
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.16 – E2 element primitives og sikre embeds ==
+
+Nyt:
+- UD-028: sikkert Icon/SVG-element med indbygget allowlist-baseret ikonbibliotek uden rå bruger-SVG
+- UD-029: nye semantiske elementer for skillelinje, liste, badge og citat
+- Divider-varianter: hel, stiplet, prikket og dobbelt; List-varianter: punkter, numre og flueben
+- Badge kan være fyldt/outline, og Quote kan være standard/stort citat
+- UD-032: separat Embed-element via WordPress oEmbed og separat avanceret Shortcode-element
+- Shortcode autoriseres kun ved gemning af brugere med unfiltered_html/manage_options; lavere roller kan ikke ændre eller indsætte ny eksekverbar shortcode
+- eksisterende autoriseret shortcode kan bevares af lavere roller, når selve shortcode-indholdet er uændret
+- importerede Gutenberg lister/citater/separatorer konverteres til de nye semantiske elementer
+- HTML-elementet udfører ikke længere nye shortcodes implicit; eksplicit Shortcode-element er sikkerhedsgrænsen
+- page-editor schema løftes bagudkompatibelt til 1.13
 
 == Version 0.5.15 – Multi-select, canvas workspace og context menu ==
 

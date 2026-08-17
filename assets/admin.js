@@ -332,9 +332,32 @@ jQuery(function ($) {
         const labels = {
             hero: 'Topbanner / hero', text: 'Tekst', text_image: 'Tekst og billede', image: 'Stort billede',
             buttons: 'Handlingsknapper', card: 'Indholdskort', card_grid: 'Kort-række / kolonner', highlight: 'Fremhævet tekst',
+            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
             spacer: 'Afstand', html: 'Importeret blok / HTML', css: 'Side-CSS', mail_form: 'Mailformular', poll: 'Afstemning', legacy: 'Eksisterende indhold'
         };
         return labels[String(type || '')] || 'Sektion';
+    }
+
+    const primitiveVariantOptionsV0516 = {
+        icon: { check: 'Flueben', star: 'Stjerne', info: 'Info', location: 'Placering', calendar: 'Kalender', phone: 'Telefon', mail: 'E-mail', wrench: 'Værktøj', shield: 'Skjold', arrow: 'Pil' },
+        divider: { solid: 'Hel linje', dashed: 'Stiplet', dotted: 'Prikket', double: 'Dobbelt' },
+        list: { bullets: 'Punkter', numbers: 'Numre', checks: 'Flueben' },
+        badge: { solid: 'Fyldt', outline: 'Outline' },
+        quote: { standard: 'Standard', large: 'Stort citat' }
+    };
+
+    function refreshPrimitiveVariantV0516($row) {
+        if (!$row || !$row.length) { return; }
+        const type = String($row.attr('data-section-type') || 'text');
+        const options = primitiveVariantOptionsV0516[type];
+        const $select = pageSectionControls($row, '.h18-primitive-variant').first();
+        if (!$select.length || !options) { return; }
+        const current = String($select.val() || '');
+        $select.empty();
+        Object.keys(options).forEach(function (value) {
+            $select.append($('<option>', { value: value, text: options[value] }));
+        });
+        $select.val(Object.prototype.hasOwnProperty.call(options, current) ? current : Object.keys(options)[0]);
     }
 
     function setInspectorPanel(panel) {
@@ -620,6 +643,7 @@ jQuery(function ($) {
         refreshSectionDesignMode($row);
         refreshSectionBackgroundEffect($row);
         refreshHoverStyleMode($row);
+        refreshPrimitiveVariantV0516($row);
         rebuildPageNavigator();
         renderCanvasPreview($row);
     }
@@ -728,6 +752,22 @@ jQuery(function ($) {
             setValue('HeroHeightPx', 320);
             setValue('MobileHeroHeightPx', 220);
             setValue('OverlayOpacityPercent', 35);
+        } else if (type === 'icon') {
+            setValue('PrimitiveVariant', 'check');
+            setValue('DesktopAlignment', 'Center');
+            setValue('MobileAlignment', 'Center');
+        } else if (type === 'divider') {
+            setValue('PrimitiveVariant', 'solid');
+            setValue('BorderWidthPx', 2);
+            setValue('BottomSpacingPx', 24);
+        } else if (type === 'list') {
+            setValue('PrimitiveVariant', 'bullets');
+        } else if (type === 'badge') {
+            setValue('PrimitiveVariant', 'solid');
+            setValue('DesktopAlignment', 'Left');
+        } else if (type === 'quote') {
+            setValue('PrimitiveVariant', 'standard');
+            setValue('BorderWidthPx', 4);
         } else if (type === 'card') {
             setValue('Background', 'OffWhite');
             setValue('PaddingPx', 26);
@@ -1073,6 +1113,37 @@ jQuery(function ($) {
             if (url) { $image.append($('<img>', { src: url, alt: '' })); } else { $image.append($('<span>', { class: 'h18-canvas-image-placeholder', text: 'Intet billede valgt' })); }
             canvasApplySectionImageStyle($row, $image);
             $inner.append($image);
+        } else if (type === 'icon') {
+            const variant = String(canvasFieldValue($row, 'PrimitiveVariant', 'check'));
+            const symbols = { check: '✓', star: '★', info: 'ⓘ', location: '⌖', calendar: '▣', phone: '☎', mail: '✉', wrench: '⌕', shield: '◆', arrow: '→' };
+            $inner.append($('<div>', { class: 'h18-canvas-primitive-icon', text: symbols[variant] || '✓', title: title || inspectorTypeLabel(type) }));
+            if (content) { canvasAddBodyText($inner, content); }
+        } else if (type === 'divider') {
+            const variant = String(canvasFieldValue($row, 'PrimitiveVariant', 'solid'));
+            $inner.append($('<hr>', { class: 'h18-canvas-primitive-divider h18-canvas-primitive-divider--' + variant }));
+        } else if (type === 'list') {
+            addTitle('Liste');
+            const variant = String(canvasFieldValue($row, 'PrimitiveVariant', 'bullets'));
+            const text = $('<div>').html(content).text();
+            const items = text.split(/\r?\n|•/).map(function (item) { return item.trim(); }).filter(Boolean).slice(0, 8);
+            const $list = $(variant === 'numbers' ? '<ol>' : '<ul>', { class: variant === 'checks' ? 'h18-canvas-list-checks' : '' });
+            (items.length ? items : ['Listepunkt']).forEach(function (item) { $list.append($('<li>', { text: item })); });
+            $inner.append($list);
+        } else if (type === 'badge') {
+            const variant = String(canvasFieldValue($row, 'PrimitiveVariant', 'solid'));
+            $inner.append($('<span>', { class: 'h18-canvas-primitive-badge h18-canvas-primitive-badge--' + variant, text: title || $('<div>').html(content).text() || 'Badge' }));
+        } else if (type === 'quote') {
+            const variant = String(canvasFieldValue($row, 'PrimitiveVariant', 'standard'));
+            const $quote = $('<figure>', { class: 'h18-canvas-primitive-quote h18-canvas-primitive-quote--' + variant });
+            $quote.append($('<blockquote>', { text: $('<div>').html(content).text() || 'Citat' }));
+            if (title) { $quote.append($('<figcaption>', { text: '— ' + title })); }
+            $inner.append($quote);
+        } else if (type === 'embed') {
+            addTitle('Embed');
+            $inner.append($('<div>', { class: 'h18-canvas-embed-placeholder' }).append($('<span>', { class: 'dashicons dashicons-video-alt3' }), $('<code>', { text: content || 'Indsæt en medie-URL' })));
+        } else if (type === 'shortcode') {
+            addTitle('Shortcode');
+            $inner.append($('<pre>', { class: 'h18-canvas-shortcode-placeholder' }).append($('<code>', { text: content || '[shortcode]' })));
         } else if (type === 'buttons') {
             addTitle('Handling');
             canvasAddBodyText($inner, content);

@@ -704,3 +704,11 @@ body.h18-command-palette-visible{overflow:hidden}
 .h18-context-separator{height:1px;background:#dcdcde;margin:5px 3px}
 @media(max-width:1100px){.h18-multi-edit-grid{grid-template-columns:1fr}.h18-canvas-workspace-controls{width:100%;justify-content:flex-start;margin-left:0}}
 
+/* v0.5.16 – E2 element primitives */
+.h18-canvas-primitive-icon{font-size:58px;line-height:1;text-align:center;padding:12px}
+.h18-canvas-primitive-divider{width:100%;border:0;border-top:2px solid currentColor;opacity:.55}.h18-canvas-primitive-divider--dashed{border-top-style:dashed}.h18-canvas-primitive-divider--dotted{border-top-style:dotted}.h18-canvas-primitive-divider--double{border-top-style:double;border-top-width:4px}
+.h18-canvas-list-checks{list-style:none;padding-left:0}.h18-canvas-list-checks li:before{content:'✓';font-weight:800;margin-right:.55em}
+.h18-canvas-primitive-badge{display:inline-flex;padding:5px 12px;border-radius:999px;background:currentColor;font-weight:700}.h18-canvas-primitive-badge--outline{background:transparent;border:1px solid currentColor}
+.h18-canvas-primitive-quote{margin:0;padding:14px 18px;border-left:4px solid currentColor}.h18-canvas-primitive-quote blockquote{margin:0}.h18-canvas-primitive-quote--large blockquote{font-size:1.5em}.h18-canvas-primitive-quote figcaption{margin-top:9px;font-weight:600}
+.h18-canvas-embed-placeholder,.h18-canvas-shortcode-placeholder{box-sizing:border-box;width:100%;padding:16px;border:1px dashed #8c8f94;border-radius:6px;background:rgba(255,255,255,.72);overflow-wrap:anywhere}.h18-canvas-embed-placeholder{display:flex;align-items:center;gap:9px}.h18-canvas-shortcode-placeholder{white-space:pre-wrap}
+
