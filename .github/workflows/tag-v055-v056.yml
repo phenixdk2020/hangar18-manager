@@ -1,0 +1,32 @@
+name: Tag Hangar18 Manager v0.5.5 and v0.5.6
+on:
+  push:
+    branches: [development/v0.5.6]
+    paths: ['.github/workflows/tag-v055-v056.yml']
+permissions:
+  contents: write
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag releases and self-clean
+        run: |
+          set -euo pipefail
+          git config user.name "hangar18-build"
+          git config user.email "actions@users.noreply.github.com"
+          tag_release () {
+            TAG="$1"; SHA="$2"
+            if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+              git tag -a "$TAG" "$SHA" -m "Hangar18 Manager $TAG"
+              git push origin "$TAG"
+            fi
+          }
+          tag_release v0.5.5 fe72631152f568fcc643f9cf45f9014a78f9b28f
+          tag_release v0.5.6 70e1ff4cd59d5394f737268ad60dd48305add5ca
+          rm -f .github/workflows/tag-v055-v056.yml
+          git add -A
+          git commit -m "Maintenance: clean v0.5.5-v0.5.6 tag workflow"
+          git push
