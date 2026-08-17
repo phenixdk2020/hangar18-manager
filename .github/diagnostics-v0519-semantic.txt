@@ -1,0 +1,22 @@
+version PASS
+schema_count PASS
+types PASS
+flat_parent PASS
+parent_validation PASS
+php_depth PASS
+tree PASS
+gate PASS
+cssvars PASS
+js_depth PASS
+parent_ui PASS
+preset_serialize PASS
+preset_apply PASS
+palette PASS
+carousel_bools PASS
+layout_bools PASS
+readme PASS
+legacy FAIL
+forbid 'Children' => PASS
+forbid 'LayoutChildren' => PASS
+forbid NestedSections PASS
+forbid ChildSections PASS
