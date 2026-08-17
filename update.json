@@ -6,12 +6,13 @@
   "min_php": "8.0",
   "published_utc": "2026-08-17T18:21:52Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "55e377e6956b9f0f0ee8c0adc3060ba9490efdb0d63fb4219ebe057b788bdb1f",
+  "package_sha256": "2af659c962b5adb33c96fe69b5aef92e939a434fe8d46f3f312ea5a0da67026e",
   "changelog": [
     "Tilføjer vis/skjul pr. desktop, tablet og mobil.",
     "Tilføjer særskilt tablet-layout med arv fra desktop.",
     "Tilføjer translate, scale og rotate pr. enhed.",
     "Komponerer responsive transforms med hover-effekter og reduced-motion.",
-    "Løfter page-editor schema kompatibelt til 1.9."
+    "Løfter page-editor schema kompatibelt til 1.9.",
+    "Tablet-justering gælder også importerede Gutenberg-grupper, tekstjustering og handlinger."
   ]
 }
