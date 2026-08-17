@@ -1,0 +1,30 @@
+name: Retag Hangar18 Manager v0.5.0
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/retag-v050.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  retag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Point v0.5.0 at rebuilt release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET='3768f989edc2f9570c086e24f2d113aa140ee744'
+          git fetch --tags --force
+          git tag -f v0.5.0 "$TARGET"
+          git push origin refs/tags/v0.5.0 --force
+          test "$(git rev-parse v0.5.0^{commit})" = "$TARGET"
