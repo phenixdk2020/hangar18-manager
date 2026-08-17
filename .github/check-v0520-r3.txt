@@ -1,0 +1,14 @@
+=== PREPARE ===
+v0.5.20 deterministic finalizer prepared
+prepare_status=0
+=== PATCH ===
+design admin panels: expected exactly one anchor, found 0
+patch_status=1
+=== PHP ===
+No syntax errors detected in hangar18-manager.php
+php_status=0
+=== JS ===
+js_status=0
+=== QA ===
+Failed v0.5.20 checks: ['version', 'page schema', 'breakpoints', 'motion defaults', 'motion tokens', 'focus tokens', 'dynamic breakpoints', 'state defaults', 'focus css', 'active css', 'disabled css', 'canvas states', 'palette states', 'readme']
+qa_status=1
