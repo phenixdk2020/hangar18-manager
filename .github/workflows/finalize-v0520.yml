@@ -1,0 +1,151 @@
+name: Finalize Hangar18 Manager v0.5.20
+
+on:
+  push:
+    branches:
+      - qa/v0.5.20-diagnose
+    paths:
+      - '.github/workflows/finalize-v0520.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.20-diagnose
+          fetch-depth: 0
+
+      - name: Correct patch anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/patch_v0520.py')
+          t=p.read_text()
+          old="""spacing_panel_tail=\"\"\"                        $this->field('SpacingLargePx', 'Afstand L (px)', $s['SpacingLargePx'], 'number');
+                        $this->field('SpacingXlPx', 'Afstand XL (px)', $s['SpacingXlPx'], 'number');
+                        ?>
+                    </section>
+\"\"\""""
+          new="""spacing_panel_tail=\"\"\"                        $this->field('SpacingLargePx', 'Afstand L (px)', $s['SpacingLargePx'], 'number');
+                        $this->field('SpacingXlPx', 'Afstand XL (px)', $s['SpacingXlPx'], 'number');
+                        $this->field('RadiusSmallPx', 'Afrunding S (px)', $s['RadiusSmallPx'], 'number');
+                        $this->field('RadiusMediumPx', 'Afrunding M (px)', $s['RadiusMediumPx'], 'number');
+                        $this->field('RadiusLargePx', 'Afrunding L (px)', $s['RadiusLargePx'], 'number');
+                        ?>
+                    </section>
+\"\"\""""
+          if old not in t:
+              raise SystemExit('Admin anchor definition missing')
+          p.write_text(t.replace(old,new,1))
+          PY
+
+      - name: Apply patch and source QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/patch_v0520.py
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          python3 .github/scripts/qa_v0520.py
+
+      - name: Build distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp assets/admin.css assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+
+      - name: Write release manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          p=Path('dist/hangar18-manager.zip')
+          m={
+            'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.20','min_wp':'6.4','min_php':'8.0',
+            'published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+            'package_path':'dist/hangar18-manager.zip','package_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),
+            'changelog':[
+              'Afslutter E3 Design System med redigerbare builder-breakpoints og globale motion/focus-tokens.',
+              'Tilføjer Focus, Active og Disabled states samt transition presets pr. element.',
+              'Live canvas og kommandopalette kan forhåndsvise Normal, Hover, Focus, Aktiv og Disabled.',
+              'Standard-breakpoints 782/1199 bevarer eksisterende responsive sider; Header legacy breakpoints ændres ikke.',
+              'Løfter DesignerSchemaVersion kompatibelt til 1.1 og page-editor schema til 1.16.'
+            ]}
+          Path('update.json').write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n')
+          print(m['package_sha256'])
+          PY
+
+      - name: Package QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .verify
+          mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          m=json.loads(Path('update.json').read_text())
+          actual=hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest()
+          assert m['version']=='0.5.20'
+          assert m['package_sha256']==actual
+          php=Path('.verify/hangar18-manager/hangar18-manager.php').read_text()
+          js=Path('.verify/hangar18-manager/assets/admin.js').read_text()
+          assert "'Version'        => '1.16'" in php
+          assert "'data-state': 'focus'" in js and "'data-state': 'disabled'" in js
+          print('v0.5.20 package QA passed:',actual)
+          PY
+
+      - name: Self-clean and release scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          rm -f .github/scripts/patch_v0520.py
+          rm -f .github/scripts/qa_v0520.py
+          rm -f .github/workflows/build-v0520.yml
+          rm -f .github/workflows/diagnose-v0520.yml
+          rm -f .github/workflows/finalize-v0520.yml
+          rm -f .github/diagnostics-v0520.txt
+          git status --short
+          python3 - <<'PY'
+          import subprocess
+          allowed={'hangar18-manager.php','assets/admin.js','assets/admin.css','readme.txt','update.json','dist/hangar18-manager.zip','.github/scripts/patch_v0520.py','.github/scripts/qa_v0520.py','.github/workflows/build-v0520.yml','.github/workflows/diagnose-v0520.yml','.github/workflows/finalize-v0520.yml','.github/diagnostics-v0520.txt'}
+          paths=set()
+          for line in subprocess.check_output(['git','status','--short'],text=True).splitlines():
+              p=line[3:].strip()
+              if ' -> ' in p:p=p.split(' -> ',1)[1]
+              paths.add(p)
+          extra=paths-allowed
+          if extra:
+              raise SystemExit('Unexpected release-scope files: '+repr(sorted(extra)))
+          print('Release scope QA passed')
+          PY
+
+      - name: Commit release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m 'Release Hangar18 Manager 0.5.20'
+          git push origin HEAD:qa/v0.5.20-diagnose
