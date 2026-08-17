@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.11",
+  "version": "0.5.12",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T20:19:43Z",
+  "published_utc": "2026-08-17T20:28:26Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "7f03cf04fb961b913a63afb29993c425b6196883d962a0618246e0d482cd9303",
+  "package_sha256": "4b0bcda797b373532802e572138554d9f5ac7dc1efb3cb1f6147e2222f066881",
   "changelog": [
-    "Tilføjer responsive elementbredder, max-bredde og minimumshøjde.",
-    "Tilføjer direkte bredde/min-højde-kontroller i live canvas.",
-    "Tilføjer billedbredde, max-bredde og låst/frigivet billedformat.",
-    "Tilføjer Kopiér design / Indsæt design uden at kopiere indhold eller billeder.",
-    "Page-editor schema 1.12 med bagudkompatible standarder."
+    "Tilføjer lokal Undo/Redo-historik med op til 50 trin i den visuelle editor.",
+    "Tilføjer Fortryd/Gendan-knapper samt sikre tastaturgenveje.",
+    "Historikken dækker live-canvas, sektioner, Card Grid og rækkefølge.",
+    "Tilføjer status for ugemte ændringer og navigation-advarsel.",
+    "Page-editor schema forbliver 1.12; permanente revisioner og backups er uændrede."
   ]
 }

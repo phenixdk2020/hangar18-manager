@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.11
+ * Version: 0.5.12
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.11';
+    const VERSION = '0.5.12';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -8669,6 +8669,11 @@ HTML;
                         <button type="button" class="button h18-preview-device is-active" data-device="desktop">Desktop</button>
                         <button type="button" class="button h18-preview-device" data-device="tablet">Tablet</button>
                         <button type="button" class="button h18-preview-device" data-device="mobile">Mobil</button>
+                        <span class="h18-editor-history-controls">
+                            <button type="button" class="button" id="h18-editor-undo" disabled title="Fortryd sidste ændring (Ctrl/Cmd+Z)">↶ Fortryd</button>
+                            <button type="button" class="button" id="h18-editor-redo" disabled title="Gendan ændring (Ctrl/Cmd+Shift+Z)">↷ Gendan</button>
+                            <span id="h18-editor-history-status" class="h18-editor-history-status" aria-live="polite">Ingen ugemte ændringer</span>
+                        </span>
                         <span>Visningen gør arbejdsområdet smallere. Den offentlige side åbnes med knappen ovenfor.</span>
                     </div>
 

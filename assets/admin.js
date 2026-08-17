@@ -2412,6 +2412,216 @@ jQuery(function ($) {
         refreshAllCanvasPreviews();
     });
 
+    const editorHistoryLimit = 50;
+    const editorHistoryEntries = [];
+    let editorHistoryIndex = -1;
+    let editorHistoryTimer = null;
+    let editorHistoryReady = false;
+    let editorHistoryApplying = false;
+    let editorHistorySubmitting = false;
+    let editorHistorySavedSignature = '';
+
+    function editorHistoryNormalizeClone($root) {
+        $root.find('.h18-canvas-preview, .ui-sortable-placeholder, .ui-sortable-helper').remove();
+        $root.find('.is-selected, .is-card-selected, .is-direct-dragging, .is-focal-dragging').removeClass('is-selected is-card-selected is-direct-dragging is-focal-dragging');
+        $root.find('.ui-sortable').removeClass('ui-sortable');
+        $root.find('input').each(function () {
+            const $input = $(this);
+            if ($input.is(':checkbox, :radio')) {
+                if ($input.prop('checked')) { $input.attr('checked', 'checked'); }
+                else { $input.removeAttr('checked'); }
+            } else {
+                $input.attr('value', String($input.val() == null ? '' : $input.val()));
+            }
+        });
+        $root.find('textarea').each(function () { $(this).text(String($(this).val() == null ? '' : $(this).val())); });
+        $root.find('select').each(function () {
+            const $select = $(this);
+            const values = Array.isArray($select.val()) ? $select.val().map(String) : [String($select.val() == null ? '' : $select.val())];
+            $select.find('option').each(function () {
+                if (values.includes(String($(this).val()))) { $(this).attr('selected', 'selected'); }
+                else { $(this).removeAttr('selected'); }
+            });
+        });
+    }
+
+    function editorHistorySnapshot() {
+        if (!$pageSections.length) { return null; }
+        const selectedKey = $inspectedSection.length ? String($inspectedSection.find('.h18-page-section-key').val() || '') : '';
+        const inspectedIndex = $inspectedSection.length ? String($inspectedSection.attr('data-section-index') || '') : '';
+        const $clone = $pageSections.clone(false, false);
+        if (inspectedIndex) {
+            const $body = $pageInspectorTarget.children('.h18-page-section-body').first();
+            if ($body.length) {
+                const $cloneRow = $clone.children('.h18-page-section-row[data-section-index="' + inspectedIndex + '"]').first();
+                if ($cloneRow.length) {
+                    $cloneRow.children('.h18-page-section-body').remove();
+                    $cloneRow.children('.h18-page-section-header').after($body.clone(false, false));
+                }
+            }
+        }
+        editorHistoryNormalizeClone($clone);
+        const html = String($clone.html() || '');
+        return {
+            html: html,
+            signature: html,
+            selectedKey: selectedKey,
+            selectedCardKey: String(selectedCanvasCardKey || ''),
+            device: String(currentCanvasDevice || 'desktop'),
+            state: String(currentCanvasState || 'normal')
+        };
+    }
+
+    function editorHistoryUpdateUi() {
+        const canUndo = editorHistoryIndex > 0;
+        const canRedo = editorHistoryIndex >= 0 && editorHistoryIndex < editorHistoryEntries.length - 1;
+        $('#h18-editor-undo').prop('disabled', !canUndo);
+        $('#h18-editor-redo').prop('disabled', !canRedo);
+        const current = editorHistoryIndex >= 0 ? editorHistoryEntries[editorHistoryIndex] : null;
+        const dirty = Boolean(current && current.signature !== editorHistorySavedSignature);
+        $('#h18-editor-history-status')
+            .toggleClass('is-dirty', dirty)
+            .text(dirty ? 'Ugemte ændringer · trin ' + editorHistoryIndex : 'Ingen ugemte ændringer');
+    }
+
+    function editorHistoryRecordNow() {
+        if (!editorHistoryReady || editorHistoryApplying) { return; }
+        const snapshot = editorHistorySnapshot();
+        if (!snapshot) { return; }
+        const current = editorHistoryIndex >= 0 ? editorHistoryEntries[editorHistoryIndex] : null;
+        if (current && current.signature === snapshot.signature) { editorHistoryUpdateUi(); return; }
+        if (editorHistoryIndex < editorHistoryEntries.length - 1) { editorHistoryEntries.splice(editorHistoryIndex + 1); }
+        editorHistoryEntries.push(snapshot);
+        if (editorHistoryEntries.length > editorHistoryLimit) {
+            editorHistoryEntries.shift();
+            if (editorHistorySavedSignature && !editorHistoryEntries.some(entry => entry.signature === editorHistorySavedSignature)) {
+                editorHistorySavedSignature = '__saved_state_outside_history__';
+            }
+        }
+        editorHistoryIndex = editorHistoryEntries.length - 1;
+        editorHistoryUpdateUi();
+    }
+
+    function scheduleEditorHistoryCapture(delay) {
+        if (!editorHistoryReady || editorHistoryApplying) { return; }
+        window.clearTimeout(editorHistoryTimer);
+        editorHistoryTimer = window.setTimeout(editorHistoryRecordNow, typeof delay === 'number' ? delay : 280);
+    }
+
+    function editorHistoryFindRowByKey(key) {
+        let $match = $();
+        if (!key) { return $match; }
+        $pageSections.children('.h18-page-section-row').each(function () {
+            const $row = $(this);
+            if (String($row.find('.h18-page-section-key').val() || '') === String(key)) { $match = $row; return false; }
+        });
+        return $match;
+    }
+
+    function editorHistoryRestore(entry) {
+        if (!entry || !entry.html || !$pageSections.length) { return; }
+        editorHistoryApplying = true;
+        window.clearTimeout(editorHistoryTimer);
+        try {
+            restoreInspectedSection();
+            selectedCanvasCardKey = String(entry.selectedCardKey || '');
+            $pageSections.html(entry.html);
+            $pageSections.children('.h18-page-section-row').each(function () {
+                const $row = $(this);
+                refreshPageSectionType($row);
+                initializePageCardSortables($row);
+            });
+            syncPageSectionOrder(true);
+            rebuildPageNavigator();
+            currentCanvasDevice = ['desktop','tablet','mobile'].includes(String(entry.device)) ? String(entry.device) : 'desktop';
+            currentCanvasState = String(entry.state) === 'hover' ? 'hover' : 'normal';
+            $('.h18-preview-device').removeClass('is-active').filter('[data-device="' + currentCanvasDevice + '"]').addClass('is-active');
+            $('.h18-preview-state').removeClass('is-active').filter('[data-state="' + currentCanvasState + '"]').addClass('is-active');
+            $pageSections.removeClass('h18-preview-desktop h18-preview-tablet h18-preview-mobile').addClass('h18-preview-' + currentCanvasDevice);
+            const $target = editorHistoryFindRowByKey(entry.selectedKey);
+            if ($target.length && !$target.hasClass('h18-page-section-removed')) { inspectPageSection($target); }
+            refreshAllCanvasPreviews();
+        } finally {
+            editorHistoryApplying = false;
+            editorHistoryUpdateUi();
+        }
+    }
+
+    function editorHistoryUndo() {
+        if (editorHistoryIndex <= 0) { return; }
+        editorHistoryIndex -= 1;
+        editorHistoryRestore(editorHistoryEntries[editorHistoryIndex]);
+    }
+
+    function editorHistoryRedo() {
+        if (editorHistoryIndex < 0 || editorHistoryIndex >= editorHistoryEntries.length - 1) { return; }
+        editorHistoryIndex += 1;
+        editorHistoryRestore(editorHistoryEntries[editorHistoryIndex]);
+    }
+
+    function initializeEditorHistory() {
+        if (!$pageSections.length || editorHistoryReady) { return; }
+        const initial = editorHistorySnapshot();
+        if (!initial) { return; }
+        editorHistoryEntries.push(initial);
+        editorHistoryIndex = 0;
+        editorHistorySavedSignature = initial.signature;
+        editorHistoryReady = true;
+        editorHistoryUpdateUi();
+
+        const originalCanvasSetField = canvasSetField;
+        canvasSetField = function ($row, fieldName, value) {
+            const result = originalCanvasSetField($row, fieldName, value);
+            if (result) { scheduleEditorHistoryCapture(); }
+            return result;
+        };
+        const originalCanvasCardSetField = canvasCardSetField;
+        canvasCardSetField = function ($card, fieldName, value) {
+            const result = originalCanvasCardSetField($card, fieldName, value);
+            if (result) { scheduleEditorHistoryCapture(); }
+            return result;
+        };
+
+        $('#h18-page-editor-form').on('input change', '.h18-page-section-body :input, .h18-page-card-row :input', function () {
+            scheduleEditorHistoryCapture();
+        });
+
+        if (window.MutationObserver && $pageSections.get(0)) {
+            const observer = new MutationObserver(function (mutations) {
+                if (editorHistoryApplying) { return; }
+                let meaningful = false;
+                mutations.forEach(function (mutation) {
+                    if (meaningful) { return; }
+                    if (mutation.type === 'childList') {
+                        const nodes = Array.from(mutation.addedNodes || []).concat(Array.from(mutation.removedNodes || []));
+                        meaningful = nodes.some(function (node) {
+                            return node && node.nodeType === 1 && ($(node).is('.h18-page-section-row, .h18-page-card-row') || $(node).find('.h18-page-section-row, .h18-page-card-row').length);
+                        });
+                    } else if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        const $target = $(mutation.target);
+                        if ($target.is('.h18-page-section-row, .h18-page-card-row')) {
+                            const before = String(mutation.oldValue || '').includes('h18-page-section-removed') || String(mutation.oldValue || '').includes('h18-page-card-removed');
+                            const after = $target.hasClass('h18-page-section-removed') || $target.hasClass('h18-page-card-removed');
+                            meaningful = before !== after;
+                        }
+                    }
+                });
+                if (meaningful) { scheduleEditorHistoryCapture(120); }
+            });
+            observer.observe($pageSections.get(0), { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
+        }
+    }
+
+    $(document).on('click', '#h18-editor-undo', function (event) { event.preventDefault(); editorHistoryUndo(); });
+    $(document).on('click', '#h18-editor-redo', function (event) { event.preventDefault(); editorHistoryRedo(); });
+    $(document).on('keydown.h18EditorHistory', function (event) {
+        if (!(event.ctrlKey || event.metaKey) || String(event.key || '').toLowerCase() !== 'z') { return; }
+        const $target = $(event.target);
+        if ($target.is('input, textarea, select') || $target.closest('[contenteditable="true"]').length) { return; }
+        event.preventDefault();
+        if (event.shiftKey) { editorHistoryRedo(); } else { editorHistoryUndo(); }
+    });
+
     const $pageEditorForm = $('#h18-page-editor-form');
     const $pageChangeNote = $pageEditorForm.find('[name="page_change_note"]');
     const $pageWhatIf = $pageEditorForm.find('[name="whatif"]');
@@ -2427,6 +2637,17 @@ jQuery(function ($) {
     if ($pageEditorForm.length) {
         $pageWhatIf.on('change', syncPageChangeNoteRequirement);
         syncPageChangeNoteRequirement();
+        $pageEditorForm.on('submit', function () { editorHistorySubmitting = true; });
+        window.setTimeout(initializeEditorHistory, 0);
     }
+
+    $(window).on('beforeunload.h18EditorHistory', function (event) {
+        if (!editorHistoryReady || editorHistorySubmitting || editorHistoryIndex < 0) { return; }
+        const current = editorHistoryEntries[editorHistoryIndex];
+        if (!current || current.signature === editorHistorySavedSignature) { return; }
+        event.preventDefault();
+        event.returnValue = '';
+        return '';
+    });
 
 });

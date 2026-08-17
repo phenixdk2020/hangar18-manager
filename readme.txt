@@ -897,3 +897,11 @@ Kompatibilitet og sikkerhed:
 - Værdien 0 betyder global størrelse og giver fuld bagudkompatibilitet.
 - Typografifelterne gemmes også i genbrugelige komponenter fra v0.5.1.
 - Page-editor dataformatet er kompatibelt løftet fra schema 1.6 til 1.7.
+
+
+== 0.5.12 ==
+* Lokal Undo/Redo-historik med op til 50 redigeringstrin i den visuelle editor.
+* Fortryd/Gendan-knapper samt Ctrl/Cmd+Z og Ctrl/Cmd+Shift+Z uden at overtage tekstfelters native undo.
+* Historikken dækker feltændringer, live-canvas, sektioner, kort og rækkefølge.
+* Status viser ugemte ændringer, og browseren advarer ved navigation væk fra en ændret side.
+* Ingen page-editor schemaændring; permanente WordPress-revisioner/backups er uændrede.
