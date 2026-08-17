@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.5.7
+Version: 0.5.8
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+== Version 0.5.8 – Direkte canvas-kontroller ==
+
+Nyt:
+- brødtekst kan redigeres direkte som rich text i canvas med dobbeltklik
+- Escape annullerer inline-redigering af overskrift/knaptekst
+- valgt element får hurtigkontroller for padding, vandret padding, top/bundafstand, radius og opacity
+- baggrund, tekst og overskriftsfarve kan vælges direkte fra canvas
+- fire drag-handles ændrer indvendig lodret/vandret luft direkte på elementet
+- kontrollerne følger Desktop/Tablet/Mobil og Normal/Hover
+- page-editor schema forbliver 1.10; ingen eksisterende sidedata migreres
+
 
 == Version 0.5.7 – Live visuel canvas ==
 

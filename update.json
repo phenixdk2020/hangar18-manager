@@ -1,19 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T18:36:17Z",
+  "published_utc": "2026-08-17T18:54:08Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "b13553fbfcdaa1dc2574b949f514bad70bacb40ab8ccd5695063157aa19deefb",
+  "package_sha256": "f066303cd51cdf3f638abbea88f4ceed1a3c835dda543e5e3d5b46bfd8d28706",
   "changelog": [
-    "Tilføjer live visuel canvas i sideeditorens arbejdsområde.",
-    "Desktop, tablet og mobil gengiver deres faktiske responsive elementværdier.",
-    "Normal og Hover kan simuleres direkte i editoren.",
-    "Inspector-ændringer opdaterer canvas live uden gemning.",
-    "Overskrifter og knaptekster kan redigeres direkte med dobbeltklik.",
-    "Skjulte device-elementer vises som redigerbare placeholders i canvas.",
-    "Page-editor schema forbliver 1.10 og eksisterende sidedata ændres ikke."
+    "Tilføjer direkte rich-text redigering af brødtekst i live canvas.",
+    "Tilføjer grafiske hurtigkontroller for padding, spacing, radius og opacity.",
+    "Tilføjer direkte farvevalg for baggrund, tekst og overskrift.",
+    "Tilføjer fire drag-handles til indvendig luft på det valgte element.",
+    "Kontroller følger Desktop/Tablet/Mobil og Normal/Hover.",
+    "Page-editor schema forbliver 1.10 og eksisterende sidedata migreres ikke."
   ]
 }

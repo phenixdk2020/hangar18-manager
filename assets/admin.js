@@ -521,6 +521,7 @@ jQuery(function ($) {
         refreshInspectorMeta($row);
         setInspectorPanel(currentInspectorPanel);
         rebuildPageNavigator();
+        refreshAllCanvasPreviews();
     }
 
     function pageSectionControls($row, selector) {
@@ -875,10 +876,19 @@ jQuery(function ($) {
     }
 
     function canvasAddBodyText($target, value) {
-        const text = canvasTextFromHtml(value, 260);
-        if (text) {
-            $target.append($('<p>', { class: 'h18-canvas-preview-text', text: text }));
+        const html = String(value || '').trim();
+        if (!html) {
+            return;
         }
+        const $body = $('<div>', { class: 'h18-canvas-preview-text h18-canvas-rich-edit' });
+        $body.html(html);
+        $body.attr({
+            'data-canvas-edit-field': 'Content',
+            contenteditable: 'false',
+            spellcheck: 'true',
+            title: 'Dobbeltklik for at redigere brødtekst direkte'
+        });
+        $target.append($body);
     }
 
     function canvasBuildPreviewContent($row, $preview) {
@@ -1051,6 +1061,7 @@ jQuery(function ($) {
         } else {
             $preview.css('minHeight', '0');
         }
+        renderCanvasDirectControls($row, $preview, layout, colors);
     }
 
     function refreshAllCanvasPreviews() {
@@ -1065,6 +1076,88 @@ jQuery(function ($) {
         const stateLabel = currentCanvasState === 'hover' ? 'Hover' : 'Normal';
         $('.h18-builder-canvas').attr('data-canvas-device', currentCanvasDevice).attr('data-canvas-state', currentCanvasState);
         $('#h18-canvas-runtime-status').text(deviceLabel + ' · ' + stateLabel + ' · Live');
+    }
+
+    function canvasQuickFields() {
+        if (currentCanvasDevice === 'tablet') {
+            return { pad: 'TabletPaddingPx', padX: 'TabletHorizontalPaddingPx', top: 'TabletTopSpacingPx', bottom: 'TabletBottomSpacingPx' };
+        }
+        if (currentCanvasDevice === 'mobile') {
+            return { pad: 'MobilePaddingPx', padX: 'MobileHorizontalPaddingPx', top: 'MobileTopSpacingPx', bottom: 'MobileBottomSpacingPx' };
+        }
+        return { pad: 'PaddingPx', padX: 'HorizontalPaddingPx', top: 'TopSpacingPx', bottom: 'BottomSpacingPx' };
+    }
+
+    function canvasSetField($row, fieldName, value) {
+        const $field = pageSectionControls($row, '[name$="[' + fieldName + ']"]').first();
+        if (!$field.length) { return false; }
+        if ($field.is(':checkbox')) {
+            $field.prop('checked', Boolean(value));
+        } else {
+            $field.val(value);
+        }
+        return true;
+    }
+
+    function canvasQuickRange(label, fieldName, value, min, max, suffix) {
+        const $wrap = $('<label>', { class: 'h18-canvas-quick-range' });
+        const $top = $('<span>', { class: 'h18-canvas-quick-range-label' }).append(
+            $('<span>', { text: label }),
+            $('<output>', { text: String(Math.round(value)) + (suffix || '') })
+        );
+        const $input = $('<input>', {
+            type: 'range', min: min, max: max, step: 1, value: Math.round(value),
+            'data-canvas-quick-field': fieldName, 'data-canvas-quick-suffix': suffix || ''
+        });
+        return $wrap.append($top, $input);
+    }
+
+    function canvasQuickColor(label, role, value) {
+        return $('<label>', { class: 'h18-canvas-quick-color' }).append(
+            $('<span>', { text: label }),
+            $('<input>', { type: 'color', value: value, 'data-canvas-color-role': role })
+        );
+    }
+
+    function renderCanvasDirectControls($row, $preview, layout, colors) {
+        $preview.children('.h18-canvas-direct-controls, .h18-canvas-padding-handle').remove();
+        if (!$row.hasClass('is-selected')) { return; }
+
+        const fields = canvasQuickFields();
+        const hoverCustom = currentCanvasState === 'hover' && String(canvasFieldValue($row, 'HoverStyleMode', 'Inherit')) === 'Custom';
+        const opacityField = hoverCustom ? 'HoverOpacityPercent' : 'SectionOpacityPercent';
+        const opacityValue = hoverCustom ? canvasNumber($row, 'HoverOpacityPercent', 100) : canvasNumber($row, 'SectionOpacityPercent', 100);
+        const radius = canvasNumber($row, 'RadiusPx', 7);
+        const $bar = $('<div>', { class: 'h18-canvas-direct-controls', 'data-canvas-state': currentCanvasState });
+        const $ranges = $('<div>', { class: 'h18-canvas-quick-ranges' }).append(
+            canvasQuickRange('Indvendig', fields.pad, layout.pad, 0, 100, ' px'),
+            canvasQuickRange('Vandret', fields.padX, layout.padX, 0, 100, ' px'),
+            canvasQuickRange('Topafstand', fields.top, layout.top, 0, 160, ' px'),
+            canvasQuickRange('Bundafstand', fields.bottom, layout.bottom, 0, 160, ' px'),
+            canvasQuickRange('Radius', 'RadiusPx', radius, 0, 60, ' px'),
+            canvasQuickRange('Opacity', opacityField, opacityValue, 0, 100, '%')
+        );
+        const $colors = $('<div>', { class: 'h18-canvas-quick-colors', 'data-canvas-color-state': currentCanvasState }).append(
+            canvasQuickColor('Baggrund', 'background', colors.background),
+            canvasQuickColor('Tekst', 'text', colors.text),
+            canvasQuickColor('Overskrift', 'heading', colors.heading)
+        );
+        $bar.append($('<strong>', { class: 'h18-canvas-direct-title', text: 'Direkte design' }), $ranges, $colors);
+        $preview.append($bar);
+
+        [
+            ['top', fields.pad, 'y', 1, layout.pad],
+            ['bottom', fields.pad, 'y', -1, layout.pad],
+            ['left', fields.padX, 'x', 1, layout.padX],
+            ['right', fields.padX, 'x', -1, layout.padX]
+        ].forEach(function (item) {
+            $preview.append($('<button>', {
+                type: 'button', class: 'h18-canvas-padding-handle is-' + item[0],
+                'data-canvas-handle-field': item[1], 'data-canvas-handle-axis': item[2],
+                'data-canvas-handle-sign': item[3], 'data-canvas-handle-value': item[4],
+                title: 'Træk for at ændre indvendig luft'
+            }).append($('<span>', { class: 'dashicons dashicons-move' })));
+        });
     }
 
     function ensureCanvasToolbar() {
@@ -1126,6 +1219,7 @@ jQuery(function ($) {
         event.preventDefault();
         event.stopPropagation();
         inspectPageSection($(this).closest('.h18-page-section-row'));
+        $(this).data('canvas-original-text', String($(this).text() || ''));
         $(this).attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
         const selection = window.getSelection && window.getSelection();
         if (selection && document.createRange) {
@@ -1161,8 +1255,143 @@ jQuery(function ($) {
         }
         if (event.key === 'Escape') {
             event.preventDefault();
-            renderCanvasPreview($(this).closest('.h18-page-section-row'));
+            const $editable = $(this);
+            const $row = $editable.closest('.h18-page-section-row');
+            const fieldName = String($editable.data('canvas-edit-field') || '');
+            const original = String($editable.data('canvas-original-text') || '');
+            if (fieldName && $row.length) {
+                canvasSetField($row, fieldName, original);
+                if (fieldName === 'Title') {
+                    $row.find('.h18-page-section-title-summary').text(original);
+                    rebuildPageNavigator();
+                }
+            }
+            renderCanvasPreview($row);
         }
+    });
+
+    $(document).on('dblclick', '.h18-canvas-rich-edit', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const $row = $(this).closest('.h18-page-section-row');
+        inspectPageSection($row);
+        $(this).data('canvas-original-html', String($(this).html() || ''));
+        $(this).attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
+    });
+
+    $(document).on('input', '.h18-canvas-rich-edit.is-editing', function () {
+        const $row = $(this).closest('.h18-page-section-row');
+        canvasSetField($row, 'Content', String($(this).html() || ''));
+    });
+
+    $(document).on('blur', '.h18-canvas-rich-edit.is-editing', function () {
+        const $row = $(this).closest('.h18-page-section-row');
+        $(this).attr('contenteditable', 'false').removeClass('is-editing');
+        renderCanvasPreview($row);
+    });
+
+    $(document).on('keydown', '.h18-canvas-rich-edit.is-editing', function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            $(this).trigger('blur');
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            const $row = $(this).closest('.h18-page-section-row');
+            const original = String($(this).data('canvas-original-html') || '');
+            canvasSetField($row, 'Content', original);
+            renderCanvasPreview($row);
+        }
+    });
+
+    $(document).on('click pointerdown', '.h18-canvas-direct-controls, .h18-canvas-padding-handle', function (event) {
+        event.stopPropagation();
+    });
+
+    $(document).on('input', '.h18-canvas-quick-range input[type=range]', function () {
+        const $input = $(this);
+        const $row = $input.closest('.h18-page-section-row');
+        const fieldName = String($input.data('canvas-quick-field') || '');
+        const value = parseInt($input.val(), 10) || 0;
+        canvasSetField($row, fieldName, value);
+        $input.closest('.h18-canvas-quick-range').find('output').text(String(value) + String($input.data('canvas-quick-suffix') || ''));
+    });
+
+    $(document).on('change', '.h18-canvas-quick-range input[type=range]', function () {
+        renderCanvasPreview($(this).closest('.h18-page-section-row'));
+    });
+
+    $(document).on('input', '.h18-canvas-quick-color input[type=color]', function () {
+        const $input = $(this);
+        const $row = $input.closest('.h18-page-section-row');
+        const $preview = $row.children('.h18-canvas-preview');
+        const role = String($input.data('canvas-color-role') || 'background');
+        const value = String($input.val() || '#ffffff');
+        const $group = $input.closest('.h18-canvas-quick-colors');
+        const state = String($group.data('canvas-color-state') || 'normal');
+        const background = String($group.find('[data-canvas-color-role="background"]').val() || '#ffffff');
+        const text = String($group.find('[data-canvas-color-role="text"]').val() || '#30382a');
+        const heading = String($group.find('[data-canvas-color-role="heading"]').val() || text);
+        if (state === 'hover') {
+            canvasSetField($row, 'HoverStyleMode', 'Custom');
+            canvasSetField($row, 'HoverBackgroundColor', background);
+            canvasSetField($row, 'HoverTextColor', text);
+            canvasSetField($row, 'HoverHeadingColor', heading);
+            refreshHoverStyleMode($row);
+        } else {
+            canvasSetField($row, 'DesignMode', 'Custom');
+            canvasSetField($row, 'CustomBackgroundColor', background);
+            canvasSetField($row, 'CustomTextColor', text);
+            canvasSetField($row, 'CustomHeadingColor', heading);
+            refreshSectionDesignMode($row);
+        }
+        if (role === 'background') { $preview.css('backgroundColor', value); }
+        if (role === 'text') { $preview.css('color', value); }
+        if (role === 'heading') { $preview.find('.h18-canvas-preview-title').css('color', value); }
+    });
+
+    $(document).on('change', '.h18-canvas-quick-color input[type=color]', function () {
+        renderCanvasPreview($(this).closest('.h18-page-section-row'));
+    });
+
+    let canvasHandleDrag = null;
+    $(document).on('pointerdown', '.h18-canvas-padding-handle', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const $handle = $(this);
+        const $row = $handle.closest('.h18-page-section-row');
+        const $preview = $row.children('.h18-canvas-preview');
+        canvasHandleDrag = {
+            $row: $row,
+            $preview: $preview,
+            field: String($handle.data('canvas-handle-field') || ''),
+            axis: String($handle.data('canvas-handle-axis') || 'x'),
+            sign: parseFloat($handle.data('canvas-handle-sign')) || 1,
+            startValue: parseFloat($handle.data('canvas-handle-value')) || 0,
+            startX: event.clientX,
+            startY: event.clientY
+        };
+        $preview.addClass('is-direct-dragging');
+    });
+
+    $(document).on('pointermove', function (event) {
+        if (!canvasHandleDrag) { return; }
+        const delta = canvasHandleDrag.axis === 'x' ? event.clientX - canvasHandleDrag.startX : event.clientY - canvasHandleDrag.startY;
+        const value = Math.max(0, Math.min(100, Math.round(canvasHandleDrag.startValue + (delta * canvasHandleDrag.sign))));
+        canvasSetField(canvasHandleDrag.$row, canvasHandleDrag.field, value);
+        if (canvasHandleDrag.axis === 'x') {
+            canvasHandleDrag.$preview.css({ paddingLeft: value + 'px', paddingRight: value + 'px' });
+        } else {
+            canvasHandleDrag.$preview.css({ paddingTop: value + 'px', paddingBottom: value + 'px' });
+        }
+        canvasHandleDrag.$preview.find('[data-canvas-quick-field="' + canvasHandleDrag.field + '"]').val(value).closest('.h18-canvas-quick-range').find('output').text(value + ' px');
+    });
+
+    $(document).on('pointerup pointercancel', function () {
+        if (!canvasHandleDrag) { return; }
+        const $row = canvasHandleDrag.$row;
+        canvasHandleDrag.$preview.removeClass('is-direct-dragging');
+        canvasHandleDrag = null;
+        renderCanvasPreview($row);
     });
 
     $(document).on('input change', '#h18-page-inspector-target :input', function () {
