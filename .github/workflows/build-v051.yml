@@ -1,0 +1,772 @@
+name: Build Hangar18 Manager 0.5.1
+
+on:
+  push:
+    branches:
+      - development/v0.5.1-work
+    paths:
+      - '.github/workflows/build-v051.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.1-work
+
+      - name: Implement v0.5.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          php_path = Path('hangar18-manager.php')
+          js_path = Path('assets/admin.js')
+          css_path = Path('assets/admin.css')
+          readme_path = Path('readme.txt')
+
+          php = php_path.read_text(encoding='utf-8')
+          js = js_path.read_text(encoding='utf-8')
+          css = css_path.read_text(encoding='utf-8')
+          readme = readme_path.read_text(encoding='utf-8')
+
+          def rep(text, old, new, label):
+              if old not in text:
+                  raise SystemExit(f'{label}: anchor not found')
+              return text.replace(old, new, 1)
+
+          php = rep(php, ' * Version: 0.5.0', ' * Version: 0.5.1', 'plugin version')
+          php = rep(php, "const VERSION = '0.5.0';", "const VERSION = '0.5.1';", 'version constant')
+
+          php = rep(
+              php,
+              "    const PAGE_VERSION_HISTORY_OPTION = 'hangar18_manager_page_versions_v1';\n    const FORM_SUBMISSIONS_OPTION   = 'hangar18_manager_form_submissions_v1';",
+              "    const PAGE_VERSION_HISTORY_OPTION = 'hangar18_manager_page_versions_v1';\n    const PAGE_PRESETS_OPTION         = 'hangar18_manager_page_presets_v1';\n    const FORM_SUBMISSIONS_OPTION   = 'hangar18_manager_form_submissions_v1';",
+              'preset option constant'
+          )
+
+          php = rep(
+              php,
+              "        add_action('admin_post_h18_save_page_editor', [$this, 'handle_save_page_editor']);\n        add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);",
+              "        add_action('admin_post_h18_save_page_editor', [$this, 'handle_save_page_editor']);\n        add_action('wp_ajax_h18_save_page_preset', [$this, 'ajax_save_page_preset']);\n        add_action('wp_ajax_h18_delete_page_preset', [$this, 'ajax_delete_page_preset']);\n        add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);",
+              'ajax preset hooks'
+          )
+
+          php = rep(
+              php,
+              "            'galleryEmpty'      => 'Albummet har ingen billeder endnu.',\n        ]);",
+              "            'galleryEmpty'      => 'Albummet har ingen billeder endnu.',\n            'ajaxUrl'           => admin_url('admin-ajax.php'),\n            'pagePresetNonce'   => wp_create_nonce('h18_page_presets_v051'),\n        ]);",
+              'localized preset ajax'
+          )
+
+          preset_methods = r'''
+    private function get_page_presets() {
+        $stored = get_option(self::PAGE_PRESETS_OPTION, []);
+        if (!is_array($stored)) {
+            return [];
+        }
+
+        $presets = [];
+        foreach (array_slice($stored, 0, 50, true) as $id => $entry) {
+            if (!is_array($entry) || !isset($entry['Section']) || !is_array($entry['Section'])) {
+                continue;
+            }
+            $preset_id = sanitize_key((string) ($entry['Id'] ?? $id));
+            $name = sanitize_text_field((string) ($entry['Name'] ?? 'Genbrugelig komponent'));
+            if ($preset_id === '' || $name === '') {
+                continue;
+            }
+            $section = $this->normalize_page_section($entry['Section'], 0);
+            if ($section['Type'] === 'legacy') {
+                continue;
+            }
+            $section['Key'] = '';
+            $section['Order'] = 10;
+            $presets[$preset_id] = [
+                'Id'         => $preset_id,
+                'Name'       => $name,
+                'UpdatedUtc' => sanitize_text_field((string) ($entry['UpdatedUtc'] ?? '')),
+                'Section'    => $section,
+            ];
+        }
+        return $presets;
+    }
+
+    public function ajax_save_page_preset() {
+        if (!current_user_can('edit_pages')) {
+            wp_send_json_error(['message' => 'Du har ikke rettigheder til at gemme komponenter.'], 403);
+        }
+        check_ajax_referer('h18_page_presets_v051', 'nonce');
+
+        $name = sanitize_text_field((string) wp_unslash($_POST['name'] ?? ''));
+        $name = function_exists('mb_substr') ? mb_substr($name, 0, 80) : substr($name, 0, 80);
+        $json = (string) wp_unslash($_POST['section'] ?? '');
+        if ($name === '') {
+            wp_send_json_error(['message' => 'Komponenten skal have et navn.'], 400);
+        }
+        if ($json === '' || strlen($json) > 120000) {
+            wp_send_json_error(['message' => 'Komponentdata mangler eller er for stor.'], 400);
+        }
+
+        $raw = json_decode($json, true);
+        if (!is_array($raw) || json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error(['message' => 'Komponentdata er ikke gyldig JSON.'], 400);
+        }
+
+        $section = $this->normalize_page_section($raw, 0);
+        if ($section['Type'] === 'legacy') {
+            wp_send_json_error(['message' => 'Eksisterende legacy-indhold kan ikke gemmes som komponent.'], 400);
+        }
+        $section['Key'] = '';
+        $section['Order'] = 10;
+
+        $presets = $this->get_page_presets();
+        $preset_id = sanitize_key((string) wp_unslash($_POST['preset_id'] ?? ''));
+        if ($preset_id === '' || !isset($presets[$preset_id])) {
+            $preset_id = 'preset-' . sanitize_key(wp_generate_uuid4());
+        }
+
+        $entry = [
+            'Id'         => $preset_id,
+            'Name'       => $name,
+            'UpdatedUtc' => gmdate('c'),
+            'Section'    => $section,
+        ];
+        $presets[$preset_id] = $entry;
+        if (count($presets) > 50) {
+            $presets = array_slice($presets, -50, null, true);
+        }
+        update_option(self::PAGE_PRESETS_OPTION, $presets, false);
+
+        $this->log('INFO', 'PAGE_PRESET_SAVED', "Genbrugelig komponent '{$name}' gemt som {$preset_id}.");
+        wp_send_json_success(['preset' => $entry]);
+    }
+
+    public function ajax_delete_page_preset() {
+        if (!current_user_can('edit_pages')) {
+            wp_send_json_error(['message' => 'Du har ikke rettigheder til at slette komponenter.'], 403);
+        }
+        check_ajax_referer('h18_page_presets_v051', 'nonce');
+
+        $preset_id = sanitize_key((string) wp_unslash($_POST['preset_id'] ?? ''));
+        $presets = $this->get_page_presets();
+        if ($preset_id === '' || !isset($presets[$preset_id])) {
+            wp_send_json_error(['message' => 'Komponenten blev ikke fundet.'], 404);
+        }
+        $name = (string) $presets[$preset_id]['Name'];
+        unset($presets[$preset_id]);
+        update_option(self::PAGE_PRESETS_OPTION, $presets, false);
+        $this->log('INFO', 'PAGE_PRESET_DELETED', "Genbrugelig komponent '{$name}' ({$preset_id}) blev slettet.");
+        wp_send_json_success(['preset_id' => $preset_id]);
+    }
+
+'''
+          php = rep(
+              php,
+              "    private function page_module_storage_key($page_id, $section_key) {",
+              preset_methods + "    private function page_module_storage_key($page_id, $section_key) {",
+              'preset methods insertion'
+          )
+
+          php = rep(
+              php,
+              "        $versions = $page instanceof WP_Post ? $this->get_page_version_history($slug) : [];\n        ?>",
+              "        $versions = $page instanceof WP_Post ? $this->get_page_version_history($slug) : [];\n        $page_presets = $this->get_page_presets();\n        ?>",
+              'render preset data load'
+          )
+
+          palette_pattern = re.compile(r'''                        <aside class=\"h18-builder-palette\">.*?                        </aside>\n\n                        <div class=\"h18-builder-canvas\">''', re.S)
+          palette_replacement = r'''                        <aside class="h18-builder-palette">
+                            <div class="h18-builder-sidebar-tabs" role="tablist" aria-label="Builderpanel">
+                                <button type="button" class="h18-builder-sidebar-tab is-active" data-builder-tab="elements">Elementer</button>
+                                <button type="button" class="h18-builder-sidebar-tab" data-builder-tab="layers">Lag</button>
+                                <button type="button" class="h18-builder-sidebar-tab" data-builder-tab="components">Komponenter</button>
+                            </div>
+
+                            <div class="h18-builder-sidebar-panel is-active" data-builder-panel="elements">
+                                <h3>Elementer og funktioner</h3>
+                                <p>Træk et element ind på siden, eller klik for at tilføje det nederst.</p>
+                                <div class="h18-builder-palette-list">
+                                    <?php foreach ($this->page_section_type_labels() as $value => $label) : if (in_array($value, ['legacy', 'css'], true)) { continue; } ?>
+                                        <button class="h18-builder-palette-item" type="button" draggable="true" data-section-type="<?php echo esc_attr($value); ?>"><span class="dashicons dashicons-plus-alt2"></span><?php echo esc_html($label); ?></button>
+                                    <?php endforeach; ?>
+                                </div>
+                                <details><summary>Avanceret</summary><button class="h18-builder-palette-item" type="button" draggable="true" data-section-type="css"><span class="dashicons dashicons-editor-code"></span>Side-CSS</button></details>
+                            </div>
+
+                            <div class="h18-builder-sidebar-panel" data-builder-panel="layers">
+                                <div class="h18-builder-panel-heading"><h3>Navigator / lag</h3><span id="h18-page-navigator-count">0</span></div>
+                                <p>Klik for at redigere. Træk lagene for at ændre rækkefølgen på siden.</p>
+                                <div id="h18-page-navigator-list" class="h18-page-navigator-list"></div>
+                            </div>
+
+                            <div class="h18-builder-sidebar-panel" data-builder-panel="components">
+                                <h3>Komponentbibliotek</h3>
+                                <p>Færdige kombinationer du kan indsætte og derefter tilpasse.</p>
+                                <div class="h18-builder-component-list">
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="hero-cta"><span class="dashicons dashicons-cover-image"></span><strong>Hero + handling</strong><small>Stor introduktion med knap</small></button>
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="text-image"><span class="dashicons dashicons-align-pull-left"></span><strong>Tekst + billede</strong><small>To-delt præsentation</small></button>
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="info-cards"><span class="dashicons dashicons-screenoptions"></span><strong>3 informationskort</strong><small>Responsivt kort-grid</small></button>
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="cta-band"><span class="dashicons dashicons-megaphone"></span><strong>CTA-bånd</strong><small>Fremhævet handlingssektion</small></button>
+                                    <button type="button" class="h18-builder-component-item" data-section-preset="contact-form"><span class="dashicons dashicons-email-alt"></span><strong>Kontaktblok</strong><small>Tekst og mailformular</small></button>
+                                </div>
+                                <div class="h18-user-components-heading"><h4>Egne komponenter</h4><span>Gemmes i WordPress</span></div>
+                                <div id="h18-user-presets-list" class="h18-user-presets-list"><p class="description">Vælg en sektion og brug “Gem som komponent” i Inspector.</p></div>
+                            </div>
+                        </aside>
+
+                        <div class="h18-builder-canvas">'''
+          php, count = palette_pattern.subn(palette_replacement, php, count=1)
+          if count != 1:
+              raise SystemExit('builder palette replacement failed')
+
+          inspector_pattern = re.compile(r'''                        <aside id=\"h18-page-inspector\" class=\"h18-builder-inspector\">.*?                        </aside>''', re.S)
+          inspector_replacement = r'''                        <aside id="h18-page-inspector" class="h18-builder-inspector" data-inspector-panel="content">
+                            <div class="h18-builder-inspector-heading"><h3>Inspector</h3><span>Vælg en sektion i sideopbygningen</span></div>
+                            <div class="h18-inspector-tabs" role="tablist" aria-label="Elementindstillinger">
+                                <button type="button" class="h18-inspector-tab is-active" data-inspector-tab="content">Indhold</button>
+                                <button type="button" class="h18-inspector-tab" data-inspector-tab="design">Design</button>
+                                <button type="button" class="h18-inspector-tab" data-inspector-tab="advanced">Avanceret</button>
+                            </div>
+                            <div id="h18-page-inspector-target"><p class="description">Klik på <strong>Rediger</strong> ved en sektion for at ændre indhold, design og responsive indstillinger.</p></div>
+                            <div id="h18-inspector-advanced-panel" class="h18-inspector-advanced-panel">
+                                <div class="h18-inspector-meta-grid">
+                                    <div><span>Type</span><strong id="h18-inspector-type">–</strong></div>
+                                    <div><span>Elementnøgle</span><code id="h18-inspector-key">–</code></div>
+                                </div>
+                                <div class="h18-inspector-advanced-actions">
+                                    <button type="button" class="button" id="h18-inspector-copy-key" disabled>Kopiér nøgle</button>
+                                    <button type="button" class="button" id="h18-inspector-duplicate" disabled>Duplikér element</button>
+                                    <button type="button" class="button button-primary" id="h18-save-section-preset" disabled>Gem som komponent</button>
+                                </div>
+                                <p class="description">Genbrugelige komponenter gemmes centralt i WordPress og kan indsættes på alle sider i Hangar18-editoren.</p>
+                            </div>
+                        </aside>'''
+          php, count = inspector_pattern.subn(inspector_replacement, php, count=1)
+          if count != 1:
+              raise SystemExit('builder inspector replacement failed')
+
+          php = rep(
+              php,
+              "                <template id=\"h18-page-section-template\"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>",
+              "                <script id=\"h18-page-presets-data\" type=\"application/json\"><?php echo wp_json_encode(array_values($page_presets), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>\n                <template id=\"h18-page-section-template\"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>",
+              'preset json output'
+          )
+
+          # -------------------------- admin.js ---------------------------
+          js = rep(
+              js,
+              "    const $pageInspector = $('#h18-page-inspector');\n    const $pageInspectorTarget = $('#h18-page-inspector-target');\n    let pageSectionNextIndex = 0;\n    let pageCardSerial = 0;\n    let $inspectedSection = $();",
+              "    const $pageInspector = $('#h18-page-inspector');\n    const $pageInspectorTarget = $('#h18-page-inspector-target');\n    const $pageInspectorAdvanced = $('#h18-inspector-advanced-panel');\n    const $pageNavigatorList = $('#h18-page-navigator-list');\n    const $pageNavigatorCount = $('#h18-page-navigator-count');\n    const $pageUserPresetsList = $('#h18-user-presets-list');\n    let pageSectionNextIndex = 0;\n    let pageCardSerial = 0;\n    let $inspectedSection = $();\n    let currentInspectorPanel = 'content';\n    const pageUserPresets = {};\n\n    try {\n        const presetNode = document.getElementById('h18-page-presets-data');\n        const parsedPresets = presetNode ? JSON.parse(presetNode.textContent || '[]') : [];\n        (Array.isArray(parsedPresets) ? parsedPresets : []).forEach(function (preset) {\n            if (preset && preset.Id) {\n                pageUserPresets[String(preset.Id)] = preset;\n            }\n        });\n    } catch (presetError) {\n        window.console && console.warn('Hangar18: kunne ikke læse komponentbibliotek.', presetError);\n    }\n\n    const builtInSectionPresets = {\n        'hero-cta': {\n            Type: 'hero', Title: 'Velkommen', Content: '<p>Skriv en kort introduktion, der fortæller hvad siden handler om.</p>',\n            Background: 'Olive', DesktopAlignment: 'Center', MobileAlignment: 'Center', PaddingPx: 36, MobilePaddingPx: 22,\n            HeroHeightPx: 320, MobileHeroHeightPx: 220, OverlayOpacityPercent: 35, Button1Label: 'Læs mere', Button1Url: '#', Active: true\n        },\n        'text-image': {\n            Type: 'text_image', Title: 'Overskrift', Content: '<p>Fortæl historien her. Vælg derefter et billede i Inspector.</p>',\n            Background: 'White', ImagePosition: 'Right', DesktopAlignment: 'Left', MobileAlignment: 'Left', Active: true\n        },\n        'info-cards': {\n            Type: 'card_grid', Title: 'Kort fortalt', Content: '', Background: 'White', Columns: 3, MobileColumns: 1, ColumnGapPx: 16, MobileColumnGapPx: 14, Active: true,\n            Cards: [\n                { Title: 'Punkt 1', Content: '<p>Beskrivelse af det første punkt.</p>', Background: 'OffWhite', TextTone: 'Auto', Active: true },\n                { Title: 'Punkt 2', Content: '<p>Beskrivelse af det andet punkt.</p>', Background: 'Sand', TextTone: 'Auto', Active: true },\n                { Title: 'Punkt 3', Content: '<p>Beskrivelse af det tredje punkt.</p>', Background: 'Steel', TextTone: 'Auto', Active: true }\n            ]\n        },\n        'cta-band': {\n            Type: 'buttons', Title: 'Klar til næste skridt?', Content: '<p>Brug sektionen til en tydelig handling.</p>', Background: 'OffWhite',\n            DesktopAlignment: 'Center', MobileAlignment: 'Center', PaddingPx: 24, MobilePaddingPx: 18, Button1Label: 'Læs mere', Button1Url: '#', Active: true\n        },\n        'contact-form': {\n            Type: 'mail_form', Title: 'Kontakt os', Content: '<p>Send os en besked, så vender vi tilbage hurtigst muligt.</p>', Background: 'OffWhite',\n            PaddingPx: 26, MobilePaddingPx: 20, Active: true\n        }\n    };",
+              'builder state extension'
+          )
+
+          helper_block = r'''
+    function inspectorTypeLabel(type) {
+        const labels = {
+            hero: 'Topbanner / hero', text: 'Tekst', text_image: 'Tekst og billede', image: 'Stort billede',
+            buttons: 'Handlingsknapper', card: 'Indholdskort', card_grid: 'Kort-række / kolonner', highlight: 'Fremhævet tekst',
+            spacer: 'Afstand', html: 'Importeret blok / HTML', css: 'Side-CSS', mail_form: 'Mailformular', poll: 'Afstemning', legacy: 'Eksisterende indhold'
+        };
+        return labels[String(type || '')] || 'Sektion';
+    }
+
+    function setInspectorPanel(panel) {
+        panel = ['content', 'design', 'advanced'].includes(String(panel)) ? String(panel) : 'content';
+        currentInspectorPanel = panel;
+        $pageInspector.attr('data-inspector-panel', panel);
+        $pageInspector.find('.h18-inspector-tab').removeClass('is-active').filter('[data-inspector-tab="' + panel + '"]').addClass('is-active');
+    }
+
+    function refreshInspectorMeta($row) {
+        const hasRow = $row && $row.length && !$row.hasClass('h18-page-section-removed');
+        const type = hasRow ? String($row.attr('data-section-type') || 'text') : '';
+        const key = hasRow ? String($row.find('.h18-page-section-key').val() || '') : '';
+        $('#h18-inspector-type').text(hasRow ? inspectorTypeLabel(type) : '–');
+        $('#h18-inspector-key').text(key || '–');
+        $('#h18-inspector-copy-key, #h18-inspector-duplicate, #h18-save-section-preset').prop('disabled', !hasRow || type === 'legacy');
+        if (hasRow && type === 'legacy') {
+            $('#h18-inspector-copy-key').prop('disabled', false);
+        }
+    }
+
+    function rebuildPageNavigator() {
+        if (!$pageNavigatorList.length || !$pageSections.length) {
+            return;
+        }
+        if ($pageNavigatorList.hasClass('ui-sortable')) {
+            $pageNavigatorList.sortable('destroy');
+        }
+        $pageNavigatorList.empty();
+        let count = 0;
+        $pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').each(function () {
+            const $row = $(this);
+            const index = String($row.attr('data-section-index') || '');
+            const type = String($row.attr('data-section-type') || 'text');
+            const title = String($row.find('.h18-page-section-title-summary').first().text() || '').trim();
+            const active = $row.find('.h18-section-active').is(':checked');
+            const selected = $inspectedSection.length && $inspectedSection.get(0) === $row.get(0);
+            const $item = $('<div>', { class: 'h18-navigator-item' + (selected ? ' is-selected' : ''), 'data-section-index': index });
+            $item.append($('<span>', { class: 'dashicons dashicons-menu h18-navigator-drag', title: 'Flyt lag' }));
+            const $button = $('<button>', { type: 'button', class: 'h18-navigator-select' });
+            $button.append($('<strong>', { text: inspectorTypeLabel(type) }));
+            $button.append($('<small>', { text: title || 'Uden overskrift' }));
+            $item.append($button);
+            $item.append($('<span>', { class: 'h18-navigator-visibility ' + (active ? 'is-visible' : 'is-hidden'), title: active ? 'Synlig' : 'Skjult' }).append($('<span>', { class: 'dashicons ' + (active ? 'dashicons-visibility' : 'dashicons-hidden') })));
+            $pageNavigatorList.append($item);
+            count += 1;
+        });
+        $pageNavigatorCount.text(count);
+        if (count > 1) {
+            $pageNavigatorList.sortable({
+                items: '> .h18-navigator-item', handle: '.h18-navigator-drag', axis: 'y', tolerance: 'pointer',
+                update: function () {
+                    const orderedRows = [];
+                    $pageNavigatorList.children('.h18-navigator-item').each(function () {
+                        const index = String($(this).attr('data-section-index') || '');
+                        const $row = $pageSections.children('.h18-page-section-row[data-section-index="' + index + '"]');
+                        if ($row.length) {
+                            orderedRows.push($row);
+                        }
+                    });
+                    orderedRows.forEach(function ($row) { $pageSections.append($row); });
+                    $pageSections.children('.h18-page-section-row.h18-page-section-removed').appendTo($pageSections);
+                    syncPageSectionOrder(true);
+                    window.setTimeout(rebuildPageNavigator, 0);
+                }
+            });
+        }
+    }
+
+    function renderUserPresets() {
+        if (!$pageUserPresetsList.length) {
+            return;
+        }
+        const presets = Object.values(pageUserPresets).sort(function (a, b) { return String(a.Name || '').localeCompare(String(b.Name || ''), 'da'); });
+        $pageUserPresetsList.empty();
+        if (!presets.length) {
+            $pageUserPresetsList.html('<p class="description">Vælg en sektion og brug “Gem som komponent” i Inspector.</p>');
+            return;
+        }
+        presets.forEach(function (preset) {
+            const $row = $('<div>', { class: 'h18-user-preset-row', 'data-preset-id': String(preset.Id) });
+            $row.append($('<button>', { type: 'button', class: 'h18-user-preset-insert' }).append($('<strong>', { text: String(preset.Name || 'Komponent') })).append($('<small>', { text: inspectorTypeLabel(preset.Section && preset.Section.Type) })));
+            $row.append($('<button>', { type: 'button', class: 'h18-user-preset-delete', title: 'Slet komponent', 'aria-label': 'Slet komponent' }).append($('<span>', { class: 'dashicons dashicons-trash' })));
+            $pageUserPresetsList.append($row);
+        });
+    }
+
+    function sectionPresetData($row) {
+        if (!$row || !$row.length) {
+            return null;
+        }
+        const data = { Type: String($row.attr('data-section-type') || 'text') };
+        const cards = {};
+        pageSectionControls($row, '[name]').each(function () {
+            const $field = $(this);
+            const name = String($field.attr('name') || '');
+            let match = name.match(/^sections\[[^\]]+\]\[Cards\]\[([^\]]+)\]\[([^\]]+)\]$/);
+            let value = $field.is(':checkbox') ? $field.is(':checked') : $field.val();
+            if (match) {
+                const cardIndex = String(match[1]);
+                const fieldName = String(match[2]);
+                if (['Key', 'Order', 'Remove'].includes(fieldName)) {
+                    return;
+                }
+                cards[cardIndex] = cards[cardIndex] || {};
+                cards[cardIndex][fieldName] = value;
+                return;
+            }
+            match = name.match(/^sections\[[^\]]+\]\[([^\]]+)\]$/);
+            if (!match) {
+                return;
+            }
+            const fieldName = String(match[1]);
+            if (['Key', 'Order', 'Remove', 'ResetVotes'].includes(fieldName)) {
+                return;
+            }
+            data[fieldName] = value;
+        });
+        data.Cards = Object.keys(cards).sort(function (a, b) { return Number(a) - Number(b); }).map(function (index) { return cards[index]; });
+        return data;
+    }
+
+    function setSectionPresetField($row, fieldName, value) {
+        const sectionIndex = String($row.attr('data-section-index') || '');
+        pageSectionControls($row, '[name]').filter(function () {
+            return String($(this).attr('name') || '') === 'sections[' + sectionIndex + '][' + fieldName + ']';
+        }).each(function () {
+            const $field = $(this);
+            if ($field.is(':checkbox')) {
+                $field.prop('checked', Boolean(value));
+            } else {
+                $field.val(value == null ? '' : value);
+            }
+        });
+    }
+
+    function applySectionPreset(presetData) {
+        if (!presetData || typeof presetData !== 'object') {
+            return $();
+        }
+        const type = String(presetData.Type || 'text');
+        const $row = addPageSection(type);
+        if (!$row.length) {
+            return $row;
+        }
+        Object.keys(presetData).forEach(function (fieldName) {
+            if (['Type', 'Cards', 'Key', 'Order', 'Remove'].includes(fieldName)) {
+                return;
+            }
+            setSectionPresetField($row, fieldName, presetData[fieldName]);
+        });
+        $row.find('.h18-page-section-type').val(type);
+        if (Array.isArray(presetData.Cards) && type === 'card_grid') {
+            const $container = pageSectionControls($row, '.h18-page-cards-sortable');
+            $container.children('.h18-page-card-row').remove();
+            presetData.Cards.slice(0, 12).forEach(function (card) { addPageCard($row, card || {}); });
+        }
+        refreshPageSectionType($row);
+        const title = String(setSectionTitleSummary($row));
+        if (title) { /* summary already updated */ }
+        syncPageSectionOrder();
+        inspectPageSection($row);
+        return $row;
+    }
+
+    function setSectionTitleSummary($row) {
+        const title = String(pageSectionControls($row, '.h18-section-title-input').val() || '');
+        $row.find('.h18-page-section-title-summary').text(title);
+        return title;
+    }
+
+'''
+          js = rep(js, "    function restoreInspectedSection() {", helper_block + "    function restoreInspectedSection() {", 'insert builder helpers')
+
+          js = rep(
+              js,
+              "        $pageInspectorTarget.html('<p class=\"description\">Klik på <strong>Rediger</strong> ved en sektion for at ændre indhold, farver og luft.</p>');\n    }",
+              "        $pageInspectorTarget.html('<p class=\"description\">Klik på <strong>Rediger</strong> ved en sektion for at ændre indhold, design og responsive indstillinger.</p>');\n        refreshInspectorMeta($());\n        setInspectorPanel('content');\n        rebuildPageNavigator();\n    }",
+              'restore inspector state'
+          )
+
+          js = rep(
+              js,
+              "        $pageInspectorTarget.empty().append($row.children('.h18-page-section-body'));\n    }",
+              "        $pageInspectorTarget.empty().append($row.children('.h18-page-section-body'));\n        refreshInspectorMeta($row);\n        setInspectorPanel(currentInspectorPanel);\n        rebuildPageNavigator();\n    }",
+              'inspect section meta'
+          )
+
+          old_sync = r'''    function syncPageSectionOrder() {
+        if (!$pageSections.length) {
+            return;
+        }
+        let visibleIndex = 0;
+        $pageSections.children('.h18-page-section-row').each(function () {
+            if (!$(this).hasClass('h18-page-section-removed')) {
+                visibleIndex += 1;
+                $(this).find('.h18-page-section-order').val(visibleIndex * 10);
+            }
+        });
+    }'''
+          new_sync = r'''    function syncPageSectionOrder(skipNavigator) {
+        if (!$pageSections.length) {
+            return;
+        }
+        let visibleIndex = 0;
+        $pageSections.children('.h18-page-section-row').each(function () {
+            if (!$(this).hasClass('h18-page-section-removed')) {
+                visibleIndex += 1;
+                $(this).find('.h18-page-section-order').val(visibleIndex * 10);
+            }
+        });
+        if (!skipNavigator) {
+            rebuildPageNavigator();
+        }
+    }'''
+          js = rep(js, old_sync, new_sync, 'navigator-aware order sync')
+
+          js = rep(
+              js,
+              "        $row.find('.h18-page-section-summary').text(labels[type] || 'Sektion');\n        pageSectionControls($row, '.h18-section-title-label').text(type === 'poll' ? 'Spørgsmål' : 'Overskrift');\n    }",
+              "        $row.find('.h18-page-section-summary').text(labels[type] || 'Sektion');\n        pageSectionControls($row, '.h18-section-title-label').text(type === 'poll' ? 'Spørgsmål' : 'Overskrift');\n        refreshInspectorMeta($row);\n        rebuildPageNavigator();\n    }",
+              'refresh navigator on type'
+          )
+
+          js = rep(
+              js,
+              "        if ($firstEditable.length) {\n            inspectPageSection($firstEditable);\n        }\n    }",
+              "        if ($firstEditable.length) {\n            inspectPageSection($firstEditable);\n        }\n        renderUserPresets();\n        rebuildPageNavigator();\n    }",
+              'initialize components and navigator'
+          )
+
+          js = rep(
+              js,
+              "    $(document).on('input', '.h18-section-title-input', function () {\n        pageSectionForElement(this).find('.h18-page-section-title-summary').text($(this).val());\n    });",
+              "    $(document).on('input', '.h18-section-title-input', function () {\n        const $row = pageSectionForElement(this);\n        $row.find('.h18-page-section-title-summary').text($(this).val());\n        rebuildPageNavigator();\n    });\n\n    $(document).on('change', '.h18-section-active', rebuildPageNavigator);",
+              'navigator live title and visibility'
+          )
+
+          event_block = r'''
+    $(document).on('click', '.h18-builder-sidebar-tab', function () {
+        const tab = String($(this).data('builder-tab') || 'elements');
+        $('.h18-builder-sidebar-tab').removeClass('is-active');
+        $(this).addClass('is-active');
+        $('.h18-builder-sidebar-panel').removeClass('is-active').filter('[data-builder-panel="' + tab + '"]').addClass('is-active');
+        if (tab === 'layers') {
+            rebuildPageNavigator();
+        } else if (tab === 'components') {
+            renderUserPresets();
+        }
+    });
+
+    $(document).on('click', '.h18-navigator-select', function () {
+        const index = String($(this).closest('.h18-navigator-item').attr('data-section-index') || '');
+        const $row = $pageSections.children('.h18-page-section-row[data-section-index="' + index + '"]');
+        inspectPageSection($row);
+    });
+
+    $(document).on('click', '.h18-inspector-tab', function () {
+        setInspectorPanel(String($(this).data('inspector-tab') || 'content'));
+    });
+
+    $(document).on('click', '.h18-builder-component-item', function () {
+        const presetId = String($(this).data('section-preset') || '');
+        if (builtInSectionPresets[presetId]) {
+            applySectionPreset(builtInSectionPresets[presetId]);
+        }
+    });
+
+    $(document).on('click', '.h18-user-preset-insert', function () {
+        const presetId = String($(this).closest('.h18-user-preset-row').attr('data-preset-id') || '');
+        const preset = pageUserPresets[presetId];
+        if (preset && preset.Section) {
+            applySectionPreset(preset.Section);
+        }
+    });
+
+    $('#h18-inspector-copy-key').on('click', function () {
+        if (!$inspectedSection.length) { return; }
+        const key = String($inspectedSection.find('.h18-page-section-key').val() || '');
+        if (!key) { return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(key);
+        } else {
+            window.prompt('Kopiér elementnøglen:', key);
+        }
+    });
+
+    $('#h18-inspector-duplicate').on('click', function () {
+        if ($inspectedSection.length) {
+            $inspectedSection.find('.h18-page-section-duplicate').first().trigger('click');
+        }
+    });
+
+    $('#h18-save-section-preset').on('click', function () {
+        if (!$inspectedSection.length) {
+            return;
+        }
+        const data = sectionPresetData($inspectedSection);
+        if (!data || data.Type === 'legacy') {
+            window.alert('Denne sektion kan ikke gemmes som komponent.');
+            return;
+        }
+        const defaultName = String($inspectedSection.find('.h18-page-section-title-summary').text() || inspectorTypeLabel(data.Type)).trim();
+        const name = window.prompt('Navn på den genbrugelige komponent:', defaultName || 'Ny komponent');
+        if (!name) {
+            return;
+        }
+        const $button = $(this).prop('disabled', true).text('Gemmer…');
+        $.post(Hangar18Manager.ajaxUrl || window.ajaxurl, {
+            action: 'h18_save_page_preset', nonce: Hangar18Manager.pagePresetNonce, name: name, section: JSON.stringify(data)
+        }).done(function (response) {
+            if (!response || !response.success || !response.data || !response.data.preset) {
+                window.alert((response && response.data && response.data.message) || 'Komponenten kunne ikke gemmes.');
+                return;
+            }
+            const preset = response.data.preset;
+            pageUserPresets[String(preset.Id)] = preset;
+            renderUserPresets();
+            $('.h18-builder-sidebar-tab[data-builder-tab="components"]').trigger('click');
+        }).fail(function (xhr) {
+            const message = xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message ? xhr.responseJSON.data.message : 'Komponenten kunne ikke gemmes.';
+            window.alert(message);
+        }).always(function () {
+            $button.prop('disabled', false).text('Gem som komponent');
+        });
+    });
+
+    $(document).on('click', '.h18-user-preset-delete', function () {
+        const presetId = String($(this).closest('.h18-user-preset-row').attr('data-preset-id') || '');
+        const preset = pageUserPresets[presetId];
+        if (!preset || !window.confirm('Slet komponenten “' + String(preset.Name || 'Komponent') + '”?')) {
+            return;
+        }
+        $.post(Hangar18Manager.ajaxUrl || window.ajaxurl, {
+            action: 'h18_delete_page_preset', nonce: Hangar18Manager.pagePresetNonce, preset_id: presetId
+        }).done(function (response) {
+            if (!response || !response.success) {
+                window.alert((response && response.data && response.data.message) || 'Komponenten kunne ikke slettes.');
+                return;
+            }
+            delete pageUserPresets[presetId];
+            renderUserPresets();
+        }).fail(function () {
+            window.alert('Komponenten kunne ikke slettes.');
+        });
+    });
+
+'''
+          js = rep(
+              js,
+              "    let draggedPaletteType = '';",
+              event_block + "    let draggedPaletteType = '';",
+              'builder events insertion'
+          )
+
+          # -------------------------- admin.css --------------------------
+          css_append = r'''
+
+/* v0.5.1 – Navigator, inspector tabs og komponentbibliotek */
+.h18-visual-builder{grid-template-columns:260px minmax(420px,1fr) minmax(350px,440px)}
+.h18-builder-sidebar-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:-4px -4px 14px}
+.h18-builder-sidebar-tab,.h18-inspector-tab{appearance:none;border:1px solid #c3c4c7;border-radius:6px;background:#f6f7f7;color:#1d2327;padding:8px 7px;font-weight:600;cursor:pointer}
+.h18-builder-sidebar-tab:hover,.h18-inspector-tab:hover{border-color:#3858e9;color:#1935a5}
+.h18-builder-sidebar-tab.is-active,.h18-inspector-tab.is-active{border-color:#3858e9;background:#edf1ff;color:#1935a5;box-shadow:inset 0 -2px 0 #3858e9}
+.h18-builder-sidebar-panel{display:none}
+.h18-builder-sidebar-panel.is-active{display:block}
+.h18-builder-sidebar-panel>p{margin:7px 0 14px;color:#646970}
+.h18-builder-panel-heading,.h18-user-components-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.h18-builder-panel-heading span,.h18-user-components-heading span{font-size:11px;color:#646970}
+.h18-page-navigator-list{display:flex;flex-direction:column;gap:6px}
+.h18-navigator-item{display:grid;grid-template-columns:24px minmax(0,1fr) 24px;align-items:center;gap:5px;border:1px solid #dcdcde;border-radius:6px;background:#fff}
+.h18-navigator-item:hover{border-color:#8c8f94}
+.h18-navigator-item.is-selected{border-color:#3858e9;background:#edf1ff;box-shadow:0 0 0 1px rgba(56,88,233,.12)}
+.h18-navigator-drag{cursor:move;color:#646970;margin-left:5px}
+.h18-navigator-select{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 2px;border:0;background:transparent;text-align:left;cursor:pointer}
+.h18-navigator-select strong,.h18-navigator-select small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h18-navigator-select strong{font-size:12px;color:#1d2327}
+.h18-navigator-select small{font-size:11px;color:#646970}
+.h18-navigator-visibility{display:flex;align-items:center;justify-content:center}
+.h18-navigator-visibility .dashicons{width:16px;height:16px;font-size:16px}
+.h18-navigator-visibility.is-hidden{color:#b32d2e}
+.h18-navigator-visibility.is-visible{color:#2e7d32}
+.h18-builder-component-list{display:grid;gap:7px}
+.h18-builder-component-item{display:grid;grid-template-columns:28px minmax(0,1fr);gap:0 7px;width:100%;padding:9px;border:1px solid #c3c4c7;border-radius:7px;background:#f6f7f7;text-align:left;cursor:pointer}
+.h18-builder-component-item:hover{border-color:#3858e9;background:#edf1ff}
+.h18-builder-component-item>.dashicons{grid-row:1/3;align-self:center;color:#8b4a2b}
+.h18-builder-component-item strong{font-size:12px;color:#1d2327}
+.h18-builder-component-item small{font-size:11px;color:#646970}
+.h18-user-components-heading{margin-top:18px;padding-top:14px;border-top:1px solid #dcdcde}
+.h18-user-components-heading h4{margin:0}
+.h18-user-presets-list{display:grid;gap:6px;margin-top:8px}
+.h18-user-preset-row{display:grid;grid-template-columns:minmax(0,1fr) 32px;border:1px solid #dcdcde;border-radius:6px;overflow:hidden;background:#fff}
+.h18-user-preset-insert{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 9px;border:0;background:transparent;text-align:left;cursor:pointer}
+.h18-user-preset-insert:hover{background:#edf1ff}
+.h18-user-preset-insert strong,.h18-user-preset-insert small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h18-user-preset-insert small{font-size:11px;color:#646970}
+.h18-user-preset-delete{display:flex;align-items:center;justify-content:center;border:0;border-left:1px solid #dcdcde;background:#fff;color:#b32d2e;cursor:pointer}
+.h18-user-preset-delete:hover{background:#fcf0f1}
+.h18-inspector-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:14px}
+.h18-builder-inspector[data-inspector-panel="content"] #h18-page-inspector-target>.h18-page-section-body>.h18-page-section-layout{display:none!important}
+.h18-builder-inspector[data-inspector-panel="design"] #h18-page-inspector-target>.h18-page-section-body>*{display:none!important}
+.h18-builder-inspector[data-inspector-panel="design"] #h18-page-inspector-target>.h18-page-section-body>.h18-page-section-layout{display:block!important}
+.h18-builder-inspector[data-inspector-panel="advanced"] #h18-page-inspector-target{display:none}
+.h18-inspector-advanced-panel{display:none}
+.h18-builder-inspector[data-inspector-panel="advanced"] .h18-inspector-advanced-panel{display:block}
+.h18-inspector-meta-grid{display:grid;gap:10px;padding:12px;border:1px solid #dcdcde;border-radius:7px;background:#f6f7f7}
+.h18-inspector-meta-grid>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.h18-inspector-meta-grid span{font-size:11px;color:#646970;text-transform:uppercase;letter-spacing:.04em}
+.h18-inspector-meta-grid code{overflow-wrap:anywhere}
+.h18-inspector-advanced-actions{display:grid;gap:8px;margin-top:12px}
+.h18-inspector-advanced-actions .button{width:100%;justify-content:center}
+@media(max-width:1280px){.h18-visual-builder{grid-template-columns:220px minmax(360px,1fr) minmax(320px,390px)}}
+@media(max-width:960px){.h18-visual-builder{grid-template-columns:210px minmax(0,1fr)}}
+@media(max-width:782px){.h18-builder-sidebar-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}.h18-page-navigator-list{max-height:360px;overflow:auto}}
+'''
+          css += css_append
+
+          if 'Version: 0.5.0' not in readme:
+              raise SystemExit('readme version anchor missing')
+          readme = readme.replace('Version: 0.5.0', 'Version: 0.5.1', 1)
+          readme += '''\n\n== Version 0.5.1 – Navigator, avanceret Inspector og genbrugelige komponenter ==\n\n- Sidebuilderens venstre panel har faner til Elementer, Lag og Komponenter.\n- Navigator/Lag viser alle aktive sektioner, synlighedsstatus og understøtter drag-and-drop rækkefølge.\n- Inspector er opdelt i Indhold, Design og Avanceret.\n- Avanceret Inspector viser elementtype og elementnøgle samt genveje til duplikering og komponentlagring.\n- Fem indbyggede komponentpresets: Hero + handling, Tekst + billede, 3 informationskort, CTA-bånd og Kontaktblok.\n- Enhver ikke-legacy sektion kan gemmes som egen genbrugelig komponent. Egne komponenter gemmes centralt i WordPress og kan indsættes på alle redigerbare sider.\n- Egne komponenter kan slettes direkte fra komponentbiblioteket.\n- Eksisterende v0.5.0 sider, HeaderDesign schema 2.3 og Designer schema 1.0 bevares uændret.\n'''
+
+          php_path.write_text(php, encoding='utf-8')
+          js_path.write_text(js, encoding='utf-8')
+          css_path.write_text(css, encoding='utf-8')
+          readme_path.write_text(readme, encoding='utf-8')
+          PY
+
+      - name: Static QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          grep -F 'Version: 0.5.1' hangar18-manager.php
+          grep -F "const VERSION = '0.5.1';" hangar18-manager.php
+          grep -F 'PAGE_PRESETS_OPTION' hangar18-manager.php
+          grep -F 'wp_ajax_h18_save_page_preset' hangar18-manager.php
+          grep -F 'h18-page-navigator-list' hangar18-manager.php
+          grep -F 'h18-save-section-preset' hangar18-manager.php
+          grep -F 'builtInSectionPresets' assets/admin.js
+          grep -F 'rebuildPageNavigator' assets/admin.js
+          grep -F 'sectionPresetData' assets/admin.js
+          grep -F 'data-inspector-panel="advanced"' assets/admin.css
+
+      - name: Build package and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist .build
+          mkdir -p dist .build/hangar18-manager/assets
+          cp hangar18-manager.php .build/hangar18-manager/
+          cp readme.txt .build/hangar18-manager/
+          cp assets/admin.css .build/hangar18-manager/assets/
+          cp assets/admin.js .build/hangar18-manager/assets/
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"
+          export SHA
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          manifest = {
+              'schema_version': '1.0',
+              'plugin': 'hangar18-manager',
+              'version': '0.5.1',
+              'min_wp': '6.4',
+              'min_php': '8.0',
+              'published_utc': datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              'package_path': 'dist/hangar18-manager.zip',
+              'package_sha256': os.environ['SHA'],
+              'changelog': [
+                  'Tilføjer Navigator/Lag med drag-and-drop rækkefølge og synlighedsstatus.',
+                  'Opdeler Inspector i Indhold, Design og Avanceret.',
+                  'Tilføjer fem indbyggede komponentpresets.',
+                  'Gør det muligt at gemme og genbruge egne sektioner centralt i WordPress.'
+              ]
+          }
+          with open('update.json', 'w', encoding='utf-8') as f:
+              json.dump(manifest, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          PY
+          rm -rf .build
+
+      - name: Commit validated build and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/build-v051.yml
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'Build Hangar18 Manager 0.5.1 navigator and components'
+          git push
