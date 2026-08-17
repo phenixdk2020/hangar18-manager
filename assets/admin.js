@@ -892,6 +892,94 @@ jQuery(function ($) {
         $target.append($body);
     }
 
+    function canvasImageSettings($row) {
+        const aspectValue = String(canvasFieldValue($row, 'ImageAspectRatio', 'Auto'));
+        const aspectMap = { Auto: 'auto', '1:1': '1 / 1', '4:3': '4 / 3', '3:2': '3 / 2', '16:9': '16 / 9' };
+        const heightField = currentCanvasDevice === 'mobile' ? 'MobileImageHeightPx' : 'ImageHeightPx';
+        return {
+            aspect: aspectMap[aspectValue] || 'auto',
+            aspectValue: aspectValue,
+            fit: String(canvasFieldValue($row, 'ImageFit', 'Cover')).toLowerCase(),
+            x: Math.max(0, Math.min(100, canvasNumber($row, 'ImageFocalXPercent', 50))),
+            y: Math.max(0, Math.min(100, canvasNumber($row, 'ImageFocalYPercent', 50))),
+            heightField: heightField,
+            height: Math.max(0, canvasNumber($row, heightField, 0))
+        };
+    }
+
+    function canvasApplySectionImageStyle($row, $scope) {
+        if (!$row || !$row.length || !$scope || !$scope.length) { return; }
+        const settings = canvasImageSettings($row);
+        $scope.find('img').css({
+            width: '100%',
+            height: settings.height > 0 ? settings.height + 'px' : 'auto',
+            aspectRatio: settings.aspect,
+            objectFit: settings.fit,
+            objectPosition: settings.x + '% ' + settings.y + '%'
+        });
+    }
+
+    function canvasOpenSectionMedia($row) {
+        if (!$row || !$row.length || typeof wp === 'undefined' || !wp.media) { return; }
+        const frame = wp.media({
+            title: Hangar18Manager.chooseImage,
+            button: { text: Hangar18Manager.useImage },
+            multiple: false,
+            library: { type: 'image' }
+        });
+        frame.on('select', function () {
+            const image = frame.state().get('selection').first().toJSON();
+            const preview = image.sizes && image.sizes.thumbnail ? image.sizes.thumbnail.url : image.url;
+            canvasSetField($row, 'MediaId', image.id || '');
+            canvasSetField($row, 'MediaUrl', image.url || '');
+            pageSectionControls($row, '.h18-section-media-preview').html($('<img>', { src: preview, alt: image.alt || '' }));
+            renderCanvasPreview($row);
+        });
+        frame.open();
+    }
+
+    function canvasImageSelect(label, fieldName, value, options) {
+        const $select = $('<select>', { class: 'h18-canvas-image-control', 'data-image-control-field': fieldName });
+        options.forEach(function (item) {
+            $select.append($('<option>', { value: item[0], text: item[1], selected: String(value) === String(item[0]) }));
+        });
+        return $('<label>', { class: 'h18-canvas-image-select' }).append($('<span>', { text: label }), $select);
+    }
+
+    function canvasImageRange(label, fieldName, value, min, max, suffix) {
+        return $('<label>', { class: 'h18-canvas-image-range' }).append(
+            $('<span>', { text: label }),
+            $('<input>', { type: 'range', min: min, max: max, step: 1, value: Math.round(value), 'data-image-control-field': fieldName }),
+            $('<output>', { text: Math.round(value) + (suffix || '') })
+        );
+    }
+
+    function renderCanvasImageTools($row, $preview) {
+        if (!$row.hasClass('is-selected')) { return; }
+        const type = String($row.attr('data-section-type') || '');
+        if (!['image', 'text_image'].includes(type)) { return; }
+        const $media = $preview.find('.h18-canvas-editable-media').first();
+        if (!$media.length) { return; }
+        const settings = canvasImageSettings($row);
+        const $tools = $('<div>', { class: 'h18-canvas-image-tools' }).append(
+            $('<strong>', { text: 'Billede' }),
+            $('<div>', { class: 'h18-canvas-image-actions' }).append(
+                $('<button>', { type: 'button', class: 'button button-small h18-canvas-image-change', text: 'Skift billede' }),
+                $('<button>', { type: 'button', class: 'button-link-delete h18-canvas-image-remove', text: 'Fjern' })
+            ),
+            canvasImageSelect('Format', 'ImageAspectRatio', settings.aspectValue, [['Auto','Auto'],['1:1','1:1'],['4:3','4:3'],['3:2','3:2'],['16:9','16:9']]),
+            canvasImageSelect('Tilpas', 'ImageFit', String(canvasFieldValue($row, 'ImageFit', 'Cover')), [['Cover','Fyld'],['Contain','Hele billedet']]),
+            canvasImageRange('Fokus X', 'ImageFocalXPercent', settings.x, 0, 100, '%'),
+            canvasImageRange('Fokus Y', 'ImageFocalYPercent', settings.y, 0, 100, '%'),
+            canvasImageRange(currentCanvasDevice === 'mobile' ? 'Højde mobil' : 'Højde', settings.heightField, settings.height, 0, currentCanvasDevice === 'mobile' ? 900 : 1200, ' px')
+        );
+        const $dot = $('<button>', {
+            type: 'button', class: 'h18-canvas-focal-dot',
+            'aria-label': 'Træk fokuspunkt', title: 'Træk for at flytte fokuspunkt'
+        }).css({ left: settings.x + '%', top: settings.y + '%' });
+        $media.append($tools, $dot);
+    }
+
     function canvasBuildPreviewContent($row, $preview) {
         const type = String($row.attr('data-section-type') || 'text');
         const title = String(canvasFieldValue($row, 'Title', ''));
@@ -927,8 +1015,9 @@ jQuery(function ($) {
             if (title) { $copy.append(canvasEditableNode('h2', 'h18-canvas-preview-title', 'Title', title, 'Overskrift')); }
             canvasAddBodyText($copy, content);
             const url = String(canvasFieldValue($row, 'MediaUrl', '') || '');
-            const $media = $('<div>', { class: 'h18-canvas-preview-media' });
-            if (url) { $media.append($('<img>', { src: url, alt: '' })); } else { $media.append($('<span>', { text: 'Vælg billede' })); }
+            const $media = $('<div>', { class: 'h18-canvas-preview-media h18-canvas-editable-media', tabindex: '0', role: 'button', title: 'Klik for billedkontroller · dobbeltklik for at skifte billede' });
+            if (url) { $media.append($('<img>', { src: url, alt: '' })); } else { $media.append($('<span>', { class: 'h18-canvas-image-placeholder', text: 'Vælg billede' })); }
+            canvasApplySectionImageStyle($row, $media);
             if (String(canvasFieldValue($row, 'ImagePosition', 'Right')) === 'Left' && currentCanvasDevice !== 'mobile') {
                 $grid.append($media, $copy);
             } else {
@@ -938,8 +1027,9 @@ jQuery(function ($) {
         } else if (type === 'image') {
             addTitle('Billede');
             const url = String(canvasFieldValue($row, 'MediaUrl', '') || '');
-            const $image = $('<div>', { class: 'h18-canvas-preview-image' });
-            if (url) { $image.append($('<img>', { src: url, alt: '' })); } else { $image.append($('<span>', { text: 'Intet billede valgt' })); }
+            const $image = $('<div>', { class: 'h18-canvas-preview-image h18-canvas-editable-media', tabindex: '0', role: 'button', title: 'Klik for billedkontroller · dobbeltklik for at skifte billede' });
+            if (url) { $image.append($('<img>', { src: url, alt: '' })); } else { $image.append($('<span>', { class: 'h18-canvas-image-placeholder', text: 'Intet billede valgt' })); }
+            canvasApplySectionImageStyle($row, $image);
             $inner.append($image);
         } else if (type === 'buttons') {
             addTitle('Handling');
@@ -1006,6 +1096,7 @@ jQuery(function ($) {
         }
 
         $preview.empty().append($inner);
+        renderCanvasImageTools($row, $preview);
     }
 
 
@@ -1310,6 +1401,23 @@ jQuery(function ($) {
                 title: 'Træk for at ændre indvendig luft'
             }).append($('<span>', { class: 'dashicons dashicons-move' })));
         });
+
+        $preview.append($('<div>', { class: 'h18-canvas-box-model-overlay', 'aria-hidden': 'true' }).append(
+            $('<span>', { class: 'is-margin-top', text: 'M ' + Math.round(layout.top) }),
+            $('<span>', { class: 'is-padding', text: 'P ' + Math.round(layout.pad) + ' / ' + Math.round(layout.padX) }),
+            $('<span>', { class: 'is-margin-bottom', text: 'M ' + Math.round(layout.bottom) })
+        ));
+        [
+            ['top', fields.top, 'y', 1, layout.top],
+            ['bottom', fields.bottom, 'y', -1, layout.bottom]
+        ].forEach(function (item) {
+            $preview.append($('<button>', {
+                type: 'button', class: 'h18-canvas-margin-handle is-' + item[0],
+                'data-canvas-margin-field': item[1], 'data-canvas-margin-axis': item[2],
+                'data-canvas-margin-sign': item[3], 'data-canvas-margin-value': item[4],
+                title: 'Træk for at ændre ydre afstand'
+            }).append($('<span>', { text: 'M' })));
+        });
     }
 
     function ensureCanvasToolbar() {
@@ -1474,6 +1582,78 @@ jQuery(function ($) {
 
     $(document).on('change', '.h18-canvas-card-range input[type=range]', function () { renderCanvasPreview($(this).closest('.h18-page-section-row')); });
 
+    $(document).on('click keydown', '.h18-canvas-editable-media', function (event) {
+        if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) { return; }
+        if ($(event.target).closest('.h18-canvas-image-tools, .h18-canvas-focal-dot').length) { return; }
+        event.preventDefault(); event.stopPropagation();
+        const $row = $(this).closest('.h18-page-section-row');
+        inspectPageSection($row);
+        renderCanvasPreview($row);
+    });
+
+    $(document).on('dblclick', '.h18-canvas-editable-media', function (event) {
+        if ($(event.target).closest('.h18-canvas-image-tools, .h18-canvas-focal-dot').length) { return; }
+        event.preventDefault(); event.stopPropagation();
+        const $row = $(this).closest('.h18-page-section-row');
+        inspectPageSection($row);
+        canvasOpenSectionMedia($row);
+    });
+
+    $(document).on('click', '.h18-canvas-image-change', function (event) {
+        event.preventDefault(); event.stopPropagation();
+        canvasOpenSectionMedia($(this).closest('.h18-page-section-row'));
+    });
+
+    $(document).on('click', '.h18-canvas-image-remove', function (event) {
+        event.preventDefault(); event.stopPropagation();
+        const $row = $(this).closest('.h18-page-section-row');
+        canvasSetField($row, 'MediaId', ''); canvasSetField($row, 'MediaUrl', '');
+        pageSectionControls($row, '.h18-section-media-preview').empty();
+        renderCanvasPreview($row);
+    });
+
+    $(document).on('input change', '.h18-canvas-image-control, .h18-canvas-image-range input[type=range]', function (event) {
+        event.stopPropagation();
+        const $control = $(this), $row = $control.closest('.h18-page-section-row');
+        const field = String($control.data('image-control-field') || '');
+        if (!field) { return; }
+        const value = $control.is('[type=range]') ? (parseInt($control.val(), 10) || 0) : $control.val();
+        canvasSetField($row, field, value);
+        if ($control.is('[type=range]')) { $control.closest('.h18-canvas-image-range').find('output').text(value + (field.includes('Percent') ? '%' : ' px')); }
+        const $media = $row.children('.h18-canvas-preview').find('.h18-canvas-editable-media').first();
+        canvasApplySectionImageStyle($row, $media);
+        if (event.type === 'change' || ['ImageAspectRatio','ImageFit'].includes(field)) { renderCanvasPreview($row); }
+    });
+
+    let canvasFocalDrag = null;
+    $(document).on('pointerdown', '.h18-canvas-focal-dot', function (event) {
+        event.preventDefault(); event.stopPropagation();
+        const $media = $(this).closest('.h18-canvas-editable-media');
+        canvasFocalDrag = { $row: $(this).closest('.h18-page-section-row'), $media: $media, rect: $media.get(0).getBoundingClientRect() };
+        $media.addClass('is-focal-dragging');
+    });
+
+    $(document).on('pointermove', function (event) {
+        if (!canvasFocalDrag) { return; }
+        const rect = canvasFocalDrag.rect;
+        const x = Math.max(0, Math.min(100, Math.round(((event.clientX - rect.left) / Math.max(1, rect.width)) * 100)));
+        const y = Math.max(0, Math.min(100, Math.round(((event.clientY - rect.top) / Math.max(1, rect.height)) * 100)));
+        canvasSetField(canvasFocalDrag.$row, 'ImageFocalXPercent', x);
+        canvasSetField(canvasFocalDrag.$row, 'ImageFocalYPercent', y);
+        canvasFocalDrag.$media.find('img').css('objectPosition', x + '% ' + y + '%');
+        canvasFocalDrag.$media.find('.h18-canvas-focal-dot').css({ left: x + '%', top: y + '%' });
+        canvasFocalDrag.$media.find('[data-image-control-field="ImageFocalXPercent"]').val(x).closest('.h18-canvas-image-range').find('output').text(x + '%');
+        canvasFocalDrag.$media.find('[data-image-control-field="ImageFocalYPercent"]').val(y).closest('.h18-canvas-image-range').find('output').text(y + '%');
+    });
+
+    $(document).on('pointerup pointercancel', function () {
+        if (!canvasFocalDrag) { return; }
+        const $row = canvasFocalDrag.$row;
+        canvasFocalDrag.$media.removeClass('is-focal-dragging');
+        canvasFocalDrag = null;
+        renderCanvasPreview($row);
+    });
+
     $(document).on('dblclick', '.h18-canvas-inline-edit', function (event) {
         event.preventDefault();
         event.stopPropagation();
@@ -1562,7 +1742,7 @@ jQuery(function ($) {
         }
     });
 
-    $(document).on('click pointerdown', '.h18-canvas-direct-controls, .h18-canvas-padding-handle', function (event) {
+    $(document).on('click pointerdown', '.h18-canvas-direct-controls, .h18-canvas-padding-handle, .h18-canvas-margin-handle, .h18-canvas-image-tools, .h18-canvas-focal-dot', function (event) {
         event.stopPropagation();
     });
 
@@ -1666,6 +1846,39 @@ jQuery(function ($) {
         const $row = canvasHandleDrag.$row;
         canvasHandleDrag.$preview.removeClass('is-direct-dragging');
         canvasHandleDrag = null;
+        renderCanvasPreview($row);
+    });
+
+    let canvasMarginDrag = null;
+    $(document).on('pointerdown', '.h18-canvas-margin-handle', function (event) {
+        event.preventDefault(); event.stopPropagation();
+        const $handle = $(this), $row = $handle.closest('.h18-page-section-row');
+        canvasMarginDrag = {
+            $row: $row, $preview: $row.children('.h18-canvas-preview'),
+            field: String($handle.data('canvas-margin-field') || ''),
+            sign: parseFloat($handle.data('canvas-margin-sign')) || 1,
+            startValue: parseFloat($handle.data('canvas-margin-value')) || 0,
+            startY: event.clientY,
+            edge: $handle.hasClass('is-top') ? 'top' : 'bottom'
+        };
+        canvasMarginDrag.$preview.addClass('is-margin-dragging');
+    });
+
+    $(document).on('pointermove', function (event) {
+        if (!canvasMarginDrag) { return; }
+        const value = Math.max(0, Math.min(160, Math.round(canvasMarginDrag.startValue + ((event.clientY - canvasMarginDrag.startY) * canvasMarginDrag.sign))));
+        canvasSetField(canvasMarginDrag.$row, canvasMarginDrag.field, value);
+        if (canvasMarginDrag.edge === 'top') { canvasMarginDrag.$preview.css('marginTop', value + 'px'); }
+        else { canvasMarginDrag.$preview.css('marginBottom', value + 'px'); }
+        canvasMarginDrag.$preview.find('[data-canvas-quick-field="' + canvasMarginDrag.field + '"]').val(value).closest('.h18-canvas-quick-range').find('output').text(value + ' px');
+        canvasMarginDrag.$preview.find('.h18-canvas-box-model-overlay .' + (canvasMarginDrag.edge === 'top' ? 'is-margin-top' : 'is-margin-bottom')).text('M ' + value);
+    });
+
+    $(document).on('pointerup pointercancel', function () {
+        if (!canvasMarginDrag) { return; }
+        const $row = canvasMarginDrag.$row;
+        canvasMarginDrag.$preview.removeClass('is-margin-dragging');
+        canvasMarginDrag = null;
         renderCanvasPreview($row);
     });
 
@@ -2015,21 +2228,7 @@ jQuery(function ($) {
 
     $(document).on('click', '.h18-page-select-media', function (event) {
         event.preventDefault();
-        const $row = pageSectionForElement(this);
-        const frame = wp.media({
-            title: Hangar18Manager.chooseImage,
-            button: { text: Hangar18Manager.useImage },
-            multiple: false,
-            library: { type: 'image' }
-        });
-        frame.on('select', function () {
-            const image = frame.state().get('selection').first().toJSON();
-            const preview = image.sizes && image.sizes.thumbnail ? image.sizes.thumbnail.url : image.url;
-            pageSectionControls($row, '.h18-section-media-id').val(image.id || '');
-            pageSectionControls($row, '.h18-section-media-url').val(image.url || '');
-            pageSectionControls($row, '.h18-section-media-preview').html($('<img>', { src: preview, alt: image.alt || '' }));
-        });
-        frame.open();
+        canvasOpenSectionMedia(pageSectionForElement(this));
     });
 
     $(document).on('click', '.h18-page-remove-media', function (event) {
@@ -2037,6 +2236,7 @@ jQuery(function ($) {
         const $row = pageSectionForElement(this);
         pageSectionControls($row, '.h18-section-media-id, .h18-section-media-url').val('');
         pageSectionControls($row, '.h18-section-media-preview').empty();
+        renderCanvasPreview($row);
     });
 
     $(document).on('click', '.h18-page-select-bg-media', function (event) {

@@ -1,7 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.5.9
+Version: 0.5.10
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.5.10 – Billeder og box-model i live canvas ==
+
+Nyt:
+- klik på image/text_image direkte i canvas for billedkontroller; dobbeltklik åbner WordPress Media Library
+- focal point kan trækkes direkte på billedet og gemmes som X/Y-procenter
+- billedformat: Auto, 1:1, 4:3, 3:2 og 16:9
+- object-fit kan vælges som Fyld/beskær eller Vis hele billedet
+- separat billedhøjde for desktop/tablet og mobil; 0 bevarer automatisk højde
+- margin top/bund får egne drag-handles, mens eksisterende padding-handles bevares
+- valgt element viser en kompakt box-model overlay med margin- og padding-værdier
+- page-editor schema 1.11 med bagudkompatible standarder: Auto, Cover, fokus 50/50 og 0 px højde
 
 == Version 0.5.9 – Direkte Card Grid-redigering ==
 
