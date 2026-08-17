@@ -1,0 +1,96 @@
+name: QA Hangar18 Manager 0.5.9
+
+on:
+  push:
+    branches:
+      - qa/v0.5.9
+    paths:
+      - .github/workflows/qa-fix-v059.yml
+
+permissions:
+  contents: write
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.9
+          fetch-depth: 0
+
+      - name: Restore clean admin.js and apply corrected patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:assets/admin.js > assets/admin.js
+          python3 .github/v059_fix.py
+
+      - name: Validate corrected source
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          grep -F 'selectedCanvasCardKey' assets/admin.js
+          grep -F 'canvasBuildCardTools' assets/admin.js
+          grep -F 'initializeCanvasCardGridPreview' assets/admin.js
+          grep -F 'h18-canvas-card-tools' assets/admin.css
+          read ADD DEL <<< $(git diff --numstat origin/main -- assets/admin.js | awk '{print $1, $2}')
+          echo "admin.js additions=${ADD:-0} deletions=${DEL:-0}"
+          test "${ADD:-0}" -gt 150
+          test "${DEL:-0}" -lt 80
+
+      - name: Rebuild package and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .pkg .verify
+          mkdir -p .pkg .verify
+          unzip -q dist/hangar18-manager.zip -d .pkg
+          cp hangar18-manager.php .pkg/hangar18-manager/hangar18-manager.php
+          cp readme.txt .pkg/hangar18-manager/readme.txt
+          cp assets/admin.js .pkg/hangar18-manager/assets/admin.js
+          cp assets/admin.css .pkg/hangar18-manager/assets/admin.css
+          rm -f dist/hangar18-manager.zip
+          (cd .pkg && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          SHA=$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')
+          export SHA
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          p='update.json'
+          d=json.load(open(p,encoding='utf-8'))
+          d['version']='0.5.9'
+          d['published_utc']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          d['package_sha256']=os.environ['SHA']
+          d['changelog']=[
+            'Hvert kort i Card Grid kan vælges og redigeres direkte i live canvas.',
+            'Kort kan omarrangeres direkte i canvas med drag-and-drop.',
+            'Kortoverskrift og rich-text indhold kan redigeres med dobbeltklik.',
+            'Valgt kort får hurtigkontroller for baggrund, teksttone, placering, padding, radius, kant og aktiv-status.',
+            'Card Grid får direkte kontrol over kolonner og mellemrum for visuel breddejustering.',
+            'Valgt kort fremhæves samtidig i Inspector.',
+            'Page-editor schema forbliver 1.10 og eksisterende sidedata migreres ikke.'
+          ]
+          with open(p,'w',encoding='utf-8') as f:
+              json.dump(d,f,ensure_ascii=False,indent=2); f.write('\n')
+          PY
+          rm -rf .pkg .verify
+
+      - name: Commit corrected release and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/v059_fix.py .github/workflows/qa-fix-v059.yml
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A assets/admin.js assets/admin.css hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip .github/v059_fix.py .github/workflows/qa-fix-v059.yml
+          git commit -m 'QA fix v0.5.9 Card Grid canvas patch scope'
+          git push origin HEAD:qa/v0.5.9
