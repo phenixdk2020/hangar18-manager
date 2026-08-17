@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.5.1
+Version: 0.5.2
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -778,3 +778,12 @@ Kompatibilitet og sikkerhed:
 - Enhver ikke-legacy sektion kan gemmes som egen genbrugelig komponent. Egne komponenter gemmes centralt i WordPress og kan indsættes på alle redigerbare sider.
 - Egne komponenter kan slettes direkte fra komponentbiblioteket.
 - Eksisterende v0.5.0 sider, HeaderDesign schema 2.3 og Designer schema 1.0 bevares uændret.
+
+
+== Version 0.5.2 – Individuelt elementdesign ==
+
+- Hver editorsektion kan følge Globalt design eller bruge Tilpasset farvetilstand.
+- Tilpasset tilstand giver egne farver for baggrund, tekst og overskrifter.
+- Hvert element kan få egen kantbredde, kantfarve og skygge.
+- Globalt design er fortsat standard, så eksisterende sider beholder deres udseende efter opdatering.
+- Page-editor dataformatet er kompatibelt løftet fra schema 1.5 til 1.6.

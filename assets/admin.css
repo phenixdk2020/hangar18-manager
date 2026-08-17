@@ -477,3 +477,10 @@
 @media(max-width:1280px){.h18-visual-builder{grid-template-columns:220px minmax(360px,1fr) minmax(320px,390px)}}
 @media(max-width:960px){.h18-visual-builder{grid-template-columns:210px minmax(0,1fr)}}
 @media(max-width:782px){.h18-builder-sidebar-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}.h18-page-navigator-list{max-height:360px;overflow:auto}}
+
+
+/* v0.5.2 – individuelt elementdesign */
+.h18-element-design-box{margin-top:18px;padding-top:16px;border-top:1px solid #dcdcde}
+.h18-element-design-box h4{margin:0 0 10px}
+.h18-custom-design-fields{margin-top:12px;padding:12px;border:1px solid #dcdcde;border-radius:7px;background:#f6f7f7}
+.h18-custom-design-fields input[type=color]{width:100%;min-height:38px;padding:2px}

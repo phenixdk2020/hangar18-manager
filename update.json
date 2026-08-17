@@ -1,16 +1,16 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T17:53:22Z",
+  "published_utc": "2026-08-17T18:01:29Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "e0bd9c287c3165dff449aca79c4bbdd13fc336c683c9fb79a977b1990175379d",
+  "package_sha256": "2195b282c9866c2121b98793f8c918f04e3f5454503b6be86ad5f0c85a481b55",
   "changelog": [
-    "Tilføjer Navigator/Lag med drag-and-drop rækkefølge og synlighedsstatus.",
-    "Opdeler Inspector i Indhold, Design og Avanceret.",
-    "Tilføjer fem indbyggede komponentpresets.",
-    "Gør det muligt at gemme og genbruge egne sektioner centralt i WordPress."
+    "Tilføjer individuel farvestyring pr. editorsektion.",
+    "Tilføjer kantbredde, kantfarve og skygge pr. element.",
+    "Globalt design er fortsat standard for bagudkompatibilitet.",
+    "Løfter page-editor dataformatet kompatibelt til schema 1.6."
   ]
 }

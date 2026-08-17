@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.1
+ * Version: 0.5.2
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.1';
+    const VERSION = '0.5.2';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -706,7 +706,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.5',
+                'Version' => '1.6',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -2914,7 +2914,7 @@ final class Hangar18_Manager {
         $static_content['Saved'] = gmdate('c');
 
         $pages = [
-            'Version' => '1.5',
+            'Version' => '1.6',
             'Saved'   => gmdate('c'),
             'Pages'   => $this->get_page_editor_store(),
         ];
@@ -6431,6 +6431,13 @@ HTML;
             'HeroHeightPx'          => 320,
             'MobileHeroHeightPx'    => 220,
             'OverlayOpacityPercent' => 35,
+            'DesignMode'             => 'Global',
+            'CustomBackgroundColor'  => '#ffffff',
+            'CustomTextColor'        => '#30382a',
+            'CustomHeadingColor'     => '#30382a',
+            'BorderWidthPx'          => 0,
+            'CustomBorderColor'      => '#c3ae83',
+            'ShadowStyle'            => 'None',
             'ImportedGroupType'     => '',
             'LegacyHtml'            => '',
         ];
@@ -6579,6 +6586,15 @@ HTML;
             $imported_group_type = '';
         }
 
+        $design_mode = (string) ($raw['DesignMode'] ?? 'Global');
+        if (!in_array($design_mode, ['Global', 'Custom'], true)) { $design_mode = 'Global'; }
+        $shadow_style = (string) ($raw['ShadowStyle'] ?? 'None');
+        if (!in_array($shadow_style, ['None', 'Soft', 'Medium', 'Strong'], true)) { $shadow_style = 'None'; }
+        $custom_background = sanitize_hex_color((string) ($raw['CustomBackgroundColor'] ?? '#ffffff')) ?: '#ffffff';
+        $custom_text = sanitize_hex_color((string) ($raw['CustomTextColor'] ?? '#30382a')) ?: '#30382a';
+        $custom_heading = sanitize_hex_color((string) ($raw['CustomHeadingColor'] ?? '#30382a')) ?: '#30382a';
+        $custom_border = sanitize_hex_color((string) ($raw['CustomBorderColor'] ?? '#c3ae83')) ?: '#c3ae83';
+
         $cards = [];
         $used_card_keys = [];
         $raw_cards = isset($raw['Cards']) && is_array($raw['Cards']) ? $raw['Cards'] : [];
@@ -6646,6 +6662,13 @@ HTML;
             'HeroHeightPx'          => $this->clamp_int($raw['HeroHeightPx'] ?? 320, 140, 800, 320),
             'MobileHeroHeightPx'    => $this->clamp_int($raw['MobileHeroHeightPx'] ?? 220, 100, 600, 220),
             'OverlayOpacityPercent' => $this->clamp_int($raw['OverlayOpacityPercent'] ?? 35, 0, 90, 35),
+            'DesignMode'             => $design_mode,
+            'CustomBackgroundColor'  => $custom_background,
+            'CustomTextColor'        => $custom_text,
+            'CustomHeadingColor'     => $custom_heading,
+            'BorderWidthPx'          => $this->clamp_int($raw['BorderWidthPx'] ?? 0, 0, 12, 0),
+            'CustomBorderColor'      => $custom_border,
+            'ShadowStyle'            => $shadow_style,
             'ImportedGroupType'     => $imported_group_type,
             'LegacyHtml'            => $legacy_html,
         ];
@@ -6693,7 +6716,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.5',
+            'Version'        => '1.6',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7205,7 +7228,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.5',
+            'Version'        => '1.6',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7386,6 +7409,31 @@ HTML;
     }
 
     private function page_editor_section_style(array $section) {
+        $preset = (string) ($section['Background'] ?? 'White');
+        $backgrounds = [
+            'White' => 'var(--h18-color-background,#ffffff)',
+            'OffWhite' => 'var(--h18-color-surface,#f2f0e8)',
+            'Sand' => 'var(--h18-color-accent,#c3ae83)',
+            'Olive' => 'var(--h18-color-primary,#30382a)',
+            'Steel' => 'var(--h18-color-secondary,#525a5f)',
+        ];
+        $dark = in_array($preset, ['Olive', 'Steel'], true);
+        if (($section['DesignMode'] ?? 'Global') === 'Custom') {
+            $bg = (string) $section['CustomBackgroundColor'];
+            $text = (string) $section['CustomTextColor'];
+            $heading = (string) $section['CustomHeadingColor'];
+        } else {
+            $bg = $backgrounds[$preset] ?? $backgrounds['White'];
+            $text = $dark ? 'var(--h18-color-light,#ffffff)' : 'var(--h18-color-text,#30382a)';
+            $heading = $text;
+        }
+        $shadows = [
+            'None' => 'none',
+            'Soft' => '0 6px 18px rgba(0,0,0,.08)',
+            'Medium' => '0 12px 30px rgba(0,0,0,.14)',
+            'Strong' => '0 18px 44px rgba(0,0,0,.22)',
+        ];
+        $shadow = $shadows[$section['ShadowStyle'] ?? 'None'] ?? 'none';
         return '--h18-top:' . (int) $section['TopSpacingPx'] . 'px;' .
             '--h18-bottom:' . (int) $section['BottomSpacingPx'] . 'px;' .
             '--h18-mobile-top:' . (int) $section['MobileTopSpacingPx'] . 'px;' .
@@ -7398,7 +7446,13 @@ HTML;
             '--h18-align:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'left') . ';' .
             '--h18-mobile-align:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'left') . ';' .
             '--h18-justify:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'flex-start') . ';' .
-            '--h18-mobile-justify:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'flex-start') . ';';
+            '--h18-mobile-justify:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'flex-start') . ';' .
+            '--h18-section-bg:' . $bg . ';' .
+            '--h18-section-text:' . $text . ';' .
+            '--h18-section-heading:' . $heading . ';' .
+            '--h18-section-border:' . (string) $section['CustomBorderColor'] . ';' .
+            '--h18-section-border-width:' . (int) $section['BorderWidthPx'] . 'px;' .
+            '--h18-section-shadow:' . $shadow . ';';
     }
 
     private function render_page_editor_imported_group(array $section, $inner, $extra_class) {
@@ -7429,6 +7483,9 @@ HTML;
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
+            'body.page .h18-editor-page>.h18-editor-section{background:var(--h18-section-bg)!important;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);box-shadow:var(--h18-section-shadow,none)}' .
+            'body.page .h18-editor-page>.h18-editor-section h1,body.page .h18-editor-page>.h18-editor-section h2,body.page .h18-editor-page>.h18-editor-section h3{color:var(--h18-section-heading)!important}' .
+            'body.page .h18-editor-page>.h18-editor-section .h18-editor-grid-card h3{color:inherit!important}' .
             '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
     }
@@ -7976,7 +8033,23 @@ HTML;
                                 <div class="h18-field"><label><strong>Indvendig luft – vandret (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[MobileHorizontalPaddingPx]" value="<?php echo esc_attr($section['MobileHorizontalPaddingPx']); ?>" /><p class="description">Luft i siderne på mobil.</p></div>
                             </div></fieldset>
                         </div>
-                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Sand" <?php selected($section['Background'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option><option value="Steel" <?php selected($section['Background'], 'Steel'); ?>>Stålgrå</option></select><p class="description">Farven på hele sektionen. De samme designfarver bruges på tværs af siderne.</p></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /><p class="description">0 giver lige kanter som på den oprindelige Hjem-side.</p></div></div>
+                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Sand" <?php selected($section['Background'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option><option value="Steel" <?php selected($section['Background'], 'Steel'); ?>>Stålgrå</option></select><p class="description">Bruges når elementet følger Globalt design.</p></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /></div></div>
+                        <div class="h18-element-design-box">
+                            <h4>Individuelt elementdesign</h4>
+                            <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                <div class="h18-field"><label><strong>Farvetilstand</strong></label><select class="h18-section-design-mode" name="<?php echo esc_attr($prefix); ?>[DesignMode]"><option value="Global" <?php selected($section['DesignMode'], 'Global'); ?>>Globalt design</option><option value="Custom" <?php selected($section['DesignMode'], 'Custom'); ?>>Tilpasset</option></select></div>
+                                <div class="h18-field"><label><strong>Kantbredde (px)</strong></label><input type="number" min="0" max="12" name="<?php echo esc_attr($prefix); ?>[BorderWidthPx]" value="<?php echo esc_attr($section['BorderWidthPx']); ?>" /></div>
+                                <div class="h18-field"><label><strong>Kantfarve</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[CustomBorderColor]" value="<?php echo esc_attr($section['CustomBorderColor']); ?>" /></div>
+                                <div class="h18-field"><label><strong>Skygge</strong></label><select name="<?php echo esc_attr($prefix); ?>[ShadowStyle]"><option value="None" <?php selected($section['ShadowStyle'], 'None'); ?>>Ingen</option><option value="Soft" <?php selected($section['ShadowStyle'], 'Soft'); ?>>Blød</option><option value="Medium" <?php selected($section['ShadowStyle'], 'Medium'); ?>>Mellem</option><option value="Strong" <?php selected($section['ShadowStyle'], 'Strong'); ?>>Kraftig</option></select></div>
+                            </div>
+                            <div class="h18-custom-design-fields">
+                                <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                    <div class="h18-field"><label><strong>Baggrund</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[CustomBackgroundColor]" value="<?php echo esc_attr($section['CustomBackgroundColor']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Tekst</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[CustomTextColor]" value="<?php echo esc_attr($section['CustomTextColor']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Overskrifter</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[CustomHeadingColor]" value="<?php echo esc_attr($section['CustomHeadingColor']); ?>" /></div>
+                                </div>
+                            </div>
+                        </div>
                     </details>
                 <?php endif; ?>
             </div>
@@ -8449,7 +8522,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.5',
+                    'Version' => '1.6',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -8543,7 +8616,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.5',
+            'Version'        => '1.6',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -8573,7 +8646,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.5',
+                'Version' => '1.6',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

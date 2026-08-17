@@ -545,6 +545,12 @@ jQuery(function ($) {
         }
     }
 
+    function refreshSectionDesignMode($row) {
+        if (!$row || !$row.length) { return; }
+        const custom = String(pageSectionControls($row, '.h18-section-design-mode').val() || 'Global') === 'Custom';
+        pageSectionControls($row, '.h18-custom-design-fields').toggle(custom);
+    }
+
     function refreshPageSectionType($row) {
         const type = String(pageSectionControls($row, '.h18-page-section-type').val() || pageSectionControls($row, 'input[name$="[Type]"]').val() || 'text');
         $row.attr('data-section-type', type);
@@ -571,6 +577,7 @@ jQuery(function ($) {
         $row.find('.h18-page-section-summary').text(labels[type] || 'Sektion');
         pageSectionControls($row, '.h18-section-title-label').text(type === 'poll' ? 'Spørgsmål' : 'Overskrift');
         refreshInspectorMeta($row);
+        refreshSectionDesignMode($row);
         rebuildPageNavigator();
     }
 
@@ -768,6 +775,7 @@ jQuery(function ($) {
     });
 
     $(document).on('change', '.h18-section-active', rebuildPageNavigator);
+    $(document).on('change', '.h18-section-design-mode', function () { refreshSectionDesignMode(pageSectionForElement(this)); });
 
     function addPageSection(type, $before) {
         if (!pageSectionTemplate || !$pageSections.length) {
