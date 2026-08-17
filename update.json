@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.10",
+  "version": "0.5.11",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T19:42:21Z",
+  "published_utc": "2026-08-17T20:19:43Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "727ea61adaf4fa4e04a03136eb12272e97306485c101b7622d89f93b987ac72b",
+  "package_sha256": "7f03cf04fb961b913a63afb29993c425b6196883d962a0618246e0d482cd9303",
   "changelog": [
-    "Tilføjer direkte Media Library-redigering af image/text_image fra live canvas.",
-    "Tilføjer draggable focal point med X/Y-procenter.",
-    "Tilføjer aspect ratio, object-fit og separat billedhøjde for desktop/tablet og mobil.",
-    "Tilføjer box-model overlay samt margin top/bund drag-handles.",
-    "Page-editor schema 1.11 med bagudkompatible standarder."
+    "Tilføjer responsive elementbredder, max-bredde og minimumshøjde.",
+    "Tilføjer direkte bredde/min-højde-kontroller i live canvas.",
+    "Tilføjer billedbredde, max-bredde og låst/frigivet billedformat.",
+    "Tilføjer Kopiér design / Indsæt design uden at kopiere indhold eller billeder.",
+    "Page-editor schema 1.12 med bagudkompatible standarder."
   ]
 }

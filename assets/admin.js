@@ -274,6 +274,15 @@ jQuery(function ($) {
     let currentCanvasDevice = 'desktop';
     let currentCanvasState = 'normal';
     let selectedCanvasCardKey = '';
+    const sectionDesignClipboardStorageKey = 'hangar18SectionDesignClipboardV0511';
+    let sectionDesignClipboard = null;
+    try {
+        const storedDesignClipboard = window.localStorage ? window.localStorage.getItem(sectionDesignClipboardStorageKey) : '';
+        const parsedDesignClipboard = storedDesignClipboard ? JSON.parse(storedDesignClipboard) : null;
+        if (parsedDesignClipboard && parsedDesignClipboard.Fields && typeof parsedDesignClipboard.Fields === 'object') { sectionDesignClipboard = parsedDesignClipboard; }
+    } catch (designClipboardError) {
+        sectionDesignClipboard = null;
+    }
 
     try {
         const presetNode = document.getElementById('h18-page-presets-data');
@@ -334,7 +343,8 @@ jQuery(function ($) {
         const key = hasRow ? String($row.find('.h18-page-section-key').val() || '') : '';
         $('#h18-inspector-type').text(hasRow ? inspectorTypeLabel(type) : '–');
         $('#h18-inspector-key').text(key || '–');
-        $('#h18-inspector-copy-key, #h18-inspector-duplicate, #h18-save-section-preset').prop('disabled', !hasRow || type === 'legacy');
+        $('#h18-inspector-copy-key, #h18-inspector-duplicate, #h18-inspector-copy-design, #h18-save-section-preset').prop('disabled', !hasRow || type === 'legacy');
+        $('#h18-inspector-paste-design').prop('disabled', !hasRow || type === 'legacy' || !sectionDesignClipboard);
         if (hasRow && type === 'legacy') {
             $('#h18-inspector-copy-key').prop('disabled', false);
         }
@@ -792,6 +802,7 @@ jQuery(function ($) {
             pad: canvasNumber($row, 'PaddingPx', 0), padX: canvasNumber($row, 'HorizontalPaddingPx', canvasNumber($row, 'PaddingPx', 0)),
             x: canvasNumber($row, 'DesktopTranslateXPx', 0), y: canvasNumber($row, 'DesktopTranslateYPx', 0),
             scale: canvasNumber($row, 'DesktopScalePercent', 100), rotate: canvasNumber($row, 'DesktopRotateDeg', 0),
+            width: canvasNumber($row, 'ElementWidthPercent', 100), minHeight: canvasNumber($row, 'ElementMinHeightPx', 0),
             visible: Boolean(canvasFieldValue($row, 'ShowDesktop', true))
         };
         if (currentCanvasDevice === 'tablet') {
@@ -806,6 +817,8 @@ jQuery(function ($) {
                 pad: inherit('TabletPaddingPx', desktop.pad), padX: inherit('TabletHorizontalPaddingPx', desktop.padX),
                 x: canvasNumber($row, 'TabletTranslateXPx', 0), y: canvasNumber($row, 'TabletTranslateYPx', 0),
                 scale: canvasNumber($row, 'TabletScalePercent', 100), rotate: canvasNumber($row, 'TabletRotateDeg', 0),
+                width: canvasNumber($row, 'TabletWidthPercent', -1) >= 20 ? canvasNumber($row, 'TabletWidthPercent', desktop.width) : desktop.width,
+                minHeight: inherit('TabletMinHeightPx', desktop.minHeight),
                 visible: Boolean(canvasFieldValue($row, 'ShowTablet', true))
             };
         }
@@ -816,6 +829,8 @@ jQuery(function ($) {
                 pad: canvasNumber($row, 'MobilePaddingPx', 0), padX: canvasNumber($row, 'MobileHorizontalPaddingPx', canvasNumber($row, 'MobilePaddingPx', 0)),
                 x: canvasNumber($row, 'MobileTranslateXPx', 0), y: canvasNumber($row, 'MobileTranslateYPx', 0),
                 scale: canvasNumber($row, 'MobileScalePercent', 100), rotate: canvasNumber($row, 'MobileRotateDeg', 0),
+                width: canvasNumber($row, 'MobileWidthPercent', -1) >= 20 ? canvasNumber($row, 'MobileWidthPercent', desktop.width) : desktop.width,
+                minHeight: canvasNumber($row, 'MobileMinHeightPx', -1) < 0 ? desktop.minHeight : canvasNumber($row, 'MobileMinHeightPx', desktop.minHeight),
                 visible: Boolean(canvasFieldValue($row, 'ShowMobile', true))
             };
         }
@@ -896,6 +911,8 @@ jQuery(function ($) {
         const aspectValue = String(canvasFieldValue($row, 'ImageAspectRatio', 'Auto'));
         const aspectMap = { Auto: 'auto', '1:1': '1 / 1', '4:3': '4 / 3', '3:2': '3 / 2', '16:9': '16 / 9' };
         const heightField = currentCanvasDevice === 'mobile' ? 'MobileImageHeightPx' : 'ImageHeightPx';
+        const widthField = currentCanvasDevice === 'mobile' ? 'MobileImageWidthPercent' : 'ImageWidthPercent';
+        const locked = Boolean(canvasFieldValue($row, 'ImageAspectLocked', false));
         return {
             aspect: aspectMap[aspectValue] || 'auto',
             aspectValue: aspectValue,
@@ -903,7 +920,11 @@ jQuery(function ($) {
             x: Math.max(0, Math.min(100, canvasNumber($row, 'ImageFocalXPercent', 50))),
             y: Math.max(0, Math.min(100, canvasNumber($row, 'ImageFocalYPercent', 50))),
             heightField: heightField,
-            height: Math.max(0, canvasNumber($row, heightField, 0))
+            height: Math.max(0, canvasNumber($row, heightField, 0)),
+            widthField: widthField,
+            width: Math.max(20, Math.min(100, canvasNumber($row, widthField, 100))),
+            maxWidth: Math.max(0, canvasNumber($row, 'ImageMaxWidthPx', 0)),
+            locked: locked
         };
     }
 
@@ -911,8 +932,10 @@ jQuery(function ($) {
         if (!$row || !$row.length || !$scope || !$scope.length) { return; }
         const settings = canvasImageSettings($row);
         $scope.find('img').css({
-            width: '100%',
-            height: settings.height > 0 ? settings.height + 'px' : 'auto',
+            width: settings.width + '%',
+            maxWidth: settings.maxWidth > 0 ? settings.maxWidth + 'px' : 'none',
+            marginInline: 'auto',
+            height: settings.locked && settings.aspectValue !== 'Auto' ? 'auto' : (settings.height > 0 ? settings.height + 'px' : 'auto'),
             aspectRatio: settings.aspect,
             objectFit: settings.fit,
             objectPosition: settings.x + '% ' + settings.y + '%'
@@ -971,8 +994,14 @@ jQuery(function ($) {
             canvasImageSelect('Tilpas', 'ImageFit', String(canvasFieldValue($row, 'ImageFit', 'Cover')), [['Cover','Fyld'],['Contain','Hele billedet']]),
             canvasImageRange('Fokus X', 'ImageFocalXPercent', settings.x, 0, 100, '%'),
             canvasImageRange('Fokus Y', 'ImageFocalYPercent', settings.y, 0, 100, '%'),
-            canvasImageRange(currentCanvasDevice === 'mobile' ? 'Højde mobil' : 'Højde', settings.heightField, settings.height, 0, currentCanvasDevice === 'mobile' ? 900 : 1200, ' px')
+            canvasImageRange(currentCanvasDevice === 'mobile' ? 'Bredde mobil' : 'Bredde', settings.widthField, settings.width, 20, 100, '%'),
+            canvasImageRange('Maks. bredde', 'ImageMaxWidthPx', settings.maxWidth, 0, 2000, ' px'),
+            canvasImageRange(currentCanvasDevice === 'mobile' ? 'Højde mobil' : 'Højde', settings.heightField, settings.height, 0, currentCanvasDevice === 'mobile' ? 900 : 1200, ' px'),
+            $('<button>', { type: 'button', class: 'button button-small h18-canvas-aspect-lock', text: settings.locked ? '🔒 Format låst' : '🔓 Format frit', title: settings.locked ? 'Klik for at frigive billedformatet' : 'Klik for at låse det valgte billedformat' })
         );
+        if (settings.locked && settings.aspectValue !== 'Auto') {
+            $tools.find('[data-image-control-field="' + settings.heightField + '"]').prop('disabled', true).closest('.h18-canvas-image-range').attr('title', 'Højden styres af det låste billedformat.');
+        }
         const $dot = $('<button>', {
             type: 'button', class: 'h18-canvas-focal-dot',
             'aria-label': 'Træk fokuspunkt', title: 'Træk for at flytte fokuspunkt'
@@ -1269,6 +1298,9 @@ jQuery(function ($) {
             textAlign: layout.align,
             padding: layout.pad + 'px ' + layout.padX + 'px',
             marginTop: Math.max(0, layout.top) + 'px', marginBottom: Math.max(0, layout.bottom) + 'px',
+            width: Math.max(20, Math.min(100, layout.width)) + '%',
+            maxWidth: canvasNumber($row, 'ElementMaxWidthPx', 0) > 0 ? canvasNumber($row, 'ElementMaxWidthPx', 0) + 'px' : 'none',
+            marginLeft: 'auto', marginRight: 'auto',
             transform: 'translate(' + layout.x + 'px,' + translateY + 'px) scale(' + scale + ') rotate(' + layout.rotate + 'deg)'
         });
         if (bodySize > 0) { $preview.css('fontSize', bodySize + 'px'); }
@@ -1283,9 +1315,9 @@ jQuery(function ($) {
         }
         if (type === 'hero') {
             const height = currentCanvasDevice === 'mobile' ? canvasNumber($row, 'MobileHeroHeightPx', 220) : canvasNumber($row, 'HeroHeightPx', 320);
-            $preview.css('minHeight', Math.max(120, height) + 'px');
+            $preview.css('minHeight', Math.max(120, height, Math.max(0, layout.minHeight)) + 'px');
         } else {
-            $preview.css('minHeight', '0');
+            $preview.css('minHeight', Math.max(0, layout.minHeight) + 'px');
         }
         renderCanvasDirectControls($row, $preview, layout, colors);
     }
@@ -1306,12 +1338,12 @@ jQuery(function ($) {
 
     function canvasQuickFields() {
         if (currentCanvasDevice === 'tablet') {
-            return { pad: 'TabletPaddingPx', padX: 'TabletHorizontalPaddingPx', top: 'TabletTopSpacingPx', bottom: 'TabletBottomSpacingPx' };
+            return { pad: 'TabletPaddingPx', padX: 'TabletHorizontalPaddingPx', top: 'TabletTopSpacingPx', bottom: 'TabletBottomSpacingPx', width: 'TabletWidthPercent', minHeight: 'TabletMinHeightPx' };
         }
         if (currentCanvasDevice === 'mobile') {
-            return { pad: 'MobilePaddingPx', padX: 'MobileHorizontalPaddingPx', top: 'MobileTopSpacingPx', bottom: 'MobileBottomSpacingPx' };
+            return { pad: 'MobilePaddingPx', padX: 'MobileHorizontalPaddingPx', top: 'MobileTopSpacingPx', bottom: 'MobileBottomSpacingPx', width: 'MobileWidthPercent', minHeight: 'MobileMinHeightPx' };
         }
-        return { pad: 'PaddingPx', padX: 'HorizontalPaddingPx', top: 'TopSpacingPx', bottom: 'BottomSpacingPx' };
+        return { pad: 'PaddingPx', padX: 'HorizontalPaddingPx', top: 'TopSpacingPx', bottom: 'BottomSpacingPx', width: 'ElementWidthPercent', minHeight: 'ElementMinHeightPx' };
     }
 
     function canvasSetField($row, fieldName, value) {
@@ -1323,6 +1355,45 @@ jQuery(function ($) {
             $field.val(value);
         }
         return true;
+    }
+
+
+    const sectionDesignFields = [
+        'Background','DesktopAlignment','TabletAlignment','MobileAlignment','TopSpacingPx','BottomSpacingPx','MobileTopSpacingPx','MobileBottomSpacingPx',
+        'TabletTopSpacingPx','TabletBottomSpacingPx','PaddingPx','HorizontalPaddingPx','MobilePaddingPx','MobileHorizontalPaddingPx','TabletPaddingPx','TabletHorizontalPaddingPx',
+        'RadiusPx','RadiusTopLeftPx','RadiusTopRightPx','RadiusBottomRightPx','RadiusBottomLeftPx','DesignMode','CustomBackgroundColor','CustomTextColor','CustomHeadingColor',
+        'BorderWidthPx','CustomBorderColor','ShadowStyle','SectionBodyFontFamily','SectionHeadingFontFamily','BodyFontSizePx','H1FontSizePx','H2FontSizePx','H3FontSizePx',
+        'SectionOpacityPercent','GradientStartColor','GradientEndColor','GradientAngleDeg','HoverEffect','HoverTransitionMs','HoverStyleMode','HoverBackgroundColor','HoverTextColor',
+        'HoverHeadingColor','HoverBorderColor','HoverOpacityPercent','DesktopTranslateXPx','DesktopTranslateYPx','DesktopScalePercent','DesktopRotateDeg','TabletTranslateXPx',
+        'TabletTranslateYPx','TabletScalePercent','TabletRotateDeg','MobileTranslateXPx','MobileTranslateYPx','MobileScalePercent','MobileRotateDeg','ElementWidthPercent',
+        'TabletWidthPercent','MobileWidthPercent','ElementMaxWidthPx','ElementMinHeightPx','TabletMinHeightPx','MobileMinHeightPx'
+    ];
+    const sectionImageDesignFields = ['ImagePosition','ImageAspectRatio','ImageFit','ImageFocalXPercent','ImageFocalYPercent','ImageHeightPx','MobileImageHeightPx','ImageWidthPercent','MobileImageWidthPercent','ImageMaxWidthPx','ImageAspectLocked'];
+
+    function sectionDesignSnapshot($row) {
+        if (!$row || !$row.length || String($row.attr('data-section-type') || '') === 'legacy') { return null; }
+        const type = String($row.attr('data-section-type') || 'text');
+        const fields = {};
+        sectionDesignFields.concat(['image','text_image'].includes(type) ? sectionImageDesignFields : []).forEach(function (fieldName) {
+            const $field = pageSectionControls($row, '[name$="[' + fieldName + ']"]').first();
+            if (!$field.length) { return; }
+            fields[fieldName] = $field.is(':checkbox') ? $field.is(':checked') : $field.val();
+        });
+        return { Version: '1.0', SourceType: type, Fields: fields };
+    }
+
+    function applySectionDesignSnapshot($row, snapshot) {
+        if (!$row || !$row.length || !snapshot || !snapshot.Fields) { return 0; }
+        const targetType = String($row.attr('data-section-type') || 'text');
+        let changed = 0;
+        Object.keys(snapshot.Fields).forEach(function (fieldName) {
+            if (sectionImageDesignFields.includes(fieldName) && !['image','text_image'].includes(targetType)) { return; }
+            if (canvasSetField($row, fieldName, snapshot.Fields[fieldName])) { changed += 1; }
+        });
+        refreshSectionDesignMode($row);
+        refreshHoverStyleMode($row);
+        renderCanvasPreview($row);
+        return changed;
     }
 
     function canvasQuickRange(label, fieldName, value, min, max, suffix) {
@@ -1364,7 +1435,9 @@ jQuery(function ($) {
             canvasQuickRange('Topafstand', fields.top, layout.top, 0, 160, ' px'),
             canvasQuickRange('Bundafstand', fields.bottom, layout.bottom, 0, 160, ' px'),
             canvasQuickRange('Radius', 'RadiusPx', radius, 0, 60, ' px'),
-            canvasQuickRange('Opacity', opacityField, opacityValue, 0, 100, '%')
+            canvasQuickRange('Opacity', opacityField, opacityValue, 0, 100, '%'),
+            canvasQuickRange('Bredde', fields.width, layout.width, 20, 100, '%'),
+            canvasQuickRange('Min. højde', fields.minHeight, Math.max(0, layout.minHeight), 0, currentCanvasDevice === 'mobile' ? 1200 : 1600, ' px')
         );
         const $colors = $('<div>', {
             class: 'h18-canvas-quick-colors',
@@ -1602,6 +1675,13 @@ jQuery(function ($) {
     $(document).on('click', '.h18-canvas-image-change', function (event) {
         event.preventDefault(); event.stopPropagation();
         canvasOpenSectionMedia($(this).closest('.h18-page-section-row'));
+    });
+
+    $(document).on('click', '.h18-canvas-aspect-lock', function (event) {
+        event.preventDefault(); event.stopPropagation();
+        const $row = $(this).closest('.h18-page-section-row');
+        canvasSetField($row, 'ImageAspectLocked', !Boolean(canvasFieldValue($row, 'ImageAspectLocked', false)));
+        renderCanvasPreview($row);
     });
 
     $(document).on('click', '.h18-canvas-image-remove', function (event) {
@@ -2017,6 +2097,25 @@ jQuery(function ($) {
         if ($inspectedSection.length) {
             $inspectedSection.find('.h18-page-section-duplicate').first().trigger('click');
         }
+    });
+
+    $('#h18-inspector-copy-design').on('click', function () {
+        if (!$inspectedSection.length) { return; }
+        const snapshot = sectionDesignSnapshot($inspectedSection);
+        if (!snapshot) { return; }
+        sectionDesignClipboard = snapshot;
+        try { if (window.localStorage) { window.localStorage.setItem(sectionDesignClipboardStorageKey, JSON.stringify(snapshot)); } } catch (error) {}
+        refreshInspectorMeta($inspectedSection);
+        const $button = $(this).text('Design kopieret ✓');
+        window.setTimeout(function () { $button.text('Kopiér design'); }, 1200);
+    });
+
+    $('#h18-inspector-paste-design').on('click', function () {
+        if (!$inspectedSection.length || !sectionDesignClipboard) { return; }
+        const changed = applySectionDesignSnapshot($inspectedSection, sectionDesignClipboard);
+        if (!changed) { window.alert('Der var ingen kompatible designfelter at indsætte på dette element.'); return; }
+        const $button = $(this).text('Design indsat ✓');
+        window.setTimeout(function () { $button.text('Indsæt design'); }, 1200);
     });
 
     $('#h18-save-section-preset').on('click', function () {

@@ -1,8 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.5.10
+Version: 0.5.11
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.11 – Elementstørrelse og design-clipboard ==
+
+Nyt:
+- elementbredde kan styres separat for desktop, tablet og mobil
+- tablet/mobil kan arve desktopbredde med -1
+- max-bredde og minimumshøjde kan styres pr. element
+- bredde og minimumshøjde kan justeres direkte fra live canvas
+- image/text_image får separat billedbredde på desktop/tablet og mobil samt max-bredde
+- valgt billedformat kan låses eller frigives; låst format styrer højden når formatet ikke er Auto
+- Inspector får Kopiér design / Indsæt design uden at kopiere tekst, links, billeder eller elementnøgle
+- design-clipboard gemmes lokalt i browseren og kan bruges mellem elementer/sider i editoren
+- page-editor schema 1.12 med bagudkompatible standarder
 
 == Version 0.5.10 – Billeder og box-model i live canvas ==
 

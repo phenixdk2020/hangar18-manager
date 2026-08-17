@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.10
+ * Version: 0.5.11
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.10';
+    const VERSION = '0.5.11';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -6402,6 +6402,17 @@ HTML;
             'ImageFocalYPercent'    => 50,
             'ImageHeightPx'         => 0,
             'MobileImageHeightPx'   => 0,
+            'ElementWidthPercent'     => 100,
+            'TabletWidthPercent'      => -1,
+            'MobileWidthPercent'      => -1,
+            'ElementMaxWidthPx'       => 0,
+            'ElementMinHeightPx'      => 0,
+            'TabletMinHeightPx'       => -1,
+            'MobileMinHeightPx'       => -1,
+            'ImageWidthPercent'       => 100,
+            'MobileImageWidthPercent' => 100,
+            'ImageMaxWidthPx'         => 0,
+            'ImageAspectLocked'       => false,
             'Button1Label'          => '',
             'Button1Url'            => '',
             'Button2Label'          => '',
@@ -6718,6 +6729,17 @@ HTML;
             'ImageFocalYPercent'    => $this->clamp_int($raw['ImageFocalYPercent'] ?? 50, 0, 100, 50),
             'ImageHeightPx'         => $this->clamp_int($raw['ImageHeightPx'] ?? 0, 0, 1200, 0),
             'MobileImageHeightPx'   => $this->clamp_int($raw['MobileImageHeightPx'] ?? 0, 0, 900, 0),
+            'ElementWidthPercent'     => $this->clamp_int($raw['ElementWidthPercent'] ?? 100, 20, 100, 100),
+            'TabletWidthPercent'      => $this->clamp_int($raw['TabletWidthPercent'] ?? -1, -1, 100, -1),
+            'MobileWidthPercent'      => $this->clamp_int($raw['MobileWidthPercent'] ?? -1, -1, 100, -1),
+            'ElementMaxWidthPx'       => $this->clamp_int($raw['ElementMaxWidthPx'] ?? 0, 0, 2400, 0),
+            'ElementMinHeightPx'      => $this->clamp_int($raw['ElementMinHeightPx'] ?? 0, 0, 1600, 0),
+            'TabletMinHeightPx'       => $this->clamp_int($raw['TabletMinHeightPx'] ?? -1, -1, 1600, -1),
+            'MobileMinHeightPx'       => $this->clamp_int($raw['MobileMinHeightPx'] ?? -1, -1, 1200, -1),
+            'ImageWidthPercent'       => $this->clamp_int($raw['ImageWidthPercent'] ?? 100, 20, 100, 100),
+            'MobileImageWidthPercent' => $this->clamp_int($raw['MobileImageWidthPercent'] ?? 100, 20, 100, 100),
+            'ImageMaxWidthPx'         => $this->clamp_int($raw['ImageMaxWidthPx'] ?? 0, 0, 2000, 0),
+            'ImageAspectLocked'       => array_key_exists('ImageAspectLocked', $raw) ? $this->bool_value($raw['ImageAspectLocked'], false) : false,
             'Button1Label'          => sanitize_text_field((string) ($raw['Button1Label'] ?? '')),
             'Button1Url'            => esc_url_raw((string) ($raw['Button1Url'] ?? '')),
             'Button2Label'          => sanitize_text_field((string) ($raw['Button2Label'] ?? '')),
@@ -6854,7 +6876,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.11',
+            'Version'        => '1.12',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7366,7 +7388,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.11',
+            'Version'        => '1.12',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7666,8 +7688,18 @@ HTML;
             '--h18-image-aspect:' . (($section['ImageAspectRatio'] ?? 'Auto') === 'Auto' ? 'auto' : str_replace(':', ' / ', (string) $section['ImageAspectRatio'])) . ';' .
             '--h18-image-fit:' . strtolower((string) ($section['ImageFit'] ?? 'Cover')) . ';' .
             '--h18-image-position:' . (int) ($section['ImageFocalXPercent'] ?? 50) . '% ' . (int) ($section['ImageFocalYPercent'] ?? 50) . '%;' .
-            '--h18-image-height:' . ((int) ($section['ImageHeightPx'] ?? 0) > 0 ? (int) $section['ImageHeightPx'] . 'px' : 'auto') . ';' .
-            '--h18-mobile-image-height:' . ((int) ($section['MobileImageHeightPx'] ?? 0) > 0 ? (int) $section['MobileImageHeightPx'] . 'px' : 'auto') . ';' .
+            '--h18-image-height:' . (!empty($section['ImageAspectLocked']) && ($section['ImageAspectRatio'] ?? 'Auto') !== 'Auto' ? 'auto' : ((int) ($section['ImageHeightPx'] ?? 0) > 0 ? (int) $section['ImageHeightPx'] . 'px' : 'auto')) . ';' .
+            '--h18-mobile-image-height:' . (!empty($section['ImageAspectLocked']) && ($section['ImageAspectRatio'] ?? 'Auto') !== 'Auto' ? 'auto' : ((int) ($section['MobileImageHeightPx'] ?? 0) > 0 ? (int) $section['MobileImageHeightPx'] . 'px' : 'auto')) . ';' .
+            '--h18-element-width:' . (int) ($section['ElementWidthPercent'] ?? 100) . '%;' .
+            '--h18-tablet-element-width:' . ((int) ($section['TabletWidthPercent'] ?? -1) >= 20 ? (int) $section['TabletWidthPercent'] . '%' : 'var(--h18-element-width,100%)') . ';' .
+            '--h18-mobile-element-width:' . ((int) ($section['MobileWidthPercent'] ?? -1) >= 20 ? (int) $section['MobileWidthPercent'] . '%' : 'var(--h18-element-width,100%)') . ';' .
+            '--h18-element-max-width:' . ((int) ($section['ElementMaxWidthPx'] ?? 0) > 0 ? (int) $section['ElementMaxWidthPx'] . 'px' : 'none') . ';' .
+            '--h18-element-min-height:' . ((int) ($section['ElementMinHeightPx'] ?? 0) > 0 ? (int) $section['ElementMinHeightPx'] . 'px' : '0') . ';' .
+            '--h18-tablet-element-min-height:' . ((int) ($section['TabletMinHeightPx'] ?? -1) >= 0 ? (int) $section['TabletMinHeightPx'] . 'px' : 'var(--h18-element-min-height,0)') . ';' .
+            '--h18-mobile-element-min-height:' . ((int) ($section['MobileMinHeightPx'] ?? -1) >= 0 ? (int) $section['MobileMinHeightPx'] . 'px' : 'var(--h18-element-min-height,0)') . ';' .
+            '--h18-image-width:' . (int) ($section['ImageWidthPercent'] ?? 100) . '%;' .
+            '--h18-mobile-image-width:' . (int) ($section['MobileImageWidthPercent'] ?? 100) . '%;' .
+            '--h18-image-max-width:' . ((int) ($section['ImageMaxWidthPx'] ?? 0) > 0 ? (int) $section['ImageMaxWidthPx'] . 'px' : 'none') . ';' .
             '--h18-radius-tl:' . $radius_tl . 'px;' .
             '--h18-radius-tr:' . $radius_tr . 'px;' .
             '--h18-radius-br:' . $radius_br . 'px;' .
@@ -7736,7 +7768,7 @@ HTML;
             '.h18-editor-card{border-top:4px solid #c3ae83}.h18-editor-highlight{border-left:5px solid #c3ae83}' .
             '.h18-editor-card-grid{display:grid;grid-template-columns:repeat(var(--h18-grid-columns,3),minmax(0,1fr));gap:var(--h18-grid-gap,16px);align-items:stretch}.h18-editor-grid-card{box-sizing:border-box;padding:var(--h18-card-pad,26px);border:var(--h18-card-border-width,0) solid var(--h18-card-border,#c3ae83);border-radius:var(--h18-card-radius,7px);text-align:var(--h18-card-align,left)}.h18-editor-grid-card h3{margin:0 0 12px;color:inherit}.h18-editor-grid-card--white{background:#fff}.h18-editor-grid-card--offwhite{background:#f2f0e8}.h18-editor-grid-card--sand{background:#c3ae83}.h18-editor-grid-card--olive{background:#30382a}.h18-editor-grid-card--steel{background:#525a5f}.h18-editor-grid-card--tone-dark{color:#30382a}.h18-editor-grid-card--tone-light{color:#fff}.h18-editor-grid-card--tone-light h3{color:#fff}' .
             '.h18-editor-text-image{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:28px;align-items:center}.h18-editor-text-image--left .h18-editor-media{order:-1}' .
-            '.h18-editor-media img,.h18-editor-image img{display:block;width:100%;height:var(--h18-image-height,auto);aspect-ratio:var(--h18-image-aspect,auto);object-fit:var(--h18-image-fit,cover);object-position:var(--h18-image-position,50% 50%);border-radius:inherit}.h18-editor-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:var(--h18-justify,flex-start)}' .
+            '.h18-editor-media img,.h18-editor-image img{display:block;width:var(--h18-image-width,100%);max-width:var(--h18-image-max-width,none);height:var(--h18-image-height,auto);margin-inline:auto;aspect-ratio:var(--h18-image-aspect,auto);object-fit:var(--h18-image-fit,cover);object-position:var(--h18-image-position,50% 50%);border-radius:inherit}.h18-editor-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:var(--h18-justify,flex-start)}' .
             '.h18-editor-hero{position:relative;display:grid;min-height:var(--h18-hero-height,320px);place-items:center;overflow:hidden;background-position:center;background-repeat:no-repeat;background-size:cover}.h18-editor-hero:before{position:absolute;inset:0;content:"";background:#20261d;opacity:var(--h18-overlay-opacity,.35)}.h18-editor-hero-inner{position:relative;z-index:1;width:min(100%,920px)}.h18-editor-hero .h18-editor-actions{margin-top:20px}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover{display:block!important;min-height:0!important;padding:0!important;background:none!important}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__image-background,.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__background{display:none!important}' .
             '.h18-editor-page .wp-block-columns{display:flex;align-items:stretch;gap:16px}.h18-editor-page .wp-block-column{flex:1 1 0;min-width:0}.h18-editor-page .wp-block-button__link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}' .
             '.h18-imported-group{box-sizing:border-box;width:100%}.h18-imported-group>.h18-editor-section{margin:0!important;padding:0!important;border-radius:0!important;background:transparent!important;text-align:var(--h18-align,left)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-justify,flex-start)!important;margin-top:22px}.h18-editor-page .h18-imported-tagline.h18-imported-group{margin-top:var(--h18-top,0)!important;margin-bottom:var(--h18-bottom,0)!important}.h18-imported-group .h18-editor-button{min-height:52px;padding:13px 24px;border:0;border-radius:29px}.h18-imported-group.h18-editor-section--offwhite .h18-editor-button,.h18-imported-group.h18-editor-section--sand .h18-editor-button{background:#30382a;color:#fff}.h18-imported-group.h18-editor-section--olive .h18-editor-button{background:#c3ae83;color:#30382a}' .
@@ -7745,16 +7777,16 @@ HTML;
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            'body.page .h18-editor-page>.h18-editor-section{background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transform:translate(var(--h18-transform-x,0px),var(--h18-transform-y,0px)) translateY(var(--h18-hover-y,0px)) scale(var(--h18-transform-scale,1)) scale(var(--h18-hover-scale,1)) rotate(var(--h18-transform-rotate,0deg));transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease,background-color var(--h18-hover-transition,220ms) ease,color var(--h18-hover-transition,220ms) ease,border-color var(--h18-hover-transition,220ms) ease}' .
+            'body.page .h18-editor-page>.h18-editor-section{box-sizing:border-box;width:var(--h18-element-width,100%);max-width:var(--h18-element-max-width,none);min-height:var(--h18-element-min-height,0);margin-left:auto;margin-right:auto;background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transform:translate(var(--h18-transform-x,0px),var(--h18-transform-y,0px)) translateY(var(--h18-hover-y,0px)) scale(var(--h18-transform-scale,1)) scale(var(--h18-hover-scale,1)) rotate(var(--h18-transform-rotate,0deg));transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease,background-color var(--h18-hover-transition,220ms) ease,color var(--h18-hover-transition,220ms) ease,border-color var(--h18-hover-transition,220ms) ease}' .
             '@media(hover:hover){body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:var(--h18-hover-active-y,0px);--h18-hover-scale:var(--h18-hover-active-scale,1);background-color:var(--h18-hover-bg,var(--h18-section-bg))!important;background-image:var(--h18-hover-bg-image,var(--h18-section-bg-image,none));color:var(--h18-hover-text,var(--h18-section-text))!important;border-color:var(--h18-hover-border,var(--h18-section-border,transparent));opacity:var(--h18-hover-opacity,var(--h18-section-opacity,1));box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}body.page .h18-editor-page>.h18-editor-section:hover h1,body.page .h18-editor-page>.h18-editor-section:hover h2,body.page .h18-editor-page>.h18-editor-section:hover h3{color:var(--h18-hover-heading,var(--h18-section-heading))!important}body.page .h18-editor-page>.h18-editor-section:hover .h18-editor-grid-card h3{color:inherit!important}body.page .h18-editor-page>.h18-hover-style-custom:hover{background-image:none!important}}' .
             '@media(prefers-reduced-motion:reduce){body.page .h18-editor-page>.h18-editor-section{transition:none!important}body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:0px;--h18-hover-scale:1}}' .
             '@media(min-width:1200px){body.page .h18-editor-page>.h18-hide-desktop{display:none!important}}' .
-            '@media(min-width:783px) and (max-width:1199px){body.page .h18-editor-page>.h18-hide-tablet{display:none!important}body.page .h18-editor-page>.h18-editor-section{margin-top:var(--h18-tablet-top,var(--h18-top,0));margin-bottom:var(--h18-tablet-bottom,var(--h18-bottom,24px));padding:var(--h18-tablet-pad,var(--h18-pad,0)) var(--h18-tablet-pad-x,var(--h18-pad-x,var(--h18-pad,0)));text-align:var(--h18-tablet-align,var(--h18-align,left));--h18-transform-x:var(--h18-tablet-transform-x);--h18-transform-y:var(--h18-tablet-transform-y);--h18-transform-scale:var(--h18-tablet-transform-scale);--h18-transform-rotate:var(--h18-tablet-transform-rotate)}body.page .h18-editor-page>.h18-editor-section .has-text-align-left,body.page .h18-editor-page>.h18-editor-section .has-text-align-center,body.page .h18-editor-page>.h18-editor-section .has-text-align-right{ text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-group>.h18-editor-section{text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-composite .h18-editor-actions,body.page .h18-editor-page>.h18-editor-section .h18-editor-actions{justify-content:var(--h18-tablet-justify,var(--h18-justify,flex-start))!important}}' .
+            '@media(min-width:783px) and (max-width:1199px){body.page .h18-editor-page>.h18-hide-tablet{display:none!important}body.page .h18-editor-page>.h18-editor-section{margin-top:var(--h18-tablet-top,var(--h18-top,0));margin-bottom:var(--h18-tablet-bottom,var(--h18-bottom,24px));padding:var(--h18-tablet-pad,var(--h18-pad,0)) var(--h18-tablet-pad-x,var(--h18-pad-x,var(--h18-pad,0)));text-align:var(--h18-tablet-align,var(--h18-align,left));width:var(--h18-tablet-element-width,var(--h18-element-width,100%));min-height:var(--h18-tablet-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-tablet-transform-x);--h18-transform-y:var(--h18-tablet-transform-y);--h18-transform-scale:var(--h18-tablet-transform-scale);--h18-transform-rotate:var(--h18-tablet-transform-rotate)}body.page .h18-editor-page>.h18-editor-section .has-text-align-left,body.page .h18-editor-page>.h18-editor-section .has-text-align-center,body.page .h18-editor-page>.h18-editor-section .has-text-align-right{ text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-group>.h18-editor-section{text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-composite .h18-editor-actions,body.page .h18-editor-page>.h18-editor-section .h18-editor-actions{justify-content:var(--h18-tablet-justify,var(--h18-justify,flex-start))!important}}' .
             'body.page .h18-editor-page>.h18-editor-section h1{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h1-size)}' .
             'body.page .h18-editor-page>.h18-editor-section h2{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h2-size)}' .
             'body.page .h18-editor-page>.h18-editor-section h3{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h3-size)}' .
             'body.page .h18-editor-page>.h18-editor-section .h18-editor-grid-card h3{color:inherit!important}' .
-            '@media(max-width:782px){body.page .h18-editor-page>.h18-hide-mobile{display:none!important}.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center);--h18-transform-x:var(--h18-mobile-transform-x);--h18-transform-y:var(--h18-mobile-transform-y);--h18-transform-scale:var(--h18-mobile-transform-scale);--h18-transform-rotate:var(--h18-mobile-transform-rotate)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-editor-media img,.h18-editor-image img{height:var(--h18-mobile-image-height,var(--h18-image-height,auto))}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
+            '@media(max-width:782px){body.page .h18-editor-page>.h18-hide-mobile{display:none!important}.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center);width:var(--h18-mobile-element-width,var(--h18-element-width,100%));min-height:var(--h18-mobile-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-mobile-transform-x);--h18-transform-y:var(--h18-mobile-transform-y);--h18-transform-scale:var(--h18-mobile-transform-scale);--h18-transform-rotate:var(--h18-mobile-transform-rotate)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-editor-media img,.h18-editor-image img{width:var(--h18-mobile-image-width,var(--h18-image-width,100%));height:var(--h18-mobile-image-height,var(--h18-image-height,auto))}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
     }
 
@@ -8215,6 +8247,10 @@ HTML;
                                     <div class="h18-field"><label><strong>Fokus lodret (%)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[ImageFocalYPercent]" value="<?php echo esc_attr($section['ImageFocalYPercent']); ?>" /></div>
                                     <div class="h18-field"><label><strong>Højde desktop/tablet (px)</strong></label><input type="number" min="0" max="1200" name="<?php echo esc_attr($prefix); ?>[ImageHeightPx]" value="<?php echo esc_attr($section['ImageHeightPx']); ?>" /><p class="description">0 = automatisk.</p></div>
                                     <div class="h18-field"><label><strong>Højde mobil (px)</strong></label><input type="number" min="0" max="900" name="<?php echo esc_attr($prefix); ?>[MobileImageHeightPx]" value="<?php echo esc_attr($section['MobileImageHeightPx']); ?>" /><p class="description">0 = automatisk.</p></div>
+                                    <div class="h18-field"><label><strong>Billedbredde desktop/tablet (%)</strong></label><input type="number" min="20" max="100" name="<?php echo esc_attr($prefix); ?>[ImageWidthPercent]" value="<?php echo esc_attr($section['ImageWidthPercent']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Billedbredde mobil (%)</strong></label><input type="number" min="20" max="100" name="<?php echo esc_attr($prefix); ?>[MobileImageWidthPercent]" value="<?php echo esc_attr($section['MobileImageWidthPercent']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Maks. billedbredde (px)</strong></label><input type="number" min="0" max="2000" name="<?php echo esc_attr($prefix); ?>[ImageMaxWidthPx]" value="<?php echo esc_attr($section['ImageMaxWidthPx']); ?>" /><p class="description">0 = ingen grænse.</p></div>
+                                    <div class="h18-field h18-checkbox-setting"><label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[ImageAspectLocked]" value="1" <?php checked(!empty($section['ImageAspectLocked'])); ?> /> <strong>Lås valgt billedformat</strong></label><p class="description">Når formatet er låst og ikke står på Auto, styres højden af formatet.</p></div>
                                 </div>
                             </div>
                         </div>
@@ -8321,6 +8357,19 @@ HTML;
                                 <div class="h18-field"><label><strong>Kantbredde (px)</strong></label><input type="number" min="0" max="12" name="<?php echo esc_attr($prefix); ?>[BorderWidthPx]" value="<?php echo esc_attr($section['BorderWidthPx']); ?>" /></div>
                                 <div class="h18-field"><label><strong>Kantfarve</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[CustomBorderColor]" value="<?php echo esc_attr($section['CustomBorderColor']); ?>" /></div>
                                 <div class="h18-field"><label><strong>Skygge</strong></label><select name="<?php echo esc_attr($prefix); ?>[ShadowStyle]"><option value="None" <?php selected($section['ShadowStyle'], 'None'); ?>>Ingen</option><option value="Soft" <?php selected($section['ShadowStyle'], 'Soft'); ?>>Blød</option><option value="Medium" <?php selected($section['ShadowStyle'], 'Medium'); ?>>Mellem</option><option value="Strong" <?php selected($section['ShadowStyle'], 'Strong'); ?>>Kraftig</option></select></div>
+                            </div>
+                            <div class="h18-element-size-fields">
+                                <h4>Elementstørrelse</h4>
+                                <p class="description">Bredde er procent af sideområdet. 0 px max-bredde betyder ingen grænse. Tablet/mobil med -1 arver desktop.</p>
+                                <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                    <div class="h18-field"><label><strong>Bredde desktop (%)</strong></label><input type="number" min="20" max="100" name="<?php echo esc_attr($prefix); ?>[ElementWidthPercent]" value="<?php echo esc_attr($section['ElementWidthPercent']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Bredde tablet (%)</strong></label><input type="number" min="-1" max="100" name="<?php echo esc_attr($prefix); ?>[TabletWidthPercent]" value="<?php echo esc_attr($section['TabletWidthPercent']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Bredde mobil (%)</strong></label><input type="number" min="-1" max="100" name="<?php echo esc_attr($prefix); ?>[MobileWidthPercent]" value="<?php echo esc_attr($section['MobileWidthPercent']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Maks. bredde (px)</strong></label><input type="number" min="0" max="2400" name="<?php echo esc_attr($prefix); ?>[ElementMaxWidthPx]" value="<?php echo esc_attr($section['ElementMaxWidthPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Min. højde desktop (px)</strong></label><input type="number" min="0" max="1600" name="<?php echo esc_attr($prefix); ?>[ElementMinHeightPx]" value="<?php echo esc_attr($section['ElementMinHeightPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Min. højde tablet (px)</strong></label><input type="number" min="-1" max="1600" name="<?php echo esc_attr($prefix); ?>[TabletMinHeightPx]" value="<?php echo esc_attr($section['TabletMinHeightPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Min. højde mobil (px)</strong></label><input type="number" min="-1" max="1200" name="<?php echo esc_attr($prefix); ?>[MobileMinHeightPx]" value="<?php echo esc_attr($section['MobileMinHeightPx']); ?>" /></div>
+                                </div>
                             </div>
                             <div class="h18-custom-design-fields">
                                 <div class="h18-module-fields-grid h18-module-fields-grid--four">
@@ -8687,6 +8736,8 @@ HTML;
                                 <div class="h18-inspector-advanced-actions">
                                     <button type="button" class="button" id="h18-inspector-copy-key" disabled>Kopiér nøgle</button>
                                     <button type="button" class="button" id="h18-inspector-duplicate" disabled>Duplikér element</button>
+                                    <button type="button" class="button" id="h18-inspector-copy-design" disabled>Kopiér design</button>
+                                    <button type="button" class="button" id="h18-inspector-paste-design" disabled>Indsæt design</button>
                                     <button type="button" class="button button-primary" id="h18-save-section-preset" disabled>Gem som komponent</button>
                                 </div>
                                 <p class="description">Genbrugelige komponenter gemmes centralt i WordPress og kan indsættes på alle sider i Hangar18-editoren.</p>
@@ -8984,7 +9035,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.11',
+            'Version'        => '1.12',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
