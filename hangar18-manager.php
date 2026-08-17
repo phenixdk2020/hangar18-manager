@@ -14,6 +14,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once __DIR__ . '/includes/page-creation-validator.php';
+
 final class Hangar18_Manager {
     const VERSION = '0.5.0';
 
@@ -112,6 +114,7 @@ final class Hangar18_Manager {
 
         add_action('admin_post_h18_save_static_content', [$this, 'handle_save_static_content']);
         add_action('admin_post_h18_save_page_editor', [$this, 'handle_save_page_editor']);
+        add_action('admin_post_h18_create_page', [$this, 'handle_create_page']);
         add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);
         add_action('admin_post_h18_restore_page_before_editor', [$this, 'handle_restore_page_before_editor']);
         add_action('admin_post_h18_send_page_form', [$this, 'handle_send_page_form']);
@@ -6194,6 +6197,9 @@ HTML;
             'buttons'    => 'Handlingsknapper',
             'card'       => 'Indholdskort',
             'card_grid'  => 'Kort-række / kolonner',
+            'split'      => 'Opdel sektion',
+            'table'      => 'Tabel',
+            'function'   => 'Funktion / felter',
             'highlight'  => 'Fremhævet tekst',
             'spacer'     => 'Afstand',
             'html'       => 'Importeret blok / HTML',
@@ -6260,6 +6266,39 @@ HTML;
             'ColumnGapPx'           => 16,
             'MobileColumnGapPx'     => 14,
             'Cards'                 => [],
+            'SplitColumns'           => 2,
+            'SplitGapPx'            => 24,
+            'SplitMobileGapPx'      => 16,
+            'SplitPaddingPx'        => 22,
+            'SplitColumnColors'     => '#ffffff,#f2f0e8',
+            'TableColumns'          => 3,
+            'TableHeaderRow'        => true,
+            'TableBorderColor'      => '#d9d3c7',
+            'TableHeaderBackground' => '#f2f0e8',
+            'TableTextColor'        => '#30382a',
+            'TableCellPaddingPx'    => 12,
+            'TableData'             => "Kolonne 1;Kolonne 2;Kolonne 3\nVærdi 1;Værdi 2;Værdi 3",
+            'TextColor'             => '#30382a',
+            'TextSizePx'            => 16,
+            'FunctionColumns'       => 2,
+            'FunctionFields'        => [
+                [
+                    'Key' => 'navn',
+                    'Label' => 'Navn',
+                    'Type' => 'text',
+                    'Value' => '',
+                    'Options' => [],
+                    'Order' => 10,
+                ],
+                [
+                    'Key' => 'beskrivelse',
+                    'Label' => 'Beskrivelse',
+                    'Type' => 'textarea',
+                    'Value' => '',
+                    'Options' => [],
+                    'Order' => 20,
+                ],
+            ],
             'TopSpacingPx'          => 0,
             'BottomSpacingPx'       => 24,
             'MobileTopSpacingPx'    => 0,
@@ -6343,6 +6382,99 @@ HTML;
         ];
     }
 
+    private function normalize_page_function_fields($value, array $fallback = []) {
+        $entries = [];
+        if (is_array($value)) {
+            $entries = $value;
+        } elseif (is_string($value) && trim($value) !== '') {
+            $entries = preg_split('/\r\n|\r|\n/', trim($value));
+        }
+        if (empty($entries) && !empty($fallback)) {
+            $entries = $fallback;
+        }
+        if (empty($entries)) {
+            $entries = [
+                'Navn|text|navn|',
+                'Beskrivelse|textarea|beskrivelse|',
+            ];
+        }
+
+        $normalized = [];
+        $order = 10;
+        foreach ($entries as $entry) {
+            $field = [];
+            if (is_array($entry)) {
+                $field = $entry;
+            } else {
+                $field = preg_split('/\s*\|\s*|\s*;\s*|\t+/', trim((string) $entry));
+            }
+            if (!is_array($field) || count($field) < 3) {
+                continue;
+            }
+
+            $label = sanitize_text_field((string) ($field['Label'] ?? ($field[0] ?? 'Felt')));
+            $type = sanitize_key((string) ($field['Type'] ?? ($field[1] ?? 'text')));
+            $key = sanitize_key((string) ($field['Key'] ?? ($field[2] ?? $label)));
+            $value = isset($field['Value']) ? (string) $field['Value'] : (isset($field[3]) ? (string) $field[3] : '');
+            $options = isset($field['Options']) && is_array($field['Options']) ? $field['Options'] : [];
+            if (!$options && isset($field[4]) && (string) $field[4] !== '') {
+                $options = preg_split('/\s*[,;]+\s*/', (string) $field[4]);
+            }
+            if ($label === '') {
+                $label = 'Felt';
+            }
+            if ($key === '') {
+                $key = 'felt-' . $order;
+            }
+            if (!in_array($type, ['text', 'textarea', 'number', 'boolean', 'select', 'date', 'url', 'color'], true)) {
+                $type = 'text';
+            }
+            $clean_options = [];
+            foreach ((array) $options as $option) {
+                $labelled = sanitize_text_field((string) $option);
+                if ($labelled !== '' && !in_array($labelled, $clean_options, true)) {
+                    $clean_options[] = $labelled;
+                }
+            }
+            $normalized[] = [
+                'Key' => $key,
+                'Label' => $label,
+                'Type' => $type,
+                'Value' => $type === 'textarea' ? wp_kses_post($value) : sanitize_text_field($value),
+                'Options' => $clean_options,
+                'Order' => $order,
+            ];
+            $order += 10;
+        }
+
+        if ($normalized === []) {
+            return [
+                [
+                    'Key' => 'navn',
+                    'Label' => 'Navn',
+                    'Type' => 'text',
+                    'Value' => '',
+                    'Options' => [],
+                    'Order' => 10,
+                ],
+                [
+                    'Key' => 'beskrivelse',
+                    'Label' => 'Beskrivelse',
+                    'Type' => 'textarea',
+                    'Value' => '',
+                    'Options' => [],
+                    'Order' => 20,
+                ],
+            ];
+        }
+
+        usort($normalized, static function ($a, $b) {
+            return ((int) ($a['Order'] ?? 0)) <=> ((int) ($b['Order'] ?? 0));
+        });
+
+        return $normalized;
+    }
+
     private function normalize_page_section(array $raw, $index = 0, array $legacy_source = []) {
         $types = $this->page_section_type_labels();
         $type = sanitize_key((string) ($raw['Type'] ?? 'text'));
@@ -6417,6 +6549,105 @@ HTML;
         if ($success_message === '') {
             $success_message = $section['SuccessMessage'];
         }
+        $split_columns = $this->clamp_int($raw['SplitColumns'] ?? $section['SplitColumns'], 1, 4, 2);
+        $split_gap = $this->clamp_int($raw['SplitGapPx'] ?? $section['SplitGapPx'], 0, 80, 24);
+        $split_mobile_gap = $this->clamp_int($raw['SplitMobileGapPx'] ?? $section['SplitMobileGapPx'], 0, 60, 16);
+        $split_padding = $this->clamp_int($raw['SplitPaddingPx'] ?? $section['SplitPaddingPx'], 0, 80, 22);
+        $split_color_source = is_string($raw['SplitColumnColors'] ?? null) ? $raw['SplitColumnColors'] : (string) ($section['SplitColumnColors'] ?? '#ffffff,#f2f0e8');
+        $split_color_values = [];
+        foreach (preg_split('/[\r\n,;]+/', $split_color_source) as $split_color) {
+            $value = sanitize_hex_color((string) $split_color);
+            if ($value !== '') {
+                $split_color_values[] = $value;
+            }
+        }
+        if ($split_color_values === []) {
+            $split_color_values = ['#ffffff', '#f2f0e8'];
+        }
+        $split_content_lines = [];
+        $raw_split_content = trim((string) ($raw['Content'] ?? $section['Content']));
+        if ($raw_split_content !== '') {
+            foreach (preg_split('/\r\n|\r|\n/', $raw_split_content) as $line) {
+                $line = trim(wp_strip_all_tags((string) $line));
+                if ($line !== '') {
+                    $split_content_lines[] = $line;
+                }
+            }
+        }
+        if ($split_content_lines === []) {
+            for ($split_i = 0; $split_i < $split_columns; $split_i++) {
+                $split_content_lines[] = 'Kolonne ' . ($split_i + 1);
+            }
+        }
+        $split_content_lines = array_slice($split_content_lines, 0, $split_columns);
+        while (count($split_content_lines) < $split_columns) {
+            $split_content_lines[] = 'Kolonne ' . (count($split_content_lines) + 1);
+        }
+
+        $table_columns = $this->clamp_int($raw['TableColumns'] ?? $section['TableColumns'], 1, 6, 3);
+        $table_data = (string) ($raw['TableData'] ?? $section['TableData']);
+        $table_rows = [];
+        foreach (preg_split('/\r\n|\r|\n/', $table_data) as $line) {
+            $trimmed = trim((string) $line);
+            if ($trimmed === '') {
+                continue;
+            }
+            $cells = preg_split('/\t|\||;/', $trimmed);
+            if (!is_array($cells)) {
+                continue;
+            }
+            $cells = array_map('trim', array_map('strval', $cells));
+            foreach ($cells as $index => $cell) {
+                $cells[$index] = wp_strip_all_tags($cell);
+            }
+            if ($table_columns > 1 && count($cells) > $table_columns) {
+                $cells = array_slice($cells, 0, $table_columns);
+            }
+            if (count($cells) < $table_columns) {
+                $cells = array_pad($cells, $table_columns, '');
+            }
+            $table_rows[] = $cells;
+        }
+        if (!$table_rows) {
+            $table_rows = [
+                array_fill(0, $table_columns, ''),
+                array_fill(0, $table_columns, ''),
+            ];
+            for ($i = 0; $i < $table_columns; $i++) {
+                $table_rows[0][$i] = 'Kolonne ' . ($i + 1);
+                $table_rows[1][$i] = 'Værdi ' . ($i + 1);
+            }
+        }
+        $table_data = implode("\n", array_map(static function ($row) {
+            return implode(';', array_map('strval', $row));
+        }, $table_rows));
+        $table_border_color = sanitize_text_field((string) ($raw['TableBorderColor'] ?? $section['TableBorderColor']));
+        if ($table_border_color === '' || !preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $table_border_color)) {
+            $table_border_color = '#d9d3c7';
+        }
+        $table_header_background = sanitize_text_field((string) ($raw['TableHeaderBackground'] ?? $section['TableHeaderBackground']));
+        if ($table_header_background === '' || !preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $table_header_background)) {
+            $table_header_background = '#f2f0e8';
+        }
+        $table_text_color = sanitize_text_field((string) ($raw['TableTextColor'] ?? $section['TableTextColor']));
+        if ($table_text_color === '' || !preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $table_text_color)) {
+            $table_text_color = '#30382a';
+        }
+        $table_header_row = array_key_exists('TableHeaderRow', $raw) ? $this->bool_value($raw['TableHeaderRow'], false) : !empty($section['TableHeaderRow']);
+        $table_cell_padding = $this->clamp_int($raw['TableCellPaddingPx'] ?? $section['TableCellPaddingPx'], 4, 30, 12);
+        $section_text_color = sanitize_hex_color((string) ($raw['TextColor'] ?? $section['TextColor']));
+        if ($section_text_color === '') {
+            $section_text_color = '#30382a';
+        }
+        $section_font_size = $this->clamp_int($raw['TextSizePx'] ?? $section['TextSizePx'] ?? 16, 12, 32, 16);
+        $function_columns = $this->clamp_int($raw['FunctionColumns'] ?? $section['FunctionColumns'] ?? 2, 1, 4, 2);
+        $function_fields = $this->normalize_page_function_fields(
+            $raw['FunctionFields'] ?? $section['FunctionFields'] ?? [],
+            [
+                'Navn|text|navn|',
+                'Beskrivelse|textarea|beskrivelse|',
+            ]
+        );
         $imported_group_type = sanitize_key((string) ($raw['ImportedGroupType'] ?? ''));
         if (!in_array($imported_group_type, ['', 'columns'], true)) {
             $imported_group_type = '';
@@ -6475,6 +6706,22 @@ HTML;
             'ColumnGapPx'           => $this->clamp_int($raw['ColumnGapPx'] ?? 16, 0, 80, 16),
             'MobileColumnGapPx'     => $this->clamp_int($raw['MobileColumnGapPx'] ?? 14, 0, 60, 14),
             'Cards'                 => $cards,
+            'SplitColumns'           => $split_columns,
+            'SplitGapPx'            => $split_gap,
+            'SplitMobileGapPx'      => $split_mobile_gap,
+            'SplitPaddingPx'        => $split_padding,
+            'SplitColumnColors'     => implode(',', array_slice($split_color_values, 0, 4)),
+            'TableColumns'          => $table_columns,
+            'TableHeaderRow'        => $table_header_row,
+            'TableBorderColor'      => $table_border_color,
+            'TableHeaderBackground' => $table_header_background,
+            'TableTextColor'        => $table_text_color,
+            'TableCellPaddingPx'    => $table_cell_padding,
+            'TableData'             => $table_data,
+            'TextColor'             => $section_text_color,
+            'TextSizePx'            => $section_font_size,
+            'FunctionColumns'       => $function_columns,
+            'FunctionFields'        => $function_fields,
             'TopSpacingPx'          => $this->clamp_int($raw['TopSpacingPx'] ?? 0, 0, 160, 0),
             'BottomSpacingPx'       => $this->clamp_int($raw['BottomSpacingPx'] ?? 24, 0, 160, 24),
             'MobileTopSpacingPx'    => $this->clamp_int($raw['MobileTopSpacingPx'] ?? 0, 0, 100, 0),
@@ -7128,6 +7375,12 @@ HTML;
     }
 
     private function page_editor_section_style(array $section) {
+        $text_color = sanitize_hex_color((string) ($section['TextColor'] ?? '#30382a'));
+        if ($text_color === '') {
+            $text_color = '#30382a';
+        }
+        $font_size = $this->clamp_int($section['TextSizePx'] ?? 16, 12, 32, 16);
+
         return '--h18-top:' . (int) $section['TopSpacingPx'] . 'px;' .
             '--h18-bottom:' . (int) $section['BottomSpacingPx'] . 'px;' .
             '--h18-mobile-top:' . (int) $section['MobileTopSpacingPx'] . 'px;' .
@@ -7140,7 +7393,9 @@ HTML;
             '--h18-align:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'left') . ';' .
             '--h18-mobile-align:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'left') . ';' .
             '--h18-justify:' . ($section['DesktopAlignment'] === 'Center' ? 'center' : 'flex-start') . ';' .
-            '--h18-mobile-justify:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'flex-start') . ';';
+            '--h18-mobile-justify:' . ($section['MobileAlignment'] === 'Center' ? 'center' : 'flex-start') . ';' .
+            '--h18-text-color:' . esc_attr($text_color) . ';' .
+            '--h18-font-size:' . (int) $font_size . 'px;';
     }
 
     private function render_page_editor_imported_group(array $section, $inner, $extra_class) {
@@ -7156,11 +7411,14 @@ HTML;
     private function page_editor_frontend_css($page_id) {
         $id = (int) $page_id;
         return '<style id="h18-page-editor-style-' . $id . '">' .
-            '.h18-editor-page{width:100%;box-sizing:border-box}.h18-editor-section{box-sizing:border-box;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0) var(--h18-pad-x,var(--h18-pad,0));border-radius:var(--h18-radius,0);text-align:var(--h18-align,left)}' .
-            '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--sand{background:#c3ae83;color:#30382a}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--steel{background:#525a5f;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:#fff}' .
-            '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:#fff}.h18-editor-section p:last-child{margin-bottom:0}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{text-align:var(--h18-align,left)!important}' .
+            '.h18-editor-page{width:100%;box-sizing:border-box}.h18-editor-section{box-sizing:border-box;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0) var(--h18-pad-x,var(--h18-pad,0));border-radius:var(--h18-radius,0);text-align:var(--h18-align,left);color:var(--h18-text-color,#30382a);font-size:var(--h18-font-size,16px)}' .
+            '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--sand{background:#c3ae83;color:var(--h18-text-color,#30382a)}.h18-editor-section--olive{background:#30382a;color:var(--h18-text-color,#fff)}.h18-editor-section--steel{background:#525a5f;color:var(--h18-text-color,#fff)}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:var(--h18-text-color,#fff)}' .
+            '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:var(--h18-text-color,#30382a)}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:var(--h18-text-color,#fff)}.h18-editor-section p:last-child{margin-bottom:0}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{text-align:var(--h18-align,left)!important}' .
             '.h18-editor-card{border-top:4px solid #c3ae83}.h18-editor-highlight{border-left:5px solid #c3ae83}' .
             '.h18-editor-card-grid{display:grid;grid-template-columns:repeat(var(--h18-grid-columns,3),minmax(0,1fr));gap:var(--h18-grid-gap,16px);align-items:stretch}.h18-editor-grid-card{box-sizing:border-box;padding:var(--h18-card-pad,26px);border:var(--h18-card-border-width,0) solid var(--h18-card-border,#c3ae83);border-radius:var(--h18-card-radius,7px);text-align:var(--h18-card-align,left)}.h18-editor-grid-card h3{margin:0 0 12px;color:inherit}.h18-editor-grid-card--white{background:#fff}.h18-editor-grid-card--offwhite{background:#f2f0e8}.h18-editor-grid-card--sand{background:#c3ae83}.h18-editor-grid-card--olive{background:#30382a}.h18-editor-grid-card--steel{background:#525a5f}.h18-editor-grid-card--tone-dark{color:#30382a}.h18-editor-grid-card--tone-light{color:#fff}.h18-editor-grid-card--tone-light h3{color:#fff}' .
+            '.h18-editor-split-grid{display:grid;grid-template-columns:repeat(var(--h18-split-columns,2),minmax(0,1fr));gap:var(--h18-split-gap,24px);align-items:stretch}.h18-editor-split-column{box-sizing:border-box;padding:var(--h18-split-pad,22px);border-radius:12px;min-height:100%}.h18-editor-split-column > *:first-child{margin-top:0}.h18-editor-split-column > *:last-child{margin-bottom:0}@media (max-width:782px){.h18-editor-split-grid{grid-template-columns:repeat(var(--h18-split-mobile-columns,1),minmax(0,1fr));gap:var(--h18-split-mobile-gap,16px)}}' .
+            '.h18-editor-table-wrap{overflow-x:auto}.h18-editor-table{width:100%;border-collapse:collapse;border-spacing:0;margin:0;background:transparent;color:var(--h18-table-text,#30382a);border:1px solid var(--h18-table-border,#d9d3c7)}.h18-editor-table th,.h18-editor-table td{padding:var(--h18-table-cell-pad,12px);border:1px solid var(--h18-table-border,#d9d3c7);text-align:left;vertical-align:top}.h18-editor-table th{background:var(--h18-table-header-bg,#f2f0e8);font-weight:700}.h18-editor-table tbody tr:nth-child(even){background:rgba(48,56,42,.02)}' .
+            '.h18-editor-function-grid{display:grid;grid-template-columns:repeat(var(--h18-function-columns,2),minmax(0,1fr));gap:16px;align-items:stretch}.h18-editor-function-field{box-sizing:border-box;padding:18px 20px;border:1px solid #d9d3c7;border-radius:8px;background:#f7f5f0}.h18-editor-function-field strong,.h18-editor-function-field-label{display:block;margin-bottom:8px;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:#30382a}.h18-editor-function-field-value{margin:0;color:#30382a;line-height:1.6}.h18-editor-function-field-value em{font-style:italic}.h18-editor-function-field--textarea .h18-editor-function-field-value{white-space:pre-wrap}' .
             '.h18-editor-text-image{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:28px;align-items:center}.h18-editor-text-image--left .h18-editor-media{order:-1}' .
             '.h18-editor-media img,.h18-editor-image img{display:block;width:100%;height:auto;border-radius:inherit}.h18-editor-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:var(--h18-justify,flex-start)}' .
             '.h18-editor-hero{position:relative;display:grid;min-height:var(--h18-hero-height,320px);place-items:center;overflow:hidden;background-position:center;background-repeat:no-repeat;background-size:cover}.h18-editor-hero:before{position:absolute;inset:0;content:"";background:#20261d;opacity:var(--h18-overlay-opacity,.35)}.h18-editor-hero-inner{position:relative;z-index:1;width:min(100%,920px)}.h18-editor-hero .h18-editor-actions{margin-top:20px}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover{display:block!important;min-height:0!important;padding:0!important;background:none!important}.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__image-background,.h18-editor-page .h18-editor-hero .h18-editor-hero-inner .wp-block-cover__background{display:none!important}' .
@@ -7254,6 +7512,128 @@ HTML;
             ? do_shortcode(wp_kses_post($content_source))
             : $this->format_page_section_content($content_source);
         $inner = $title . $content;
+
+        if ($section['Type'] === 'split') {
+            $split_columns = max(1, (int) ($section['SplitColumns'] ?? 2));
+            $split_lines = [];
+            foreach (preg_split('/\r\n|\r|\n/', (string) ($section['Content'] ?? '')) as $line) {
+                $trimmed = trim((string) $line);
+                if ($trimmed === '') {
+                    continue;
+                }
+                $split_lines[] = wp_strip_all_tags($trimmed);
+            }
+            if (!$split_lines) {
+                for ($i = 0; $i < $split_columns; $i++) {
+                    $split_lines[] = 'Kolonne ' . ($i + 1);
+                }
+            }
+            $split_lines = array_slice($split_lines, 0, $split_columns);
+            while (count($split_lines) < $split_columns) {
+                $split_lines[] = 'Kolonne ' . (count($split_lines) + 1);
+            }
+            $split_colors = [];
+            foreach (preg_split('/[\r\n,;]+/', (string) ($section['SplitColumnColors'] ?? '#ffffff,#f2f0e8')) as $color) {
+                $safe = sanitize_hex_color((string) $color);
+                if ($safe !== '') {
+                    $split_colors[] = $safe;
+                }
+            }
+            if (!$split_colors) {
+                $split_colors = ['#ffffff', '#f2f0e8'];
+            }
+            $split_html = '';
+            foreach ($split_lines as $index => $text) {
+                $background = $split_colors[$index % count($split_colors)] ?? $split_colors[0];
+                $split_html .= '<div class="h18-editor-split-column" style="background:' . esc_attr($background) . ';padding:' . (int) ($section['SplitPaddingPx'] ?? 22) . 'px;--h18-split-gap:' . (int) ($section['SplitGapPx'] ?? 24) . 'px;">' . $this->format_page_section_content($text) . '</div>';
+            }
+            $inner = $title . '<div class="h18-editor-split-grid" style="--h18-split-columns:' . (int) $split_columns . ';--h18-split-mobile-columns:1;--h18-split-gap:' . (int) ($section['SplitGapPx'] ?? 24) . 'px;--h18-split-mobile-gap:' . (int) ($section['SplitMobileGapPx'] ?? 16) . 'px;--h18-split-pad:' . (int) ($section['SplitPaddingPx'] ?? 22) . 'px;">' . $split_html . '</div>';
+        } elseif ($section['Type'] === 'table') {
+            $table_rows = [];
+            foreach (preg_split('/\r\n|\r|\n/', (string) ($section['TableData'] ?? '')) as $line) {
+                $trimmed = trim((string) $line);
+                if ($trimmed === '') {
+                    continue;
+                }
+                $cells = array_map('trim', preg_split('/\t|\||;/', $trimmed));
+                if (!$cells) {
+                    continue;
+                }
+                $table_rows[] = $cells;
+            }
+            if (!$table_rows) {
+                $table_rows = [
+                    ['Kolonne 1', 'Kolonne 2'],
+                    ['Værdi 1', 'Værdi 2'],
+                ];
+            }
+            $columns = max(1, (int) ($section['TableColumns'] ?? count($table_rows[0])));
+            $table = '<table class="h18-editor-table" style="--h18-table-border:' . esc_attr((string) ($section['TableBorderColor'] ?? '#d9d3c7')) . ';--h18-table-header-bg:' . esc_attr((string) ($section['TableHeaderBackground'] ?? '#f2f0e8')) . ';--h18-table-text:' . esc_attr((string) ($section['TableTextColor'] ?? '#30382a')) . ';--h18-table-cell-pad:' . (int) ($section['TableCellPaddingPx'] ?? 12) . 'px;">';
+            $header_row = !empty($section['TableHeaderRow']);
+            foreach ($table_rows as $row_index => $row) {
+                $cells = array_map('trim', (array) $row);
+                if (count($cells) < $columns) {
+                    $cells = array_pad($cells, $columns, '');
+                }
+                if (count($cells) > $columns) {
+                    $cells = array_slice($cells, 0, $columns);
+                }
+                $tag = $header_row && $row_index === 0 ? 'th' : 'td';
+                $table .= '<tr>' . implode('', array_map(static function ($cell) use ($tag) {
+                    return '<' . $tag . '>' . esc_html((string) $cell) . '</' . $tag . '>';
+                }, $cells)) . '</tr>';
+            }
+            $table .= '</table>';
+            $inner = $title . '<div class="h18-editor-table-wrap">' . $table . '</div>';
+        } elseif ($section['Type'] === 'function') {
+            $function_fields = [];
+            foreach ((array) ($section['FunctionFields'] ?? []) as $field) {
+                if (!is_array($field)) {
+                    continue;
+                }
+                $label = sanitize_text_field((string) ($field['Label'] ?? 'Felt'));
+                $type = sanitize_key((string) ($field['Type'] ?? 'text'));
+                if ($label === '') {
+                    $label = 'Felt';
+                }
+                if (!in_array($type, ['text', 'textarea', 'number', 'boolean', 'select', 'date', 'url', 'color'], true)) {
+                    $type = 'text';
+                }
+                $value = (string) ($field['Value'] ?? '');
+                if ($type === 'boolean') {
+                    $value = $value === '1' || strtolower($value) === 'true' || strtolower($value) === 'ja' ? 'Ja' : 'Nej';
+                } elseif ($type === 'select') {
+                    $value = sanitize_text_field($value);
+                } elseif ($type === 'date') {
+                    $value = sanitize_text_field($value);
+                } elseif ($type === 'url') {
+                    $value = esc_url_raw($value) !== '' ? '<a href="' . esc_url($value) . '">' . esc_html($value) . '</a>' : esc_html($value);
+                } elseif ($type === 'color') {
+                    $value = $value !== '' ? '<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:' . esc_attr($value) . ';border:1px solid rgba(0,0,0,.2);vertical-align:middle;margin-right:8px;"></span><span>' . esc_html($value) . '</span>' : esc_html($value);
+                } else {
+                    $value = $type === 'textarea' ? wp_kses_post($value) : esc_html($value);
+                }
+                $function_fields[] = [
+                    'Label' => $label,
+                    'Type' => $type,
+                    'Value' => $value,
+                ];
+            }
+            if (!$function_fields) {
+                $function_fields[] = ['Label' => 'Angiv felter', 'Type' => 'text', 'Value' => 'Tilføj felter i sektionen.'];
+            }
+            $function_html = '';
+            foreach ($function_fields as $field) {
+                $field_class = 'h18-editor-function-field';
+                if (($field['Type'] ?? 'text') === 'textarea') {
+                    $field_class .= ' h18-editor-function-field--textarea';
+                }
+                $field_value = (string) ($field['Value'] ?? '');
+                $function_html .= '<div class="' . esc_attr($field_class) . '"><strong class="h18-editor-function-field-label">' . esc_html((string) ($field['Label'] ?? 'Felt')) . '</strong><div class="h18-editor-function-field-value">' . $field_value . '</div></div>';
+            }
+            $columns = max(1, (int) ($section['FunctionColumns'] ?? 2));
+            $inner = $title . '<div class="h18-editor-function-grid" style="--h18-function-columns:' . $columns . ';">' . $function_html . '</div>';
+        }
 
         if ($section['Type'] === 'hero') {
             $image_url = $section['MediaId'] ? wp_get_attachment_image_url($section['MediaId'], 'full') : '';
@@ -7591,18 +7971,44 @@ HTML;
                             </select>
                         </div>
 
-                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight html mail_form poll">
+                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid table function highlight html mail_form poll">
                             <label><strong class="h18-section-title-label"><?php echo $section['Type'] === 'poll' ? 'Spørgsmål' : 'Overskrift'; ?></strong></label>
                             <input class="h18-section-title-input" type="text" name="<?php echo esc_attr($prefix); ?>[Title]" value="<?php echo esc_attr($section['Title']); ?>" />
                         </div>
 
-                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card card_grid highlight html css mail_form poll">
-                            <label><strong><?php echo $section['Type'] === 'image' ? 'Billedtekst' : ($section['Type'] === 'css' ? 'CSS' : 'Tekst'); ?></strong></label>
-                            <div class="h18-mini-editor-toolbar h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight html mail_form poll"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
+                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card card_grid table highlight html css mail_form poll function">
+                            <label><strong><?php echo $section['Type'] === 'image' ? 'Billedtekst' : ($section['Type'] === 'css' ? 'CSS' : ($section['Type'] === 'table' ? 'Tabeldata' : ($section['Type'] === 'function' ? 'Sektionstekst' : 'Tekst'))); ?></strong></label>
+                            <div class="h18-mini-editor-toolbar h18-section-type-field" data-types="hero text text_image image buttons card card_grid table highlight html mail_form poll function"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
                             <textarea name="<?php echo esc_attr($prefix); ?>[Content]" rows="5"><?php echo esc_textarea($section['Content']); ?></textarea>
                             <p class="description h18-standard-content-help">Almindelig tekst samt enkel formatering som fed, kursiv, links og lister er tilladt.</p>
                             <p class="description h18-section-type-field" data-types="html"><strong>Importeret blok:</strong> HTML-koden er bevaret for at fastholde det nuværende udseende. Tekst og links kan redigeres direkte her.</p>
                             <p class="description h18-section-type-field" data-types="css"><strong>Avanceret side-CSS:</strong> Bevarer den eksisterende sides farver, kolonner og responsive regler. Ret kun feltet, hvis du kender CSS.</p>
+                            <p class="description h18-section-type-field" data-types="table"><strong>Tabelformat:</strong> Skriv én række per linje, adskil celler med semikolon. F.eks.: <code>Kolonne 1;Kolonne 2</code> / <code>Værdi 1;Værdi 2</code></p>
+                            <p class="description h18-section-type-field" data-types="function"><strong>Feltblok:</strong> Skriv én linje per felt: <code>Navn|text|navn|</code> eller <code>Beskrivelse|textarea|beskrivelse|</code>. Typer: text, textarea, number, boolean, select, date, url, color.</p>
+                        </div>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box" data-types="function">
+                        <h4>Funktion / felter</h4>
+                        <div class="h18-module-fields-grid">
+                            <div class="h18-field h18-field-wide">
+                                <label><strong>Felter</strong></label>
+                                <textarea name="<?php echo esc_attr($prefix); ?>[FunctionFields]" rows="8" placeholder="Navn|text|navn|&#10;Beskrivelse|textarea|beskrivelse|"><?php echo esc_textarea(implode("\n", array_map(static function ($field) {
+                                    if (!is_array($field)) {
+                                        return '';
+                                    }
+                                    $label = sanitize_text_field((string) ($field['Label'] ?? ''));
+                                    $type = sanitize_key((string) ($field['Type'] ?? 'text'));
+                                    $key = sanitize_key((string) ($field['Key'] ?? ''));
+                                    $value = (string) ($field['Value'] ?? '');
+                                    $options = isset($field['Options']) && is_array($field['Options']) ? implode(',', array_map('strval', $field['Options'])) : '';
+                                    return implode('|', [$label !== '' ? $label : 'Felt', $type, $key !== '' ? $key : 'felt', $value, $options]);
+                                }, (array) $section['FunctionFields']))); ?></textarea>
+                            </div>
+                            <div class="h18-field">
+                                <label><strong>Antal kolonner</strong></label>
+                                <input type="number" min="1" max="4" name="<?php echo esc_attr($prefix); ?>[FunctionColumns]" value="<?php echo esc_attr((int) ($section['FunctionColumns'] ?? 2)); ?>" />
+                            </div>
                         </div>
                     </div>
 
@@ -7660,6 +8066,23 @@ HTML;
                         <button class="button h18-add-page-card" type="button">Tilføj kasse</button>
                     </div>
 
+                    <div class="h18-section-type-field h18-section-module-box" data-types="table">
+                        <h4>Tabel</h4>
+                        <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                            <div class="h18-field"><label><strong>Kolonner</strong></label><select name="<?php echo esc_attr($prefix); ?>[TableColumns]"><?php for ($columns = 1; $columns <= 6; $columns++) : ?><option value="<?php echo esc_attr($columns); ?>" <?php selected($section['TableColumns'], $columns); ?>><?php echo esc_html($columns); ?></option><?php endfor; ?></select></div>
+                            <div class="h18-field"><label><strong>Første række er overskrift</strong></label><label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[TableHeaderRow]" value="1" <?php checked(!empty($section['TableHeaderRow'])); ?> /> Brug første række som overskrifter</label></div>
+                            <div class="h18-field"><label><strong>Cellestørrelse (px)</strong></label><input type="number" min="4" max="30" name="<?php echo esc_attr($prefix); ?>[TableCellPaddingPx]" value="<?php echo esc_attr($section['TableCellPaddingPx']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Borderfarve</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[TableBorderColor]" value="<?php echo esc_attr($section['TableBorderColor']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Overskriftsfarve</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[TableHeaderBackground]" value="<?php echo esc_attr($section['TableHeaderBackground']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Tekstfarve</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[TableTextColor]" value="<?php echo esc_attr($section['TableTextColor']); ?>" /></div>
+                        </div>
+                        <div class="h18-field h18-field-wide">
+                            <label><strong>Tabeldata</strong></label>
+                            <textarea name="<?php echo esc_attr($prefix); ?>[TableData]" rows="6"><?php echo esc_textarea($section['TableData']); ?></textarea>
+                            <p class="description">Skriv én række per linje og adskil celler med semikolon. Eksempel: <code>Kolonne 1;Kolonne 2</code><br /><code>Værdi 1;Værdi 2</code></p>
+                        </div>
+                    </div>
+
                     <div class="h18-section-type-field h18-section-module-box" data-types="html">
                         <h4>Importerede kolonner</h4>
                         <p>Hvis blokken indeholder WordPress-kolonner, kan de udskilles som selvstændige kasser. Ændringen sker først på den offentlige side, når den gemmes som en ny version.</p>
@@ -7700,7 +8123,7 @@ HTML;
                         <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Desktop (px)</strong></label><input type="number" min="0" max="200" name="<?php echo esc_attr($prefix); ?>[SpacerPx]" value="<?php echo esc_attr($section['SpacerPx']); ?>" /></div><div class="h18-field"><label><strong>Mobil (px)</strong></label><input type="number" min="0" max="140" name="<?php echo esc_attr($prefix); ?>[MobileSpacerPx]" value="<?php echo esc_attr($section['MobileSpacerPx']); ?>" /></div></div>
                     </div>
 
-                    <details class="h18-page-section-layout h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight html mail_form poll spacer">
+                    <details class="h18-page-section-layout h18-section-type-field" data-types="hero text text_image image buttons card card_grid table function highlight html mail_form poll spacer">
                         <summary>Luft, baggrund og placering</summary>
                         <div class="h18-layout-devices">
                             <fieldset class="h18-layout-device"><legend>Desktop</legend><div class="h18-layout-fields">
@@ -7718,7 +8141,7 @@ HTML;
                                 <div class="h18-field"><label><strong>Indvendig luft – vandret (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[MobileHorizontalPaddingPx]" value="<?php echo esc_attr($section['MobileHorizontalPaddingPx']); ?>" /><p class="description">Luft i siderne på mobil.</p></div>
                             </div></fieldset>
                         </div>
-                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Sand" <?php selected($section['Background'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option><option value="Steel" <?php selected($section['Background'], 'Steel'); ?>>Stålgrå</option></select><p class="description">Farven på hele sektionen. De samme designfarver bruges på tværs af siderne.</p></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /><p class="description">0 giver lige kanter som på den oprindelige Hjem-side.</p></div></div>
+                        <div class="h18-module-fields-grid"><div class="h18-field"><label><strong>Baggrund</strong></label><select name="<?php echo esc_attr($prefix); ?>[Background]"><option value="White" <?php selected($section['Background'], 'White'); ?>>Hvid</option><option value="OffWhite" <?php selected($section['Background'], 'OffWhite'); ?>>Knækket hvid</option><option value="Sand" <?php selected($section['Background'], 'Sand'); ?>>Sandfarvet</option><option value="Olive" <?php selected($section['Background'], 'Olive'); ?>>Mørk olivengrøn</option><option value="Steel" <?php selected($section['Background'], 'Steel'); ?>>Stålgrå</option></select><p class="description">Farven på hele sektionen. De samme designfarver bruges på tværs af siderne.</p></div><div class="h18-field"><label><strong>Tekstfarve</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[TextColor]" value="<?php echo esc_attr($section['TextColor']); ?>" /><p class="description">Overskrifter, tekst og links får denne farve, medmindre anden stil overskriver den.</p></div><div class="h18-field"><label><strong>Skriftstørrelse (px)</strong></label><input type="number" min="12" max="32" name="<?php echo esc_attr($prefix); ?>[TextSizePx]" value="<?php echo esc_attr((int) ($section['TextSizePx'] ?? 16)); ?>" /><p class="description">Sætter standard tekststørrelse for hele sektionen.</p></div><div class="h18-field"><label><strong>Hjørneafrunding (px)</strong></label><input type="number" min="0" max="30" name="<?php echo esc_attr($prefix); ?>[RadiusPx]" value="<?php echo esc_attr($section['RadiusPx']); ?>" /><p class="description">0 giver lige kanter som på den oprindelige Hjem-side.</p></div></div>
                     </details>
                 <?php endif; ?>
             </div>
@@ -7860,6 +8283,43 @@ HTML;
                     <a class="<?php echo $page_slug === $slug ? 'is-active' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-pages&page_slug=' . rawurlencode($page_slug))); ?>"><?php echo esc_html($label); ?></a>
                 <?php endforeach; ?>
             </nav>
+
+            <div class="h18-toolbar">
+                <form id="h18-page-create-form" class="h18-secondary-action h18-explained-action h18-page-create-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <?php wp_nonce_field('h18_create_page', 'h18_create_page_nonce'); ?>
+                    <input type="hidden" name="action" value="h18_create_page" />
+                    <label style="margin:0 6px 0 0"><strong>Opret ny side</strong></label>
+                    <select name="page_slug">
+                        <?php foreach ($definitions as $page_slug => $label) : ?>
+                            <option value="<?php echo esc_attr($page_slug); ?>"><?php echo esc_html($label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <label style="margin-left:6px;">Sidetitel (valgfri)</label>
+                    <input type="text" name="page_title" placeholder="Titel for den nye side" style="min-width:200px" />
+
+                    <label style="margin-left:6px;">Slug (valgfri)</label>
+                    <input type="text" name="page_name" placeholder="unik-slug" style="min-width:160px" />
+
+                    <label style="margin-left:6px;">Skabelon</label>
+                    <select name="template">
+                        <option value="blank">Tom skabelon</option>
+                        <?php
+                            $templates = (array) get_page_templates();
+                            foreach ($templates as $file => $name) :
+                        ?>
+                            <option value="<?php echo esc_attr($file); ?>"><?php echo esc_html($name); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <label style="margin-left:6px;">Ændringsbeskrivelse</label>
+                    <input type="text" name="change_note" placeholder="Kort beskrivelse (påkrævet)" required style="min-width:280px" />
+
+                    <label style="margin-left:6px"><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
+
+                    <button class="button button-primary" type="submit">Opret side</button>
+                </form>
+            </div>
 
             <?php if (!$page) : ?>
                 <div class="notice notice-error"><p>Siden <strong><?php echo esc_html($definitions[$slug]); ?></strong> blev ikke fundet.</p></div>
@@ -8330,6 +8790,132 @@ HTML;
             $this->set_notice('error', 'Siden kunne ikke gemmes: ' . $e->getMessage());
         }
         $this->redirect_page_editor($slug);
+    }
+
+    // Admin-post handler: create a new managed page (requires manage_options)
+    private function handle_create_page() {
+        if (!current_user_can('manage_options')) {
+            $this->set_notice('error', 'Manglende rettigheder til at oprette side.');
+            $this->redirect('hangar18-pages');
+        }
+
+        check_admin_referer('h18_create_page', 'h18_create_page_nonce');
+
+        $whatif = !empty($_POST['whatif']);
+
+        $change_note = trim($this->post_text('change_note'));
+        if (!$whatif && $change_note === '') {
+            $this->set_notice('error', 'Ændringsbeskrivelse er påkrævet.');
+            $this->redirect('hangar18-pages');
+        }
+
+        $existing_page_paths = [];
+        foreach (get_pages(['post_type' => 'page', 'numberposts' => 200]) as $existing_page) {
+            if ($existing_page instanceof WP_Post && $existing_page->post_name !== '') {
+                $existing_page_paths[] = $existing_page->post_name;
+            }
+        }
+
+        $theme_templates = [];
+        foreach ((array) get_page_templates() as $template_file => $template_name) {
+            $theme_templates[] = $template_file;
+        }
+
+        $resolved = Hangar18_PageCreationValidator::normalize_page_creation_payload(
+            $this->post_text('page_slug') ?: $this->post_text('slug') ?: $this->post_text('page_name'),
+            $this->post_text('page_name'),
+            $this->post_text('page_title'),
+            $this->post_text('template'),
+            $existing_page_paths,
+            array_merge(['blank', 'default'], $theme_templates)
+        );
+
+        $slug = $resolved['slug'];
+        $title = $resolved['title'];
+        $template = $resolved['template'];
+
+        if ($resolved['slug_changed']) {
+            $this->log('WARN', 'CREATE_PAGE_SLUG_ADJUST', 'Slug collision adjusted to ' . $slug);
+            $this->set_notice('warning', 'Slug var i konflikt og blev ændret til ' . esc_html($slug) . '.');
+        }
+
+        if ($whatif) {
+            $this->log('WARN', 'WHATIF_CREATE_PAGE', '[WHATIF] Ville oprette siden: ' . $slug . '; Template=' . $template);
+            $this->set_notice('warning', 'WHATIF: Siden blev valideret, men intet blev oprettet.');
+            $this->redirect('hangar18-pages');
+        }
+
+        try {
+            // Backup current managed state before making changes
+            $this->create_full_managed_backup('Før oprettelse af ny side: ' . $title);
+
+            // Initialize empty page editor data
+            $raw = [
+                'PageSlug' => $slug,
+                'PageTitle' => $title,
+                'ContentVersion' => 1,
+                'Sections' => [],
+                'Template' => $template,
+            ];
+            $data = $this->normalize_page_editor_data($raw);
+
+            // Build core content + shell and create WP page (draft)
+            $core = $this->build_page_editor_core($slug, $data);
+            $wrapped = $this->wrap_with_shell($core);
+
+            $postarr = [
+                'post_type' => 'page',
+                'post_title' => $title,
+                'post_name' => $slug,
+                'post_status' => 'draft',
+                'post_content' => $wrapped,
+                // keep page_template default for 'blank'
+                'page_template' => $template === 'blank' ? 'default' : $template,
+            ];
+
+            $post_id = wp_insert_post($postarr);
+            if (!$post_id || is_wp_error($post_id)) {
+                throw new RuntimeException('Kunne ikke oprette WordPress-siden.');
+            }
+
+            // Save chosen template in post meta so UI can surface it later
+            update_post_meta($post_id, '_h18_page_template', $template);
+
+            // Persist page editor store and create snapshot/backups
+            $this->save_page_editor_data($slug, $data);
+            $snapshot = $this->backup_post($post_id, 'Snapshot efter oprettelse af side: ' . $title);
+            $full = $this->create_full_managed_backup('Efter oprettelse af ny side: ' . $title);
+
+            // Append version history
+            $user = wp_get_current_user();
+            $entry = [
+                'Version' => 1,
+                'SavedUtc' => gmdate('c'),
+                'UserId' => $user ? $user->ID : 0,
+                'UserDisplay' => $user ? $user->display_name : '',
+                'ChangeNote' => $change_note,
+                'Template' => $template,
+                'FullBackupFile' => $full ? basename($full) : '',
+                'SnapshotFile' => $snapshot ? basename($snapshot) : '',
+                'ContentHash' => sha1($this->extract_page_core_content($wrapped)),
+                'ActiveSections' => 0,
+            ];
+            $this->append_page_version_history($slug, $entry);
+
+            // Publish manifest of pages
+            $published = $this->get_page_editor_store();
+            $published['Saved'] = gmdate('c');
+            $this->publish_configuration_file('Hangar18-Pages.json', $published);
+
+            $this->log('INFO', 'CREATE_PAGE_SUCCESS', 'Oprettede siden ' . $slug . ' (ID ' . $post_id . ')');
+            $this->set_notice('success', 'Siden er oprettet som kladde. Du kan redigere siden nu.');
+
+            $this->redirect_page_editor($slug);
+        } catch (Throwable $e) {
+            $this->log('ERROR', 'CREATE_PAGE_FAILED', $e->getMessage());
+            $this->set_notice('error', 'Kunne ikke oprette siden: ' . $e->getMessage());
+            $this->redirect('hangar18-pages');
+        }
     }
 
     private function public_module_redirect($page, $section_key, $parameter, $status) {
