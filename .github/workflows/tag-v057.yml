@@ -1,0 +1,30 @@
+name: Tag Hangar18 Manager v0.5.7
+
+on:
+  push:
+    branches:
+      - development/v0.5.7
+    paths:
+      - .github/workflows/tag-v057.yml
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.7
+          fetch-depth: 0
+      - name: Tag v0.5.7 and self-clean
+        run: |
+          git config user.name "hangar18-build"
+          git config user.email "actions@users.noreply.github.com"
+          git tag -f v0.5.7 ad83dc07680054d2c6ada5ed0ce85ffbc7a0bed4
+          git push origin refs/tags/v0.5.7 --force
+          rm -f .github/workflows/tag-v057.yml
+          git add .github/workflows/tag-v057.yml
+          git commit -m "Maintenance: remove v0.5.7 tag workflow"
+          git push origin HEAD:development/v0.5.7
