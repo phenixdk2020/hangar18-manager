@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.2
+ * Version: 0.5.3
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.2';
+    const VERSION = '0.5.3';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -706,7 +706,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.6',
+                'Version' => '1.7',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -2914,7 +2914,7 @@ final class Hangar18_Manager {
         $static_content['Saved'] = gmdate('c');
 
         $pages = [
-            'Version' => '1.6',
+            'Version' => '1.7',
             'Saved'   => gmdate('c'),
             'Pages'   => $this->get_page_editor_store(),
         ];
@@ -6438,6 +6438,12 @@ HTML;
             'BorderWidthPx'          => 0,
             'CustomBorderColor'      => '#c3ae83',
             'ShadowStyle'            => 'None',
+            'SectionBodyFontFamily' => 'Global',
+            'SectionHeadingFontFamily' => 'Global',
+            'BodyFontSizePx'         => 0,
+            'H1FontSizePx'           => 0,
+            'H2FontSizePx'           => 0,
+            'H3FontSizePx'           => 0,
             'ImportedGroupType'     => '',
             'LegacyHtml'            => '',
         ];
@@ -6594,6 +6600,11 @@ HTML;
         $custom_text = sanitize_hex_color((string) ($raw['CustomTextColor'] ?? '#30382a')) ?: '#30382a';
         $custom_heading = sanitize_hex_color((string) ($raw['CustomHeadingColor'] ?? '#30382a')) ?: '#30382a';
         $custom_border = sanitize_hex_color((string) ($raw['CustomBorderColor'] ?? '#c3ae83')) ?: '#c3ae83';
+        $section_fonts = ['Global', 'System', 'Segoe UI', 'Arial', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Georgia', 'Times New Roman', 'Courier New'];
+        $section_body_font = (string) ($raw['SectionBodyFontFamily'] ?? 'Global');
+        if (!in_array($section_body_font, $section_fonts, true)) { $section_body_font = 'Global'; }
+        $section_heading_font = (string) ($raw['SectionHeadingFontFamily'] ?? 'Global');
+        if (!in_array($section_heading_font, $section_fonts, true)) { $section_heading_font = 'Global'; }
 
         $cards = [];
         $used_card_keys = [];
@@ -6669,6 +6680,12 @@ HTML;
             'BorderWidthPx'          => $this->clamp_int($raw['BorderWidthPx'] ?? 0, 0, 12, 0),
             'CustomBorderColor'      => $custom_border,
             'ShadowStyle'            => $shadow_style,
+            'SectionBodyFontFamily' => $section_body_font,
+            'SectionHeadingFontFamily' => $section_heading_font,
+            'BodyFontSizePx'         => $this->clamp_int($raw['BodyFontSizePx'] ?? 0, 0, 32, 0),
+            'H1FontSizePx'           => $this->clamp_int($raw['H1FontSizePx'] ?? 0, 0, 96, 0),
+            'H2FontSizePx'           => $this->clamp_int($raw['H2FontSizePx'] ?? 0, 0, 80, 0),
+            'H3FontSizePx'           => $this->clamp_int($raw['H3FontSizePx'] ?? 0, 0, 64, 0),
             'ImportedGroupType'     => $imported_group_type,
             'LegacyHtml'            => $legacy_html,
         ];
@@ -6716,7 +6733,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.6',
+            'Version'        => '1.7',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7228,7 +7245,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.6',
+            'Version'        => '1.7',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7434,6 +7451,12 @@ HTML;
             'Strong' => '0 18px 44px rgba(0,0,0,.22)',
         ];
         $shadow = $shadows[$section['ShadowStyle'] ?? 'None'] ?? 'none';
+        $body_font = ($section['SectionBodyFontFamily'] ?? 'Global') === 'Global' ? 'var(--h18-font-body,Segoe UI,Arial,sans-serif)' : $this->header_font_family_css($section['SectionBodyFontFamily']);
+        $heading_font = ($section['SectionHeadingFontFamily'] ?? 'Global') === 'Global' ? 'var(--h18-font-heading,Segoe UI,Arial,sans-serif)' : $this->header_font_family_css($section['SectionHeadingFontFamily']);
+        $body_size = (int) ($section['BodyFontSizePx'] ?? 0);
+        $h1_size = (int) ($section['H1FontSizePx'] ?? 0);
+        $h2_size = (int) ($section['H2FontSizePx'] ?? 0);
+        $h3_size = (int) ($section['H3FontSizePx'] ?? 0);
         return '--h18-top:' . (int) $section['TopSpacingPx'] . 'px;' .
             '--h18-bottom:' . (int) $section['BottomSpacingPx'] . 'px;' .
             '--h18-mobile-top:' . (int) $section['MobileTopSpacingPx'] . 'px;' .
@@ -7452,7 +7475,13 @@ HTML;
             '--h18-section-heading:' . $heading . ';' .
             '--h18-section-border:' . (string) $section['CustomBorderColor'] . ';' .
             '--h18-section-border-width:' . (int) $section['BorderWidthPx'] . 'px;' .
-            '--h18-section-shadow:' . $shadow . ';';
+            '--h18-section-shadow:' . $shadow . ';' .
+            '--h18-section-body-font:' . $body_font . ';' .
+            '--h18-section-heading-font:' . $heading_font . ';' .
+            '--h18-section-body-size:' . ($body_size > 0 ? $body_size . 'px' : 'var(--h18-font-body-size,16px)') . ';' .
+            '--h18-section-h1-size:' . ($h1_size > 0 ? $h1_size . 'px' : 'var(--h18-font-h1-size,48px)') . ';' .
+            '--h18-section-h2-size:' . ($h2_size > 0 ? $h2_size . 'px' : 'var(--h18-font-h2-size,32px)') . ';' .
+            '--h18-section-h3-size:' . ($h3_size > 0 ? $h3_size . 'px' : 'var(--h18-font-h3-size,22px)') . ';';
     }
 
     private function render_page_editor_imported_group(array $section, $inner, $extra_class) {
@@ -7483,8 +7512,10 @@ HTML;
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            'body.page .h18-editor-page>.h18-editor-section{background:var(--h18-section-bg)!important;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);box-shadow:var(--h18-section-shadow,none)}' .
-            'body.page .h18-editor-page>.h18-editor-section h1,body.page .h18-editor-page>.h18-editor-section h2,body.page .h18-editor-page>.h18-editor-section h3{color:var(--h18-section-heading)!important}' .
+            'body.page .h18-editor-page>.h18-editor-section{background:var(--h18-section-bg)!important;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);box-shadow:var(--h18-section-shadow,none);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size)}' .
+            'body.page .h18-editor-page>.h18-editor-section h1{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:clamp(2rem,5vw,var(--h18-section-h1-size))}' .
+            'body.page .h18-editor-page>.h18-editor-section h2{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:clamp(1.55rem,3.5vw,var(--h18-section-h2-size))}' .
+            'body.page .h18-editor-page>.h18-editor-section h3{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:clamp(1.2rem,2.5vw,var(--h18-section-h3-size))}' .
             'body.page .h18-editor-page>.h18-editor-section .h18-editor-grid-card h3{color:inherit!important}' .
             '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
@@ -8049,6 +8080,18 @@ HTML;
                                     <div class="h18-field"><label><strong>Overskrifter</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[CustomHeadingColor]" value="<?php echo esc_attr($section['CustomHeadingColor']); ?>" /></div>
                                 </div>
                             </div>
+                            <div class="h18-element-typography-box">
+                                <h4>Typografi for dette element</h4>
+                                <p class="description">Global font og værdien 0 arver det centrale designsystem.</p>
+                                <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                    <div class="h18-field"><label><strong>Brødtekst-font</strong></label><select name="<?php echo esc_attr($prefix); ?>[SectionBodyFontFamily]"><?php foreach (['Global','System','Segoe UI','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Times New Roman','Courier New'] as $font) : ?><option value="<?php echo esc_attr($font); ?>" <?php selected($section['SectionBodyFontFamily'], $font); ?>><?php echo esc_html($font === 'Global' ? 'Global font' : $font); ?></option><?php endforeach; ?></select></div>
+                                    <div class="h18-field"><label><strong>Overskrift-font</strong></label><select name="<?php echo esc_attr($prefix); ?>[SectionHeadingFontFamily]"><?php foreach (['Global','System','Segoe UI','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Times New Roman','Courier New'] as $font) : ?><option value="<?php echo esc_attr($font); ?>" <?php selected($section['SectionHeadingFontFamily'], $font); ?>><?php echo esc_html($font === 'Global' ? 'Global font' : $font); ?></option><?php endforeach; ?></select></div>
+                                    <div class="h18-field"><label><strong>Brødtekst (px)</strong></label><input type="number" min="0" max="32" name="<?php echo esc_attr($prefix); ?>[BodyFontSizePx]" value="<?php echo esc_attr($section['BodyFontSizePx']); ?>" /><p class="description">0 = global størrelse</p></div>
+                                    <div class="h18-field"><label><strong>H1 (px)</strong></label><input type="number" min="0" max="96" name="<?php echo esc_attr($prefix); ?>[H1FontSizePx]" value="<?php echo esc_attr($section['H1FontSizePx']); ?>" /><p class="description">0 = global størrelse</p></div>
+                                    <div class="h18-field"><label><strong>H2 (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[H2FontSizePx]" value="<?php echo esc_attr($section['H2FontSizePx']); ?>" /><p class="description">0 = global størrelse</p></div>
+                                    <div class="h18-field"><label><strong>H3 (px)</strong></label><input type="number" min="0" max="64" name="<?php echo esc_attr($prefix); ?>[H3FontSizePx]" value="<?php echo esc_attr($section['H3FontSizePx']); ?>" /><p class="description">0 = global størrelse</p></div>
+                                </div>
+                            </div>
                         </div>
                     </details>
                 <?php endif; ?>
@@ -8522,7 +8565,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.6',
+                    'Version' => '1.7',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -8616,7 +8659,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.6',
+            'Version'        => '1.7',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -8646,7 +8689,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.6',
+                'Version' => '1.7',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

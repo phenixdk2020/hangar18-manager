@@ -1,16 +1,16 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T18:01:29Z",
+  "published_utc": "2026-08-17T18:07:08Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "2195b282c9866c2121b98793f8c918f04e3f5454503b6be86ad5f0c85a481b55",
+  "package_sha256": "166646c1df81f90b939a879ea2b3d3ab7a7907c32f3fc2d4bba300f628e9b915",
   "changelog": [
-    "Tilføjer individuel farvestyring pr. editorsektion.",
-    "Tilføjer kantbredde, kantfarve og skygge pr. element.",
-    "Globalt design er fortsat standard for bagudkompatibilitet.",
-    "Løfter page-editor dataformatet kompatibelt til schema 1.6."
+    "Tilføjer brødtekstfont og overskriftsfont pr. element.",
+    "Tilføjer individuelle størrelser for brødtekst samt H1, H2 og H3.",
+    "Global/0 arver designsystemet og bevarer eksisterende sider.",
+    "Løfter page-editor schema kompatibelt til 1.7."
   ]
 }

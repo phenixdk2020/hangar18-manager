@@ -484,3 +484,9 @@
 .h18-element-design-box h4{margin:0 0 10px}
 .h18-custom-design-fields{margin-top:12px;padding:12px;border:1px solid #dcdcde;border-radius:7px;background:#f6f7f7}
 .h18-custom-design-fields input[type=color]{width:100%;min-height:38px;padding:2px}
+
+
+/* v0.5.3 – typografi pr. element */
+.h18-element-typography-box{margin-top:16px;padding-top:16px;border-top:1px solid #dcdcde}
+.h18-element-typography-box h4{margin:0 0 5px}
+.h18-element-typography-box>.description{margin:0 0 12px}

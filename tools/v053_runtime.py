@@ -1,9 +1,0 @@
-from pathlib import Path
-p=Path('hangar18-manager.php'); t=p.read_text(encoding='utf-8')
-def rep(a,b,n):
-    global t
-    if a not in t: raise SystemExit(n+' missing')
-    t=t.replace(a,b,1)
-rep("        $shadow = $shadows[$section['ShadowStyle'] ?? 'None'] ?? 'none';\n        return '--h18-top:'","        $shadow = $shadows[$section['ShadowStyle'] ?? 'None'] ?? 'none';\n        $body_font = ($section['SectionBodyFontFamily'] ?? 'Global') === 'Global' ? 'var(--h18-font-body,Segoe UI,Arial,sans-serif)' : $this->header_font_family_css($section['SectionBodyFontFamily']);\n        $heading_font = ($section['SectionHeadingFontFamily'] ?? 'Global') === 'Global' ? 'var(--h18-font-heading,Segoe UI,Arial,sans-serif)' : $this->header_font_family_css($section['SectionHeadingFontFamily']);\n        $body_size = (int) ($section['BodyFontSizePx'] ?? 0);\n        $h1_size = (int) ($section['H1FontSizePx'] ?? 0);\n        $h2_size = (int) ($section['H2FontSizePx'] ?? 0);\n        $h3_size = (int) ($section['H3FontSizePx'] ?? 0);\n        return '--h18-top:'",'setup')
-rep("            '--h18-section-shadow:' . $shadow . ';';","            '--h18-section-shadow:' . $shadow . ';' .\n            '--h18-section-body-font:' . $body_font . ';' .\n            '--h18-section-heading-font:' . $heading_font . ';' .\n            '--h18-section-body-size:' . ($body_size > 0 ? $body_size . 'px' : 'var(--h18-font-body-size,16px)') . ';' .\n            '--h18-section-h1-size:' . ($h1_size > 0 ? $h1_size . 'px' : 'var(--h18-font-h1-size,48px)') . ';' .\n            '--h18-section-h2-size:' . ($h2_size > 0 ? $h2_size . 'px' : 'var(--h18-font-h2-size,32px)') . ';' .\n            '--h18-section-h3-size:' . ($h3_size > 0 ? $h3_size . 'px' : 'var(--h18-font-h3-size,22px)') . ';';",'vars')
-p.write_text(t,encoding='utf-8')

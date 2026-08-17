@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.5.2
+Version: 0.5.3
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -787,3 +787,12 @@ Kompatibilitet og sikkerhed:
 - Hvert element kan få egen kantbredde, kantfarve og skygge.
 - Globalt design er fortsat standard, så eksisterende sider beholder deres udseende efter opdatering.
 - Page-editor dataformatet er kompatibelt løftet fra schema 1.5 til 1.6.
+
+
+== Version 0.5.3 – Typografi pr. element ==
+
+- Hver editorsektion kan vælge egen brødtekstfont og overskriftsfont eller arve de globale fonte.
+- Brødtekst samt H1, H2 og H3 kan få egne størrelser pr. element.
+- Værdien 0 betyder global størrelse og giver fuld bagudkompatibilitet.
+- Typografifelterne gemmes også i genbrugelige komponenter fra v0.5.1.
+- Page-editor dataformatet er kompatibelt løftet fra schema 1.6 til 1.7.
