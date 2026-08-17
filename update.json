@@ -6,7 +6,7 @@
   "min_php": "8.0",
   "published_utc": "2026-08-17T20:28:26Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "4b0bcda797b373532802e572138554d9f5ac7dc1efb3cb1f6147e2222f066881",
+  "package_sha256": "9496427a136a0e5ace2e65005373e1d801eee7b73c8edbb01a72bebc81e6ada7",
   "changelog": [
     "Tilføjer lokal Undo/Redo-historik med op til 50 trin i den visuelle editor.",
     "Tilføjer Fortryd/Gendan-knapper samt sikre tastaturgenveje.",

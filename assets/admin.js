@@ -2547,13 +2547,22 @@ jQuery(function ($) {
         }
     }
 
+    function editorHistoryFlushPending() {
+        if (!editorHistoryTimer) { return; }
+        window.clearTimeout(editorHistoryTimer);
+        editorHistoryTimer = null;
+        editorHistoryRecordNow();
+    }
+
     function editorHistoryUndo() {
+        editorHistoryFlushPending();
         if (editorHistoryIndex <= 0) { return; }
         editorHistoryIndex -= 1;
         editorHistoryRestore(editorHistoryEntries[editorHistoryIndex]);
     }
 
     function editorHistoryRedo() {
+        editorHistoryFlushPending();
         if (editorHistoryIndex < 0 || editorHistoryIndex >= editorHistoryEntries.length - 1) { return; }
         editorHistoryIndex += 1;
         editorHistoryRestore(editorHistoryEntries[editorHistoryIndex]);
@@ -2586,7 +2595,7 @@ jQuery(function ($) {
             scheduleEditorHistoryCapture();
         });
 
-        if (window.MutationObserver && $pageSections.get(0)) {
+        if (window.MutationObserver && $pageEditorForm.get(0)) {
             const observer = new MutationObserver(function (mutations) {
                 if (editorHistoryApplying) { return; }
                 let meaningful = false;
@@ -2608,7 +2617,7 @@ jQuery(function ($) {
                 });
                 if (meaningful) { scheduleEditorHistoryCapture(120); }
             });
-            observer.observe($pageSections.get(0), { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
+            observer.observe($pageEditorForm.get(0), { childList: true, subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
         }
     }
 
@@ -2643,8 +2652,9 @@ jQuery(function ($) {
 
     $(window).on('beforeunload.h18EditorHistory', function (event) {
         if (!editorHistoryReady || editorHistorySubmitting || editorHistoryIndex < 0) { return; }
-        const current = editorHistoryEntries[editorHistoryIndex];
-        if (!current || current.signature === editorHistorySavedSignature) { return; }
+        editorHistoryFlushPending();
+        const live = editorHistorySnapshot();
+        if (!live || live.signature === editorHistorySavedSignature) { return; }
         event.preventDefault();
         event.returnValue = '';
         return '';
