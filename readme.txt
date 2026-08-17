@@ -1,8 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.5.13
+Version: 0.5.14
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.14 – Kommandopalette og hurtignavigation ==
+
+Nyt:
+- Ctrl/Cmd+K åbner en søgbar kommandopalette uden for aktive tekstfelter
+- dynamiske Gå til element-kommandoer bygges fra sidens aktuelle sektioner, overskrifter og elementnøgler
+- tilføj alle centrale elementtyper direkte fra paletten
+- skift Desktop/Tablet/Mobil og Normal/Hover fra tastaturet
+- Fortryd/Gendan, Kopiér/Indsæt design og Gem som komponent er tilgængelige som kommandoer
+- Gem-kommandoen navigerer kun til ændringsbeskrivelsen og udfører aldrig en rigtig Gem automatisk
+- Alt+Pil op/ned skifter mellem sideelementer uden at overtage genveje inde i tekstfelter
+- Escape lukker, piletaster vælger, Enter udfører og Tab holdes inde i dialogen
+- page-editor schema forbliver 1.12; funktionen er editor-only og ændrer ikke frontend-data
 
 == Version 0.5.13 – Lokal autosave og crash recovery ==
 

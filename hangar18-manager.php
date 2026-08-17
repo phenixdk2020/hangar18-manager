@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.13
+ * Version: 0.5.14
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.13';
+    const VERSION = '0.5.14';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -8681,7 +8681,23 @@ HTML;
                                 <button type="button" class="button button-small" id="h18-editor-discard-draft">Kassér kladde</button>
                             </span>
                         </span>
+                        <button type="button" class="button h18-command-palette-open" id="h18-command-palette-open" aria-haspopup="dialog" aria-controls="h18-command-palette" aria-expanded="false" title="Åbn kommandopaletten (Ctrl/Cmd+K)">⌘K Kommandoer</button>
                         <span>Visningen gør arbejdsområdet smallere. Den offentlige side åbnes med knappen ovenfor.</span>
+                    </div>
+
+                    <div id="h18-command-palette" class="h18-command-palette" hidden>
+                        <div class="h18-command-palette-backdrop" data-command-close="1"></div>
+                        <section class="h18-command-palette-dialog" role="dialog" aria-modal="true" aria-labelledby="h18-command-palette-title">
+                            <header class="h18-command-palette-header">
+                                <div><strong id="h18-command-palette-title">Kommandoer og hurtignavigation</strong><small>Søg efter handlinger eller elementer på siden.</small></div>
+                                <button type="button" class="button-link h18-command-palette-close" aria-label="Luk kommandopaletten">Esc</button>
+                            </header>
+                            <label class="screen-reader-text" for="h18-command-palette-search">Søg i kommandoer</label>
+                            <input id="h18-command-palette-search" class="h18-command-palette-search" type="search" autocomplete="off" spellcheck="false" placeholder="Søg: hero, mobil, fortryd, kontakt …" aria-controls="h18-command-palette-results" />
+                            <div id="h18-command-palette-results" class="h18-command-palette-results" role="listbox" aria-label="Kommandoresultater"></div>
+                            <div id="h18-command-palette-empty" class="h18-command-palette-empty" hidden>Ingen kommandoer matcher søgningen.</div>
+                            <footer class="h18-command-palette-footer"><span>↑↓ vælg</span><span>Enter udfør</span><span>Esc luk</span><span>Alt+↑/↓ skift element</span></footer>
+                        </section>
                     </div>
 
                     <div class="h18-visual-builder">

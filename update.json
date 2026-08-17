@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.13",
+  "version": "0.5.14",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T20:40:04Z",
+  "published_utc": "2026-08-17T20:46:47Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "928481731c83f28b58aa98a845ddf72ef58219ccef4f8e43fb2511c3c9c641b7",
+  "package_sha256": "70c92a49ab9caf3a00b1fcc185e22f3df7aa5db5b2e2fdbf0cc7d2372d117ba8",
   "changelog": [
-    "Tilføjer lokal browser-autosave af sideeditorens recovery-state.",
-    "Tilføjer Gendan kladde / Kassér kladde med versionskontrol mod WordPress-siden.",
-    "Kladder gendannes aldrig automatisk og permanente revisioner/backups er uændrede.",
-    "Autosave flusher ved pagehide/skjult fane og håndterer succesfulde Gem-submits sikkert.",
-    "Retter readme-versioneringen og dokumenterer v0.5.12; page-editor schema forbliver 1.12."
+    "Tilføjer søgbar kommandopalette med Ctrl/Cmd+K.",
+    "Tilføjer dynamisk hurtignavigation til aktuelle sideelementer og genveje til elementoprettelse.",
+    "Tilføjer kommandoer for responsive previews, states, Undo/Redo og designhandlinger.",
+    "Tilføjer Alt+Pil op/ned navigation og tilgængelig dialogbetjening med Escape, Enter og Tab.",
+    "Gem-kommandoen navigerer kun til ændringsbeskrivelsen; page-editor schema forbliver 1.12."
   ]
 }

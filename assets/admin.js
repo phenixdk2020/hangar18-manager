@@ -2840,6 +2840,256 @@ jQuery(function ($) {
     });
 
 
+
+    const commandPaletteSectionTypes = [
+        ['text', 'Tekst'], ['hero', 'Topbanner / hero'], ['text_image', 'Tekst og billede'], ['image', 'Stort billede'],
+        ['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['highlight', 'Fremhævet tekst'],
+        ['spacer', 'Afstand'], ['html', 'Importeret blok / HTML'], ['css', 'Side-CSS'], ['mail_form', 'Mailformular'], ['poll', 'Afstemning']
+    ];
+    let commandPaletteActiveIndex = 0;
+    let commandPaletteVisibleCommands = [];
+    let commandPalettePreviousFocus = null;
+
+    function commandPaletteIsOpen() {
+        return !$('#h18-command-palette').prop('hidden');
+    }
+
+    function commandPaletteIsEditableTarget(target) {
+        const $target = $(target);
+        return $target.is('input, textarea, select') || $target.closest('[contenteditable="true"]').length > 0;
+    }
+
+    function commandPaletteNormalize(value) {
+        return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    function commandPaletteSectionLabel($row) {
+        const type = String($row.attr('data-section-type') || 'text');
+        const title = String($row.find('.h18-page-section-title-summary').first().text() || '').trim() || 'Uden overskrift';
+        const key = String($row.find('.h18-page-section-key').val() || '').trim();
+        return { type: type, title: title, key: key, typeLabel: inspectorTypeLabel(type) };
+    }
+
+    function commandPaletteScrollToRow($row) {
+        if (!$row || !$row.length) { return; }
+        inspectPageSection($row);
+        const node = $row.get(0);
+        if (node && typeof node.scrollIntoView === 'function') {
+            node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function commandPaletteBuildCommands() {
+        const commands = [];
+        $pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').each(function (index) {
+            const $row = $(this);
+            const meta = commandPaletteSectionLabel($row);
+            commands.push({
+                id: 'section-' + String($row.attr('data-section-index') || index),
+                group: 'Gå til element',
+                label: meta.title,
+                detail: meta.typeLabel + (meta.key ? ' · ' + meta.key : ''),
+                keywords: 'gå til element sektion lag navigator ' + meta.type + ' ' + meta.typeLabel + ' ' + meta.title + ' ' + meta.key,
+                run: function () { commandPaletteScrollToRow($row); }
+            });
+        });
+
+        commandPaletteSectionTypes.forEach(function (entry) {
+            commands.push({
+                id: 'add-' + entry[0], group: 'Tilføj element', label: 'Tilføj ' + entry[1], detail: entry[0],
+                keywords: 'tilføj nyt element sektion ' + entry[0] + ' ' + entry[1],
+                run: function () {
+                    const $row = addPageSection(entry[0]);
+                    if ($row.length) { commandPaletteScrollToRow($row); }
+                }
+            });
+        });
+
+        [['desktop','Desktop'],['tablet','Tablet'],['mobile','Mobil']].forEach(function (entry) {
+            commands.push({
+                id: 'device-' + entry[0], group: 'Visning', label: 'Vis ' + entry[1], detail: 'Responsive preview',
+                keywords: 'visning preview responsive device ' + entry[0] + ' ' + entry[1],
+                run: function () { $('.h18-preview-device[data-device="' + entry[0] + '"]').first().trigger('click'); }
+            });
+        });
+        [['normal','Normal'],['hover','Hover']].forEach(function (entry) {
+            commands.push({
+                id: 'state-' + entry[0], group: 'Visning', label: 'State: ' + entry[1], detail: 'Design-state',
+                keywords: 'state normal hover design ' + entry[0] + ' ' + entry[1],
+                run: function () { ensureCanvasToolbar(); $('.h18-preview-state[data-state="' + entry[0] + '"]').first().trigger('click'); }
+            });
+        });
+
+        commands.push(
+            { id: 'undo', group: 'Redigering', label: 'Fortryd', detail: 'Ctrl/Cmd+Z', keywords: 'fortryd undo tilbage', disabled: function () { return editorHistoryIndex <= 0; }, run: editorHistoryUndo },
+            { id: 'redo', group: 'Redigering', label: 'Gendan', detail: 'Ctrl/Cmd+Shift+Z', keywords: 'gendan redo frem', disabled: function () { return editorHistoryIndex < 0 || editorHistoryIndex >= editorHistoryEntries.length - 1; }, run: editorHistoryRedo },
+            { id: 'previous-section', group: 'Navigation', label: 'Forrige element', detail: 'Alt+↑', keywords: 'forrige element op navigation', run: function () { commandPaletteMoveSection(-1); } },
+            { id: 'next-section', group: 'Navigation', label: 'Næste element', detail: 'Alt+↓', keywords: 'næste element ned navigation', run: function () { commandPaletteMoveSection(1); } },
+            { id: 'copy-design', group: 'Design', label: 'Kopiér design', detail: 'Valgt element', keywords: 'kopier kopiér design stil', disabled: function () { return !$('#h18-inspector-copy-design').length || $('#h18-inspector-copy-design').prop('disabled'); }, run: function () { $('#h18-inspector-copy-design').trigger('click'); } },
+            { id: 'paste-design', group: 'Design', label: 'Indsæt design', detail: 'Valgt element', keywords: 'indsæt paste design stil', disabled: function () { return !$('#h18-inspector-paste-design').length || $('#h18-inspector-paste-design').prop('disabled'); }, run: function () { $('#h18-inspector-paste-design').trigger('click'); } },
+            { id: 'save-component', group: 'Design', label: 'Gem som komponent', detail: 'Valgt element', keywords: 'gem komponent genbrugelig preset', disabled: function () { return !$('#h18-save-section-preset').length || $('#h18-save-section-preset').prop('disabled'); }, run: function () { $('#h18-save-section-preset').trigger('click'); } },
+            { id: 'focus-save', group: 'Side', label: 'Gå til Gem / ændringsbeskrivelse', detail: 'Gemmer ikke automatisk', keywords: 'gem save ændring version note beskrivelse', run: function () {
+                const $note = $('#h18-page-editor-form [name="page_change_note"]');
+                if ($note.length) { $note.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' }); $note.trigger('focus'); }
+                else { $('#h18-page-editor-form .h18-form-actions').last().get(0)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            } },
+            { id: 'public-page', group: 'Side', label: 'Åbn offentlig side', detail: 'Ny fane', keywords: 'åbn offentlig side preview frontend', disabled: function () { return !$('.h18-toolbar a[target="_blank"]').first().attr('href'); }, run: function () {
+                const href = String($('.h18-toolbar a[target="_blank"]').first().attr('href') || '');
+                if (href) { window.open(href, '_blank', 'noopener'); }
+            } }
+        );
+        return commands;
+    }
+
+    function commandPaletteFilteredCommands(query) {
+        const normalized = commandPaletteNormalize(query);
+        const terms = normalized ? normalized.split(' ').filter(Boolean) : [];
+        return commandPaletteBuildCommands().filter(function (command) {
+            if (!terms.length) { return true; }
+            const haystack = commandPaletteNormalize([command.group, command.label, command.detail, command.keywords].join(' '));
+            return terms.every(function (term) { return haystack.indexOf(term) !== -1; });
+        }).slice(0, 60);
+    }
+
+    function commandPaletteUpdateActive() {
+        const $items = $('#h18-command-palette-results .h18-command-result');
+        if (!$items.length) {
+            $('#h18-command-palette-search').removeAttr('aria-activedescendant');
+            return;
+        }
+        commandPaletteActiveIndex = Math.max(0, Math.min(commandPaletteActiveIndex, $items.length - 1));
+        $items.removeClass('is-active').attr('aria-selected', 'false');
+        const $active = $items.eq(commandPaletteActiveIndex).addClass('is-active').attr('aria-selected', 'true');
+        $('#h18-command-palette-search').attr('aria-activedescendant', String($active.attr('id') || ''));
+        const node = $active.get(0);
+        if (node && typeof node.scrollIntoView === 'function') { node.scrollIntoView({ block: 'nearest' }); }
+    }
+
+    function commandPaletteRender(query) {
+        const $results = $('#h18-command-palette-results').empty();
+        commandPaletteVisibleCommands = commandPaletteFilteredCommands(query);
+        commandPaletteActiveIndex = 0;
+        let lastGroup = '';
+        commandPaletteVisibleCommands.forEach(function (command, index) {
+            if (command.group !== lastGroup) {
+                $results.append($('<div>', { class: 'h18-command-group-label', text: command.group }));
+                lastGroup = command.group;
+            }
+            const disabled = typeof command.disabled === 'function' ? Boolean(command.disabled()) : Boolean(command.disabled);
+            const $button = $('<button>', {
+                type: 'button', id: 'h18-command-result-' + index, class: 'h18-command-result' + (disabled ? ' is-disabled' : ''),
+                role: 'option', 'aria-selected': 'false', disabled: disabled, 'data-command-index': index
+            });
+            $button.append($('<span>', { class: 'h18-command-result-main', text: command.label }));
+            if (command.detail) { $button.append($('<small>', { text: command.detail })); }
+            $results.append($button);
+        });
+        $('#h18-command-palette-empty').prop('hidden', commandPaletteVisibleCommands.length > 0);
+        commandPaletteUpdateActive();
+    }
+
+    function commandPaletteOpen() {
+        if (!$pageSections.length) { return; }
+        commandPalettePreviousFocus = document.activeElement;
+        $('#h18-command-palette').prop('hidden', false);
+        $('#h18-command-palette-open').attr('aria-expanded', 'true');
+        $('body').addClass('h18-command-palette-visible');
+        const $search = $('#h18-command-palette-search').val('');
+        commandPaletteRender('');
+        window.setTimeout(function () { $search.trigger('focus').trigger('select'); }, 0);
+    }
+
+    function commandPaletteClose(restoreFocus) {
+        $('#h18-command-palette').prop('hidden', true);
+        $('#h18-command-palette-open').attr('aria-expanded', 'false');
+        $('body').removeClass('h18-command-palette-visible');
+        commandPaletteVisibleCommands = [];
+        if (restoreFocus !== false && commandPalettePreviousFocus && typeof commandPalettePreviousFocus.focus === 'function') {
+            commandPalettePreviousFocus.focus();
+        }
+        commandPalettePreviousFocus = null;
+    }
+
+    function commandPaletteExecute(index) {
+        const command = commandPaletteVisibleCommands[Number(index) || 0];
+        if (!command) { return; }
+        const disabled = typeof command.disabled === 'function' ? Boolean(command.disabled()) : Boolean(command.disabled);
+        if (disabled) { return; }
+        commandPaletteClose(false);
+        try { command.run(); } finally {
+            if ($inspectedSection.length) { window.setTimeout(function () { $inspectedSection.find('.h18-canvas-preview').first().trigger('focus'); }, 0); }
+        }
+    }
+
+    function commandPaletteMoveSection(direction) {
+        const $rows = $pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)');
+        if (!$rows.length) { return; }
+        let current = $inspectedSection.length ? $rows.index($inspectedSection) : -1;
+        if (current < 0) { current = direction > 0 ? -1 : 0; }
+        let next = current + (direction > 0 ? 1 : -1);
+        if (next < 0) { next = $rows.length - 1; }
+        if (next >= $rows.length) { next = 0; }
+        commandPaletteScrollToRow($rows.eq(next));
+    }
+
+    function commandPaletteFocusable() {
+        return $('#h18-command-palette .h18-command-palette-dialog').find('input:not(:disabled),button:not(:disabled),[href],select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex="-1"])').filter(':visible');
+    }
+
+    $(document).on('click', '#h18-command-palette-open', function (event) { event.preventDefault(); commandPaletteOpen(); });
+    $(document).on('click', '.h18-command-palette-close,[data-command-close="1"]', function (event) { event.preventDefault(); commandPaletteClose(true); });
+    $(document).on('input', '#h18-command-palette-search', function () { commandPaletteRender($(this).val()); });
+    $(document).on('mouseenter', '.h18-command-result:not(:disabled)', function () {
+        commandPaletteActiveIndex = Number($(this).attr('data-command-index')) || 0;
+        commandPaletteUpdateActive();
+    });
+    $(document).on('click', '.h18-command-result:not(:disabled)', function () { commandPaletteExecute($(this).attr('data-command-index')); });
+
+    $(document).on('keydown.h18CommandPalette', function (event) {
+        const key = String(event.key || '').toLowerCase();
+        if ((event.ctrlKey || event.metaKey) && key === 'k') {
+            if (commandPaletteIsOpen()) {
+                event.preventDefault();
+                $('#h18-command-palette-search').trigger('focus').trigger('select');
+                return;
+            }
+            if (commandPaletteIsEditableTarget(event.target)) { return; }
+            event.preventDefault();
+            commandPaletteOpen();
+            return;
+        }
+        if (!commandPaletteIsOpen()) {
+            if (event.altKey && !event.ctrlKey && !event.metaKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown') && !commandPaletteIsEditableTarget(event.target)) {
+                event.preventDefault();
+                commandPaletteMoveSection(event.key === 'ArrowDown' ? 1 : -1);
+            }
+            return;
+        }
+        if (event.key === 'Escape') { event.preventDefault(); commandPaletteClose(true); return; }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            if (!commandPaletteVisibleCommands.length) { return; }
+            const direction = event.key === 'ArrowDown' ? 1 : -1;
+            let next = commandPaletteActiveIndex;
+            do {
+                next = (next + direction + commandPaletteVisibleCommands.length) % commandPaletteVisibleCommands.length;
+            } while ($('#h18-command-result-' + next).prop('disabled') && next !== commandPaletteActiveIndex);
+            commandPaletteActiveIndex = next;
+            commandPaletteUpdateActive();
+            return;
+        }
+        if (event.key === 'Enter' && $(event.target).is('#h18-command-palette-search')) {
+            event.preventDefault(); commandPaletteExecute(commandPaletteActiveIndex); return;
+        }
+        if (event.key === 'Tab') {
+            const $focusable = commandPaletteFocusable();
+            if (!$focusable.length) { event.preventDefault(); return; }
+            const first = $focusable.get(0), last = $focusable.get($focusable.length - 1);
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }
+    });
+
     $(document).on('click', '#h18-editor-restore-draft', function (event) {
         event.preventDefault();
         editorHistoryFlushPending();
