@@ -1,0 +1,37 @@
+name: Tag Hangar18 Manager v0.5.4
+
+on:
+  push:
+    branches:
+      - development/v0.5.4
+    paths:
+      - '.github/workflows/tag-v054.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create release tag and self-clean
+        run: |
+          set -euo pipefail
+          RELEASE_SHA=bccfdb5d33ccae9e2d396df1ed32fd6e7c112b5f
+          git config user.name "hangar18-build"
+          git config user.email "actions@users.noreply.github.com"
+          if git ls-remote --exit-code --tags origin refs/tags/v0.5.4 >/dev/null 2>&1; then
+            echo "v0.5.4 already exists"
+          else
+            git tag -a v0.5.4 "$RELEASE_SHA" -m "Hangar18 Manager v0.5.4"
+            git push origin v0.5.4
+          fi
+          rm -f .github/workflows/tag-v054.yml
+          git add -A
+          git commit -m "Maintenance: clean v0.5.4 tag workflow"
+          git push
