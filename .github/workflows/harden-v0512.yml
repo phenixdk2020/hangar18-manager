@@ -1,0 +1,71 @@
+name: Harden Hangar18 Manager v0.5.12
+
+on:
+  push:
+    branches:
+      - development/v0.5.12
+    paths:
+      - .github/workflows/harden-v0512.yml
+
+permissions:
+  contents: write
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.12
+          fetch-depth: 0
+      - name: Apply hardening
+        run: python3 .github/scripts/harden_v0512.py
+      - name: QA history edge cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check assets/admin.js
+          php -l hangar18-manager.php
+          grep -q "function editorHistoryFlushPending" assets/admin.js
+          grep -q 'observer.observe($pageEditorForm.get(0)' assets/admin.js
+          grep -q 'editorHistoryFlushPending();' assets/admin.js
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('assets/admin.js').read_text(encoding='utf-8')
+          assert s.count('observer.observe($pageEditorForm.get(0)') == 1
+          assert 'observer.observe($pageSections.get(0)' not in s
+          assert "const live = editorHistorySnapshot();" in s
+          undo=s[s.index('function editorHistoryUndo()'):s.index('function editorHistoryRedo()')]
+          assert 'editorHistoryFlushPending();' in undo
+          PY
+      - name: Rebuild ZIP and manifest hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          unzip -q dist/hangar18-manager.zip -d "$work"
+          cp assets/admin.js "$work/hangar18-manager/assets/admin.js"
+          rm -f dist/hangar18-manager.zip
+          (cd "$work" && zip -qr "$GITHUB_WORKSPACE/dist/hangar18-manager.zip" hangar18-manager)
+          rm -rf "$work"
+          unzip -t dist/hangar18-manager.zip >/dev/null
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          p=Path('dist/hangar18-manager.zip')
+          m=json.loads(Path('update.json').read_text(encoding='utf-8'))
+          m['package_sha256']=hashlib.sha256(p.read_bytes()).hexdigest()
+          Path('update.json').write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+          unzip -p dist/hangar18-manager.zip hangar18-manager/assets/admin.js > /tmp/h18.js
+          node --check /tmp/h18.js
+      - name: Self-clean and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/scripts/harden_v0512.py .github/workflows/harden-v0512.yml
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m "QA harden v0.5.12 undo redo history"
+          git push origin HEAD:development/v0.5.12
