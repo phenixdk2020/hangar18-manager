@@ -1,0 +1,219 @@
+name: Build Hangar18 Manager v0.5.19
+
+on:
+  push:
+    branches:
+      - development/v0.5.19
+    paths:
+      - '.github/workflows/build-v0519.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.19
+          fetch-depth: 0
+
+      - name: Tighten v0.5.19 architecture rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/scripts/patch_v0519.py')
+          t = p.read_text()
+          # Three total levels: root = level 1, child = level 2, grandchild = level 3.
+          t = t.replace('if ($depth > 3 ||', 'if ($depth > 2 ||')
+          t = t.replace('if ($depth > 3) { return \'\'; }', 'if ($depth > 2) { return \'\'; }')
+          t = t.replace('if (depth > 3 ||', 'if (depth > 2 ||')
+          p.write_text(t)
+          PY
+
+      - name: Apply v0.5.19 patch
+        run: python3 .github/scripts/patch_v0519.py
+
+      - name: Harden presets and command palette
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('assets/admin.js')
+          t = p.read_text()
+          old_save = "if (['Key', 'Order', 'Remove', 'ResetVotes'].includes(fieldName)) {"
+          new_save = "if (['Key', 'Order', 'Remove', 'ResetVotes', 'LayoutParentKey'].includes(fieldName)) {"
+          if old_save not in t:
+              raise SystemExit('Preset serialization anchor missing')
+          t = t.replace(old_save, new_save, 1)
+          old_apply = "if (['Type', 'Cards', 'Key', 'Order', 'Remove'].includes(fieldName)) {"
+          new_apply = "if (['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {"
+          if old_apply not in t:
+              raise SystemExit('Preset application anchor missing')
+          t = t.replace(old_apply, new_apply, 1)
+          old_palette = "['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['highlight', 'Fremhævet tekst'],"
+          new_palette = "['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['container', 'Container'], ['flex', 'Flex container'], ['grid', 'Grid container'], ['highlight', 'Fremhævet tekst'],"
+          if old_palette not in t:
+              raise SystemExit('Command palette section type anchor missing')
+          t = t.replace(old_palette, new_palette, 1)
+          p.write_text(t)
+          PY
+
+      - name: Syntax and structural QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          grep -F 'Version: 0.5.19' hangar18-manager.php
+          grep -F "const VERSION = '0.5.19';" hangar18-manager.php
+          grep -F "'Version'        => '1.15'" hangar18-manager.php
+          grep -F "'container'  => 'Container'" hangar18-manager.php
+          grep -F "'flex'       => 'Flex container'" hangar18-manager.php
+          grep -F "'grid'       => 'Grid container'" hangar18-manager.php
+          grep -F "'LayoutParentKey'" hangar18-manager.php
+          grep -F 'render_page_editor_layout_tree' hangar18-manager.php
+          grep -F "['container', 'flex', 'grid']" hangar18-manager.php
+          grep -F 'if ($depth > 2 ||' hangar18-manager.php
+          grep -F "if ($depth > 2) { return ''; }" hangar18-manager.php
+          grep -F 'if (depth > 2 ||' assets/admin.js
+          grep -F "'LayoutParentKey'].includes(fieldName)" assets/admin.js
+          grep -F "['container', 'Container'], ['flex', 'Flex container'], ['grid', 'Grid container']" assets/admin.js
+          grep -F "raw['CarouselLoop'] = !empty" hangar18-manager.php
+          grep -F "raw['CarouselShowArrows'] = !empty" hangar18-manager.php
+          grep -F "raw['CarouselShowDots'] = !empty" hangar18-manager.php
+          grep -F 'page-editor schema løftes bagudkompatibelt til 1.15' readme.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          php = Path('hangar18-manager.php').read_text()
+          js = Path('assets/admin.js').read_text()
+          required_php = [
+              "'LayoutParentKey'        => $layout_parent_key",
+              "in_array((string) ($parent_section['Type'] ?? ''), $layout_parent_types, true)",
+              "private function render_page_editor_layout_tree",
+              "$has_layout_hierarchy = false",
+              "return $html . $this->render_page_editor_layout_tree($page_id, $sections) . '</div>';",
+              "--h18-layout-columns:",
+              "--h18-layout-mobile-columns:",
+          ]
+          missing = [x for x in required_php if x not in php]
+          if missing:
+              raise SystemExit('Missing layout architecture: ' + repr(missing))
+          required_js = [
+              'layoutWouldCycleV0519', 'refreshLayoutHierarchyV0519',
+              "if (depth > 2 || seen.has(cursor))", '.h18-layout-parent-select',
+              "['container','flex','grid'].includes(type)",
+              "['Key', 'Order', 'Remove', 'ResetVotes', 'LayoutParentKey']",
+              "['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey']",
+          ]
+          missing = [x for x in required_js if x not in js]
+          if missing:
+              raise SystemExit('Missing layout editor safety: ' + repr(missing))
+          # Persist a flat graph, never recursive Children arrays.
+          forbidden = ["'Children' =>", "'LayoutChildren' =>", 'NestedSections', 'ChildSections']
+          hits = [x for x in forbidden if x in php]
+          if hits:
+              raise SystemExit('Recursive storage model detected: ' + repr(hits))
+          # Presets may not capture/apply a page-specific parent relation.
+          preset_start = js.index('function sectionPresetData')
+          preset_end = js.index('function restoreInspectedSection', preset_start)
+          preset_block = js[preset_start:preset_end]
+          if "'LayoutParentKey'" not in preset_block:
+              raise SystemExit('Preset parent-key exclusion missing')
+          # Old pages with no parent relation must retain the legacy imported grouping renderer.
+          front_start = php.index('private function render_page_editor_front')
+          if '$has_layout_hierarchy' not in php[front_start:]:
+              raise SystemExit('Legacy/no-hierarchy compatibility gate missing')
+          print('v0.5.19 structural/hierarchy QA passed')
+          PY
+
+      - name: Rebuild distribution package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php .build/hangar18-manager/
+          cp readme.txt .build/hangar18-manager/
+          cp assets/admin.css .build/hangar18-manager/assets/
+          cp assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+
+      - name: Update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          package = Path('dist/hangar18-manager.zip')
+          manifest = {
+              'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.19','min_wp':'6.4','min_php':'8.0',
+              'published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              'package_path':'dist/hangar18-manager.zip','package_sha256':hashlib.sha256(package.read_bytes()).hexdigest(),
+              'changelog':[
+                  'Tilføjer UD-021–023 Container, Flex og Grid som native nested layout-elementer.',
+                  'Bevarer en flad revisionsvenlig storage-model med LayoutParentKey og bygger et ægte DOM-træ på frontend.',
+                  'Validerer parent-type, manglende parents, cykler og maksimalt tre samlede layoutniveauer.',
+                  'Tilføjer Flex/Grid responsive gaps, retning, wrap, justify/align, kolonner og mobil-stack.',
+                  'Løfter page-editor schema bagudkompatibelt til 1.15 og retter Carousel checkbox-semantik.'
+              ]}
+          Path('update.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(manifest['package_sha256'])
+          PY
+
+      - name: Package QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .verify && mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          grep -F 'Version: 0.5.19' .verify/hangar18-manager/hangar18-manager.php
+          grep -F "'Version'        => '1.15'" .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'render_page_editor_layout_tree' .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'refreshLayoutHierarchyV0519' .verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          m=json.loads(Path('update.json').read_text());a=hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest()
+          assert m['version']=='0.5.19' and m['package_sha256']==a
+          print('Package manifest QA passed:',a)
+          PY
+
+      - name: Self-clean and diff scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          rm -f .github/scripts/patch_v0519.py .github/workflows/build-v0519.yml
+          git status --short
+          python3 - <<'PY'
+          import subprocess
+          allowed={'hangar18-manager.php','assets/admin.js','assets/admin.css','readme.txt','update.json','dist/hangar18-manager.zip','.github/scripts/patch_v0519.py','.github/workflows/build-v0519.yml'}
+          paths=set()
+          for line in subprocess.check_output(['git','status','--short'],text=True).splitlines():
+              p=line[3:].strip();p=p.split(' -> ',1)[1] if ' -> ' in p else p;paths.add(p)
+          extra=paths-allowed
+          if extra:raise SystemExit('Unexpected release-scope files: '+repr(sorted(extra)))
+          print('Release scope QA passed')
+          PY
+
+      - name: Commit v0.5.19 release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m 'Release Hangar18 Manager 0.5.19'
+          git push origin HEAD:development/v0.5.19
