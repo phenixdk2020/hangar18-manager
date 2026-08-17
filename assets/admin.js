@@ -332,7 +332,7 @@ jQuery(function ($) {
         const labels = {
             hero: 'Topbanner / hero', text: 'Tekst', text_image: 'Tekst og billede', image: 'Stort billede',
             buttons: 'Handlingsknapper', card: 'Indholdskort', card_grid: 'Kort-række / kolonner', highlight: 'Fremhævet tekst',
-            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', tabs: 'Faner / tabs', accordion: 'Accordion', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
+            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', tabs: 'Faner / tabs', accordion: 'Accordion', carousel: 'Carousel / slider', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
             spacer: 'Afstand', html: 'Importeret blok / HTML', css: 'Side-CSS', mail_form: 'Mailformular', poll: 'Afstemning', legacy: 'Eksisterende indhold'
         };
         return labels[String(type || '')] || 'Sektion';
@@ -519,7 +519,7 @@ jQuery(function ($) {
             setSectionPresetField($row, fieldName, presetData[fieldName]);
         });
         $row.find('.h18-page-section-type').val(type);
-        if (Array.isArray(presetData.Cards) && ['card_grid', 'tabs', 'accordion'].includes(type)) {
+        if (Array.isArray(presetData.Cards) && ['card_grid', 'tabs', 'accordion', 'carousel'].includes(type)) {
             const $container = pageSectionControls($row, '.h18-page-cards-sortable');
             $container.children('.h18-page-card-row').remove();
             presetData.Cards.slice(0, 12).forEach(function (card) { addPageCard($row, card || {}); });
@@ -622,18 +622,19 @@ jQuery(function ($) {
         const isCards = type === 'card_grid';
         const isTabs = type === 'tabs';
         const isAccordion = type === 'accordion';
+        const isCarousel = type === 'carousel';
         $box.find('.h18-card-grid-layout-fields').toggle(isCards);
-        $box.find('.h18-collection-editor-title').text(isTabs ? 'Faner / tabs' : (isAccordion ? 'Accordion' : 'Kort-række / kolonner'));
+        $box.find('.h18-collection-editor-title').text(isTabs ? 'Faner / tabs' : (isAccordion ? 'Accordion' : (isCarousel ? 'Carousel / slider' : 'Kort-række / kolonner')));
         $box.find('.h18-collection-editor-description').text(isTabs
             ? 'Hvert panel bliver en fane. Titel er fanetekst; indhold er fanens panel.'
-            : (isAccordion ? 'Hvert panel bliver et fold-ud punkt med titel og indhold.' : 'Hver kasse kan flyttes, farves og tilpasses separat.'));
+            : (isAccordion ? 'Hvert panel bliver et fold-ud punkt med titel og indhold.' : (isCarousel ? 'Hvert panel bliver et slide. Titel, indhold og Card-design følger slidet.' : 'Hver kasse kan flyttes, farves og tilpasses separat.')));
         $box.find('.h18-add-page-card-label').text(isCards ? 'Tilføj kasse' : 'Tilføj panel');
     }
 
     function initializeCollectionPanelsV0517($row, type) {
-        if (!['tabs', 'accordion'].includes(type)) { return; }
+        if (!['tabs', 'accordion', 'carousel'].includes(type)) { return; }
         if (pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length) { return; }
-        const prefix = type === 'tabs' ? 'Fane' : 'Punkt';
+        const prefix = type === 'tabs' ? 'Fane' : (type === 'carousel' ? 'Slide' : 'Punkt');
         addPageCard($row, { Title: prefix + ' 1', Content: '<p>Indhold til ' + prefix.toLowerCase() + ' 1.</p>', Background: 'White', TextTone: 'Auto', Active: true });
         addPageCard($row, { Title: prefix + ' 2', Content: '<p>Indhold til ' + prefix.toLowerCase() + ' 2.</p>', Background: 'OffWhite', TextTone: 'Auto', Active: true });
     }
@@ -655,6 +656,7 @@ jQuery(function ($) {
             card_grid: 'Kort-række / kolonner',
             tabs: 'Faner / tabs',
             accordion: 'Accordion',
+            carousel: 'Carousel / slider',
             highlight: 'Fremhævet tekst',
             spacer: 'Afstand',
             html: 'Importeret blok / HTML',
@@ -799,6 +801,18 @@ jQuery(function ($) {
             setValue('Background', 'OffWhite');
             setValue('PaddingPx', 26);
             setValue('MobilePaddingPx', 20);
+        } else if (type === 'carousel') {
+            setValue('Background', 'White');
+            setValue('PaddingPx', 0);
+            setValue('HorizontalPaddingPx', 0);
+            setValue('MobilePaddingPx', 0);
+            setValue('MobileHorizontalPaddingPx', 0);
+            setValue('CarouselIntervalMs', 5000);
+            pageSectionControls($row, '[name$="[CarouselAutoplay]"]').prop('checked', false);
+            pageSectionControls($row, '[name$="[CarouselLoop]"]').prop('checked', true);
+            pageSectionControls($row, '[name$="[CarouselShowArrows]"]').prop('checked', true);
+            pageSectionControls($row, '[name$="[CarouselShowDots]"]').prop('checked', true);
+            initializeCollectionPanelsV0517($row, type);
         } else if (type === 'tabs' || type === 'accordion') {
             setValue('Background', 'White');
             setValue('PaddingPx', 0);
@@ -1182,6 +1196,30 @@ jQuery(function ($) {
             addTitle('Handling');
             canvasAddBodyText($inner, content);
             addButtons();
+        } else if (type === 'carousel') {
+            addTitle('Carousel');
+            canvasAddBodyText($inner, content);
+            const $slides = pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').filter(function () { return $(this).find('[name$="[Active]"]').is(':checked'); });
+            const $carousel = $('<div>', { class: 'h18-canvas-carousel' });
+            const $stage = $('<div>', { class: 'h18-canvas-carousel-stage' });
+            if ($slides.length) {
+                const $card = $slides.first();
+                const cardTitle = String($card.find('.h18-page-card-title').val() || 'Slide 1');
+                $stage.append($('<strong>', { text: cardTitle }), $('<div>', { class: 'h18-canvas-carousel-body' }).html(String($card.find('[name$="[Content]"]').val() || '')));
+            } else {
+                $stage.text('Tilføj mindst ét slide.');
+            }
+            const showArrows = Boolean(canvasFieldValue($row, 'CarouselShowArrows', true));
+            const showDots = Boolean(canvasFieldValue($row, 'CarouselShowDots', true));
+            if (showArrows && $slides.length > 1) { $carousel.append($('<span>', { class: 'h18-canvas-carousel-arrow is-prev', text: '‹' })); }
+            $carousel.append($stage);
+            if (showArrows && $slides.length > 1) { $carousel.append($('<span>', { class: 'h18-canvas-carousel-arrow is-next', text: '›' })); }
+            if (showDots && $slides.length > 1) {
+                const $dots = $('<div>', { class: 'h18-canvas-carousel-dots' });
+                $slides.each(function (i) { $dots.append($('<span>', { class: 'h18-canvas-carousel-dot' + (i === 0 ? ' is-active' : '') })); });
+                $carousel.append($dots);
+            }
+            $inner.append($carousel);
         } else if (type === 'tabs') {
             addTitle('Faner');
             canvasAddBodyText($inner, content);
@@ -2137,7 +2175,7 @@ jQuery(function ($) {
     $(document).on('change', '.h18-page-section-type', function () {
         const $row = pageSectionForElement(this);
         const type = String($(this).val() || 'text');
-        if (['card_grid', 'tabs', 'accordion'].includes(type) && !pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length) {
+        if (['card_grid', 'tabs', 'accordion', 'carousel'].includes(type) && !pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length) {
             applyNewSectionDefaults($row, type);
         }
         refreshPageSectionType($row);
@@ -2391,7 +2429,7 @@ jQuery(function ($) {
         const $row = pageSectionForElement(this);
         const type = String($row.attr('data-section-type') || 'card_grid');
         const current = pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length + 1;
-        const title = type === 'tabs' ? 'Fane ' + current : (type === 'accordion' ? 'Punkt ' + current : 'Ny kasse');
+        const title = type === 'tabs' ? 'Fane ' + current : (type === 'accordion' ? 'Punkt ' + current : (type === 'carousel' ? 'Slide ' + current : 'Ny kasse'));
         addPageCard($row, { Title: title, Background: 'OffWhite', TextTone: 'Auto', Active: true });
     });
 

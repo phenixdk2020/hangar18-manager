@@ -1,8 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.5.17
+Version: 0.5.18
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.18 – Carousel / Slider ==
+
+Nyt:
+- UD-031: Carousel/Slider som native sideeditor-element og med den eksisterende Cards-model som slides
+- autoplay er FRA som standard og kan aktiveres med justerbart interval 2-20 sekunder
+- loop, forrige/næste-pile og priknavigation kan slås til/fra separat
+- keyboard-navigation med venstre/højre pil samt Home/End på priknavigationen
+- touch swipe på mobil og tablet; swipe kræver mindst ca. 45 px bevægelse
+- autoplay pauser ved hover og keyboard-fokus og genstarter først, når brugeren forlader carousellen
+- prefers-reduced-motion deaktiverer autoplay og transitions automatisk
+- slides bruger role=group/aria-roledescription=slide, live status og skjuler inaktive slides fra fokus/assistive tech
+- hvert slide bevarer Card-baggrund, teksttone, kant, padding, radius og responsive indstillinger
+- page-editor schema løftes bagudkompatibelt til 1.14 for carousel-adfærd
 
 == Version 0.5.17 – Tabs og Accordion ==
 

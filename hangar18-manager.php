@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.17
+ * Version: 0.5.18
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.17';
+    const VERSION = '0.5.18';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -706,7 +706,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.13',
+                'Version' => '1.14',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -6359,6 +6359,7 @@ HTML;
             'quote'      => 'Citat',
             'tabs'       => 'Faner / tabs',
             'accordion'  => 'Accordion',
+            'carousel'   => 'Carousel / slider',
             'embed'      => 'Embed / medie-URL',
             'shortcode'  => 'Shortcode (avanceret)',
             'spacer'     => 'Afstand',
@@ -6402,6 +6403,22 @@ HTML;
         ];
         $shape = $icons[$name] ?? $icons['check'];
         return '<svg class="h18-safe-icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' . $shape . '</svg>';
+    }
+
+    private function page_editor_carousel_script($section_id) {
+        $root_json = wp_json_encode((string) $section_id);
+        return '<script>(function(){' .
+            'var section=document.getElementById(' . $root_json . ');if(!section)return;var root=section.querySelector(".h18-editor-carousel");if(!root)return;' .
+            'var slides=Array.prototype.slice.call(root.querySelectorAll(".h18-editor-carousel-slide"));var dots=Array.prototype.slice.call(root.querySelectorAll(".h18-editor-carousel-dot"));var prev=root.querySelector(".h18-editor-carousel-prev");var next=root.querySelector(".h18-editor-carousel-next");var status=root.querySelector(".h18-editor-carousel-status");if(!slides.length)return;' .
+            'var index=0;var timer=null;var startX=null;var loop=root.dataset.loop==="1";var autoplay=root.dataset.autoplay==="1";var interval=Math.max(2000,parseInt(root.dataset.interval||"5000",10)||5000);var reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;' .
+            'function normalize(i){if(loop)return(i+slides.length)%slides.length;return Math.max(0,Math.min(slides.length-1,i));}' .
+            'function show(i,user){index=normalize(i);slides.forEach(function(slide,n){var on=n===index;slide.hidden=!on;slide.setAttribute("aria-hidden",on?"false":"true");});dots.forEach(function(dot,n){var on=n===index;dot.setAttribute("aria-current",on?"true":"false");dot.tabIndex=on?0:-1;});if(prev)prev.disabled=!loop&&index===0;if(next)next.disabled=!loop&&index===slides.length-1;if(status)status.textContent=(index+1)+" af "+slides.length;if(user)restart();}' .
+            'function advance(step,user){show(index+step,user);}' .
+            'function stop(){if(timer){window.clearInterval(timer);timer=null;}}function restart(){stop();if(autoplay&&!reduced&&slides.length>1)timer=window.setInterval(function(){if(loop||index<slides.length-1)advance(1,false);else show(0,false);},interval);}' .
+            'if(prev)prev.addEventListener("click",function(){advance(-1,true);});if(next)next.addEventListener("click",function(){advance(1,true);});dots.forEach(function(dot,n){dot.addEventListener("click",function(){show(n,true);});dot.addEventListener("keydown",function(e){var target=n;if(e.key==="ArrowRight")target=n+1;else if(e.key==="ArrowLeft")target=n-1;else if(e.key==="Home")target=0;else if(e.key==="End")target=dots.length-1;else return;e.preventDefault();show(target,true);dots[normalize(target)].focus();});});' .
+            'root.addEventListener("keydown",function(e){if(e.target&&e.target.classList.contains("h18-editor-carousel-dot"))return;if(e.key==="ArrowRight"){e.preventDefault();advance(1,true);}else if(e.key==="ArrowLeft"){e.preventDefault();advance(-1,true);}});root.addEventListener("mouseenter",stop);root.addEventListener("mouseleave",restart);root.addEventListener("focusin",stop);root.addEventListener("focusout",function(e){if(!root.contains(e.relatedTarget))restart();});' .
+            'root.addEventListener("touchstart",function(e){startX=e.touches&&e.touches[0]?e.touches[0].clientX:null;},{passive:true});root.addEventListener("touchend",function(e){if(startX===null)return;var end=e.changedTouches&&e.changedTouches[0]?e.changedTouches[0].clientX:startX;var dx=end-startX;startX=null;if(Math.abs(dx)>45)advance(dx<0?1:-1,true);},{passive:true});show(0,false);restart();' .
+            '})();</script>';
     }
 
     private function page_editor_tabs_script($section_id) {
@@ -6516,6 +6533,11 @@ HTML;
             'ColumnGapPx'           => 16,
             'MobileColumnGapPx'     => 14,
             'Cards'                 => [],
+            'CarouselAutoplay'      => false,
+            'CarouselIntervalMs'    => 5000,
+            'CarouselLoop'          => true,
+            'CarouselShowArrows'    => true,
+            'CarouselShowDots'      => true,
             'TopSpacingPx'          => 0,
             'BottomSpacingPx'       => 24,
             'MobileTopSpacingPx'    => 0,
@@ -6856,8 +6878,13 @@ HTML;
             'MobileColumns'         => $this->clamp_int($raw['MobileColumns'] ?? 1, 1, 2, 1),
             'ColumnGapPx'           => $this->clamp_int($raw['ColumnGapPx'] ?? 16, 0, 80, 16),
             'MobileColumnGapPx'     => $this->clamp_int($raw['MobileColumnGapPx'] ?? 14, 0, 60, 14),
-            'Cards'                 => $cards,
-            'TopSpacingPx'          => $this->clamp_int($raw['TopSpacingPx'] ?? 0, 0, 160, 0),
+            'Cards'                  => $cards,
+            'CarouselAutoplay'       => array_key_exists('CarouselAutoplay', $raw) ? $this->bool_value($raw['CarouselAutoplay'], false) : false,
+            'CarouselIntervalMs'     => $this->clamp_int($raw['CarouselIntervalMs'] ?? 5000, 2000, 20000, 5000),
+            'CarouselLoop'           => array_key_exists('CarouselLoop', $raw) ? $this->bool_value($raw['CarouselLoop'], true) : true,
+            'CarouselShowArrows'     => array_key_exists('CarouselShowArrows', $raw) ? $this->bool_value($raw['CarouselShowArrows'], true) : true,
+            'CarouselShowDots'       => array_key_exists('CarouselShowDots', $raw) ? $this->bool_value($raw['CarouselShowDots'], true) : true,
+            'TopSpacingPx'           => $this->clamp_int($raw['TopSpacingPx'] ?? 0, 0, 160, 0),
             'BottomSpacingPx'       => $this->clamp_int($raw['BottomSpacingPx'] ?? 24, 0, 160, 24),
             'MobileTopSpacingPx'    => $this->clamp_int($raw['MobileTopSpacingPx'] ?? 0, 0, 100, 0),
             'MobileBottomSpacingPx' => $this->clamp_int($raw['MobileBottomSpacingPx'] ?? 18, 0, 100, 18),
@@ -6972,7 +6999,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.13',
+            'Version'        => '1.14',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7506,7 +7533,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.13',
+            'Version'        => '1.14',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7884,6 +7911,7 @@ HTML;
             '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--sand{background:#c3ae83;color:#30382a}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--steel{background:#525a5f;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:#fff}' .
             '.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:#fff}.h18-editor-section p:last-child{margin-bottom:0}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{text-align:var(--h18-align,left)!important}' .
             '.h18-editor-card{border-top:4px solid #c3ae83}.h18-editor-highlight{border-left:5px solid #c3ae83}' .
+            '.h18-editor-carousel{position:relative;outline:none}.h18-editor-carousel:focus-visible{outline:2px solid #2271b1;outline-offset:4px}.h18-editor-carousel-viewport{position:relative;overflow:hidden}.h18-editor-carousel-slide[hidden]{display:none!important}.h18-editor-carousel-arrow{position:absolute;top:50%;z-index:2;display:grid;place-items:center;width:44px;height:44px;margin-top:-22px;border:1px solid rgba(0,0,0,.18);border-radius:999px;background:rgba(255,255,255,.92);color:#30382a;font-size:30px;line-height:1;cursor:pointer}.h18-editor-carousel-arrow:focus-visible{outline:2px solid #2271b1;outline-offset:2px}.h18-editor-carousel-arrow:disabled{opacity:.35;cursor:not-allowed}.h18-editor-carousel-prev{left:12px}.h18-editor-carousel-next{right:12px}.h18-editor-carousel-dots{display:flex;justify-content:center;gap:8px;margin-top:12px}.h18-editor-carousel-dot{width:12px;height:12px;padding:0;border:1px solid currentColor;border-radius:999px;background:transparent;cursor:pointer}.h18-editor-carousel-dot[aria-current=true]{background:currentColor}.h18-editor-carousel-dot:focus-visible{outline:2px solid #2271b1;outline-offset:3px}@media(prefers-reduced-motion:reduce){.h18-editor-carousel *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}' .
             '.h18-editor-tabs{display:grid;gap:0}.h18-editor-tabs-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:0;border-bottom:1px solid #c3c4c7}.h18-editor-tab{appearance:none;padding:10px 16px;border:1px solid transparent;border-bottom:0;border-radius:6px 6px 0 0;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer}.h18-editor-tab:hover{background:rgba(195,174,131,.14)}.h18-editor-tab[aria-selected=true]{border-color:#c3c4c7;background:#fff;color:#30382a}.h18-editor-tab:focus-visible{outline:2px solid #2271b1;outline-offset:2px}.h18-editor-tab-panel{margin-top:-1px;border-top-left-radius:0!important}.h18-editor-tab-panel[hidden]{display:none!important}.h18-editor-accordion{display:grid;gap:10px}.h18-editor-accordion-item{padding:0!important;overflow:hidden}.h18-editor-accordion-item summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:var(--h18-card-pad,20px);font-weight:700;cursor:pointer;list-style:none}.h18-editor-accordion-item summary::-webkit-details-marker{display:none}.h18-editor-accordion-item summary:after{content:"+";font-size:1.35em;line-height:1}.h18-editor-accordion-item[open] summary:after{content:"−"}.h18-editor-accordion-item summary:focus-visible{outline:2px solid #2271b1;outline-offset:-3px}.h18-editor-accordion-body{padding:0 var(--h18-card-pad,20px) var(--h18-card-pad,20px)}' .
             '.h18-editor-card-grid{display:grid;grid-template-columns:repeat(var(--h18-grid-columns,3),minmax(0,1fr));gap:var(--h18-grid-gap,16px);align-items:stretch}.h18-editor-grid-card{box-sizing:border-box;padding:var(--h18-card-pad,26px);border:var(--h18-card-border-width,0) solid var(--h18-card-border,#c3ae83);border-radius:var(--h18-card-radius,7px);text-align:var(--h18-card-align,left)}.h18-editor-grid-card h3{margin:0 0 12px;color:inherit}.h18-editor-grid-card--white{background:#fff}.h18-editor-grid-card--offwhite{background:#f2f0e8}.h18-editor-grid-card--sand{background:#c3ae83}.h18-editor-grid-card--olive{background:#30382a}.h18-editor-grid-card--steel{background:#525a5f}.h18-editor-grid-card--tone-dark{color:#30382a}.h18-editor-grid-card--tone-light{color:#fff}.h18-editor-grid-card--tone-light h3{color:#fff}' .
             '.h18-editor-text-image{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:28px;align-items:center}.h18-editor-text-image--left .h18-editor-media{order:-1}' .
@@ -8063,6 +8091,39 @@ HTML;
                 $buttons .= '<a class="h18-editor-button h18-editor-button--secondary" href="' . esc_url($section['Button2Url']) . '">' . esc_html($section['Button2Label']) . '</a>';
             }
             $inner = $title . $content . '<div class="h18-editor-actions">' . $buttons . '</div>';
+        } elseif ($section['Type'] === 'carousel') {
+            $border_colors = ['None'=>'transparent','Sand'=>'#c3ae83','Olive'=>'#30382a','Steel'=>'#525a5f'];
+            $items = [];
+            foreach ((array) $section['Cards'] as $card) { if (!empty($card['Active'])) { $items[] = $card; } }
+            $slides = '';
+            $dots = '';
+            $slide_count = count($items);
+            foreach ($items as $item_index => $card) {
+                $tone = (string) $card['TextTone'];
+                if ($tone === 'Auto') { $tone = in_array($card['Background'], ['Olive','Steel'], true) ? 'Light' : 'Dark'; }
+                $card_background = strtolower((string) $card['Background']);
+                $card_border = $border_colors[$card['BorderColor']] ?? '#c3ae83';
+                $card_style = '--h18-card-pad:' . (int) $card['PaddingPx'] . 'px;' .
+                    '--h18-card-mobile-pad:' . (int) $card['MobilePaddingPx'] . 'px;' .
+                    '--h18-card-radius:' . (int) $card['RadiusPx'] . 'px;' .
+                    '--h18-card-border-width:' . (int) $card['BorderWidthPx'] . 'px;' .
+                    '--h18-card-border:' . $card_border . ';' .
+                    '--h18-card-align:' . ($card['DesktopAlignment'] === 'Center' ? 'center' : 'left') . ';' .
+                    '--h18-card-mobile-align:' . ($card['MobileAlignment'] === 'Center' ? 'center' : 'left') . ';';
+                $label = $card['Title'] !== '' ? (string) $card['Title'] : 'Slide ' . ($item_index + 1);
+                $slides .= '<article class="h18-editor-carousel-slide h18-editor-grid-card h18-editor-grid-card--' . esc_attr($card_background) . ' h18-editor-grid-card--tone-' . esc_attr(strtolower($tone)) . '" style="' . esc_attr($card_style) . '" role="group" aria-roledescription="slide" aria-label="' . esc_attr(($item_index + 1) . ' af ' . $slide_count . ': ' . $label) . '" aria-hidden="' . ($item_index === 0 ? 'false' : 'true') . '"' . ($item_index === 0 ? '' : ' hidden') . '>' .
+                    ($card['Title'] !== '' ? '<h3>' . esc_html($card['Title']) . '</h3>' : '') . $this->format_page_section_content($card['Content']) . '</article>';
+                if (!empty($section['CarouselShowDots'])) {
+                    $dots .= '<button type="button" class="h18-editor-carousel-dot" aria-label="Gå til slide ' . esc_attr($item_index + 1) . '" aria-current="' . ($item_index === 0 ? 'true' : 'false') . '" tabindex="' . ($item_index === 0 ? '0' : '-1') . '"></button>';
+                }
+            }
+            $controls = '';
+            if (!empty($section['CarouselShowArrows']) && $slide_count > 1) {
+                $controls = '<button type="button" class="h18-editor-carousel-arrow h18-editor-carousel-prev" aria-label="Forrige slide">‹</button><button type="button" class="h18-editor-carousel-arrow h18-editor-carousel-next" aria-label="Næste slide">›</button>';
+            }
+            $dots_html = $dots !== '' ? '<div class="h18-editor-carousel-dots" role="group" aria-label="Vælg slide">' . $dots . '</div>' : '';
+            $carousel_label = $section['Title'] !== '' ? (string) $section['Title'] : 'Carousel';
+            $inner = $title . $content . '<div class="h18-editor-carousel" role="region" aria-roledescription="carousel" aria-label="' . esc_attr($carousel_label) . '" tabindex="0" data-autoplay="' . (!empty($section['CarouselAutoplay']) ? '1' : '0') . '" data-interval="' . (int) $section['CarouselIntervalMs'] . '" data-loop="' . (!empty($section['CarouselLoop']) ? '1' : '0') . '"><div class="h18-editor-carousel-viewport">' . $slides . '</div>' . $controls . $dots_html . '<span class="screen-reader-text h18-editor-carousel-status" aria-live="polite">' . ($slide_count > 0 ? '1 af ' . $slide_count : 'Ingen slides') . '</span></div>' . $this->page_editor_carousel_script($id);
         } elseif (in_array($section['Type'], ['tabs', 'accordion'], true)) {
             $border_colors = [
                 'None'  => 'transparent',
@@ -8412,12 +8473,12 @@ HTML;
                             </select>
                         </div>
 
-                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid tabs accordion highlight icon list badge quote html mail_form poll">
+                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid tabs accordion carousel highlight icon list badge quote html mail_form poll">
                             <label><strong class="h18-section-title-label"><?php echo $section['Type'] === 'poll' ? 'Spørgsmål' : 'Overskrift'; ?></strong></label>
                             <input class="h18-section-title-input" type="text" name="<?php echo esc_attr($prefix); ?>[Title]" value="<?php echo esc_attr($section['Title']); ?>" />
                         </div>
 
-                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card card_grid tabs accordion highlight icon list quote embed shortcode html css mail_form poll">
+                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card card_grid tabs accordion carousel highlight icon list quote embed shortcode html css mail_form poll">
                             <label><strong><?php echo $section['Type'] === 'image' ? 'Billedtekst' : ($section['Type'] === 'css' ? 'CSS' : 'Tekst'); ?></strong></label>
                             <div class="h18-mini-editor-toolbar h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight list quote html mail_form poll"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
                             <textarea name="<?php echo esc_attr($prefix); ?>[Content]" rows="5"><?php echo esc_textarea($section['Content']); ?></textarea>
@@ -8493,9 +8554,21 @@ HTML;
                         </div>
                     </div>
 
-                    <div class="h18-section-type-field h18-section-module-box h18-card-grid-editor h18-collection-editor" data-types="card_grid tabs accordion">
-                        <h4 class="h18-collection-editor-title"><?php echo $section['Type'] === 'tabs' ? 'Faner / tabs' : ($section['Type'] === 'accordion' ? 'Accordion' : 'Kort-række / kolonner'); ?></h4>
-                        <p class="h18-collection-editor-description"><?php echo in_array($section['Type'], ['tabs','accordion'], true) ? 'Hvert panel bruger den eksisterende kassemodel og kan flyttes, farves og tilpasses separat.' : 'Hver kasse kan flyttes, farves og tilpasses separat. På mobil placeres kasserne som standard under hinanden.'; ?></p>
+                    <div class="h18-section-type-field h18-section-module-box" data-types="carousel">
+                        <h4>Carousel / slider</h4>
+                        <p>Autoplay er FRA som standard. Reduced Motion i brugerens system slår automatisk autoplay fra.</p>
+                        <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                            <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[CarouselAutoplay]" value="1" <?php checked(!empty($section['CarouselAutoplay'])); ?> /> <strong>Autoplay</strong></label>
+                            <div class="h18-field"><label><strong>Interval (ms)</strong></label><input type="number" min="2000" max="20000" step="250" name="<?php echo esc_attr($prefix); ?>[CarouselIntervalMs]" value="<?php echo esc_attr($section['CarouselIntervalMs']); ?>" /></div>
+                            <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[CarouselLoop]" value="1" <?php checked(!empty($section['CarouselLoop'])); ?> /> <strong>Loop</strong></label>
+                            <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[CarouselShowArrows]" value="1" <?php checked(!empty($section['CarouselShowArrows'])); ?> /> <strong>Vis pile</strong></label>
+                            <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[CarouselShowDots]" value="1" <?php checked(!empty($section['CarouselShowDots'])); ?> /> <strong>Vis priknavigation</strong></label>
+                        </div>
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box h18-card-grid-editor h18-collection-editor" data-types="card_grid tabs accordion carousel">
+                        <h4 class="h18-collection-editor-title"><?php echo $section['Type'] === 'tabs' ? 'Faner / tabs' : ($section['Type'] === 'accordion' ? 'Accordion' : ($section['Type'] === 'carousel' ? 'Carousel / slider' : 'Kort-række / kolonner')); ?></h4>
+                        <p class="h18-collection-editor-description"><?php echo in_array($section['Type'], ['tabs','accordion','carousel'], true) ? 'Hvert panel bruger den eksisterende kassemodel og kan flyttes, farves og tilpasses separat.' : 'Hver kasse kan flyttes, farves og tilpasses separat. På mobil placeres kasserne som standard under hinanden.'; ?></p>
                         <div class="h18-module-fields-grid h18-module-fields-grid--four h18-card-grid-layout-fields">
                             <div class="h18-field"><label><strong>Kolonner desktop</strong></label><select name="<?php echo esc_attr($prefix); ?>[Columns]"><?php for ($columns = 1; $columns <= 4; $columns++) : ?><option value="<?php echo esc_attr($columns); ?>" <?php selected($section['Columns'], $columns); ?>><?php echo esc_html($columns); ?></option><?php endfor; ?></select></div>
                             <div class="h18-field"><label><strong>Kolonner mobil</strong></label><select name="<?php echo esc_attr($prefix); ?>[MobileColumns]"><option value="1" <?php selected($section['MobileColumns'], 1); ?>>1 – under hinanden</option><option value="2" <?php selected($section['MobileColumns'], 2); ?>>2 ved siden af hinanden</option></select></div>
@@ -8505,7 +8578,7 @@ HTML;
                         <div class="h18-page-cards-sortable">
                             <?php foreach ((array) $section['Cards'] as $card_index => $card) { $this->render_page_editor_card_admin($card, $index, $card_index); } ?>
                         </div>
-                        <button class="button h18-add-page-card" type="button"><span class="h18-add-page-card-label"><?php echo in_array($section['Type'], ['tabs','accordion'], true) ? 'Tilføj panel' : 'Tilføj kasse'; ?></span></button>
+                        <button class="button h18-add-page-card" type="button"><span class="h18-add-page-card-label"><?php echo in_array($section['Type'], ['tabs','accordion','carousel'], true) ? 'Tilføj panel' : 'Tilføj kasse'; ?></span></button>
                     </div>
 
                     <div class="h18-section-type-field h18-section-module-box" data-types="html">
@@ -9183,7 +9256,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.13',
+                    'Version' => '1.14',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -9296,7 +9369,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.13',
+            'Version'        => '1.14',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -9326,7 +9399,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.13',
+                'Version' => '1.14',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

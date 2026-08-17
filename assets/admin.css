@@ -719,3 +719,9 @@ body.h18-command-palette-visible{overflow:hidden}
 .h18-canvas-tabs-panel{padding:16px;border:1px solid rgba(0,0,0,.15);border-top:0;background:rgba(255,255,255,.55)}
 .h18-canvas-accordion{display:grid;gap:7px}.h18-canvas-accordion-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 13px;border:1px solid rgba(0,0,0,.16);border-radius:5px}.h18-canvas-accordion-body{grid-column:1/-1;padding-top:8px;border-top:1px solid rgba(0,0,0,.12)}
 
+/* v0.5.18 – Carousel canvas */
+.h18-canvas-carousel{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}
+.h18-canvas-carousel-stage{min-height:120px;padding:18px;border:1px solid rgba(0,0,0,.16);border-radius:7px;background:rgba(255,255,255,.58)}
+.h18-canvas-carousel-body{margin-top:8px}.h18-canvas-carousel-arrow{display:grid;place-items:center;width:32px;height:32px;border:1px solid rgba(0,0,0,.18);border-radius:999px;background:rgba(255,255,255,.9);color:#30382a;font-size:24px}
+.h18-canvas-carousel-dots{grid-column:1/-1;display:flex;justify-content:center;gap:6px}.h18-canvas-carousel-dot{width:8px;height:8px;border:1px solid currentColor;border-radius:50%}.h18-canvas-carousel-dot.is-active{background:currentColor}
+
