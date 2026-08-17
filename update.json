@@ -6,12 +6,13 @@
   "min_php": "8.0",
   "published_utc": "2026-08-17T18:26:25Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "18216c0e1f86151f3981cbc36c40f07c685ef716ea2b6e18dec25712f5672eb3",
+  "package_sha256": "002bc895667c1b57fdf88e14e886c5a1100acb4dfad8219ed7795d8d2f35d463",
   "changelog": [
     "Tilføjer Normal/Hover state-styling pr. element.",
     "Tilføjer hover-baggrund, tekst, overskrift, kant og opacity.",
     "Hover-state komponeres med responsive transforms, bevægelse og skygge.",
     "Arv Normal er standard og bevarer eksisterende sider.",
-    "Løfter page-editor schema kompatibelt til 1.10."
+    "Løfter page-editor schema kompatibelt til 1.10.",
+    "Tilpasset solid hover-state tilsidesætter også inline hero-baggrund uden at påvirke Arv Normal."
   ]
 }
