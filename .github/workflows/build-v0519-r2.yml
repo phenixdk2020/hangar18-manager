@@ -1,0 +1,167 @@
+name: Build Hangar18 Manager v0.5.19 r2
+
+on:
+  push:
+    branches:
+      - development/v0.5.19
+    paths:
+      - '.github/workflows/build-v0519-r2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.19
+          fetch-depth: 0
+
+      - name: Prepare strict three-level patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/patch_v0519.py')
+          t=p.read_text()
+          t=t.replace('if ($depth > 3 ||','if ($depth > 2 ||')
+          t=t.replace("if ($depth > 3) { return ''; }","if ($depth > 2) { return ''; }")
+          t=t.replace('if (depth > 3 ||','if (depth > 2 ||')
+          p.write_text(t)
+          PY
+
+      - name: Apply v0.5.19 patch
+        run: python3 .github/scripts/patch_v0519.py
+
+      - name: Harden reusable components and palette
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('assets/admin.js'); t=p.read_text()
+          pairs=[
+            ("if (['Key', 'Order', 'Remove', 'ResetVotes'].includes(fieldName)) {","if (['Key', 'Order', 'Remove', 'ResetVotes', 'LayoutParentKey'].includes(fieldName)) {"),
+            ("if (['Type', 'Cards', 'Key', 'Order', 'Remove'].includes(fieldName)) {","if (['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {"),
+            ("['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['highlight', 'Fremhævet tekst'],","['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['container', 'Container'], ['flex', 'Flex container'], ['grid', 'Grid container'], ['highlight', 'Fremhævet tekst'],")
+          ]
+          for old,new in pairs:
+              if old not in t: raise SystemExit('Missing hardening anchor: '+old)
+              t=t.replace(old,new,1)
+          p.write_text(t)
+          PY
+
+      - name: Syntax and semantic QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          php=Path('hangar18-manager.php').read_text(); js=Path('assets/admin.js').read_text(); readme=Path('readme.txt').read_text()
+          assertions={
+            'plugin version': "Version: 0.5.19" in php and "const VERSION = '0.5.19';" in php,
+            'schema 1.15': php.count("'Version'        => '1.15'") == 3,
+            'layout types': all(x in php for x in ["'container'  => 'Container'","'flex'       => 'Flex container'","'grid'       => 'Grid container'"]),
+            'flat parent field': "'LayoutParentKey'        => $layout_parent_key" in php,
+            'parent type validation': "in_array((string) ($parent_section['Type'] ?? ''), $layout_parent_types, true)" in php,
+            'php strict depth': 'if ($depth > 2 ||' in php and "if ($depth > 2) { return ''; }" in php,
+            'tree renderer': 'private function render_page_editor_layout_tree' in php and '$has_layout_hierarchy = false' in php,
+            'legacy compatibility gate': "if ($has_layout_hierarchy)" in php,
+            'flex/grid css': all(x in php for x in ['--h18-layout-columns:','--h18-layout-mobile-columns:','--h18-layout-direction:','--h18-layout-mobile-direction:']),
+            'js cycle protection': 'if (depth > 2 || seen.has(cursor))' in js,
+            'parent UI': '.h18-layout-parent-select' in js and 'refreshLayoutHierarchyV0519' in js,
+            'preset serialization excludes parent': "['Key', 'Order', 'Remove', 'ResetVotes', 'LayoutParentKey']" in js,
+            'preset application excludes parent': "['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey']" in js,
+            'palette layout types': "['container', 'Container'], ['flex', 'Flex container'], ['grid', 'Grid container']" in js,
+            'carousel checkbox semantics': all(x in php for x in ["$raw['CarouselAutoplay'] = !empty","$raw['CarouselLoop'] = !empty","$raw['CarouselShowArrows'] = !empty","$raw['CarouselShowDots'] = !empty"]),
+            'layout checkbox semantics': all(x in php for x in ["$raw['LayoutWrap'] = !empty","$raw['MobileLayoutStack'] = !empty"]),
+            'readme': 'page-editor schema løftes bagudkompatibelt til 1.15' in readme,
+          }
+          failed=[k for k,v in assertions.items() if not v]
+          if failed: raise SystemExit('Failed semantic assertions: '+repr(failed))
+          forbidden=["'Children' =>","'LayoutChildren' =>",'NestedSections','ChildSections']
+          hits=[x for x in forbidden if x in php]
+          if hits: raise SystemExit('Recursive storage detected: '+repr(hits))
+          # Explicitly verify the legacy renderer remains after the hierarchy early-return.
+          front=php[php.index('private function render_page_editor_front'):]
+          for marker in ['$imported_group_depth', 'ImportedGroupType', 'render_page_editor_section_front($page_id, $section)']:
+              if marker not in front: raise SystemExit('Legacy grouping renderer missing: '+marker)
+          print('v0.5.19 semantic QA passed')
+          PY
+
+      - name: Rebuild distribution package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build && mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp assets/admin.css assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+
+      - name: Update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          p=Path('dist/hangar18-manager.zip')
+          m={'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.19','min_wp':'6.4','min_php':'8.0','published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),'package_path':'dist/hangar18-manager.zip','package_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'changelog':['Tilføjer UD-021–023 Container, Flex og Grid som native nested layout-elementer.','Bevarer en flad revisionsvenlig storage-model med LayoutParentKey og bygger et ægte DOM-træ på frontend.','Validerer parent-type, manglende parents, cykler og maksimalt tre samlede layoutniveauer.','Tilføjer Flex/Grid responsive gaps, retning, wrap, justify/align, kolonner og mobil-stack.','Løfter page-editor schema bagudkompatibelt til 1.15 og retter Carousel checkbox-semantik.']}
+          Path('update.json').write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n'); print(m['package_sha256'])
+          PY
+
+      - name: Package QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .verify && mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          m=json.loads(Path('update.json').read_text());a=hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest()
+          assert m['version']=='0.5.19' and m['package_sha256']==a
+          php=Path('.verify/hangar18-manager/hangar18-manager.php').read_text(); js=Path('.verify/hangar18-manager/assets/admin.js').read_text()
+          assert 'render_page_editor_layout_tree' in php and 'refreshLayoutHierarchyV0519' in js
+          print('Package manifest QA passed:',a)
+          PY
+
+      - name: Self-clean and diff scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          rm -f .github/scripts/patch_v0519.py .github/workflows/build-v0519.yml .github/workflows/build-v0519-r2.yml
+          git status --short
+          python3 - <<'PY'
+          import subprocess
+          allowed={'hangar18-manager.php','assets/admin.js','assets/admin.css','readme.txt','update.json','dist/hangar18-manager.zip','.github/scripts/patch_v0519.py','.github/workflows/build-v0519.yml','.github/workflows/build-v0519-r2.yml'}
+          paths=set()
+          for line in subprocess.check_output(['git','status','--short'],text=True).splitlines():
+              p=line[3:].strip();p=p.split(' -> ',1)[1] if ' -> ' in p else p;paths.add(p)
+          extra=paths-allowed
+          if extra: raise SystemExit('Unexpected release-scope files: '+repr(sorted(extra)))
+          print('Release scope QA passed')
+          PY
+
+      - name: Commit v0.5.19 release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m 'Release Hangar18 Manager 0.5.19'
+          git push origin HEAD:development/v0.5.19
