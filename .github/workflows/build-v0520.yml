@@ -1,0 +1,68 @@
+name: Build Hangar18 Manager v0.5.20
+on:
+  push:
+    branches: [development/v0.5.20]
+    paths: ['.github/workflows/build-v0520.yml']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.20
+          fetch-depth: 0
+      - name: Apply patch
+        run: python3 .github/scripts/patch_v0520.py
+      - name: Source QA
+        run: |
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          python3 .github/scripts/qa_v0520.py
+      - name: Build package
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp assets/admin.css assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+      - name: Update manifest
+        run: |
+          python3 - <<'PY'
+          import hashlib,json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          p=Path('dist/hangar18-manager.zip')
+          m={'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.20','min_wp':'6.4','min_php':'8.0','published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),'package_path':'dist/hangar18-manager.zip','package_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'changelog':['Afslutter E3 Design System med redigerbare builder-breakpoints og globale motion/focus-tokens.','Tilføjer Focus, Active og Disabled states samt transition presets pr. element.','Live canvas og kommandopalette kan forhåndsvise Normal, Hover, Focus, Aktiv og Disabled.','Standard-breakpoints 782/1199 bevarer eksisterende responsive sider; Header legacy breakpoints ændres ikke.','Løfter DesignerSchemaVersion kompatibelt til 1.1 og page-editor schema til 1.16.']}
+          Path('update.json').write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n')
+          print(m['package_sha256'])
+          PY
+      - name: Package QA
+        run: |
+          set -euo pipefail
+          rm -rf .verify
+          mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          m=json.loads(Path('update.json').read_text())
+          a=hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest()
+          assert m['version']=='0.5.20' and m['package_sha256']==a
+          PY
+      - name: Self-clean and commit
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          rm -f .github/scripts/patch_v0520.py .github/scripts/qa_v0520.py .github/workflows/build-v0520.yml
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m 'Release Hangar18 Manager 0.5.20'
+          git push origin HEAD:development/v0.5.20
