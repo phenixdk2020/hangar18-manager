@@ -273,6 +273,7 @@ jQuery(function ($) {
     const pageUserPresets = {};
     let currentCanvasDevice = 'desktop';
     let currentCanvasState = 'normal';
+    let selectedCanvasCardKey = '';
 
     try {
         const presetNode = document.getElementById('h18-page-presets-data');
@@ -709,242 +710,6 @@ jQuery(function ($) {
             setValue('PaddingPx', 26);
             setValue('MobilePaddingPx', 20);
         } else if (type === 'card_grid') {
-            setValue('Background', 'White');
-            setValue('PaddingPx', 0);
-            setValue('HorizontalPaddingPx', 0);
-            setValue('MobilePaddingPx', 0);
-            setValue('MobileHorizontalPaddingPx', 0);
-            setValue('Columns', 3);
-            setValue('MobileColumns', 1);
-            setValue('ColumnGapPx', 16);
-            setValue('MobileColumnGapPx', 14);
-            if (!pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length) {
-                addPageCard($row, { Title: 'Kasse 1', Background: 'OffWhite', TextTone: 'Auto', Active: true });
-                addPageCard($row, { Title: 'Kasse 2', Background: 'Sand', TextTone: 'Auto', Active: true });
-                addPageCard($row, { Title: 'Kasse 3', Background: 'Steel', TextTone: 'Auto', Active: true });
-            }
-        } else if (type === 'highlight') {
-            setValue('Background', 'OffWhite');
-            setValue('PaddingPx', 22);
-            setValue('MobilePaddingPx', 18);
-        } else if (type === 'mail_form' || type === 'poll') {
-            setValue('Background', 'OffWhite');
-            setValue('PaddingPx', 26);
-            setValue('MobilePaddingPx', 20);
-        } else if (type === 'spacer') {
-            setValue('BottomSpacingPx', 0);
-            setValue('MobileBottomSpacingPx', 0);
-        } else if (type === 'css') {
-            setValue('BottomSpacingPx', 0);
-            setValue('MobileBottomSpacingPx', 0);
-        }
-    }
-
-    function canvasFieldValue($row, fieldName, fallback) {
-        const $field = pageSectionControls($row, '[name$="[' + fieldName + ']"]').first();
-        if (!$field.length) {
-            return fallback;
-        }
-        if ($field.is(':checkbox')) {
-            return $field.is(':checked');
-        }
-        const value = $field.val();
-        return value == null || value === '' ? fallback : value;
-    }
-
-    function canvasNumber($row, fieldName, fallback) {
-        const value = parseFloat(canvasFieldValue($row, fieldName, fallback));
-        return Number.isFinite(value) ? value : fallback;
-    }
-
-    function canvasTextFromHtml(value, maxLength) {
-        const node = document.createElement('div');
-        node.innerHTML = String(value || '');
-        let text = String(node.textContent || node.innerText || '').replace(/\s+/g, ' ').trim();
-        const limit = parseInt(maxLength, 10) || 220;
-        if (text.length > limit) {
-            text = text.slice(0, limit - 1).trimEnd() + '…';
-        }
-        return text;
-    }
-
-    function canvasPaletteColor(value) {
-        const colors = {
-            White: '#ffffff', OffWhite: '#f2f0e8', Sand: '#c3ae83',
-            Olive: '#30382a', Steel: '#525a5f', Transparent: 'transparent'
-        };
-        return colors[String(value || 'White')] || '#ffffff';
-    }
-
-    function canvasShadow(value) {
-        const shadows = {
-            None: 'none', Soft: '0 4px 14px rgba(0,0,0,.10)',
-            Medium: '0 9px 24px rgba(0,0,0,.16)', Strong: '0 15px 38px rgba(0,0,0,.24)'
-        };
-        return shadows[String(value || 'None')] || 'none';
-    }
-
-    function canvasDeviceLayout($row) {
-        const desktop = {
-            align: String(canvasFieldValue($row, 'DesktopAlignment', 'Left')).toLowerCase(),
-            top: canvasNumber($row, 'TopSpacingPx', 0), bottom: canvasNumber($row, 'BottomSpacingPx', 24),
-            pad: canvasNumber($row, 'PaddingPx', 0), padX: canvasNumber($row, 'HorizontalPaddingPx', canvasNumber($row, 'PaddingPx', 0)),
-            x: canvasNumber($row, 'DesktopTranslateXPx', 0), y: canvasNumber($row, 'DesktopTranslateYPx', 0),
-            scale: canvasNumber($row, 'DesktopScalePercent', 100), rotate: canvasNumber($row, 'DesktopRotateDeg', 0),
-            visible: Boolean(canvasFieldValue($row, 'ShowDesktop', true))
-        };
-        if (currentCanvasDevice === 'tablet') {
-            const align = String(canvasFieldValue($row, 'TabletAlignment', 'Inherit'));
-            const inherit = function (field, desktopValue) {
-                const value = canvasNumber($row, field, -1);
-                return value < 0 ? desktopValue : value;
-            };
-            return {
-                align: align === 'Inherit' ? desktop.align : align.toLowerCase(),
-                top: inherit('TabletTopSpacingPx', desktop.top), bottom: inherit('TabletBottomSpacingPx', desktop.bottom),
-                pad: inherit('TabletPaddingPx', desktop.pad), padX: inherit('TabletHorizontalPaddingPx', desktop.padX),
-                x: canvasNumber($row, 'TabletTranslateXPx', 0), y: canvasNumber($row, 'TabletTranslateYPx', 0),
-                scale: canvasNumber($row, 'TabletScalePercent', 100), rotate: canvasNumber($row, 'TabletRotateDeg', 0),
-                visible: Boolean(canvasFieldValue($row, 'ShowTablet', true))
-            };
-        }
-        if (currentCanvasDevice === 'mobile') {
-            return {
-                align: String(canvasFieldValue($row, 'MobileAlignment', 'Center')).toLowerCase(),
-                top: canvasNumber($row, 'MobileTopSpacingPx', 0), bottom: canvasNumber($row, 'MobileBottomSpacingPx', 18),
-                pad: canvasNumber($row, 'MobilePaddingPx', 0), padX: canvasNumber($row, 'MobileHorizontalPaddingPx', canvasNumber($row, 'MobilePaddingPx', 0)),
-                x: canvasNumber($row, 'MobileTranslateXPx', 0), y: canvasNumber($row, 'MobileTranslateYPx', 0),
-                scale: canvasNumber($row, 'MobileScalePercent', 100), rotate: canvasNumber($row, 'MobileRotateDeg', 0),
-                visible: Boolean(canvasFieldValue($row, 'ShowMobile', true))
-            };
-        }
-        return desktop;
-    }
-
-    function canvasElementColors($row) {
-        const preset = String(canvasFieldValue($row, 'Background', 'White'));
-        const dark = ['Olive', 'Steel'].includes(preset);
-        let background = canvasPaletteColor(preset);
-        let text = dark ? '#ffffff' : '#30382a';
-        let heading = text;
-        let border = String(canvasFieldValue($row, 'CustomBorderColor', '#c3ae83'));
-        let opacity = Math.max(0, Math.min(100, canvasNumber($row, 'SectionOpacityPercent', 100))) / 100;
-        let backgroundImage = 'none';
-
-        if (String(canvasFieldValue($row, 'DesignMode', 'Global')) === 'Custom') {
-            background = String(canvasFieldValue($row, 'CustomBackgroundColor', '#ffffff'));
-            text = String(canvasFieldValue($row, 'CustomTextColor', '#30382a'));
-            heading = String(canvasFieldValue($row, 'CustomHeadingColor', text));
-        }
-
-        const backgroundEffect = String(canvasFieldValue($row, 'BackgroundEffect', 'None'));
-        if (backgroundEffect === 'Gradient') {
-            const angle = canvasNumber($row, 'GradientAngleDeg', 135);
-            const start = String(canvasFieldValue($row, 'GradientStartColor', '#30382a'));
-            const end = String(canvasFieldValue($row, 'GradientEndColor', '#c3ae83'));
-            backgroundImage = 'linear-gradient(' + angle + 'deg,' + start + ',' + end + ')';
-        } else if (backgroundEffect === 'Image') {
-            const url = String(canvasFieldValue($row, 'BackgroundImageUrl', '') || '');
-            if (url) {
-                backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
-            }
-        }
-
-        if (String($row.attr('data-section-type') || '') === 'hero' && backgroundEffect === 'None') {
-            const heroUrl = String(canvasFieldValue($row, 'MediaUrl', '') || '');
-            if (heroUrl) {
-                backgroundImage = 'url("' + heroUrl.replace(/"/g, '%22') + '")';
-            }
-        }
-
-        if (currentCanvasState === 'hover' && String(canvasFieldValue($row, 'HoverStyleMode', 'Inherit')) === 'Custom') {
-            background = String(canvasFieldValue($row, 'HoverBackgroundColor', background));
-            text = String(canvasFieldValue($row, 'HoverTextColor', text));
-            heading = String(canvasFieldValue($row, 'HoverHeadingColor', heading));
-            border = String(canvasFieldValue($row, 'HoverBorderColor', border));
-            opacity = Math.max(0, Math.min(100, canvasNumber($row, 'HoverOpacityPercent', 100))) / 100;
-            backgroundImage = 'none';
-        }
-
-        return { background: background, text: text, heading: heading, border: border, opacity: opacity, backgroundImage: backgroundImage };
-    }
-
-    function canvasEditableNode(tagName, className, fieldName, value, fallback) {
-        const $node = $('<' + tagName + '>', { class: className + ' h18-canvas-inline-edit', text: String(value || fallback || '') });
-        $node.attr({ 'data-canvas-edit-field': fieldName, contenteditable: 'false', spellcheck: 'true', title: 'Dobbeltklik for at redigere direkte' });
-        return $node;
-    }
-
-    function canvasAddBodyText($target, value) {
-        const html = String(value || '').trim();
-        if (!html) {
-            return;
-        }
-        const $body = $('<div>', { class: 'h18-canvas-preview-text h18-canvas-rich-edit' });
-        $body.html(html);
-        $body.attr({
-            'data-canvas-edit-field': 'Content',
-            contenteditable: 'false',
-            spellcheck: 'true',
-            title: 'Dobbeltklik for at redigere brødtekst direkte'
-        });
-        $target.append($body);
-    }
-
-    function canvasBuildPreviewContent($row, $preview) {
-        const type = String($row.attr('data-section-type') || 'text');
-        const title = String(canvasFieldValue($row, 'Title', ''));
-        const content = String(canvasFieldValue($row, 'Content', ''));
-        const $inner = $('<div>', { class: 'h18-canvas-preview-inner h18-canvas-type-' + type });
-        const addTitle = function (fallback) {
-            if (title || fallback) {
-                $inner.append(canvasEditableNode('h2', 'h18-canvas-preview-title', 'Title', title, fallback));
-            }
-        };
-        const addButtons = function () {
-            const labels = [
-                ['Button1Label', canvasFieldValue($row, 'Button1Label', '')],
-                ['Button2Label', canvasFieldValue($row, 'Button2Label', '')]
-            ];
-            const $actions = $('<div>', { class: 'h18-canvas-preview-actions' });
-            labels.forEach(function (item, index) {
-                if (!String(item[1] || '')) { return; }
-                const $button = canvasEditableNode('span', 'h18-canvas-preview-button' + (index ? ' is-secondary' : ''), item[0], item[1], 'Knap');
-                $button.attr('role', 'button');
-                $actions.append($button);
-            });
-            if ($actions.children().length) { $inner.append($actions); }
-        };
-
-        if (type === 'hero') {
-            addTitle('Hero-overskrift');
-            canvasAddBodyText($inner, content);
-            addButtons();
-        } else if (type === 'text_image') {
-            const $grid = $('<div>', { class: 'h18-canvas-text-image' });
-            const $copy = $('<div>', { class: 'h18-canvas-text-image-copy' });
-            if (title) { $copy.append(canvasEditableNode('h2', 'h18-canvas-preview-title', 'Title', title, 'Overskrift')); }
-            canvasAddBodyText($copy, content);
-            const url = String(canvasFieldValue($row, 'MediaUrl', '') || '');
-            const $media = $('<div>', { class: 'h18-canvas-preview-media' });
-            if (url) { $media.append($('<img>', { src: url, alt: '' })); } else { $media.append($('<span>', { text: 'Vælg billede' })); }
-            if (String(canvasFieldValue($row, 'ImagePosition', 'Right')) === 'Left' && currentCanvasDevice !== 'mobile') {
-                $grid.append($media, $copy);
-            } else {
-                $grid.append($copy, $media);
-            }
-            $inner.append($grid);
-        } else if (type === 'image') {
-            addTitle('Billede');
-            const url = String(canvasFieldValue($row, 'MediaUrl', '') || '');
-            const $image = $('<div>', { class: 'h18-canvas-preview-image' });
-            if (url) { $image.append($('<img>', { src: url, alt: '' })); } else { $image.append($('<span>', { text: 'Intet billede valgt' })); }
-            $inner.append($image);
-        } else if (type === 'buttons') {
-            addTitle('Handling');
-            canvasAddBodyText($inner, content);
-            addButtons();
-        } else if (type === 'card_grid') {
             addTitle('Kort-række');
             canvasAddBodyText($inner, content);
             const columns = currentCanvasDevice === 'mobile' ? canvasNumber($row, 'MobileColumns', 1) : canvasNumber($row, 'Columns', 3);
@@ -952,12 +717,53 @@ jQuery(function ($) {
             const $grid = $('<div>', { class: 'h18-canvas-card-grid' }).css({ gridTemplateColumns: 'repeat(' + Math.max(1, Math.min(6, columns)) + ',minmax(0,1fr))', gap: gap + 'px' });
             pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').each(function () {
                 const $card = $(this);
-                const cardTitle = String($card.find('[name$="[Title]"]').val() || 'Kort');
-                const cardContent = canvasTextFromHtml($card.find('[name$="[Content]"]').val() || '', 90);
-                const cardBackground = canvasPaletteColor($card.find('[name$="[Background]"]').val() || 'OffWhite');
-                const $cardPreview = $('<div>', { class: 'h18-canvas-card' }).css('background', cardBackground);
-                $cardPreview.append($('<strong>', { text: cardTitle }));
-                if (cardContent) { $cardPreview.append($('<small>', { text: cardContent })); }
+                const key = canvasCardKey($card);
+                const active = $card.find('[name$="[Active]"]').is(':checked');
+                const $cardPreview = $('<article>', {
+                    class: 'h18-canvas-card' + (selectedCanvasCardKey === key ? ' is-card-selected' : '') + (active ? '' : ' is-card-inactive'),
+                    'data-card-key': key,
+                    tabindex: '0',
+                    role: 'button',
+                    'aria-label': 'Kort ' + (String(canvasCardFieldValue($card, 'Title', '')) || 'uden overskrift')
+                });
+                $cardPreview.append($('<button>', {
+                    type: 'button', class: 'h18-canvas-card-drag-handle', title: 'Træk for at flytte kort', 'aria-label': 'Flyt kort'
+                }).append($('<span>', { class: 'dashicons dashicons-move' })));
+                const titleValue = String(canvasCardFieldValue($card, 'Title', ''));
+                const $title = $('<strong>', {
+                    class: 'h18-canvas-card-title h18-canvas-card-inline-edit',
+                    text: titleValue || 'Kort uden overskrift',
+                    'data-card-edit-field': 'Title',
+                    contenteditable: 'false',
+                    spellcheck: 'true',
+                    title: 'Dobbeltklik for at redigere kortets overskrift'
+                });
+                $cardPreview.append($title);
+                const contentHtml = String(canvasCardFieldValue($card, 'Content', '') || '').trim();
+                if (contentHtml) {
+                    $cardPreview.append($('<div>', {
+                        class: 'h18-canvas-card-content h18-canvas-card-rich-edit',
+                        'data-card-edit-field': 'Content',
+                        contenteditable: 'false',
+                        spellcheck: 'true',
+                        title: 'Dobbeltklik for at redigere kortets tekst'
+                    }).html(contentHtml));
+                } else {
+                    $cardPreview.append($('<div>', {
+                        class: 'h18-canvas-card-content h18-canvas-card-rich-edit is-empty',
+                        'data-card-edit-field': 'Content',
+                        contenteditable: 'false',
+                        spellcheck: 'true',
+                        text: 'Dobbeltklik for at tilføje tekst'
+                    }));
+                }
+                if (!active) {
+                    $cardPreview.append($('<span>', { class: 'h18-canvas-card-inactive-label', text: 'Skjult på siden' }));
+                }
+                canvasApplyCardPreviewStyle($card, $cardPreview);
+                if (selectedCanvasCardKey === key) {
+                    canvasBuildCardTools($card, $cardPreview);
+                }
                 $grid.append($cardPreview);
             });
             if (!$grid.children().length) { $grid.append($('<div>', { class: 'h18-canvas-card', text: 'Tilføj et kort i Inspector' })); }
@@ -989,6 +795,159 @@ jQuery(function ($) {
         }
 
         $preview.empty().append($inner);
+    }
+
+
+    function canvasCardKey($card) {
+        return String($card.find('.h18-page-card-key').val() || $card.attr('data-card-index') || '');
+    }
+
+    function canvasCardFieldValue($card, fieldName, fallback) {
+        const $field = $card.find('[name$="[' + fieldName + ']"]').first();
+        if (!$field.length) { return fallback; }
+        if ($field.is(':checkbox')) { return $field.is(':checked'); }
+        const value = $field.val();
+        return value == null || value === '' ? fallback : value;
+    }
+
+    function canvasCardSetField($card, fieldName, value) {
+        const $field = $card.find('[name$="[' + fieldName + ']"]').first();
+        if (!$field.length) { return false; }
+        if ($field.is(':checkbox')) {
+            $field.prop('checked', Boolean(value));
+        } else {
+            $field.val(value);
+        }
+        return true;
+    }
+
+    function canvasCardNumber($card, fieldName, fallback) {
+        const value = parseFloat(canvasCardFieldValue($card, fieldName, fallback));
+        return Number.isFinite(value) ? value : fallback;
+    }
+
+    function canvasCardBorderColor(value) {
+        const borders = { None: 'transparent', Sand: '#c3ae83', Olive: '#30382a', Steel: '#525a5f' };
+        return borders[String(value || 'Sand')] || '#c3ae83';
+    }
+
+    function canvasCardTextColor($card) {
+        const background = String(canvasCardFieldValue($card, 'Background', 'OffWhite'));
+        const tone = String(canvasCardFieldValue($card, 'TextTone', 'Auto'));
+        if (tone === 'Light' || (tone === 'Auto' && ['Olive', 'Steel'].includes(background))) { return '#ffffff'; }
+        return '#30382a';
+    }
+
+    function canvasFindCardRow($row, cardKey) {
+        let $match = $();
+        pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').each(function () {
+            const $card = $(this);
+            if (canvasCardKey($card) === String(cardKey || '')) {
+                $match = $card;
+                return false;
+            }
+        });
+        return $match;
+    }
+
+    function canvasApplyCardPreviewStyle($card, $cardPreview) {
+        if (!$card.length || !$cardPreview.length) { return; }
+        const mobile = currentCanvasDevice === 'mobile';
+        const background = canvasPaletteColor(canvasCardFieldValue($card, 'Background', 'OffWhite'));
+        const text = canvasCardTextColor($card);
+        const borderWidth = Math.max(0, Math.min(8, canvasCardNumber($card, 'BorderWidthPx', 0)));
+        const paddingField = mobile ? 'MobilePaddingPx' : 'PaddingPx';
+        const paddingMax = mobile ? 60 : 80;
+        const padding = Math.max(0, Math.min(paddingMax, canvasCardNumber($card, paddingField, mobile ? 20 : 26)));
+        const radius = Math.max(0, Math.min(30, canvasCardNumber($card, 'RadiusPx', 7)));
+        const alignField = mobile ? 'MobileAlignment' : 'DesktopAlignment';
+        const align = String(canvasCardFieldValue($card, alignField, 'Left')) === 'Center' ? 'center' : 'left';
+        $cardPreview.css({
+            background: background,
+            color: text,
+            borderStyle: 'solid',
+            borderWidth: borderWidth + 'px',
+            borderColor: canvasCardBorderColor(canvasCardFieldValue($card, 'BorderColor', 'Sand')),
+            padding: padding + 'px',
+            borderRadius: radius + 'px',
+            textAlign: align
+        });
+    }
+
+    function canvasCardRange(label, fieldName, value, min, max, suffix) {
+        return $('<label>', { class: 'h18-canvas-card-range' }).append(
+            $('<span>', { text: label }),
+            $('<input>', { type: 'range', min: min, max: max, step: 1, value: Math.round(value), 'data-card-control-field': fieldName }),
+            $('<output>', { text: Math.round(value) + (suffix || '') })
+        );
+    }
+
+    function canvasCardSelect(label, fieldName, value, options) {
+        const $select = $('<select>', { class: 'h18-canvas-card-control', 'data-card-control-field': fieldName });
+        options.forEach(function (option) {
+            $select.append($('<option>', { value: option[0], text: option[1], selected: String(value) === String(option[0]) }));
+        });
+        return $('<label>', { class: 'h18-canvas-card-select' }).append($('<span>', { text: label }), $select);
+    }
+
+    function canvasBuildCardTools($card, $cardPreview) {
+        const mobile = currentCanvasDevice === 'mobile';
+        const paddingField = mobile ? 'MobilePaddingPx' : 'PaddingPx';
+        const alignField = mobile ? 'MobileAlignment' : 'DesktopAlignment';
+        const $tools = $('<div>', { class: 'h18-canvas-card-tools' }).append(
+            $('<strong>', { text: 'Kortdesign' }),
+            canvasCardSelect('Baggrund', 'Background', canvasCardFieldValue($card, 'Background', 'OffWhite'), [
+                ['White', 'Hvid'], ['OffWhite', 'Knækket hvid'], ['Sand', 'Sand'], ['Olive', 'Oliven'], ['Steel', 'Stål']
+            ]),
+            canvasCardSelect('Tekst', 'TextTone', canvasCardFieldValue($card, 'TextTone', 'Auto'), [
+                ['Auto', 'Auto'], ['Dark', 'Mørk'], ['Light', 'Lys']
+            ]),
+            canvasCardSelect('Placering', alignField, canvasCardFieldValue($card, alignField, 'Left'), [
+                ['Left', 'Venstre'], ['Center', 'Midt']
+            ]),
+            canvasCardRange('Padding', paddingField, canvasCardNumber($card, paddingField, mobile ? 20 : 26), 0, mobile ? 60 : 80, ' px'),
+            canvasCardRange('Radius', 'RadiusPx', canvasCardNumber($card, 'RadiusPx', 7), 0, 30, ' px'),
+            canvasCardRange('Kant', 'BorderWidthPx', canvasCardNumber($card, 'BorderWidthPx', 0), 0, 8, ' px'),
+            $('<label>', { class: 'h18-canvas-card-active' }).append(
+                $('<input>', { type: 'checkbox', class: 'h18-canvas-card-control', 'data-card-control-field': 'Active', checked: Boolean(canvasCardFieldValue($card, 'Active', true)) }),
+                $('<span>', { text: 'Aktiv' })
+            )
+        );
+        $cardPreview.append($tools);
+    }
+
+    function canvasFocusCardEditor($row, cardKey) {
+        pageSectionControls($row, '.h18-page-card-row').removeClass('is-canvas-selected-card');
+        const $card = canvasFindCardRow($row, cardKey);
+        if ($card.length) {
+            $card.addClass('is-canvas-selected-card');
+            const title = String(canvasCardFieldValue($card, 'Title', '') || 'Kort uden overskrift');
+            $pageInspector.find('.h18-builder-inspector-heading span').text('Kort-række · ' + title);
+        }
+        return $card;
+    }
+
+    function initializeCanvasCardGridPreview($row, $preview) {
+        const $grid = $preview.find('.h18-canvas-card-grid');
+        if (!$grid.length || $grid.hasClass('ui-sortable')) { return; }
+        $grid.sortable({
+            items: '> .h18-canvas-card[data-card-key]',
+            handle: '.h18-canvas-card-drag-handle',
+            tolerance: 'pointer',
+            placeholder: 'h18-canvas-card-sort-placeholder',
+            start: function () { $grid.addClass('is-sorting'); },
+            stop: function () { $grid.removeClass('is-sorting'); },
+            update: function () {
+                const keys = $grid.children('.h18-canvas-card[data-card-key]').map(function () { return String($(this).data('card-key') || ''); }).get();
+                const $container = pageSectionControls($row, '.h18-page-cards-sortable').first();
+                keys.forEach(function (key) {
+                    const $card = canvasFindCardRow($row, key);
+                    if ($card.length) { $container.append($card); }
+                });
+                syncPageCardOrder($container);
+                renderCanvasPreview($row);
+            }
+        });
     }
 
     function ensureCanvasPreview($row) {
@@ -1029,6 +988,7 @@ jQuery(function ($) {
         const h2Size = canvasNumber($row, 'H2FontSizePx', 0);
 
         canvasBuildPreviewContent($row, $preview);
+        initializeCanvasCardGridPreview($row, $preview);
         $preview.removeAttr('style').css({
             backgroundColor: colors.background,
             backgroundImage: colors.backgroundImage,
@@ -1151,6 +1111,17 @@ jQuery(function ($) {
             canvasQuickColor('Overskrift', 'heading', colors.heading)
         );
         $bar.append($('<strong>', { class: 'h18-canvas-direct-title', text: 'Direkte design' }), $ranges, $colors);
+        if (String($row.attr('data-section-type') || '') === 'card_grid') {
+            const columnField = currentCanvasDevice === 'mobile' ? 'MobileColumns' : 'Columns';
+            const gapField = currentCanvasDevice === 'mobile' ? 'MobileColumnGapPx' : 'ColumnGapPx';
+            const columnValue = canvasNumber($row, columnField, currentCanvasDevice === 'mobile' ? 1 : 3);
+            const gapValue = canvasNumber($row, gapField, currentCanvasDevice === 'mobile' ? 14 : 16);
+            $bar.append($('<div>', { class: 'h18-canvas-card-grid-controls' }).append(
+                $('<strong>', { text: 'Kort-række' }),
+                canvasQuickRange('Kolonner', columnField, columnValue, 1, 6, ''),
+                canvasQuickRange('Mellemrum', gapField, gapValue, 0, 60, ' px')
+            ));
+        }
         $preview.append($bar);
 
         [
@@ -1221,6 +1192,141 @@ jQuery(function ($) {
         if ($(event.target).closest('.h18-canvas-inline-edit.is-editing').length) { return; }
         event.preventDefault();
         inspectPageSection($(this).closest('.h18-page-section-row'));
+    });
+
+
+    $(document).on('click keydown', '.h18-canvas-card[data-card-key]', function (event) {
+        if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) { return; }
+        if ($(event.target).closest('.h18-canvas-card-tools, .h18-canvas-card-drag-handle, .h18-canvas-card-inline-edit.is-editing, .h18-canvas-card-rich-edit.is-editing').length) { return; }
+        event.preventDefault();
+        event.stopPropagation();
+        const $row = $(this).closest('.h18-page-section-row');
+        inspectPageSection($row);
+        selectedCanvasCardKey = String($(this).data('card-key') || '');
+        canvasFocusCardEditor($row, selectedCanvasCardKey);
+        renderCanvasPreview($row);
+    });
+
+    $(document).on('click pointerdown', '.h18-canvas-card-tools, .h18-canvas-card-drag-handle', function (event) {
+        event.stopPropagation();
+    });
+
+    $(document).on('dblclick', '.h18-canvas-card-inline-edit', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const $row = $(this).closest('.h18-page-section-row');
+        const key = String($(this).closest('.h18-canvas-card').data('card-key') || '');
+        selectedCanvasCardKey = key;
+        inspectPageSection($row);
+        canvasFocusCardEditor($row, key);
+        $(this).data('canvas-original-card-text', String($(this).text() || ''));
+        $(this).attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
+    });
+
+    $(document).on('input', '.h18-canvas-card-inline-edit.is-editing', function () {
+        const $editable = $(this);
+        const $row = $editable.closest('.h18-page-section-row');
+        const $card = canvasFindCardRow($row, String($editable.closest('.h18-canvas-card').data('card-key') || ''));
+        if (!$card.length) { return; }
+        const value = String($editable.text() || '').replace(/\s+/g, ' ').trim();
+        canvasCardSetField($card, String($editable.data('card-edit-field') || 'Title'), value);
+        $card.find('.h18-page-card-title-summary').text(value || 'Uden overskrift');
+    });
+
+    $(document).on('blur', '.h18-canvas-card-inline-edit.is-editing', function () {
+        const $row = $(this).closest('.h18-page-section-row');
+        $(this).attr('contenteditable', 'false').removeClass('is-editing');
+        renderCanvasPreview($row);
+    });
+
+    $(document).on('keydown', '.h18-canvas-card-inline-edit.is-editing', function (event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            $(this).trigger('blur');
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            const $editable = $(this);
+            const $row = $editable.closest('.h18-page-section-row');
+            const $card = canvasFindCardRow($row, String($editable.closest('.h18-canvas-card').data('card-key') || ''));
+            const original = String($editable.data('canvas-original-card-text') || '');
+            if ($card.length) {
+                canvasCardSetField($card, String($editable.data('card-edit-field') || 'Title'), original);
+                $card.find('.h18-page-card-title-summary').text(original || 'Uden overskrift');
+            }
+            renderCanvasPreview($row);
+        }
+    });
+
+    $(document).on('dblclick', '.h18-canvas-card-rich-edit', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const $row = $(this).closest('.h18-page-section-row');
+        const key = String($(this).closest('.h18-canvas-card').data('card-key') || '');
+        selectedCanvasCardKey = key;
+        inspectPageSection($row);
+        canvasFocusCardEditor($row, key);
+        $(this).data('canvas-original-card-html', String($(this).hasClass('is-empty') ? '' : ($(this).html() || '')));
+        if ($(this).hasClass('is-empty')) { $(this).empty().removeClass('is-empty'); }
+        $(this).attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
+    });
+
+    $(document).on('input', '.h18-canvas-card-rich-edit.is-editing', function () {
+        const $editable = $(this);
+        const $row = $editable.closest('.h18-page-section-row');
+        const $card = canvasFindCardRow($row, String($editable.closest('.h18-canvas-card').data('card-key') || ''));
+        if ($card.length) { canvasCardSetField($card, 'Content', String($editable.html() || '')); }
+    });
+
+    $(document).on('blur', '.h18-canvas-card-rich-edit.is-editing', function () {
+        const $row = $(this).closest('.h18-page-section-row');
+        $(this).attr('contenteditable', 'false').removeClass('is-editing');
+        renderCanvasPreview($row);
+    });
+
+    $(document).on('keydown', '.h18-canvas-card-rich-edit.is-editing', function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            $(this).trigger('blur');
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            const $editable = $(this);
+            const $row = $editable.closest('.h18-page-section-row');
+            const $card = canvasFindCardRow($row, String($editable.closest('.h18-canvas-card').data('card-key') || ''));
+            if ($card.length) { canvasCardSetField($card, 'Content', String($editable.data('canvas-original-card-html') || '')); }
+            renderCanvasPreview($row);
+        }
+    });
+
+    $(document).on('input', '.h18-canvas-card-range input[type=range]', function (event) {
+        event.stopPropagation();
+        const $input = $(this);
+        const $previewCard = $input.closest('.h18-canvas-card');
+        const $row = $previewCard.closest('.h18-page-section-row');
+        const $card = canvasFindCardRow($row, String($previewCard.data('card-key') || ''));
+        if (!$card.length) { return; }
+        const field = String($input.data('card-control-field') || '');
+        const value = parseInt($input.val(), 10) || 0;
+        canvasCardSetField($card, field, value);
+        $input.closest('.h18-canvas-card-range').find('output').text(value + ' px');
+        canvasApplyCardPreviewStyle($card, $previewCard);
+    });
+
+    $(document).on('change', '.h18-canvas-card-control', function (event) {
+        event.stopPropagation();
+        const $control = $(this);
+        const $previewCard = $control.closest('.h18-canvas-card');
+        const $row = $previewCard.closest('.h18-page-section-row');
+        const $card = canvasFindCardRow($row, String($previewCard.data('card-key') || ''));
+        if (!$card.length) { return; }
+        const field = String($control.data('card-control-field') || '');
+        const value = $control.is(':checkbox') ? $control.is(':checked') : $control.val();
+        canvasCardSetField($card, field, value);
+        renderCanvasPreview($row);
+        canvasFocusCardEditor($row, selectedCanvasCardKey);
+    });
+
+    $(document).on('change', '.h18-canvas-card-range input[type=range]', function () {
+        renderCanvasPreview($(this).closest('.h18-page-section-row'));
     });
 
     $(document).on('dblclick', '.h18-canvas-inline-edit', function (event) {

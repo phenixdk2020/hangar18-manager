@@ -1,19 +1,19 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T18:55:28Z",
+  "published_utc": "2026-08-17T19:19:46Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "d76d40b3e1280ba531823d5973004cb60639a21eb345dc78d02c2d42dfe91a32",
+  "package_sha256": "2eb8136db07772bd923e29d8a4213c4fad8220e03b2ebf23b4f67cabe246b871",
   "changelog": [
-    "Tilføjer direkte rich-text redigering af brødtekst i live canvas.",
-    "Tilføjer grafiske hurtigkontroller for padding, spacing, radius og opacity.",
-    "Tilføjer direkte farvevalg for baggrund, tekst og overskrift.",
-    "Tilføjer fire drag-handles til indvendig luft på det valgte element.",
-    "Kontroller følger Desktop/Tablet/Mobil og Normal/Hover.",
-    "Page-editor schema forbliver 1.10 og eksisterende sidedata migreres ikke.",
-    "Hover-direktekontroller seedes nu fra Normal-design, så Hover-ændringer ikke påvirker Normal eller nulstiller kant/opacity."
+    "Hvert kort i Card Grid kan vælges og redigeres direkte i live canvas.",
+    "Kort kan omarrangeres direkte i canvas med drag-and-drop.",
+    "Kortoverskrift og rich-text indhold kan redigeres med dobbeltklik.",
+    "Valgt kort får hurtigkontroller for baggrund, teksttone, placering, padding, radius, kant og aktiv-status.",
+    "Card Grid får direkte kontrol over kolonner og mellemrum for visuel breddejustering.",
+    "Valgt kort fremhæves samtidig i Inspector.",
+    "Page-editor schema forbliver 1.10 og eksisterende sidedata migreres ikke."
   ]
 }

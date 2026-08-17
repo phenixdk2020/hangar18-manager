@@ -1,7 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.5.8
+Version: 0.5.9
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+== Version 0.5.9 – Direkte Card Grid-redigering ==
+
+Nyt:
+- hvert kort i Card Grid kan vælges direkte i canvas
+- kort kan omarrangeres direkte i canvas med drag-and-drop
+- kortets overskrift og rich-text indhold kan redigeres med dobbeltklik
+- valgt kort får egne hurtigkontroller for baggrund, teksttone, placering, padding, radius, kant og aktiv-status
+- kortdesign følger desktop/mobil-felterne, som allerede fandtes i editorens datamodel
+- Card Grid får direkte kontrol over antal kolonner og mellemrum, så kortbredden kan justeres visuelt
+- valgt kort fremhæves samtidig i Inspector
+- page-editor schema forbliver 1.10; ingen datamigrering er nødvendig
+
 
 == Version 0.5.8 – Direkte canvas-kontroller ==
 
