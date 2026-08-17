@@ -1,0 +1,65 @@
+name: Diagnose v0.5.19 semantic checks
+on:
+  push:
+    branches: [qa/v0.5.19-diagnose]
+    paths: ['.github/workflows/diagnose-v0519-semantic.yml']
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.19-diagnose
+      - name: Apply patch and record assertions
+        shell: bash
+        run: |
+          set +e
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/patch_v0519.py');t=p.read_text()
+          t=t.replace('if ($depth > 3 ||','if ($depth > 2 ||').replace("if ($depth > 3) { return ''; }","if ($depth > 2) { return ''; }").replace('if (depth > 3 ||','if (depth > 2 ||')
+          p.write_text(t)
+          PY
+          python3 .github/scripts/patch_v0519.py >/tmp/patch.log 2>&1
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('assets/admin.js');t=p.read_text()
+          for a,b in [
+          ("if (['Key', 'Order', 'Remove', 'ResetVotes'].includes(fieldName)) {","if (['Key', 'Order', 'Remove', 'ResetVotes', 'LayoutParentKey'].includes(fieldName)) {"),
+          ("if (['Type', 'Cards', 'Key', 'Order', 'Remove'].includes(fieldName)) {","if (['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {"),
+          ("['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['highlight', 'Fremhævet tekst'],","['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['container', 'Container'], ['flex', 'Flex container'], ['grid', 'Grid container'], ['highlight', 'Fremhævet tekst'],")]:
+              if a in t:t=t.replace(a,b,1)
+          p.write_text(t)
+          PY
+          python3 - <<'PY' > .github/diagnostics-v0519-semantic.txt
+          from pathlib import Path
+          php=Path('hangar18-manager.php').read_text();js=Path('assets/admin.js').read_text();readme=Path('readme.txt').read_text()
+          checks={
+          'version':"Version: 0.5.19" in php and "const VERSION = '0.5.19';" in php,
+          'schema_count':php.count("'Version'        => '1.15'")==3,
+          'types':all(x in php for x in ["'container'  => 'Container'","'flex'       => 'Flex container'","'grid'       => 'Grid container'"]),
+          'flat_parent':"'LayoutParentKey'        => $layout_parent_key" in php,
+          'parent_validation':"in_array((string) ($parent_section['Type'] ?? ''), $layout_parent_types, true)" in php,
+          'php_depth':'if ($depth > 2 ||' in php and "if ($depth > 2) { return ''; }" in php,
+          'tree':'private function render_page_editor_layout_tree' in php,
+          'gate':'$has_layout_hierarchy = false' in php and 'if ($has_layout_hierarchy)' in php,
+          'cssvars':all(x in php for x in ['--h18-layout-columns:','--h18-layout-mobile-columns:','--h18-layout-direction:','--h18-layout-mobile-direction:']),
+          'js_depth':'if (depth > 2 || seen.has(cursor))' in js,
+          'parent_ui':'.h18-layout-parent-select' in js and 'refreshLayoutHierarchyV0519' in js,
+          'preset_serialize':"['Key', 'Order', 'Remove', 'ResetVotes', 'LayoutParentKey']" in js,
+          'preset_apply':"['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey']" in js,
+          'palette':"['container', 'Container'], ['flex', 'Flex container'], ['grid', 'Grid container']" in js,
+          'carousel_bools':all(x in php for x in ["$raw['CarouselAutoplay'] = !empty","$raw['CarouselLoop'] = !empty","$raw['CarouselShowArrows'] = !empty","$raw['CarouselShowDots'] = !empty"]),
+          'layout_bools':all(x in php for x in ["$raw['LayoutWrap'] = !empty","$raw['MobileLayoutStack'] = !empty"]),
+          'readme':'page-editor schema løftes bagudkompatibelt til 1.15' in readme,
+          'legacy':all(x in php[php.index('private function render_page_editor_front'):] for x in ['$imported_group_depth','ImportedGroupType','render_page_editor_section_front($page_id, $section)'])}
+          for k,v in checks.items():print(k, 'PASS' if v else 'FAIL')
+          for x in ["'Children' =>","'LayoutChildren' =>",'NestedSections','ChildSections']:print('forbid '+x,'FAIL' if x in php else 'PASS')
+          PY
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add .github/diagnostics-v0519-semantic.txt
+          git commit -m 'QA: record v0.5.19 semantic checks'
+          git push origin HEAD:qa/v0.5.19-diagnose
