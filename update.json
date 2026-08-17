@@ -1,16 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T18:07:08Z",
+  "published_utc": "2026-08-17T18:14:28Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "52216b5a70e05a3cef2d98adfd661c5ae07305e0995f7ee2d00f4418bf83d58a",
+  "package_sha256": "310f26c64800851437770c4d2218050997427b4dc87cea652fcae02a0183e12a",
   "changelog": [
-    "Tilføjer brødtekstfont og overskriftsfont pr. element.",
-    "Tilføjer individuelle størrelser for brødtekst samt H1, H2 og H3.",
-    "Global/0 arver designsystemet og bevarer eksisterende sider.",
-    "Løfter page-editor schema kompatibelt til 1.7."
+    "Tilføjer opacity pr. editorsektion.",
+    "Tilføjer gradient og baggrundsbillede med placering og skalering.",
+    "Tilføjer individuel radius for alle fire hjørner.",
+    "Tilføjer hover-effekter og justerbar transition.",
+    "Løfter page-editor schema kompatibelt til 1.8."
   ]
 }

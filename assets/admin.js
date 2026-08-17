@@ -551,6 +551,13 @@ jQuery(function ($) {
         pageSectionControls($row, '.h18-custom-design-fields').toggle(custom);
     }
 
+    function refreshSectionBackgroundEffect($row) {
+        if (!$row || !$row.length) { return; }
+        const effect = String(pageSectionControls($row, '.h18-section-background-effect').val() || 'None');
+        pageSectionControls($row, '.h18-bg-gradient-fields').toggle(effect === 'Gradient');
+        pageSectionControls($row, '.h18-bg-image-fields').toggle(effect === 'Image');
+    }
+
     function refreshPageSectionType($row) {
         const type = String(pageSectionControls($row, '.h18-page-section-type').val() || pageSectionControls($row, 'input[name$="[Type]"]').val() || 'text');
         $row.attr('data-section-type', type);
@@ -578,6 +585,7 @@ jQuery(function ($) {
         pageSectionControls($row, '.h18-section-title-label').text(type === 'poll' ? 'Spørgsmål' : 'Overskrift');
         refreshInspectorMeta($row);
         refreshSectionDesignMode($row);
+        refreshSectionBackgroundEffect($row);
         rebuildPageNavigator();
     }
 
@@ -776,6 +784,7 @@ jQuery(function ($) {
 
     $(document).on('change', '.h18-section-active', rebuildPageNavigator);
     $(document).on('change', '.h18-section-design-mode', function () { refreshSectionDesignMode(pageSectionForElement(this)); });
+    $(document).on('change', '.h18-section-background-effect', function () { refreshSectionBackgroundEffect(pageSectionForElement(this)); });
 
     function addPageSection(type, $before) {
         if (!pageSectionTemplate || !$pageSections.length) {
@@ -1102,6 +1111,32 @@ jQuery(function ($) {
         const $row = pageSectionForElement(this);
         pageSectionControls($row, '.h18-section-media-id, .h18-section-media-url').val('');
         pageSectionControls($row, '.h18-section-media-preview').empty();
+    });
+
+    $(document).on('click', '.h18-page-select-bg-media', function (event) {
+        event.preventDefault();
+        const $row = pageSectionForElement(this);
+        const frame = wp.media({
+            title: Hangar18Manager.chooseImage,
+            button: { text: Hangar18Manager.useImage },
+            multiple: false,
+            library: { type: 'image' }
+        });
+        frame.on('select', function () {
+            const image = frame.state().get('selection').first().toJSON();
+            const preview = image.sizes && image.sizes.thumbnail ? image.sizes.thumbnail.url : image.url;
+            pageSectionControls($row, '.h18-section-bg-media-id').val(image.id || '');
+            pageSectionControls($row, '.h18-section-bg-media-url').val(image.url || '');
+            pageSectionControls($row, '.h18-section-bg-media-preview').html($('<img>', { src: preview, alt: image.alt || '' }));
+        });
+        frame.open();
+    });
+
+    $(document).on('click', '.h18-page-remove-bg-media', function (event) {
+        event.preventDefault();
+        const $row = pageSectionForElement(this);
+        pageSectionControls($row, '.h18-section-bg-media-id, .h18-section-bg-media-url').val('');
+        pageSectionControls($row, '.h18-section-bg-media-preview').empty();
     });
 
     $(document).on('click', '.h18-mini-format', function (event) {

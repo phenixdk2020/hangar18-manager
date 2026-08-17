@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.3
+ * Version: 0.5.4
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.3';
+    const VERSION = '0.5.4';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -706,7 +706,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.7',
+                'Version' => '1.8',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -2914,7 +2914,7 @@ final class Hangar18_Manager {
         $static_content['Saved'] = gmdate('c');
 
         $pages = [
-            'Version' => '1.7',
+            'Version' => '1.8',
             'Saved'   => gmdate('c'),
             'Pages'   => $this->get_page_editor_store(),
         ];
@@ -6444,6 +6444,21 @@ HTML;
             'H1FontSizePx'           => 0,
             'H2FontSizePx'           => 0,
             'H3FontSizePx'           => 0,
+            'SectionOpacityPercent'  => 100,
+            'BackgroundEffect'       => 'None',
+            'GradientStartColor'     => '#30382a',
+            'GradientEndColor'       => '#c3ae83',
+            'GradientAngleDeg'       => 135,
+            'BackgroundMediaId'      => 0,
+            'BackgroundImageUrl'     => '',
+            'BackgroundImagePosition'=> 'Center',
+            'BackgroundImageSize'    => 'Cover',
+            'RadiusTopLeftPx'        => -1,
+            'RadiusTopRightPx'       => -1,
+            'RadiusBottomRightPx'    => -1,
+            'RadiusBottomLeftPx'     => -1,
+            'HoverEffect'            => 'None',
+            'HoverTransitionMs'      => 220,
             'ImportedGroupType'     => '',
             'LegacyHtml'            => '',
         ];
@@ -6606,6 +6621,17 @@ HTML;
         $section_heading_font = (string) ($raw['SectionHeadingFontFamily'] ?? 'Global');
         if (!in_array($section_heading_font, $section_fonts, true)) { $section_heading_font = 'Global'; }
 
+        $background_effect = (string) ($raw['BackgroundEffect'] ?? 'None');
+        if (!in_array($background_effect, ['None', 'Gradient', 'Image'], true)) { $background_effect = 'None'; }
+        $gradient_start = sanitize_hex_color((string) ($raw['GradientStartColor'] ?? '#30382a')) ?: '#30382a';
+        $gradient_end = sanitize_hex_color((string) ($raw['GradientEndColor'] ?? '#c3ae83')) ?: '#c3ae83';
+        $background_position = (string) ($raw['BackgroundImagePosition'] ?? 'Center');
+        if (!in_array($background_position, ['Center', 'Top', 'Bottom', 'Left', 'Right'], true)) { $background_position = 'Center'; }
+        $background_size = (string) ($raw['BackgroundImageSize'] ?? 'Cover');
+        if (!in_array($background_size, ['Cover', 'Contain', 'Auto'], true)) { $background_size = 'Cover'; }
+        $hover_effect = (string) ($raw['HoverEffect'] ?? 'None');
+        if (!in_array($hover_effect, ['None', 'Lift', 'Scale', 'Shadow'], true)) { $hover_effect = 'None'; }
+
         $cards = [];
         $used_card_keys = [];
         $raw_cards = isset($raw['Cards']) && is_array($raw['Cards']) ? $raw['Cards'] : [];
@@ -6686,6 +6712,21 @@ HTML;
             'H1FontSizePx'           => $this->clamp_int($raw['H1FontSizePx'] ?? 0, 0, 96, 0),
             'H2FontSizePx'           => $this->clamp_int($raw['H2FontSizePx'] ?? 0, 0, 80, 0),
             'H3FontSizePx'           => $this->clamp_int($raw['H3FontSizePx'] ?? 0, 0, 64, 0),
+            'SectionOpacityPercent'  => $this->clamp_int($raw['SectionOpacityPercent'] ?? 100, 0, 100, 100),
+            'BackgroundEffect'       => $background_effect,
+            'GradientStartColor'     => $gradient_start,
+            'GradientEndColor'       => $gradient_end,
+            'GradientAngleDeg'       => $this->clamp_int($raw['GradientAngleDeg'] ?? 135, 0, 360, 135),
+            'BackgroundMediaId'      => absint($raw['BackgroundMediaId'] ?? 0),
+            'BackgroundImageUrl'     => esc_url_raw((string) ($raw['BackgroundImageUrl'] ?? '')),
+            'BackgroundImagePosition'=> $background_position,
+            'BackgroundImageSize'    => $background_size,
+            'RadiusTopLeftPx'        => $this->clamp_int($raw['RadiusTopLeftPx'] ?? -1, -1, 60, -1),
+            'RadiusTopRightPx'       => $this->clamp_int($raw['RadiusTopRightPx'] ?? -1, -1, 60, -1),
+            'RadiusBottomRightPx'    => $this->clamp_int($raw['RadiusBottomRightPx'] ?? -1, -1, 60, -1),
+            'RadiusBottomLeftPx'     => $this->clamp_int($raw['RadiusBottomLeftPx'] ?? -1, -1, 60, -1),
+            'HoverEffect'            => $hover_effect,
+            'HoverTransitionMs'      => $this->clamp_int($raw['HoverTransitionMs'] ?? 220, 0, 1000, 220),
             'ImportedGroupType'     => $imported_group_type,
             'LegacyHtml'            => $legacy_html,
         ];
@@ -6733,7 +6774,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.7',
+            'Version'        => '1.8',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7245,7 +7286,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.7',
+            'Version'        => '1.8',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7457,6 +7498,35 @@ HTML;
         $h1_size = (int) ($section['H1FontSizePx'] ?? 0);
         $h2_size = (int) ($section['H2FontSizePx'] ?? 0);
         $h3_size = (int) ($section['H3FontSizePx'] ?? 0);
+        $opacity = max(0, min(100, (int) ($section['SectionOpacityPercent'] ?? 100))) / 100;
+        $effect = (string) ($section['BackgroundEffect'] ?? 'None');
+        $effect_image = 'none';
+        if ($effect === 'Gradient') {
+            $effect_image = 'linear-gradient(' . (int) ($section['GradientAngleDeg'] ?? 135) . 'deg,' . (string) ($section['GradientStartColor'] ?? '#30382a') . ',' . (string) ($section['GradientEndColor'] ?? '#c3ae83') . ')';
+        } elseif ($effect === 'Image' && !empty($section['BackgroundImageUrl'])) {
+            $effect_image = 'url(' . wp_json_encode(esc_url_raw((string) $section['BackgroundImageUrl'])) . ')';
+        }
+        $base_radius = (int) ($section['RadiusPx'] ?? 0);
+        $radius_tl = (int) ($section['RadiusTopLeftPx'] ?? -1);
+        $radius_tr = (int) ($section['RadiusTopRightPx'] ?? -1);
+        $radius_br = (int) ($section['RadiusBottomRightPx'] ?? -1);
+        $radius_bl = (int) ($section['RadiusBottomLeftPx'] ?? -1);
+        $radius_tl = $radius_tl < 0 ? $base_radius : $radius_tl;
+        $radius_tr = $radius_tr < 0 ? $base_radius : $radius_tr;
+        $radius_br = $radius_br < 0 ? $base_radius : $radius_br;
+        $radius_bl = $radius_bl < 0 ? $base_radius : $radius_bl;
+        $hover_effect = (string) ($section['HoverEffect'] ?? 'None');
+        $hover_transform = 'none';
+        $hover_shadow = $shadow;
+        if ($hover_effect === 'Lift') {
+            $hover_transform = 'translateY(-4px)';
+            $hover_shadow = '0 16px 38px rgba(0,0,0,.16)';
+        } elseif ($hover_effect === 'Scale') {
+            $hover_transform = 'scale(1.02)';
+            $hover_shadow = '0 12px 30px rgba(0,0,0,.14)';
+        } elseif ($hover_effect === 'Shadow') {
+            $hover_shadow = '0 18px 44px rgba(0,0,0,.22)';
+        }
         return '--h18-top:' . (int) $section['TopSpacingPx'] . 'px;' .
             '--h18-bottom:' . (int) $section['BottomSpacingPx'] . 'px;' .
             '--h18-mobile-top:' . (int) $section['MobileTopSpacingPx'] . 'px;' .
@@ -7481,7 +7551,18 @@ HTML;
             '--h18-section-body-size:' . ($body_size > 0 ? $body_size . 'px' : 'var(--h18-font-body-size,16px)') . ';' .
             '--h18-section-h1-size:' . ($h1_size > 0 ? $h1_size . 'px' : 'clamp(2rem,5vw,var(--h18-font-h1-size,48px))') . ';' .
             '--h18-section-h2-size:' . ($h2_size > 0 ? $h2_size . 'px' : 'clamp(1.55rem,3.5vw,var(--h18-font-h2-size,32px))') . ';' .
-            '--h18-section-h3-size:' . ($h3_size > 0 ? $h3_size . 'px' : 'clamp(1.2rem,2.5vw,var(--h18-font-h3-size,22px))') . ';';
+            '--h18-section-h3-size:' . ($h3_size > 0 ? $h3_size . 'px' : 'clamp(1.2rem,2.5vw,var(--h18-font-h3-size,22px))') . ';' .
+            '--h18-section-opacity:' . $opacity . ';' .
+            '--h18-section-bg-image:' . $effect_image . ';' .
+            '--h18-section-bg-position:' . strtolower((string) ($section['BackgroundImagePosition'] ?? 'Center')) . ';' .
+            '--h18-section-bg-size:' . strtolower((string) ($section['BackgroundImageSize'] ?? 'Cover')) . ';' .
+            '--h18-radius-tl:' . $radius_tl . 'px;' .
+            '--h18-radius-tr:' . $radius_tr . 'px;' .
+            '--h18-radius-br:' . $radius_br . 'px;' .
+            '--h18-radius-bl:' . $radius_bl . 'px;' .
+            '--h18-hover-transform:' . $hover_transform . ';' .
+            '--h18-hover-shadow:' . $hover_shadow . ';' .
+            '--h18-hover-transition:' . (int) ($section['HoverTransitionMs'] ?? 220) . 'ms;';
     }
 
     private function render_page_editor_imported_group(array $section, $inner, $extra_class) {
@@ -7512,7 +7593,8 @@ HTML;
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            'body.page .h18-editor-page>.h18-editor-section{background:var(--h18-section-bg)!important;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);box-shadow:var(--h18-section-shadow,none);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size)}' .
+            'body.page .h18-editor-page>.h18-editor-section{background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease}' .
+            '@media(hover:hover){body.page .h18-editor-page>.h18-editor-section:hover{transform:var(--h18-hover-transform,none);box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}}' .
             'body.page .h18-editor-page>.h18-editor-section h1{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h1-size)}' .
             'body.page .h18-editor-page>.h18-editor-section h2{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h2-size)}' .
             'body.page .h18-editor-page>.h18-editor-section h3{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h3-size)}' .
@@ -7609,7 +7691,7 @@ HTML;
             $style .= '--h18-hero-height:' . (int) $section['HeroHeightPx'] . 'px;' .
                 '--h18-mobile-hero-height:' . (int) $section['MobileHeroHeightPx'] . 'px;' .
                 '--h18-overlay-opacity:' . ((int) $section['OverlayOpacityPercent'] / 100) . ';';
-            if ($image_url !== '') {
+            if ($image_url !== '' && ($section['BackgroundEffect'] ?? 'None') === 'None') {
                 $style .= 'background-image:url(' . wp_json_encode(esc_url_raw((string) $image_url)) . ');';
             }
             $classes .= ' h18-editor-hero';
@@ -8092,6 +8174,36 @@ HTML;
                                     <div class="h18-field"><label><strong>H3 (px)</strong></label><input type="number" min="0" max="64" name="<?php echo esc_attr($prefix); ?>[H3FontSizePx]" value="<?php echo esc_attr($section['H3FontSizePx']); ?>" /><p class="description">0 = global størrelse</p></div>
                                 </div>
                             </div>
+                            <div class="h18-element-effects-box">
+                                <h4>Effekter og baggrund</h4>
+                                <p class="description">Alle standardværdier svarer til v0.5.3. Effekter aktiveres kun, når du vælger dem.</p>
+                                <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                    <div class="h18-field"><label><strong>Opacity (%)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[SectionOpacityPercent]" value="<?php echo esc_attr($section['SectionOpacityPercent']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Baggrundseffekt</strong></label><select class="h18-section-background-effect" name="<?php echo esc_attr($prefix); ?>[BackgroundEffect]"><option value="None" <?php selected($section['BackgroundEffect'], 'None'); ?>>Ingen</option><option value="Gradient" <?php selected($section['BackgroundEffect'], 'Gradient'); ?>>Gradient</option><option value="Image" <?php selected($section['BackgroundEffect'], 'Image'); ?>>Baggrundsbillede</option></select></div>
+                                    <div class="h18-field"><label><strong>Hover-effekt</strong></label><select name="<?php echo esc_attr($prefix); ?>[HoverEffect]"><option value="None" <?php selected($section['HoverEffect'], 'None'); ?>>Ingen</option><option value="Lift" <?php selected($section['HoverEffect'], 'Lift'); ?>>Løft</option><option value="Scale" <?php selected($section['HoverEffect'], 'Scale'); ?>>Zoom let</option><option value="Shadow" <?php selected($section['HoverEffect'], 'Shadow'); ?>>Mere skygge</option></select></div>
+                                    <div class="h18-field"><label><strong>Hover-transition (ms)</strong></label><input type="number" min="0" max="1000" step="10" name="<?php echo esc_attr($prefix); ?>[HoverTransitionMs]" value="<?php echo esc_attr($section['HoverTransitionMs']); ?>" /></div>
+                                </div>
+                                <div class="h18-bg-gradient-fields h18-module-fields-grid h18-module-fields-grid--four">
+                                    <div class="h18-field"><label><strong>Gradient start</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[GradientStartColor]" value="<?php echo esc_attr($section['GradientStartColor']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Gradient slut</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[GradientEndColor]" value="<?php echo esc_attr($section['GradientEndColor']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Vinkel (grader)</strong></label><input type="number" min="0" max="360" name="<?php echo esc_attr($prefix); ?>[GradientAngleDeg]" value="<?php echo esc_attr($section['GradientAngleDeg']); ?>" /></div>
+                                </div>
+                                <div class="h18-bg-image-fields">
+                                    <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                        <div class="h18-field h18-field-wide"><label><strong>Baggrundsbillede</strong></label><input class="h18-section-bg-media-id" type="hidden" name="<?php echo esc_attr($prefix); ?>[BackgroundMediaId]" value="<?php echo esc_attr($section['BackgroundMediaId']); ?>" /><input class="h18-section-bg-media-url" type="url" name="<?php echo esc_attr($prefix); ?>[BackgroundImageUrl]" value="<?php echo esc_attr($section['BackgroundImageUrl']); ?>" placeholder="https://..." /><div class="h18-section-bg-media-preview"><?php if ($section['BackgroundMediaId']) { echo wp_get_attachment_image($section['BackgroundMediaId'], 'thumbnail'); } ?></div><button class="button h18-page-select-bg-media" type="button">Vælg fra mediebibliotek</button> <button class="button-link-delete h18-page-remove-bg-media" type="button">Fjern</button></div>
+                                        <div class="h18-field"><label><strong>Placering</strong></label><select name="<?php echo esc_attr($prefix); ?>[BackgroundImagePosition]"><option value="Center" <?php selected($section['BackgroundImagePosition'], 'Center'); ?>>Center</option><option value="Top" <?php selected($section['BackgroundImagePosition'], 'Top'); ?>>Top</option><option value="Bottom" <?php selected($section['BackgroundImagePosition'], 'Bottom'); ?>>Bund</option><option value="Left" <?php selected($section['BackgroundImagePosition'], 'Left'); ?>>Venstre</option><option value="Right" <?php selected($section['BackgroundImagePosition'], 'Right'); ?>>Højre</option></select></div>
+                                        <div class="h18-field"><label><strong>Skalering</strong></label><select name="<?php echo esc_attr($prefix); ?>[BackgroundImageSize]"><option value="Cover" <?php selected($section['BackgroundImageSize'], 'Cover'); ?>>Fyld området</option><option value="Contain" <?php selected($section['BackgroundImageSize'], 'Contain'); ?>>Vis hele billedet</option><option value="Auto" <?php selected($section['BackgroundImageSize'], 'Auto'); ?>>Original størrelse</option></select></div>
+                                    </div>
+                                </div>
+                                <h4>Individuelle hjørner</h4>
+                                <p class="description">-1 bruger den almindelige hjørneafrunding. 0 giver et helt skarpt hjørne.</p>
+                                <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                    <div class="h18-field"><label><strong>Top venstre</strong></label><input type="number" min="-1" max="60" name="<?php echo esc_attr($prefix); ?>[RadiusTopLeftPx]" value="<?php echo esc_attr($section['RadiusTopLeftPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Top højre</strong></label><input type="number" min="-1" max="60" name="<?php echo esc_attr($prefix); ?>[RadiusTopRightPx]" value="<?php echo esc_attr($section['RadiusTopRightPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Bund højre</strong></label><input type="number" min="-1" max="60" name="<?php echo esc_attr($prefix); ?>[RadiusBottomRightPx]" value="<?php echo esc_attr($section['RadiusBottomRightPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Bund venstre</strong></label><input type="number" min="-1" max="60" name="<?php echo esc_attr($prefix); ?>[RadiusBottomLeftPx]" value="<?php echo esc_attr($section['RadiusBottomLeftPx']); ?>" /></div>
+                                </div>
+                            </div>
                         </div>
                     </details>
                 <?php endif; ?>
@@ -8565,7 +8677,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.7',
+                    'Version' => '1.8',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -8659,7 +8771,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.7',
+            'Version'        => '1.8',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -8689,7 +8801,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.7',
+                'Version' => '1.8',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

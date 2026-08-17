@@ -1,7 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.5.3
+Version: 0.5.4
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+== Version 0.5.4 – Avanceret visuelt elementdesign ==
+
+Nyt i sideeditoren:
+- opacity pr. sektion
+- gradientbaggrund med start/slutfarve og vinkel
+- baggrundsbillede fra WordPress Media Library eller URL
+- baggrundsbilledets placering og skalering
+- individuel radius for alle fire hjørner
+- hover-effekter: løft, let zoom eller ekstra skygge
+- justerbar hover-transition
+- schema 1.8 med bagudkompatible standardværdier
+
+Eksisterende sektioner beholder 100% opacity, ingen ekstra baggrundseffekt, deres eksisterende radius og ingen hover-effekt.
 
 == Installation / opdatering ==
 

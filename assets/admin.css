@@ -490,3 +490,12 @@
 .h18-element-typography-box{margin-top:16px;padding-top:16px;border-top:1px solid #dcdcde}
 .h18-element-typography-box h4{margin:0 0 5px}
 .h18-element-typography-box>.description{margin:0 0 12px}
+
+
+/* v0.5.4 advanced per-element effects */
+.h18-element-effects-box{margin-top:14px;padding:14px;border:1px solid #dcdcde;border-radius:8px;background:#fbfbfb}
+.h18-element-effects-box>h4:first-child{margin-top:0}
+.h18-section-bg-media-preview{display:flex;align-items:center;min-height:54px;margin:8px 0;padding:6px;border:1px dashed #c3ae83;border-radius:6px;background:#fff}
+.h18-section-bg-media-preview:empty{display:none}
+.h18-section-bg-media-preview img{display:block;max-width:120px;max-height:80px;width:auto;height:auto;border-radius:4px}
+.h18-bg-gradient-fields,.h18-bg-image-fields{margin-top:10px}
