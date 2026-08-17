@@ -1,0 +1,45 @@
+name: Release check v0.5.20
+
+on:
+  push:
+    branches:
+      - qa/v0.5.20-release-check
+    paths:
+      - '.github/workflows/release-check-v0520.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  release-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.20-release-check
+          fetch-depth: 0
+      - name: Point release runner at this QA branch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/release_v0520.py')
+          t=p.read_text()
+          t=t.replace("TARGET_BRANCH = 'qa/v0.5.20-r3-check'", "TARGET_BRANCH = 'qa/v0.5.20-release-check'")
+          p.write_text(t)
+          PY
+      - name: Run release with captured log
+        shell: bash
+        run: |
+          set +e
+          python3 .github/scripts/release_v0520.py > /tmp/release-v0520.log 2>&1
+          STATUS=$?
+          if [ "$STATUS" -ne 0 ]; then
+            cp /tmp/release-v0520.log .github/release-v0520-run.log
+            git config user.name hangar18-build
+            git config user.email actions@users.noreply.github.com
+            git add .github/release-v0520-run.log
+            git commit -m 'QA: capture v0.5.20 release failure'
+            git push origin HEAD:qa/v0.5.20-release-check
+            exit "$STATUS"
+          fi
+          cat /tmp/release-v0520.log
