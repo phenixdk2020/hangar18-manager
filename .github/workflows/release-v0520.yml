@@ -1,0 +1,21 @@
+name: Release Hangar18 Manager v0.5.20
+
+on:
+  push:
+    branches:
+      - qa/v0.5.20-r3-check
+    paths:
+      - '.github/workflows/release-v0520.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.20-r3-check
+          fetch-depth: 0
+      - run: python3 .github/scripts/release_v0520.py
