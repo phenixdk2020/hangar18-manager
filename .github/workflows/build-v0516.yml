@@ -1,0 +1,193 @@
+name: Build Hangar18 Manager v0.5.16
+
+on:
+  push:
+    branches:
+      - development/v0.5.16
+    paths:
+      - '.github/workflows/build-v0516.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.16
+          fetch-depth: 0
+
+      - name: Normalize patch anchors
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/scripts/patch_v0516.py')
+          t = p.read_text()
+          old = '''php = replace_once(php,
+              'data-types="hero text text_image image buttons card card_grid highlight html mail_form poll"',
+              'data-types="hero text text_image image buttons card card_grid highlight icon list badge quote html mail_form poll"',
+              'admin title types')'''
+          new = '''php = replace_once(php,
+              '<div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight html mail_form poll">',
+              '<div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight icon list badge quote html mail_form poll">',
+              'admin title types')'''
+          if old not in t:
+              raise SystemExit('Could not normalize admin title anchor')
+          p.write_text(t.replace(old, new, 1))
+          PY
+
+      - name: Apply v0.5.16 patch
+        run: python3 .github/scripts/patch_v0516.py
+
+      - name: Syntax and structural QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          grep -F 'Version: 0.5.16' hangar18-manager.php
+          grep -F "const VERSION = '0.5.16';" hangar18-manager.php
+          grep -F "'Version'        => '1.13'" hangar18-manager.php
+          grep -F "'icon'       => 'Ikon / SVG'" hangar18-manager.php
+          grep -F "'divider'    => 'Skillelinje'" hangar18-manager.php
+          grep -F "'list'       => 'Liste'" hangar18-manager.php
+          grep -F "'badge'      => 'Badge / mærkat'" hangar18-manager.php
+          grep -F "'quote'      => 'Citat'" hangar18-manager.php
+          grep -F "'embed'      => 'Embed / medie-URL'" hangar18-manager.php
+          grep -F "'shortcode'  => 'Shortcode (avanceret)'" hangar18-manager.php
+          grep -F 'page_editor_safe_icon_svg' hangar18-manager.php
+          grep -F 'wp_oembed_get' hangar18-manager.php
+          grep -F "current_user_can('unfiltered_html') || current_user_can('manage_options')" hangar18-manager.php
+          grep -F 'AdvancedContentAuthorized' hangar18-manager.php
+          grep -F 'primitiveVariantOptionsV0516' assets/admin.js
+          grep -F 'h18-canvas-primitive-divider' assets/admin.css
+          grep -F 'page-editor schema løftes bagudkompatibelt til 1.13' readme.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          php = Path('hangar18-manager.php').read_text()
+          js = Path('assets/admin.js').read_text()
+          # Explicit shortcode element owns shortcode execution. HTML compatibility content must not execute shortcodes implicitly.
+          start = php.index("private function render_page_editor_section_front")
+          end = php.index("private function render_page_editor_front", start)
+          block = php[start:end]
+          if "$section['Type'] === 'html'" not in block or 'wp_kses_post($content_source)' not in block:
+              raise SystemExit('HTML renderer security boundary missing')
+          if "do_shortcode(wp_kses_post($content_source))" in block:
+              raise SystemExit('HTML still executes shortcodes implicitly')
+          if "$section['Type'] === 'shortcode'" not in block or "AdvancedContentAuthorized" not in block:
+              raise SystemExit('Shortcode authorization boundary missing')
+          if 'wp_oembed_get($embed_url)' not in block:
+              raise SystemExit('oEmbed renderer missing')
+          # Built-in SVG library only: no posted SVG field or raw SVG storage.
+          if "[Svg" in php or "[SVG" in php or "SvgMarkup" in php:
+              raise SystemExit('Unexpected raw SVG persistence')
+          required_js = ['icon:', 'divider:', 'list:', 'badge:', 'quote:', 'embed:', 'shortcode:', 'refreshPrimitiveVariantV0516']
+          missing = [x for x in required_js if x not in js]
+          if missing:
+              raise SystemExit('Missing canvas/type JS: ' + repr(missing))
+          print('v0.5.16 structural/security QA passed')
+          PY
+
+      - name: Rebuild distribution package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php .build/hangar18-manager/
+          cp readme.txt .build/hangar18-manager/
+          cp assets/admin.css .build/hangar18-manager/assets/
+          cp assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+
+      - name: Update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          package = Path('dist/hangar18-manager.zip')
+          manifest = {
+              'schema_version': '1.0',
+              'plugin': 'hangar18-manager',
+              'version': '0.5.16',
+              'min_wp': '6.4',
+              'min_php': '8.0',
+              'published_utc': datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              'package_path': 'dist/hangar18-manager.zip',
+              'package_sha256': hashlib.sha256(package.read_bytes()).hexdigest(),
+              'changelog': [
+                  'Tilføjer E2 primitive elementer: Icon/SVG, Divider, List, Badge og Quote.',
+                  'Tilføjer sikkert Embed-element via WordPress oEmbed og separat capability-gated Shortcode-element.',
+                  'Importerede Gutenberg lister, citater og separatorer bliver semantiske Hangar18-elementer.',
+                  'HTML udfører ikke længere shortcodes implicit; eksekverbar shortcode kræver eksplicit autorisation.',
+                  'Løfter page-editor schema bagudkompatibelt til 1.13.'
+              ]
+          }
+          Path('update.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(manifest['package_sha256'])
+          PY
+
+      - name: Package QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .verify
+          mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          grep -F 'Version: 0.5.16' .verify/hangar18-manager/hangar18-manager.php
+          grep -F "'Version'        => '1.13'" .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'page_editor_safe_icon_svg' .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'AdvancedContentAuthorized' .verify/hangar18-manager/hangar18-manager.php
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          manifest = json.loads(Path('update.json').read_text())
+          actual = hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest()
+          assert manifest['version'] == '0.5.16'
+          assert manifest['package_sha256'] == actual
+          print('Package manifest QA passed:', actual)
+          PY
+
+      - name: Self-clean and diff scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          rm -f .github/scripts/patch_v0516.py .github/workflows/build-v0516.yml
+          git status --short
+          python3 - <<'PY'
+          import subprocess
+          allowed = {
+              'hangar18-manager.php','assets/admin.js','assets/admin.css','readme.txt','update.json','dist/hangar18-manager.zip',
+              '.github/scripts/patch_v0516.py','.github/workflows/build-v0516.yml'
+          }
+          paths = set()
+          for line in subprocess.check_output(['git','status','--short'], text=True).splitlines():
+              path = line[3:].strip()
+              if ' -> ' in path: path = path.split(' -> ',1)[1]
+              paths.add(path)
+          extra = paths - allowed
+          if extra: raise SystemExit('Unexpected release-scope files: ' + repr(sorted(extra)))
+          print('Release scope QA passed')
+          PY
+
+      - name: Commit v0.5.16 release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m 'Release Hangar18 Manager 0.5.16'
+          git push origin HEAD:development/v0.5.16
