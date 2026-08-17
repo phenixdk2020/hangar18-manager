@@ -6,7 +6,7 @@
   "min_php": "8.0",
   "published_utc": "2026-08-17T17:53:22Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "7eb06146f08f51c44301953456e6bd8b93c3e042510e076f4a1d73cd99006816",
+  "package_sha256": "e0bd9c287c3165dff449aca79c4bbdd13fc336c683c9fb79a977b1990175379d",
   "changelog": [
     "Tilføjer Navigator/Lag med drag-and-drop rækkefølge og synlighedsstatus.",
     "Opdeler Inspector i Indhold, Design og Avanceret.",

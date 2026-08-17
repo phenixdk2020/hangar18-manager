@@ -540,7 +540,7 @@ jQuery(function ($) {
                 $(this).find('.h18-page-section-order').val(visibleIndex * 10);
             }
         });
-        if (!skipNavigator) {
+        if (skipNavigator !== true) {
             rebuildPageNavigator();
         }
     }
