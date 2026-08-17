@@ -24,7 +24,7 @@ t=t.replace(old_admin,new_admin,1)
 # Correct CSS function boundary: section renderer follows page_editor_frontend_css in current source.
 t=t.replace("end=php.index('    private function render_page_editor_imported_group', start)","end=php.index('    private function render_page_editor_section_front', start)")
 
-# Correct actual multiline canvas color return anchor and preserve clampValue().
+# Correct current v0.5.19 canvasElementColors return order exactly.
 old="""colors_return=\"\"\"        return { background: background, backgroundImage: backgroundImage, text: text, heading: heading, border: border, opacity: opacity };
 \"\"\"
 colors_return_new=\"\"\"        if (currentCanvasState === 'disabled') {
@@ -32,26 +32,12 @@ colors_return_new=\"\"\"        if (currentCanvasState === 'disabled') {
         }
         return { background: background, backgroundImage: backgroundImage, text: text, heading: heading, border: border, opacity: opacity };
 \"\"\""""
-new="""colors_return=\"\"\"        return {
-            background: background,
-            backgroundImage: backgroundImage,
-            text: text,
-            heading: heading,
-            border: border,
-            opacity: clampValue(opacity, 0, 1)
-        };
+new="""colors_return=\"\"\"        return { background: background, text: text, heading: heading, border: border, opacity: opacity, backgroundImage: backgroundImage };
 \"\"\"
 colors_return_new=\"\"\"        if (currentCanvasState === 'disabled') {
             opacity *= Math.max(10, Math.min(100, canvasNumber($row, 'DisabledOpacityPercent', 55))) / 100;
         }
-        return {
-            background: background,
-            backgroundImage: backgroundImage,
-            text: text,
-            heading: heading,
-            border: border,
-            opacity: clampValue(opacity, 0, 1)
-        };
+        return { background: background, text: text, heading: heading, border: border, opacity: opacity, backgroundImage: backgroundImage };
 \"\"\""""
 if old not in t:
     raise SystemExit('Canvas return patch-definition anchor missing')
@@ -76,7 +62,6 @@ if old_run not in f:
     raise SystemExit('Finalizer run() anchor missing')
 f=f.replace(old_run,new_run,1)
 
-# Ensure all v0.5.20 QA-only files disappear from the successful release tree.
 needle="""      '.github/workflows/diagnose-v0520-next.yml','.github/workflows/run-finalize-v0520.yml',
       '.github/diagnostics-v0520.txt','.github/diagnostics-v0520-next.txt','.github/finalize-v0520-error.txt']:
 """
