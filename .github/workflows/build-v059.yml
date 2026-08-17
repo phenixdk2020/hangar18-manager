@@ -1,0 +1,97 @@
+name: Build Hangar18 Manager 0.5.9
+
+on:
+  push:
+    branches:
+      - qa/v0.5.9
+    paths:
+      - .github/workflows/build-v059.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.9
+          fetch-depth: 0
+
+      - name: Apply v0.5.9 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/v059_patch.py
+
+      - name: Static QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'Version: 0.5.9' hangar18-manager.php
+          grep -F "const VERSION = '0.5.9';" hangar18-manager.php
+          grep -F 'Direkte Card Grid-redigering' readme.txt
+          grep -F 'selectedCanvasCardKey' assets/admin.js
+          grep -F 'initializeCanvasCardGridPreview' assets/admin.js
+          grep -F 'h18-canvas-card-tools' assets/admin.css
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+
+      - name: Rebuild package and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .pkg .verify
+          mkdir -p .pkg .verify
+          unzip -q dist/hangar18-manager.zip -d .pkg
+          test -d .pkg/hangar18-manager
+          cp hangar18-manager.php .pkg/hangar18-manager/hangar18-manager.php
+          cp readme.txt .pkg/hangar18-manager/readme.txt
+          mkdir -p .pkg/hangar18-manager/assets
+          cp assets/admin.js .pkg/hangar18-manager/assets/admin.js
+          cp assets/admin.css .pkg/hangar18-manager/assets/admin.css
+          rm -f dist/hangar18-manager.zip
+          (cd .pkg && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          unzip -q dist/hangar18-manager.zip -d .verify
+          grep -F 'Version: 0.5.9' .verify/hangar18-manager/hangar18-manager.php
+          grep -F "const VERSION = '0.5.9';" .verify/hangar18-manager/hangar18-manager.php
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          SHA=$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')
+          export SHA
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          path = 'update.json'
+          data = json.load(open(path, encoding='utf-8'))
+          data['version'] = '0.5.9'
+          data['published_utc'] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
+          data['package_sha256'] = os.environ['SHA']
+          data['changelog'] = [
+              'Hvert kort i Card Grid kan vælges og redigeres direkte i live canvas.',
+              'Kort kan omarrangeres direkte i canvas med drag-and-drop.',
+              'Kortoverskrift og rich-text indhold kan redigeres med dobbeltklik.',
+              'Valgt kort får hurtigkontroller for baggrund, teksttone, placering, padding, radius, kant og aktiv-status.',
+              'Card Grid får direkte kontrol over kolonner og mellemrum for visuel breddejustering.',
+              'Valgt kort fremhæves samtidig i Inspector.',
+              'Page-editor schema forbliver 1.10 og eksisterende sidedata migreres ikke.'
+          ]
+          with open(path, 'w', encoding='utf-8') as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          PY
+          rm -rf .pkg .verify
+
+      - name: Commit validated build and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/v059_patch.py .github/workflows/build-v059.yml
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A hangar18-manager.php assets/admin.js assets/admin.css readme.txt update.json dist/hangar18-manager.zip .github/v059_patch.py .github/workflows/build-v059.yml
+          git commit -m 'Release v0.5.9 direct Card Grid canvas editing'
+          git push origin HEAD:qa/v0.5.9
