@@ -55,6 +55,48 @@ jQuery(function ($) {
         }
     });
 
+    $('#h18-page-create-form').on('submit', function (event) {
+        const $form = $(this);
+        const $whatIf = $form.find('input[name="whatif"]');
+        const $title = $form.find('input[name="page_title"]');
+        const $name = $form.find('input[name="page_name"]');
+        const $changeNote = $form.find('input[name="change_note"]');
+
+        if ($whatIf.is(':checked')) {
+            return true;
+        }
+
+        const hasTitle = $title.val().trim().length > 0;
+        const hasManualSlug = $name.val().trim().length > 0;
+        const hasChangeNote = $changeNote.val().trim().length > 0;
+
+        if (!hasTitle && !hasManualSlug) {
+            event.preventDefault();
+            window.alert('Angiv enten en sidetitel eller en unik slug, før du opretter siden.');
+            return false;
+        }
+
+        if (!hasChangeNote) {
+            event.preventDefault();
+            window.alert('Skriv en kort ændringsbeskrivelse, før du opretter siden.');
+            return false;
+        }
+
+        if (!hasManualSlug && $title.val().trim()) {
+            $name.val(slugify($title.val()));
+        }
+
+        return true;
+    });
+
+    $('#h18-page-create-form input[name="page_title"]').on('blur', function () {
+        const $form = $('#h18-page-create-form');
+        const $name = $form.find('input[name="page_name"]');
+        if ($name.length && !$name.val().trim()) {
+            $name.val(slugify($(this).val()));
+        }
+    });
+
     const $sortable = $('#h18-gallery-sortable');
     const $json = $('#h18-gallery-items-json');
     const $count = $('#h18-gallery-count');
@@ -347,6 +389,9 @@ jQuery(function ($) {
             buttons: 'Handlingsknapper',
             card: 'Indholdskort',
             card_grid: 'Kort-række / kolonner',
+            split: 'Opdel sektion',
+            table: 'Tabel',
+            function: 'Funktion / felter',
             highlight: 'Fremhævet tekst',
             spacer: 'Afstand',
             html: 'Importeret blok / HTML',
@@ -481,6 +526,24 @@ jQuery(function ($) {
                 addPageCard($row, { Title: 'Kasse 2', Background: 'Sand', TextTone: 'Auto', Active: true });
                 addPageCard($row, { Title: 'Kasse 3', Background: 'Steel', TextTone: 'Auto', Active: true });
             }
+        } else if (type === 'split') {
+            setValue('Background', 'White');
+            setValue('PaddingPx', 0);
+            setValue('HorizontalPaddingPx', 0);
+            setValue('MobilePaddingPx', 0);
+            setValue('MobileHorizontalPaddingPx', 0);
+            setValue('SplitColumns', 2);
+            setValue('SplitGapPx', 24);
+            setValue('SplitMobileGapPx', 16);
+            setValue('SplitPaddingPx', 22);
+            setValue('SplitColumnColors', '#ffffff,#f2f0e8');
+            setValue('Content', 'Kolonne 1\nKolonne 2');
+        } else if (type === 'function') {
+            setValue('Background', 'OffWhite');
+            setValue('PaddingPx', 12);
+            setValue('MobilePaddingPx', 12);
+            setValue('FunctionColumns', 2);
+            setValue('FunctionFields', 'Navn|text|navn|\nBeskrivelse|textarea|beskrivelse|');
         } else if (type === 'highlight') {
             setValue('Background', 'OffWhite');
             setValue('PaddingPx', 22);

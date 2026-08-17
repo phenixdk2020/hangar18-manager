@@ -1,18 +1,18 @@
-{
-  "schema_version": "1.0",
-  "plugin": "hangar18-manager",
-  "version": "0.4.27",
-  "min_wp": "6.4",
-  "min_php": "8.0",
-  "published_utc": "2026-08-16T07:11:05Z",
-  "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "814a4f2f8ef833f44072ce28cc3238a9eedbe4ca493f8adb901f6b0b3895aa75",
-  "changelog": [
-    "Tilføjer en visuel sidebygger med elementpalette, sideopbygning og indstillingspanel.",
-    "Elementer og funktioner kan klikkes eller trækkes ind i siden og flyttes med drag-and-drop.",
-    "Tilføjer kort-rækker med 1-4 desktopkolonner og individuelle farver, kanter, luft og placering.",
-    "Tilføjer stålgrå designfarve og automatisk lys eller mørk tekst på hver kasse.",
-    "Kan opdele importerede WordPress-kolonner til selvstændige redigerbare kasser.",
-    "Bevarer versionsnummer, ændringsbeskrivelse og automatiske backups ved rigtig gemning."
-  ]
+﻿{
+    "schema_version":  "1.0",
+    "plugin":  "hangar18-manager",
+    "version":  "0.5.0",
+    "min_wp":  "6.4",
+    "min_php":  "8.0",
+    "published_utc":  "2026-08-17T08:27:06Z",
+    "package_path":  "dist/hangar18-manager.zip",
+    "package_sha256":  "89f1685072934ce1bc3b68f0b82c7724852e702a3b2e64144ae74204791df9f2",
+    "changelog":  [
+                      "TilfÃ¸jer en visuel sidebygger med elementpalette, sideopbygning og indstillingspanel.",
+                      "Elementer og funktioner kan klikkes eller trÃ¦kkes ind i siden og flyttes med drag-and-drop.",
+                      "TilfÃ¸jer kort-rÃ¦kker med 1-4 desktopkolonner og individuelle farver, kanter, luft og placering.",
+                      "TilfÃ¸jer stÃ¥lgrÃ¥ designfarve og automatisk lys eller mÃ¸rk tekst pÃ¥ hver kasse.",
+                      "Kan opdele importerede WordPress-kolonner til selvstÃ¦ndige redigerbare kasser.",
+                      "Bevarer versionsnummer, Ã¦ndringsbeskrivelse og automatiske backups ved rigtig gemning."
+                  ]
 }
