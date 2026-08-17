@@ -1,8 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.5.14
+Version: 0.5.15
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.15 – Multi-select, canvas workspace og context menu ==
+
+Nyt:
+- UD-017: Ctrl/Cmd/Shift+klik kan vælge flere sideelementer samtidig i canvas og Navigator
+- fælles kompatible egenskaber kan batch-redigeres: baggrund, placering, padding, radius, opacity og synlighed
+- Inspector viser tydeligt antal valgte elementer og skjuler batchfelter, som ikke understøttes af alle valgte elementer
+- UD-018: canvas zoom 50-150%, 100%-reset, Outline mode og 16 px Guides-grid
+- workspace-indstillinger gemmes lokalt i browseren og ændrer aldrig frontend-output
+- UD-019: højreklik eller Shift+F10 åbner en keyboard-tilgængelig context menu på canvas/Navigator
+- context menu indeholder redigér, multivalg, duplikér, design copy/paste, komponent, vis/skjul, flyt og fjern
+- context menu understøtter piletaster, Home/End, Enter/Space, Tab-loop og Escape
+- page-editor schema forbliver 1.12; alle funktioner er editor-only
 
 == Version 0.5.14 – Kommandopalette og hurtignavigation ==
 

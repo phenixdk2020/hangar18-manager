@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.14",
+  "version": "0.5.15",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T20:46:47Z",
+  "published_utc": "2026-08-17T22:17:09Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "70c92a49ab9caf3a00b1fcc185e22f3df7aa5db5b2e2fdbf0cc7d2372d117ba8",
+  "package_sha256": "2d9d55836200e776a50c1f9cbd896a9972732aa09d2e700efa31e14e5dbe31dd",
   "changelog": [
-    "Tilføjer søgbar kommandopalette med Ctrl/Cmd+K.",
-    "Tilføjer dynamisk hurtignavigation til aktuelle sideelementer og genveje til elementoprettelse.",
-    "Tilføjer kommandoer for responsive previews, states, Undo/Redo og designhandlinger.",
-    "Tilføjer Alt+Pil op/ned navigation og tilgængelig dialogbetjening med Escape, Enter og Tab.",
-    "Gem-kommandoen navigerer kun til ændringsbeskrivelsen; page-editor schema forbliver 1.12."
+    "Afslutter E1 Editor Shell med UD-017 multi-select og fælles property editing.",
+    "Tilføjer UD-018 canvas zoom, Outline mode og Guides med lokale workspace-præferencer.",
+    "Tilføjer UD-019 keyboard-tilgængelig context menu via højreklik og Shift+F10.",
+    "Batch-redigering og context menu genbruger eksisterende editorfelter og Undo/Redo-historik.",
+    "Funktionerne er editor-only; page-editor schema forbliver 1.12."
   ]
 }
