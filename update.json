@@ -1,18 +1,16 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.4.27",
+  "version": "0.5.0",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-16T07:11:05Z",
+  "published_utc": "2026-08-17T17:33:36Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "814a4f2f8ef833f44072ce28cc3238a9eedbe4ca493f8adb901f6b0b3895aa75",
+  "package_sha256": "63e442257c3d25f3d70ce00da54469a9dab704e58c26bedb4a74b472e2798dc3",
   "changelog": [
-    "Tilføjer en visuel sidebygger med elementpalette, sideopbygning og indstillingspanel.",
-    "Elementer og funktioner kan klikkes eller trækkes ind i siden og flyttes med drag-and-drop.",
-    "Tilføjer kort-rækker med 1-4 desktopkolonner og individuelle farver, kanter, luft og placering.",
-    "Tilføjer stålgrå designfarve og automatisk lys eller mørk tekst på hver kasse.",
-    "Kan opdele importerede WordPress-kolonner til selvstændige redigerbare kasser.",
-    "Bevarer versionsnummer, ændringsbeskrivelse og automatiske backups ved rigtig gemning."
+    "Bygger direkte videre på v0.4.27 og bevarer den eksisterende visuelle builder.",
+    "Tilføjer HeaderDesign schema 3.0 med globale design tokens.",
+    "Kobler sidebyggerens farvepresets til centrale designfarver.",
+    "Tilføjer valgfrie menupræsentationer, hover/active-effekter og undermenu-animationer."
   ]
 }

@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.4.27
+ * Version: 0.5.0
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.4.27';
+    const VERSION = '0.5.0';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -90,6 +90,7 @@ final class Hangar18_Manager {
         add_action('admin_init', [$this, 'maybe_restore_home_editor_design_0423'], 20);
         add_action('admin_init', [$this, 'maybe_check_for_updates'], 20);
         add_action('wp', [$this, 'disable_astra_banner_for_managed_pages'], 1);
+        add_action('wp_head', [$this, 'render_design_tokens_v050'], 998);
         add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);
         add_action('wp_footer', [$this, 'render_header_origin_guard'], PHP_INT_MAX);
         add_action('admin_menu', [$this, 'register_admin_menu']);
@@ -746,6 +747,92 @@ final class Hangar18_Manager {
         }
     }
 
+    public function render_design_tokens_v050() {
+    if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
+        return;
+    }
+
+    $d = $this->get_header_design_settings();
+    $body_font = $this->header_font_family_css($d['BodyFontFamily']);
+    $heading_font = $this->header_font_family_css($d['HeadingFontFamily']);
+    $transition = (int) $d['MenuTransitionMs'];
+    ?>
+    <style id="hangar18-design-tokens-v050">
+    :root {
+        --h18-color-primary:<?php echo esc_html($d['PrimaryColor']); ?>;
+        --h18-color-secondary:<?php echo esc_html($d['SecondaryColor']); ?>;
+        --h18-color-accent:<?php echo esc_html($d['AccentColor']); ?>;
+        --h18-color-surface:<?php echo esc_html($d['SurfaceColor']); ?>;
+        --h18-color-background:<?php echo esc_html($d['BackgroundColor']); ?>;
+        --h18-color-text:<?php echo esc_html($d['TextColor']); ?>;
+        --h18-color-light:<?php echo esc_html($d['LightTextColor']); ?>;
+        --h18-color-action:<?php echo esc_html($d['ActionColor']); ?>;
+        --h18-font-body:<?php echo esc_html($body_font); ?>;
+        --h18-font-heading:<?php echo esc_html($heading_font); ?>;
+        --h18-font-body-size:<?php echo esc_html((int) $d['BodyFontSize']); ?>px;
+        --h18-font-h1-size:<?php echo esc_html((int) $d['H1FontSize']); ?>px;
+        --h18-font-h2-size:<?php echo esc_html((int) $d['H2FontSize']); ?>px;
+        --h18-font-h3-size:<?php echo esc_html((int) $d['H3FontSize']); ?>px;
+        --h18-radius-small:<?php echo esc_html((int) $d['RadiusSmallPx']); ?>px;
+        --h18-radius-medium:<?php echo esc_html((int) $d['RadiusMediumPx']); ?>px;
+        --h18-radius-large:<?php echo esc_html((int) $d['RadiusLargePx']); ?>px;
+        --h18-space-xs:<?php echo esc_html((int) $d['SpacingXsPx']); ?>px;
+        --h18-space-s:<?php echo esc_html((int) $d['SpacingSmallPx']); ?>px;
+        --h18-space-m:<?php echo esc_html((int) $d['SpacingMediumPx']); ?>px;
+        --h18-space-l:<?php echo esc_html((int) $d['SpacingLargePx']); ?>px;
+        --h18-space-xl:<?php echo esc_html((int) $d['SpacingXlPx']); ?>px;
+        --h18-menu-transition:<?php echo esc_html($transition); ?>ms;
+    }
+
+    body.page .h18-editor-page {
+        color:var(--h18-color-text);
+        font-family:var(--h18-font-body);
+        font-size:var(--h18-font-body-size);
+    }
+    body.page .h18-editor-page h1 {font-family:var(--h18-font-heading);font-size:clamp(2rem,5vw,var(--h18-font-h1-size));}
+    body.page .h18-editor-page h2 {font-family:var(--h18-font-heading);font-size:clamp(1.55rem,3.5vw,var(--h18-font-h2-size));}
+    body.page .h18-editor-page h3 {font-family:var(--h18-font-heading);font-size:clamp(1.2rem,2.5vw,var(--h18-font-h3-size));}
+    body.page .h18-editor-section--offwhite {background:var(--h18-color-surface) !important;}
+    body.page .h18-editor-section--sand {background:var(--h18-color-accent) !important;color:var(--h18-color-text) !important;}
+    body.page .h18-editor-section--olive {background:var(--h18-color-primary) !important;color:var(--h18-color-light) !important;}
+    body.page .h18-editor-section--steel {background:var(--h18-color-secondary) !important;color:var(--h18-color-light) !important;}
+    body.page .h18-editor-section a {color:var(--h18-color-action);}
+    .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a {position:relative;transition:color var(--h18-menu-transition) ease,background var(--h18-menu-transition) ease,transform var(--h18-menu-transition) ease;}
+
+    <?php if ($d['MenuPresentation'] === 'FloatingPill') : ?>
+    .h18-site-header .h18-desktop-nav {background:var(--h18-color-surface) !important;border:1px solid rgba(48,56,42,.14) !important;border-radius:999px !important;padding:6px 12px !important;box-shadow:0 8px 24px rgba(0,0,0,.09) !important;}
+    <?php elseif ($d['MenuPresentation'] === 'Framed') : ?>
+    .h18-site-header .h18-desktop-nav {border:1px solid var(--h18-color-accent) !important;border-radius:var(--h18-radius-medium) !important;padding:6px 12px !important;}
+    <?php endif; ?>
+
+    <?php if ($d['MenuHoverEffect'] === 'Underline') : ?>
+    .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a::after {content:"";position:absolute;left:12%;right:12%;bottom:-4px;height:2px;background:var(--h18-color-accent);transform:scaleX(0);transition:transform var(--h18-menu-transition) ease;}
+    .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:hover::after,.h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:focus-visible::after {transform:scaleX(1);}
+    <?php elseif ($d['MenuHoverEffect'] === 'Lift') : ?>
+    .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:hover,.h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:focus-visible {transform:translateY(-2px);}
+    <?php elseif ($d['MenuHoverEffect'] === 'Pill') : ?>
+    .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:hover,.h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:focus-visible {background:color-mix(in srgb,var(--h18-color-accent) 24%,transparent);border-radius:999px;}
+    <?php endif; ?>
+
+    <?php if ($d['MenuActiveStyle'] === 'Underline') : ?>
+    .h18-desktop-nav .current-menu-item > a::after,.h18-desktop-nav .current_page_item > a::after,.h18-desktop-nav .current-menu-ancestor > a::after {content:"";position:absolute;left:12%;right:12%;bottom:-4px;height:2px;background:var(--h18-color-accent);transform:scaleX(1);}
+    <?php elseif ($d['MenuActiveStyle'] === 'Pill') : ?>
+    .h18-desktop-nav .current-menu-item > a,.h18-desktop-nav .current_page_item > a,.h18-desktop-nav .current-menu-ancestor > a {background:color-mix(in srgb,var(--h18-color-accent) 24%,transparent);border-radius:999px;}
+    <?php elseif ($d['MenuActiveStyle'] === 'Dot') : ?>
+    .h18-desktop-nav .current-menu-item > a::after,.h18-desktop-nav .current_page_item > a::after {content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--h18-color-accent);left:50%;bottom:-7px;transform:translateX(-50%);}
+    <?php endif; ?>
+
+    <?php if ($d['SubmenuAnimation'] !== 'None') : ?>
+    .h18-site-header .h18-desktop-nav .h18-submenu {display:flex !important;opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--h18-menu-transition) ease,transform var(--h18-menu-transition) ease;}
+    <?php if ($d['SubmenuAnimation'] === 'FadeSlide') : ?>.h18-site-header .h18-desktop-nav .h18-submenu {transform:translateY(-8px);}
+    <?php elseif ($d['SubmenuAnimation'] === 'Scale') : ?>.h18-site-header .h18-desktop-nav .h18-submenu {transform:scale(.96);transform-origin:top left;}
+    <?php endif; ?>
+    .h18-site-header .h18-desktop-nav .h18-menu-item-has-children:hover > .h18-submenu,.h18-site-header .h18-desktop-nav .h18-menu-item-has-children:focus-within > .h18-submenu {opacity:1;visibility:visible;pointer-events:auto;transform:none;}
+    <?php endif; ?>
+    </style>
+    <?php
+}
+
     public function render_frontend_runtime_fixes() {
         if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
             return;
@@ -1200,7 +1287,34 @@ final class Hangar18_Manager {
 
     private function default_header_design() {
         return [
-            'Version' => '2.3',
+            'Version' => '3.0',
+            'PrimaryColor' => '#30382a',
+            'SecondaryColor' => '#525a5f',
+            'AccentColor' => '#c3ae83',
+            'SurfaceColor' => '#f2f0e8',
+            'BackgroundColor' => '#ffffff',
+            'TextColor' => '#30382a',
+            'LightTextColor' => '#ffffff',
+            'ActionColor' => '#8b4a2b',
+            'BodyFontFamily' => 'Segoe UI',
+            'HeadingFontFamily' => 'Segoe UI',
+            'BodyFontSize' => 16,
+            'H1FontSize' => 48,
+            'H2FontSize' => 32,
+            'H3FontSize' => 22,
+            'RadiusSmallPx' => 4,
+            'RadiusMediumPx' => 7,
+            'RadiusLargePx' => 12,
+            'SpacingXsPx' => 4,
+            'SpacingSmallPx' => 8,
+            'SpacingMediumPx' => 16,
+            'SpacingLargePx' => 24,
+            'SpacingXlPx' => 40,
+            'MenuPresentation' => 'Classic',
+            'MenuHoverEffect' => 'None',
+            'MenuActiveStyle' => 'None',
+            'MenuTransitionMs' => 180,
+            'SubmenuAnimation' => 'None',
             'VisualBaseScalePercent' => 90,
             'MenuAlignment' => 'Right',
             'PositionMode' => 'Normal',
@@ -1264,6 +1378,14 @@ final class Hangar18_Manager {
         ];
         $allowed_weights = ['Normal', 'Medium', 'Semibold', 'Bold'];
         $allowed_max_widths = ['None', '1400', '1600', '1800', '2000'];
+        $allowed_menu_presentations = ['Classic', 'FloatingPill', 'Framed'];
+        $allowed_menu_hover = ['None', 'Underline', 'Lift', 'Pill'];
+        $allowed_menu_active = ['None', 'Underline', 'Pill', 'Dot'];
+        $allowed_submenu_animations = ['None', 'Fade', 'FadeSlide', 'Scale'];
+        $normalize_color = static function($value, $fallback) {
+            $color = sanitize_hex_color((string) $value);
+            return $color ?: $fallback;
+        };
 
         $position = in_array(
             (string) ($saved['PositionMode'] ?? ''),
@@ -1284,7 +1406,34 @@ final class Hangar18_Manager {
         }
 
         return [
-            'Version'                           => '2.3',
+            'Version'                           => '3.0',
+            'PrimaryColor'                      => $normalize_color($saved['PrimaryColor'] ?? $default['PrimaryColor'], $default['PrimaryColor']),
+            'SecondaryColor'                    => $normalize_color($saved['SecondaryColor'] ?? $default['SecondaryColor'], $default['SecondaryColor']),
+            'AccentColor'                       => $normalize_color($saved['AccentColor'] ?? $default['AccentColor'], $default['AccentColor']),
+            'SurfaceColor'                      => $normalize_color($saved['SurfaceColor'] ?? $default['SurfaceColor'], $default['SurfaceColor']),
+            'BackgroundColor'                   => $normalize_color($saved['BackgroundColor'] ?? $default['BackgroundColor'], $default['BackgroundColor']),
+            'TextColor'                         => $normalize_color($saved['TextColor'] ?? $default['TextColor'], $default['TextColor']),
+            'LightTextColor'                    => $normalize_color($saved['LightTextColor'] ?? $default['LightTextColor'], $default['LightTextColor']),
+            'ActionColor'                       => $normalize_color($saved['ActionColor'] ?? $default['ActionColor'], $default['ActionColor']),
+            'BodyFontFamily'                    => in_array((string) ($saved['BodyFontFamily'] ?? ''), $allowed_fonts, true) ? (string) $saved['BodyFontFamily'] : $default['BodyFontFamily'],
+            'HeadingFontFamily'                 => in_array((string) ($saved['HeadingFontFamily'] ?? ''), $allowed_fonts, true) ? (string) $saved['HeadingFontFamily'] : $default['HeadingFontFamily'],
+            'BodyFontSize'                      => $this->clamp_int($saved['BodyFontSize'] ?? $default['BodyFontSize'], 12, 24, $default['BodyFontSize']),
+            'H1FontSize'                        => $this->clamp_int($saved['H1FontSize'] ?? $default['H1FontSize'], 24, 88, $default['H1FontSize']),
+            'H2FontSize'                        => $this->clamp_int($saved['H2FontSize'] ?? $default['H2FontSize'], 20, 64, $default['H2FontSize']),
+            'H3FontSize'                        => $this->clamp_int($saved['H3FontSize'] ?? $default['H3FontSize'], 16, 48, $default['H3FontSize']),
+            'RadiusSmallPx'                     => $this->clamp_int($saved['RadiusSmallPx'] ?? $default['RadiusSmallPx'], 0, 30, $default['RadiusSmallPx']),
+            'RadiusMediumPx'                    => $this->clamp_int($saved['RadiusMediumPx'] ?? $default['RadiusMediumPx'], 0, 40, $default['RadiusMediumPx']),
+            'RadiusLargePx'                     => $this->clamp_int($saved['RadiusLargePx'] ?? $default['RadiusLargePx'], 0, 60, $default['RadiusLargePx']),
+            'SpacingXsPx'                       => $this->clamp_int($saved['SpacingXsPx'] ?? $default['SpacingXsPx'], 0, 24, $default['SpacingXsPx']),
+            'SpacingSmallPx'                    => $this->clamp_int($saved['SpacingSmallPx'] ?? $default['SpacingSmallPx'], 0, 40, $default['SpacingSmallPx']),
+            'SpacingMediumPx'                   => $this->clamp_int($saved['SpacingMediumPx'] ?? $default['SpacingMediumPx'], 0, 64, $default['SpacingMediumPx']),
+            'SpacingLargePx'                    => $this->clamp_int($saved['SpacingLargePx'] ?? $default['SpacingLargePx'], 0, 96, $default['SpacingLargePx']),
+            'SpacingXlPx'                       => $this->clamp_int($saved['SpacingXlPx'] ?? $default['SpacingXlPx'], 0, 140, $default['SpacingXlPx']),
+            'MenuPresentation'                  => in_array((string) ($saved['MenuPresentation'] ?? ''), $allowed_menu_presentations, true) ? (string) $saved['MenuPresentation'] : $default['MenuPresentation'],
+            'MenuHoverEffect'                   => in_array((string) ($saved['MenuHoverEffect'] ?? ''), $allowed_menu_hover, true) ? (string) $saved['MenuHoverEffect'] : $default['MenuHoverEffect'],
+            'MenuActiveStyle'                   => in_array((string) ($saved['MenuActiveStyle'] ?? ''), $allowed_menu_active, true) ? (string) $saved['MenuActiveStyle'] : $default['MenuActiveStyle'],
+            'MenuTransitionMs'                  => $this->clamp_int($saved['MenuTransitionMs'] ?? $default['MenuTransitionMs'], 0, 1200, $default['MenuTransitionMs']),
+            'SubmenuAnimation'                  => in_array((string) ($saved['SubmenuAnimation'] ?? ''), $allowed_submenu_animations, true) ? (string) $saved['SubmenuAnimation'] : $default['SubmenuAnimation'],
             'VisualBaseScalePercent'            => $this->clamp_int($saved['VisualBaseScalePercent'] ?? $default['VisualBaseScalePercent'], 50, 100, $default['VisualBaseScalePercent']),
             'MenuAlignment'                     => in_array((string) ($saved['MenuAlignment'] ?? ''), $allowed_alignments, true) ? (string) $saved['MenuAlignment'] : $default['MenuAlignment'],
             'PositionMode'                      => $position,
@@ -10325,7 +10474,34 @@ HTML;
 
     private function header_design_from_post() {
         return $this->normalize_header_design([
-            'Version'                           => '2.3',
+            'Version'                           => '3.0',
+            'PrimaryColor'                      => $this->post_text('PrimaryColor'),
+            'SecondaryColor'                    => $this->post_text('SecondaryColor'),
+            'AccentColor'                       => $this->post_text('AccentColor'),
+            'SurfaceColor'                      => $this->post_text('SurfaceColor'),
+            'BackgroundColor'                   => $this->post_text('BackgroundColor'),
+            'TextColor'                         => $this->post_text('TextColor'),
+            'LightTextColor'                    => $this->post_text('LightTextColor'),
+            'ActionColor'                       => $this->post_text('ActionColor'),
+            'BodyFontFamily'                    => $this->post_text('BodyFontFamily'),
+            'HeadingFontFamily'                 => $this->post_text('HeadingFontFamily'),
+            'BodyFontSize'                      => $_POST['BodyFontSize'] ?? 16,
+            'H1FontSize'                        => $_POST['H1FontSize'] ?? 48,
+            'H2FontSize'                        => $_POST['H2FontSize'] ?? 32,
+            'H3FontSize'                        => $_POST['H3FontSize'] ?? 22,
+            'RadiusSmallPx'                     => $_POST['RadiusSmallPx'] ?? 4,
+            'RadiusMediumPx'                    => $_POST['RadiusMediumPx'] ?? 7,
+            'RadiusLargePx'                     => $_POST['RadiusLargePx'] ?? 12,
+            'SpacingXsPx'                       => $_POST['SpacingXsPx'] ?? 4,
+            'SpacingSmallPx'                    => $_POST['SpacingSmallPx'] ?? 8,
+            'SpacingMediumPx'                   => $_POST['SpacingMediumPx'] ?? 16,
+            'SpacingLargePx'                    => $_POST['SpacingLargePx'] ?? 24,
+            'SpacingXlPx'                       => $_POST['SpacingXlPx'] ?? 40,
+            'MenuPresentation'                  => $this->post_text('MenuPresentation'),
+            'MenuHoverEffect'                   => $this->post_text('MenuHoverEffect'),
+            'MenuActiveStyle'                   => $this->post_text('MenuActiveStyle'),
+            'MenuTransitionMs'                  => $_POST['MenuTransitionMs'] ?? 180,
+            'SubmenuAnimation'                  => $this->post_text('SubmenuAnimation'),
             'VisualBaseScalePercent'            => $_POST['VisualBaseScalePercent'] ?? 90,
             'MenuAlignment'                     => $this->post_text('MenuAlignment'),
             'PositionMode'                      => $this->post_text('PositionMode'),
@@ -10508,6 +10684,57 @@ HTML;
                 </div>
 
                 <div class="h18-settings-groups">
+                    <section class="h18-panel h18-panel-wide">
+                        <h3>Globalt designsystem</h3>
+                        <p class="description">Fælles design tokens for sidebyggeren. Standardværdierne matcher v0.4.27.</p>
+                        <div class="h18-dynamic-fields-grid">
+                            <?php
+                            $this->field('PrimaryColor', 'Primærfarve', $s['PrimaryColor'], 'color');
+                            $this->field('SecondaryColor', 'Sekundærfarve', $s['SecondaryColor'], 'color');
+                            $this->field('AccentColor', 'Accentfarve', $s['AccentColor'], 'color');
+                            $this->field('SurfaceColor', 'Lys flade', $s['SurfaceColor'], 'color');
+                            $this->field('BackgroundColor', 'Sidebaggrund', $s['BackgroundColor'], 'color');
+                            $this->field('TextColor', 'Tekstfarve', $s['TextColor'], 'color');
+                            $this->field('LightTextColor', 'Lys tekst', $s['LightTextColor'], 'color');
+                            $this->field('ActionColor', 'Links / handlinger', $s['ActionColor'], 'color');
+                            ?>
+                        </div>
+                    </section>
+                    <section class="h18-panel">
+                        <h3>Global typografi</h3>
+                        <?php
+                        $font_options = ['System'=>'System','Segoe UI'=>'Segoe UI','Arial'=>'Arial','Verdana'=>'Verdana','Tahoma'=>'Tahoma','Trebuchet MS'=>'Trebuchet MS','Georgia'=>'Georgia','Times New Roman'=>'Times New Roman','Courier New'=>'Courier New'];
+                        $this->select_field('BodyFontFamily', 'Brødtekst-font', $s['BodyFontFamily'], $font_options);
+                        $this->select_field('HeadingFontFamily', 'Overskrift-font', $s['HeadingFontFamily'], $font_options);
+                        $this->field('BodyFontSize', 'Brødtekst (px)', $s['BodyFontSize'], 'number');
+                        $this->field('H1FontSize', 'H1 maksimum (px)', $s['H1FontSize'], 'number');
+                        $this->field('H2FontSize', 'H2 maksimum (px)', $s['H2FontSize'], 'number');
+                        $this->field('H3FontSize', 'H3 maksimum (px)', $s['H3FontSize'], 'number');
+                        ?>
+                    </section>
+                    <section class="h18-panel">
+                        <h3>Afstande og hjørner</h3>
+                        <?php
+                        $this->field('SpacingXsPx', 'Afstand XS (px)', $s['SpacingXsPx'], 'number');
+                        $this->field('SpacingSmallPx', 'Afstand S (px)', $s['SpacingSmallPx'], 'number');
+                        $this->field('SpacingMediumPx', 'Afstand M (px)', $s['SpacingMediumPx'], 'number');
+                        $this->field('SpacingLargePx', 'Afstand L (px)', $s['SpacingLargePx'], 'number');
+                        $this->field('SpacingXlPx', 'Afstand XL (px)', $s['SpacingXlPx'], 'number');
+                        $this->field('RadiusSmallPx', 'Afrunding S (px)', $s['RadiusSmallPx'], 'number');
+                        $this->field('RadiusMediumPx', 'Afrunding M (px)', $s['RadiusMediumPx'], 'number');
+                        $this->field('RadiusLargePx', 'Afrunding L (px)', $s['RadiusLargePx'], 'number');
+                        ?>
+                    </section>
+                    <section class="h18-panel">
+                        <h3>Menu – præsentation og effekter</h3>
+                        <?php
+                        $this->select_field('MenuPresentation', 'Præsentation', $s['MenuPresentation'], ['Classic'=>'Klassisk','FloatingPill'=>'Flydende pill','Framed'=>'Indrammet']);
+                        $this->select_field('MenuHoverEffect', 'Hover-effekt', $s['MenuHoverEffect'], ['None'=>'Ingen','Underline'=>'Animeret understregning','Lift'=>'Løft','Pill'=>'Pill-baggrund']);
+                        $this->select_field('MenuActiveStyle', 'Aktiv side', $s['MenuActiveStyle'], ['None'=>'Ingen','Underline'=>'Understregning','Pill'=>'Pill','Dot'=>'Punkt']);
+                        $this->select_field('SubmenuAnimation', 'Undermenu-animation', $s['SubmenuAnimation'], ['None'=>'Ingen','Fade'=>'Fade','FadeSlide'=>'Fade + slide','Scale'=>'Scale']);
+                        $this->field('MenuTransitionMs', 'Animationshastighed (ms)', $s['MenuTransitionMs'], 'number');
+                        ?>
+                    </section>
                     <section class="h18-panel">
                         <h3>Generelt / position / baggrund</h3>
                         <?php
@@ -10676,7 +10903,7 @@ HTML;
             $this->log(
                 'WARN',
                 'WHATIF_HEADER_DESIGN_1TO1',
-                '[WHATIF] HeaderDesign schema 2.3 ville blive gemt centralt og anvendt på ' .
+                '[WHATIF] HeaderDesign schema 3.0 ville blive gemt centralt og anvendt på ' .
                 count($this->get_managed_pages()) .
                 ' sider. StickyOnScroll=' .
                 ($settings['StickyOnScroll'] ? 'True' : 'False') .
@@ -10703,7 +10930,7 @@ HTML;
 
         try {
             $this->create_full_managed_backup(
-                'Før HeaderDesign schema 2.3 blev ændret fra web-manager'
+                'Før HeaderDesign schema 3.0 blev ændret fra web-manager'
             );
 
             update_option(
@@ -10727,7 +10954,7 @@ HTML;
             $this->log(
                 'INFO',
                 'HEADER_DESIGN_1TO1_SAVED',
-                'HeaderDesign schema 2.3 gemt centralt og anvendt på ' .
+                'HeaderDesign schema 3.0 gemt centralt og anvendt på ' .
                 $count .
                 ' sider. StickyOnScroll=' .
                 ($settings['StickyOnScroll'] ? 'True' : 'False') .

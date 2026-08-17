@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.4.27
+Version: 0.5.0
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -743,3 +743,26 @@ AUTHORITATIVE_BASELINE_FAILED
 - Tilføjer stålgrå til den godkendte farvepalette.
 - Tilføjer Opdel importerede kasser, som udskiller WordPress-kolonner uden at ændre den resterende importerede sektion.
 - Bevarer den offentlige side, indtil redaktøren gemmer som en ny version med ændringsbeskrivelse og automatisk backup.
+
+
+== Version 0.5.0 – Designsystem og menueffekter ==
+
+Version 0.5.0 bygger direkte videre på v0.4.27. Den eksisterende visuelle sidebygger, datamodeller, WhatIf, backup og versionshistorik er bevaret.
+
+Nyt i første 0.5.0-fundament:
+- HeaderDesign schema 3.0 med globale design tokens.
+- Centrale farver: primær, sekundær, accent, lys flade, baggrund, tekst, lys tekst og action/link.
+- Global brødtekst- og overskriftstypografi med H1/H2/H3-størrelser.
+- Afstandstokens XS/S/M/L/XL og tre niveauer af hjørneafrunding.
+- Sidebyggerens eksisterende farveklasser kobles til de globale farver.
+- Menupræsentation: Klassisk, Flydende pill eller Indrammet.
+- Hover-effekter: Ingen, animeret understregning, løft eller pill-baggrund.
+- Aktiv side: Ingen, understregning, pill eller punkt.
+- Undermenu-animation: Ingen, Fade, Fade + slide eller Scale.
+- Animationshastighed kan styres centralt.
+
+Kompatibilitet og sikkerhed:
+- Standardfarverne er identiske med v0.4.27.
+- Alle nye menueffekter er slået fra som standard.
+- Ældre HeaderDesign-konfigurationer normaliseres bagudkompatibelt.
+- Ingen sidekonvertering eller datamigration køres automatisk.
