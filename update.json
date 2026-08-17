@@ -1,18 +1,19 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T18:26:25Z",
+  "published_utc": "2026-08-17T18:36:17Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "002bc895667c1b57fdf88e14e886c5a1100acb4dfad8219ed7795d8d2f35d463",
+  "package_sha256": "b13553fbfcdaa1dc2574b949f514bad70bacb40ab8ccd5695063157aa19deefb",
   "changelog": [
-    "Tilføjer Normal/Hover state-styling pr. element.",
-    "Tilføjer hover-baggrund, tekst, overskrift, kant og opacity.",
-    "Hover-state komponeres med responsive transforms, bevægelse og skygge.",
-    "Arv Normal er standard og bevarer eksisterende sider.",
-    "Løfter page-editor schema kompatibelt til 1.10.",
-    "Tilpasset solid hover-state tilsidesætter også inline hero-baggrund uden at påvirke Arv Normal."
+    "Tilføjer live visuel canvas i sideeditorens arbejdsområde.",
+    "Desktop, tablet og mobil gengiver deres faktiske responsive elementværdier.",
+    "Normal og Hover kan simuleres direkte i editoren.",
+    "Inspector-ændringer opdaterer canvas live uden gemning.",
+    "Overskrifter og knaptekster kan redigeres direkte med dobbeltklik.",
+    "Skjulte device-elementer vises som redigerbare placeholders i canvas.",
+    "Page-editor schema forbliver 1.10 og eksisterende sidedata ændres ikke."
   ]
 }

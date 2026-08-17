@@ -271,6 +271,8 @@ jQuery(function ($) {
     let $inspectedSection = $();
     let currentInspectorPanel = 'content';
     const pageUserPresets = {};
+    let currentCanvasDevice = 'desktop';
+    let currentCanvasState = 'normal';
 
     try {
         const presetNode = document.getElementById('h18-page-presets-data');
@@ -594,6 +596,7 @@ jQuery(function ($) {
         refreshSectionBackgroundEffect($row);
         refreshHoverStyleMode($row);
         rebuildPageNavigator();
+        renderCanvasPreview($row);
     }
 
     function syncPageCardOrder($container) {
@@ -628,7 +631,7 @@ jQuery(function ($) {
                     handle: '.h18-page-card-drag',
                     axis: 'y',
                     tolerance: 'pointer',
-                    update: function () { syncPageCardOrder($container); }
+                    update: function () { syncPageCardOrder($container); renderCanvasPreview(pageSectionForElement($container)); }
                 });
             }
             syncPageCardOrder($container);
@@ -667,6 +670,7 @@ jQuery(function ($) {
         $card.find('.h18-page-card-title-summary').text(title);
         $container.append($card);
         initializePageCardSortables($container);
+        renderCanvasPreview($row);
         return $card;
     }
 
@@ -735,6 +739,352 @@ jQuery(function ($) {
         }
     }
 
+    function canvasFieldValue($row, fieldName, fallback) {
+        const $field = pageSectionControls($row, '[name$="[' + fieldName + ']"]').first();
+        if (!$field.length) {
+            return fallback;
+        }
+        if ($field.is(':checkbox')) {
+            return $field.is(':checked');
+        }
+        const value = $field.val();
+        return value == null || value === '' ? fallback : value;
+    }
+
+    function canvasNumber($row, fieldName, fallback) {
+        const value = parseFloat(canvasFieldValue($row, fieldName, fallback));
+        return Number.isFinite(value) ? value : fallback;
+    }
+
+    function canvasTextFromHtml(value, maxLength) {
+        const node = document.createElement('div');
+        node.innerHTML = String(value || '');
+        let text = String(node.textContent || node.innerText || '').replace(/\s+/g, ' ').trim();
+        const limit = parseInt(maxLength, 10) || 220;
+        if (text.length > limit) {
+            text = text.slice(0, limit - 1).trimEnd() + '…';
+        }
+        return text;
+    }
+
+    function canvasPaletteColor(value) {
+        const colors = {
+            White: '#ffffff', OffWhite: '#f2f0e8', Sand: '#c3ae83',
+            Olive: '#30382a', Steel: '#525a5f', Transparent: 'transparent'
+        };
+        return colors[String(value || 'White')] || '#ffffff';
+    }
+
+    function canvasShadow(value) {
+        const shadows = {
+            None: 'none', Soft: '0 4px 14px rgba(0,0,0,.10)',
+            Medium: '0 9px 24px rgba(0,0,0,.16)', Strong: '0 15px 38px rgba(0,0,0,.24)'
+        };
+        return shadows[String(value || 'None')] || 'none';
+    }
+
+    function canvasDeviceLayout($row) {
+        const desktop = {
+            align: String(canvasFieldValue($row, 'DesktopAlignment', 'Left')).toLowerCase(),
+            top: canvasNumber($row, 'TopSpacingPx', 0), bottom: canvasNumber($row, 'BottomSpacingPx', 24),
+            pad: canvasNumber($row, 'PaddingPx', 0), padX: canvasNumber($row, 'HorizontalPaddingPx', canvasNumber($row, 'PaddingPx', 0)),
+            x: canvasNumber($row, 'DesktopTranslateXPx', 0), y: canvasNumber($row, 'DesktopTranslateYPx', 0),
+            scale: canvasNumber($row, 'DesktopScalePercent', 100), rotate: canvasNumber($row, 'DesktopRotateDeg', 0),
+            visible: Boolean(canvasFieldValue($row, 'ShowDesktop', true))
+        };
+        if (currentCanvasDevice === 'tablet') {
+            const align = String(canvasFieldValue($row, 'TabletAlignment', 'Inherit'));
+            const inherit = function (field, desktopValue) {
+                const value = canvasNumber($row, field, -1);
+                return value < 0 ? desktopValue : value;
+            };
+            return {
+                align: align === 'Inherit' ? desktop.align : align.toLowerCase(),
+                top: inherit('TabletTopSpacingPx', desktop.top), bottom: inherit('TabletBottomSpacingPx', desktop.bottom),
+                pad: inherit('TabletPaddingPx', desktop.pad), padX: inherit('TabletHorizontalPaddingPx', desktop.padX),
+                x: canvasNumber($row, 'TabletTranslateXPx', 0), y: canvasNumber($row, 'TabletTranslateYPx', 0),
+                scale: canvasNumber($row, 'TabletScalePercent', 100), rotate: canvasNumber($row, 'TabletRotateDeg', 0),
+                visible: Boolean(canvasFieldValue($row, 'ShowTablet', true))
+            };
+        }
+        if (currentCanvasDevice === 'mobile') {
+            return {
+                align: String(canvasFieldValue($row, 'MobileAlignment', 'Center')).toLowerCase(),
+                top: canvasNumber($row, 'MobileTopSpacingPx', 0), bottom: canvasNumber($row, 'MobileBottomSpacingPx', 18),
+                pad: canvasNumber($row, 'MobilePaddingPx', 0), padX: canvasNumber($row, 'MobileHorizontalPaddingPx', canvasNumber($row, 'MobilePaddingPx', 0)),
+                x: canvasNumber($row, 'MobileTranslateXPx', 0), y: canvasNumber($row, 'MobileTranslateYPx', 0),
+                scale: canvasNumber($row, 'MobileScalePercent', 100), rotate: canvasNumber($row, 'MobileRotateDeg', 0),
+                visible: Boolean(canvasFieldValue($row, 'ShowMobile', true))
+            };
+        }
+        return desktop;
+    }
+
+    function canvasElementColors($row) {
+        const preset = String(canvasFieldValue($row, 'Background', 'White'));
+        const dark = ['Olive', 'Steel'].includes(preset);
+        let background = canvasPaletteColor(preset);
+        let text = dark ? '#ffffff' : '#30382a';
+        let heading = text;
+        let border = String(canvasFieldValue($row, 'CustomBorderColor', '#c3ae83'));
+        let opacity = Math.max(0, Math.min(100, canvasNumber($row, 'SectionOpacityPercent', 100))) / 100;
+        let backgroundImage = 'none';
+
+        if (String(canvasFieldValue($row, 'DesignMode', 'Global')) === 'Custom') {
+            background = String(canvasFieldValue($row, 'CustomBackgroundColor', '#ffffff'));
+            text = String(canvasFieldValue($row, 'CustomTextColor', '#30382a'));
+            heading = String(canvasFieldValue($row, 'CustomHeadingColor', text));
+        }
+
+        const backgroundEffect = String(canvasFieldValue($row, 'BackgroundEffect', 'None'));
+        if (backgroundEffect === 'Gradient') {
+            const angle = canvasNumber($row, 'GradientAngleDeg', 135);
+            const start = String(canvasFieldValue($row, 'GradientStartColor', '#30382a'));
+            const end = String(canvasFieldValue($row, 'GradientEndColor', '#c3ae83'));
+            backgroundImage = 'linear-gradient(' + angle + 'deg,' + start + ',' + end + ')';
+        } else if (backgroundEffect === 'Image') {
+            const url = String(canvasFieldValue($row, 'BackgroundImageUrl', '') || '');
+            if (url) {
+                backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
+            }
+        }
+
+        if (String($row.attr('data-section-type') || '') === 'hero' && backgroundEffect === 'None') {
+            const heroUrl = String(canvasFieldValue($row, 'MediaUrl', '') || '');
+            if (heroUrl) {
+                backgroundImage = 'url("' + heroUrl.replace(/"/g, '%22') + '")';
+            }
+        }
+
+        if (currentCanvasState === 'hover' && String(canvasFieldValue($row, 'HoverStyleMode', 'Inherit')) === 'Custom') {
+            background = String(canvasFieldValue($row, 'HoverBackgroundColor', background));
+            text = String(canvasFieldValue($row, 'HoverTextColor', text));
+            heading = String(canvasFieldValue($row, 'HoverHeadingColor', heading));
+            border = String(canvasFieldValue($row, 'HoverBorderColor', border));
+            opacity = Math.max(0, Math.min(100, canvasNumber($row, 'HoverOpacityPercent', 100))) / 100;
+            backgroundImage = 'none';
+        }
+
+        return { background: background, text: text, heading: heading, border: border, opacity: opacity, backgroundImage: backgroundImage };
+    }
+
+    function canvasEditableNode(tagName, className, fieldName, value, fallback) {
+        const $node = $('<' + tagName + '>', { class: className + ' h18-canvas-inline-edit', text: String(value || fallback || '') });
+        $node.attr({ 'data-canvas-edit-field': fieldName, contenteditable: 'false', spellcheck: 'true', title: 'Dobbeltklik for at redigere direkte' });
+        return $node;
+    }
+
+    function canvasAddBodyText($target, value) {
+        const text = canvasTextFromHtml(value, 260);
+        if (text) {
+            $target.append($('<p>', { class: 'h18-canvas-preview-text', text: text }));
+        }
+    }
+
+    function canvasBuildPreviewContent($row, $preview) {
+        const type = String($row.attr('data-section-type') || 'text');
+        const title = String(canvasFieldValue($row, 'Title', ''));
+        const content = String(canvasFieldValue($row, 'Content', ''));
+        const $inner = $('<div>', { class: 'h18-canvas-preview-inner h18-canvas-type-' + type });
+        const addTitle = function (fallback) {
+            if (title || fallback) {
+                $inner.append(canvasEditableNode('h2', 'h18-canvas-preview-title', 'Title', title, fallback));
+            }
+        };
+        const addButtons = function () {
+            const labels = [
+                ['Button1Label', canvasFieldValue($row, 'Button1Label', '')],
+                ['Button2Label', canvasFieldValue($row, 'Button2Label', '')]
+            ];
+            const $actions = $('<div>', { class: 'h18-canvas-preview-actions' });
+            labels.forEach(function (item, index) {
+                if (!String(item[1] || '')) { return; }
+                const $button = canvasEditableNode('span', 'h18-canvas-preview-button' + (index ? ' is-secondary' : ''), item[0], item[1], 'Knap');
+                $button.attr('role', 'button');
+                $actions.append($button);
+            });
+            if ($actions.children().length) { $inner.append($actions); }
+        };
+
+        if (type === 'hero') {
+            addTitle('Hero-overskrift');
+            canvasAddBodyText($inner, content);
+            addButtons();
+        } else if (type === 'text_image') {
+            const $grid = $('<div>', { class: 'h18-canvas-text-image' });
+            const $copy = $('<div>', { class: 'h18-canvas-text-image-copy' });
+            if (title) { $copy.append(canvasEditableNode('h2', 'h18-canvas-preview-title', 'Title', title, 'Overskrift')); }
+            canvasAddBodyText($copy, content);
+            const url = String(canvasFieldValue($row, 'MediaUrl', '') || '');
+            const $media = $('<div>', { class: 'h18-canvas-preview-media' });
+            if (url) { $media.append($('<img>', { src: url, alt: '' })); } else { $media.append($('<span>', { text: 'Vælg billede' })); }
+            if (String(canvasFieldValue($row, 'ImagePosition', 'Right')) === 'Left' && currentCanvasDevice !== 'mobile') {
+                $grid.append($media, $copy);
+            } else {
+                $grid.append($copy, $media);
+            }
+            $inner.append($grid);
+        } else if (type === 'image') {
+            addTitle('Billede');
+            const url = String(canvasFieldValue($row, 'MediaUrl', '') || '');
+            const $image = $('<div>', { class: 'h18-canvas-preview-image' });
+            if (url) { $image.append($('<img>', { src: url, alt: '' })); } else { $image.append($('<span>', { text: 'Intet billede valgt' })); }
+            $inner.append($image);
+        } else if (type === 'buttons') {
+            addTitle('Handling');
+            canvasAddBodyText($inner, content);
+            addButtons();
+        } else if (type === 'card_grid') {
+            addTitle('Kort-række');
+            canvasAddBodyText($inner, content);
+            const columns = currentCanvasDevice === 'mobile' ? canvasNumber($row, 'MobileColumns', 1) : canvasNumber($row, 'Columns', 3);
+            const gap = currentCanvasDevice === 'mobile' ? canvasNumber($row, 'MobileColumnGapPx', 14) : canvasNumber($row, 'ColumnGapPx', 16);
+            const $grid = $('<div>', { class: 'h18-canvas-card-grid' }).css({ gridTemplateColumns: 'repeat(' + Math.max(1, Math.min(6, columns)) + ',minmax(0,1fr))', gap: gap + 'px' });
+            pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').each(function () {
+                const $card = $(this);
+                const cardTitle = String($card.find('[name$="[Title]"]').val() || 'Kort');
+                const cardContent = canvasTextFromHtml($card.find('[name$="[Content]"]').val() || '', 90);
+                const cardBackground = canvasPaletteColor($card.find('[name$="[Background]"]').val() || 'OffWhite');
+                const $cardPreview = $('<div>', { class: 'h18-canvas-card' }).css('background', cardBackground);
+                $cardPreview.append($('<strong>', { text: cardTitle }));
+                if (cardContent) { $cardPreview.append($('<small>', { text: cardContent })); }
+                $grid.append($cardPreview);
+            });
+            if (!$grid.children().length) { $grid.append($('<div>', { class: 'h18-canvas-card', text: 'Tilføj et kort i Inspector' })); }
+            $inner.append($grid);
+        } else if (type === 'mail_form') {
+            addTitle('Kontaktformular');
+            canvasAddBodyText($inner, content);
+            $inner.append($('<div>', { class: 'h18-canvas-fake-form' }).append(
+                $('<span>', { text: 'Navn' }), $('<span>', { text: 'E-mail' }), $('<span>', { class: 'is-wide', text: 'Besked' }), $('<b>', { text: 'Send besked' })
+            ));
+        } else if (type === 'poll') {
+            addTitle('Afstemning');
+            canvasAddBodyText($inner, content);
+            $inner.append($('<div>', { class: 'h18-canvas-poll' }).append(
+                $('<span>', { text: '○ Svarmulighed 1' }), $('<span>', { text: '○ Svarmulighed 2' }), $('<b>', { text: 'Stem' })
+            ));
+        } else if (type === 'spacer') {
+            const height = currentCanvasDevice === 'mobile' ? canvasNumber($row, 'MobileSpacerPx', 24) : canvasNumber($row, 'SpacerPx', 32);
+            $inner.append($('<div>', { class: 'h18-canvas-spacer', text: 'Afstand · ' + height + ' px' }).css('minHeight', Math.max(24, height) + 'px'));
+        } else if (type === 'css') {
+            $inner.append($('<div>', { class: 'h18-canvas-code-block' }).append($('<strong>', { text: 'Side-CSS' }), $('<small>', { text: 'CSS påvirker siden efter gemning og vises ikke som rå kode i canvas.' })));
+        } else if (type === 'html' || type === 'legacy') {
+            addTitle(type === 'legacy' ? 'Eksisterende indhold' : 'HTML-blok');
+            canvasAddBodyText($inner, type === 'legacy' ? canvasFieldValue($row, 'LegacyHtml', content) : content);
+        } else {
+            addTitle(type === 'highlight' ? 'Fremhævet tekst' : (type === 'card' ? 'Indholdskort' : 'Overskrift'));
+            canvasAddBodyText($inner, content);
+            addButtons();
+        }
+
+        $preview.empty().append($inner);
+    }
+
+    function ensureCanvasPreview($row) {
+        if (!$row || !$row.length || $row.hasClass('h18-page-section-removed')) { return $(); }
+        let $preview = $row.children('.h18-canvas-preview');
+        if (!$preview.length) {
+            $preview = $('<div>', { class: 'h18-canvas-preview', tabindex: '0', role: 'button' });
+            $row.children('.h18-page-section-header').after($preview);
+        }
+        return $preview;
+    }
+
+    function renderCanvasPreview($row) {
+        if (!$row || !$row.length || $row.hasClass('h18-page-section-removed')) { return; }
+        const $preview = ensureCanvasPreview($row);
+        if (!$preview.length) { return; }
+        const type = String($row.attr('data-section-type') || 'text');
+        const layout = canvasDeviceLayout($row);
+        const colors = canvasElementColors($row);
+        const radius = canvasNumber($row, 'RadiusPx', 7);
+        const tl = canvasNumber($row, 'RadiusTopLeftPx', -1);
+        const tr = canvasNumber($row, 'RadiusTopRightPx', -1);
+        const br = canvasNumber($row, 'RadiusBottomRightPx', -1);
+        const bl = canvasNumber($row, 'RadiusBottomLeftPx', -1);
+        let scale = layout.scale / 100;
+        let translateY = layout.y;
+        let shadow = canvasShadow(canvasFieldValue($row, 'ShadowStyle', 'None'));
+        if (currentCanvasState === 'hover') {
+            const effect = String(canvasFieldValue($row, 'HoverEffect', 'None'));
+            if (effect === 'Lift') { translateY -= 6; }
+            if (effect === 'Scale') { scale *= 1.025; }
+            if (effect === 'Shadow') { shadow = '0 16px 38px rgba(0,0,0,.24)'; }
+        }
+        const effectPosition = String(canvasFieldValue($row, 'BackgroundImagePosition', 'Center')).toLowerCase();
+        const effectSize = String(canvasFieldValue($row, 'BackgroundImageSize', 'Cover')).toLowerCase();
+        const borderWidth = canvasNumber($row, 'BorderWidthPx', 0);
+        const bodySize = canvasNumber($row, 'BodyFontSizePx', 0);
+        const h2Size = canvasNumber($row, 'H2FontSizePx', 0);
+
+        canvasBuildPreviewContent($row, $preview);
+        $preview.removeAttr('style').css({
+            backgroundColor: colors.background,
+            backgroundImage: colors.backgroundImage,
+            backgroundPosition: effectPosition,
+            backgroundSize: effectSize,
+            backgroundRepeat: 'no-repeat',
+            color: colors.text,
+            opacity: colors.opacity,
+            borderStyle: 'solid', borderWidth: borderWidth + 'px', borderColor: colors.border,
+            borderRadius: (tl < 0 ? radius : tl) + 'px ' + (tr < 0 ? radius : tr) + 'px ' + (br < 0 ? radius : br) + 'px ' + (bl < 0 ? radius : bl) + 'px',
+            boxShadow: shadow,
+            textAlign: layout.align,
+            padding: layout.pad + 'px ' + layout.padX + 'px',
+            marginTop: Math.max(0, layout.top) + 'px', marginBottom: Math.max(0, layout.bottom) + 'px',
+            transform: 'translate(' + layout.x + 'px,' + translateY + 'px) scale(' + scale + ') rotate(' + layout.rotate + 'deg)'
+        });
+        if (bodySize > 0) { $preview.css('fontSize', bodySize + 'px'); }
+        if (h2Size > 0) { $preview.find('.h18-canvas-preview-title').css('fontSize', h2Size + 'px'); }
+        $preview.find('.h18-canvas-preview-title').css('color', colors.heading);
+        $preview.toggleClass('is-device-hidden', !layout.visible);
+        $preview.attr('aria-label', inspectorTypeLabel(type) + ' – klik for at redigere');
+        $preview.attr('data-canvas-device', currentCanvasDevice).attr('data-canvas-state', currentCanvasState);
+        $preview.find('.h18-canvas-device-hidden-label').remove();
+        if (!layout.visible) {
+            $preview.append($('<span>', { class: 'h18-canvas-device-hidden-label', text: 'Skjult på ' + (currentCanvasDevice === 'mobile' ? 'mobil' : currentCanvasDevice) }));
+        }
+        if (type === 'hero') {
+            const height = currentCanvasDevice === 'mobile' ? canvasNumber($row, 'MobileHeroHeightPx', 220) : canvasNumber($row, 'HeroHeightPx', 320);
+            $preview.css('minHeight', Math.max(120, height) + 'px');
+        } else {
+            $preview.css('minHeight', '0');
+        }
+    }
+
+    function refreshAllCanvasPreviews() {
+        $pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').each(function () {
+            renderCanvasPreview($(this));
+        });
+        updateCanvasToolbarStatus();
+    }
+
+    function updateCanvasToolbarStatus() {
+        const deviceLabel = currentCanvasDevice === 'mobile' ? 'Mobil' : currentCanvasDevice.charAt(0).toUpperCase() + currentCanvasDevice.slice(1);
+        const stateLabel = currentCanvasState === 'hover' ? 'Hover' : 'Normal';
+        $('.h18-builder-canvas').attr('data-canvas-device', currentCanvasDevice).attr('data-canvas-state', currentCanvasState);
+        $('#h18-canvas-runtime-status').text(deviceLabel + ' · ' + stateLabel + ' · Live');
+    }
+
+    function ensureCanvasToolbar() {
+        const $toolbar = $('.h18-page-preview-toolbar');
+        if (!$toolbar.length) { return; }
+        if (!$toolbar.find('.h18-preview-state').length) {
+            const $hint = $toolbar.children('span').last();
+            const $label = $('<strong>', { class: 'h18-preview-state-heading', text: 'State:' });
+            const $normal = $('<button>', { type: 'button', class: 'button h18-preview-state is-active', 'data-state': 'normal', text: 'Normal' });
+            const $hover = $('<button>', { type: 'button', class: 'button h18-preview-state', 'data-state': 'hover', text: 'Hover' });
+            $label.insertBefore($hint); $normal.insertBefore($hint); $hover.insertBefore($hint);
+            $hint.text('Klik direkte i canvas for at vælge et element. Dobbeltklik på overskrifter og knaptekster for hurtig tekstredigering.');
+        }
+        const $heading = $('.h18-builder-canvas-heading');
+        if ($heading.length && !$('#h18-canvas-runtime-status').length) {
+            $heading.children('span').first().attr('title', 'Live visning af den valgte breakpoint og state').attr('id', 'h18-canvas-runtime-status');
+        }
+        updateCanvasToolbarStatus();
+    }
+
     if ($pageSections.length) {
         $('.h18-visual-builder').addClass('is-ready');
         $pageSections.sortable({
@@ -755,12 +1105,75 @@ jQuery(function ($) {
         }
         renderUserPresets();
         rebuildPageNavigator();
+        ensureCanvasToolbar();
+        refreshAllCanvasPreviews();
+        $('.h18-builder-canvas').addClass('h18-live-canvas-ready');
     }
 
     function pageSectionForElement(element) {
         const $closest = $(element).closest('.h18-page-section-row');
         return $closest.length ? $closest : $inspectedSection;
     }
+
+    $(document).on('click keydown', '.h18-canvas-preview', function (event) {
+        if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) { return; }
+        if ($(event.target).closest('.h18-canvas-inline-edit.is-editing').length) { return; }
+        event.preventDefault();
+        inspectPageSection($(this).closest('.h18-page-section-row'));
+    });
+
+    $(document).on('dblclick', '.h18-canvas-inline-edit', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        inspectPageSection($(this).closest('.h18-page-section-row'));
+        $(this).attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
+        const selection = window.getSelection && window.getSelection();
+        if (selection && document.createRange) {
+            const range = document.createRange();
+            range.selectNodeContents(this); range.collapse(false); selection.removeAllRanges(); selection.addRange(range);
+        }
+    });
+
+    $(document).on('input', '.h18-canvas-inline-edit.is-editing', function () {
+        const $editable = $(this);
+        const $row = $editable.closest('.h18-page-section-row');
+        const fieldName = String($editable.data('canvas-edit-field') || '');
+        if (!fieldName || !$row.length) { return; }
+        const value = String($editable.text() || '').replace(/\s+/g, ' ').trim();
+        pageSectionControls($row, '[name$="[' + fieldName + ']"]').first().val(value);
+        if (fieldName === 'Title') {
+            $row.find('.h18-page-section-title-summary').text(value);
+            rebuildPageNavigator();
+        }
+    });
+
+    $(document).on('blur', '.h18-canvas-inline-edit.is-editing', function () {
+        const $editable = $(this);
+        const $row = $editable.closest('.h18-page-section-row');
+        $editable.attr('contenteditable', 'false').removeClass('is-editing');
+        renderCanvasPreview($row);
+    });
+
+    $(document).on('keydown', '.h18-canvas-inline-edit.is-editing', function (event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            $(this).trigger('blur');
+        }
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            renderCanvasPreview($(this).closest('.h18-page-section-row'));
+        }
+    });
+
+    $(document).on('input change', '#h18-page-inspector-target :input', function () {
+        const $row = pageSectionForElement(this);
+        window.requestAnimationFrame(function () { renderCanvasPreview($row); });
+    });
+
+    $(document).on('click', '.h18-page-card-remove, .h18-page-card-restore, .h18-add-page-card', function () {
+        const $row = pageSectionForElement(this);
+        window.setTimeout(function () { renderCanvasPreview($row); }, 0);
+    });
 
     $(document).on('click', '.h18-page-section-edit', function (event) {
         event.preventDefault();
@@ -819,6 +1232,7 @@ jQuery(function ($) {
         initializePageCardSortables($row);
         syncPageSectionOrder();
         inspectPageSection($row);
+        renderCanvasPreview($row);
         $('html, body').animate({ scrollTop: $row.offset().top - 60 }, 250);
         return $row;
     }
@@ -1136,6 +1550,7 @@ jQuery(function ($) {
             pageSectionControls($row, '.h18-section-bg-media-id').val(image.id || '');
             pageSectionControls($row, '.h18-section-bg-media-url').val(image.url || '');
             pageSectionControls($row, '.h18-section-bg-media-preview').html($('<img>', { src: preview, alt: image.alt || '' }));
+            renderCanvasPreview($row);
         });
         frame.open();
     });
@@ -1145,6 +1560,7 @@ jQuery(function ($) {
         const $row = pageSectionForElement(this);
         pageSectionControls($row, '.h18-section-bg-media-id, .h18-section-bg-media-url').val('');
         pageSectionControls($row, '.h18-section-bg-media-preview').empty();
+        renderCanvasPreview($row);
     });
 
     $(document).on('click', '.h18-mini-format', function (event) {
@@ -1179,9 +1595,18 @@ jQuery(function ($) {
 
     $('.h18-preview-device').on('click', function () {
         const device = String($(this).data('device') || 'desktop');
+        currentCanvasDevice = ['desktop', 'tablet', 'mobile'].includes(device) ? device : 'desktop';
         $('.h18-preview-device').removeClass('is-active');
         $(this).addClass('is-active');
-        $pageSections.removeClass('h18-preview-desktop h18-preview-tablet h18-preview-mobile').addClass('h18-preview-' + device);
+        $pageSections.removeClass('h18-preview-desktop h18-preview-tablet h18-preview-mobile').addClass('h18-preview-' + currentCanvasDevice);
+        refreshAllCanvasPreviews();
+    });
+
+    $(document).on('click', '.h18-preview-state', function () {
+        currentCanvasState = String($(this).data('state') || 'normal') === 'hover' ? 'hover' : 'normal';
+        $('.h18-preview-state').removeClass('is-active');
+        $(this).addClass('is-active');
+        refreshAllCanvasPreviews();
     });
 
     const $pageEditorForm = $('#h18-page-editor-form');

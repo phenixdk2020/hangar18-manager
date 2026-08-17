@@ -1,7 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.5.6
+Version: 0.5.7
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+== Version 0.5.7 – Live visuel canvas ==
+
+Nyt:
+- midterfeltet i sideeditoren viser nu en live visuel gengivelse af sektionerne
+- klik direkte på et element i canvas for at vælge det i Inspector
+- Desktop, Tablet og Mobil bruger de faktiske responsive værdier i live preview
+- Normal/Hover kan simuleres direkte i editorens toolbar
+- designændringer i Inspector opdaterer canvas uden at siden først skal gemmes
+- overskrifter og knaptekster kan redigeres direkte med dobbeltklik i canvas
+- skjulte elementer forbliver synlige som redigerbare, nedtonede placeholders på det valgte device
+- hero, tekst/billede, kort, formularer, afstemninger, spacer, HTML og øvrige sektionstyper har egne visuelle previews
+- page-editor schema forbliver 1.10; v0.5.7 ændrer kun editorens visuelle arbejdslag og er derfor bagudkompatibel
+
 
 == Version 0.5.6 – Normal/Hover states ==
 
