@@ -1383,10 +1383,16 @@ jQuery(function ($) {
 
     $(document).on('dblclick', '.h18-canvas-card-inline-edit', function (event) {
         event.preventDefault(); event.stopPropagation();
-        const $row = $(this).closest('.h18-page-section-row');
-        selectedCanvasCardKey = String($(this).closest('.h18-canvas-card').data('card-key') || '');
-        inspectPageSection($row); canvasFocusCardEditor($row, selectedCanvasCardKey);
-        $(this).data('canvas-original-card-text', String($(this).text() || '')).attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
+        const $source = $(this);
+        const $row = $source.closest('.h18-page-section-row');
+        const key = String($source.closest('.h18-canvas-card').data('card-key') || '');
+        const original = String($source.text() || '');
+        selectedCanvasCardKey = key;
+        inspectPageSection($row);
+        canvasFocusCardEditor($row, key);
+        renderCanvasPreview($row);
+        const $fresh = $row.children('.h18-canvas-preview').find('.h18-canvas-card[data-card-key="' + key + '"] .h18-canvas-card-inline-edit').first();
+        $fresh.data('canvas-original-card-text', original).attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
     });
 
     $(document).on('input', '.h18-canvas-card-inline-edit.is-editing', function () {
@@ -1413,12 +1419,18 @@ jQuery(function ($) {
 
     $(document).on('dblclick', '.h18-canvas-card-rich-edit', function (event) {
         event.preventDefault(); event.stopPropagation();
-        const $row = $(this).closest('.h18-page-section-row');
-        selectedCanvasCardKey = String($(this).closest('.h18-canvas-card').data('card-key') || '');
-        inspectPageSection($row); canvasFocusCardEditor($row, selectedCanvasCardKey);
-        $(this).data('canvas-original-card-html', String($(this).hasClass('is-empty') ? '' : ($(this).html() || '')));
-        if ($(this).hasClass('is-empty')) { $(this).empty().removeClass('is-empty'); }
-        $(this).attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
+        const $source = $(this);
+        const $row = $source.closest('.h18-page-section-row');
+        const key = String($source.closest('.h18-canvas-card').data('card-key') || '');
+        const original = String($source.hasClass('is-empty') ? '' : ($source.html() || ''));
+        selectedCanvasCardKey = key;
+        inspectPageSection($row);
+        canvasFocusCardEditor($row, key);
+        renderCanvasPreview($row);
+        const $fresh = $row.children('.h18-canvas-preview').find('.h18-canvas-card[data-card-key="' + key + '"] .h18-canvas-card-rich-edit').first();
+        $fresh.data('canvas-original-card-html', original);
+        if ($fresh.hasClass('is-empty')) { $fresh.empty().removeClass('is-empty'); }
+        $fresh.attr('contenteditable', 'true').addClass('is-editing').trigger('focus');
     });
 
     $(document).on('input', '.h18-canvas-card-rich-edit.is-editing', function () {
