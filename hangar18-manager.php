@@ -801,6 +801,7 @@ final class Hangar18_Manager {
 
     <?php if ($d['MenuPresentation'] === 'FloatingPill') : ?>
     .h18-site-header .h18-desktop-nav {background:var(--h18-color-surface) !important;border:1px solid rgba(48,56,42,.14) !important;border-radius:999px !important;padding:6px 12px !important;box-shadow:0 8px 24px rgba(0,0,0,.09) !important;}
+              .h18-site-header .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a {color:var(--h18-color-text) !important;}
     <?php elseif ($d['MenuPresentation'] === 'Framed') : ?>
     .h18-site-header .h18-desktop-nav {border:1px solid var(--h18-color-accent) !important;border-radius:var(--h18-radius-medium) !important;padding:6px 12px !important;}
     <?php endif; ?>
@@ -1287,7 +1288,8 @@ final class Hangar18_Manager {
 
     private function default_header_design() {
         return [
-            'Version' => '3.0',
+            'Version' => '2.3',
+            'DesignerSchemaVersion' => '1.0',
             'PrimaryColor' => '#30382a',
             'SecondaryColor' => '#525a5f',
             'AccentColor' => '#c3ae83',
@@ -1406,7 +1408,8 @@ final class Hangar18_Manager {
         }
 
         return [
-            'Version'                           => '3.0',
+            'Version'                           => '2.3',
+            'DesignerSchemaVersion'             => '1.0',
             'PrimaryColor'                      => $normalize_color($saved['PrimaryColor'] ?? $default['PrimaryColor'], $default['PrimaryColor']),
             'SecondaryColor'                    => $normalize_color($saved['SecondaryColor'] ?? $default['SecondaryColor'], $default['SecondaryColor']),
             'AccentColor'                       => $normalize_color($saved['AccentColor'] ?? $default['AccentColor'], $default['AccentColor']),
@@ -10474,7 +10477,8 @@ HTML;
 
     private function header_design_from_post() {
         return $this->normalize_header_design([
-            'Version'                           => '3.0',
+            'Version'                           => '2.3',
+            'DesignerSchemaVersion'             => '1.0',
             'PrimaryColor'                      => $this->post_text('PrimaryColor'),
             'SecondaryColor'                    => $this->post_text('SecondaryColor'),
             'AccentColor'                       => $this->post_text('AccentColor'),
@@ -10903,7 +10907,7 @@ HTML;
             $this->log(
                 'WARN',
                 'WHATIF_HEADER_DESIGN_1TO1',
-                '[WHATIF] HeaderDesign schema 3.0 ville blive gemt centralt og anvendt på ' .
+                '[WHATIF] HeaderDesign schema 2.3 + Designer schema 1.0 ville blive gemt centralt og anvendt på ' .
                 count($this->get_managed_pages()) .
                 ' sider. StickyOnScroll=' .
                 ($settings['StickyOnScroll'] ? 'True' : 'False') .
@@ -10930,7 +10934,7 @@ HTML;
 
         try {
             $this->create_full_managed_backup(
-                'Før HeaderDesign schema 3.0 blev ændret fra web-manager'
+                'Før HeaderDesign schema 2.3 + Designer schema 1.0 blev ændret fra web-manager'
             );
 
             update_option(
@@ -10954,7 +10958,7 @@ HTML;
             $this->log(
                 'INFO',
                 'HEADER_DESIGN_1TO1_SAVED',
-                'HeaderDesign schema 3.0 gemt centralt og anvendt på ' .
+                'HeaderDesign schema 2.3 + Designer schema 1.0 gemt centralt og anvendt på ' .
                 $count .
                 ' sider. StickyOnScroll=' .
                 ($settings['StickyOnScroll'] ? 'True' : 'False') .

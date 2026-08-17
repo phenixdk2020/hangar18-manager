@@ -750,7 +750,7 @@ AUTHORITATIVE_BASELINE_FAILED
 Version 0.5.0 bygger direkte videre på v0.4.27. Den eksisterende visuelle sidebygger, datamodeller, WhatIf, backup og versionshistorik er bevaret.
 
 Nyt i første 0.5.0-fundament:
-- HeaderDesign schema 3.0 med globale design tokens.
+- Nyt Designer schema 1.0 med globale design tokens, indlejret bagudkompatibelt i HeaderDesign schema 2.3.
 - Centrale farver: primær, sekundær, accent, lys flade, baggrund, tekst, lys tekst og action/link.
 - Global brødtekst- og overskriftstypografi med H1/H2/H3-størrelser.
 - Afstandstokens XS/S/M/L/XL og tre niveauer af hjørneafrunding.
@@ -764,5 +764,5 @@ Nyt i første 0.5.0-fundament:
 Kompatibilitet og sikkerhed:
 - Standardfarverne er identiske med v0.4.27.
 - Alle nye menueffekter er slået fra som standard.
-- Ældre HeaderDesign-konfigurationer normaliseres bagudkompatibelt.
+- HeaderDesign forbliver schema 2.3, så den eksisterende centrale konfiguration og ældre PowerShell-klienter fortsat kan læse de kendte felter.
 - Ingen sidekonvertering eller datamigration køres automatisk.

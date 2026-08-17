@@ -6,10 +6,10 @@
   "min_php": "8.0",
   "published_utc": "2026-08-17T17:33:36Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "63e442257c3d25f3d70ce00da54469a9dab704e58c26bedb4a74b472e2798dc3",
+  "package_sha256": "37af59568581e3bf5c1c65f351b21dfb20237d68297474b19c32320b35f32c6f",
   "changelog": [
     "Bygger direkte videre på v0.4.27 og bevarer den eksisterende visuelle builder.",
-    "Tilføjer HeaderDesign schema 3.0 med globale design tokens.",
+    "Tilføjer Designer schema 1.0 med globale design tokens uden at bryde HeaderDesign schema 2.3.",
     "Kobler sidebyggerens farvepresets til centrale designfarver.",
     "Tilføjer valgfrie menupræsentationer, hover/active-effekter og undermenu-animationer."
   ]
