@@ -1,0 +1,28 @@
+=== PATCH ===
+v0.5.19 patch applied
+patch_status=0
+=== PHP ===
+No syntax errors detected in hangar18-manager.php
+php_status=0
+=== JS ===
+js_status=0
+=== KEY ASSERTIONS ===
+6539:            'LayoutParentKey'       => '',
+6819:        $layout_parent_key = sanitize_key((string) ($raw['LayoutParentKey'] ?? ''));
+6903:            'LayoutParentKey'        => $layout_parent_key,
+7024:            $parent_key = sanitize_key((string) ($candidate['LayoutParentKey'] ?? ''));
+7043:                $cursor = sanitize_key((string) ($parent_section['LayoutParentKey'] ?? ''));
+7046:                $candidate['LayoutParentKey'] = '';
+8353:            if (sanitize_key((string) ($section['LayoutParentKey'] ?? '')) !== sanitize_key((string) $parent_key)) { continue; }
+8368:            if (sanitize_key((string) ($layout_candidate['LayoutParentKey'] ?? '')) !== '') { $has_layout_hierarchy = true; break; }
+8659:                        <input class="h18-layout-parent-key" type="hidden" name="<?php echo esc_attr($prefix); ?>[LayoutParentKey]" value="<?php echo esc_attr($section['LayoutParentKey']); ?>" />
+8349:    private function render_page_editor_layout_tree($page_id, array $sections, $parent_key = '', $depth = 0) {
+8356:                $children = $this->render_page_editor_layout_tree($page_id, $sections, (string) $section['Key'], $depth + 1);
+8371:            return $html . $this->render_page_editor_layout_tree($page_id, $sections) . '</div>';
+662:    function refreshLayoutHierarchyV0519() {
+731:        refreshLayoutHierarchyV0519();
+2267:        refreshLayoutHierarchyV0519();
+2269:        refreshLayoutHierarchyV0519();
+2272:    $(document).on('click', '.h18-page-section-delete', function () { window.setTimeout(refreshLayoutHierarchyV0519, 0); });
+3583:        window.setTimeout(refreshLayoutHierarchyV0519, 0);
+653:            if (depth > 2 || seen.has(cursor)) { return true; }
