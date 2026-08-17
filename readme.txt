@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.5.4
+Version: 0.5.5
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+== Version 0.5.5 – Responsiv elementstyring ==
+
+Nyt:
+- vis/skjul hvert element separat på desktop, tablet og mobil
+- særskilt tablet-placering, luft og indvendig luft
+- tablet kan arve desktop med Inherit/-1
+- translate X/Y, scale og rotate separat for desktop, tablet og mobil
+- eksisterende hover-effekter komponeres med de responsive transforms
+- reduced-motion fjerner kun hover-bevægelsen og bevarer statiske transforms
+- page-editor schema 1.9 med neutrale bagudkompatible standarder
+
 
 == Version 0.5.4 – Avanceret visuelt elementdesign ==
 

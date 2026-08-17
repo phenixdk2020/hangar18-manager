@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.4
+ * Version: 0.5.5
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.4';
+    const VERSION = '0.5.5';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -706,7 +706,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.8',
+                'Version' => '1.9',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -2914,7 +2914,7 @@ final class Hangar18_Manager {
         $static_content['Saved'] = gmdate('c');
 
         $pages = [
-            'Version' => '1.8',
+            'Version' => '1.9',
             'Saved'   => gmdate('c'),
             'Pages'   => $this->get_page_editor_store(),
         ];
@@ -6459,6 +6459,26 @@ HTML;
             'RadiusBottomLeftPx'     => -1,
             'HoverEffect'            => 'None',
             'HoverTransitionMs'      => 220,
+            'ShowDesktop'            => true,
+            'ShowTablet'             => true,
+            'ShowMobile'             => true,
+            'TabletAlignment'        => 'Inherit',
+            'TabletTopSpacingPx'     => -1,
+            'TabletBottomSpacingPx'  => -1,
+            'TabletPaddingPx'        => -1,
+            'TabletHorizontalPaddingPx' => -1,
+            'DesktopTranslateXPx'    => 0,
+            'DesktopTranslateYPx'    => 0,
+            'DesktopScalePercent'    => 100,
+            'DesktopRotateDeg'       => 0,
+            'TabletTranslateXPx'     => 0,
+            'TabletTranslateYPx'     => 0,
+            'TabletScalePercent'     => 100,
+            'TabletRotateDeg'        => 0,
+            'MobileTranslateXPx'     => 0,
+            'MobileTranslateYPx'     => 0,
+            'MobileScalePercent'     => 100,
+            'MobileRotateDeg'        => 0,
             'ImportedGroupType'     => '',
             'LegacyHtml'            => '',
         ];
@@ -6631,6 +6651,8 @@ HTML;
         if (!in_array($background_size, ['Cover', 'Contain', 'Auto'], true)) { $background_size = 'Cover'; }
         $hover_effect = (string) ($raw['HoverEffect'] ?? 'None');
         if (!in_array($hover_effect, ['None', 'Lift', 'Scale', 'Shadow'], true)) { $hover_effect = 'None'; }
+        $tablet_alignment = (string) ($raw['TabletAlignment'] ?? 'Inherit');
+        if (!in_array($tablet_alignment, ['Inherit', 'Left', 'Center'], true)) { $tablet_alignment = 'Inherit'; }
 
         $cards = [];
         $used_card_keys = [];
@@ -6727,6 +6749,26 @@ HTML;
             'RadiusBottomLeftPx'     => $this->clamp_int($raw['RadiusBottomLeftPx'] ?? -1, -1, 60, -1),
             'HoverEffect'            => $hover_effect,
             'HoverTransitionMs'      => $this->clamp_int($raw['HoverTransitionMs'] ?? 220, 0, 1000, 220),
+            'ShowDesktop'            => array_key_exists('ShowDesktop', $raw) ? !empty($raw['ShowDesktop']) : true,
+            'ShowTablet'             => array_key_exists('ShowTablet', $raw) ? !empty($raw['ShowTablet']) : true,
+            'ShowMobile'             => array_key_exists('ShowMobile', $raw) ? !empty($raw['ShowMobile']) : true,
+            'TabletAlignment'        => $tablet_alignment,
+            'TabletTopSpacingPx'     => $this->clamp_int($raw['TabletTopSpacingPx'] ?? -1, -1, 160, -1),
+            'TabletBottomSpacingPx'  => $this->clamp_int($raw['TabletBottomSpacingPx'] ?? -1, -1, 160, -1),
+            'TabletPaddingPx'        => $this->clamp_int($raw['TabletPaddingPx'] ?? -1, -1, 100, -1),
+            'TabletHorizontalPaddingPx' => $this->clamp_int($raw['TabletHorizontalPaddingPx'] ?? -1, -1, 100, -1),
+            'DesktopTranslateXPx'    => $this->clamp_int($raw['DesktopTranslateXPx'] ?? 0, -300, 300, 0),
+            'DesktopTranslateYPx'    => $this->clamp_int($raw['DesktopTranslateYPx'] ?? 0, -300, 300, 0),
+            'DesktopScalePercent'    => $this->clamp_int($raw['DesktopScalePercent'] ?? 100, 50, 150, 100),
+            'DesktopRotateDeg'       => $this->clamp_int($raw['DesktopRotateDeg'] ?? 0, -180, 180, 0),
+            'TabletTranslateXPx'     => $this->clamp_int($raw['TabletTranslateXPx'] ?? 0, -300, 300, 0),
+            'TabletTranslateYPx'     => $this->clamp_int($raw['TabletTranslateYPx'] ?? 0, -300, 300, 0),
+            'TabletScalePercent'     => $this->clamp_int($raw['TabletScalePercent'] ?? 100, 50, 150, 100),
+            'TabletRotateDeg'        => $this->clamp_int($raw['TabletRotateDeg'] ?? 0, -180, 180, 0),
+            'MobileTranslateXPx'     => $this->clamp_int($raw['MobileTranslateXPx'] ?? 0, -300, 300, 0),
+            'MobileTranslateYPx'     => $this->clamp_int($raw['MobileTranslateYPx'] ?? 0, -300, 300, 0),
+            'MobileScalePercent'     => $this->clamp_int($raw['MobileScalePercent'] ?? 100, 50, 150, 100),
+            'MobileRotateDeg'        => $this->clamp_int($raw['MobileRotateDeg'] ?? 0, -180, 180, 0),
             'ImportedGroupType'     => $imported_group_type,
             'LegacyHtml'            => $legacy_html,
         ];
@@ -6774,7 +6816,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.8',
+            'Version'        => '1.9',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7286,7 +7328,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.8',
+            'Version'        => '1.9',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7524,17 +7566,29 @@ HTML;
         $radius_br = $radius_br < 0 ? $base_radius : $radius_br;
         $radius_bl = $radius_bl < 0 ? $base_radius : $radius_bl;
         $hover_effect = (string) ($section['HoverEffect'] ?? 'None');
-        $hover_transform = 'none';
+        $hover_y = '0px';
+        $hover_scale = '1';
         $hover_shadow = $shadow;
         if ($hover_effect === 'Lift') {
-            $hover_transform = 'translateY(-4px)';
+            $hover_y = '-4px';
             $hover_shadow = '0 16px 38px rgba(0,0,0,.16)';
         } elseif ($hover_effect === 'Scale') {
-            $hover_transform = 'scale(1.02)';
+            $hover_scale = '1.02';
             $hover_shadow = '0 12px 30px rgba(0,0,0,.14)';
         } elseif ($hover_effect === 'Shadow') {
             $hover_shadow = '0 18px 44px rgba(0,0,0,.22)';
         }
+        $tablet_alignment = (string) ($section['TabletAlignment'] ?? 'Inherit');
+        $tablet_align = $tablet_alignment === 'Center' ? 'center' : ($tablet_alignment === 'Left' ? 'left' : ($section['DesktopAlignment'] === 'Center' ? 'center' : 'left'));
+        $tablet_justify = $tablet_align === 'center' ? 'center' : 'flex-start';
+        $tablet_top = (int) ($section['TabletTopSpacingPx'] ?? -1);
+        $tablet_bottom = (int) ($section['TabletBottomSpacingPx'] ?? -1);
+        $tablet_pad = (int) ($section['TabletPaddingPx'] ?? -1);
+        $tablet_pad_x = (int) ($section['TabletHorizontalPaddingPx'] ?? -1);
+        if ($tablet_top < 0) { $tablet_top = (int) $section['TopSpacingPx']; }
+        if ($tablet_bottom < 0) { $tablet_bottom = (int) $section['BottomSpacingPx']; }
+        if ($tablet_pad < 0) { $tablet_pad = (int) $section['PaddingPx']; }
+        if ($tablet_pad_x < 0) { $tablet_pad_x = (int) $section['HorizontalPaddingPx']; }
         return '--h18-top:' . (int) $section['TopSpacingPx'] . 'px;' .
             '--h18-bottom:' . (int) $section['BottomSpacingPx'] . 'px;' .
             '--h18-mobile-top:' . (int) $section['MobileTopSpacingPx'] . 'px;' .
@@ -7568,15 +7622,48 @@ HTML;
             '--h18-radius-tr:' . $radius_tr . 'px;' .
             '--h18-radius-br:' . $radius_br . 'px;' .
             '--h18-radius-bl:' . $radius_bl . 'px;' .
-            '--h18-hover-transform:' . $hover_transform . ';' .
+            '--h18-tablet-top:' . $tablet_top . 'px;' .
+            '--h18-tablet-bottom:' . $tablet_bottom . 'px;' .
+            '--h18-tablet-pad:' . $tablet_pad . 'px;' .
+            '--h18-tablet-pad-x:' . $tablet_pad_x . 'px;' .
+            '--h18-tablet-align:' . $tablet_align . ';' .
+            '--h18-tablet-justify:' . $tablet_justify . ';' .
+            '--h18-desktop-transform-x:' . (int) ($section['DesktopTranslateXPx'] ?? 0) . 'px;' .
+            '--h18-desktop-transform-y:' . (int) ($section['DesktopTranslateYPx'] ?? 0) . 'px;' .
+            '--h18-desktop-transform-scale:' . ((int) ($section['DesktopScalePercent'] ?? 100) / 100) . ';' .
+            '--h18-desktop-transform-rotate:' . (int) ($section['DesktopRotateDeg'] ?? 0) . 'deg;' .
+            '--h18-tablet-transform-x:' . (int) ($section['TabletTranslateXPx'] ?? 0) . 'px;' .
+            '--h18-tablet-transform-y:' . (int) ($section['TabletTranslateYPx'] ?? 0) . 'px;' .
+            '--h18-tablet-transform-scale:' . ((int) ($section['TabletScalePercent'] ?? 100) / 100) . ';' .
+            '--h18-tablet-transform-rotate:' . (int) ($section['TabletRotateDeg'] ?? 0) . 'deg;' .
+            '--h18-mobile-transform-x:' . (int) ($section['MobileTranslateXPx'] ?? 0) . 'px;' .
+            '--h18-mobile-transform-y:' . (int) ($section['MobileTranslateYPx'] ?? 0) . 'px;' .
+            '--h18-mobile-transform-scale:' . ((int) ($section['MobileScalePercent'] ?? 100) / 100) . ';' .
+            '--h18-mobile-transform-rotate:' . (int) ($section['MobileRotateDeg'] ?? 0) . 'deg;' .
+            '--h18-transform-x:var(--h18-desktop-transform-x);' .
+            '--h18-transform-y:var(--h18-desktop-transform-y);' .
+            '--h18-transform-scale:var(--h18-desktop-transform-scale);' .
+            '--h18-transform-rotate:var(--h18-desktop-transform-rotate);' .
+            '--h18-hover-y:0px;' .
+            '--h18-hover-scale:1;' .
+            '--h18-hover-active-y:' . $hover_y . ';' .
+            '--h18-hover-active-scale:' . $hover_scale . ';' .
             '--h18-hover-shadow:' . $hover_shadow . ';' .
             '--h18-hover-transition:' . (int) ($section['HoverTransitionMs'] ?? 220) . 'ms;';
+    }
+
+    private function page_editor_visibility_classes(array $section) {
+        $classes = [];
+        if (empty($section['ShowDesktop'])) { $classes[] = 'h18-hide-desktop'; }
+        if (empty($section['ShowTablet'])) { $classes[] = 'h18-hide-tablet'; }
+        if (empty($section['ShowMobile'])) { $classes[] = 'h18-hide-mobile'; }
+        return implode(' ', $classes);
     }
 
     private function render_page_editor_imported_group(array $section, $inner, $extra_class) {
         $background_class = strtolower((string) $section['Background']);
         $classes = 'h18-imported-group ' . implode(' ', array_map('sanitize_html_class', preg_split('/\s+/', trim((string) $extra_class)))) .
-            ' h18-editor-section h18-editor-section--' . sanitize_html_class($background_class);
+            ' h18-editor-section h18-editor-section--' . sanitize_html_class($background_class) . ' ' . $this->page_editor_visibility_classes($section);
 
         return '<div class="' . esc_attr($classes) . '" style="' .
             esc_attr($this->page_editor_section_style($section)) . '">' .
@@ -7601,14 +7688,16 @@ HTML;
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            'body.page .h18-editor-page>.h18-editor-section{background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease}' .
-            '@media(hover:hover){body.page .h18-editor-page>.h18-editor-section:hover{transform:var(--h18-hover-transform,none);box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}}' .
-            '@media(prefers-reduced-motion:reduce){body.page .h18-editor-page>.h18-editor-section{transition:none!important}body.page .h18-editor-page>.h18-editor-section:hover{transform:none!important}}' .
+            'body.page .h18-editor-page>.h18-editor-section{background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transform:translate(var(--h18-transform-x,0px),var(--h18-transform-y,0px)) translateY(var(--h18-hover-y,0px)) scale(var(--h18-transform-scale,1)) scale(var(--h18-hover-scale,1)) rotate(var(--h18-transform-rotate,0deg));transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease}' .
+            '@media(hover:hover){body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:var(--h18-hover-active-y,0px);--h18-hover-scale:var(--h18-hover-active-scale,1);box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}}' .
+            '@media(prefers-reduced-motion:reduce){body.page .h18-editor-page>.h18-editor-section{transition:none!important}body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:0px;--h18-hover-scale:1}}' .
+            '@media(min-width:1200px){body.page .h18-editor-page>.h18-hide-desktop{display:none!important}}' .
+            '@media(min-width:783px) and (max-width:1199px){body.page .h18-editor-page>.h18-hide-tablet{display:none!important}body.page .h18-editor-page>.h18-editor-section{margin-top:var(--h18-tablet-top,var(--h18-top,0));margin-bottom:var(--h18-tablet-bottom,var(--h18-bottom,24px));padding:var(--h18-tablet-pad,var(--h18-pad,0)) var(--h18-tablet-pad-x,var(--h18-pad-x,var(--h18-pad,0)));text-align:var(--h18-tablet-align,var(--h18-align,left));--h18-transform-x:var(--h18-tablet-transform-x);--h18-transform-y:var(--h18-tablet-transform-y);--h18-transform-scale:var(--h18-tablet-transform-scale);--h18-transform-rotate:var(--h18-tablet-transform-rotate)}body.page .h18-editor-page>.h18-editor-section .h18-editor-actions{justify-content:var(--h18-tablet-justify,var(--h18-justify,flex-start))}}' .
             'body.page .h18-editor-page>.h18-editor-section h1{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h1-size)}' .
             'body.page .h18-editor-page>.h18-editor-section h2{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h2-size)}' .
             'body.page .h18-editor-page>.h18-editor-section h3{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h3-size)}' .
             'body.page .h18-editor-page>.h18-editor-section .h18-editor-grid-card h3{color:inherit!important}' .
-            '@media(max-width:782px){.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
+            '@media(max-width:782px){body.page .h18-editor-page>.h18-hide-mobile{display:none!important}.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center);--h18-transform-x:var(--h18-mobile-transform-x);--h18-transform-y:var(--h18-mobile-transform-y);--h18-transform-scale:var(--h18-mobile-transform-scale);--h18-transform-rotate:var(--h18-mobile-transform-rotate)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
     }
 
@@ -7675,7 +7764,7 @@ HTML;
 
         $background_class = strtolower((string) $section['Background']);
         $style = $this->page_editor_section_style($section);
-        $classes = 'h18-editor-section h18-editor-section--' . $background_class;
+        $classes = 'h18-editor-section h18-editor-section--' . $background_class . ' ' . $this->page_editor_visibility_classes($section);
         if ($section['Type'] === 'card') {
             $classes .= ' h18-editor-card';
         } elseif ($section['Type'] === 'highlight') {
@@ -8213,6 +8302,38 @@ HTML;
                                     <div class="h18-field"><label><strong>Bund venstre</strong></label><input type="number" min="-1" max="60" name="<?php echo esc_attr($prefix); ?>[RadiusBottomLeftPx]" value="<?php echo esc_attr($section['RadiusBottomLeftPx']); ?>" /></div>
                                 </div>
                             </div>
+                            <div class="h18-responsive-controls-box">
+                                <h4>Responsiv elementstyring</h4>
+                                <div class="h18-responsive-visibility">
+                                    <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[ShowDesktop]" value="1" <?php checked(!empty($section['ShowDesktop'])); ?> /> Desktop</label>
+                                    <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[ShowTablet]" value="1" <?php checked(!empty($section['ShowTablet'])); ?> /> Tablet</label>
+                                    <label><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[ShowMobile]" value="1" <?php checked(!empty($section['ShowMobile'])); ?> /> Mobil</label>
+                                </div>
+                                <h4>Tablet-layout</h4>
+                                <p class="description">Inherit/-1 bruger desktop-værdien.</p>
+                                <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                    <div class="h18-field"><label><strong>Placering</strong></label><select name="<?php echo esc_attr($prefix); ?>[TabletAlignment]"><option value="Inherit" <?php selected($section['TabletAlignment'], 'Inherit'); ?>>Arv desktop</option><option value="Left" <?php selected($section['TabletAlignment'], 'Left'); ?>>Venstre</option><option value="Center" <?php selected($section['TabletAlignment'], 'Center'); ?>>Midt</option></select></div>
+                                    <div class="h18-field"><label><strong>Luft før</strong></label><input type="number" min="-1" max="160" name="<?php echo esc_attr($prefix); ?>[TabletTopSpacingPx]" value="<?php echo esc_attr($section['TabletTopSpacingPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Luft efter</strong></label><input type="number" min="-1" max="160" name="<?php echo esc_attr($prefix); ?>[TabletBottomSpacingPx]" value="<?php echo esc_attr($section['TabletBottomSpacingPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Indvendig lodret</strong></label><input type="number" min="-1" max="100" name="<?php echo esc_attr($prefix); ?>[TabletPaddingPx]" value="<?php echo esc_attr($section['TabletPaddingPx']); ?>" /></div>
+                                    <div class="h18-field"><label><strong>Indvendig vandret</strong></label><input type="number" min="-1" max="100" name="<?php echo esc_attr($prefix); ?>[TabletHorizontalPaddingPx]" value="<?php echo esc_attr($section['TabletHorizontalPaddingPx']); ?>" /></div>
+                                </div>
+                                <h4>Transform pr. enhed</h4>
+                                <div class="h18-responsive-device-grid">
+                                    <?php foreach ([
+                                        'Desktop' => ['DesktopTranslateXPx','DesktopTranslateYPx','DesktopScalePercent','DesktopRotateDeg'],
+                                        'Tablet' => ['TabletTranslateXPx','TabletTranslateYPx','TabletScalePercent','TabletRotateDeg'],
+                                        'Mobil' => ['MobileTranslateXPx','MobileTranslateYPx','MobileScalePercent','MobileRotateDeg']
+                                    ] as $device_label => $device_fields) : ?>
+                                        <fieldset class="h18-responsive-transform-device"><legend><?php echo esc_html($device_label); ?></legend>
+                                            <div class="h18-field"><label><strong>X (px)</strong></label><input type="number" min="-300" max="300" name="<?php echo esc_attr($prefix); ?>[<?php echo esc_attr($device_fields[0]); ?>]" value="<?php echo esc_attr($section[$device_fields[0]]); ?>" /></div>
+                                            <div class="h18-field"><label><strong>Y (px)</strong></label><input type="number" min="-300" max="300" name="<?php echo esc_attr($prefix); ?>[<?php echo esc_attr($device_fields[1]); ?>]" value="<?php echo esc_attr($section[$device_fields[1]]); ?>" /></div>
+                                            <div class="h18-field"><label><strong>Skala (%)</strong></label><input type="number" min="50" max="150" name="<?php echo esc_attr($prefix); ?>[<?php echo esc_attr($device_fields[2]); ?>]" value="<?php echo esc_attr($section[$device_fields[2]]); ?>" /></div>
+                                            <div class="h18-field"><label><strong>Rotation (°)</strong></label><input type="number" min="-180" max="180" name="<?php echo esc_attr($prefix); ?>[<?php echo esc_attr($device_fields[3]); ?>]" value="<?php echo esc_attr($section[$device_fields[3]]); ?>" /></div>
+                                        </fieldset>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                         </div>
                     </details>
                 <?php endif; ?>
@@ -8686,7 +8807,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.8',
+                    'Version' => '1.9',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -8770,6 +8891,9 @@ HTML;
             $raw['Active'] = !empty($raw['Active']);
             $raw['StoreSubmissions'] = !empty($raw['StoreSubmissions']);
             $raw['AllowMultiple'] = !empty($raw['AllowMultiple']);
+            $raw['ShowDesktop'] = !empty($raw['ShowDesktop']);
+            $raw['ShowTablet'] = !empty($raw['ShowTablet']);
+            $raw['ShowMobile'] = !empty($raw['ShowMobile']);
             $key = sanitize_key((string) ($raw['Key'] ?? ''));
             $legacy = isset($legacy_by_key[$key]) ? $legacy_by_key[$key] : [];
             $section = $this->normalize_page_section($raw, $index, $legacy);
@@ -8780,7 +8904,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.8',
+            'Version'        => '1.9',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -8810,7 +8934,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.8',
+                'Version' => '1.9',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

@@ -1,18 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T18:14:28Z",
+  "published_utc": "2026-08-17T18:21:52Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "0b0dffadb5e9f9acdabbe134bd60c1e13b1d026948e756b6cd91998223ad2afb",
+  "package_sha256": "55e377e6956b9f0f0ee8c0adc3060ba9490efdb0d63fb4219ebe057b788bdb1f",
   "changelog": [
-    "Tilføjer opacity pr. editorsektion.",
-    "Tilføjer gradient og baggrundsbillede med placering og skalering.",
-    "Tilføjer individuel radius for alle fire hjørner.",
-    "Tilføjer hover-effekter og justerbar transition.",
-    "Løfter page-editor schema kompatibelt til 1.8.",
-    "Baggrundsbilleder fra Media Library følger attachment-ID, og hover respekterer reduceret bevægelse."
+    "Tilføjer vis/skjul pr. desktop, tablet og mobil.",
+    "Tilføjer særskilt tablet-layout med arv fra desktop.",
+    "Tilføjer translate, scale og rotate pr. enhed.",
+    "Komponerer responsive transforms med hover-effekter og reduced-motion.",
+    "Løfter page-editor schema kompatibelt til 1.9."
   ]
 }
