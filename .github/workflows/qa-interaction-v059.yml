@@ -1,0 +1,66 @@
+name: QA Hangar18 Manager 0.5.9 interaction
+
+on:
+  push:
+    branches:
+      - qa/v0.5.9
+    paths:
+      - .github/workflows/qa-interaction-v059.yml
+
+permissions:
+  contents: write
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.9
+          fetch-depth: 0
+
+      - name: Apply interaction fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/v059_interaction_fix.py
+          node --check assets/admin.js
+          grep -F "const \$fresh = \$row.children('.h18-canvas-preview')" assets/admin.js
+
+      - name: Rebuild package and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .pkg .verify
+          mkdir -p .pkg .verify
+          unzip -q dist/hangar18-manager.zip -d .pkg
+          cp assets/admin.js .pkg/hangar18-manager/assets/admin.js
+          rm -f dist/hangar18-manager.zip
+          (cd .pkg && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          unzip -q dist/hangar18-manager.zip -d .verify
+          node --check .verify/hangar18-manager/assets/admin.js
+          SHA=$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')
+          export SHA
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          p='update.json'; d=json.load(open(p,encoding='utf-8'))
+          d['published_utc']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          d['package_sha256']=os.environ['SHA']
+          d['changelog'].append('Direkte kortredigering fastholder fokus korrekt, også når sektionen først skal åbnes i Inspector.')
+          with open(p,'w',encoding='utf-8') as f: json.dump(d,f,ensure_ascii=False,indent=2); f.write('\n')
+          PY
+          rm -rf .pkg .verify
+
+      - name: Commit interaction QA fix and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/v059_interaction_fix.py .github/workflows/qa-interaction-v059.yml
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A assets/admin.js update.json dist/hangar18-manager.zip .github/v059_interaction_fix.py .github/workflows/qa-interaction-v059.yml
+          git commit -m 'QA fix v0.5.9 direct card edit focus'
+          git push origin HEAD:qa/v0.5.9
