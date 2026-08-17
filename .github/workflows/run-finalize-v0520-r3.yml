@@ -1,0 +1,22 @@
+name: Finalize v0.5.20 r3
+
+on:
+  push:
+    branches:
+      - qa/v0.5.20-diagnose
+    paths:
+      - '.github/workflows/run-finalize-v0520-r3.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.20-diagnose
+          fetch-depth: 0
+      - run: python3 .github/scripts/prepare_finalize_v0520_r3.py
+      - run: python3 .github/scripts/finalize_v0520.py
