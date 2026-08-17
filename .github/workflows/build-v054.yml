@@ -1,0 +1,89 @@
+name: Build Hangar18 Manager 0.5.4
+
+on:
+  push:
+    branches:
+      - development/v0.5.4
+    paths:
+      - '.github/workflows/build-v054.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply v0.5.4 patch
+        run: |
+          set -euo pipefail
+          python3 tools/build_v054.py
+
+      - name: Static QA
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          grep -F "Version: 0.5.4" hangar18-manager.php
+          grep -F "const VERSION = '0.5.4';" hangar18-manager.php
+          grep -F "'Version'        => '1.8'" hangar18-manager.php
+          grep -F "'BackgroundEffect'       => 'None'" hangar18-manager.php
+          grep -F "'SectionOpacityPercent'  => 100" hangar18-manager.php
+          grep -F "h18-page-select-bg-media" assets/admin.js
+          grep -F "h18-section-bg-image" hangar18-manager.php
+          test "$(grep -o "'1.8'" hangar18-manager.php | wc -l)" -eq 7
+
+      - name: Build package and manifest
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager dist
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          mkdir -p .build/hangar18-manager/assets
+          cp assets/admin.css assets/admin.js .build/hangar18-manager/assets/
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          unzip -q dist/hangar18-manager.zip -d .build/verify
+          php -l .build/verify/hangar18-manager/hangar18-manager.php
+          node --check .build/verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          import hashlib, json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          package = Path('dist/hangar18-manager.zip')
+          payload = {
+              'schema_version': '1.0',
+              'plugin': 'hangar18-manager',
+              'version': '0.5.4',
+              'min_wp': '6.4',
+              'min_php': '8.0',
+              'published_utc': datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              'package_path': 'dist/hangar18-manager.zip',
+              'package_sha256': hashlib.sha256(package.read_bytes()).hexdigest(),
+              'changelog': [
+                  'Tilføjer opacity pr. editorsektion.',
+                  'Tilføjer gradient og baggrundsbillede med placering og skalering.',
+                  'Tilføjer individuel radius for alle fire hjørner.',
+                  'Tilføjer hover-effekter og justerbar transition.',
+                  'Løfter page-editor schema kompatibelt til 1.8.'
+              ]
+          }
+          Path('update.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          rm -rf .build
+
+      - name: Commit validated build and self-clean
+        run: |
+          set -euo pipefail
+          rm -f tools/build_v054.py .github/workflows/build-v054.yml
+          rmdir tools 2>/dev/null || true
+          git config user.name "hangar18-build"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Build Hangar18 Manager 0.5.4 advanced visual element design"
+          git push
