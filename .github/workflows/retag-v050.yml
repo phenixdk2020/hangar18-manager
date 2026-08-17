@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  retag:
+  retag-and-clean:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,12 +19,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Point v0.5.0 at rebuilt release commit
+      - name: Verify v0.5.0 tag and remove this one-time workflow
         shell: bash
         run: |
           set -euo pipefail
           TARGET='3768f989edc2f9570c086e24f2d113aa140ee744'
           git fetch --tags --force
-          git tag -f v0.5.0 "$TARGET"
-          git push origin refs/tags/v0.5.0 --force
           test "$(git rev-parse v0.5.0^{commit})" = "$TARGET"
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/retag-v050.yml
+          git commit -m 'Cleanup: remove temporary v0.5.0 retag workflow'
+          git push origin HEAD:main
