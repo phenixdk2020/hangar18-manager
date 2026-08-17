@@ -1,0 +1,1 @@
+CalledProcessError: Command '['python3', '.github/scripts/patch_v0520.py']' returned non-zero exit status 1.
