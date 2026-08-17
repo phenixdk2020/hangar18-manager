@@ -1,0 +1,63 @@
+name: Diagnose patch v0.5.20 r4
+
+on:
+  push:
+    branches:
+      - qa/v0.5.20-diagnose
+    paths:
+      - '.github/workflows/run-diagnose-patch-v0520-r4.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.20-diagnose
+          fetch-depth: 0
+      - name: Correct patch anchors
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/patch_v0520.py')
+          t=p.read_text()
+          old_boundary="end=php.index('    private function render_page_editor_imported_group', start)"
+          new_boundary="end=php.index('    private function render_page_editor_section_front', start)"
+          if old_boundary in t:
+              t=t.replace(old_boundary,new_boundary,1)
+          old="""colors_return=\"\"\"        return { background: background, backgroundImage: backgroundImage, text: text, heading: heading, border: border, opacity: opacity };
+\"\"\"
+colors_return_new=\"\"\"        if (currentCanvasState === 'disabled') {
+            opacity *= Math.max(10, Math.min(100, canvasNumber($row, 'DisabledOpacityPercent', 55))) / 100;
+        }
+        return { background: background, backgroundImage: backgroundImage, text: text, heading: heading, border: border, opacity: opacity };
+\"\"\""""
+          new="""colors_return=\"\"\"        return {
+            background: background,
+            backgroundImage: backgroundImage,
+            text: text,
+            heading: heading,
+            border: border,
+            opacity: clampValue(opacity, 0, 1)
+        };
+\"\"\"
+colors_return_new=\"\"\"        if (currentCanvasState === 'disabled') {
+            opacity *= Math.max(10, Math.min(100, canvasNumber($row, 'DisabledOpacityPercent', 55))) / 100;
+        }
+        return {
+            background: background,
+            backgroundImage: backgroundImage,
+            text: text,
+            heading: heading,
+            border: border,
+            opacity: clampValue(opacity, 0, 1)
+        };
+\"\"\""""
+          if old not in t:
+              raise SystemExit('Original canvas return definitions missing')
+          p.write_text(t.replace(old,new,1))
+          PY
+      - run: python3 .github/scripts/diagnose_patch_v0520.py
