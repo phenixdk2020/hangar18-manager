@@ -4,15 +4,16 @@
   "version": "0.5.8",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T18:54:08Z",
+  "published_utc": "2026-08-17T18:55:28Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "f066303cd51cdf3f638abbea88f4ceed1a3c835dda543e5e3d5b46bfd8d28706",
+  "package_sha256": "d76d40b3e1280ba531823d5973004cb60639a21eb345dc78d02c2d42dfe91a32",
   "changelog": [
     "Tilføjer direkte rich-text redigering af brødtekst i live canvas.",
     "Tilføjer grafiske hurtigkontroller for padding, spacing, radius og opacity.",
     "Tilføjer direkte farvevalg for baggrund, tekst og overskrift.",
     "Tilføjer fire drag-handles til indvendig luft på det valgte element.",
     "Kontroller følger Desktop/Tablet/Mobil og Normal/Hover.",
-    "Page-editor schema forbliver 1.10 og eksisterende sidedata migreres ikke."
+    "Page-editor schema forbliver 1.10 og eksisterende sidedata migreres ikke.",
+    "Hover-direktekontroller seedes nu fra Normal-design, så Hover-ændringer ikke påvirker Normal eller nulstiller kant/opacity."
   ]
 }

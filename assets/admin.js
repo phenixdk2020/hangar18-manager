@@ -1113,9 +1113,11 @@ jQuery(function ($) {
     }
 
     function canvasQuickColor(label, role, value) {
+        const raw = String(value || '');
+        const normalized = /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : '#ffffff';
         return $('<label>', { class: 'h18-canvas-quick-color' }).append(
             $('<span>', { text: label }),
-            $('<input>', { type: 'color', value: value, 'data-canvas-color-role': role })
+            $('<input>', { type: 'color', value: normalized, 'data-canvas-color-role': role })
         );
     }
 
@@ -1124,9 +1126,10 @@ jQuery(function ($) {
         if (!$row.hasClass('is-selected')) { return; }
 
         const fields = canvasQuickFields();
-        const hoverCustom = currentCanvasState === 'hover' && String(canvasFieldValue($row, 'HoverStyleMode', 'Inherit')) === 'Custom';
-        const opacityField = hoverCustom ? 'HoverOpacityPercent' : 'SectionOpacityPercent';
-        const opacityValue = hoverCustom ? canvasNumber($row, 'HoverOpacityPercent', 100) : canvasNumber($row, 'SectionOpacityPercent', 100);
+        const hoverState = currentCanvasState === 'hover';
+        const hoverCustom = hoverState && String(canvasFieldValue($row, 'HoverStyleMode', 'Inherit')) === 'Custom';
+        const opacityField = hoverState ? 'HoverOpacityPercent' : 'SectionOpacityPercent';
+        const opacityValue = hoverCustom ? canvasNumber($row, 'HoverOpacityPercent', 100) : Math.round(colors.opacity * 100);
         const radius = canvasNumber($row, 'RadiusPx', 7);
         const $bar = $('<div>', { class: 'h18-canvas-direct-controls', 'data-canvas-state': currentCanvasState });
         const $ranges = $('<div>', { class: 'h18-canvas-quick-ranges' }).append(
@@ -1137,7 +1140,12 @@ jQuery(function ($) {
             canvasQuickRange('Radius', 'RadiusPx', radius, 0, 60, ' px'),
             canvasQuickRange('Opacity', opacityField, opacityValue, 0, 100, '%')
         );
-        const $colors = $('<div>', { class: 'h18-canvas-quick-colors', 'data-canvas-color-state': currentCanvasState }).append(
+        const $colors = $('<div>', {
+            class: 'h18-canvas-quick-colors',
+            'data-canvas-color-state': currentCanvasState,
+            'data-canvas-border': colors.border,
+            'data-canvas-opacity': Math.round(colors.opacity * 100)
+        }).append(
             canvasQuickColor('Baggrund', 'background', colors.background),
             canvasQuickColor('Tekst', 'text', colors.text),
             canvasQuickColor('Overskrift', 'heading', colors.heading)
@@ -1312,6 +1320,15 @@ jQuery(function ($) {
         const $row = $input.closest('.h18-page-section-row');
         const fieldName = String($input.data('canvas-quick-field') || '');
         const value = parseInt($input.val(), 10) || 0;
+        if (fieldName === 'HoverOpacityPercent' && String(canvasFieldValue($row, 'HoverStyleMode', 'Inherit')) !== 'Custom') {
+            const $group = $input.closest('.h18-canvas-direct-controls').find('.h18-canvas-quick-colors');
+            canvasSetField($row, 'HoverStyleMode', 'Custom');
+            canvasSetField($row, 'HoverBackgroundColor', String($group.find('[data-canvas-color-role="background"]').val() || '#ffffff'));
+            canvasSetField($row, 'HoverTextColor', String($group.find('[data-canvas-color-role="text"]').val() || '#30382a'));
+            canvasSetField($row, 'HoverHeadingColor', String($group.find('[data-canvas-color-role="heading"]').val() || '#30382a'));
+            canvasSetField($row, 'HoverBorderColor', String($group.attr('data-canvas-border') || '#c3ae83'));
+            refreshHoverStyleMode($row);
+        }
         canvasSetField($row, fieldName, value);
         $input.closest('.h18-canvas-quick-range').find('output').text(String(value) + String($input.data('canvas-quick-suffix') || ''));
     });
@@ -1331,11 +1348,18 @@ jQuery(function ($) {
         const background = String($group.find('[data-canvas-color-role="background"]').val() || '#ffffff');
         const text = String($group.find('[data-canvas-color-role="text"]').val() || '#30382a');
         const heading = String($group.find('[data-canvas-color-role="heading"]').val() || text);
+        const seedBorder = String($group.attr('data-canvas-border') || '#c3ae83');
+        const seedOpacity = parseInt($group.attr('data-canvas-opacity'), 10);
         if (state === 'hover') {
+            const wasCustom = String(canvasFieldValue($row, 'HoverStyleMode', 'Inherit')) === 'Custom';
             canvasSetField($row, 'HoverStyleMode', 'Custom');
             canvasSetField($row, 'HoverBackgroundColor', background);
             canvasSetField($row, 'HoverTextColor', text);
             canvasSetField($row, 'HoverHeadingColor', heading);
+            if (!wasCustom) {
+                canvasSetField($row, 'HoverBorderColor', seedBorder);
+                canvasSetField($row, 'HoverOpacityPercent', Number.isFinite(seedOpacity) ? seedOpacity : 100);
+            }
             refreshHoverStyleMode($row);
         } else {
             canvasSetField($row, 'DesignMode', 'Custom');
