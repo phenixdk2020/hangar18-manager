@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.18
+ * Version: 0.5.19
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.18';
+    const VERSION = '0.5.19';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -706,7 +706,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.14',
+                'Version' => '1.15',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -6360,6 +6360,9 @@ HTML;
             'tabs'       => 'Faner / tabs',
             'accordion'  => 'Accordion',
             'carousel'   => 'Carousel / slider',
+            'container'  => 'Container',
+            'flex'       => 'Flex container',
+            'grid'       => 'Grid container',
             'embed'      => 'Embed / medie-URL',
             'shortcode'  => 'Shortcode (avanceret)',
             'spacer'     => 'Afstand',
@@ -6533,6 +6536,16 @@ HTML;
             'ColumnGapPx'           => 16,
             'MobileColumnGapPx'     => 14,
             'Cards'                 => [],
+            'LayoutParentKey'       => '',
+            'LayoutDirection'       => 'Row',
+            'LayoutWrap'            => true,
+            'LayoutJustify'         => 'Start',
+            'LayoutAlign'           => 'Stretch',
+            'LayoutGapPx'           => 16,
+            'MobileLayoutGapPx'     => 12,
+            'LayoutColumns'         => 2,
+            'MobileLayoutColumns'   => 1,
+            'MobileLayoutStack'     => true,
             'CarouselAutoplay'      => false,
             'CarouselIntervalMs'    => 5000,
             'CarouselLoop'          => true,
@@ -6803,6 +6816,14 @@ HTML;
         $tablet_alignment = (string) ($raw['TabletAlignment'] ?? 'Inherit');
         if (!in_array($tablet_alignment, ['Inherit', 'Left', 'Center'], true)) { $tablet_alignment = 'Inherit'; }
 
+        $layout_parent_key = sanitize_key((string) ($raw['LayoutParentKey'] ?? ''));
+        $layout_direction = (string) ($raw['LayoutDirection'] ?? 'Row');
+        if (!in_array($layout_direction, ['Row', 'Column'], true)) { $layout_direction = 'Row'; }
+        $layout_justify = (string) ($raw['LayoutJustify'] ?? 'Start');
+        if (!in_array($layout_justify, ['Start', 'Center', 'End', 'SpaceBetween'], true)) { $layout_justify = 'Start'; }
+        $layout_align = (string) ($raw['LayoutAlign'] ?? 'Stretch');
+        if (!in_array($layout_align, ['Start', 'Center', 'End', 'Stretch'], true)) { $layout_align = 'Stretch'; }
+
         $cards = [];
         $used_card_keys = [];
         $raw_cards = isset($raw['Cards']) && is_array($raw['Cards']) ? $raw['Cards'] : [];
@@ -6879,6 +6900,16 @@ HTML;
             'ColumnGapPx'           => $this->clamp_int($raw['ColumnGapPx'] ?? 16, 0, 80, 16),
             'MobileColumnGapPx'     => $this->clamp_int($raw['MobileColumnGapPx'] ?? 14, 0, 60, 14),
             'Cards'                  => $cards,
+            'LayoutParentKey'        => $layout_parent_key,
+            'LayoutDirection'        => $layout_direction,
+            'LayoutWrap'             => array_key_exists('LayoutWrap', $raw) ? $this->bool_value($raw['LayoutWrap'], true) : true,
+            'LayoutJustify'          => $layout_justify,
+            'LayoutAlign'            => $layout_align,
+            'LayoutGapPx'            => $this->clamp_int($raw['LayoutGapPx'] ?? 16, 0, 120, 16),
+            'MobileLayoutGapPx'      => $this->clamp_int($raw['MobileLayoutGapPx'] ?? 12, 0, 80, 12),
+            'LayoutColumns'          => $this->clamp_int($raw['LayoutColumns'] ?? 2, 1, 6, 2),
+            'MobileLayoutColumns'    => $this->clamp_int($raw['MobileLayoutColumns'] ?? 1, 1, 3, 1),
+            'MobileLayoutStack'      => array_key_exists('MobileLayoutStack', $raw) ? $this->bool_value($raw['MobileLayoutStack'], true) : true,
             'CarouselAutoplay'       => array_key_exists('CarouselAutoplay', $raw) ? $this->bool_value($raw['CarouselAutoplay'], false) : false,
             'CarouselIntervalMs'     => $this->clamp_int($raw['CarouselIntervalMs'] ?? 5000, 2000, 20000, 5000),
             'CarouselLoop'           => array_key_exists('CarouselLoop', $raw) ? $this->bool_value($raw['CarouselLoop'], true) : true,
@@ -6984,6 +7015,39 @@ HTML;
             return ((int) $a['Order']) <=> ((int) $b['Order']);
         });
 
+        $layout_parent_types = ['container', 'flex', 'grid'];
+        $sections_by_key = [];
+        foreach ($sections as $section_index => $candidate) {
+            $sections_by_key[(string) $candidate['Key']] = $section_index;
+        }
+        foreach ($sections as $section_index => &$candidate) {
+            $parent_key = sanitize_key((string) ($candidate['LayoutParentKey'] ?? ''));
+            if ($parent_key === '') { continue; }
+            $self_key = (string) $candidate['Key'];
+            $seen = [$self_key => true];
+            $cursor = $parent_key;
+            $depth = 0;
+            $valid_parent = true;
+            while ($cursor !== '') {
+                $depth++;
+                if ($depth > 2 || isset($seen[$cursor]) || !isset($sections_by_key[$cursor])) {
+                    $valid_parent = false;
+                    break;
+                }
+                $seen[$cursor] = true;
+                $parent_section = $sections[$sections_by_key[$cursor]];
+                if (!in_array((string) ($parent_section['Type'] ?? ''), $layout_parent_types, true)) {
+                    $valid_parent = false;
+                    break;
+                }
+                $cursor = sanitize_key((string) ($parent_section['LayoutParentKey'] ?? ''));
+            }
+            if (!$valid_parent) {
+                $candidate['LayoutParentKey'] = '';
+            }
+        }
+        unset($candidate);
+
         $title = sanitize_text_field((string) ($raw['PageTitle'] ?? ($page ? $page->post_title : $definitions[$slug])));
         if ($title === '') {
             $title = $definitions[$slug];
@@ -6999,7 +7063,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.14',
+            'Version'        => '1.15',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7533,7 +7597,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.14',
+            'Version'        => '1.15',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7920,21 +7984,22 @@ HTML;
             '.h18-editor-page .wp-block-columns{display:flex;align-items:stretch;gap:16px}.h18-editor-page .wp-block-column{flex:1 1 0;min-width:0}.h18-editor-page .wp-block-button__link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}' .
             '.h18-imported-group{box-sizing:border-box;width:100%}.h18-imported-group>.h18-editor-section{margin:0!important;padding:0!important;border-radius:0!important;background:transparent!important;text-align:var(--h18-align,left)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-justify,flex-start)!important;margin-top:22px}.h18-editor-page .h18-imported-tagline.h18-imported-group{margin-top:var(--h18-top,0)!important;margin-bottom:var(--h18-bottom,0)!important}.h18-imported-group .h18-editor-button{min-height:52px;padding:13px 24px;border:0;border-radius:29px}.h18-imported-group.h18-editor-section--offwhite .h18-editor-button,.h18-imported-group.h18-editor-section--sand .h18-editor-button{background:#30382a;color:#fff}.h18-imported-group.h18-editor-section--olive .h18-editor-button{background:#c3ae83;color:#30382a}' .
             '.h18-editor-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:1px solid #c3ae83;border-radius:5px;background:#c3ae83;color:#20261d;text-decoration:none;font-weight:700}.h18-editor-button--secondary{background:transparent;color:inherit}' .
+            '.h18-layout-children{box-sizing:border-box;min-width:0;gap:var(--h18-layout-gap,16px)}.h18-layout-container-children{display:grid;grid-template-columns:minmax(0,1fr)}.h18-layout-flex-children{display:flex;flex-direction:var(--h18-layout-direction,row);flex-wrap:var(--h18-layout-wrap,wrap);justify-content:var(--h18-layout-justify,flex-start);align-items:var(--h18-layout-align,stretch)}.h18-layout-grid-children{display:grid;grid-template-columns:repeat(var(--h18-layout-columns,2),minmax(0,1fr));align-items:var(--h18-layout-align,stretch)}.h18-layout-children>.h18-editor-section{min-width:0;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0) var(--h18-pad-x,var(--h18-pad,0));text-align:var(--h18-align,left)}@media(max-width:782px){.h18-layout-children{gap:var(--h18-layout-mobile-gap,12px)}.h18-layout-flex-children{flex-direction:var(--h18-layout-mobile-direction,column)}.h18-layout-grid-children{grid-template-columns:repeat(var(--h18-layout-mobile-columns,1),minmax(0,1fr))}}' .
             '.h18-page-form,.h18-page-poll{max-width:760px;margin-inline:auto;text-align:left}.h18-page-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.h18-page-form-field{display:flex;flex-direction:column;gap:6px}.h18-page-form-field--wide{grid-column:1/-1}.h18-page-form input,.h18-page-form textarea{box-sizing:border-box;width:100%;padding:11px;border:1px solid #8c8f94;border-radius:4px}.h18-page-form input[type=checkbox]{width:auto;padding:0}.h18-page-form button,.h18-page-poll button{min-height:44px;padding:10px 20px;border:0;border-radius:5px;background:#c3ae83;color:#20261d;font-weight:700;cursor:pointer}' .
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-icon{display:inline-flex;align-items:center;justify-content:center;font-size:clamp(42px,6vw,84px);line-height:1;color:var(--h18-section-heading,currentColor)}.h18-safe-icon-svg{display:block;width:1em;height:1em}.h18-editor-icon-copy{margin-top:12px}.h18-editor-divider{width:100%;height:0;margin:0;border:0;border-top:var(--h18-section-border-width,2px) solid var(--h18-section-border,#c3ae83)}.h18-editor-divider--dashed{border-top-style:dashed}.h18-editor-divider--dotted{border-top-style:dotted}.h18-editor-divider--double{border-top-style:double;border-top-width:max(3px,var(--h18-section-border-width,3px))}.h18-editor-list>ul,.h18-editor-list>ol{margin:0;padding-left:1.5em}.h18-editor-list-checks{list-style:none!important;padding-left:0!important}.h18-editor-list-checks li{position:relative;padding-left:1.7em}.h18-editor-list-checks li:before{position:absolute;left:0;content:"✓";font-weight:800}.h18-editor-badge{display:inline-flex;align-items:center;min-height:30px;padding:5px 12px;border-radius:999px;background:var(--h18-section-heading,#30382a);color:var(--h18-section-bg,#fff);font-size:.88em;font-weight:700;line-height:1.2}.h18-editor-badge--outline{background:transparent;color:inherit;border:1px solid currentColor}.h18-editor-quote{margin:0;padding:18px 22px;border-left:4px solid var(--h18-section-border,#c3ae83)}.h18-editor-quote blockquote{margin:0;font-size:1.15em}.h18-editor-quote--large blockquote{font-size:clamp(1.35em,2.6vw,2em);line-height:1.35}.h18-editor-quote figcaption{margin-top:12px;font-weight:600}.h18-editor-embed{position:relative;max-width:100%;overflow:hidden}.h18-editor-embed iframe,.h18-editor-embed video{max-width:100%}.h18-editor-shortcode-locked{white-space:pre-wrap;padding:12px;border:1px dashed #b32d2e;background:#fcf0f1}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            'body.page .h18-editor-page>.h18-editor-section{box-sizing:border-box;width:var(--h18-element-width,100%);max-width:var(--h18-element-max-width,none);min-height:var(--h18-element-min-height,0);margin-left:auto;margin-right:auto;background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transform:translate(var(--h18-transform-x,0px),var(--h18-transform-y,0px)) translateY(var(--h18-hover-y,0px)) scale(var(--h18-transform-scale,1)) scale(var(--h18-hover-scale,1)) rotate(var(--h18-transform-rotate,0deg));transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease,background-color var(--h18-hover-transition,220ms) ease,color var(--h18-hover-transition,220ms) ease,border-color var(--h18-hover-transition,220ms) ease}' .
-            '@media(hover:hover){body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:var(--h18-hover-active-y,0px);--h18-hover-scale:var(--h18-hover-active-scale,1);background-color:var(--h18-hover-bg,var(--h18-section-bg))!important;background-image:var(--h18-hover-bg-image,var(--h18-section-bg-image,none));color:var(--h18-hover-text,var(--h18-section-text))!important;border-color:var(--h18-hover-border,var(--h18-section-border,transparent));opacity:var(--h18-hover-opacity,var(--h18-section-opacity,1));box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}body.page .h18-editor-page>.h18-editor-section:hover h1,body.page .h18-editor-page>.h18-editor-section:hover h2,body.page .h18-editor-page>.h18-editor-section:hover h3{color:var(--h18-hover-heading,var(--h18-section-heading))!important}body.page .h18-editor-page>.h18-editor-section:hover .h18-editor-grid-card h3{color:inherit!important}body.page .h18-editor-page>.h18-hover-style-custom:hover{background-image:none!important}}' .
-            '@media(prefers-reduced-motion:reduce){body.page .h18-editor-page>.h18-editor-section{transition:none!important}body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:0px;--h18-hover-scale:1}}' .
-            '@media(min-width:1200px){body.page .h18-editor-page>.h18-hide-desktop{display:none!important}}' .
-            '@media(min-width:783px) and (max-width:1199px){body.page .h18-editor-page>.h18-hide-tablet{display:none!important}body.page .h18-editor-page>.h18-editor-section{margin-top:var(--h18-tablet-top,var(--h18-top,0));margin-bottom:var(--h18-tablet-bottom,var(--h18-bottom,24px));padding:var(--h18-tablet-pad,var(--h18-pad,0)) var(--h18-tablet-pad-x,var(--h18-pad-x,var(--h18-pad,0)));text-align:var(--h18-tablet-align,var(--h18-align,left));width:var(--h18-tablet-element-width,var(--h18-element-width,100%));min-height:var(--h18-tablet-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-tablet-transform-x);--h18-transform-y:var(--h18-tablet-transform-y);--h18-transform-scale:var(--h18-tablet-transform-scale);--h18-transform-rotate:var(--h18-tablet-transform-rotate)}body.page .h18-editor-page>.h18-editor-section .has-text-align-left,body.page .h18-editor-page>.h18-editor-section .has-text-align-center,body.page .h18-editor-page>.h18-editor-section .has-text-align-right{ text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-group>.h18-editor-section{text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-composite .h18-editor-actions,body.page .h18-editor-page>.h18-editor-section .h18-editor-actions{justify-content:var(--h18-tablet-justify,var(--h18-justify,flex-start))!important}}' .
-            'body.page .h18-editor-page>.h18-editor-section h1{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h1-size)}' .
-            'body.page .h18-editor-page>.h18-editor-section h2{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h2-size)}' .
-            'body.page .h18-editor-page>.h18-editor-section h3{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h3-size)}' .
-            'body.page .h18-editor-page>.h18-editor-section .h18-editor-grid-card h3{color:inherit!important}' .
-            '@media(max-width:782px){body.page .h18-editor-page>.h18-hide-mobile{display:none!important}.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center);width:var(--h18-mobile-element-width,var(--h18-element-width,100%));min-height:var(--h18-mobile-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-mobile-transform-x);--h18-transform-y:var(--h18-mobile-transform-y);--h18-transform-scale:var(--h18-mobile-transform-scale);--h18-transform-rotate:var(--h18-mobile-transform-rotate)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-editor-media img,.h18-editor-image img{width:var(--h18-mobile-image-width,var(--h18-image-width,100%));height:var(--h18-mobile-image-height,var(--h18-image-height,auto))}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
+            ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section){box-sizing:border-box;width:var(--h18-element-width,100%);max-width:var(--h18-element-max-width,none);min-height:var(--h18-element-min-height,0);margin-left:auto;margin-right:auto;background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transform:translate(var(--h18-transform-x,0px),var(--h18-transform-y,0px)) translateY(var(--h18-hover-y,0px)) scale(var(--h18-transform-scale,1)) scale(var(--h18-hover-scale,1)) rotate(var(--h18-transform-rotate,0deg));transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease,background-color var(--h18-hover-transition,220ms) ease,color var(--h18-hover-transition,220ms) ease,border-color var(--h18-hover-transition,220ms) ease}' .
+            '@media(hover:hover){:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover{--h18-hover-y:var(--h18-hover-active-y,0px);--h18-hover-scale:var(--h18-hover-active-scale,1);background-color:var(--h18-hover-bg,var(--h18-section-bg))!important;background-image:var(--h18-hover-bg-image,var(--h18-section-bg-image,none));color:var(--h18-hover-text,var(--h18-section-text))!important;border-color:var(--h18-hover-border,var(--h18-section-border,transparent));opacity:var(--h18-hover-opacity,var(--h18-section-opacity,1));box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover h1,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover h2,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover h3{color:var(--h18-hover-heading,var(--h18-section-heading))!important}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover .h18-editor-grid-card h3{color:inherit!important}body.page .h18-editor-page .h18-hover-style-custom:hover{background-image:none!important}}' .
+            '@media(prefers-reduced-motion:reduce){:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section){transition:none!important}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover{--h18-hover-y:0px;--h18-hover-scale:1}}' .
+            '@media(min-width:1200px){body.page .h18-editor-page .h18-hide-desktop{display:none!important}}' .
+            '@media(min-width:783px) and (max-width:1199px){body.page .h18-editor-page .h18-hide-tablet{display:none!important}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section){margin-top:var(--h18-tablet-top,var(--h18-top,0));margin-bottom:var(--h18-tablet-bottom,var(--h18-bottom,24px));padding:var(--h18-tablet-pad,var(--h18-pad,0)) var(--h18-tablet-pad-x,var(--h18-pad-x,var(--h18-pad,0)));text-align:var(--h18-tablet-align,var(--h18-align,left));width:var(--h18-tablet-element-width,var(--h18-element-width,100%));min-height:var(--h18-tablet-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-tablet-transform-x);--h18-transform-y:var(--h18-tablet-transform-y);--h18-transform-scale:var(--h18-tablet-transform-scale);--h18-transform-rotate:var(--h18-tablet-transform-rotate)}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-left,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-center,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-right{ text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-group>.h18-editor-section{text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-composite .h18-editor-actions,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .h18-editor-actions{justify-content:var(--h18-tablet-justify,var(--h18-justify,flex-start))!important}}' .
+            ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) h1{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h1-size)}' .
+            ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) h2{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h2-size)}' .
+            ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) h3{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h3-size)}' .
+            ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .h18-editor-grid-card h3{color:inherit!important}' .
+            '@media(max-width:782px){body.page .h18-editor-page .h18-hide-mobile{display:none!important}.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center);width:var(--h18-mobile-element-width,var(--h18-element-width,100%));min-height:var(--h18-mobile-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-mobile-transform-x);--h18-transform-y:var(--h18-mobile-transform-y);--h18-transform-scale:var(--h18-mobile-transform-scale);--h18-transform-rotate:var(--h18-mobile-transform-rotate)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-editor-media img,.h18-editor-image img{width:var(--h18-mobile-image-width,var(--h18-image-width,100%));height:var(--h18-mobile-image-height,var(--h18-image-height,auto))}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
     }
 
@@ -7987,7 +8052,7 @@ HTML;
         return $html . '</div>';
     }
 
-    private function render_page_editor_section_front($page_id, array $section) {
+    private function render_page_editor_section_front($page_id, array $section, $layout_children = '') {
         if (empty($section['Active'])) {
             return '';
         }
@@ -8024,7 +8089,21 @@ HTML;
         }
         $inner = $title . $content;
 
-        if ($section['Type'] === 'icon') {
+        if (in_array($section['Type'], ['container', 'flex', 'grid'], true)) {
+            $justify_map = ['Start'=>'flex-start','Center'=>'center','End'=>'flex-end','SpaceBetween'=>'space-between'];
+            $align_map = ['Start'=>'flex-start','Center'=>'center','End'=>'flex-end','Stretch'=>'stretch'];
+            $style .= '--h18-layout-gap:' . (int) $section['LayoutGapPx'] . 'px;' .
+                '--h18-layout-mobile-gap:' . (int) $section['MobileLayoutGapPx'] . 'px;' .
+                '--h18-layout-columns:' . (int) $section['LayoutColumns'] . ';' .
+                '--h18-layout-mobile-columns:' . (int) $section['MobileLayoutColumns'] . ';' .
+                '--h18-layout-direction:' . strtolower((string) $section['LayoutDirection']) . ';' .
+                '--h18-layout-wrap:' . (!empty($section['LayoutWrap']) ? 'wrap' : 'nowrap') . ';' .
+                '--h18-layout-justify:' . ($justify_map[$section['LayoutJustify']] ?? 'flex-start') . ';' .
+                '--h18-layout-align:' . ($align_map[$section['LayoutAlign']] ?? 'stretch') . ';' .
+                '--h18-layout-mobile-direction:' . (!empty($section['MobileLayoutStack']) ? 'column' : strtolower((string) $section['LayoutDirection'])) . ';';
+            $layout_class = 'h18-layout-' . sanitize_html_class((string) $section['Type']) . '-children';
+            $inner = $title . $content . '<div class="h18-layout-children ' . esc_attr($layout_class) . '">' . (string) $layout_children . '</div>';
+        } elseif ($section['Type'] === 'icon') {
             $variant = (string) ($section['PrimitiveVariant'] ?? 'check');
             $label = $section['Title'] !== '' ? $section['Title'] : ($this->page_primitive_variant_options('icon')[$variant] ?? 'Ikon');
             $inner = '<div class="h18-editor-icon" role="img" aria-label="' . esc_attr($label) . '">' . $this->page_editor_safe_icon_svg($variant) . '</div>' .
@@ -8267,9 +8346,30 @@ HTML;
         return '<section id="' . esc_attr($id) . '" class="' . esc_attr($classes) . '" style="' . esc_attr($style) . '">' . $inner . '</section>';
     }
 
+    private function render_page_editor_layout_tree($page_id, array $sections, $parent_key = '', $depth = 0) {
+        if ($depth > 2) { return ''; }
+        $html = '';
+        foreach ($sections as $section) {
+            if (sanitize_key((string) ($section['LayoutParentKey'] ?? '')) !== sanitize_key((string) $parent_key)) { continue; }
+            $children = '';
+            if (in_array((string) ($section['Type'] ?? ''), ['container','flex','grid'], true)) {
+                $children = $this->render_page_editor_layout_tree($page_id, $sections, (string) $section['Key'], $depth + 1);
+            }
+            $html .= $this->render_page_editor_section_front($page_id, $section, $children);
+        }
+        return $html;
+    }
+
     private function render_page_editor_front($page_id, array $data) {
         $html = $this->page_editor_frontend_css($page_id) . '<div class="h18-editor-page">';
         $sections = array_values((array) $data['Sections']);
+        $has_layout_hierarchy = false;
+        foreach ($sections as $layout_candidate) {
+            if (sanitize_key((string) ($layout_candidate['LayoutParentKey'] ?? '')) !== '') { $has_layout_hierarchy = true; break; }
+        }
+        if ($has_layout_hierarchy) {
+            return $html . $this->render_page_editor_layout_tree($page_id, $sections) . '</div>';
+        }
         $count = count($sections);
         for ($index = 0; $index < $count; $index++) {
             $section = $sections[$index];
@@ -8473,12 +8573,12 @@ HTML;
                             </select>
                         </div>
 
-                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid tabs accordion carousel highlight icon list badge quote html mail_form poll">
+                        <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid tabs accordion carousel container flex grid highlight icon list badge quote html mail_form poll">
                             <label><strong class="h18-section-title-label"><?php echo $section['Type'] === 'poll' ? 'Spørgsmål' : 'Overskrift'; ?></strong></label>
                             <input class="h18-section-title-input" type="text" name="<?php echo esc_attr($prefix); ?>[Title]" value="<?php echo esc_attr($section['Title']); ?>" />
                         </div>
 
-                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card card_grid tabs accordion carousel highlight icon list quote embed shortcode html css mail_form poll">
+                        <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card card_grid tabs accordion carousel container flex grid highlight icon list quote embed shortcode html css mail_form poll">
                             <label><strong><?php echo $section['Type'] === 'image' ? 'Billedtekst' : ($section['Type'] === 'css' ? 'CSS' : 'Tekst'); ?></strong></label>
                             <div class="h18-mini-editor-toolbar h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight list quote html mail_form poll"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
                             <textarea name="<?php echo esc_attr($prefix); ?>[Content]" rows="5"><?php echo esc_textarea($section['Content']); ?></textarea>
@@ -8551,6 +8651,27 @@ HTML;
                             <div class="h18-field"><label><strong>Højde desktop (px)</strong></label><input type="number" min="140" max="800" name="<?php echo esc_attr($prefix); ?>[HeroHeightPx]" value="<?php echo esc_attr($section['HeroHeightPx']); ?>" /></div>
                             <div class="h18-field"><label><strong>Højde mobil (px)</strong></label><input type="number" min="100" max="600" name="<?php echo esc_attr($prefix); ?>[MobileHeroHeightPx]" value="<?php echo esc_attr($section['MobileHeroHeightPx']); ?>" /></div>
                             <div class="h18-field"><label><strong>Mørkning (%)</strong></label><input type="number" min="0" max="90" name="<?php echo esc_attr($prefix); ?>[OverlayOpacityPercent]" value="<?php echo esc_attr($section['OverlayOpacityPercent']); ?>" /></div>
+                        </div>
+                    </div>
+
+                    <div class="h18-section-module-box h18-layout-parent-box">
+                        <h4>Layout-hierarki</h4>
+                        <input class="h18-layout-parent-key" type="hidden" name="<?php echo esc_attr($prefix); ?>[LayoutParentKey]" value="<?php echo esc_attr($section['LayoutParentKey']); ?>" />
+                        <div class="h18-field"><label><strong>Placér element i</strong></label><select class="h18-layout-parent-select"><option value="">Topniveau på siden</option></select></div>
+                        <p class="description">Kun Container, Flex container og Grid container kan være parent. Cyklusser og mere end tre niveauer afvises også server-side.</p>
+                    </div>
+                    <div class="h18-section-type-field h18-section-module-box" data-types="container flex grid">
+                        <h4>Container-layout</h4>
+                        <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                            <div class="h18-field h18-section-type-field" data-types="flex"><label><strong>Retning</strong></label><select name="<?php echo esc_attr($prefix); ?>[LayoutDirection]"><option value="Row" <?php selected($section['LayoutDirection'],'Row'); ?>>Vandret</option><option value="Column" <?php selected($section['LayoutDirection'],'Column'); ?>>Lodret</option></select></div>
+                            <label class="h18-section-type-field" data-types="flex"><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[LayoutWrap]" value="1" <?php checked(!empty($section['LayoutWrap'])); ?> /> <strong>Tillad wrap</strong></label>
+                            <div class="h18-field h18-section-type-field" data-types="flex"><label><strong>Fordeling</strong></label><select name="<?php echo esc_attr($prefix); ?>[LayoutJustify]"><option value="Start" <?php selected($section['LayoutJustify'],'Start'); ?>>Start</option><option value="Center" <?php selected($section['LayoutJustify'],'Center'); ?>>Center</option><option value="End" <?php selected($section['LayoutJustify'],'End'); ?>>Slut</option><option value="SpaceBetween" <?php selected($section['LayoutJustify'],'SpaceBetween'); ?>>Space between</option></select></div>
+                            <div class="h18-field h18-section-type-field" data-types="flex grid"><label><strong>Vertikal/track placering</strong></label><select name="<?php echo esc_attr($prefix); ?>[LayoutAlign]"><option value="Start" <?php selected($section['LayoutAlign'],'Start'); ?>>Start</option><option value="Center" <?php selected($section['LayoutAlign'],'Center'); ?>>Center</option><option value="End" <?php selected($section['LayoutAlign'],'End'); ?>>Slut</option><option value="Stretch" <?php selected($section['LayoutAlign'],'Stretch'); ?>>Stretch</option></select></div>
+                            <div class="h18-field"><label><strong>Gap desktop (px)</strong></label><input type="number" min="0" max="120" name="<?php echo esc_attr($prefix); ?>[LayoutGapPx]" value="<?php echo esc_attr($section['LayoutGapPx']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Gap mobil (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[MobileLayoutGapPx]" value="<?php echo esc_attr($section['MobileLayoutGapPx']); ?>" /></div>
+                            <div class="h18-field h18-section-type-field" data-types="grid"><label><strong>Grid kolonner</strong></label><input type="number" min="1" max="6" name="<?php echo esc_attr($prefix); ?>[LayoutColumns]" value="<?php echo esc_attr($section['LayoutColumns']); ?>" /></div>
+                            <div class="h18-field h18-section-type-field" data-types="grid"><label><strong>Grid kolonner mobil</strong></label><input type="number" min="1" max="3" name="<?php echo esc_attr($prefix); ?>[MobileLayoutColumns]" value="<?php echo esc_attr($section['MobileLayoutColumns']); ?>" /></div>
+                            <label class="h18-section-type-field" data-types="flex"><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[MobileLayoutStack]" value="1" <?php checked(!empty($section['MobileLayoutStack'])); ?> /> <strong>Stack lodret på mobil</strong></label>
                         </div>
                     </div>
 
@@ -9256,7 +9377,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.14',
+                    'Version' => '1.15',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -9347,6 +9468,12 @@ HTML;
             $raw['ShowDesktop'] = !empty($raw['ShowDesktop']);
             $raw['ShowTablet'] = !empty($raw['ShowTablet']);
             $raw['ShowMobile'] = !empty($raw['ShowMobile']);
+            $raw['CarouselAutoplay'] = !empty($raw['CarouselAutoplay']);
+            $raw['CarouselLoop'] = !empty($raw['CarouselLoop']);
+            $raw['CarouselShowArrows'] = !empty($raw['CarouselShowArrows']);
+            $raw['CarouselShowDots'] = !empty($raw['CarouselShowDots']);
+            $raw['LayoutWrap'] = !empty($raw['LayoutWrap']);
+            $raw['MobileLayoutStack'] = !empty($raw['MobileLayoutStack']);
             $key = sanitize_key((string) ($raw['Key'] ?? ''));
             $existing_section = isset($current_by_key[$key]) && is_array($current_by_key[$key]) ? $current_by_key[$key] : [];
             $submitted_type = sanitize_key((string) ($raw['Type'] ?? 'text'));
@@ -9369,7 +9496,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.14',
+            'Version'        => '1.15',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -9399,7 +9526,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.14',
+                'Version' => '1.15',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

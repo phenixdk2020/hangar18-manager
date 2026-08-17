@@ -1,8 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.5.18
+Version: 0.5.19
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.19 – Section/Container/Flex/Grid layout foundation ==
+
+Nyt:
+- UD-021–023 layoutfundament: Container, Flex container og Grid container som native builder-elementer
+- elementer kan placeres inde i en layout-parent via LayoutParentKey, mens storage fortsat er en flad revisionsvenlig sektionsliste
+- frontend omdanner den flade model til et ægte DOM-træ med op til tre niveauer
+- server-side validering af parent-type, manglende parent, selvreference, cykler og maksimal dybde
+- Flex: row/column, wrap, justify, align, desktop/mobile gap og valgfri mobil-stack
+- Grid: 1-6 desktopkolonner, 1-3 mobilkolonner, align og separate gaps
+- Canvas og Navigator indrykker children og viser antal under-elementer i layout-containere
+- responsive section styling, hover, visibility og typografi virker også for nested children
+- retter samtidig checkbox-semantik for Carousel loop/pile/prikker samt nye layout-checkboxes
+- page-editor schema løftes bagudkompatibelt til 1.15
 
 == Version 0.5.18 – Carousel / Slider ==
 

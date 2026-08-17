@@ -332,7 +332,7 @@ jQuery(function ($) {
         const labels = {
             hero: 'Topbanner / hero', text: 'Tekst', text_image: 'Tekst og billede', image: 'Stort billede',
             buttons: 'Handlingsknapper', card: 'Indholdskort', card_grid: 'Kort-række / kolonner', highlight: 'Fremhævet tekst',
-            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', tabs: 'Faner / tabs', accordion: 'Accordion', carousel: 'Carousel / slider', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
+            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', tabs: 'Faner / tabs', accordion: 'Accordion', carousel: 'Carousel / slider', container: 'Container', flex: 'Flex container', grid: 'Grid container', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
             spacer: 'Afstand', html: 'Importeret blok / HTML', css: 'Side-CSS', mail_form: 'Mailformular', poll: 'Afstemning', legacy: 'Eksisterende indhold'
         };
         return labels[String(type || '')] || 'Sektion';
@@ -474,7 +474,7 @@ jQuery(function ($) {
                 return;
             }
             const fieldName = String(match[1]);
-            if (['Key', 'Order', 'Remove', 'ResetVotes'].includes(fieldName)) {
+            if (['Key', 'Order', 'Remove', 'ResetVotes', 'LayoutParentKey'].includes(fieldName)) {
                 return;
             }
             data[fieldName] = value;
@@ -513,7 +513,7 @@ jQuery(function ($) {
             return $row;
         }
         Object.keys(presetData).forEach(function (fieldName) {
-            if (['Type', 'Cards', 'Key', 'Order', 'Remove'].includes(fieldName)) {
+            if (['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {
                 return;
             }
             setSectionPresetField($row, fieldName, presetData[fieldName]);
@@ -639,6 +639,57 @@ jQuery(function ($) {
         addPageCard($row, { Title: prefix + ' 2', Content: '<p>Indhold til ' + prefix.toLowerCase() + ' 2.</p>', Background: 'OffWhite', TextTone: 'Auto', Active: true });
     }
 
+    function layoutParentCapableV0519($row) {
+        return $row && $row.length && ['container','flex','grid'].includes(String($row.attr('data-section-type') || ''));
+    }
+
+    function layoutWouldCycleV0519($row, candidateKey) {
+        const selfKey = String($row.find('.h18-page-section-key').val() || '');
+        let cursor = String(candidateKey || '');
+        const seen = new Set([selfKey]);
+        let depth = 0;
+        while (cursor) {
+            depth += 1;
+            if (depth > 2 || seen.has(cursor)) { return true; }
+            seen.add(cursor);
+            const $candidate = $pageSections.children('.h18-page-section-row').filter(function () { return String($(this).find('.h18-page-section-key').val() || '') === cursor; }).first();
+            if (!$candidate.length || !layoutParentCapableV0519($candidate)) { return true; }
+            cursor = String(pageSectionControls($candidate, '.h18-layout-parent-key').val() || '');
+        }
+        return false;
+    }
+
+    function refreshLayoutHierarchyV0519() {
+        if (!$pageSections.length) { return; }
+        const parents = [];
+        $pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').each(function () {
+            const $candidate = $(this);
+            if (layoutParentCapableV0519($candidate)) {
+                parents.push({ key: String($candidate.find('.h18-page-section-key').val() || ''), title: String($candidate.find('.h18-page-section-title-summary').first().text() || inspectorTypeLabel($candidate.attr('data-section-type'))), type: String($candidate.attr('data-section-type') || '') });
+            }
+        });
+        $pageSections.children('.h18-page-section-row').each(function () {
+            const $row = $(this);
+            const selfKey = String($row.find('.h18-page-section-key').val() || '');
+            const $hidden = pageSectionControls($row, '.h18-layout-parent-key').first();
+            const $select = pageSectionControls($row, '.h18-layout-parent-select').first();
+            if (!$select.length || !$hidden.length) { return; }
+            let current = String($hidden.val() || '');
+            $select.empty().append($('<option>', { value: '', text: 'Topniveau på siden' }));
+            parents.forEach(function (parent) {
+                if (!parent.key || parent.key === selfKey) { return; }
+                const disabled = layoutWouldCycleV0519($row, parent.key);
+                $select.append($('<option>', { value: parent.key, text: inspectorTypeLabel(parent.type) + ' · ' + (parent.title || parent.key), disabled: disabled }));
+            });
+            if (current && !$select.find('option[value="' + current.replace(/"/g,'\\"') + '"]:not(:disabled)').length) { current = ''; $hidden.val(''); }
+            $select.val(current);
+            $row.toggleClass('h18-layout-child-row', Boolean(current)).attr('data-layout-parent', current);
+            const index = String($row.attr('data-section-index') || '');
+            $pageNavigatorList.children('.h18-navigator-item[data-section-index="' + index + '"]').toggleClass('h18-layout-child-item', Boolean(current)).attr('data-layout-parent', current);
+            $row.find('.h18-layout-parent-box').toggle(String($row.attr('data-section-type') || '') !== 'legacy');
+        });
+    }
+
     function refreshPageSectionType($row) {
         const type = String(pageSectionControls($row, '.h18-page-section-type').val() || pageSectionControls($row, 'input[name$="[Type]"]').val() || 'text');
         $row.attr('data-section-type', type);
@@ -657,6 +708,9 @@ jQuery(function ($) {
             tabs: 'Faner / tabs',
             accordion: 'Accordion',
             carousel: 'Carousel / slider',
+            container: 'Container',
+            flex: 'Flex container',
+            grid: 'Grid container',
             highlight: 'Fremhævet tekst',
             spacer: 'Afstand',
             html: 'Importeret blok / HTML',
@@ -674,6 +728,7 @@ jQuery(function ($) {
         refreshPrimitiveVariantV0516($row);
         refreshCollectionEditorV0517($row);
         rebuildPageNavigator();
+        refreshLayoutHierarchyV0519();
         renderCanvasPreview($row);
     }
 
@@ -801,6 +856,18 @@ jQuery(function ($) {
             setValue('Background', 'OffWhite');
             setValue('PaddingPx', 26);
             setValue('MobilePaddingPx', 20);
+        } else if (['container','flex','grid'].includes(type)) {
+            setValue('Background', 'White');
+            setValue('PaddingPx', 12);
+            setValue('HorizontalPaddingPx', 12);
+            setValue('MobilePaddingPx', 8);
+            setValue('MobileHorizontalPaddingPx', 8);
+            setValue('LayoutGapPx', 16);
+            setValue('MobileLayoutGapPx', 12);
+            setValue('LayoutColumns', 2);
+            setValue('MobileLayoutColumns', 1);
+            pageSectionControls($row, '[name$="[LayoutWrap]"]').prop('checked', true);
+            pageSectionControls($row, '[name$="[MobileLayoutStack]"]').prop('checked', true);
         } else if (type === 'carousel') {
             setValue('Background', 'White');
             setValue('PaddingPx', 0);
@@ -1196,6 +1263,13 @@ jQuery(function ($) {
             addTitle('Handling');
             canvasAddBodyText($inner, content);
             addButtons();
+        } else if (['container','flex','grid'].includes(type)) {
+            addTitle(type === 'grid' ? 'Grid container' : (type === 'flex' ? 'Flex container' : 'Container'));
+            canvasAddBodyText($inner, content);
+            const selfKey = String($row.find('.h18-page-section-key').val() || '');
+            const childCount = $pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').filter(function () { return String(pageSectionControls($(this), '.h18-layout-parent-key').val() || '') === selfKey; }).length;
+            const detail = type === 'grid' ? String(canvasFieldValue($row,'LayoutColumns',2)) + ' kolonner' : (type === 'flex' ? String(canvasFieldValue($row,'LayoutDirection','Row')) + ' · gap ' + String(canvasFieldValue($row,'LayoutGapPx',16)) + ' px' : 'blok-container');
+            $inner.append($('<div>', { class: 'h18-canvas-layout-shell h18-canvas-layout-shell--' + type }).append($('<strong>', { text: childCount + ' under-element' + (childCount === 1 ? '' : 'er') }), $('<small>', { text: detail })));
         } else if (type === 'carousel') {
             addTitle('Carousel');
             canvasAddBodyText($inner, content);
@@ -2186,6 +2260,16 @@ jQuery(function ($) {
         $row.find('.h18-page-section-title-summary').text($(this).val());
         rebuildPageNavigator();
     });
+
+    $(document).on('change', '.h18-layout-parent-select', function () {
+        const $row = pageSectionForElement(this);
+        pageSectionControls($row, '.h18-layout-parent-key').val(String($(this).val() || '')).trigger('change');
+        refreshLayoutHierarchyV0519();
+        rebuildPageNavigator();
+        refreshLayoutHierarchyV0519();
+        scheduleEditorHistoryCapture(0);
+    });
+    $(document).on('click', '.h18-page-section-delete', function () { window.setTimeout(refreshLayoutHierarchyV0519, 0); });
 
     $(document).on('change', '.h18-section-active', rebuildPageNavigator);
     $(document).on('change', '.h18-section-design-mode', function () { refreshSectionDesignMode(pageSectionForElement(this)); });
@@ -3496,6 +3580,7 @@ jQuery(function ($) {
             editorHistorySubmitting = true;
         });
         window.setTimeout(initializeEditorHistory, 0);
+        window.setTimeout(refreshLayoutHierarchyV0519, 0);
     }
 
     $(window).on('beforeunload.h18EditorHistory', function (event) {
@@ -3513,7 +3598,7 @@ jQuery(function ($) {
 
     const commandPaletteSectionTypes = [
         ['text', 'Tekst'], ['hero', 'Topbanner / hero'], ['text_image', 'Tekst og billede'], ['image', 'Stort billede'],
-        ['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['highlight', 'Fremhævet tekst'],
+        ['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['container', 'Container'], ['flex', 'Flex container'], ['grid', 'Grid container'], ['highlight', 'Fremhævet tekst'],
         ['spacer', 'Afstand'], ['html', 'Importeret blok / HTML'], ['css', 'Side-CSS'], ['mail_form', 'Mailformular'], ['poll', 'Afstemning']
     ];
     let commandPaletteActiveIndex = 0;

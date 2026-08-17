@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.18",
+  "version": "0.5.19",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T22:37:18Z",
+  "published_utc": "2026-08-17T22:48:55Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "e9667c367eef17466b9b835370606795d5b8702e2850faa95833028996d2a5e6",
+  "package_sha256": "748b3ae5787fd43974efa7dbd6d8c1ab43b2ce8dd94b7a0bfde653ffdf97f56e",
   "changelog": [
-    "Tilføjer UD-031 Carousel/Slider med Cards som fælles slide-model.",
-    "Tilføjer opt-in autoplay, interval, loop, pile og priknavigation.",
-    "Tilføjer keyboard-navigation, touch swipe og pause ved hover/fokus.",
-    "prefers-reduced-motion deaktiverer autoplay og transitions automatisk.",
-    "Løfter page-editor schema bagudkompatibelt til 1.14."
+    "Tilføjer UD-021–023 Container, Flex og Grid som native nested layout-elementer.",
+    "Bevarer en flad revisionsvenlig storage-model med LayoutParentKey og bygger et ægte DOM-træ på frontend.",
+    "Validerer parent-type, manglende parents, cykler og maksimalt tre samlede layoutniveauer.",
+    "Tilføjer Flex/Grid responsive gaps, retning, wrap, justify/align, kolonner og mobil-stack.",
+    "Løfter page-editor schema bagudkompatibelt til 1.15 og retter Carousel checkbox-semantik."
   ]
 }
