@@ -7500,11 +7500,19 @@ HTML;
         $h3_size = (int) ($section['H3FontSizePx'] ?? 0);
         $opacity = max(0, min(100, (int) ($section['SectionOpacityPercent'] ?? 100))) / 100;
         $effect = (string) ($section['BackgroundEffect'] ?? 'None');
+        $background_image_url = esc_url_raw((string) ($section['BackgroundImageUrl'] ?? ''));
+        $background_media_id = absint($section['BackgroundMediaId'] ?? 0);
+        if ($background_media_id > 0) {
+            $resolved_background_url = wp_get_attachment_url($background_media_id);
+            if ($resolved_background_url) {
+                $background_image_url = esc_url_raw((string) $resolved_background_url);
+            }
+        }
         $effect_image = 'none';
         if ($effect === 'Gradient') {
             $effect_image = 'linear-gradient(' . (int) ($section['GradientAngleDeg'] ?? 135) . 'deg,' . (string) ($section['GradientStartColor'] ?? '#30382a') . ',' . (string) ($section['GradientEndColor'] ?? '#c3ae83') . ')';
-        } elseif ($effect === 'Image' && !empty($section['BackgroundImageUrl'])) {
-            $effect_image = 'url(' . wp_json_encode(esc_url_raw((string) $section['BackgroundImageUrl'])) . ')';
+        } elseif ($effect === 'Image' && $background_image_url !== '') {
+            $effect_image = 'url(' . wp_json_encode($background_image_url) . ')';
         }
         $base_radius = (int) ($section['RadiusPx'] ?? 0);
         $radius_tl = (int) ($section['RadiusTopLeftPx'] ?? -1);
@@ -7595,6 +7603,7 @@ HTML;
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
             'body.page .h18-editor-page>.h18-editor-section{background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease}' .
             '@media(hover:hover){body.page .h18-editor-page>.h18-editor-section:hover{transform:var(--h18-hover-transform,none);box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}}' .
+            '@media(prefers-reduced-motion:reduce){body.page .h18-editor-page>.h18-editor-section{transition:none!important}body.page .h18-editor-page>.h18-editor-section:hover{transform:none!important}}' .
             'body.page .h18-editor-page>.h18-editor-section h1{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h1-size)}' .
             'body.page .h18-editor-page>.h18-editor-section h2{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h2-size)}' .
             'body.page .h18-editor-page>.h18-editor-section h3{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h3-size)}' .
