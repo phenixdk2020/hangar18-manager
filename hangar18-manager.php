@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.5
+ * Version: 0.5.6
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.5';
+    const VERSION = '0.5.6';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -706,7 +706,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.9',
+                'Version' => '1.10',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -2914,7 +2914,7 @@ final class Hangar18_Manager {
         $static_content['Saved'] = gmdate('c');
 
         $pages = [
-            'Version' => '1.9',
+            'Version' => '1.10',
             'Saved'   => gmdate('c'),
             'Pages'   => $this->get_page_editor_store(),
         ];
@@ -6459,6 +6459,12 @@ HTML;
             'RadiusBottomLeftPx'     => -1,
             'HoverEffect'            => 'None',
             'HoverTransitionMs'      => 220,
+            'HoverStyleMode'         => 'Inherit',
+            'HoverBackgroundColor'   => '#ffffff',
+            'HoverTextColor'         => '#30382a',
+            'HoverHeadingColor'      => '#30382a',
+            'HoverBorderColor'       => '#c3ae83',
+            'HoverOpacityPercent'    => 100,
             'ShowDesktop'            => true,
             'ShowTablet'             => true,
             'ShowMobile'             => true,
@@ -6651,6 +6657,12 @@ HTML;
         if (!in_array($background_size, ['Cover', 'Contain', 'Auto'], true)) { $background_size = 'Cover'; }
         $hover_effect = (string) ($raw['HoverEffect'] ?? 'None');
         if (!in_array($hover_effect, ['None', 'Lift', 'Scale', 'Shadow'], true)) { $hover_effect = 'None'; }
+        $hover_style_mode = (string) ($raw['HoverStyleMode'] ?? 'Inherit');
+        if (!in_array($hover_style_mode, ['Inherit', 'Custom'], true)) { $hover_style_mode = 'Inherit'; }
+        $hover_background = sanitize_hex_color((string) ($raw['HoverBackgroundColor'] ?? '#ffffff')) ?: '#ffffff';
+        $hover_text = sanitize_hex_color((string) ($raw['HoverTextColor'] ?? '#30382a')) ?: '#30382a';
+        $hover_heading = sanitize_hex_color((string) ($raw['HoverHeadingColor'] ?? '#30382a')) ?: '#30382a';
+        $hover_border = sanitize_hex_color((string) ($raw['HoverBorderColor'] ?? '#c3ae83')) ?: '#c3ae83';
         $tablet_alignment = (string) ($raw['TabletAlignment'] ?? 'Inherit');
         if (!in_array($tablet_alignment, ['Inherit', 'Left', 'Center'], true)) { $tablet_alignment = 'Inherit'; }
 
@@ -6749,6 +6761,12 @@ HTML;
             'RadiusBottomLeftPx'     => $this->clamp_int($raw['RadiusBottomLeftPx'] ?? -1, -1, 60, -1),
             'HoverEffect'            => $hover_effect,
             'HoverTransitionMs'      => $this->clamp_int($raw['HoverTransitionMs'] ?? 220, 0, 1000, 220),
+            'HoverStyleMode'         => $hover_style_mode,
+            'HoverBackgroundColor'   => $hover_background,
+            'HoverTextColor'         => $hover_text,
+            'HoverHeadingColor'      => $hover_heading,
+            'HoverBorderColor'       => $hover_border,
+            'HoverOpacityPercent'    => $this->clamp_int($raw['HoverOpacityPercent'] ?? 100, 0, 100, 100),
             'ShowDesktop'            => array_key_exists('ShowDesktop', $raw) ? !empty($raw['ShowDesktop']) : true,
             'ShowTablet'             => array_key_exists('ShowTablet', $raw) ? !empty($raw['ShowTablet']) : true,
             'ShowMobile'             => array_key_exists('ShowMobile', $raw) ? !empty($raw['ShowMobile']) : true,
@@ -6816,7 +6834,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.9',
+            'Version'        => '1.10',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7328,7 +7346,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.9',
+            'Version'        => '1.10',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7566,6 +7584,13 @@ HTML;
         $radius_br = $radius_br < 0 ? $base_radius : $radius_br;
         $radius_bl = $radius_bl < 0 ? $base_radius : $radius_bl;
         $hover_effect = (string) ($section['HoverEffect'] ?? 'None');
+        $hover_style_custom = ($section['HoverStyleMode'] ?? 'Inherit') === 'Custom';
+        $hover_background = $hover_style_custom ? (string) ($section['HoverBackgroundColor'] ?? '#ffffff') : $bg;
+        $hover_text = $hover_style_custom ? (string) ($section['HoverTextColor'] ?? '#30382a') : $text;
+        $hover_heading = $hover_style_custom ? (string) ($section['HoverHeadingColor'] ?? '#30382a') : $heading;
+        $hover_border = $hover_style_custom ? (string) ($section['HoverBorderColor'] ?? '#c3ae83') : (string) ($section['CustomBorderColor'] ?? '#c3ae83');
+        $hover_opacity = $hover_style_custom ? (max(0, min(100, (int) ($section['HoverOpacityPercent'] ?? 100))) / 100) : $opacity;
+        $hover_background_image = $hover_style_custom ? 'none' : $effect_image;
         $hover_y = '0px';
         $hover_scale = '1';
         $hover_shadow = $shadow;
@@ -7649,6 +7674,12 @@ HTML;
             '--h18-hover-active-y:' . $hover_y . ';' .
             '--h18-hover-active-scale:' . $hover_scale . ';' .
             '--h18-hover-shadow:' . $hover_shadow . ';' .
+            '--h18-hover-bg:' . $hover_background . ';' .
+            '--h18-hover-bg-image:' . $hover_background_image . ';' .
+            '--h18-hover-text:' . $hover_text . ';' .
+            '--h18-hover-heading:' . $hover_heading . ';' .
+            '--h18-hover-border:' . $hover_border . ';' .
+            '--h18-hover-opacity:' . $hover_opacity . ';' .
             '--h18-hover-transition:' . (int) ($section['HoverTransitionMs'] ?? 220) . 'ms;';
     }
 
@@ -7688,8 +7719,8 @@ HTML;
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
-            'body.page .h18-editor-page>.h18-editor-section{background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transform:translate(var(--h18-transform-x,0px),var(--h18-transform-y,0px)) translateY(var(--h18-hover-y,0px)) scale(var(--h18-transform-scale,1)) scale(var(--h18-hover-scale,1)) rotate(var(--h18-transform-rotate,0deg));transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease}' .
-            '@media(hover:hover){body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:var(--h18-hover-active-y,0px);--h18-hover-scale:var(--h18-hover-active-scale,1);box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}}' .
+            'body.page .h18-editor-page>.h18-editor-section{background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transform:translate(var(--h18-transform-x,0px),var(--h18-transform-y,0px)) translateY(var(--h18-hover-y,0px)) scale(var(--h18-transform-scale,1)) scale(var(--h18-hover-scale,1)) rotate(var(--h18-transform-rotate,0deg));transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease,background-color var(--h18-hover-transition,220ms) ease,color var(--h18-hover-transition,220ms) ease,border-color var(--h18-hover-transition,220ms) ease}' .
+            '@media(hover:hover){body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:var(--h18-hover-active-y,0px);--h18-hover-scale:var(--h18-hover-active-scale,1);background-color:var(--h18-hover-bg,var(--h18-section-bg))!important;background-image:var(--h18-hover-bg-image,var(--h18-section-bg-image,none));color:var(--h18-hover-text,var(--h18-section-text))!important;border-color:var(--h18-hover-border,var(--h18-section-border,transparent));opacity:var(--h18-hover-opacity,var(--h18-section-opacity,1));box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}body.page .h18-editor-page>.h18-editor-section:hover h1,body.page .h18-editor-page>.h18-editor-section:hover h2,body.page .h18-editor-page>.h18-editor-section:hover h3{color:var(--h18-hover-heading,var(--h18-section-heading))!important}body.page .h18-editor-page>.h18-editor-section:hover .h18-editor-grid-card h3{color:inherit!important}}' .
             '@media(prefers-reduced-motion:reduce){body.page .h18-editor-page>.h18-editor-section{transition:none!important}body.page .h18-editor-page>.h18-editor-section:hover{--h18-hover-y:0px;--h18-hover-scale:1}}' .
             '@media(min-width:1200px){body.page .h18-editor-page>.h18-hide-desktop{display:none!important}}' .
             '@media(min-width:783px) and (max-width:1199px){body.page .h18-editor-page>.h18-hide-tablet{display:none!important}body.page .h18-editor-page>.h18-editor-section{margin-top:var(--h18-tablet-top,var(--h18-top,0));margin-bottom:var(--h18-tablet-bottom,var(--h18-bottom,24px));padding:var(--h18-tablet-pad,var(--h18-pad,0)) var(--h18-tablet-pad-x,var(--h18-pad-x,var(--h18-pad,0)));text-align:var(--h18-tablet-align,var(--h18-align,left));--h18-transform-x:var(--h18-tablet-transform-x);--h18-transform-y:var(--h18-tablet-transform-y);--h18-transform-scale:var(--h18-tablet-transform-scale);--h18-transform-rotate:var(--h18-tablet-transform-rotate)}body.page .h18-editor-page>.h18-editor-section .has-text-align-left,body.page .h18-editor-page>.h18-editor-section .has-text-align-center,body.page .h18-editor-page>.h18-editor-section .has-text-align-right{ text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-group>.h18-editor-section{text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-composite .h18-editor-actions,body.page .h18-editor-page>.h18-editor-section .h18-editor-actions{justify-content:var(--h18-tablet-justify,var(--h18-justify,flex-start))!important}}' .
@@ -8281,6 +8312,17 @@ HTML;
                                     <div class="h18-field"><label><strong>Hover-effekt</strong></label><select name="<?php echo esc_attr($prefix); ?>[HoverEffect]"><option value="None" <?php selected($section['HoverEffect'], 'None'); ?>>Ingen</option><option value="Lift" <?php selected($section['HoverEffect'], 'Lift'); ?>>Løft</option><option value="Scale" <?php selected($section['HoverEffect'], 'Scale'); ?>>Zoom let</option><option value="Shadow" <?php selected($section['HoverEffect'], 'Shadow'); ?>>Mere skygge</option></select></div>
                                     <div class="h18-field"><label><strong>Hover-transition (ms)</strong></label><input type="number" min="0" max="1000" step="10" name="<?php echo esc_attr($prefix); ?>[HoverTransitionMs]" value="<?php echo esc_attr($section['HoverTransitionMs']); ?>" /></div>
                                 </div>
+                                <div class="h18-hover-state-box">
+                                    <h4>Hover-state</h4>
+                                    <div class="h18-field"><label><strong>Hover-farver</strong></label><select class="h18-hover-style-mode" name="<?php echo esc_attr($prefix); ?>[HoverStyleMode]"><option value="Inherit" <?php selected($section['HoverStyleMode'], 'Inherit'); ?>>Arv Normal</option><option value="Custom" <?php selected($section['HoverStyleMode'], 'Custom'); ?>>Tilpasset solid state</option></select></div>
+                                    <div class="h18-hover-style-fields h18-module-fields-grid h18-module-fields-grid--four">
+                                        <div class="h18-field"><label><strong>Baggrund</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[HoverBackgroundColor]" value="<?php echo esc_attr($section['HoverBackgroundColor']); ?>" /></div>
+                                        <div class="h18-field"><label><strong>Tekst</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[HoverTextColor]" value="<?php echo esc_attr($section['HoverTextColor']); ?>" /></div>
+                                        <div class="h18-field"><label><strong>Overskrift</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[HoverHeadingColor]" value="<?php echo esc_attr($section['HoverHeadingColor']); ?>" /></div>
+                                        <div class="h18-field"><label><strong>Kant</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[HoverBorderColor]" value="<?php echo esc_attr($section['HoverBorderColor']); ?>" /></div>
+                                        <div class="h18-field"><label><strong>Opacity (%)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[HoverOpacityPercent]" value="<?php echo esc_attr($section['HoverOpacityPercent']); ?>" /></div>
+                                    </div>
+                                </div>
                                 <div class="h18-bg-gradient-fields h18-module-fields-grid h18-module-fields-grid--four">
                                     <div class="h18-field"><label><strong>Gradient start</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[GradientStartColor]" value="<?php echo esc_attr($section['GradientStartColor']); ?>" /></div>
                                     <div class="h18-field"><label><strong>Gradient slut</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[GradientEndColor]" value="<?php echo esc_attr($section['GradientEndColor']); ?>" /></div>
@@ -8807,7 +8849,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.9',
+                    'Version' => '1.10',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -8904,7 +8946,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.9',
+            'Version'        => '1.10',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -8934,7 +8976,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.9',
+                'Version' => '1.10',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

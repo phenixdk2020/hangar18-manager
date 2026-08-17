@@ -1,7 +1,17 @@
 === Hangar18 Manager ===
-Version: 0.5.5
+Version: 0.5.6
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+== Version 0.5.6 – Normal/Hover states ==
+
+Nyt:
+- hover-state kan arve Normal eller have egne farver
+- egen hover-baggrund, tekst, overskrift, kant og opacity
+- tilpasset hover-baggrund er en solid state og erstatter gradient/billede under hover
+- hover state kombineres med v0.5.4-bevægelse/skygge og v0.5.5-device transforms
+- page-editor schema 1.10; standarden Arv Normal bevarer eksisterende design
+
 
 == Version 0.5.5 – Responsiv elementstyring ==
 

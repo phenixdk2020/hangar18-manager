@@ -1,18 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T18:21:52Z",
+  "published_utc": "2026-08-17T18:26:25Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "2af659c962b5adb33c96fe69b5aef92e939a434fe8d46f3f312ea5a0da67026e",
+  "package_sha256": "18216c0e1f86151f3981cbc36c40f07c685ef716ea2b6e18dec25712f5672eb3",
   "changelog": [
-    "Tilføjer vis/skjul pr. desktop, tablet og mobil.",
-    "Tilføjer særskilt tablet-layout med arv fra desktop.",
-    "Tilføjer translate, scale og rotate pr. enhed.",
-    "Komponerer responsive transforms med hover-effekter og reduced-motion.",
-    "Løfter page-editor schema kompatibelt til 1.9.",
-    "Tablet-justering gælder også importerede Gutenberg-grupper, tekstjustering og handlinger."
+    "Tilføjer Normal/Hover state-styling pr. element.",
+    "Tilføjer hover-baggrund, tekst, overskrift, kant og opacity.",
+    "Hover-state komponeres med responsive transforms, bevægelse og skygge.",
+    "Arv Normal er standard og bevarer eksisterende sider.",
+    "Løfter page-editor schema kompatibelt til 1.10."
   ]
 }

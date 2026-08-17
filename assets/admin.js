@@ -558,6 +558,12 @@ jQuery(function ($) {
         pageSectionControls($row, '.h18-bg-image-fields').toggle(effect === 'Image');
     }
 
+    function refreshHoverStyleMode($row) {
+        if (!$row || !$row.length) { return; }
+        const custom = String(pageSectionControls($row, '.h18-hover-style-mode').val() || 'Inherit') === 'Custom';
+        pageSectionControls($row, '.h18-hover-style-fields').toggle(custom);
+    }
+
     function refreshPageSectionType($row) {
         const type = String(pageSectionControls($row, '.h18-page-section-type').val() || pageSectionControls($row, 'input[name$="[Type]"]').val() || 'text');
         $row.attr('data-section-type', type);
@@ -586,6 +592,7 @@ jQuery(function ($) {
         refreshInspectorMeta($row);
         refreshSectionDesignMode($row);
         refreshSectionBackgroundEffect($row);
+        refreshHoverStyleMode($row);
         rebuildPageNavigator();
     }
 
@@ -785,6 +792,7 @@ jQuery(function ($) {
     $(document).on('change', '.h18-section-active', rebuildPageNavigator);
     $(document).on('change', '.h18-section-design-mode', function () { refreshSectionDesignMode(pageSectionForElement(this)); });
     $(document).on('change', '.h18-section-background-effect', function () { refreshSectionBackgroundEffect(pageSectionForElement(this)); });
+    $(document).on('change', '.h18-hover-style-mode', function () { refreshHoverStyleMode(pageSectionForElement(this)); });
 
     function addPageSection(type, $before) {
         if (!pageSectionTemplate || !$pageSections.length) {
