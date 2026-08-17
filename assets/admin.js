@@ -1050,6 +1050,9 @@ jQuery(function ($) {
             backgroundImage = 'none';
         }
 
+        if (currentCanvasState === 'disabled') {
+            opacity *= Math.max(10, Math.min(100, canvasNumber($row, 'DisabledOpacityPercent', 55))) / 100;
+        }
         return { background: background, text: text, heading: heading, border: border, opacity: opacity, backgroundImage: backgroundImage };
     }
 
@@ -1533,6 +1536,16 @@ jQuery(function ($) {
             if (effect === 'Scale') { scale *= 1.025; }
             if (effect === 'Shadow') { shadow = '0 16px 38px rgba(0,0,0,.24)'; }
         }
+        if (currentCanvasState === 'active') {
+            const activeEffect = String(canvasFieldValue($row, 'ActiveEffect', 'None'));
+            if (activeEffect === 'Press') { translateY += 1; }
+            if (activeEffect === 'ScaleDown') { scale *= 0.97; }
+        }
+        const focusPreview = currentCanvasState === 'focus' && String(canvasFieldValue($row, 'FocusRingStyle', 'Global')) !== 'None';
+        const focusColor = String(canvasFieldValue($row, 'FocusRingColor', '#8b4a2b'));
+        const focusWidth = Math.max(1, Math.min(8, canvasNumber($row, 'FocusRingWidthPx', 3)));
+        const focusOffset = Math.max(0, Math.min(12, canvasNumber($row, 'FocusRingOffsetPx', 2)));
+        if (focusPreview) { shadow = '0 0 0 ' + focusOffset + 'px transparent,0 0 0 ' + (focusOffset + focusWidth) + 'px ' + focusColor; }
         const effectPosition = String(canvasFieldValue($row, 'BackgroundImagePosition', 'Center')).toLowerCase();
         const effectSize = String(canvasFieldValue($row, 'BackgroundImageSize', 'Cover')).toLowerCase();
         const borderWidth = canvasNumber($row, 'BorderWidthPx', 0);
@@ -1588,7 +1601,8 @@ jQuery(function ($) {
 
     function updateCanvasToolbarStatus() {
         const deviceLabel = currentCanvasDevice === 'mobile' ? 'Mobil' : currentCanvasDevice.charAt(0).toUpperCase() + currentCanvasDevice.slice(1);
-        const stateLabel = currentCanvasState === 'hover' ? 'Hover' : 'Normal';
+        const stateLabels = { normal: 'Normal', hover: 'Hover', focus: 'Focus', active: 'Aktiv', disabled: 'Disabled' };
+        const stateLabel = stateLabels[currentCanvasState] || 'Normal';
         $('.h18-builder-canvas').attr('data-canvas-device', currentCanvasDevice).attr('data-canvas-state', currentCanvasState);
         $('#h18-canvas-runtime-status').text(deviceLabel + ' · ' + stateLabel + ' · Live');
     }
@@ -1758,7 +1772,10 @@ jQuery(function ($) {
             const $label = $('<strong>', { class: 'h18-preview-state-heading', text: 'State:' });
             const $normal = $('<button>', { type: 'button', class: 'button h18-preview-state is-active', 'data-state': 'normal', text: 'Normal' });
             const $hover = $('<button>', { type: 'button', class: 'button h18-preview-state', 'data-state': 'hover', text: 'Hover' });
-            $label.insertBefore($hint); $normal.insertBefore($hint); $hover.insertBefore($hint);
+            const $focus = $('<button>', { type: 'button', class: 'button h18-preview-state', 'data-state': 'focus', text: 'Focus' });
+            const $active = $('<button>', { type: 'button', class: 'button h18-preview-state', 'data-state': 'active', text: 'Aktiv' });
+            const $disabled = $('<button>', { type: 'button', class: 'button h18-preview-state', 'data-state': 'disabled', text: 'Disabled' });
+            $label.insertBefore($hint); $normal.insertBefore($hint); $hover.insertBefore($hint); $focus.insertBefore($hint); $active.insertBefore($hint); $disabled.insertBefore($hint);
             $hint.text('Klik direkte i canvas for at vælge et element. Dobbeltklik på overskrifter og knaptekster for hurtig tekstredigering.');
         }
         const $heading = $('.h18-builder-canvas-heading');
@@ -2687,7 +2704,8 @@ jQuery(function ($) {
     });
 
     $(document).on('click', '.h18-preview-state', function () {
-        currentCanvasState = String($(this).data('state') || 'normal') === 'hover' ? 'hover' : 'normal';
+        const requestedState = String($(this).data('state') || 'normal');
+        currentCanvasState = ['normal','hover','focus','active','disabled'].includes(requestedState) ? requestedState : 'normal';
         $('.h18-preview-state').removeClass('is-active');
         $(this).addClass('is-active');
         refreshAllCanvasPreviews();
@@ -3457,7 +3475,7 @@ jQuery(function ($) {
             syncPageSectionOrder(true);
             rebuildPageNavigator();
             currentCanvasDevice = ['desktop','tablet','mobile'].includes(String(entry.device)) ? String(entry.device) : 'desktop';
-            currentCanvasState = String(entry.state) === 'hover' ? 'hover' : 'normal';
+            currentCanvasState = ['normal','hover','focus','active','disabled'].includes(String(entry.state)) ? String(entry.state) : 'normal';
             $('.h18-preview-device').removeClass('is-active').filter('[data-device="' + currentCanvasDevice + '"]').addClass('is-active');
             $('.h18-preview-state').removeClass('is-active').filter('[data-state="' + currentCanvasState + '"]').addClass('is-active');
             $pageSections.removeClass('h18-preview-desktop h18-preview-tablet h18-preview-mobile').addClass('h18-preview-' + currentCanvasDevice);
@@ -3667,7 +3685,7 @@ jQuery(function ($) {
                 run: function () { $('.h18-preview-device[data-device="' + entry[0] + '"]').first().trigger('click'); }
             });
         });
-        [['normal','Normal'],['hover','Hover']].forEach(function (entry) {
+        [['normal','Normal'],['hover','Hover'],['focus','Focus'],['active','Aktiv'],['disabled','Disabled']].forEach(function (entry) {
             commands.push({
                 id: 'state-' + entry[0], group: 'Visning', label: 'State: ' + entry[1], detail: 'Design-state',
                 keywords: 'state normal hover design ' + entry[0] + ' ' + entry[1],

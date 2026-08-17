@@ -1,5 +1,0 @@
-returncode=1
---- stdout ---
-
---- stderr ---
-canvas disabled opacity: expected exactly one anchor, found 0
