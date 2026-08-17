@@ -1,0 +1,9 @@
+returncode=1
+--- stdout ---
+
+--- stderr ---
+Traceback (most recent call last):
+  File "/home/runner/work/hangar18-manager/hangar18-manager/.github/scripts/patch_v0520.py", line 217, in <module>
+    end=php.index('    private function render_page_editor_imported_group', start)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
