@@ -1,0 +1,34 @@
+name: Restore unrelated v0.5.1 dist assets
+
+on:
+  push:
+    branches:
+      - development/v0.5.1-work
+    paths:
+      - '.github/workflows/restore-v051-dist.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.1-work
+          fetch-depth: 0
+
+      - name: Restore unrelated distribution assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout origin/main -- dist/hangar18-base-theme-v1.2.0.zip.b64 dist/hangar18-base-theme.zip.b64
+          rm -f .github/workflows/restore-v051-dist.yml
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'QA restore unrelated base-theme distribution assets'
+          git push
