@@ -1,0 +1,26 @@
+name: Actions smoke v0.5.20
+
+on:
+  push:
+    branches:
+      - qa/actions-smoke-v0520
+    paths:
+      - '.github/workflows/smoke-v0520.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/actions-smoke-v0520
+      - run: echo ok > .github/actions-smoke-result.txt
+      - run: |
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add .github/actions-smoke-result.txt
+          git commit -m 'QA: Actions smoke passed'
+          git push origin HEAD:qa/actions-smoke-v0520
