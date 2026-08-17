@@ -1,0 +1,69 @@
+name: Diagnose Hangar18 Manager v0.5.19
+
+on:
+  push:
+    branches:
+      - qa/v0.5.19-diagnose
+    paths:
+      - '.github/workflows/diagnose-v0519.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.19-diagnose
+          fetch-depth: 0
+      - name: Diagnose patch and syntax
+        shell: bash
+        run: |
+          set +e
+          LOG=/tmp/h18-v0519-diagnostic.txt
+          : > "$LOG"
+          python3 - <<'PY' >> "$LOG" 2>&1
+          from pathlib import Path
+          p=Path('.github/scripts/patch_v0519.py')
+          t=p.read_text()
+          t=t.replace('if ($depth > 3 ||','if ($depth > 2 ||')
+          t=t.replace("if ($depth > 3) { return ''; }","if ($depth > 2) { return ''; }")
+          t=t.replace('if (depth > 3 ||','if (depth > 2 ||')
+          p.write_text(t)
+          PY
+          echo '=== PATCH ===' >> "$LOG"
+          python3 .github/scripts/patch_v0519.py >> "$LOG" 2>&1
+          PATCH=$?
+          echo "patch_status=$PATCH" >> "$LOG"
+          if [ "$PATCH" -eq 0 ]; then
+            python3 - <<'PY' >> "$LOG" 2>&1
+          from pathlib import Path
+          p=Path('assets/admin.js');t=p.read_text()
+          replacements=[
+            ("if (['Key', 'Order', 'Remove', 'ResetVotes'].includes(fieldName)) {","if (['Key', 'Order', 'Remove', 'ResetVotes', 'LayoutParentKey'].includes(fieldName)) {"),
+            ("if (['Type', 'Cards', 'Key', 'Order', 'Remove'].includes(fieldName)) {","if (['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {"),
+            ("['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['highlight', 'Fremhævet tekst'],","['buttons', 'Handlingsknapper'], ['card', 'Indholdskort'], ['card_grid', 'Kort-række / kolonner'], ['container', 'Container'], ['flex', 'Flex container'], ['grid', 'Grid container'], ['highlight', 'Fremhævet tekst'],")
+          ]
+          for old,new in replacements:
+              if old not in t: print('MISSING POST-PATCH ANCHOR:',old)
+              else: t=t.replace(old,new,1)
+          p.write_text(t)
+          PY
+            echo '=== PHP ===' >> "$LOG"
+            php -l hangar18-manager.php >> "$LOG" 2>&1; echo "php_status=$?" >> "$LOG"
+            echo '=== JS ===' >> "$LOG"
+            node --check assets/admin.js >> "$LOG" 2>&1; echo "js_status=$?" >> "$LOG"
+            echo '=== KEY ASSERTIONS ===' >> "$LOG"
+            grep -n -F 'LayoutParentKey' hangar18-manager.php | head -20 >> "$LOG" 2>&1
+            grep -n -F 'render_page_editor_layout_tree' hangar18-manager.php | head -10 >> "$LOG" 2>&1
+            grep -n -F 'refreshLayoutHierarchyV0519' assets/admin.js | head -10 >> "$LOG" 2>&1
+            grep -n -F "if (depth > 2 ||" assets/admin.js | head -10 >> "$LOG" 2>&1
+          fi
+          cp "$LOG" .github/diagnostics-v0519.txt
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add .github/diagnostics-v0519.txt
+          git commit -m 'QA: record v0.5.19 diagnostic'
+          git push origin HEAD:qa/v0.5.19-diagnose
