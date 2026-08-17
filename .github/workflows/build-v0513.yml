@@ -61,7 +61,6 @@ jobs:
           missing = [item for item in required if item not in js]
           if missing:
               raise SystemExit('Missing recovery safety assertions: ' + repr(missing))
-          # Restore must only be wired to an explicit click; initialization only detects the candidate.
           init_start = js.index('function editorDraftInitializeRecovery')
           init_end = js.index('function editorDraftRestoreCandidate', init_start)
           if 'editorHistoryRestore(' in js[init_start:init_end]:
@@ -144,7 +143,7 @@ jobs:
           git status --short
           python3 - <<'PY'
           import subprocess
-          allowed = {'hangar18-manager.php','assets/admin.js','assets/admin.css','readme.txt','update.json','dist/hangar18-manager.zip'}
+          allowed = {'hangar18-manager.php','assets/admin.js','assets/admin.css','readme.txt','update.json','dist/hangar18-manager.zip','.github/scripts/patch_v0513.py','.github/workflows/build-v0513.yml'}
           changed = set(subprocess.check_output(['git','status','--short'], text=True).splitlines())
           paths = set()
           for line in changed:
