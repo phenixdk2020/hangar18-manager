@@ -1,0 +1,144 @@
+name: Build Hangar18 Manager v0.5.18 r2
+
+on:
+  push:
+    branches:
+      - development/v0.5.18
+    paths:
+      - '.github/workflows/build-v0518-r2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.18
+          fetch-depth: 0
+
+      - name: Correct patch anchors
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/patch_v0518.py')
+          t=p.read_text()
+          # Exact PHP alignment is 17 spaces after Cards, not the earlier assumed alignment.
+          t=t.replace("            'Cards'                  => $cards,\n            'TopSpacingPx'           => $this->clamp_int($raw['TopSpacingPx'] ?? 0, 0, 160, 0),",
+                      "            'Cards'                 => $cards,\n            'TopSpacingPx'          => $this->clamp_int($raw['TopSpacingPx'] ?? 0, 0, 160, 0),")
+          old='''js = replace_once(js,
+              "['card_grid', 'tabs', 'accordion'].includes(type)",
+              "['card_grid', 'tabs', 'accordion', 'carousel'].includes(type)",
+              'preset carousel cards')'''
+          new='''js = replace_once(js,
+              "if (Array.isArray(presetData.Cards) && ['card_grid', 'tabs', 'accordion'].includes(type)) {",
+              "if (Array.isArray(presetData.Cards) && ['card_grid', 'tabs', 'accordion', 'carousel'].includes(type)) {",
+              'preset carousel cards')'''
+          if old in t:t=t.replace(old,new,1)
+          p.write_text(t)
+          PY
+
+      - name: Apply v0.5.18 patch
+        run: python3 .github/scripts/patch_v0518.py
+
+      - name: Syntax and structural QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          grep -F 'Version: 0.5.18' hangar18-manager.php
+          grep -F "const VERSION = '0.5.18';" hangar18-manager.php
+          grep -F "'Version'        => '1.14'" hangar18-manager.php
+          grep -F "'carousel'   => 'Carousel / slider'" hangar18-manager.php
+          grep -F "'CarouselAutoplay'      => false" hangar18-manager.php
+          grep -F 'page_editor_carousel_script' hangar18-manager.php
+          grep -F 'aria-roledescription="carousel"' hangar18-manager.php
+          grep -F 'aria-roledescription="slide"' hangar18-manager.php
+          grep -F 'touchstart' hangar18-manager.php
+          grep -F 'prefers-reduced-motion: reduce' hangar18-manager.php
+          grep -F 'h18-canvas-carousel' assets/admin.css
+          python3 - <<'PY'
+          from pathlib import Path
+          php=Path('hangar18-manager.php').read_text(); js=Path('assets/admin.js').read_text()
+          required=['window.matchMedia("(prefers-reduced-motion: reduce)").matches','root.addEventListener("touchstart"','root.addEventListener("touchend"','root.addEventListener("mouseenter",stop)','root.addEventListener("focusin",stop)','aria-live="polite"',"if (Array.isArray(presetData.Cards) && ['card_grid', 'tabs', 'accordion', 'carousel'].includes(type)) {","['card_grid', 'tabs', 'accordion', 'carousel'].includes(type) &&","type === 'carousel' ? 'Slide'"]
+          missing=[x for x in required if x not in php+js]
+          if missing:raise SystemExit('Missing carousel behavior: '+repr(missing))
+          if any(x in php or x in js for x in ['CarouselItems','SlidesItems','CarouselSlides']):raise SystemExit('Parallel slide model detected')
+          assert "$this->clamp_int($raw['CarouselIntervalMs'] ?? 5000, 2000, 20000, 5000)" in php
+          print('v0.5.18 structural/accessibility QA passed')
+          PY
+
+      - name: Rebuild distribution package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php .build/hangar18-manager/
+          cp readme.txt .build/hangar18-manager/
+          cp assets/admin.css .build/hangar18-manager/assets/
+          cp assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+
+      - name: Update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          package=Path('dist/hangar18-manager.zip')
+          manifest={'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.18','min_wp':'6.4','min_php':'8.0','published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),'package_path':'dist/hangar18-manager.zip','package_sha256':hashlib.sha256(package.read_bytes()).hexdigest(),'changelog':['Tilføjer UD-031 Carousel/Slider med Cards som fælles slide-model.','Tilføjer opt-in autoplay, interval, loop, pile og priknavigation.','Tilføjer keyboard-navigation, touch swipe og pause ved hover/fokus.','prefers-reduced-motion deaktiverer autoplay og transitions automatisk.','Løfter page-editor schema bagudkompatibelt til 1.14.']}
+          Path('update.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8');print(manifest['package_sha256'])
+          PY
+
+      - name: Package QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .verify && mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          grep -F 'Version: 0.5.18' .verify/hangar18-manager/hangar18-manager.php
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          m=json.loads(Path('update.json').read_text());a=hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest();assert m['version']=='0.5.18' and m['package_sha256']==a;print('Package manifest QA passed:',a)
+          PY
+
+      - name: Self-clean and diff scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          rm -f .github/scripts/patch_v0518.py .github/workflows/build-v0518.yml .github/workflows/build-v0518-r2.yml .github/workflows/diagnose-v0518.yml .github/diagnostics-v0518.txt
+          git status --short
+          python3 - <<'PY'
+          import subprocess
+          allowed={'hangar18-manager.php','assets/admin.js','assets/admin.css','readme.txt','update.json','dist/hangar18-manager.zip','.github/scripts/patch_v0518.py','.github/workflows/build-v0518.yml','.github/workflows/build-v0518-r2.yml','.github/workflows/diagnose-v0518.yml','.github/diagnostics-v0518.txt'}
+          paths=set()
+          for line in subprocess.check_output(['git','status','--short'],text=True).splitlines():
+              p=line[3:].strip();p=p.split(' -> ',1)[1] if ' -> ' in p else p;paths.add(p)
+          extra=paths-allowed
+          if extra:raise SystemExit('Unexpected release-scope files: '+repr(sorted(extra)))
+          print('Release scope QA passed')
+          PY
+
+      - name: Commit v0.5.18 release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m 'Release Hangar18 Manager 0.5.18'
+          git push origin HEAD:development/v0.5.18
