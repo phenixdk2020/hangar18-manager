@@ -37,119 +37,153 @@ jobs:
               if old not in php:
                   raise SystemExit(f'{label}: anchor not found')
               php = php.replace(old, new, 1)
+              print(f'OK: {label}')
 
-          # -----------------------------------------------------------------
-          # Version 0.5.0: keep the v0.4.27 editor and extend its design model.
-          # -----------------------------------------------------------------
+          # Version.
           rep(' * Version: 0.4.27', ' * Version: 0.5.0', 'plugin version')
           rep("const VERSION = '0.4.27';", "const VERSION = '0.5.0';", 'version constant')
 
-          # HeaderDesign becomes the global design system. Defaults preserve
-          # the exact existing Hangar18 palette so activation is visually safe.
+          # Add the v0.5.0 token/effect renderer without replacing legacy runtime CSS.
           rep(
-              "            'Version' => '2.3',\n            'VisualBaseScalePercent' => 90,",
-              "            'Version' => '3.0',\n            'PrimaryColor' => '#30382a',\n            'SecondaryColor' => '#525a5f',\n            'AccentColor' => '#c3ae83',\n            'SurfaceColor' => '#f2f0e8',\n            'BackgroundColor' => '#ffffff',\n            'TextColor' => '#30382a',\n            'LightTextColor' => '#ffffff',\n            'ActionColor' => '#8b4a2b',\n            'BodyFontFamily' => 'Segoe UI',\n            'HeadingFontFamily' => 'Segoe UI',\n            'BodyFontSize' => 16,\n            'H1FontSize' => 48,\n            'H2FontSize' => 32,\n            'H3FontSize' => 22,\n            'RadiusSmallPx' => 4,\n            'RadiusMediumPx' => 7,\n            'RadiusLargePx' => 12,\n            'SpacingXsPx' => 4,\n            'SpacingSmallPx' => 8,\n            'SpacingMediumPx' => 16,\n            'SpacingLargePx' => 24,\n            'SpacingXlPx' => 40,\n            'MenuPresentation' => 'Classic',\n            'MenuHoverEffect' => 'Underline',\n            'MenuActiveStyle' => 'Underline',\n            'MenuTransitionMs' => 180,\n            'SubmenuAnimation' => 'FadeSlide',\n            'VisualBaseScalePercent' => 90,",
-              'design defaults'
+              "        add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);",
+              "        add_action('wp_head', [$this, 'render_design_tokens_v050'], 998);\n        add_action('wp_head', [$this, 'render_frontend_runtime_fixes'], 999);",
+              'design token hook'
           )
 
-          # Normalization: new fields are optional and fall back to the legacy
-          # palette/typography, making old HeaderDesign JSON fully compatible.
+          # Safe defaults: identical palette to v0.4.27, and menu effects opt-in.
           rep(
-              "        $allowed_weights = ['Normal', 'Medium', 'Semibold', 'Bold'];\n        $allowed_max_widths = ['None', '1400', '1600', '1800', '2000'];\n",
-              "        $allowed_weights = ['Normal', 'Medium', 'Semibold', 'Bold'];\n        $allowed_max_widths = ['None', '1400', '1600', '1800', '2000'];\n        $allowed_menu_presentations = ['Classic', 'FloatingPill', 'Framed'];\n        $allowed_menu_hover = ['None', 'Underline', 'Lift', 'Pill'];\n        $allowed_menu_active = ['None', 'Underline', 'Pill', 'Dot'];\n        $allowed_submenu_animations = ['None', 'Fade', 'FadeSlide', 'Scale'];\n\n        $normalize_color = static function($value, $fallback) {\n            $color = sanitize_hex_color((string) $value);\n            return $color ?: $fallback;\n        };\n",
-              'design normalization helpers'
+              "            'Version' => '2.3',\n            'VisualBaseScalePercent' => 90,",
+              "            'Version' => '3.0',\n            'PrimaryColor' => '#30382a',\n            'SecondaryColor' => '#525a5f',\n            'AccentColor' => '#c3ae83',\n            'SurfaceColor' => '#f2f0e8',\n            'BackgroundColor' => '#ffffff',\n            'TextColor' => '#30382a',\n            'LightTextColor' => '#ffffff',\n            'ActionColor' => '#8b4a2b',\n            'BodyFontFamily' => 'Segoe UI',\n            'HeadingFontFamily' => 'Segoe UI',\n            'BodyFontSize' => 16,\n            'H1FontSize' => 48,\n            'H2FontSize' => 32,\n            'H3FontSize' => 22,\n            'RadiusSmallPx' => 4,\n            'RadiusMediumPx' => 7,\n            'RadiusLargePx' => 12,\n            'SpacingXsPx' => 4,\n            'SpacingSmallPx' => 8,\n            'SpacingMediumPx' => 16,\n            'SpacingLargePx' => 24,\n            'SpacingXlPx' => 40,\n            'MenuPresentation' => 'Classic',\n            'MenuHoverEffect' => 'None',\n            'MenuActiveStyle' => 'None',\n            'MenuTransitionMs' => 180,\n            'SubmenuAnimation' => 'None',\n            'VisualBaseScalePercent' => 90,",
+              'design system defaults'
+          )
+
+          rep(
+              "        $allowed_weights = ['Normal', 'Medium', 'Semibold', 'Bold'];\n        $allowed_max_widths = ['None', '1400', '1600', '1800', '2000'];",
+              "        $allowed_weights = ['Normal', 'Medium', 'Semibold', 'Bold'];\n        $allowed_max_widths = ['None', '1400', '1600', '1800', '2000'];\n        $allowed_menu_presentations = ['Classic', 'FloatingPill', 'Framed'];\n        $allowed_menu_hover = ['None', 'Underline', 'Lift', 'Pill'];\n        $allowed_menu_active = ['None', 'Underline', 'Pill', 'Dot'];\n        $allowed_submenu_animations = ['None', 'Fade', 'FadeSlide', 'Scale'];\n        $normalize_color = static function($value, $fallback) {\n            $color = sanitize_hex_color((string) $value);\n            return $color ?: $fallback;\n        };",
+              'normalization helpers'
           )
 
           rep(
               "            'Version'                           => '2.3',\n            'VisualBaseScalePercent'",
               "            'Version'                           => '3.0',\n            'PrimaryColor'                      => $normalize_color($saved['PrimaryColor'] ?? $default['PrimaryColor'], $default['PrimaryColor']),\n            'SecondaryColor'                    => $normalize_color($saved['SecondaryColor'] ?? $default['SecondaryColor'], $default['SecondaryColor']),\n            'AccentColor'                       => $normalize_color($saved['AccentColor'] ?? $default['AccentColor'], $default['AccentColor']),\n            'SurfaceColor'                      => $normalize_color($saved['SurfaceColor'] ?? $default['SurfaceColor'], $default['SurfaceColor']),\n            'BackgroundColor'                   => $normalize_color($saved['BackgroundColor'] ?? $default['BackgroundColor'], $default['BackgroundColor']),\n            'TextColor'                         => $normalize_color($saved['TextColor'] ?? $default['TextColor'], $default['TextColor']),\n            'LightTextColor'                    => $normalize_color($saved['LightTextColor'] ?? $default['LightTextColor'], $default['LightTextColor']),\n            'ActionColor'                       => $normalize_color($saved['ActionColor'] ?? $default['ActionColor'], $default['ActionColor']),\n            'BodyFontFamily'                    => in_array((string) ($saved['BodyFontFamily'] ?? ''), $allowed_fonts, true) ? (string) $saved['BodyFontFamily'] : $default['BodyFontFamily'],\n            'HeadingFontFamily'                 => in_array((string) ($saved['HeadingFontFamily'] ?? ''), $allowed_fonts, true) ? (string) $saved['HeadingFontFamily'] : $default['HeadingFontFamily'],\n            'BodyFontSize'                      => $this->clamp_int($saved['BodyFontSize'] ?? $default['BodyFontSize'], 12, 24, $default['BodyFontSize']),\n            'H1FontSize'                        => $this->clamp_int($saved['H1FontSize'] ?? $default['H1FontSize'], 24, 88, $default['H1FontSize']),\n            'H2FontSize'                        => $this->clamp_int($saved['H2FontSize'] ?? $default['H2FontSize'], 20, 64, $default['H2FontSize']),\n            'H3FontSize'                        => $this->clamp_int($saved['H3FontSize'] ?? $default['H3FontSize'], 16, 48, $default['H3FontSize']),\n            'RadiusSmallPx'                     => $this->clamp_int($saved['RadiusSmallPx'] ?? $default['RadiusSmallPx'], 0, 30, $default['RadiusSmallPx']),\n            'RadiusMediumPx'                    => $this->clamp_int($saved['RadiusMediumPx'] ?? $default['RadiusMediumPx'], 0, 40, $default['RadiusMediumPx']),\n            'RadiusLargePx'                     => $this->clamp_int($saved['RadiusLargePx'] ?? $default['RadiusLargePx'], 0, 60, $default['RadiusLargePx']),\n            'SpacingXsPx'                       => $this->clamp_int($saved['SpacingXsPx'] ?? $default['SpacingXsPx'], 0, 24, $default['SpacingXsPx']),\n            'SpacingSmallPx'                    => $this->clamp_int($saved['SpacingSmallPx'] ?? $default['SpacingSmallPx'], 0, 40, $default['SpacingSmallPx']),\n            'SpacingMediumPx'                   => $this->clamp_int($saved['SpacingMediumPx'] ?? $default['SpacingMediumPx'], 0, 64, $default['SpacingMediumPx']),\n            'SpacingLargePx'                    => $this->clamp_int($saved['SpacingLargePx'] ?? $default['SpacingLargePx'], 0, 96, $default['SpacingLargePx']),\n            'SpacingXlPx'                       => $this->clamp_int($saved['SpacingXlPx'] ?? $default['SpacingXlPx'], 0, 140, $default['SpacingXlPx']),\n            'MenuPresentation'                  => in_array((string) ($saved['MenuPresentation'] ?? ''), $allowed_menu_presentations, true) ? (string) $saved['MenuPresentation'] : $default['MenuPresentation'],\n            'MenuHoverEffect'                   => in_array((string) ($saved['MenuHoverEffect'] ?? ''), $allowed_menu_hover, true) ? (string) $saved['MenuHoverEffect'] : $default['MenuHoverEffect'],\n            'MenuActiveStyle'                   => in_array((string) ($saved['MenuActiveStyle'] ?? ''), $allowed_menu_active, true) ? (string) $saved['MenuActiveStyle'] : $default['MenuActiveStyle'],\n            'MenuTransitionMs'                  => $this->clamp_int($saved['MenuTransitionMs'] ?? $default['MenuTransitionMs'], 0, 1200, $default['MenuTransitionMs']),\n            'SubmenuAnimation'                  => in_array((string) ($saved['SubmenuAnimation'] ?? ''), $allowed_submenu_animations, true) ? (string) $saved['SubmenuAnimation'] : $default['SubmenuAnimation'],\n            'VisualBaseScalePercent'",
-              'normalized design token fields'
+              'normalized v050 fields'
           )
 
-          # Save pipeline: read the new design-system and menu-effect controls.
           rep(
               "            'Version'                           => '2.3',\n            'VisualBaseScalePercent'            => $_POST['VisualBaseScalePercent'] ?? 90,",
               "            'Version'                           => '3.0',\n            'PrimaryColor'                      => $this->post_text('PrimaryColor'),\n            'SecondaryColor'                    => $this->post_text('SecondaryColor'),\n            'AccentColor'                       => $this->post_text('AccentColor'),\n            'SurfaceColor'                      => $this->post_text('SurfaceColor'),\n            'BackgroundColor'                   => $this->post_text('BackgroundColor'),\n            'TextColor'                         => $this->post_text('TextColor'),\n            'LightTextColor'                    => $this->post_text('LightTextColor'),\n            'ActionColor'                       => $this->post_text('ActionColor'),\n            'BodyFontFamily'                    => $this->post_text('BodyFontFamily'),\n            'HeadingFontFamily'                 => $this->post_text('HeadingFontFamily'),\n            'BodyFontSize'                      => $_POST['BodyFontSize'] ?? 16,\n            'H1FontSize'                        => $_POST['H1FontSize'] ?? 48,\n            'H2FontSize'                        => $_POST['H2FontSize'] ?? 32,\n            'H3FontSize'                        => $_POST['H3FontSize'] ?? 22,\n            'RadiusSmallPx'                     => $_POST['RadiusSmallPx'] ?? 4,\n            'RadiusMediumPx'                    => $_POST['RadiusMediumPx'] ?? 7,\n            'RadiusLargePx'                     => $_POST['RadiusLargePx'] ?? 12,\n            'SpacingXsPx'                       => $_POST['SpacingXsPx'] ?? 4,\n            'SpacingSmallPx'                    => $_POST['SpacingSmallPx'] ?? 8,\n            'SpacingMediumPx'                   => $_POST['SpacingMediumPx'] ?? 16,\n            'SpacingLargePx'                    => $_POST['SpacingLargePx'] ?? 24,\n            'SpacingXlPx'                       => $_POST['SpacingXlPx'] ?? 40,\n            'MenuPresentation'                  => $this->post_text('MenuPresentation'),\n            'MenuHoverEffect'                   => $this->post_text('MenuHoverEffect'),\n            'MenuActiveStyle'                   => $this->post_text('MenuActiveStyle'),\n            'MenuTransitionMs'                  => $_POST['MenuTransitionMs'] ?? 180,\n            'SubmenuAnimation'                  => $this->post_text('SubmenuAnimation'),\n            'VisualBaseScalePercent'            => $_POST['VisualBaseScalePercent'] ?? 90,",
-              'save design token fields'
+              'save v050 fields'
           )
 
-          # Header classes carry the menu presentation/effect choices.
-          rep(
-              "            'h18-mobile-' . strtolower($design['MobileStyle']),\n            !empty($design['ShowBrand'])",
-              "            'h18-mobile-' . strtolower($design['MobileStyle']),\n            'h18-menu-presentation-' . strtolower($design['MenuPresentation']),\n            'h18-menu-hover-' . strtolower($design['MenuHoverEffect']),\n            'h18-menu-active-' . strtolower($design['MenuActiveStyle']),\n            'h18-submenu-' . strtolower($design['SubmenuAnimation']),\n            !empty($design['ShowBrand'])",
-              'menu effect classes'
-          )
-
-          rep(
-              "            '--h18-menu-text-transform:' .\n            (!empty($design['MenuUppercase']) ? 'uppercase' : 'none') . ';' .\n            '--h18-logo-width:'",
-              "            '--h18-menu-text-transform:' .\n            (!empty($design['MenuUppercase']) ? 'uppercase' : 'none') . ';' .\n            '--h18-menu-transition:' . (int) $design['MenuTransitionMs'] . 'ms;' .\n            '--h18-logo-width:'",
-              'menu transition variable'
-          )
-
-          # The existing runtime :root becomes the source of truth for design
-          # tokens. Existing values are preserved as defaults.
-          rep(
-              "            ':root {' . \"\\\n\" .\n            '    --h18-site-width:'",
-              "            ':root {' . \"\\\n\" .\n            '    --h18-color-primary:' . esc_attr($design['PrimaryColor']) . ';' . \"\\\n\" .\n            '    --h18-color-secondary:' . esc_attr($design['SecondaryColor']) . ';' . \"\\\n\" .\n            '    --h18-color-accent:' . esc_attr($design['AccentColor']) . ';' . \"\\\n\" .\n            '    --h18-color-surface:' . esc_attr($design['SurfaceColor']) . ';' . \"\\\n\" .\n            '    --h18-color-background:' . esc_attr($design['BackgroundColor']) . ';' . \"\\\n\" .\n            '    --h18-color-text:' . esc_attr($design['TextColor']) . ';' . \"\\\n\" .\n            '    --h18-color-light:' . esc_attr($design['LightTextColor']) . ';' . \"\\\n\" .\n            '    --h18-color-action:' . esc_attr($design['ActionColor']) . ';' . \"\\\n\" .\n            '    --h18-font-body:' . esc_attr($this->header_font_family_css($design['BodyFontFamily'])) . ';' . \"\\\n\" .\n            '    --h18-font-heading:' . esc_attr($this->header_font_family_css($design['HeadingFontFamily'])) . ';' . \"\\\n\" .\n            '    --h18-font-body-size:' . (int) $design['BodyFontSize'] . 'px;' . \"\\\n\" .\n            '    --h18-font-h1-size:' . (int) $design['H1FontSize'] . 'px;' . \"\\\n\" .\n            '    --h18-font-h2-size:' . (int) $design['H2FontSize'] . 'px;' . \"\\\n\" .\n            '    --h18-font-h3-size:' . (int) $design['H3FontSize'] . 'px;' . \"\\\n\" .\n            '    --h18-radius-small:' . (int) $design['RadiusSmallPx'] . 'px;' . \"\\\n\" .\n            '    --h18-radius-medium:' . (int) $design['RadiusMediumPx'] . 'px;' . \"\\\n\" .\n            '    --h18-radius-large:' . (int) $design['RadiusLargePx'] . 'px;' . \"\\\n\" .\n            '    --h18-space-xs:' . (int) $design['SpacingXsPx'] . 'px;' . \"\\\n\" .\n            '    --h18-space-s:' . (int) $design['SpacingSmallPx'] . 'px;' . \"\\\n\" .\n            '    --h18-space-m:' . (int) $design['SpacingMediumPx'] . 'px;' . \"\\\n\" .\n            '    --h18-space-l:' . (int) $design['SpacingLargePx'] . 'px;' . \"\\\n\" .\n            '    --h18-space-xl:' . (int) $design['SpacingXlPx'] . 'px;' . \"\\\n\" .\n            '    --h18-site-width:'",
-              'runtime design token variables'
-          )
-
-          # The page builder now consumes the global palette instead of fixed
-          # duplicate colour literals. Fallbacks preserve old rendering.
-          rep(
-              ".h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--sand{background:#c3ae83;color:#30382a}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--steel{background:#525a5f;color:#fff}",
-              ".h18-editor-section--offwhite{background:var(--h18-color-surface,#f2f0e8)}.h18-editor-section--sand{background:var(--h18-color-accent,#c3ae83);color:var(--h18-color-text,#30382a)}.h18-editor-section--olive{background:var(--h18-color-primary,#30382a);color:var(--h18-color-light,#fff)}.h18-editor-section--steel{background:var(--h18-color-secondary,#525a5f);color:var(--h18-color-light,#fff)}",
-              'page editor palette'
-          )
-          php = php.replace('color:#fff}.h18-editor-section--olive h1', 'color:var(--h18-color-light,#fff)}.h18-editor-section--olive h1', 1)
-          php = php.replace('h3{color:#fff}\' .\n            \'.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:#30382a}', 'h3{color:var(--h18-color-light,#fff)}\' .\n            \'.h18-editor-section h1,.h18-editor-section h2,.h18-editor-section h3{margin-top:0;color:var(--h18-color-text,#30382a)}', 1)
-
-          # Add global typography to the managed content frame without touching
-          # WordPress admin or unrelated pages.
-          rep(
-              "        body.page .h18-page-frame {\n            --h18-section-spacing:",
-              "        body.page .h18-page-frame {\n            color:var(--h18-color-text,#30382a);\n            font-family:var(--h18-font-body,\"Segoe UI\",Arial,sans-serif);\n            font-size:var(--h18-font-body-size,16px);\n            --h18-section-spacing:",
-              'frontend body typography'
-          )
-          rep(
-              "        body.page .h18-page-frame > :not(style):not(script) {",
-              "        body.page .h18-page-frame h1 {font-family:var(--h18-font-heading,\"Segoe UI\",Arial,sans-serif);font-size:clamp(2rem,5vw,var(--h18-font-h1-size,48px));}\n        body.page .h18-page-frame h2 {font-family:var(--h18-font-heading,\"Segoe UI\",Arial,sans-serif);font-size:clamp(1.55rem,3.5vw,var(--h18-font-h2-size,32px));}\n        body.page .h18-page-frame h3 {font-family:var(--h18-font-heading,\"Segoe UI\",Arial,sans-serif);font-size:clamp(1.2rem,2.5vw,var(--h18-font-h3-size,22px));}\n\n        body.page .h18-page-frame > :not(style):not(script) {",
-              'frontend heading typography'
-          )
-
-          # Menu presentation and interaction effects. All are opt-in except
-          # the legacy-equivalent default underline; mobile menu remains intact.
-          rep(
-              ".h18-desktop-nav .h18-submenu {\n    display:none !important;",
-              ".h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a {\n    position:relative !important;\n    transition:color var(--h18-menu-transition,180ms) ease, background var(--h18-menu-transition,180ms) ease, transform var(--h18-menu-transition,180ms) ease !important;\n}\n.h18-site-header.h18-menu-presentation-floatingpill .h18-desktop-nav {\n    background:var(--h18-color-surface,#f2f0e8) !important;\n    border:1px solid rgba(48,56,42,.14) !important;\n    border-radius:999px !important;\n    padding:6px 12px !important;\n    box-shadow:0 8px 24px rgba(0,0,0,.09) !important;\n}\n.h18-site-header.h18-menu-presentation-framed .h18-desktop-nav {\n    border:1px solid var(--h18-color-accent,#c3ae83) !important;\n    border-radius:var(--h18-radius-medium,7px) !important;\n    padding:6px 12px !important;\n}\n.h18-site-header.h18-menu-hover-underline .h18-web-menu-root > .h18-menu-item > a::after {\n    content:\"\";position:absolute;left:12%;right:12%;bottom:-4px;height:2px;background:var(--h18-color-accent,#c3ae83);transform:scaleX(0);transform-origin:center;transition:transform var(--h18-menu-transition,180ms) ease;\n}\n.h18-site-header.h18-menu-hover-underline .h18-web-menu-root > .h18-menu-item > a:hover::after,\n.h18-site-header.h18-menu-hover-underline .h18-web-menu-root > .h18-menu-item > a:focus-visible::after {transform:scaleX(1);}\n.h18-site-header.h18-menu-hover-lift .h18-web-menu-root > .h18-menu-item > a:hover,\n.h18-site-header.h18-menu-hover-lift .h18-web-menu-root > .h18-menu-item > a:focus-visible {transform:translateY(-2px);}\n.h18-site-header.h18-menu-hover-pill .h18-web-menu-root > .h18-menu-item > a:hover,\n.h18-site-header.h18-menu-hover-pill .h18-web-menu-root > .h18-menu-item > a:focus-visible {background:rgba(195,174,131,.22);border-radius:999px;}\n.h18-site-header.h18-menu-active-underline .current-menu-item > a::after,\n.h18-site-header.h18-menu-active-underline .current_page_item > a::after,\n.h18-site-header.h18-menu-active-underline .current-menu-ancestor > a::after {content:\"\";position:absolute;left:12%;right:12%;bottom:-4px;height:2px;background:var(--h18-color-accent,#c3ae83);transform:scaleX(1);}\n.h18-site-header.h18-menu-active-pill .current-menu-item > a,\n.h18-site-header.h18-menu-active-pill .current_page_item > a,\n.h18-site-header.h18-menu-active-pill .current-menu-ancestor > a {background:rgba(195,174,131,.24);border-radius:999px;}\n.h18-site-header.h18-menu-active-dot .current-menu-item > a::after,\n.h18-site-header.h18-menu-active-dot .current_page_item > a::after {content:\"\";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--h18-color-accent,#c3ae83);left:50%;bottom:-7px;transform:translateX(-50%);}\n.h18-desktop-nav .h18-submenu {\n    display:none !important;",
-              'menu presentation css'
-          )
-          php = php.replace('background:#30382a !important;', 'background:var(--h18-color-primary,#30382a) !important;', 1)
-          php = php.replace('border-left:2px solid rgba(195,174,131,.55) !important;', 'border-left:2px solid var(--h18-color-accent,#c3ae83) !important;', 1)
-
-          rep(
-              ".h18-desktop-nav .h18-menu-item-has-children:hover > .h18-submenu,\n.h18-desktop-nav .h18-menu-item-has-children:focus-within > .h18-submenu {\n    display:flex !important;\n}",
-              ".h18-desktop-nav .h18-menu-item-has-children:hover > .h18-submenu,\n.h18-desktop-nav .h18-menu-item-has-children:focus-within > .h18-submenu {\n    display:flex !important;\n}\n.h18-site-header.h18-submenu-fade .h18-desktop-nav .h18-submenu,\n.h18-site-header.h18-submenu-fadeslide .h18-desktop-nav .h18-submenu,\n.h18-site-header.h18-submenu-scale .h18-desktop-nav .h18-submenu {display:flex !important;opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--h18-menu-transition,180ms) ease,transform var(--h18-menu-transition,180ms) ease;}\n.h18-site-header.h18-submenu-fadeslide .h18-desktop-nav .h18-submenu {transform:translateY(-8px);}\n.h18-site-header.h18-submenu-scale .h18-desktop-nav .h18-submenu {transform:scale(.96);transform-origin:top left;}\n.h18-site-header.h18-submenu-fade .h18-menu-item-has-children:hover > .h18-submenu,\n.h18-site-header.h18-submenu-fade .h18-menu-item-has-children:focus-within > .h18-submenu,\n.h18-site-header.h18-submenu-fadeslide .h18-menu-item-has-children:hover > .h18-submenu,\n.h18-site-header.h18-submenu-fadeslide .h18-menu-item-has-children:focus-within > .h18-submenu,\n.h18-site-header.h18-submenu-scale .h18-menu-item-has-children:hover > .h18-submenu,\n.h18-site-header.h18-submenu-scale .h18-menu-item-has-children:focus-within > .h18-submenu {opacity:1;visibility:visible;pointer-events:auto;transform:none;}",
-              'submenu animations'
-          )
-
-          # Add controls to the existing Header / Footer design screen. This is
-          # deliberately integrated with the current UI rather than a new page.
-          panel_anchor = '''                <div class="h18-settings-groups">\n                    <section class="h18-panel">\n                        <h3>Generelt / position / baggrund</h3>'''
-          panel_insert = '''                <div class="h18-settings-groups">\n                    <section class="h18-panel h18-panel-wide">\n                        <h3>Globalt designsystem</h3>\n                        <p class="description">Farver, typografi, afstande og afrunding bruges som fælles design tokens af sidebyggeren. Standardværdierne svarer 1:1 til det nuværende Hangar18-design.</p>\n                        <div class="h18-dynamic-fields-grid">\n                            <?php\n                            $this->field('PrimaryColor', 'Primærfarve', $s['PrimaryColor'], 'color');\n                            $this->field('SecondaryColor', 'Sekundærfarve', $s['SecondaryColor'], 'color');\n                            $this->field('AccentColor', 'Accentfarve', $s['AccentColor'], 'color');\n                            $this->field('SurfaceColor', 'Flade / lys baggrund', $s['SurfaceColor'], 'color');\n                            $this->field('BackgroundColor', 'Sidebaggrund', $s['BackgroundColor'], 'color');\n                            $this->field('TextColor', 'Tekstfarve', $s['TextColor'], 'color');\n                            $this->field('LightTextColor', 'Lys tekstfarve', $s['LightTextColor'], 'color');\n                            $this->field('ActionColor', 'Links / handlinger', $s['ActionColor'], 'color');\n                            ?>\n                        </div>\n                    </section>\n\n                    <section class="h18-panel">\n                        <h3>Global typografi</h3>\n                        <?php\n                        $font_options = [\n                            'System'=>'System', 'Segoe UI'=>'Segoe UI', 'Arial'=>'Arial', 'Verdana'=>'Verdana',\n                            'Tahoma'=>'Tahoma', 'Trebuchet MS'=>'Trebuchet MS', 'Georgia'=>'Georgia',\n                            'Times New Roman'=>'Times New Roman', 'Courier New'=>'Courier New',\n                        ];\n                        $this->select_field('BodyFontFamily', 'Brødtekst-font', $s['BodyFontFamily'], $font_options);\n                        $this->select_field('HeadingFontFamily', 'Overskrift-font', $s['HeadingFontFamily'], $font_options);\n                        $this->field('BodyFontSize', 'Brødtekst (px)', $s['BodyFontSize'], 'number');\n                        $this->field('H1FontSize', 'H1 maksimum (px)', $s['H1FontSize'], 'number');\n                        $this->field('H2FontSize', 'H2 maksimum (px)', $s['H2FontSize'], 'number');\n                        $this->field('H3FontSize', 'H3 maksimum (px)', $s['H3FontSize'], 'number');\n                        ?>\n                    </section>\n\n                    <section class="h18-panel">\n                        <h3>Design tokens – afstand / hjørner</h3>\n                        <?php\n                        $this->field('SpacingXsPx', 'Afstand XS (px)', $s['SpacingXsPx'], 'number');\n                        $this->field('SpacingSmallPx', 'Afstand S (px)', $s['SpacingSmallPx'], 'number');\n                        $this->field('SpacingMediumPx', 'Afstand M (px)', $s['SpacingMediumPx'], 'number');\n                        $this->field('SpacingLargePx', 'Afstand L (px)', $s['SpacingLargePx'], 'number');\n                        $this->field('SpacingXlPx', 'Afstand XL (px)', $s['SpacingXlPx'], 'number');\n                        $this->field('RadiusSmallPx', 'Afrunding S (px)', $s['RadiusSmallPx'], 'number');\n                        $this->field('RadiusMediumPx', 'Afrunding M (px)', $s['RadiusMediumPx'], 'number');\n                        $this->field('RadiusLargePx', 'Afrunding L (px)', $s['RadiusLargePx'], 'number');\n                        ?>\n                    </section>\n\n                    <section class="h18-panel">\n                        <h3>Menu – præsentation og effekter</h3>\n                        <?php\n                        $this->select_field('MenuPresentation', 'Præsentation', $s['MenuPresentation'], [\n                            'Classic'=>'Klassisk', 'FloatingPill'=>'Flydende pill', 'Framed'=>'Indrammet',\n                        ]);\n                        $this->select_field('MenuHoverEffect', 'Hover-effekt', $s['MenuHoverEffect'], [\n                            'None'=>'Ingen', 'Underline'=>'Animeret understregning', 'Lift'=>'Løft', 'Pill'=>'Pill-baggrund',\n                        ]);\n                        $this->select_field('MenuActiveStyle', 'Aktiv side', $s['MenuActiveStyle'], [\n                            'None'=>'Ingen', 'Underline'=>'Understregning', 'Pill'=>'Pill', 'Dot'=>'Punkt',\n                        ]);\n                        $this->select_field('SubmenuAnimation', 'Undermenu-animation', $s['SubmenuAnimation'], [\n                            'None'=>'Ingen', 'Fade'=>'Fade', 'FadeSlide'=>'Fade + slide', 'Scale'=>'Scale',\n                        ]);\n                        $this->field('MenuTransitionMs', 'Animationshastighed (ms)', $s['MenuTransitionMs'], 'number');\n                        ?>\n                    </section>\n\n                    <section class="h18-panel">\n                        <h3>Generelt / position / baggrund</h3>'''
-          if panel_anchor not in php:
+          # Insert controls into the existing design screen, not a parallel editor.
+          ui_anchor = '''                <div class="h18-settings-groups">\n                    <section class="h18-panel">\n                        <h3>Generelt / position / baggrund</h3>'''
+          ui = '''                <div class="h18-settings-groups">\n                    <section class="h18-panel h18-panel-wide">\n                        <h3>Globalt designsystem</h3>\n                        <p class="description">Fælles design tokens for sidebyggeren. Standardværdierne matcher v0.4.27.</p>\n                        <div class="h18-dynamic-fields-grid">\n                            <?php\n                            $this->field('PrimaryColor', 'Primærfarve', $s['PrimaryColor'], 'color');\n                            $this->field('SecondaryColor', 'Sekundærfarve', $s['SecondaryColor'], 'color');\n                            $this->field('AccentColor', 'Accentfarve', $s['AccentColor'], 'color');\n                            $this->field('SurfaceColor', 'Lys flade', $s['SurfaceColor'], 'color');\n                            $this->field('BackgroundColor', 'Sidebaggrund', $s['BackgroundColor'], 'color');\n                            $this->field('TextColor', 'Tekstfarve', $s['TextColor'], 'color');\n                            $this->field('LightTextColor', 'Lys tekst', $s['LightTextColor'], 'color');\n                            $this->field('ActionColor', 'Links / handlinger', $s['ActionColor'], 'color');\n                            ?>\n                        </div>\n                    </section>\n                    <section class="h18-panel">\n                        <h3>Global typografi</h3>\n                        <?php\n                        $font_options = ['System'=>'System','Segoe UI'=>'Segoe UI','Arial'=>'Arial','Verdana'=>'Verdana','Tahoma'=>'Tahoma','Trebuchet MS'=>'Trebuchet MS','Georgia'=>'Georgia','Times New Roman'=>'Times New Roman','Courier New'=>'Courier New'];\n                        $this->select_field('BodyFontFamily', 'Brødtekst-font', $s['BodyFontFamily'], $font_options);\n                        $this->select_field('HeadingFontFamily', 'Overskrift-font', $s['HeadingFontFamily'], $font_options);\n                        $this->field('BodyFontSize', 'Brødtekst (px)', $s['BodyFontSize'], 'number');\n                        $this->field('H1FontSize', 'H1 maksimum (px)', $s['H1FontSize'], 'number');\n                        $this->field('H2FontSize', 'H2 maksimum (px)', $s['H2FontSize'], 'number');\n                        $this->field('H3FontSize', 'H3 maksimum (px)', $s['H3FontSize'], 'number');\n                        ?>\n                    </section>\n                    <section class="h18-panel">\n                        <h3>Afstande og hjørner</h3>\n                        <?php\n                        $this->field('SpacingXsPx', 'Afstand XS (px)', $s['SpacingXsPx'], 'number');\n                        $this->field('SpacingSmallPx', 'Afstand S (px)', $s['SpacingSmallPx'], 'number');\n                        $this->field('SpacingMediumPx', 'Afstand M (px)', $s['SpacingMediumPx'], 'number');\n                        $this->field('SpacingLargePx', 'Afstand L (px)', $s['SpacingLargePx'], 'number');\n                        $this->field('SpacingXlPx', 'Afstand XL (px)', $s['SpacingXlPx'], 'number');\n                        $this->field('RadiusSmallPx', 'Afrunding S (px)', $s['RadiusSmallPx'], 'number');\n                        $this->field('RadiusMediumPx', 'Afrunding M (px)', $s['RadiusMediumPx'], 'number');\n                        $this->field('RadiusLargePx', 'Afrunding L (px)', $s['RadiusLargePx'], 'number');\n                        ?>\n                    </section>\n                    <section class="h18-panel">\n                        <h3>Menu – præsentation og effekter</h3>\n                        <?php\n                        $this->select_field('MenuPresentation', 'Præsentation', $s['MenuPresentation'], ['Classic'=>'Klassisk','FloatingPill'=>'Flydende pill','Framed'=>'Indrammet']);\n                        $this->select_field('MenuHoverEffect', 'Hover-effekt', $s['MenuHoverEffect'], ['None'=>'Ingen','Underline'=>'Animeret understregning','Lift'=>'Løft','Pill'=>'Pill-baggrund']);\n                        $this->select_field('MenuActiveStyle', 'Aktiv side', $s['MenuActiveStyle'], ['None'=>'Ingen','Underline'=>'Understregning','Pill'=>'Pill','Dot'=>'Punkt']);\n                        $this->select_field('SubmenuAnimation', 'Undermenu-animation', $s['SubmenuAnimation'], ['None'=>'Ingen','Fade'=>'Fade','FadeSlide'=>'Fade + slide','Scale'=>'Scale']);\n                        $this->field('MenuTransitionMs', 'Animationshastighed (ms)', $s['MenuTransitionMs'], 'number');\n                        ?>\n                    </section>\n                    <section class="h18-panel">\n                        <h3>Generelt / position / baggrund</h3>'''
+          if ui_anchor not in php:
               raise SystemExit('design UI anchor not found')
-          php = php.replace(panel_anchor, panel_insert, 1)
+          php = php.replace(ui_anchor, ui, 1)
+          print('OK: design UI')
 
-          # Update schema references in logging/help text.
+          # New isolated CSS layer. It consumes the current normalized settings,
+          # so older installations gain defaults without a destructive migration.
+          method_anchor = "    public function render_frontend_runtime_fixes() {\n"
+          method = r'''    public function render_design_tokens_v050() {
+              if (is_admin() || !$this->is_hangar18_managed_frontend_page()) {
+                  return;
+              }
+
+              $d = $this->get_header_design_settings();
+              $body_font = $this->header_font_family_css($d['BodyFontFamily']);
+              $heading_font = $this->header_font_family_css($d['HeadingFontFamily']);
+              $transition = (int) $d['MenuTransitionMs'];
+              ?>
+              <style id="hangar18-design-tokens-v050">
+              :root {
+                  --h18-color-primary:<?php echo esc_html($d['PrimaryColor']); ?>;
+                  --h18-color-secondary:<?php echo esc_html($d['SecondaryColor']); ?>;
+                  --h18-color-accent:<?php echo esc_html($d['AccentColor']); ?>;
+                  --h18-color-surface:<?php echo esc_html($d['SurfaceColor']); ?>;
+                  --h18-color-background:<?php echo esc_html($d['BackgroundColor']); ?>;
+                  --h18-color-text:<?php echo esc_html($d['TextColor']); ?>;
+                  --h18-color-light:<?php echo esc_html($d['LightTextColor']); ?>;
+                  --h18-color-action:<?php echo esc_html($d['ActionColor']); ?>;
+                  --h18-font-body:<?php echo esc_html($body_font); ?>;
+                  --h18-font-heading:<?php echo esc_html($heading_font); ?>;
+                  --h18-font-body-size:<?php echo esc_html((int) $d['BodyFontSize']); ?>px;
+                  --h18-font-h1-size:<?php echo esc_html((int) $d['H1FontSize']); ?>px;
+                  --h18-font-h2-size:<?php echo esc_html((int) $d['H2FontSize']); ?>px;
+                  --h18-font-h3-size:<?php echo esc_html((int) $d['H3FontSize']); ?>px;
+                  --h18-radius-small:<?php echo esc_html((int) $d['RadiusSmallPx']); ?>px;
+                  --h18-radius-medium:<?php echo esc_html((int) $d['RadiusMediumPx']); ?>px;
+                  --h18-radius-large:<?php echo esc_html((int) $d['RadiusLargePx']); ?>px;
+                  --h18-space-xs:<?php echo esc_html((int) $d['SpacingXsPx']); ?>px;
+                  --h18-space-s:<?php echo esc_html((int) $d['SpacingSmallPx']); ?>px;
+                  --h18-space-m:<?php echo esc_html((int) $d['SpacingMediumPx']); ?>px;
+                  --h18-space-l:<?php echo esc_html((int) $d['SpacingLargePx']); ?>px;
+                  --h18-space-xl:<?php echo esc_html((int) $d['SpacingXlPx']); ?>px;
+                  --h18-menu-transition:<?php echo esc_html($transition); ?>ms;
+              }
+
+              body.page .h18-editor-page {
+                  color:var(--h18-color-text);
+                  font-family:var(--h18-font-body);
+                  font-size:var(--h18-font-body-size);
+              }
+              body.page .h18-editor-page h1 {font-family:var(--h18-font-heading);font-size:clamp(2rem,5vw,var(--h18-font-h1-size));}
+              body.page .h18-editor-page h2 {font-family:var(--h18-font-heading);font-size:clamp(1.55rem,3.5vw,var(--h18-font-h2-size));}
+              body.page .h18-editor-page h3 {font-family:var(--h18-font-heading);font-size:clamp(1.2rem,2.5vw,var(--h18-font-h3-size));}
+              body.page .h18-editor-section--offwhite {background:var(--h18-color-surface) !important;}
+              body.page .h18-editor-section--sand {background:var(--h18-color-accent) !important;color:var(--h18-color-text) !important;}
+              body.page .h18-editor-section--olive {background:var(--h18-color-primary) !important;color:var(--h18-color-light) !important;}
+              body.page .h18-editor-section--steel {background:var(--h18-color-secondary) !important;color:var(--h18-color-light) !important;}
+              body.page .h18-editor-section a {color:var(--h18-color-action);}
+              .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a {position:relative;transition:color var(--h18-menu-transition) ease,background var(--h18-menu-transition) ease,transform var(--h18-menu-transition) ease;}
+
+              <?php if ($d['MenuPresentation'] === 'FloatingPill') : ?>
+              .h18-site-header .h18-desktop-nav {background:var(--h18-color-surface) !important;border:1px solid rgba(48,56,42,.14) !important;border-radius:999px !important;padding:6px 12px !important;box-shadow:0 8px 24px rgba(0,0,0,.09) !important;}
+              <?php elseif ($d['MenuPresentation'] === 'Framed') : ?>
+              .h18-site-header .h18-desktop-nav {border:1px solid var(--h18-color-accent) !important;border-radius:var(--h18-radius-medium) !important;padding:6px 12px !important;}
+              <?php endif; ?>
+
+              <?php if ($d['MenuHoverEffect'] === 'Underline') : ?>
+              .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a::after {content:"";position:absolute;left:12%;right:12%;bottom:-4px;height:2px;background:var(--h18-color-accent);transform:scaleX(0);transition:transform var(--h18-menu-transition) ease;}
+              .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:hover::after,.h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:focus-visible::after {transform:scaleX(1);}
+              <?php elseif ($d['MenuHoverEffect'] === 'Lift') : ?>
+              .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:hover,.h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:focus-visible {transform:translateY(-2px);}
+              <?php elseif ($d['MenuHoverEffect'] === 'Pill') : ?>
+              .h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:hover,.h18-desktop-nav .h18-web-menu-root > .h18-menu-item > a:focus-visible {background:color-mix(in srgb,var(--h18-color-accent) 24%,transparent);border-radius:999px;}
+              <?php endif; ?>
+
+              <?php if ($d['MenuActiveStyle'] === 'Underline') : ?>
+              .h18-desktop-nav .current-menu-item > a::after,.h18-desktop-nav .current_page_item > a::after,.h18-desktop-nav .current-menu-ancestor > a::after {content:"";position:absolute;left:12%;right:12%;bottom:-4px;height:2px;background:var(--h18-color-accent);transform:scaleX(1);}
+              <?php elseif ($d['MenuActiveStyle'] === 'Pill') : ?>
+              .h18-desktop-nav .current-menu-item > a,.h18-desktop-nav .current_page_item > a,.h18-desktop-nav .current-menu-ancestor > a {background:color-mix(in srgb,var(--h18-color-accent) 24%,transparent);border-radius:999px;}
+              <?php elseif ($d['MenuActiveStyle'] === 'Dot') : ?>
+              .h18-desktop-nav .current-menu-item > a::after,.h18-desktop-nav .current_page_item > a::after {content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--h18-color-accent);left:50%;bottom:-7px;transform:translateX(-50%);}
+              <?php endif; ?>
+
+              <?php if ($d['SubmenuAnimation'] !== 'None') : ?>
+              .h18-site-header .h18-desktop-nav .h18-submenu {display:flex !important;opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--h18-menu-transition) ease,transform var(--h18-menu-transition) ease;}
+              <?php if ($d['SubmenuAnimation'] === 'FadeSlide') : ?>.h18-site-header .h18-desktop-nav .h18-submenu {transform:translateY(-8px);}
+              <?php elseif ($d['SubmenuAnimation'] === 'Scale') : ?>.h18-site-header .h18-desktop-nav .h18-submenu {transform:scale(.96);transform-origin:top left;}
+              <?php endif; ?>
+              .h18-site-header .h18-desktop-nav .h18-menu-item-has-children:hover > .h18-submenu,.h18-site-header .h18-desktop-nav .h18-menu-item-has-children:focus-within > .h18-submenu {opacity:1;visibility:visible;pointer-events:auto;transform:none;}
+              <?php endif; ?>
+              </style>
+              <?php
+          }
+
+          '''
+          if method_anchor not in php:
+              raise SystemExit('frontend runtime method anchor not found')
+          php = php.replace(method_anchor, method + method_anchor, 1)
+          print('OK: design token renderer')
+
           php = php.replace('HeaderDesign schema 2.3', 'HeaderDesign schema 3.0')
-          php = php.replace('central schema 2.3 values', 'central schema 3.0 values')
 
-          # Readme/version history.
           if 'Version: 0.4.27' not in readme:
               raise SystemExit('readme version anchor not found')
           readme = readme.replace('Version: 0.4.27', 'Version: 0.5.0', 1)
-          readme += '''\n\n== Version 0.5.0 – Designsystem og menueffekter ==\n\nVersion 0.5.0 bygger direkte videre på v0.4.27 og bevarer den eksisterende visuelle sidebygger, datamodeller, backups, WhatIf og versionshistorik.\n\nNyt fundament:\n- HeaderDesign schema 3.0 med globale design tokens.\n- Centrale farver: primær, sekundær, accent, surface, baggrund, tekst, lys tekst og action/link.\n- Global brødtekst- og overskriftstypografi samt H1/H2/H3 størrelser.\n- Globale afstandstokens XS/S/M/L/XL og tre niveauer af hjørneafrunding.\n- Sidebyggerens eksisterende farve-presets bruger nu de globale designfarver med sikre fallback-værdier.\n- Menupræsentation: Klassisk, Flydende pill og Indrammet.\n- Hover-effekter: Ingen, animeret understregning, løft og pill-baggrund.\n- Aktiv side kan markeres med understregning, pill eller punkt.\n- Undermenu-animation: Ingen, Fade, Fade + slide eller Scale.\n- Animationshastighed kan styres centralt.\n- Ældre HeaderDesign-konfigurationer er bagudkompatible og får de nuværende Hangar18-værdier som defaults.\n\nSikkerhed:\n- Standardværdierne matcher v0.4.27 visuelt.\n- Ingen eksisterende sider konverteres automatisk ved installation.\n- Ændringer anvendes først via den eksisterende Gem design og opdater alle sider-handling.\n'''
+          readme += '''\n\n== Version 0.5.0 – Designsystem og menueffekter ==\n\nVersion 0.5.0 bygger direkte videre på v0.4.27. Den eksisterende visuelle sidebygger, datamodeller, WhatIf, backup og versionshistorik er bevaret.\n\nNyt i første 0.5.0-fundament:\n- HeaderDesign schema 3.0 med globale design tokens.\n- Centrale farver: primær, sekundær, accent, lys flade, baggrund, tekst, lys tekst og action/link.\n- Global brødtekst- og overskriftstypografi med H1/H2/H3-størrelser.\n- Afstandstokens XS/S/M/L/XL og tre niveauer af hjørneafrunding.\n- Sidebyggerens eksisterende farveklasser kobles til de globale farver.\n- Menupræsentation: Klassisk, Flydende pill eller Indrammet.\n- Hover-effekter: Ingen, animeret understregning, løft eller pill-baggrund.\n- Aktiv side: Ingen, understregning, pill eller punkt.\n- Undermenu-animation: Ingen, Fade, Fade + slide eller Scale.\n- Animationshastighed kan styres centralt.\n\nKompatibilitet og sikkerhed:\n- Standardfarverne er identiske med v0.4.27.\n- Alle nye menueffekter er slået fra som standard.\n- Ældre HeaderDesign-konfigurationer normaliseres bagudkompatibelt.\n- Ingen sidekonvertering eller datamigration køres automatisk.\n'''
 
           php_path.write_text(php, encoding='utf-8')
           readme_path.write_text(readme, encoding='utf-8')
@@ -164,11 +198,10 @@ jobs:
           grep -F 'Version: 0.5.0' hangar18-manager.php
           grep -F "const VERSION = '0.5.0';" hangar18-manager.php
           grep -F "'Version' => '3.0'" hangar18-manager.php
+          grep -F 'render_design_tokens_v050' hangar18-manager.php
           grep -F 'PrimaryColor' hangar18-manager.php
           grep -F 'MenuPresentation' hangar18-manager.php
-          grep -F 'h18-menu-presentation-floatingpill' hangar18-manager.php
           grep -F -- '--h18-color-primary:' hangar18-manager.php
-          grep -F 'var(--h18-color-surface,#f2f0e8)' hangar18-manager.php
 
       - name: Build v0.5.0 package and manifest
         shell: bash
@@ -198,9 +231,9 @@ jobs:
               'package_sha256': os.environ['SHA'],
               'changelog': [
                   'Bygger direkte videre på v0.4.27 og bevarer den eksisterende visuelle builder.',
-                  'Tilføjer HeaderDesign schema 3.0 med globale farver, typografi, spacing og radius tokens.',
-                  'Sidebyggerens farve-presets bruger de globale design tokens med bagudkompatible fallbacks.',
-                  'Tilføjer menupræsentationer, hover/active-effekter og undermenu-animationer.'
+                  'Tilføjer HeaderDesign schema 3.0 med globale design tokens.',
+                  'Kobler sidebyggerens farvepresets til centrale designfarver.',
+                  'Tilføjer valgfrie menupræsentationer, hover/active-effekter og undermenu-animationer.'
               ]
           }
           with open('update.json', 'w', encoding='utf-8') as f:
