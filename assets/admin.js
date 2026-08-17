@@ -332,7 +332,7 @@ jQuery(function ($) {
         const labels = {
             hero: 'Topbanner / hero', text: 'Tekst', text_image: 'Tekst og billede', image: 'Stort billede',
             buttons: 'Handlingsknapper', card: 'Indholdskort', card_grid: 'Kort-række / kolonner', highlight: 'Fremhævet tekst',
-            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
+            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', tabs: 'Faner / tabs', accordion: 'Accordion', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
             spacer: 'Afstand', html: 'Importeret blok / HTML', css: 'Side-CSS', mail_form: 'Mailformular', poll: 'Afstemning', legacy: 'Eksisterende indhold'
         };
         return labels[String(type || '')] || 'Sektion';
@@ -519,7 +519,7 @@ jQuery(function ($) {
             setSectionPresetField($row, fieldName, presetData[fieldName]);
         });
         $row.find('.h18-page-section-type').val(type);
-        if (Array.isArray(presetData.Cards) && type === 'card_grid') {
+        if (Array.isArray(presetData.Cards) && ['card_grid', 'tabs', 'accordion'].includes(type)) {
             const $container = pageSectionControls($row, '.h18-page-cards-sortable');
             $container.children('.h18-page-card-row').remove();
             presetData.Cards.slice(0, 12).forEach(function (card) { addPageCard($row, card || {}); });
@@ -614,6 +614,30 @@ jQuery(function ($) {
         pageSectionControls($row, '.h18-hover-style-fields').toggle(custom);
     }
 
+    function refreshCollectionEditorV0517($row) {
+        if (!$row || !$row.length) { return; }
+        const type = String($row.attr('data-section-type') || 'text');
+        const $box = pageSectionControls($row, '.h18-collection-editor');
+        if (!$box.length) { return; }
+        const isCards = type === 'card_grid';
+        const isTabs = type === 'tabs';
+        const isAccordion = type === 'accordion';
+        $box.find('.h18-card-grid-layout-fields').toggle(isCards);
+        $box.find('.h18-collection-editor-title').text(isTabs ? 'Faner / tabs' : (isAccordion ? 'Accordion' : 'Kort-række / kolonner'));
+        $box.find('.h18-collection-editor-description').text(isTabs
+            ? 'Hvert panel bliver en fane. Titel er fanetekst; indhold er fanens panel.'
+            : (isAccordion ? 'Hvert panel bliver et fold-ud punkt med titel og indhold.' : 'Hver kasse kan flyttes, farves og tilpasses separat.'));
+        $box.find('.h18-add-page-card-label').text(isCards ? 'Tilføj kasse' : 'Tilføj panel');
+    }
+
+    function initializeCollectionPanelsV0517($row, type) {
+        if (!['tabs', 'accordion'].includes(type)) { return; }
+        if (pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length) { return; }
+        const prefix = type === 'tabs' ? 'Fane' : 'Punkt';
+        addPageCard($row, { Title: prefix + ' 1', Content: '<p>Indhold til ' + prefix.toLowerCase() + ' 1.</p>', Background: 'White', TextTone: 'Auto', Active: true });
+        addPageCard($row, { Title: prefix + ' 2', Content: '<p>Indhold til ' + prefix.toLowerCase() + ' 2.</p>', Background: 'OffWhite', TextTone: 'Auto', Active: true });
+    }
+
     function refreshPageSectionType($row) {
         const type = String(pageSectionControls($row, '.h18-page-section-type').val() || pageSectionControls($row, 'input[name$="[Type]"]').val() || 'text');
         $row.attr('data-section-type', type);
@@ -629,6 +653,8 @@ jQuery(function ($) {
             buttons: 'Handlingsknapper',
             card: 'Indholdskort',
             card_grid: 'Kort-række / kolonner',
+            tabs: 'Faner / tabs',
+            accordion: 'Accordion',
             highlight: 'Fremhævet tekst',
             spacer: 'Afstand',
             html: 'Importeret blok / HTML',
@@ -644,6 +670,7 @@ jQuery(function ($) {
         refreshSectionBackgroundEffect($row);
         refreshHoverStyleMode($row);
         refreshPrimitiveVariantV0516($row);
+        refreshCollectionEditorV0517($row);
         rebuildPageNavigator();
         renderCanvasPreview($row);
     }
@@ -772,6 +799,13 @@ jQuery(function ($) {
             setValue('Background', 'OffWhite');
             setValue('PaddingPx', 26);
             setValue('MobilePaddingPx', 20);
+        } else if (type === 'tabs' || type === 'accordion') {
+            setValue('Background', 'White');
+            setValue('PaddingPx', 0);
+            setValue('HorizontalPaddingPx', 0);
+            setValue('MobilePaddingPx', 0);
+            setValue('MobileHorizontalPaddingPx', 0);
+            initializeCollectionPanelsV0517($row, type);
         } else if (type === 'card_grid') {
             setValue('Background', 'White');
             setValue('PaddingPx', 0);
@@ -1148,6 +1182,33 @@ jQuery(function ($) {
             addTitle('Handling');
             canvasAddBodyText($inner, content);
             addButtons();
+        } else if (type === 'tabs') {
+            addTitle('Faner');
+            canvasAddBodyText($inner, content);
+            const $cards = pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').filter(function () { return $(this).find('[name$="[Active]"]').is(':checked'); });
+            const $tabs = $('<div>', { class: 'h18-canvas-tabs-nav' });
+            const $panel = $('<div>', { class: 'h18-canvas-tabs-panel' });
+            if (!$cards.length) { $panel.text('Tilføj mindst ét panel.'); }
+            $cards.each(function (index) {
+                const $card = $(this);
+                const cardTitle = String($card.find('.h18-page-card-title').val() || ('Fane ' + (index + 1)));
+                $tabs.append($('<button>', { type: 'button', class: 'h18-canvas-tab' + (index === 0 ? ' is-active' : ''), text: cardTitle, tabindex: -1 }));
+                if (index === 0) { $panel.html(String($card.find('[name$="[Content]"]').val() || '')); }
+            });
+            $inner.append($tabs, $panel);
+        } else if (type === 'accordion') {
+            addTitle('Accordion');
+            canvasAddBodyText($inner, content);
+            const $accordion = $('<div>', { class: 'h18-canvas-accordion' });
+            pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').filter(function () { return $(this).find('[name$="[Active]"]').is(':checked'); }).each(function (index) {
+                const $card = $(this);
+                const cardTitle = String($card.find('.h18-page-card-title').val() || ('Punkt ' + (index + 1)));
+                const $item = $('<div>', { class: 'h18-canvas-accordion-item' });
+                $item.append($('<strong>', { text: cardTitle }), $('<span>', { text: index === 0 ? '−' : '+' }));
+                if (index === 0) { $item.append($('<div>', { class: 'h18-canvas-accordion-body' }).html(String($card.find('[name$="[Content]"]').val() || ''))); }
+                $accordion.append($item);
+            });
+            $inner.append($accordion);
         } else if (type === 'card_grid') {
             addTitle('Kort-række');
             canvasAddBodyText($inner, content);
@@ -2076,7 +2137,7 @@ jQuery(function ($) {
     $(document).on('change', '.h18-page-section-type', function () {
         const $row = pageSectionForElement(this);
         const type = String($(this).val() || 'text');
-        if (type === 'card_grid' && !pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length) {
+        if (['card_grid', 'tabs', 'accordion'].includes(type) && !pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length) {
             applyNewSectionDefaults($row, type);
         }
         refreshPageSectionType($row);
@@ -2327,7 +2388,11 @@ jQuery(function ($) {
 
     $(document).on('click', '.h18-add-page-card', function (event) {
         event.preventDefault();
-        addPageCard(pageSectionForElement(this), { Title: 'Ny kasse', Background: 'OffWhite', TextTone: 'Auto', Active: true });
+        const $row = pageSectionForElement(this);
+        const type = String($row.attr('data-section-type') || 'card_grid');
+        const current = pageSectionControls($row, '.h18-page-card-row:not(.h18-page-card-removed)').length + 1;
+        const title = type === 'tabs' ? 'Fane ' + current : (type === 'accordion' ? 'Punkt ' + current : 'Ny kasse');
+        addPageCard($row, { Title: title, Background: 'OffWhite', TextTone: 'Auto', Active: true });
     });
 
     $(document).on('input', '.h18-page-card-title', function () {

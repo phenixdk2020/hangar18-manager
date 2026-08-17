@@ -712,3 +712,10 @@ body.h18-command-palette-visible{overflow:hidden}
 .h18-canvas-primitive-quote{margin:0;padding:14px 18px;border-left:4px solid currentColor}.h18-canvas-primitive-quote blockquote{margin:0}.h18-canvas-primitive-quote--large blockquote{font-size:1.5em}.h18-canvas-primitive-quote figcaption{margin-top:9px;font-weight:600}
 .h18-canvas-embed-placeholder,.h18-canvas-shortcode-placeholder{box-sizing:border-box;width:100%;padding:16px;border:1px dashed #8c8f94;border-radius:6px;background:rgba(255,255,255,.72);overflow-wrap:anywhere}.h18-canvas-embed-placeholder{display:flex;align-items:center;gap:9px}.h18-canvas-shortcode-placeholder{white-space:pre-wrap}
 
+/* v0.5.17 – Tabs + Accordion canvas */
+.h18-canvas-tabs-nav{display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid rgba(0,0,0,.2)}
+.h18-canvas-tab{appearance:none;border:1px solid transparent;border-bottom:0;border-radius:5px 5px 0 0;background:transparent;padding:7px 11px;font-weight:700;color:inherit}
+.h18-canvas-tab.is-active{background:rgba(255,255,255,.85);color:#30382a;border-color:rgba(0,0,0,.2)}
+.h18-canvas-tabs-panel{padding:16px;border:1px solid rgba(0,0,0,.15);border-top:0;background:rgba(255,255,255,.55)}
+.h18-canvas-accordion{display:grid;gap:7px}.h18-canvas-accordion-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:11px 13px;border:1px solid rgba(0,0,0,.16);border-radius:5px}.h18-canvas-accordion-body{grid-column:1/-1;padding-top:8px;border-top:1px solid rgba(0,0,0,.12)}
+

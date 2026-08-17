@@ -1,8 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.5.16
+Version: 0.5.17
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.17 – Tabs og Accordion ==
+
+Nyt:
+- UD-030: nye Faner/Tabs og Accordion-elementer direkte i sidebyggeren
+- begge elementer genbruger den eksisterende Cards/panel-model, så komponenter, Undo/Redo, autosave og copy/paste fortsætter uden parallel datamodel
+- Tabs har semantisk tablist/tab/tabpanel-markup, roving tabindex og tastaturstyring med pile, Home og End
+- Accordion bruger native details/summary for robust keyboard- og skærmlæserunderstøttelse
+- paneler kan flyttes, aktiveres/deaktiveres og beholder eksisterende baggrund, teksttone, kant, padding, radius og responsive Card-indstillinger
+- nye Tabs/Accordion oprettes med to startpaneler og kan have op til 12 paneler
+- live canvas viser den første fane eller det første accordion-panel uden at ændre frontend-state
+- page-editor schema forbliver 1.13; ingen ekstra paneldatamigrering er nødvendig
 
 == Version 0.5.16 – E2 element primitives og sikre embeds ==
 

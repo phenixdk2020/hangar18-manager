@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.16",
+  "version": "0.5.17",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T22:26:41Z",
+  "published_utc": "2026-08-17T22:32:33Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "53c369c932ad2e4eb60161f976062b87cde91a1b7d98565c54084ce636ef4c18",
+  "package_sha256": "f07d3c0e231c3e19b9630598fd991cbcc8c7da39a15afda889d14f1a1ca117dc",
   "changelog": [
-    "Tilføjer E2 primitive elementer: Icon/SVG, Divider, List, Badge og Quote.",
-    "Tilføjer sikkert Embed-element via WordPress oEmbed og separat capability-gated Shortcode-element.",
-    "Importerede Gutenberg lister, citater og separatorer bliver semantiske Hangar18-elementer.",
-    "HTML udfører ikke længere shortcodes implicit; eksekverbar shortcode kræver eksplicit autorisation.",
-    "Løfter page-editor schema bagudkompatibelt til 1.13."
+    "Tilføjer UD-030 Tabs/Faner og Accordion som native sideeditor-elementer.",
+    "Genbruger Cards som panelmodel, så Undo/Redo, autosave, komponenter og designkontroller følger med.",
+    "Tabs får tablist/tab/tabpanel semantik, roving tabindex og pile/Home/End-navigation.",
+    "Accordion bruger native details/summary og panelernes eksisterende Card-design.",
+    "Page-editor schema forbliver 1.13 uden ekstra datamigrering."
   ]
 }
