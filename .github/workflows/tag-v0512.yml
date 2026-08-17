@@ -24,7 +24,8 @@ jobs:
           set -euo pipefail
           release_sha="bc3a1632cceca4d4a17f9c405d189f050283deb7"
           git fetch origin main --tags
-          git show "$release_sha:hangar18-manager.php" | grep -q 'Version: 0.5.12'
+          git show "$release_sha:hangar18-manager.php" > /tmp/h18-v0512.php
+          grep -q 'Version: 0.5.12' /tmp/h18-v0512.php
           git tag -f v0.5.12 "$release_sha"
           git push origin refs/tags/v0.5.12 --force
           git rm .github/workflows/tag-v0512.yml
