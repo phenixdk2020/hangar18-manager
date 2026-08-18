@@ -67,7 +67,7 @@ jobs:
       - run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
 
   release-073:
-    if: github.ref == 'refs/heads/agent/release-0.7.3' && !contains(github.event.head_commit.message || '', 'Release Hangar18 Manager 0.7.3')
+    if: (github.ref == 'refs/heads/agent/release-0.7.3' || github.head_ref == 'agent/release-0.7.3') && !contains(github.event.head_commit.message || '', 'Release Hangar18 Manager 0.7.3')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
