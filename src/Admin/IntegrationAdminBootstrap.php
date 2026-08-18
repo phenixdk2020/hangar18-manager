@@ -8,6 +8,7 @@ use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionAiProposal
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionAiSettingsRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionArtifactRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionAssetMetadataRepository;
+use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionConversionWorkspaceRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionDesignLockRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionManualQaEvidenceRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionMenuRepository;
@@ -36,6 +37,7 @@ final class IntegrationAdminBootstrap
         PermissionsAdminController::register();
         AiAdminController::register();
         QaDashboardAdminController::register();
+        ConversionAdminController::register();
     }
 
     public static function registerMenu(): void
@@ -47,7 +49,7 @@ final class IntegrationAdminBootstrap
     public static function render(): void
     {
         if(!current_user_can('edit_pages')){wp_die(esc_html__('Du har ikke rettigheder til denne side.','hangar18-manager'));}
-        $templates=new WordPressOptionSiteTemplateRepository();$menus=new WordPressOptionMenuRepository();$assets=new WordPressOptionAssetMetadataRepository();$readiness=new ReleaseReadiness();$workspace=new WordPressOptionArtifactRepository();$designLock=(new WordPressOptionDesignLockRepository())->get();$aiSettings=(new WordPressOptionAiSettingsRepository())->get();$aiProposals=(new WordPressOptionAiProposalRepository())->all();$qaRecords=(new WordPressOptionManualQaEvidenceRepository())->all();
+        $templates=new WordPressOptionSiteTemplateRepository();$menus=new WordPressOptionMenuRepository();$assets=new WordPressOptionAssetMetadataRepository();$readiness=new ReleaseReadiness();$workspace=new WordPressOptionArtifactRepository();$designLock=(new WordPressOptionDesignLockRepository())->get();$aiSettings=(new WordPressOptionAiSettingsRepository())->get();$aiProposals=(new WordPressOptionAiProposalRepository())->all();$qaRecords=(new WordPressOptionManualQaEvidenceRepository())->all();$conversionWorkspace=(new WordPressOptionConversionWorkspaceRepository())->all();
         $allTemplates=$templates->all();$headerCount=0;$footerCount=0;foreach($allTemplates as $template){if(($template['Kind']??'')==='header'){$headerCount++;}elseif(($template['Kind']??'')==='footer'){$footerCount++;}}
         $manual=(new ManualEvidenceValidator())->statusMap($qaRecords);$manualPending=array_keys(array_filter($manual,static fn(bool $passed):bool=>!$passed));$manualPassed=count($manual)-count($manualPending);
         $capabilities=(new CapabilityCatalog())->all();$currentCapabilities=[];foreach($capabilities as $capability){if(current_user_can($capability)){$currentCapabilities[]=$capability;}}
@@ -62,13 +64,14 @@ final class IntegrationAdminBootstrap
         self::card('Permissions',sprintf('%d/%d capabilities på aktuel bruger',count($currentCapabilities),count($capabilities)),'I7 kan installere navngivne roller additivt; edit_pages fjernes ikke.');
         self::card('Design Lock',!empty($designLock['Enabled'])?'Policy aktiv (shadow)':'Policy inaktiv','Policy håndhæves først i den nye runtime efter kontrolleret cutover.');
         self::card('AI forslag',(!empty($aiSettings['Enabled'])?'Aktiv':'Inaktiv').' · '.$pendingAi.' pending','Provider-neutral I8 sandbox. Accept giver kun Apply/Undo-plan; ingen page-write.');
-        self::card('Manual QA',$manualPassed.'/'.count($manual).' PASS',count($manualPending).' manuelle gates blokerer fortsat I10. Automatisk preflight kan ikke godkende dem.');
+        self::card('Manual QA',$manualPassed.'/'.count($manual).' PASS',count($manualPending).' manuelle gates blokerer fortsat public I10 cutover. Automatisk preflight kan ikke godkende dem.');
+        self::card('I10 conversion',count($conversionWorkspace).' shadow copy/copies','Planner-only. Ingen activate/cutover-handler er registreret i denne fase.');
         self::card('Side Health','Live panel på Sider','I4 analyserer den aktuelle editor-state read-only og linker issues til konkrete elementer.');
-        self::card('Manual release gates',(string)count($manualPending).' pending','Konvertering forbliver blokeret indtil de manuelle/live gates er gennemført.');echo '</div>';
-        SiteTemplateAdminController::renderPanel();MenuAdminController::renderPanel();AssetManagerAdminController::renderPanel();PortabilityAdminController::renderPanel();PermissionsAdminController::renderPanel();AiAdminController::renderPanel();QaDashboardAdminController::renderPanel();
+        self::card('Manual release gates',(string)count($manualPending).' pending','Offentlig konvertering forbliver blokeret indtil de manuelle/live gates er gennemført.');echo '</div>';
+        SiteTemplateAdminController::renderPanel();MenuAdminController::renderPanel();AssetManagerAdminController::renderPanel();PortabilityAdminController::renderPanel();PermissionsAdminController::renderPanel();AiAdminController::renderPanel();QaDashboardAdminController::renderPanel();ConversionAdminController::renderPanel();
         echo '<h2>Integration backlog</h2><table class="widefat striped h18-ud-backlog"><thead><tr><th>Fase</th><th>Status</th><th>Næste leverance</th></tr></thead><tbody>';
-        self::backlogRow('I1','Færdig','Admin integration og overblik.');self::backlogRow('I2','Færdig','Visual Header/Footer Builder i shadow mode.');self::backlogRow('I3','Færdig','Menu UI v2 med presets, nested editor, keyboard-preview og eksplicit side-tilvalg/fravalg.');self::backlogRow('I4','Færdig','Live Side Health i eksisterende sideeditor med element-links.');self::backlogRow('I5','Færdig','Asset Manager: collections/tags/usage/focal point/duplicates/derivatives.');self::backlogRow('I6','Færdig','Import/Export UI med dry-run, signeret plan, isoleret workspace og restore-point.');self::backlogRow('I7','Færdig','Permissions/Design Lock UI og additive role-installation med migration preview.');self::backlogRow('I8','Færdig','Provider-neutral AI settings, pending forslag og signeret accept til Apply/Undo-plan.');self::backlogRow('I9','Aktiv','Manual QA evidence capture og rollback preflight på kopi. Live-copy gate kræver manuel evidens.');self::backlogRow('I10','Sidst','Kontrolleret konvertering af eksisterende sider og til sidst Vehicle/Event/Gallery.');
-        echo '</tbody></table><h2>Manuelle gates før I10</h2><ul class="ul-disc">';foreach($manualPending as $item){echo '<li><code>'.esc_html($item).'</code></li>';}echo '</ul></div>';
+        self::backlogRow('I1','Færdig','Admin integration og overblik.');self::backlogRow('I2','Færdig','Visual Header/Footer Builder i shadow mode.');self::backlogRow('I3','Færdig','Menu UI v2 med presets, nested editor, keyboard-preview og eksplicit side-tilvalg/fravalg.');self::backlogRow('I4','Færdig','Live Side Health i eksisterende sideeditor med element-links.');self::backlogRow('I5','Færdig','Asset Manager: collections/tags/usage/focal point/duplicates/derivatives.');self::backlogRow('I6','Færdig','Import/Export UI med dry-run, signeret plan, isoleret workspace og restore-point.');self::backlogRow('I7','Færdig','Permissions/Design Lock UI og additive role-installation med migration preview.');self::backlogRow('I8','Færdig','Provider-neutral AI settings, pending forslag og signeret accept til Apply/Undo-plan.');self::backlogRow('I9','Færdig','Manual QA evidence dashboard og copy-only rollback preflight; evidens udføres separat.');self::backlogRow('I10','Aktiv · planner','Kontrolleret conversion plan + shadow-copy. Public cutover er fortsat låst bag I9 og compatibility-accept.');
+        echo '</tbody></table><h2>Manuelle gates før public I10 cutover</h2><ul class="ul-disc">';foreach($manualPending as $item){echo '<li><code>'.esc_html($item).'</code></li>';}echo '</ul></div>';
     }
     private static function renderStatusNotice(): void{$status=isset($_GET['ud_status'])?sanitize_key((string)wp_unslash($_GET['ud_status'])):'';$message=isset($_GET['ud_message'])?sanitize_text_field((string)wp_unslash($_GET['ud_message'])):'';if($status===''||$message===''){return;}$class=$status==='error'?'notice notice-error inline':'notice notice-success inline';echo '<div class="'.esc_attr($class).'"><p>'.esc_html($message).'</p></div>';}
     private static function card(string $title,string $value,string $description): void{echo '<section class="h18-ud-status-card"><h3>'.esc_html($title).'</h3><strong>'.esc_html($value).'</strong><p>'.esc_html($description).'</p></section>';}
