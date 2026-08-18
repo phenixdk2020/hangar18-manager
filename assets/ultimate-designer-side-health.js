@@ -12,12 +12,21 @@ jQuery(function ($) {
     let pendingXhr = null;
 
     const $panel = $(
-        '<section id="h18-ud-side-health-panel" class="h18-ud-side-health-panel">' +
-          '<div class="h18-ud-health-head"><div><strong>Side Health</strong><small>Live · ugemte ændringer medregnes</small></div><button type="button" class="button button-small h18-ud-health-refresh">Opdatér</button></div>' +
-          '<div class="h18-ud-health-summary"><div class="h18-ud-health-score" aria-label="Side Health score"><span>–</span><small>/100</small></div><div class="h18-ud-health-areas"></div></div>' +
-          '<div class="h18-ud-health-status" aria-live="polite">Klar til analyse</div>' +
-          '<div class="h18-ud-health-filters" role="group" aria-label="Side Health filtre"><button type="button" class="is-active" data-filter="all">Alle</button><button type="button" data-filter="hard">Fejl</button><button type="button" data-filter="warning">Advarsler</button></div>' +
-          '<div class="h18-ud-health-issues"></div>' +
+        '<section id="h18-ud-side-health-panel" class="h18-ud-side-health-panel is-collapsed">' +
+          '<div class="h18-ud-health-head">' +
+            '<button type="button" class="h18-ud-health-toggle" aria-expanded="false" aria-controls="h18-ud-health-body">' +
+              '<span class="h18-ud-health-toggle-title"><strong>Side Health</strong><small>Live · ugemte ændringer medregnes</small></span>' +
+              '<span class="h18-ud-health-compact" aria-live="polite"><strong>–/100</strong><small>Klar</small></span>' +
+              '<span class="dashicons dashicons-arrow-down-alt2 h18-ud-health-chevron" aria-hidden="true"></span>' +
+            '</button>' +
+            '<button type="button" class="button button-small h18-ud-health-refresh">Opdatér</button>' +
+          '</div>' +
+          '<div id="h18-ud-health-body" class="h18-ud-health-body">' +
+            '<div class="h18-ud-health-summary"><div class="h18-ud-health-score" aria-label="Side Health score"><span>–</span><small>/100</small></div><div class="h18-ud-health-areas"></div></div>' +
+            '<div class="h18-ud-health-status" aria-live="polite">Klar til analyse</div>' +
+            '<div class="h18-ud-health-filters" role="group" aria-label="Side Health filtre"><button type="button" class="is-active" data-filter="all">Alle</button><button type="button" data-filter="hard">Fejl</button><button type="button" data-filter="warning">Advarsler</button></div>' +
+            '<div class="h18-ud-health-issues"></div>' +
+          '</div>' +
         '</section>'
     );
 
@@ -99,10 +108,26 @@ jQuery(function ($) {
         return ({accessibility:'Tilgængelighed',responsive:'Mobil',design:'Design',seo:'SEO',performance:'Performance'})[area] || area;
     }
 
+    function compactStatus(score, report) {
+        const hard = Math.max(0, parseInt(report.HardFailureCount, 10) || 0);
+        const issues = Array.isArray(report.Issues) ? report.Issues : [];
+        const warnings = issues.filter(function (issue) { return String(issue.Severity || '').toLowerCase() === 'warning'; }).length;
+        let text = 'Ingen fund';
+        if (hard > 0 || warnings > 0) {
+            const parts = [];
+            if (hard > 0) { parts.push(hard + ' fejl'); }
+            if (warnings > 0) { parts.push(warnings + ' advarsel' + (warnings === 1 ? '' : 'er')); }
+            text = parts.join(' · ');
+        }
+        $panel.find('.h18-ud-health-compact strong').text(score + '/100');
+        $panel.find('.h18-ud-health-compact small').text(text);
+    }
+
     function renderReport(report) {
         const score = Math.max(0, Math.min(100, parseInt(report.Score, 10) || 0));
         $panel.find('.h18-ud-health-score span').text(score);
         $panel.find('.h18-ud-health-score').css('--h18-health-score', score);
+        compactStatus(score, report);
         const areas = report.Areas || {};
         const areaOrder = ['Design','Mobile','Accessibility','Performance','SEO'];
         $panel.find('.h18-ud-health-areas').html(areaOrder.map(function (name) {
@@ -140,12 +165,15 @@ jQuery(function ($) {
         const state = buildState();
         if (!state.Sections.length) {
             $panel.find('.h18-ud-health-status').text('Ingen elementer at analysere');
+            $panel.find('.h18-ud-health-compact strong').text('–/100');
+            $panel.find('.h18-ud-health-compact small').text('Ingen elementer');
             return;
         }
         const serial = ++requestSerial;
         if (pendingXhr && pendingXhr.readyState !== 4) { pendingXhr.abort(); }
         $panel.addClass('is-loading');
         $panel.find('.h18-ud-health-status').text('Analyserer ' + state.Sections.length + ' elementer…');
+        $panel.find('.h18-ud-health-compact small').text('Analyserer…');
         pendingXhr = $.post(config.ajaxUrl, {
             action: 'h18_ud_side_health',
             nonce: config.nonce,
@@ -162,6 +190,7 @@ jQuery(function ($) {
             if (status === 'abort' || serial !== requestSerial) { return; }
             const message = xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message ? xhr.responseJSON.data.message : 'Side Health kunne ikke beregnes';
             $panel.find('.h18-ud-health-status').text(message);
+            $panel.find('.h18-ud-health-compact small').text('Analysefejl');
         }).always(function () {
             if (serial === requestSerial) { $panel.removeClass('is-loading'); }
         });
@@ -181,6 +210,15 @@ jQuery(function ($) {
         });
     }
 
+    function setCollapsed(collapsed) {
+        collapsed = !!collapsed;
+        $panel.toggleClass('is-collapsed', collapsed);
+        $panel.find('.h18-ud-health-toggle').attr('aria-expanded', collapsed ? 'false' : 'true');
+    }
+
+    $panel.on('click', '.h18-ud-health-toggle', function () {
+        setCollapsed(!$panel.hasClass('is-collapsed'));
+    });
     $panel.on('click', '.h18-ud-health-refresh', analyze);
     $panel.on('click', '.h18-ud-health-filters button', function () {
         $panel.find('.h18-ud-health-filters button').removeClass('is-active');
@@ -209,5 +247,6 @@ jQuery(function ($) {
     if ($sections.length && window.MutationObserver) {
         new MutationObserver(schedule).observe($sections.get(0), { childList: true, subtree: false });
     }
+    setCollapsed(true);
     window.setTimeout(analyze, 250);
 });

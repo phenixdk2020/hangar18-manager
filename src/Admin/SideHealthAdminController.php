@@ -80,9 +80,6 @@ final class SideHealthAdminController
             return;
         }
 
-        // Keep the transport success response outside the analyzer try/catch.
-        // WordPress exits here; tests can safely intercept the response without it
-        // being misclassified as an analyzer exception.
         wp_send_json_success(['report' => $report]);
     }
 }
