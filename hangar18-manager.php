@@ -11234,6 +11234,7 @@ HTML;
                             <div class="h18-builder-inspector-heading"><h3>Inspector</h3><span>Vælg en sektion i sideopbygningen</span></div>
                             <div class="h18-inspector-tabs" role="tablist" aria-label="Elementindstillinger">
                                 <button type="button" class="h18-inspector-tab is-active" data-inspector-tab="content">Indhold</button>
+                                <button type="button" class="h18-inspector-tab" data-inspector-tab="typography">Typografi</button>
                                 <button type="button" class="h18-inspector-tab" data-inspector-tab="design">Design</button>
                                 <button type="button" class="h18-inspector-tab" data-inspector-tab="advanced">Avanceret</button>
                             </div>

@@ -462,10 +462,13 @@ jQuery(function ($) {
     }
 
     function setInspectorPanel(panel) {
-        panel = ['content', 'design', 'advanced'].includes(String(panel)) ? String(panel) : 'content';
+        panel = ['content', 'typography', 'design', 'advanced'].includes(String(panel)) ? String(panel) : 'content';
         currentInspectorPanel = panel;
         $pageInspector.attr('data-inspector-panel', panel);
         $pageInspector.find('.h18-inspector-tab').removeClass('is-active').filter('[data-inspector-tab="' + panel + '"]').addClass('is-active');
+        if (panel === 'typography' || panel === 'design') {
+            $pageInspectorTarget.find('.h18-page-section-layout').prop('open', true);
+        }
     }
 
     function refreshInspectorMeta($row) {
@@ -3347,32 +3350,103 @@ jQuery(function ($) {
         renderCanvasPreview($row);
     });
 
+    function h18MiniEditorToggleTag(textarea, tagName, placeholder) {
+        const openTag = '<' + tagName + '>';
+        const closeTag = '</' + tagName + '>';
+        const value = String(textarea.value || '');
+        let start = Number.isInteger(textarea.selectionStart) ? textarea.selectionStart : 0;
+        let end = Number.isInteger(textarea.selectionEnd) ? textarea.selectionEnd : start;
+        let selected = value.slice(start, end);
+        const lowerValue = value.toLowerCase();
+        const lowerOpen = openTag.toLowerCase();
+        const lowerClose = closeTag.toLowerCase();
+
+        // Selection includes the complete wrapper: unwrap instead of nesting.
+        if (selected.toLowerCase().startsWith(lowerOpen) && selected.toLowerCase().endsWith(lowerClose)) {
+            const inner = selected.slice(openTag.length, selected.length - closeTag.length);
+            textarea.setRangeText(inner, start, end, 'select');
+            textarea.setSelectionRange(start, start + inner.length);
+            return;
+        }
+
+        // Selection is exactly surrounded by the requested wrapper.
+        const immediateOpenStart = start - openTag.length;
+        const immediateCloseEnd = end + closeTag.length;
+        if (immediateOpenStart >= 0 &&
+            lowerValue.slice(immediateOpenStart, start) === lowerOpen &&
+            lowerValue.slice(end, immediateCloseEnd) === lowerClose) {
+            textarea.setRangeText(selected, immediateOpenStart, immediateCloseEnd, 'select');
+            textarea.setSelectionRange(immediateOpenStart, immediateOpenStart + selected.length);
+            return;
+        }
+
+        // Selection is a subsection inside one bold/italic span. Split the span so
+        // only the selected text is toggled off, preserving formatting either side.
+        const openPos = lowerValue.lastIndexOf(lowerOpen, start);
+        const previousClose = lowerValue.lastIndexOf(lowerClose, start);
+        const closePos = lowerValue.indexOf(lowerClose, end);
+        const nextOpen = lowerValue.indexOf(lowerOpen, end);
+        const insideSameSpan = openPos >= 0 && openPos > previousClose && closePos >= end && (nextOpen < 0 || closePos < nextOpen);
+        if (insideSameSpan) {
+            const left = value.slice(openPos + openTag.length, start);
+            const middle = value.slice(start, end);
+            const right = value.slice(end, closePos);
+            let replacement = '';
+            if (left) { replacement += openTag + left + closeTag; }
+            const middleStart = openPos + replacement.length;
+            replacement += middle;
+            if (right) { replacement += openTag + right + closeTag; }
+            textarea.setRangeText(replacement, openPos, closePos + closeTag.length, 'select');
+            textarea.setSelectionRange(middleStart, middleStart + middle.length);
+            return;
+        }
+
+        if (!selected) {
+            selected = placeholder;
+            const replacement = openTag + selected + closeTag;
+            textarea.setRangeText(replacement, start, end, 'select');
+            textarea.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+            return;
+        }
+
+        // Avoid same-tag nesting if the marked selection already contains wrappers.
+        const sameTagPattern = new RegExp('</?' + tagName + '>', 'gi');
+        selected = selected.replace(sameTagPattern, '');
+        const replacement = openTag + selected + closeTag;
+        textarea.setRangeText(replacement, start, end, 'select');
+        textarea.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+    }
+
     $(document).on('click', '.h18-mini-format', function (event) {
         event.preventDefault();
         const textarea = $(this).closest('.h18-page-section-content').find('textarea').get(0);
-        if (!textarea) {
-            return;
-        }
-        const start = textarea.selectionStart || 0;
-        const end = textarea.selectionEnd || start;
-        const selected = textarea.value.slice(start, end);
+        if (!textarea) { return; }
+
         const format = String($(this).data('format') || '');
-        let replacement = selected;
+        const start = Number.isInteger(textarea.selectionStart) ? textarea.selectionStart : 0;
+        const end = Number.isInteger(textarea.selectionEnd) ? textarea.selectionEnd : start;
+        const selected = textarea.value.slice(start, end);
+
         if (format === 'bold') {
-            replacement = '<strong>' + (selected || 'fed tekst') + '</strong>';
+            h18MiniEditorToggleTag(textarea, 'strong', 'fed tekst');
         } else if (format === 'italic') {
-            replacement = '<em>' + (selected || 'kursiv tekst') + '</em>';
+            h18MiniEditorToggleTag(textarea, 'em', 'kursiv tekst');
         } else if (format === 'link') {
             const url = window.prompt('Indtast linkadresse', 'https://');
-            if (!url) {
-                return;
-            }
-            replacement = '<a href="' + url.replace(/"/g, '&quot;') + '">' + (selected || 'linktekst') + '</a>';
+            if (!url) { return; }
+            const label = selected || 'linktekst';
+            const replacement = '<a href="' + String(url).replace(/"/g, '&quot;') + '">' + label + '</a>';
+            textarea.setRangeText(replacement, start, end, 'select');
+            textarea.setSelectionRange(start + replacement.indexOf(label), start + replacement.indexOf(label) + label.length);
         } else if (format === 'list') {
-            const lines = (selected || 'Punkt 1\nPunkt 2').split(/\r?\n/).filter(Boolean);
-            replacement = '<ul>\n' + lines.map(function (line) { return '<li>' + line + '</li>'; }).join('\n') + '\n</ul>';
+            const source = selected || 'Punkt 1\nPunkt 2';
+            const lines = source.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean);
+            const replacement = '<ul>\n' + lines.map(function (line) { return '<li>' + line.replace(/^<li>|<\/li>$/gi, '') + '</li>'; }).join('\n') + '\n</ul>';
+            textarea.setRangeText(replacement, start, end, 'select');
+        } else {
+            return;
         }
-        textarea.setRangeText(replacement, start, end, 'end');
+
         $(textarea).trigger('input');
         textarea.focus();
     });
