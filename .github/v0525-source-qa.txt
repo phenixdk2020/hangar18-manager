@@ -1,0 +1,7 @@
+v0.5.25 Query Builder v1 patch applied
+patch_status=0
+No syntax errors detected in hangar18-manager.php
+php_status=0
+js_status=0
+Sort field is not schema-validated
+qa_status=1
