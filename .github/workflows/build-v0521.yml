@@ -1,0 +1,128 @@
+name: Build Hangar18 Manager v0.5.21
+
+on:
+  push:
+    branches:
+      - development/v0.5.21
+    paths:
+      - '.github/workflows/build-v0521.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.21
+          fetch-depth: 0
+
+      - name: Apply component engine patch
+        run: |
+          python3 .github/scripts/prepare_v0521.py
+          python3 .github/scripts/patch_v0521.py
+          python3 .github/scripts/harden_v0521.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('assets/admin.css')
+          t=p.read_text()
+          t=t.replace('.h18-page-section-row:has(.h18-section-navigator-locked[value="1"]) .h18-page-section-drag','.h18-page-section-row.is-navigator-locked .h18-page-section-drag')
+          p.write_text(t)
+          PY
+
+      - name: Source and security QA
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          python3 .github/scripts/qa_v0521.py
+          grep -F 'Version: 0.5.21' hangar18-manager.php
+          grep -F "const VERSION = '0.5.21';" hangar18-manager.php
+          grep -F "'Version'        => '1.17'" hangar18-manager.php
+          if grep -Fq ':has(.h18-section-navigator-locked' assets/admin.css; then
+            echo 'Unsupported :has lock selector remains' >&2
+            exit 1
+          fi
+
+      - name: Build distribution
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp assets/admin.css assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+
+      - name: Write manifest
+        run: |
+          python3 - <<'PY'
+          import hashlib,json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          p=Path('dist/hangar18-manager.zip')
+          m={
+            'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.21','min_wp':'6.4','min_php':'8.0',
+            'published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+            'package_path':'dist/hangar18-manager.zip','package_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),
+            'changelog':[
+              'Tilføjer UD-043 Navigator rename/hide/lock/reorder med realtime canvas-synkronisering.',
+              'Tilføjer UD-044 linked subtree components i separat global component-store.',
+              'Tilføjer UD-045 atomisk propagation ved render-time resolution af den globale definition.',
+              'Tilføjer UD-046 eksplicit frigivne Title/Content/Image/Button inputs med lokale overrides og låst layout/design.',
+              'Tilføjer UD-050 usage inspector og blokeret delete når component stadig bruges.',
+              'Eksisterende presets bevares som ikke-linked Patterns.',
+              'Løfter page-editor schema bagudkompatibelt til 1.17.'
+            ]}
+          Path('update.json').write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(m['package_sha256'])
+          PY
+
+      - name: Package QA
+        run: |
+          set -euo pipefail
+          rm -rf .verify
+          mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          grep -F 'Version: 0.5.21' .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'PAGE_COMPONENTS_OPTION' .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'renderLinkedComponentsV0521' .verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          m=json.loads(Path('update.json').read_text())
+          actual=hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest()
+          assert m['version']=='0.5.21' and m['package_sha256']==actual
+          print('v0.5.21 package QA passed:',actual)
+          PY
+
+      - name: Self-clean and release scope
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          rm -f .github/scripts/patch_v0521.py .github/scripts/prepare_v0521.py .github/scripts/harden_v0521.py .github/scripts/qa_v0521.py
+          rm -f .github/workflows/build-v0521.yml .github/workflows/inspect-v0521-context.yml .github/v0521-context.txt
+          python3 - <<'PY'
+          import subprocess
+          allowed={'hangar18-manager.php','assets/admin.js','assets/admin.css','readme.txt','update.json','dist/hangar18-manager.zip','.github/scripts/patch_v0521.py','.github/scripts/prepare_v0521.py','.github/scripts/harden_v0521.py','.github/scripts/qa_v0521.py','.github/workflows/build-v0521.yml','.github/workflows/inspect-v0521-context.yml','.github/v0521-context.txt'}
+          paths=set()
+          for line in subprocess.check_output(['git','status','--short'],text=True).splitlines():
+              p=line[3:].strip(); p=p.split(' -> ',1)[1] if ' -> ' in p else p; paths.add(p)
+          extra=paths-allowed
+          if extra: raise SystemExit('Unexpected release scope: '+repr(sorted(extra)))
+          print('Release scope QA passed')
+          PY
+
+      - name: Commit release candidate
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m 'Release Hangar18 Manager 0.5.21'
+          git push origin HEAD:development/v0.5.21
