@@ -1,7 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.1
+Version: 0.8.2
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.2 – I9 Manual QA & rollback rehearsal ==
+
+Nyt:
+- Manual QA Dashboard viser alle otte obligatoriske I10-gates og deres dokumenterede status.
+- Manuel PASS kræver eksplicit bekræftelse, miljø/browser/device og evidensreference; bruger-ID og UTC-tid gemmes.
+- Automatisk test/preflight kan ikke udgive sig for manuel evidens eller lukke en manuel gate.
+- Rollback preflight kører kun på en in-memory kopi af legacy page-store og verificerer original/mutated/restored hashes.
+- Preflight skriver ikke til hangar18_manager_pages_v1 og kan aldrig sætte migration-rollback-live-copy til PASS.
+- I10 forbliver blokeret indtil de krævede manuelle/live gates faktisk er gennemført. Frontend og Vehicle/Event/Gallery ændres ikke.
 
 
 == Version 0.8.1 – I8 AI forslag ==

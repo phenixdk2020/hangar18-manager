@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T18:43:55Z",
+  "published_utc": "2026-08-18T18:55:32Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "e77fec450b60ae02cfbcd6814181cc8270f0740518896e76899e02133e0c1b06",
+  "package_sha256": "9165f64a436e764517fab85abdba1c3d921d7265dd55b3d42442042a40dba9dd",
   "changelog": [
-    "I8 provider-neutral AI registry og settings; credentials gemmes ikke i WordPress options.",
-    "AI tekstforslag oprettes i isoleret proposal workspace og forbliver pending indtil eksplicit beslutning.",
-    "Accept/reject er bundet til tidsbegrænset HMAC proposal-token.",
-    "Accept producerer kun reversible Apply/Undo-data; I8 har ingen direkte page-write vej.",
-    "Frontend og Vehicle/Event/Gallery er uændrede; ingen sider er konverteret."
+    "I9 Manual QA Dashboard registrerer evidens for alle otte obligatoriske I10-gates.",
+    "Manuel PASS kræver confirmation, miljø og evidensreference og gemmer bruger-ID/UTC-tid.",
+    "Automatiske tests/preflight kan ikke markere manuelle gates som godkendt.",
+    "Rollback preflight kører kun på en in-memory kopi og skriver ikke til legacy page-store.",
+    "I10 forbliver blokeret indtil de krævede manuelle/live gates faktisk er gennemført; frontend og Vehicle/Event/Gallery er uændrede."
   ]
 }
