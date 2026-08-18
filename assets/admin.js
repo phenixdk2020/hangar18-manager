@@ -275,6 +275,7 @@ jQuery(function ($) {
     const pageUserPresets = {};
     const pageLinkedComponents = {};
     const pageTemplatesV0522 = {};
+    const customDataCatalogV0523 = {};
     let navigatorLockedOrderSnapshotV0521 = null;
     let currentCanvasDevice = 'desktop';
     let currentCanvasState = 'normal';
@@ -321,6 +322,21 @@ jQuery(function ($) {
         const parsedTemplates = templateNode ? JSON.parse(templateNode.textContent || '[]') : [];
         (Array.isArray(parsedTemplates) ? parsedTemplates : []).forEach(function(template){ if(template&&template.Id) pageTemplatesV0522[String(template.Id)]=template; });
     } catch(templateError){ window.console&&console.warn('Hangar18: kunne ikke læse Page Templates.',templateError); }
+    try { const node=document.getElementById('h18-custom-data-catalog');const rows=node?JSON.parse(node.textContent||'[]'):[];(Array.isArray(rows)?rows:[]).forEach(function(type){if(type&&type.Key)customDataCatalogV0523[String(type.Key)]=type;}); } catch(dataCatalogError){window.console&&console.warn('Hangar18: kunne ikke læse Dynamic Data katalog.',dataCatalogError);}
+
+
+    const dynamicBindingTargetsV0523={title:{label:'Overskrift',types:['text','number','bool','date']},content:{label:'Tekst',types:['text','number','bool','date']},mediaid:{label:'Billede / medie',types:['media']},button1label:{label:'Knap 1 tekst',types:['text','number','bool','date']},button1url:{label:'Knap 1 link',types:['text']},button2label:{label:'Knap 2 tekst',types:['text','number','bool','date']},button2url:{label:'Knap 2 link',types:['text']}};
+    function dataTypeV0523(key){return customDataCatalogV0523[String(key||'')]||null;}
+    function dataEntriesV0523(key){const type=dataTypeV0523(key);return type&&Array.isArray(type.Entries)?type.Entries:[];}
+    function dataBindingsV0523($row){try{const raw=String(pageSectionControls($row,'.h18-dynamic-bindings-json').val()||'{}');const data=JSON.parse(raw);return data&&typeof data==='object'&&!Array.isArray(data)?data:{};}catch(e){return{};}}
+    function writeDataBindingsV0523($row,data){pageSectionControls($row,'.h18-dynamic-bindings-json').val(JSON.stringify(data||{})).trigger('change');}
+    function bindingTargetsForRowV0523($row){const type=String($row.attr('data-section-type')||'text');if(['spacer','divider','css','html','shortcode','embed','legacy','component'].includes(type))return[];const result=['title','content'];if(['hero','text_image','image'].includes(type))result.push('mediaid');if(['hero','buttons'].includes(type))result.push('button1label','button1url','button2label','button2url');return result;}
+    function refreshDynamicBindingsV0523($row){if(!$row||!$row.length)return;const $type=pageSectionControls($row,'.h18-data-context-type').first();if(!$type.length)return;const $entry=pageSectionControls($row,'.h18-data-context-entry').first();const $rows=pageSectionControls($row,'.h18-dynamic-binding-rows').first();const $status=pageSectionControls($row,'.h18-dynamic-binding-status').first();let selectedType=String($type.val()||$type.attr('data-selected')||'');$type.empty().append($('<option>',{value:'',text:'Statisk'}));Object.values(customDataCatalogV0523).sort(function(a,b){return String(a.SingularLabel||a.Key).localeCompare(String(b.SingularLabel||b.Key),'da');}).forEach(function(item){$type.append($('<option>',{value:String(item.Key),text:String(item.SingularLabel||item.Key)}));});if(selectedType&&!dataTypeV0523(selectedType))selectedType='';$type.val(selectedType).attr('data-selected',selectedType);let selectedEntry=String($entry.val()||$entry.attr('data-selected')||'0');const entries=dataEntriesV0523(selectedType);$entry.empty().append($('<option>',{value:'0',text:selectedType?'Vælg entry':'Vælg datatype først'}));entries.forEach(function(item){$entry.append($('<option>',{value:String(item.Id),text:String(item.Title||('Entry '+item.Id))}));});if(selectedEntry!=='0'&&!entries.some(function(item){return String(item.Id)===selectedEntry;}))selectedEntry='0';$entry.val(selectedEntry).attr('data-selected',selectedEntry);const bindings=dataBindingsV0523($row);const schema=dataTypeV0523(selectedType);const fields=schema&&Array.isArray(schema.Fields)?schema.Fields:[];$rows.empty();let count=0;bindingTargetsForRowV0523($row).forEach(function(targetKey){const target=dynamicBindingTargetsV0523[targetKey];const $line=$('<label>',{class:'h18-dynamic-binding-row'}).append($('<span>',{text:target.label}));const $select=$('<select>',{class:'h18-dynamic-binding-target','data-target':targetKey}).append($('<option>',{value:'',text:'Statisk'}));fields.filter(function(field){return target.types.includes(String(field.Type||'text'));}).forEach(function(field){$select.append($('<option>',{value:String(field.Key),text:'Dynamisk · '+String(field.Label||field.Key)}));});const current=String(bindings[targetKey]||'');if(current&&$select.find('option[value="'+current.replace(/"/g,'\\"')+'"]').length){$select.val(current);count+=1;}else if(current)delete bindings[targetKey];$line.append($select);$rows.append($line);});writeDataBindingsV0523($row,bindings);$status.empty().append($('<span>',{class:'h18-dynamic-status-chip '+(count&&selectedEntry!=='0'?'is-dynamic':'is-static'),text:count&&selectedEntry!=='0'?count+' dynamiske binding(er)':'Statisk / fallback'}));}
+    function refreshAllDynamicBindingsV0523(){$pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').each(function(){refreshDynamicBindingsV0523($(this));});}
+    $(document).on('change','.h18-data-context-type',function(){const $row=pageSectionForElement(this);$(this).attr('data-selected',String($(this).val()||''));pageSectionControls($row,'.h18-data-context-entry').val('0').attr('data-selected','0');writeDataBindingsV0523($row,{});refreshDynamicBindingsV0523($row);renderCanvasPreview($row);scheduleEditorHistoryCapture(0);});
+    $(document).on('change','.h18-data-context-entry',function(){const $row=pageSectionForElement(this);$(this).attr('data-selected',String($(this).val()||'0'));refreshDynamicBindingsV0523($row);renderCanvasPreview($row);scheduleEditorHistoryCapture(0);});
+    $(document).on('change','.h18-dynamic-binding-target',function(){const $row=pageSectionForElement(this);const bindings=dataBindingsV0523($row);const target=String($(this).attr('data-target')||'');const field=String($(this).val()||'');if(target){if(field)bindings[target]=field;else delete bindings[target];writeDataBindingsV0523($row,bindings);}refreshDynamicBindingsV0523($row);renderCanvasPreview($row);scheduleEditorHistoryCapture(0);});
+
 
     const builtInSectionPresets = {
         'hero-cta': { Type: 'hero', Title: 'Velkommen', Content: '<p>Skriv en kort introduktion, der fortæller hvad siden handler om.</p>', Background: 'Olive', DesktopAlignment: 'Center', MobileAlignment: 'Center', PaddingPx: 36, MobilePaddingPx: 22, HeroHeightPx: 320, MobileHeroHeightPx: 220, OverlayOpacityPercent: 35, Button1Label: 'Læs mere', Button1Url: '#', Active: true },
@@ -1126,6 +1142,7 @@ jQuery(function ($) {
         refreshPrimitiveVariantV0516($row);
         refreshCollectionEditorV0517($row);
         if (type === 'component') { renderComponentInstanceEditorV0521($row); }
+        refreshDynamicBindingsV0523($row);
         rebuildPageNavigator();
         refreshLayoutHierarchyV0519();
         renderCanvasPreview($row);
@@ -1584,6 +1601,9 @@ jQuery(function ($) {
         const title = String(canvasFieldValue($row, 'Title', ''));
         const content = String(canvasFieldValue($row, 'Content', ''));
         const $inner = $('<div>', { class: 'h18-canvas-preview-inner h18-canvas-type-' + type });
+        const dynamicBindingCountV0523=Object.keys(dataBindingsV0523($row)).length;
+        const dynamicEntryV0523=String(pageSectionControls($row,'.h18-data-context-entry').val()||pageSectionControls($row,'.h18-data-context-entry').attr('data-selected')||'0');
+        if(dynamicBindingCountV0523&&dynamicEntryV0523!=='0')$inner.append($('<div>',{class:'h18-canvas-dynamic-badge',text:'Dynamic · '+dynamicBindingCountV0523+' binding(er)'}));
         const addTitle = function (fallback) {
             if (title || fallback) {
                 $inner.append(canvasEditableNode('h2', 'h18-canvas-preview-title', 'Title', title, fallback));
@@ -2214,6 +2234,7 @@ jQuery(function ($) {
         renderUserPresets();
         renderLinkedComponentsV0521();
         renderPageTemplatesV0522();
+        refreshAllDynamicBindingsV0523();
         refreshAllComponentEditorsV0521();
         rebuildPageNavigator();
         ensureCanvasToolbar();
@@ -4307,5 +4328,28 @@ jQuery(function ($) {
             editorDraftSaveNow(false);
         });
     }
+
+
+    /* v0.5.23 – Generic Dynamic Data schema + entry editor */
+    const $dataSchemaFields = $('#h18-data-schema-fields');
+    const dataFieldTemplate = document.getElementById('h18-data-field-template');
+    let dataFieldSerialV0523 = 1000;
+    function syncDataFieldRowsV0523(){
+        if(!$dataSchemaFields.length)return;
+        $dataSchemaFields.children('.h18-data-field-row:not(.is-removed)').each(function(index){$(this).find('.h18-data-field-drag').attr('title','Felt '+(index+1));});
+    }
+    if($dataSchemaFields.length){$dataSchemaFields.sortable({items:'> .h18-data-field-row:not(.is-removed)',handle:'.h18-data-field-drag',axis:'y',tolerance:'pointer',update:syncDataFieldRowsV0523});syncDataFieldRowsV0523();}
+    $('#h18-data-add-field').on('click',function(){
+        if(!dataFieldTemplate||!$dataSchemaFields.length)return;
+        if($dataSchemaFields.children('.h18-data-field-row:not(.is-removed)').length>=30){window.alert('En datatype kan højst have 30 felter.');return;}
+        dataFieldSerialV0523+=1;
+        const html=dataFieldTemplate.innerHTML.replaceAll('__INDEX__',String(dataFieldSerialV0523));
+        const $row=$(html.trim());$row.find('.h18-data-field-key').val('');$row.find('.h18-data-field-label').val('');$dataSchemaFields.append($row);syncDataFieldRowsV0523();
+    });
+    $(document).on('click','.h18-data-remove-field',function(){const $row=$(this).closest('.h18-data-field-row');$row.find('.h18-data-field-remove').val('1');$row.addClass('is-removed').hide();syncDataFieldRowsV0523();});
+    $(document).on('blur','.h18-data-field-label',function(){const $row=$(this).closest('.h18-data-field-row');const $key=$row.find('.h18-data-field-key');if(!$key.val().trim())$key.val(slugify($(this).val()).replace(/-/g,'_'));});
+    $('#h18-data-type-singular').on('blur',function(){const $key=$('#h18-data-type-key');if($key.length&&!$key.val().trim())$key.val(slugify($(this).val()).replace(/-/g,'_'));});
+    $(document).on('click','.h18-data-media-pick',function(event){event.preventDefault();const $field=$(this).closest('.h18-data-media-field');const frame=wp.media({title:'Vælg medie',button:{text:'Brug medie'},multiple:false});frame.on('select',function(){const media=frame.state().get('selection').first().toJSON();const thumb=media.sizes&&media.sizes.thumbnail?media.sizes.thumbnail.url:media.url;$field.find('.h18-data-media-id').val(media.id||0);$field.find('.h18-data-media-preview').html($('<img>',{src:thumb,alt:media.alt||''}));});frame.open();});
+    $(document).on('click','.h18-data-media-clear',function(event){event.preventDefault();const $field=$(this).closest('.h18-data-media-field');$field.find('.h18-data-media-id').val('0');$field.find('.h18-data-media-preview').empty();});
 
 });

@@ -1,8 +1,24 @@
 === Hangar18 Manager ===
-Version: 0.5.22
+Version: 0.5.23
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.23 – E5 Dynamic CMS foundation ==
+
+Nyt:
+- UD-051: generisk custom datatype schema builder under Hangar18 Manager → Data
+- schemas understøtter text, number, bool, date og media fields med stabile keys, labels, required-flag, standard/preset-værdi og validering
+- schema-struktur kræver manage_options; entry CRUD kræver edit_pages
+- datatype-key er immutable efter oprettelse, og datatype-delete blokeres når entries stadig findes
+- UD-052: generisk admin entry editor med create/read/update/delete for alle custom datatyper
+- entries gemmes som privat Hangar18 custom post type med datatype-meta, samlet values-map og query-klare _h18_field_<key> meta-felter
+- number/date/media valideres server-side; media skal pege på et rigtigt WordPress attachment
+- media-felter bruger WordPress Media Library direkte i Data-editoren
+- UD-053: elementer kan binde Overskrift, Tekst, Media og knaptekst/links til en valgt datatype + entry med tydelig Dynamic/Static-status og statisk fallback
+- datatype/entry-delete og breaking schema-ændringer blokeres, mens gemte pages/components/patterns/templates bruger dem
+- binding-rendereren har allerede en generisk data_context parameter, så UD-057 Query/Repeater kan genbruge samme motor i næste release
+- page-editor schema løftes bagudkompatibelt til 1.19 for eksplicit data-context og DynamicBindings
 
 == Version 0.5.22 – E4 Components completion ==
 
