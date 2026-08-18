@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T11:52:05Z",
+  "published_utc": "2026-08-18T11:59:54Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "6f3156712d4bd57b3d5a73a3a9b0fbf813a869743c1f4aa51cde8264dddf8df0",
+  "package_sha256": "6b5962f753fa6ad09ff98ce7701e73a4e61ce188b66add0f323c9cb1d6195dd1",
   "changelog": [
-    "Tydelig Gem-knap i sideeditorens top-toolbar samt Ctrl/Cmd+S, save-status og advarsel ved ugemte ændringer.",
-    "E8 Workflow core tilføjer autosave snapshots og permanente revisioner med user/time/note/state hash.",
-    "Revision restore bevarer historik, og structured diff viser added/removed/moved/property changes.",
-    "Expiring/revocable preview tokens og working/public staging med atomic publish og pre-publish backup.",
-    "Vehicle/Event/Gallery og eksisterende sider konverteres ikke i denne release."
+    "E9 Asset Manager metadata-overlay med folders/collections/tags oven på native WordPress Media IDs.",
+    "Usage inspector finder MediaId-referencer i pages/components/data entries.",
+    "Responsive focal points og sikker WebP/AVIF derivative pipeline bevarer originalfiler.",
+    "SHA-256 duplicate detection er read-only og non-destructive.",
+    "Vehicle/Event/Gallery og eksisterende sider konverteres ikke."
   ]
 }
