@@ -66,6 +66,9 @@ jobs:
       - name: E7 Interaction core test
         run: php tests/Architecture/e7-interaction-smoke.php
 
+      - name: E8 Workflow core test
+        run: php tests/Architecture/e8-workflow-smoke.php
+
       - name: Passive runtime JavaScript syntax
         run: |
           node --check assets/site-builder-runtime.js
