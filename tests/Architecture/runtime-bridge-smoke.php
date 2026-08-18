@@ -11,6 +11,10 @@ use Hangar18\UltimateDesigner\Contracts\PageRepository;
 use Hangar18\UltimateDesigner\Contracts\SecurityGate;
 use Hangar18\UltimateDesigner\Core\Architecture;
 use Hangar18\UltimateDesigner\Core\RuntimeBridge;
+use Hangar18\UltimateDesigner\Infrastructure\WordPress\LegacyOptionLogger;
+use Hangar18\UltimateDesigner\Infrastructure\WordPress\LegacyOptionPageRepository;
+use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressRuntimeBridgeFactory;
+use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressSecurityGate;
 use Hangar18\UltimateDesigner\Schema\PageSchemaValidator;
 
 function bridgeAssert(bool $condition, string $message): void
@@ -103,5 +107,14 @@ bridgeAssert($bridge->pages()->load('hjem') === $state, 'Page repository roundtr
 
 $bridge->logger()->log('INFO', 'RUNTIME_BRIDGE_TEST', 'Shadow bridge test.');
 bridgeAssert(count($logger->entries) === 1, 'Logger bridge was not exposed.');
+
+$wordpressBridge = WordPressRuntimeBridgeFactory::create();
+bridgeAssert($wordpressBridge->mode() === RuntimeBridge::MODE_SHADOW, 'WordPress factory must create shadow bridge.');
+bridgeAssert($wordpressBridge->pages() instanceof LegacyOptionPageRepository, 'WordPress factory must preserve v0.5.30 page option storage.');
+bridgeAssert($wordpressBridge->security() instanceof WordPressSecurityGate, 'WordPress factory must use the WordPress security adapter.');
+bridgeAssert($wordpressBridge->logger() instanceof LegacyOptionLogger, 'WordPress factory must preserve the existing log option format.');
+foreach (['vehicle', 'event', 'gallery'] as $domain) {
+    bridgeAssert($wordpressBridge->routeDomain($domain) === RuntimeBridge::ROUTE_LEGACY, "WordPress factory exposed '{$domain}' to new runtime.");
+}
 
 fwrite(STDOUT, "Runtime bridge smoke test: PASS\n");
