@@ -1,7 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.4
+Version: 0.8.5
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.5 – Auto-kasser, Tabel og kompakt Side Health ==
+
+Nyt:
+- Auto-kasser genbruger eksisterende Grid/Container: 1 kasse = 100 %, 2 = 50/50, 3 = tre lige kolonner osv. op til 6.
+- Antallet af desktop-kolonner følger automatisk direkte under-kasser; mobil starter på én kolonne.
+- Afstand mellem kasser styres med eksisterende desktop/mobile LayoutGap-indstillinger.
+- Hver Kasse er et normalt Container-element og har derfor egne farver, typografi, fontstørrelser, padding, border, shadow og responsive overrides.
+- Nyt visuelt Tabel-værktøj med rækker/kolonner, header-række, zebra, farver, fontstørrelse, celle-padding og direkte celle-redigering.
+- Tabel kan bruge vandret scroll på mobil og gemmes gennem det eksisterende sanitiserede HTML-element.
+- Side Health starter sammenklappet i Inspector og viser kompakt score + fejl/advarsler, så Indhold/Typografi/Design/Avanceret ikke overskygges.
+- Layout-værktøjerne følger Inspectorens valgte element korrekt, også når element-body flyttes ind i Inspector.
+- Ingen public cutover eller ny frontend-renderer aktiveres; Vehicle/Event/Gallery forbliver på legacy runtime.
 
 
 == Version 0.8.4 – I10 Shadow Acceptance Ledger ==
