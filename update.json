@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T11:26:27Z",
+  "published_utc": "2026-08-18T11:35:59Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "6de5778a6158e599f1ce541b8af5577f0b649ed99f93efc6c812651a43634b1d",
+  "package_sha256": "ffbd7ee4db156bdd07a3320d3d676544c7adb2c1459aef8c0801bd709c145d88",
   "changelog": [
-    "Retter Fed/Kursiv-toggle i mini-editoren og undgår nestede strong/em-tags ved gentagen toggling.",
-    "Tilføjer separat Typografi-fane med brødtekst/H1/H2/H3-størrelser og fontvalg.",
-    "E6 Site Builder core tilføjer Header/Footer templates, versioneret menu-tree, accessible klassisk menu og Site Builder presets.",
-    "Single/archive/system template assignment understøtter context og priority.",
-    "Eksisterende sider samt Vehicle/Event/Gallery og legacy header/footer/menu forbliver uændret og konverteres først i slut-fasen."
+    "E7 tilføjer generic accessible forms og server-side validation.",
+    "Ordered submit action chains understøtter mail, save og safe redirect med logging/error policy.",
+    "Signed HTTPS webhook bruger HMAC SHA-256, bounded timeout/retry og WordPress safe HTTP API.",
+    "Modal/popup core tilføjer ARIA, focus trap, ESC, scroll lock samt click/time/scroll/context triggers.",
+    "Passive interaction runtime konverterer ikke eksisterende sider eller Vehicle/Event/Gallery."
   ]
 }
