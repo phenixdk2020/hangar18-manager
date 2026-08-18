@@ -754,3 +754,7 @@ body.h18-command-palette-visible{overflow:hidden}
 
 /* v0.5.26 – UD-057 Repeater / Query list */
 .h18-query-list-editor .h18-module-fields-grid{align-items:start}.h18-canvas-query-list{display:grid;gap:8px;padding:14px;border:1px dashed #8c8f94;border-radius:7px;background:#f6f7f7}.h18-canvas-query-list strong,.h18-canvas-query-list small{display:block}.h18-canvas-query-list-samples{display:flex;gap:6px;flex-wrap:wrap}.h18-canvas-query-list-samples span{padding:4px 7px;border-radius:999px;background:#fff;border:1px solid #dcdcde;font-size:12px}
+
+
+/* v0.5.27 – UD-058 Conditional Visibility */
+.h18-condition-editor{border-left:3px solid #8b4a2b}.h18-condition-list{display:grid;gap:10px;margin:12px 0}.h18-condition-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:8px;align-items:end;padding:10px;border:1px solid #dcdcde;border-radius:7px;background:#fff}.h18-condition-row .h18-field{margin:0}.h18-condition-preview-hidden{opacity:.52}.h18-canvas-section-preview.h18-condition-preview-hidden{position:relative;outline:2px dashed #b32d2e;outline-offset:-2px}.h18-condition-preview-badge{position:absolute;top:8px;right:8px;z-index:4;padding:4px 8px;border-radius:999px;background:#b32d2e;color:#fff;font-size:11px;font-weight:700;pointer-events:none}@media(max-width:1100px){.h18-condition-row{grid-template-columns:repeat(2,minmax(0,1fr))}.h18-condition-row>.h18-condition-remove{grid-column:1/-1;justify-self:start}}

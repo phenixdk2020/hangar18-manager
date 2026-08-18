@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.26
+ * Version: 0.5.27
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.26';
+    const VERSION = '0.5.27';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -725,7 +725,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.20',
+                'Version' => '1.21',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -1274,6 +1274,20 @@ final class Hangar18_Manager {
             'pagePresetNonce'      => wp_create_nonce('h18_page_presets_v051'),
             'pageComponentNonce'   => wp_create_nonce('h18_page_components_v0521'),
             'pageTemplateNonce'    => wp_create_nonce('h18_page_templates_v0522'),
+            'conditionUser'        => (function () {
+                $user = wp_get_current_user();
+                $caps = [];
+                foreach ((array) $user->allcaps as $capability => $granted) {
+                    if ($granted) { $caps[] = sanitize_key((string) $capability); }
+                }
+                sort($caps, SORT_STRING);
+                return [
+                    'LoggedIn' => is_user_logged_in(),
+                    'Roles' => array_values(array_map('sanitize_key', (array) $user->roles)),
+                    'Capabilities' => array_values(array_unique($caps)),
+                ];
+            })(),
+            'conditionNow'         => wp_date('Y-m-d\TH:i:sP', time(), wp_timezone()),
         ]);
     }
 
@@ -7084,6 +7098,165 @@ HTML;
     }
 
 
+
+
+    /* ================================================================
+       CONDITIONAL VISIBILITY ENGINE — v0.5.27 / E5 UD-058
+       ================================================================ */
+
+    private function normalize_page_conditions($raw) {
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) { $raw = $decoded; }
+        }
+        if (!is_array($raw)) { return []; }
+        $allowed = [
+            'data' => ['empty','not_empty','eq','neq','gt','gte','lt','lte'],
+            'user' => ['logged_in','logged_out','role','capability'],
+            'date' => ['before','after','between'],
+        ];
+        $conditions = [];
+        foreach (array_slice(array_values($raw), 0, 8) as $index => $item) {
+            if (!is_array($item)) { continue; }
+            $type = sanitize_key((string) ($item['Type'] ?? ''));
+            $operator = sanitize_key((string) ($item['Operator'] ?? ''));
+            if (!isset($allowed[$type]) || !in_array($operator, $allowed[$type], true)) { continue; }
+            $field = sanitize_key((string) ($item['Field'] ?? ''));
+            $value = sanitize_text_field((string) ($item['Value'] ?? ''));
+            $value2 = sanitize_text_field((string) ($item['Value2'] ?? ''));
+            if (strlen($value) > 300) { $value = substr($value, 0, 300); }
+            if (strlen($value2) > 300) { $value2 = substr($value2, 0, 300); }
+            if ($type === 'data' && $field === '') { continue; }
+            if ($type === 'user' && in_array($operator, ['role','capability'], true)) {
+                $value = sanitize_key($value);
+                if ($value === '') { continue; }
+            }
+            if ($type === 'date') {
+                if (!$this->page_condition_datetime_timestamp($value)) { continue; }
+                if ($operator === 'between' && !$this->page_condition_datetime_timestamp($value2)) { continue; }
+            }
+            $id = sanitize_key((string) ($item['Id'] ?? ''));
+            if ($id === '') { $id = 'condition-' . ($index + 1); }
+            $conditions[] = [
+                'Id' => $id,
+                'Type' => $type,
+                'Operator' => $operator,
+                'Field' => $field,
+                'Value' => $value,
+                'Value2' => $value2,
+            ];
+        }
+        return $conditions;
+    }
+
+    private function page_condition_datetime_timestamp($value) {
+        $value = trim((string) $value);
+        if ($value === '') { return 0; }
+        $timezone = wp_timezone();
+        $formats = ['!Y-m-d\TH:i', '!Y-m-d H:i', '!Y-m-d'];
+        foreach ($formats as $format) {
+            $date = DateTimeImmutable::createFromFormat($format, $value, $timezone);
+            if ($date instanceof DateTimeImmutable) {
+                $errors = DateTimeImmutable::getLastErrors();
+                if ($errors === false || (((int) ($errors['warning_count'] ?? 0)) === 0 && ((int) ($errors['error_count'] ?? 0)) === 0)) {
+                    $roundtrip = $date->format(str_replace('!', '', $format));
+                    if ($roundtrip === $value) { return $date->getTimestamp(); }
+                }
+            }
+        }
+        return 0;
+    }
+
+    private function page_condition_value_is_empty($value, $field_type = '') {
+        if ($value === null || $value === '') { return true; }
+        if ($field_type === 'media' && absint($value) <= 0) { return true; }
+        return false;
+    }
+
+    private function evaluate_page_condition(array $condition, $context = null, $timestamp = null) {
+        $type = (string) ($condition['Type'] ?? '');
+        $operator = (string) ($condition['Operator'] ?? '');
+        if ($type === 'data') {
+            $field_key = sanitize_key((string) ($condition['Field'] ?? ''));
+            $fields = is_array($context) && isset($context['Fields']) && is_array($context['Fields']) ? $context['Fields'] : [];
+            $values = is_array($context) && isset($context['Values']) && is_array($context['Values']) ? $context['Values'] : [];
+            $field_type = isset($fields[$field_key]) ? (string) ($fields[$field_key]['Type'] ?? '') : '';
+            $exists = $field_key !== '' && isset($fields[$field_key]) && array_key_exists($field_key, $values);
+            $actual = $exists ? $values[$field_key] : null;
+            $empty = !$exists || $this->page_condition_value_is_empty($actual, $field_type);
+            if ($operator === 'empty') { return $empty; }
+            if ($operator === 'not_empty') { return !$empty; }
+            if (!$exists) { return false; }
+            $expected = (string) ($condition['Value'] ?? '');
+            if ($field_type === 'bool') {
+                $actual = $this->bool_value($actual, false) ? 1 : 0;
+                $expected = $this->bool_value($expected, false) ? 1 : 0;
+            } elseif ($field_type === 'number' || (is_numeric($actual) && is_numeric($expected))) {
+                $actual = (float) $actual;
+                $expected = (float) $expected;
+            } elseif ($field_type === 'date') {
+                $actual_ts = $this->page_condition_datetime_timestamp((string) $actual);
+                $expected_ts = $this->page_condition_datetime_timestamp((string) $expected);
+                if (!$actual_ts || !$expected_ts) { return false; }
+                $actual = $actual_ts;
+                $expected = $expected_ts;
+            } else {
+                $actual = (string) $actual;
+                $expected = (string) $expected;
+            }
+            if ($operator === 'eq') { return $actual == $expected; }
+            if ($operator === 'neq') { return $actual != $expected; }
+            if ($operator === 'gt') { return $actual > $expected; }
+            if ($operator === 'gte') { return $actual >= $expected; }
+            if ($operator === 'lt') { return $actual < $expected; }
+            if ($operator === 'lte') { return $actual <= $expected; }
+            return false;
+        }
+        if ($type === 'user') {
+            if ($operator === 'logged_in') { return is_user_logged_in(); }
+            if ($operator === 'logged_out') { return !is_user_logged_in(); }
+            $value = sanitize_key((string) ($condition['Value'] ?? ''));
+            if ($operator === 'role') {
+                $user = wp_get_current_user();
+                return $value !== '' && in_array($value, array_map('sanitize_key', (array) $user->roles), true);
+            }
+            if ($operator === 'capability') { return $value !== '' && current_user_can($value); }
+            return false;
+        }
+        if ($type === 'date') {
+            $now = $timestamp === null ? time() : (int) $timestamp;
+            $first = $this->page_condition_datetime_timestamp((string) ($condition['Value'] ?? ''));
+            if (!$first) { return false; }
+            if ($operator === 'before') { return $now < $first; }
+            if ($operator === 'after') { return $now > $first; }
+            if ($operator === 'between') {
+                $second = $this->page_condition_datetime_timestamp((string) ($condition['Value2'] ?? ''));
+                if (!$second) { return false; }
+                $min = min($first, $second); $max = max($first, $second);
+                return $now >= $min && $now <= $max;
+            }
+        }
+        return false;
+    }
+
+    private function evaluate_page_conditions(array $section, $context = null, $timestamp = null) {
+        $conditions = $this->normalize_page_conditions($section['Conditions'] ?? []);
+        if (!$conditions) { return true; }
+        $mode = (string) ($section['ConditionMode'] ?? 'All');
+        if (!in_array($mode, ['All','Any'], true)) { $mode = 'All'; }
+        if ($mode === 'Any') {
+            foreach ($conditions as $condition) {
+                if ($this->evaluate_page_condition($condition, $context, $timestamp)) { return true; }
+            }
+            return false;
+        }
+        foreach ($conditions as $condition) {
+            if (!$this->evaluate_page_condition($condition, $context, $timestamp)) { return false; }
+        }
+        return true;
+    }
+
+
     /* ================================================================
        PAGE EDITOR AND FUNCTION MODULES
        ================================================================ */
@@ -7268,6 +7441,8 @@ HTML;
             'ComponentVariant'      => '',
             'ComponentOverrides'    => [],
             'Bindings'              => [],
+            'ConditionMode'         => 'All',
+            'Conditions'            => [],
             'QueryListType'         => '',
             'QueryListFilterField'  => '',
             'QueryListFilterOperator' => 'eq',
@@ -7524,6 +7699,14 @@ HTML;
             }
         }
         $bindings = $this->normalize_dynamic_bindings($raw['Bindings'] ?? []);
+        $condition_mode = (string) ($raw['ConditionMode'] ?? 'All');
+        if (!in_array($condition_mode, ['All','Any'], true)) { $condition_mode = 'All'; }
+        $conditions_raw = $raw['Conditions'] ?? [];
+        if ((!is_array($conditions_raw) || !$conditions_raw) && isset($raw['ConditionsJson']) && is_string($raw['ConditionsJson'])) {
+            $decoded_conditions = json_decode((string) $raw['ConditionsJson'], true);
+            if (is_array($decoded_conditions)) { $conditions_raw = $decoded_conditions; }
+        }
+        $conditions = $this->normalize_page_conditions($conditions_raw);
         $query_list_type = sanitize_key((string) ($raw['QueryListType'] ?? ''));
         $query_list_filter_field = sanitize_key((string) ($raw['QueryListFilterField'] ?? ''));
         $query_list_filter_operator = sanitize_key((string) ($raw['QueryListFilterOperator'] ?? 'eq'));
@@ -7699,6 +7882,8 @@ HTML;
             'ComponentVariant'      => $component_variant,
             'ComponentOverrides'    => $component_overrides,
             'Bindings'              => $bindings,
+            'ConditionMode'         => $condition_mode,
+            'Conditions'            => $conditions,
             'QueryListType'         => $query_list_type,
             'QueryListFilterField'  => $query_list_filter_field,
             'QueryListFilterOperator' => $query_list_filter_operator,
@@ -7941,7 +8126,7 @@ HTML;
         }
 
         return [
-            'Version'            => '1.20',
+            'Version'            => '1.21',
             'PageSlug'           => $slug,
             'PageTitle'          => $title,
             'ContentVersion'     => $content_version,
@@ -8477,7 +8662,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.20',
+            'Version'        => '1.21',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'          => $data['PageTitle'],
             'ContentVersion'     => $data['ContentVersion'] ?? 0,
@@ -8545,7 +8730,7 @@ HTML;
             $type = sanitize_key((string) ($raw_section['Type'] ?? 'text'));
             if (in_array($type, ['legacy','component'], true)) { throw new RuntimeException('Legacy og linked components kan ikke gemmes inde i et ikke-linked pattern.'); }
         }
-        $data = $this->normalize_page_editor_data(['Version'=>'1.20','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
+        $data = $this->normalize_page_editor_data(['Version'=>'1.21','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
         $sections = array_values((array) $data['Sections']);
         $roots = array_values(array_filter($sections, static function($section){ return sanitize_key((string) ($section['LayoutParentKey'] ?? '')) === ''; }));
         if (count($roots) !== 1) { throw new RuntimeException('Et pattern skal have præcis ét root-element.'); }
@@ -8614,7 +8799,7 @@ HTML;
     private function normalize_page_template_sections(array $raw_sections) {
         $raw_sections=array_slice($raw_sections,0,25); if(!$raw_sections)throw new RuntimeException('Sidetemplaten skal indeholde mindst ét element.');
         foreach($raw_sections as $raw_section){if(!is_array($raw_section))continue;$type=sanitize_key((string)($raw_section['Type']??'text'));if(in_array($type,['legacy','component'],true))throw new RuntimeException('Page Templates kan ikke indeholde legacy eller linked components; templaten skal være en selvstændig kopi.');}
-        $data=$this->normalize_page_editor_data(['Version'=>'1.20','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
+        $data=$this->normalize_page_editor_data(['Version'=>'1.21','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
         $sections=array_values((array)$data['Sections']);
         foreach($sections as &$section){$section['ComponentId']='';$section['ComponentRevision']=0;$section['ComponentVariant']='';$section['ComponentOverrides']=[];}unset($section);
         return $sections;
@@ -8654,7 +8839,7 @@ HTML;
     public function ajax_create_page_from_template() {
         if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at oprette sider.'],403);check_ajax_referer('h18_page_templates_v0522','nonce');$template_id=sanitize_key((string)wp_unslash($_POST['template_id']??''));$title=sanitize_text_field((string)wp_unslash($_POST['page_title']??''));$slug=sanitize_title((string)wp_unslash($_POST['page_slug']??''));$templates=$this->get_page_templates();if(!isset($templates[$template_id]))wp_send_json_error(['message'=>'Page Template blev ikke fundet.'],404);if($title===''||$slug==='')wp_send_json_error(['message'=>'Ny side skal have titel og slug.'],400);if(get_page_by_path($slug,OBJECT,'page'))wp_send_json_error(['message'=>'Der findes allerede en side med denne slug.'],409);
         $post_id=wp_insert_post(['post_type'=>'page','post_status'=>'draft','post_title'=>$title,'post_name'=>$slug,'post_content'=>''],true);if(is_wp_error($post_id))wp_send_json_error(['message'=>$post_id->get_error_message()],400);$page=get_post($post_id);
-        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.20','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
+        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.21','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
         catch(Throwable $e){wp_delete_post($post_id,true);wp_send_json_error(['message'=>$e->getMessage()],400);}
     }
 
@@ -9354,6 +9539,9 @@ HTML;
         if (empty($section['Active'])) {
             return '';
         }
+        if (!$this->evaluate_page_conditions($section, $this->active_dynamic_data_context)) {
+            return '';
+        }
         if (is_array($this->active_dynamic_data_context)) {
             $section = $this->apply_dynamic_bindings_to_section($section, $this->active_dynamic_data_context);
         }
@@ -9941,6 +10129,17 @@ HTML;
                         <?php endforeach; ?>
                     </div>
 
+
+                    <div class="h18-section-module-box h18-condition-editor" data-condition-editor>
+                        <h4>Conditions / synlighed</h4>
+                        <p class="description">Vis eller skjul elementet ud fra data, bruger eller dato/tid. Conditions er præsentationslogik og må ikke bruges som adgangskontrol eller sikkerhedsgrænse.</p>
+                        <div class="h18-module-fields-grid h18-module-fields-grid--two">
+                            <div class="h18-field"><label><strong>Kombinér betingelser</strong></label><select class="h18-condition-mode" name="<?php echo esc_attr($prefix); ?>[ConditionMode]"><option value="All" <?php selected($section['ConditionMode'],'All'); ?>>Alle skal være opfyldt (AND)</option><option value="Any" <?php selected($section['ConditionMode'],'Any'); ?>>Mindst én skal være opfyldt (OR)</option></select></div>
+                        </div>
+                        <input class="h18-conditions-json" type="hidden" name="<?php echo esc_attr($prefix); ?>[ConditionsJson]" value="<?php echo esc_attr(wp_json_encode(array_values((array) $section['Conditions']))); ?>" />
+                        <div class="h18-condition-list"></div>
+                        <p><button type="button" class="button h18-condition-add">Tilføj condition</button> <span class="description">Maks. 8 pr. element.</span></p>
+                    </div>
 
 
                     <div class="h18-section-type-field h18-section-module-box h18-query-list-editor" data-types="query_list">
@@ -10813,7 +11012,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.20',
+                    'Version' => '1.21',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -10933,7 +11132,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.20',
+            'Version'        => '1.21',
             'PageSlug'       => $slug,
             'PageTitle'          => $this->post_text('editor_page_title'),
             'ContentVersion'     => $next_content_version,
@@ -10965,7 +11164,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.20',
+                'Version' => '1.21',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

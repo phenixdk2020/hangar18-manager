@@ -1,19 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.26",
+  "version": "0.5.27",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T05:47:14Z",
+  "published_utc": "2026-08-18T06:01:17Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "6e0cb92bd7851cae7817751df35e307c22a1209042c18e6d5f047181550b567a",
+  "package_sha256": "c6b53fb2ec8efe28138b765ed2e19df2754c4c859748140f5da528a21c6fa5c9",
   "changelog": [
-    "Tilføjer E5 UD-057 Repeater / Query list element.",
-    "Query List genbruger Query Builder v1 til datatype, filter, sortering og limit.",
-    "En linked component renderes som template én gang pr. resultat med resultatet som current data context.",
-    "Understøtter component variants, desktop/mobil-kolonner, gap og tom-resultattekst.",
-    "Component Usage Inspector og sikker delete omfatter også Query List-referencer og variants.",
-    "Runtime blokerer rekursive Query List/component-loops og gendanner altid tidligere data context.",
-    "Page-editor schema løftes bagudkompatibelt til 1.20."
+    "Tilføjer E5 UD-058 Conditional Visibility på alle page-builder elementer.",
+    "Data conditions understøtter empty/not-empty, equality og numeriske/dato-sammenligninger mod current data context.",
+    "User conditions understøtter logged in/out, rolle og capability.",
+    "Date/time conditions evalueres før/efter/mellem i WordPress-site timezone.",
+    "Conditions evalueres server-side før dynamic binding og virker pr. resultat inde i Query Lists.",
+    "Editor-preview markerer condition-skjulte elementer uden at fjerne dem fra canvas.",
+    "Conditions er præsentationslogik og ikke en authorization/security boundary.",
+    "Page-editor schema løftes bagudkompatibelt til 1.21."
   ]
 }

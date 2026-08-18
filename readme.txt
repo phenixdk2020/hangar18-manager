@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.5.26
+Version: 0.5.27
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -1106,3 +1106,15 @@ Kompatibilitet og sikkerhed:
 - Query List-komponentreferencer indgår i Usage Inspector og blokerer sikker sletning af komponent/variant.
 - Runtime beskytter mod rekursive Query List/component-loops og gendanner altid det tidligere data context.
 - Page-editor schema: 1.20.
+
+
+## v0.5.27 – E5 UD-058 Conditional Visibility
+- Alle page-builder elementer får generiske Conditions med AND/OR mode.
+- Data conditions: empty/not-empty/equality/comparison mod current data context.
+- User conditions: logged in/out, rolle og capability.
+- Date/time conditions: før, efter og mellem i WordPress-site timezone.
+- Conditions evalueres server-side før dynamic binding og virker derfor også pr. resultat inde i Query Lists.
+- Editor-preview evaluerer samme condition-model og markerer skjulte elementer uden at fjerne dem fra canvas.
+- Conditions er præsentationslogik og er eksplicit ikke en authorization/security boundary.
+- Maks. 8 conditions pr. element; ukendte typer/operatorer droppes under normalisering.
+- Page-editor schema: 1.21.

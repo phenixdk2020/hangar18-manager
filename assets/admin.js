@@ -397,8 +397,8 @@ jQuery(function ($) {
         const mediaUrls = entry.MediaUrls && typeof entry.MediaUrls === 'object' ? entry.MediaUrls : {};
         return { bound:true, value:value == null ? '' : value, mediaUrl:String(mediaUrls[fieldKey] || '') };
     }
-    $pageDataContextTypeV0524.on('change', function () { refreshPageDataContextEntriesV0524(false); refreshDynamicBindingsV0524($pageSections); refreshAllCanvasPreviews(); scheduleEditorHistoryCapture(0); });
-    $pageDataContextEntryV0524.on('change', function () { $(this).attr('data-current-entry', String($(this).val() || 0)); refreshAllCanvasPreviews(); scheduleEditorHistoryCapture(0); });
+    $pageDataContextTypeV0524.on('change', function () { refreshPageDataContextEntriesV0524(false); refreshDynamicBindingsV0524($pageSections); refreshAllCanvasPreviews(); $pageSections.children('.h18-page-section-row').each(function(){evaluateConditionPreviewV0527($(this));}); scheduleEditorHistoryCapture(0); });
+    $pageDataContextEntryV0524.on('change', function () { $(this).attr('data-current-entry', String($(this).val() || 0)); refreshAllCanvasPreviews(); $pageSections.children('.h18-page-section-row').each(function(){evaluateConditionPreviewV0527($(this));}); scheduleEditorHistoryCapture(0); });
     $(document).on('change', '.h18-dynamic-binding-select', function () { $(this).attr('data-binding-value', String($(this).val() || '')); renderCanvasPreview(pageSectionForElement(this)); scheduleEditorHistoryCapture(0); });
     refreshPageDataContextEntriesV0524(true);
     refreshDynamicBindingsV0524($pageSections);
@@ -1237,10 +1237,92 @@ jQuery(function ($) {
     $(document).on('input change','.h18-query-list-filter-value,[name$="[QueryListLimit]"],[name$="[QueryListColumns]"],[name$="[QueryListMobileColumns]"],[name$="[QueryListGapPx]"],[name$="[QueryListMobileGapPx]"],[name$="[QueryListEmptyText]"],[name$="[QueryListOrder]"]',function(){ const $row=pageSectionForElement($(this)); if($row.length)renderCanvasPreview($row); });
 
 
+
+
+    /* v0.5.27 – UD-058 Conditional Visibility */
+    function conditionEnvironmentV0527() {
+        const user = Hangar18Manager.conditionUser && typeof Hangar18Manager.conditionUser === 'object' ? Hangar18Manager.conditionUser : {LoggedIn:false,Roles:[],Capabilities:[]};
+        const nowRaw = String(Hangar18Manager.conditionNow || '');
+        const parsed = Date.parse(nowRaw);
+        return {user:user, now:Number.isFinite(parsed)?parsed:Date.now()};
+    }
+    function conditionDataContextV0527() {
+        const definition = dynamicContextDefinitionV0524();
+        const entry = dynamicContextEntryV0524();
+        if (!definition || !entry) return null;
+        const fields={}; (Array.isArray(definition.Fields)?definition.Fields:[]).forEach(function(field){if(field&&field.Key)fields[String(field.Key)]=field;});
+        return {Fields:fields,Values:(entry.Values&&typeof entry.Values==='object')?entry.Values:{}};
+    }
+    function parseConditionsV0527($row) {
+        const $hidden=pageSectionControls($row,'.h18-conditions-json').first();
+        try { const parsed=JSON.parse(String($hidden.val()||'[]')); return Array.isArray(parsed)?parsed.slice(0,8):[]; } catch(e){ return []; }
+    }
+    function conditionOperatorsV0527(type) {
+        const map={data:[['empty','Er tomt'],['not_empty','Er udfyldt'],['eq','Er lig med'],['neq','Er ikke lig med'],['gt','Større end'],['gte','Større/lig'],['lt','Mindre end'],['lte','Mindre/lig']],user:[['logged_in','Bruger er logget ind'],['logged_out','Bruger er logget ud'],['role','Bruger har rolle'],['capability','Bruger har capability']],date:[['before','Nu er før'],['after','Nu er efter'],['between','Nu er mellem']]};
+        return map[String(type||'')]||map.data;
+    }
+    function conditionNewIdV0527(){return 'condition-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);}
+    function conditionEditorFieldOptionsV0527() {
+        const definition=dynamicContextDefinitionV0524(); return definition&&Array.isArray(definition.Fields)?definition.Fields:[];
+    }
+    function syncConditionsFromEditorV0527($row) {
+        const items=[];
+        pageSectionControls($row,'.h18-condition-row').each(function(){
+            const $item=$(this); if(items.length>=8)return false;
+            items.push({Id:String($item.attr('data-condition-id')||conditionNewIdV0527()),Type:String($item.find('.h18-condition-type').val()||'data'),Operator:String($item.find('.h18-condition-operator').val()||'empty'),Field:String($item.find('.h18-condition-field').val()||''),Value:String($item.find('.h18-condition-value').val()||''),Value2:String($item.find('.h18-condition-value2').val()||'')});
+        });
+        pageSectionControls($row,'.h18-conditions-json').val(JSON.stringify(items));
+        return items;
+    }
+    function refreshConditionRowV0527($item, condition) {
+        condition=condition||{}; const type=String(condition.Type||$item.find('.h18-condition-type').val()||'data');
+        $item.find('.h18-condition-type').val(type);
+        const $operator=$item.find('.h18-condition-operator'); let op=String(condition.Operator||$operator.val()||conditionOperatorsV0527(type)[0][0]); $operator.empty(); conditionOperatorsV0527(type).forEach(function(pair){$operator.append($('<option>',{value:pair[0],text:pair[1]}));}); if(!$operator.find('option').filter(function(){return String($(this).val())===op;}).length)op=conditionOperatorsV0527(type)[0][0]; $operator.val(op);
+        const $field=$item.find('.h18-condition-field'); let field=String(condition.Field||$field.val()||''); $field.empty().append($('<option>',{value:'',text:'Vælg datafelt'})); conditionEditorFieldOptionsV0527().forEach(function(f){$field.append($('<option>',{value:String(f.Key),text:String(f.Label||f.Key)+' · '+String(f.Type||'text')}));}); if(!$field.find('option').filter(function(){return String($(this).val())===field;}).length)field=''; $field.val(field);
+        const needsField=type==='data'; const needsValue=(type==='data'&&!['empty','not_empty'].includes(op))||(type==='user'&&['role','capability'].includes(op))||type==='date'; const needsValue2=type==='date'&&op==='between';
+        $item.find('.h18-condition-field-wrap').toggle(needsField); $item.find('.h18-condition-value-wrap').toggle(needsValue); $item.find('.h18-condition-value2-wrap').toggle(needsValue2);
+        const $value=$item.find('.h18-condition-value'); const $value2=$item.find('.h18-condition-value2');
+        $value.attr('type',type==='date'?'datetime-local':'text'); $value2.attr('type','datetime-local');
+        if(Object.prototype.hasOwnProperty.call(condition,'Value'))$value.val(String(condition.Value||'')); if(Object.prototype.hasOwnProperty.call(condition,'Value2'))$value2.val(String(condition.Value2||''));
+        if(type==='user'&&op==='role')$value.attr('placeholder','fx administrator'); else if(type==='user'&&op==='capability')$value.attr('placeholder','fx edit_pages'); else $value.attr('placeholder','Værdi');
+    }
+    function conditionRowV0527(condition) {
+        condition=condition||{}; const id=String(condition.Id||conditionNewIdV0527()); const $item=$('<div>',{class:'h18-condition-row','data-condition-id':id});
+        const $type=$('<select>',{class:'h18-condition-type'}).append('<option value="data">Data</option><option value="user">Bruger</option><option value="date">Dato/tid</option>');
+        const $op=$('<select>',{class:'h18-condition-operator'}); const $field=$('<select>',{class:'h18-condition-field'}); const $value=$('<input>',{class:'h18-condition-value',type:'text'}); const $value2=$('<input>',{class:'h18-condition-value2',type:'datetime-local'});
+        $item.append($('<div>',{class:'h18-field'}).append($('<label><strong>Type</strong></label>'),$type),$('<div>',{class:'h18-field'}).append($('<label><strong>Operator</strong></label>'),$op),$('<div>',{class:'h18-field h18-condition-field-wrap'}).append($('<label><strong>Felt</strong></label>'),$field),$('<div>',{class:'h18-field h18-condition-value-wrap'}).append($('<label><strong>Værdi</strong></label>'),$value),$('<div>',{class:'h18-field h18-condition-value2-wrap'}).append($('<label><strong>Slut</strong></label>'),$value2),$('<button>',{type:'button',class:'button-link-delete h18-condition-remove',text:'Fjern'}));
+        refreshConditionRowV0527($item,condition); return $item;
+    }
+    function refreshConditionEditorV0527($row) {
+        if(!$row||!$row.length)return; const $list=pageSectionControls($row,'.h18-condition-list').first(); if(!$list.length)return;
+        const conditions=parseConditionsV0527($row); $list.empty(); conditions.forEach(function(condition){$list.append(conditionRowV0527(condition));}); evaluateConditionPreviewV0527($row);
+    }
+    function conditionEmptyV0527(value,fieldType){return value===null||value===undefined||value===''||(fieldType==='media'&&(parseInt(value,10)||0)<=0);}
+    function conditionDateV0527(value){const text=String(value||''); if(!text)return NaN; const normalized=/^\d{4}-\d{2}-\d{2}$/.test(text)?text+'T00:00':text; return Date.parse(normalized);}
+    function evaluateOneConditionV0527(condition,context,env) {
+        const type=String(condition.Type||''); const op=String(condition.Operator||'');
+        if(type==='data'){
+            const key=String(condition.Field||''); const field=context&&context.Fields?context.Fields[key]:null; const has=Boolean(field)&&context&&context.Values&&Object.prototype.hasOwnProperty.call(context.Values,key); const actual=has?context.Values[key]:null; const fieldType=field?String(field.Type||''):''; const empty=!has||conditionEmptyV0527(actual,fieldType); if(op==='empty')return empty;if(op==='not_empty')return !empty;if(!has)return false; let expected=String(condition.Value||''); let a=actual,b=expected;
+            if(fieldType==='bool'){a=Boolean(actual===true||actual===1||String(actual).toLowerCase()==='1'||String(actual).toLowerCase()==='true'||String(actual).toLowerCase()==='yes'||String(actual).toLowerCase()==='ja')?1:0;b=Boolean(['1','true','yes','ja','on'].includes(String(expected).toLowerCase()))?1:0;} else if(fieldType==='number'||(!Number.isNaN(Number(a))&&!Number.isNaN(Number(b))&&String(a).trim()!==''&&String(b).trim()!=='')){a=Number(a);b=Number(b);} else if(fieldType==='date'){a=conditionDateV0527(a);b=conditionDateV0527(b);if(!Number.isFinite(a)||!Number.isFinite(b))return false;} else {a=String(a);b=String(b);}
+            if(op==='eq')return a==b;if(op==='neq')return a!=b;if(op==='gt')return a>b;if(op==='gte')return a>=b;if(op==='lt')return a<b;if(op==='lte')return a<=b;return false;
+        }
+        if(type==='user'){const user=env.user||{};if(op==='logged_in')return Boolean(user.LoggedIn);if(op==='logged_out')return !Boolean(user.LoggedIn);const value=String(condition.Value||'');if(op==='role')return Array.isArray(user.Roles)&&user.Roles.includes(value);if(op==='capability')return Array.isArray(user.Capabilities)&&user.Capabilities.includes(value);return false;}
+        if(type==='date'){const first=conditionDateV0527(condition.Value);if(!Number.isFinite(first))return false;if(op==='before')return env.now<first;if(op==='after')return env.now>first;if(op==='between'){const second=conditionDateV0527(condition.Value2);if(!Number.isFinite(second))return false;return env.now>=Math.min(first,second)&&env.now<=Math.max(first,second);}return false;}
+        return false;
+    }
+    function evaluateConditionPreviewV0527($row) {
+        if(!$row||!$row.length)return true; const conditions=parseConditionsV0527($row); let visible=true; if(conditions.length){const mode=String(pageSectionControls($row,'.h18-condition-mode').val()||'All');const context=conditionDataContextV0527();const env=conditionEnvironmentV0527();const results=conditions.map(function(c){return evaluateOneConditionV0527(c,context,env);});visible=mode==='Any'?results.some(Boolean):results.every(Boolean);} $row.toggleClass('h18-condition-preview-hidden',!visible); const $preview=ensureCanvasPreview($row); if($preview.length){$preview.toggleClass('h18-condition-preview-hidden',!visible);$preview.find('.h18-condition-preview-badge').remove();if(!visible)$preview.append($('<span>',{class:'h18-condition-preview-badge',text:'Skjult af conditions'}));} return visible;
+    }
+    $(document).on('click','.h18-condition-add',function(){const $row=pageSectionForElement($(this));const current=parseConditionsV0527($row);if(current.length>=8){window.alert('Et element kan højst have 8 conditions.');return;}current.push({Id:conditionNewIdV0527(),Type:'data',Operator:'empty',Field:'',Value:'',Value2:''});pageSectionControls($row,'.h18-conditions-json').val(JSON.stringify(current));refreshConditionEditorV0527($row);scheduleEditorHistoryCapture(0);});
+    $(document).on('click','.h18-condition-remove',function(){const $row=pageSectionForElement($(this));$(this).closest('.h18-condition-row').remove();syncConditionsFromEditorV0527($row);evaluateConditionPreviewV0527($row);scheduleEditorHistoryCapture(0);});
+    $(document).on('change input','.h18-condition-type,.h18-condition-operator,.h18-condition-field,.h18-condition-value,.h18-condition-value2,.h18-condition-mode',function(){const $row=pageSectionForElement($(this));const $item=$(this).closest('.h18-condition-row');if($item.length)refreshConditionRowV0527($item,{});syncConditionsFromEditorV0527($row);evaluateConditionPreviewV0527($row);scheduleEditorHistoryCapture(250);});
+
+
     function refreshPageSectionType($row) {
         const type = String(pageSectionControls($row, '.h18-page-section-type').val() || pageSectionControls($row, 'input[name$="[Type]"]').val() || 'text');
         $row.attr('data-section-type', type);
         refreshQueryListControlsV0526($row);
+        refreshConditionEditorV0527($row);
         pageSectionControls($row, '.h18-section-type-field').each(function () {
             const types = String($(this).attr('data-types') || '').split(/\s+/);
             $(this).toggle(types.includes(type));
@@ -2168,6 +2250,7 @@ jQuery(function ($) {
             $preview.css('minHeight', Math.max(0, layout.minHeight) + 'px');
         }
         renderCanvasDirectControls($row, $preview, layout, colors);
+        evaluateConditionPreviewV0527($row);
     }
 
     function refreshAllCanvasPreviews() {
