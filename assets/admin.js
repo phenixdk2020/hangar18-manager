@@ -4729,6 +4729,13 @@ jQuery(function ($) {
     const $h18EditorSaveStatusV064 = $('#h18-editor-save-status');
     let h18EditorDirtyV064 = false;
     let h18EditorSubmittingV064 = false;
+    const $h18PageChangeNoteV072 = $h18PageEditorFormV064.find('[name="page_change_note"]');
+
+    function h18MakeChangeNoteOptionalV072() {
+        $h18PageChangeNoteV072.prop('required', false).removeAttr('required').attr('aria-required', 'false').each(function () {
+            if (typeof this.setCustomValidity === 'function') { this.setCustomValidity(''); }
+        });
+    }
 
     // v0.7.1: deterministic automatic change summary; manual note remains optional.
     const $h18AutoSummaryInputV071 = $('#h18-page-auto-change-summary');
@@ -4889,6 +4896,7 @@ jQuery(function ($) {
     }
 
     if ($h18PageEditorFormV064.length) {
+        h18MakeChangeNoteOptionalV072();
         h18AutoSummaryBaselineV071 = h18CollectChangeSummaryModelV071();
         h18RefreshAutomaticSummaryV071();
         $h18PageEditorFormV064.on('input change', ':input', function () {
@@ -4897,6 +4905,7 @@ jQuery(function ($) {
         });
 
         $h18PageEditorFormV064.on('submit', function (event) {
+            h18MakeChangeNoteOptionalV072();
             h18RefreshAutomaticSummaryV071();
             const whatIf = $h18PageEditorFormV064.find('[name="whatif"]').is(':checked');
             h18EditorSubmittingV064 = true;
