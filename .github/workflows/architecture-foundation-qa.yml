@@ -1,0 +1,49 @@
+name: Architecture Foundation QA
+
+on:
+  push:
+    branches:
+      - agent/architecture-foundation
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/Architecture/**'
+      - 'docs/architecture-*.md'
+      - '.github/workflows/architecture-foundation-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  architecture-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.0', '8.2', '8.3']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Foundation isolation guard
+        run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+
+      - name: Protected domain contract
+        run: bash tests/Architecture/protected-domain-contract.sh
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: PHP syntax check
+        run: |
+          find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Architecture smoke test
+        run: php tests/Architecture/architecture-smoke.php
+
+      - name: Page schema compatibility test
+        run: php tests/Architecture/page-schema-smoke.php
