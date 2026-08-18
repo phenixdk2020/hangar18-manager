@@ -21,6 +21,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/patch_v0523.py
+          python3 .github/scripts/prepare_harden_v0523.py
           python3 .github/scripts/harden_v0523.py
           php -l hangar18-manager.php
           node --check assets/admin.js
