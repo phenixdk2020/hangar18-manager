@@ -1,7 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.7.4
+Version: 0.7.5
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.5 – I2 Visual Header/Footer Builder ==
+
+Nyt:
+- Ultimate Designer har nu en visuel Header/Footer Builder i shadow mode.
+- Header/Footer templates bruger samme Sections-tree og property-navne som sideeditoren.
+- Opret, vælg, rediger, slet, tilføj/fjern elementer samt drag/drop og ↑/↓ rækkefølge.
+- Parent Key understøtter nested Container/Flex/Grid-struktur med live admin-preview.
+- Typografi/design gemmes server-side: body/heading fonts, body/H1/H2/H3 størrelser, alignment, padding samt global/custom farver.
+- Dedikeret Ultimate Designer admin-JS/CSS indlæses kun på den nye adminside og cache-bustes med version/filemtime.
+- Security QA skelner HTTP-controllerlaget fra service/domain-laget og kræver capability, nonce og sanitization ved mutationer.
+- Ingen global/public Header/Footer assignment aktiveres; eksisterende frontend og Vehicle/Event/Gallery forbliver legacy.
 
 
 == Version 0.7.4 – Ultimate Designer integration dashboard ==
