@@ -137,6 +137,7 @@ final class Hangar18_Manager {
         add_action('wp_ajax_h18_save_page_template', [$this, 'ajax_save_page_template']);
         add_action('wp_ajax_h18_delete_page_template', [$this, 'ajax_delete_page_template']);
         add_action('wp_ajax_h18_create_page_from_template', [$this, 'ajax_create_page_from_template']);
+        add_action('wp_ajax_h18_create_blank_page', [$this, 'ajax_create_blank_page']);
         add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);
         add_action('admin_post_h18_restore_page_before_editor', [$this, 'handle_restore_page_before_editor']);
         add_action('admin_post_h18_send_page_form', [$this, 'handle_send_page_form']);
@@ -9189,9 +9190,75 @@ HTML;
         return$result;
     }
 
+    public function ajax_create_blank_page() {
+        if (!current_user_can('edit_pages')) {
+            wp_send_json_error(['message' => 'Du har ikke rettigheder til at oprette sider.'], 403);
+        }
+        check_ajax_referer('h18_page_templates_v0522', 'nonce');
+
+        $title = sanitize_text_field((string) wp_unslash($_POST['page_title'] ?? ''));
+        $slug = sanitize_title((string) wp_unslash($_POST['page_slug'] ?? ''));
+
+        if ($title === '' || $slug === '') {
+            wp_send_json_error(['message' => 'Ny side skal have titel og slug.'], 400);
+        }
+        if (get_page_by_path($slug, OBJECT, 'page')) {
+            wp_send_json_error(['message' => 'Der findes allerede en side med denne slug.'], 409);
+        }
+
+        $post_id = wp_insert_post([
+            'post_type' => 'page',
+            'post_status' => 'draft',
+            'post_title' => $title,
+            'post_name' => $slug,
+            'post_content' => '',
+        ], true);
+
+        if (is_wp_error($post_id)) {
+            wp_send_json_error(['message' => $post_id->get_error_message()], 400);
+        }
+
+        $page = get_post($post_id);
+        update_post_meta($post_id, '_h18_page_editor_managed', '1');
+
+        try {
+            $data = $this->normalize_page_editor_data([
+                'Version' => '1.22',
+                'PageSlug' => $slug,
+                'PageTitle' => $title,
+                'ContentVersion' => 1,
+                'DataContextType' => '',
+                'DataContextEntryId' => 0,
+                'Sections' => [],
+            ], $page);
+
+            $this->save_page_editor_data($slug, $data);
+            $result = wp_update_post([
+                'ID' => $post_id,
+                'page_template' => 'default',
+                'post_content' => $this->wrap_with_shell($this->build_page_editor_core($slug, $data), $post_id),
+            ], true);
+
+            if (is_wp_error($result)) {
+                throw new RuntimeException($result->get_error_message());
+            }
+
+            $this->log('INFO', 'PAGE_CREATE_BLANK', "Ny Hangar18-side '{$title}' ({$slug}) oprettet som kladde.");
+            wp_send_json_success([
+                'page_id' => $post_id,
+                'page_slug' => $slug,
+                'manager_url' => admin_url('admin.php?page=hangar18-pages&page_slug=' . rawurlencode($slug)),
+                'edit_url' => get_edit_post_link($post_id, 'raw'),
+            ]);
+        } catch (Throwable $e) {
+            wp_delete_post($post_id, true);
+            wp_send_json_error(['message' => $e->getMessage()], 400);
+        }
+    }
+
     public function ajax_create_page_from_template() {
         if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at oprette sider.'],403);check_ajax_referer('h18_page_templates_v0522','nonce');$template_id=sanitize_key((string)wp_unslash($_POST['template_id']??''));$title=sanitize_text_field((string)wp_unslash($_POST['page_title']??''));$slug=sanitize_title((string)wp_unslash($_POST['page_slug']??''));$templates=$this->get_page_templates();if(!isset($templates[$template_id]))wp_send_json_error(['message'=>'Page Template blev ikke fundet.'],404);if($title===''||$slug==='')wp_send_json_error(['message'=>'Ny side skal have titel og slug.'],400);if(get_page_by_path($slug,OBJECT,'page'))wp_send_json_error(['message'=>'Der findes allerede en side med denne slug.'],409);
-        $post_id=wp_insert_post(['post_type'=>'page','post_status'=>'draft','post_title'=>$title,'post_name'=>$slug,'post_content'=>''],true);if(is_wp_error($post_id))wp_send_json_error(['message'=>$post_id->get_error_message()],400);$page=get_post($post_id);
+        $post_id=wp_insert_post(['post_type'=>'page','post_status'=>'draft','post_title'=>$title,'post_name'=>$slug,'post_content'=>''],true);if(is_wp_error($post_id))wp_send_json_error(['message'=>$post_id->get_error_message()],400);$page=get_post($post_id);update_post_meta($post_id,'_h18_page_editor_managed','1');
         try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.22','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
         catch(Throwable $e){wp_delete_post($post_id,true);wp_send_json_error(['message'=>$e->getMessage()],400);}
     }
@@ -10981,6 +11048,17 @@ HTML;
             <?php $this->render_notice(); ?>
 
             <div class="h18-help-box"><strong>Hangar18 sideeditor:</strong> Byg almindelige sider af indholdssektioner og funktionsmoduler. Header og footer ligger uden for editoren og kan derfor ikke slettes her. Køretøjer, Events og Billedgalleri har fortsat deres egne redigeringssider.</div>
+
+            <div class="h18-pages-create-bar">
+                <div class="h18-pages-create-copy">
+                    <strong>Opret ny side</strong>
+                    <span>Start med en tom Hangar18-side, eller brug en gemt Page Template.</span>
+                </div>
+                <div class="h18-pages-create-actions">
+                    <button type="button" class="button button-primary" id="h18-create-blank-page"><span class="dashicons dashicons-plus-alt2" aria-hidden="true"></span> Ny tom side</button>
+                    <button type="button" class="button" id="h18-create-from-template"><span class="dashicons dashicons-layout" aria-hidden="true"></span> Fra Page Template…</button>
+                </div>
+            </div>
 
             <nav class="h18-page-tabs" aria-label="Vælg side">
                 <?php foreach ($definitions as $page_slug => $label) : ?>

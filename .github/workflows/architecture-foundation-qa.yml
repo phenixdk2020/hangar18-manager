@@ -10,16 +10,13 @@ on:
       - 'src/**'
       - 'tests/Architecture/**'
       - 'docs/architecture-*.md'
-      - 'tools/apply-pages-admin-ui-patch.py'
       - '.github/workflows/architecture-foundation-qa.yml'
-      - '.github/workflows/apply-pages-admin-ui-patch.yml'
 
 permissions:
   contents: read
 
 jobs:
   architecture-smoke:
-    if: ${{ github.head_ref != 'agent/pages-admin-ui' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -57,40 +54,3 @@ jobs:
 
       - name: Compatibility comparator test
         run: php tests/Architecture/compatibility-comparator-smoke.php
-
-  pages-admin-ui-patch:
-    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'agent/pages-admin-ui' }}
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout PR branch
-        uses: actions/checkout@v4
-        with:
-          ref: agent/pages-admin-ui
-          fetch-depth: 0
-
-      - name: Apply precise pages UI patch
-        run: python3 tools/apply-pages-admin-ui-patch.py
-
-      - name: Validate patched runtime
-        run: |
-          php -l hangar18-manager.php
-          node --check assets/admin.js
-          grep -Fq "wp_ajax_h18_create_blank_page" hangar18-manager.php
-          grep -Fq "h18-pages-create-bar" hangar18-manager.php
-          grep -Fq "h18-pages-admin{max-width:none" assets/admin.css
-          grep -Fq "h18_create_blank_page" assets/admin.js
-          grep -Fq "update_post_meta(\$post_id,'_h18_page_editor_managed','1');" hangar18-manager.php
-          bash tests/Architecture/protected-domain-contract.sh
-          git diff --check
-
-      - name: Commit patched files and clean temporary helpers
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout origin/main -- .github/workflows/architecture-foundation-qa.yml
-          git rm -f .github/workflows/apply-pages-admin-ui-patch.yml tools/apply-pages-admin-ui-patch.py
-          git add hangar18-manager.php assets/admin.css assets/admin.js .github/workflows/architecture-foundation-qa.yml
-          git commit -m "Apply pages admin UI patch"
-          git push origin HEAD:agent/pages-admin-ui
