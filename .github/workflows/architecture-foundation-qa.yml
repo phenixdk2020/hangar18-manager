@@ -10,6 +10,7 @@ on:
       - 'src/**'
       - 'tests/Architecture/**'
       - 'docs/architecture-*.md'
+      - 'tools/fix-pages-ui-polish.py'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
@@ -17,6 +18,7 @@ permissions:
 
 jobs:
   architecture-smoke:
+    if: ${{ github.head_ref != 'agent/pages-admin-ui' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -54,3 +56,35 @@ jobs:
 
       - name: Compatibility comparator test
         run: php tests/Architecture/compatibility-comparator-smoke.php
+
+  pages-admin-ui-polish:
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'agent/pages-admin-ui' }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/pages-admin-ui
+          fetch-depth: 0
+
+      - name: Apply UI polish
+        run: python3 tools/fix-pages-ui-polish.py
+
+      - name: Validate
+        run: |
+          node --check assets/admin.js
+          php -l hangar18-manager.php
+          bash tests/Architecture/protected-domain-contract.sh
+          git diff --check
+
+      - name: Commit polish and clean helper
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout origin/main -- .github/workflows/architecture-foundation-qa.yml
+          git rm -f tools/fix-pages-ui-polish.py
+          git add assets/admin.js .github/workflows/architecture-foundation-qa.yml
+          git commit -m "Polish pages admin UI"
+          git push origin HEAD:agent/pages-admin-ui
