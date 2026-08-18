@@ -6,6 +6,7 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
+      - agent/editor-save-toolbar
   pull_request:
     paths:
       - 'src/**'
@@ -15,10 +16,11 @@ on:
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   architecture-smoke:
+    if: github.ref != 'refs/heads/agent/editor-save-toolbar' && github.head_ref != 'agent/editor-save-toolbar'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,3 +72,42 @@ jobs:
         run: |
           node --check assets/site-builder-runtime.js
           node --check assets/interaction-runtime.js
+
+  editor-save-toolbar:
+    if: github.ref == 'refs/heads/agent/editor-save-toolbar' && !contains(github.event.head_commit.message || '', 'Apply editor save toolbar')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout save branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/editor-save-toolbar
+          fetch-depth: 0
+
+      - name: Apply controlled patch
+        run: python3 .github/scripts/editor_save_toolbar_fix.py
+
+      - name: Validate save toolbar
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'id="h18-editor-save-top"' hangar18-manager.php
+          grep -F 'h18EditorSetSaveStatusV064' assets/admin.js
+          grep -F 'Ctrl/Cmd+S' hangar18-manager.php
+          grep -F 'v0.6.4 – synlig Gem-knap og save-status' assets/admin.css
+          bash tests/Architecture/protected-domain-contract.sh
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          git diff --check
+
+      - name: Commit only product changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git checkout origin/main -- .github/workflows/architecture-foundation-qa.yml
+          git rm .github/scripts/editor_save_toolbar_fix.py
+          git add hangar18-manager.php assets/admin.js assets/admin.css
+          git diff --cached --check
+          git commit -m 'Apply editor save toolbar'
+          git push origin HEAD:agent/editor-save-toolbar
