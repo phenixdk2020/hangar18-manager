@@ -12,15 +12,21 @@ final class MenuService
 {
     private MenuRepository $repository;
     private MenuTreeValidator $validator;
+    private MenuPresentationNormalizer $presentation;
 
-    public function __construct(MenuRepository $repository, MenuTreeValidator $validator)
+    public function __construct(MenuRepository $repository, MenuTreeValidator $validator, ?MenuPresentationNormalizer $presentation = null)
     {
         $this->repository = $repository;
         $this->validator = $validator;
+        $this->presentation = $presentation ?? new MenuPresentationNormalizer();
     }
 
-    /** @param list<array<string,mixed>> $items @return array<string,mixed> */
-    public function create(string $name, array $items = [], ?string $menuId = null): array
+    /**
+     * @param list<array<string,mixed>> $items
+     * @param array<string,mixed> $presentation
+     * @return array<string,mixed>
+     */
+    public function create(string $name, array $items = [], ?string $menuId = null, array $presentation = []): array
     {
         $id = $menuId !== null && trim($menuId) !== ''
             ? $this->normalizeId($menuId)
@@ -35,13 +41,18 @@ final class MenuService
             'Revision' => 1,
             'UpdatedUtc' => gmdate('c'),
             'Items' => $this->normalizeItems($items),
+            'Presentation' => $this->presentation->normalize($presentation),
         ];
         $this->validator->assertValid($menu);
         return $this->repository->save($menu);
     }
 
-    /** @param list<array<string,mixed>> $items @return array<string,mixed> */
-    public function update(string $menuId, string $name, array $items): array
+    /**
+     * @param list<array<string,mixed>> $items
+     * @param array<string,mixed>|null $presentation null keeps existing presentation/default
+     * @return array<string,mixed>
+     */
+    public function update(string $menuId, string $name, array $items, ?array $presentation = null): array
     {
         $id = $this->normalizeId($menuId);
         $existing = $this->repository->get($id);
@@ -53,6 +64,8 @@ final class MenuService
         $menu['Revision'] = ((int) ($existing['Revision'] ?? 0)) + 1;
         $menu['UpdatedUtc'] = gmdate('c');
         $menu['Items'] = $this->normalizeItems($items);
+        $sourcePresentation = $presentation ?? (is_array($existing['Presentation'] ?? null) ? $existing['Presentation'] : []);
+        $menu['Presentation'] = $this->presentation->normalize($sourcePresentation);
         $this->validator->assertValid($menu);
         return $this->repository->save($menu);
     }
@@ -66,7 +79,11 @@ final class MenuService
     /** @return array<string,mixed>|null */
     public function get(string $menuId): ?array
     {
-        return $this->repository->get($this->normalizeId($menuId));
+        $menu=$this->repository->get($this->normalizeId($menuId));
+        if($menu!==null){
+            $menu['Presentation']=$this->presentation->normalize(is_array($menu['Presentation']??null)?$menu['Presentation']:[]);
+        }
+        return $menu;
     }
 
     public function delete(string $menuId): void
