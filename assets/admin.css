@@ -839,16 +839,19 @@ body.h18-command-palette-visible{overflow:hidden}
     .h18-pages-admin .h18-inspector-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
-/* v0.6.2 – rich-text toggle og tydelig typografi-fane */
+/* v0.7.2 – Typografi-fanen viser det eksisterende typography-panel korrekt. */
 .h18-pages-admin .h18-inspector-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
 .h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target>.h18-page-section-body>*{display:none!important}
 .h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target>.h18-page-section-body>.h18-page-section-layout{display:block!important}
 .h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target>.h18-page-section-body>.h18-page-section-layout>summary{display:none!important}
-.h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target>.h18-page-section-body>.h18-page-section-layout>*:not(.h18-element-typography-box):not(summary){display:none!important}
-.h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target .h18-element-typography-box{display:block!important;margin:0;padding:0;border-top:0}
+.h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target>.h18-page-section-body>.h18-page-section-layout>*:not(.h18-element-design-box):not(summary){display:none!important}
+.h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target>.h18-page-section-body>.h18-page-section-layout>.h18-element-design-box{display:block!important;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+.h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target .h18-element-design-box>*{display:none!important}
+.h18-builder-inspector[data-inspector-panel="typography"] #h18-page-inspector-target .h18-element-design-box>.h18-element-typography-box{display:block!important;margin:0;padding:0;border-top:0}
 .h18-builder-inspector[data-inspector-panel="design"] #h18-page-inspector-target .h18-element-typography-box{display:none!important}
-.h18-builder-inspector[data-inspector-panel="typography"] .h18-module-fields-grid--four{grid-template-columns:1fr 1fr}
-.h18-builder-inspector[data-inspector-panel="typography"] .h18-field{min-width:0}
+.h18-builder-inspector[data-inspector-panel="typography"] .h18-element-typography-box .h18-module-fields-grid--four{display:grid!important;grid-template-columns:1fr 1fr}
+.h18-builder-inspector[data-inspector-panel="typography"] .h18-element-typography-box .h18-field{display:block!important;min-width:0}
+.h18-editor-version{display:inline-block;margin-top:5px;color:#646970;font-size:11px}
 @media(max-width:1180px){
     .h18-pages-admin .h18-inspector-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}
 }

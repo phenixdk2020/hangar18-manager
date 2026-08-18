@@ -1251,18 +1251,23 @@ final class Hangar18_Manager {
         wp_enqueue_media();
         wp_enqueue_script('jquery-ui-sortable');
 
+        $admin_css_path = plugin_dir_path(__FILE__) . 'assets/admin.css';
+        $admin_js_path = plugin_dir_path(__FILE__) . 'assets/admin.js';
+        $admin_css_version = self::VERSION . '-' . (is_file($admin_css_path) ? (string) filemtime($admin_css_path) : '0');
+        $admin_js_version = self::VERSION . '-' . (is_file($admin_js_path) ? (string) filemtime($admin_js_path) : '0');
+
         wp_enqueue_style(
             'hangar18-manager-admin',
             plugin_dir_url(__FILE__) . 'assets/admin.css',
             [],
-            self::VERSION
+            $admin_css_version
         );
 
         wp_enqueue_script(
             'hangar18-manager-admin',
             plugin_dir_url(__FILE__) . 'assets/admin.js',
             ['jquery', 'jquery-ui-sortable'],
-            self::VERSION,
+            $admin_js_version,
             true
         );
 
@@ -11114,7 +11119,7 @@ HTML;
                     <input type="hidden" name="page_slug" value="<?php echo esc_attr($slug); ?>" />
 
                     <div class="h18-form-header">
-                        <div><h2><?php echo esc_html($definitions[$slug]); ?></h2><p>Tilføj sektioner, træk dem i den ønskede rækkefølge, og kontrollér desktop- og mobilvisningen.</p></div>
+                        <div><h2><?php echo esc_html($definitions[$slug]); ?></h2><p>Tilføj sektioner, træk dem i den ønskede rækkefølge, og kontrollér desktop- og mobilvisningen.</p><small class="h18-editor-version">Editor v<?php echo esc_html(self::VERSION); ?></small></div>
                         <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
                     </div>
 
@@ -11122,7 +11127,7 @@ HTML;
                         <div class="h18-field"><label><strong>WordPress-sidetitel</strong></label><input type="text" name="editor_page_title" value="<?php echo esc_attr($data['PageTitle']); ?>" required /><p class="description">Menupunktets viste navn ændres fortsat under Menu.</p></div>
                         <div class="h18-field">
                             <label><strong>Egen kommentar (valgfri)</strong></label>
-                            <textarea name="page_change_note" rows="3" maxlength="500" placeholder="Valgfrit: skriv evt. hvorfor du lavede ændringen eller noget systemet ikke selv kan se."></textarea>
+                            <textarea name="page_change_note" rows="3" maxlength="500" aria-required="false" placeholder="Valgfrit: skriv evt. hvorfor du lavede ændringen eller noget systemet ikke selv kan se."></textarea>
                             <input type="hidden" name="page_auto_change_summary" id="h18-page-auto-change-summary" value="" />
                             <p class="description">Du behøver ikke skrive noget for at gemme. Systemet laver automatisk et kort resumé af ændringerne og gemmer det i versionshistorikken. Din egen kommentar tilføjes kun, hvis du skriver en.</p>
                             <p class="description"><strong>Automatisk resumé:</strong> <span id="h18-page-auto-change-summary-preview">Beregnes ud fra ændringerne på siden…</span></p>
