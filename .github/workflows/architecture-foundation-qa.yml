@@ -6,7 +6,7 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
-      - agent/fix-heading-linebreak-073
+      - agent/release-0.7.3
   pull_request:
     paths:
       - 'src/**'
@@ -14,10 +14,6 @@ on:
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
-      - 'hangar18-manager.php'
-      - 'assets/admin.js'
-      - 'assets/admin.css'
-      - '.github/scripts/fix_heading_linebreak_073.py'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
@@ -25,7 +21,7 @@ permissions:
 
 jobs:
   architecture-smoke:
-    if: github.head_ref != 'agent/release-0.7.2' && github.head_ref != 'agent/fix-heading-linebreak-073' && github.ref != 'refs/heads/agent/fix-heading-linebreak-073'
+    if: github.ref != 'refs/heads/agent/release-0.7.3' && github.head_ref != 'agent/release-0.7.3'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -55,10 +51,11 @@ jobs:
       - run: php tests/Architecture/e14-performance-budget.php
       - run: php tests/Architecture/e14-migration-rollback-smoke.php
       - run: php tests/Architecture/e14-e2e-smoke.php
+      - run: bash tests/Architecture/v073-heading-linebreak-contract.sh
       - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
 
   browser-engine-qa:
-    if: github.head_ref != 'agent/release-0.7.2' && github.head_ref != 'agent/fix-heading-linebreak-073' && github.ref != 'refs/heads/agent/fix-heading-linebreak-073'
+    if: github.ref != 'refs/heads/agent/release-0.7.3' && github.head_ref != 'agent/release-0.7.3'
     name: E14 browser engines (Chromium/Firefox/WebKit)
     runs-on: ubuntu-latest
     steps:
@@ -69,63 +66,152 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
 
-  apply-v073-fix:
-    if: github.ref == 'refs/heads/agent/fix-heading-linebreak-073' || github.head_ref == 'agent/fix-heading-linebreak-073'
+  release-073:
+    if: github.ref == 'refs/heads/agent/release-0.7.3' && !contains(github.event.head_commit.message || '', 'Release Hangar18 Manager 0.7.3')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/fix-heading-linebreak-073
+          ref: agent/release-0.7.3
           fetch-depth: 0
       - uses: shivammathur/setup-php@v2
         with: {php-version: '8.0', coverage: none}
-      - name: Apply controlled patch
-        run: python3 .github/scripts/fix_heading_linebreak_073.py
-      - name: Validate patch
+      - name: Apply release metadata
+        run: python3 .github/scripts/release_073.py
+      - name: Validate release
         run: |
           set -euo pipefail
           php -l hangar18-manager.php
           node --check assets/admin.js
           bash tests/Architecture/v073-heading-linebreak-contract.sh
           bash tests/Architecture/protected-domain-contract.sh
-      - name: Commit product patch if changed
+          php tests/Architecture/architecture-smoke.php
+          php tests/Architecture/page-schema-smoke.php
+          php tests/Architecture/runtime-bridge-smoke.php
+          php tests/Architecture/compatibility-comparator-smoke.php
+          php tests/Architecture/ud-060-starter-schemas-smoke.php
+          php tests/Architecture/e6-site-builder-smoke.php
+          php tests/Architecture/e7-interaction-smoke.php
+          php tests/Architecture/e8-workflow-smoke.php
+          php tests/Architecture/e9-assets-smoke.php
+          php tests/Architecture/e10-permissions-smoke.php
+          php tests/Architecture/e11-quality-smoke.php
+          php tests/Architecture/e12-ai-smoke.php
+          php tests/Architecture/e13-portability-smoke.php
+          bash tests/Architecture/e14-security-audit.sh
+          php tests/Architecture/e14-performance-budget.php
+          php tests/Architecture/e14-migration-rollback-smoke.php
+          php tests/Architecture/e14-e2e-smoke.php
+          grep -F 'Version: 0.7.3' hangar18-manager.php
+          grep -F "const VERSION = '0.7.3';" hangar18-manager.php
+      - name: Build plugin package
         run: |
           set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager dist
+          rm -f dist/hangar18-manager.zip
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp -R assets src .build/hangar18-manager/
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"; export SHA
+          PUBLISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; export PUBLISHED
+          python3 - <<'PY'
+          import json, os
+          data = {
+            'schema_version':'1.0',
+            'plugin':'hangar18-manager',
+            'version':'0.7.3',
+            'min_wp':'6.4',
+            'min_php':'8.0',
+            'published_utc':os.environ['PUBLISHED'],
+            'package_path':'dist/hangar18-manager.zip',
+            'package_sha256':os.environ['SHA'],
+            'changelog':[
+              'Almindelige sideelementers Overskrift er eksplicit valgfri.',
+              'Enter/newlines bevares i canvas-preview; tom linje bliver nyt afsnit på frontend.',
+              'Legacy WhatIf-reglen kan ikke længere gøre Gem-kommentaren required.',
+              'Automatisk ændringsresumé fortsætter som standard, egen kommentar er valgfri.',
+              'PHP 8.0/8.2/8.3 QA og Vehicle/Event/Gallery-kontrakten er grøn.'
+            ]
+          }
+          open('update.json','w',encoding='utf-8').write(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+          PY
+          rm -rf .build
+      - name: Clean temporary release/patch helpers and commit product files
+        run: |
+          set -euo pipefail
+          rm -f .github/scripts/release_073.py .github/scripts/fix_heading_linebreak_073.py
+          cat > .github/workflows/architecture-foundation-qa.yml <<'YAML'
+          name: Architecture QA
+
+          on:
+            push:
+              branches:
+                - agent/architecture-foundation
+                - agent/runtime-bridge-v2
+                - agent/ud-060-starter-schemas
+            pull_request:
+              paths:
+                - 'src/**'
+                - 'tests/Architecture/**'
+                - 'docs/architecture-*.md'
+                - 'docs/ud-*.md'
+                - 'docs/ultimate-designer-onboarding.md'
+                - '.github/workflows/architecture-foundation-qa.yml'
+
+          permissions:
+            contents: read
+
+          jobs:
+            architecture-smoke:
+              runs-on: ubuntu-latest
+              strategy:
+                matrix:
+                  php-version: ['8.0','8.2','8.3']
+              steps:
+                - uses: actions/checkout@v4
+                  with: {fetch-depth: 0}
+                - run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+                - run: bash tests/Architecture/protected-domain-contract.sh
+                - uses: shivammathur/setup-php@v2
+                  with: {php-version: '${{ matrix.php-version }}', coverage: none}
+                - run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
+                - run: php tests/Architecture/architecture-smoke.php
+                - run: php tests/Architecture/page-schema-smoke.php
+                - run: php tests/Architecture/runtime-bridge-smoke.php
+                - run: php tests/Architecture/compatibility-comparator-smoke.php
+                - run: php tests/Architecture/ud-060-starter-schemas-smoke.php
+                - run: php tests/Architecture/e6-site-builder-smoke.php
+                - run: php tests/Architecture/e7-interaction-smoke.php
+                - run: php tests/Architecture/e8-workflow-smoke.php
+                - run: php tests/Architecture/e9-assets-smoke.php
+                - run: php tests/Architecture/e10-permissions-smoke.php
+                - run: php tests/Architecture/e11-quality-smoke.php
+                - run: php tests/Architecture/e12-ai-smoke.php
+                - run: php tests/Architecture/e13-portability-smoke.php
+                - run: bash tests/Architecture/e14-security-audit.sh
+                - run: php tests/Architecture/e14-performance-budget.php
+                - run: php tests/Architecture/e14-migration-rollback-smoke.php
+                - run: php tests/Architecture/e14-e2e-smoke.php
+                - run: bash tests/Architecture/v073-heading-linebreak-contract.sh
+                - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
+
+            browser-engine-qa:
+              name: E14 browser engines (Chromium/Firefox/WebKit)
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-node@v4
+                  with: {node-version: '20'}
+                - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test
+                - run: npx playwright install --with-deps chromium firefox webkit
+                - run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
+          YAML
           git config user.name 'hangar18-build'
           git config user.email 'actions@users.noreply.github.com'
-          git add hangar18-manager.php assets/admin.js assets/admin.css
-          if git diff --cached --quiet; then
-            echo 'Patch already applied; no product commit needed.'
-            exit 0
-          fi
+          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip tests/Architecture/v073-heading-linebreak-contract.sh .github/workflows/architecture-foundation-qa.yml
+          git add -u .github/scripts
           git diff --cached --check
-          git commit -m 'Apply v0.7.3 heading and line-break fix'
-          git push origin HEAD:agent/fix-heading-linebreak-073
-
-  v073-feature-qa:
-    needs: apply-v073-fix
-    if: always() && needs.apply-v073-fix.result == 'success' && (github.ref == 'refs/heads/agent/fix-heading-linebreak-073' || github.head_ref == 'agent/fix-heading-linebreak-073')
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php-version: ['8.0','8.2','8.3']
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/fix-heading-linebreak-073
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-version }}
-          coverage: none
-      - name: Syntax and editor contracts
-        run: |
-          set -euo pipefail
-          php -l hangar18-manager.php
-          node --check assets/admin.js
-          bash tests/Architecture/v073-heading-linebreak-contract.sh
-          bash tests/Architecture/protected-domain-contract.sh
-      - name: Workflow/quality regression
-        run: |
-          php tests/Architecture/e8-workflow-smoke.php
-          php tests/Architecture/e11-quality-smoke.php
-          php tests/Architecture/e14-e2e-smoke.php
+          git commit -m 'Release Hangar18 Manager 0.7.3'
+          git push origin HEAD:agent/release-0.7.3
