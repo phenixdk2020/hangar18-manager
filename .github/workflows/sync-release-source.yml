@@ -5,7 +5,7 @@ on:
     branches:
       - qa/v0.5.23-source-candidate
     paths:
-      - '.github/workflows/sync-release-source.yml'
+      - '.github/v0523-source-trigger.txt'
 
 permissions:
   contents: write
@@ -18,7 +18,7 @@ jobs:
         with:
           ref: qa/v0.5.23-source-candidate
           fetch-depth: 0
-      - name: Apply Dynamic Data foundation r2
+      - name: Apply Dynamic Data foundation r3
         run: |
           set -euo pipefail
           python3 .github/scripts/patch_v0523.py
