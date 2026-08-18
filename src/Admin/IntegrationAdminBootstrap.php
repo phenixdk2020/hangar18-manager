@@ -6,6 +6,7 @@ namespace Hangar18\UltimateDesigner\Admin;
 
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionArtifactRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionAssetMetadataRepository;
+use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionDesignLockRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionMenuRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionSiteTemplateRepository;
 use Hangar18\UltimateDesigner\Permissions\CapabilityCatalog;
@@ -28,6 +29,7 @@ final class IntegrationAdminBootstrap
         SideHealthAdminController::register();
         AssetManagerAdminController::register();
         PortabilityAdminController::register();
+        PermissionsAdminController::register();
     }
 
     public static function registerMenu(): void
@@ -39,7 +41,7 @@ final class IntegrationAdminBootstrap
     public static function render(): void
     {
         if(!current_user_can('edit_pages')){wp_die(esc_html__('Du har ikke rettigheder til denne side.','hangar18-manager'));}
-        $templates=new WordPressOptionSiteTemplateRepository();$menus=new WordPressOptionMenuRepository();$assets=new WordPressOptionAssetMetadataRepository();$readiness=new ReleaseReadiness();$workspace=new WordPressOptionArtifactRepository();
+        $templates=new WordPressOptionSiteTemplateRepository();$menus=new WordPressOptionMenuRepository();$assets=new WordPressOptionAssetMetadataRepository();$readiness=new ReleaseReadiness();$workspace=new WordPressOptionArtifactRepository();$designLock=(new WordPressOptionDesignLockRepository())->get();
         $allTemplates=$templates->all();$headerCount=0;$footerCount=0;foreach($allTemplates as $template){if(($template['Kind']??'')==='header'){$headerCount++;}elseif(($template['Kind']??'')==='footer'){$footerCount++;}}
         $manual=$readiness->requiredManualEvidence();$manualPending=array_keys(array_filter($manual,static fn(bool $passed):bool=>!$passed));
         $capabilities=(new CapabilityCatalog())->all();$currentCapabilities=[];foreach($capabilities as $capability){if(current_user_can($capability)){$currentCapabilities[]=$capability;}}
@@ -51,12 +53,13 @@ final class IntegrationAdminBootstrap
         self::card('Global assignment (shadow)','Header: '.($globalHeader?:'ingen').' · Footer: '.($globalFooter?:'ingen'),'Assignments påvirker ikke legacy header/footer endnu.');
         self::card('Asset metadata',(string)$assetCount.' registreret','Metadata-lag oven på native WordPress Media IDs.');
         self::card('Portability Workspace',(string)$workspaceCount.' artifact(s)','I6-imports går kun til isoleret workspace med dry-run og backup.');
-        self::card('Permissions',sprintf('%d/%d capabilities på aktuel bruger',count($currentCapabilities),count($capabilities)),'Legacy edit_pages-gate er fortsat aktiv under migrationen.');
+        self::card('Permissions',sprintf('%d/%d capabilities på aktuel bruger',count($currentCapabilities),count($capabilities)),'I7 kan installere navngivne roller additivt; edit_pages fjernes ikke.');
+        self::card('Design Lock',!empty($designLock['Enabled'])?'Policy aktiv (shadow)':'Policy inaktiv','Policy håndhæves først i den nye runtime efter kontrolleret cutover.');
         self::card('Side Health','Live panel på Sider','I4 analyserer den aktuelle editor-state read-only og linker issues til konkrete elementer.');
         self::card('Manual release gates',(string)count($manualPending).' pending','Konvertering forbliver blokeret indtil de manuelle/live gates er gennemført.');echo '</div>';
-        SiteTemplateAdminController::renderPanel();MenuAdminController::renderPanel();AssetManagerAdminController::renderPanel();PortabilityAdminController::renderPanel();
+        SiteTemplateAdminController::renderPanel();MenuAdminController::renderPanel();AssetManagerAdminController::renderPanel();PortabilityAdminController::renderPanel();PermissionsAdminController::renderPanel();
         echo '<h2>Integration backlog</h2><table class="widefat striped h18-ud-backlog"><thead><tr><th>Fase</th><th>Status</th><th>Næste leverance</th></tr></thead><tbody>';
-        self::backlogRow('I1','Færdig','Admin integration og overblik.');self::backlogRow('I2','Færdig','Visual Header/Footer Builder i shadow mode.');self::backlogRow('I3','Færdig','Menu UI v2 med presets, nested editor, keyboard-preview og eksplicit side-tilvalg/fravalg.');self::backlogRow('I4','Færdig','Live Side Health i eksisterende sideeditor med element-links.');self::backlogRow('I5','Færdig','Asset Manager: collections/tags/usage/focal point/duplicates/derivatives.');self::backlogRow('I6','Aktiv','Import/Export UI med dry-run, conflicts, remap, isoleret workspace og restore-point.');self::backlogRow('I7','Næste','Permissions/Design Lock UI og rolle-installation med migration preview.');self::backlogRow('I8','Næste','AI provider settings + forslagspaneler; accept/undo-gated.');self::backlogRow('I9','Næste','Manual QA dashboard/evidence capture og live-copy rollback rehearsal.');self::backlogRow('I10','Sidst','Kontrolleret konvertering af eksisterende sider og til sidst Vehicle/Event/Gallery.');
+        self::backlogRow('I1','Færdig','Admin integration og overblik.');self::backlogRow('I2','Færdig','Visual Header/Footer Builder i shadow mode.');self::backlogRow('I3','Færdig','Menu UI v2 med presets, nested editor, keyboard-preview og eksplicit side-tilvalg/fravalg.');self::backlogRow('I4','Færdig','Live Side Health i eksisterende sideeditor med element-links.');self::backlogRow('I5','Færdig','Asset Manager: collections/tags/usage/focal point/duplicates/derivatives.');self::backlogRow('I6','Færdig','Import/Export UI med dry-run, signeret plan, isoleret workspace og restore-point.');self::backlogRow('I7','Aktiv','Permissions/Design Lock UI og additive role-installation med migration preview.');self::backlogRow('I8','Næste','AI provider settings + forslagspaneler; accept/undo-gated.');self::backlogRow('I9','Næste','Manual QA dashboard/evidence capture og live-copy rollback rehearsal.');self::backlogRow('I10','Sidst','Kontrolleret konvertering af eksisterende sider og til sidst Vehicle/Event/Gallery.');
         echo '</tbody></table><h2>Manuelle gates før I10</h2><ul class="ul-disc">';foreach($manualPending as $item){echo '<li><code>'.esc_html($item).'</code></li>';}echo '</ul></div>';
     }
     private static function renderStatusNotice(): void{$status=isset($_GET['ud_status'])?sanitize_key((string)wp_unslash($_GET['ud_status'])):'';$message=isset($_GET['ud_message'])?sanitize_text_field((string)wp_unslash($_GET['ud_message'])):'';if($status===''||$message===''){return;}$class=$status==='error'?'notice notice-error inline':'notice notice-success inline';echo '<div class="'.esc_attr($class).'"><p>'.esc_html($message).'</p></div>';}
