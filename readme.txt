@@ -1,7 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.5.30
+Version: 0.6.0
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.6.0 – Architecture Foundation, UD-060 og større sideeditor ==
+
+Nyt:
+- Ny ikke-invasiv Ultimate Designer architecture foundation med namespaces, registries, schema validation, repositories, security/logging contracts og passive WordPress adapters.
+- Runtime bridge kører fortsat i shadow mode og må ikke overtage eksisterende Vehicle/Event/Gallery handlers.
+- UD-060: generiske Vehicle, Event og Gallery starter schemas/presets oven på Dynamic CMS-motoren; ingen specialmotor og ingen automatisk datamigration.
+- Sider-modulet udnytter nu hele den tilgængelige WordPress-adminbredde, så sideopbygning/canvas får markant mere arbejdsplads.
+- Sider får en tydelig Ny tom side-funktion samt genvej til oprettelse fra Page Template.
+- Retter Page Template-oprettelse, så nye managed side-slugs bevares korrekt i stedet for at kunne falde tilbage til Hjem.
+- Vehicle/Event/Gallery beholder eksisterende v0.5.30 markup, CSS hooks, URLs, data og legacy runtime-kontrakt.
+- Releasepakken indeholder nu src/ med architecture foundation og validerer den ved build/installationspakke-QA.
 
 
 == Version 0.5.25 – E5 Query Builder v1 ==

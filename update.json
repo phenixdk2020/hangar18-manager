@@ -1,20 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.30",
+  "version": "0.6.0",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T06:31:19Z",
+  "published_utc": "2026-08-18T10:52:57Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "5739e034affb0f1427df53842abfd3430e437c50ad0111ae50c8e4c1dda85a46",
+  "package_sha256": "6e1acf649a5e95416a4e1ecba6460f76924a5e2443f8474b7b2eecabe8f4484d",
   "changelog": [
-    "Tilføjer E5 UD-059 Field Formatters og fallback pr. dynamic binding.",
-    "Det eksisterende Bindings-map bevares; nye indstillinger ligger bagudkompatibelt i BindingOptions.",
-    "Formatters omfatter tekst, upper/lower, tal med 0/1/2 decimaler, datoformater og Ja/Nej.",
-    "Fallback kan beholde statisk elementværdi, bruge custom værdi eller give tomt output.",
-    "FallbackWhenEmpty er opt-in og default false, så eksisterende empty-value bindinger bevarer tidligere adfærd.",
-    "Prefix/suffix understøttes på tekstoutput; URL/media saniteres fortsat typespecifikt.",
-    "Runtime og canvas-preview bruger samme formatter/fallback-model, og options følger Patterns/Components/Templates.",
-    "Page-editor schema løftes bagudkompatibelt til 1.22."
+    "Architecture Foundation og passive shadow-mode services er nu med i releasepakken under src/.",
+    "UD-060 tilføjer generiske Vehicle/Event/Gallery starter schemas uden specialmotor eller automatisk migration.",
+    "Sider-modulet bruger hele den tilgængelige WordPress-adminbredde og giver et større builder-canvas.",
+    "Ny tom side kan oprettes direkte fra Sider; oprettelse fra Page Template er gjort tydeligere.",
+    "Retter template-oprettelse, så nye managed side-slugs ikke falder tilbage til Hjem.",
+    "Vehicle/Event/Gallery beholder v0.5.30 legacy runtime, markup, CSS hooks, data og URLs uændret."
   ]
 }
