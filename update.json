@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T17:51:42Z",
+  "published_utc": "2026-08-18T18:43:55Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "45a3b56b4a7396778a7a7a8e60ae886b67a7ed635ca40309ceab1224964fa27b",
+  "package_sha256": "e77fec450b60ae02cfbcd6814181cc8270f0740518896e76899e02133e0c1b06",
   "changelog": [
-    "I7 role/capability migration preview viser additive changes før installation.",
-    "Role installation kræver manage_options + nonce + eksplicit confirmation og fjerner ingen capabilities/roller.",
-    "Design Lock policy kan konfigurere structure/design locks og released content-properties.",
-    "Ingen brugere får automatisk ændret rolle; legacy edit_pages fallback bevares indtil I10.",
+    "I8 provider-neutral AI registry og settings; credentials gemmes ikke i WordPress options.",
+    "AI tekstforslag oprettes i isoleret proposal workspace og forbliver pending indtil eksplicit beslutning.",
+    "Accept/reject er bundet til tidsbegrænset HMAC proposal-token.",
+    "Accept producerer kun reversible Apply/Undo-data; I8 har ingen direkte page-write vej.",
     "Frontend og Vehicle/Event/Gallery er uændrede; ingen sider er konverteret."
   ]
 }
