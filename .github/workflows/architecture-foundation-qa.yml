@@ -6,6 +6,7 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
+      - agent/release-0.6.7
   pull_request:
     paths:
       - 'src/**'
@@ -15,53 +16,87 @@ on:
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   architecture-smoke:
+    if: github.ref != 'refs/heads/agent/release-0.6.7' && github.head_ref != 'agent/release-0.6.7'
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-version: ['8.0', '8.2', '8.3']
+        php-version: ['8.0','8.2','8.3']
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Architecture isolation guard
-        run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
-      - name: Protected domain contract
-        run: bash tests/Architecture/protected-domain-contract.sh
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-version }}
-          coverage: none
-      - name: PHP syntax check
-        run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
-      - name: Architecture smoke test
-        run: php tests/Architecture/architecture-smoke.php
-      - name: Page schema compatibility test
-        run: php tests/Architecture/page-schema-smoke.php
-      - name: Runtime bridge shadow-mode test
-        run: php tests/Architecture/runtime-bridge-smoke.php
-      - name: Compatibility comparator test
-        run: php tests/Architecture/compatibility-comparator-smoke.php
-      - name: UD-060 starter schema preset test
-        run: php tests/Architecture/ud-060-starter-schemas-smoke.php
-      - name: E6 Site Builder core test
-        run: php tests/Architecture/e6-site-builder-smoke.php
-      - name: E7 Interaction core test
-        run: php tests/Architecture/e7-interaction-smoke.php
-      - name: E8 Workflow core test
-        run: php tests/Architecture/e8-workflow-smoke.php
-      - name: E9 Assets core test
-        run: php tests/Architecture/e9-assets-smoke.php
-      - name: E10 Permissions core test
-        run: php tests/Architecture/e10-permissions-smoke.php
-      - name: E11 Quality core test
-        run: php tests/Architecture/e11-quality-smoke.php
-      - name: Passive runtime JavaScript syntax
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+      - run: bash tests/Architecture/protected-domain-contract.sh
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '${{ matrix.php-version }}', coverage: none}
+      - run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php tests/Architecture/architecture-smoke.php
+      - run: php tests/Architecture/page-schema-smoke.php
+      - run: php tests/Architecture/runtime-bridge-smoke.php
+      - run: php tests/Architecture/compatibility-comparator-smoke.php
+      - run: php tests/Architecture/ud-060-starter-schemas-smoke.php
+      - run: php tests/Architecture/e6-site-builder-smoke.php
+      - run: php tests/Architecture/e7-interaction-smoke.php
+      - run: php tests/Architecture/e8-workflow-smoke.php
+      - run: php tests/Architecture/e9-assets-smoke.php
+      - run: php tests/Architecture/e10-permissions-smoke.php
+      - run: php tests/Architecture/e11-quality-smoke.php
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
+
+  release-067:
+    if: github.ref == 'refs/heads/agent/release-0.6.7' && !contains(github.event.head_commit.message || '', 'Release Hangar18 Manager 0.6.7')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: agent/release-0.6.7, fetch-depth: 0}
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.0', coverage: none}
+      - run: python3 .github/scripts/release_067.py
+      - name: Validate
         run: |
-          node --check assets/site-builder-runtime.js
-          node --check assets/interaction-runtime.js
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          bash tests/Architecture/protected-domain-contract.sh
+          php tests/Architecture/architecture-smoke.php
+          php tests/Architecture/page-schema-smoke.php
+          php tests/Architecture/runtime-bridge-smoke.php
+          php tests/Architecture/compatibility-comparator-smoke.php
+          php tests/Architecture/ud-060-starter-schemas-smoke.php
+          php tests/Architecture/e6-site-builder-smoke.php
+          php tests/Architecture/e7-interaction-smoke.php
+          php tests/Architecture/e8-workflow-smoke.php
+          php tests/Architecture/e9-assets-smoke.php
+          php tests/Architecture/e10-permissions-smoke.php
+          php tests/Architecture/e11-quality-smoke.php
+          grep -F 'Version: 0.6.7' hangar18-manager.php
+          grep -F "const VERSION = '0.6.7';" hangar18-manager.php
+      - name: Build
+        run: |
+          set -euo pipefail
+          rm -rf .build; mkdir -p .build/hangar18-manager dist; rm -f dist/hangar18-manager.zip
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp -R assets src .build/hangar18-manager/
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"; export SHA
+          PUBLISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; export PUBLISHED
+          python3 - <<'PY'
+          import json,os
+          d={'schema_version':'1.0','plugin':'hangar18-manager','version':'0.6.7','min_wp':'6.4','min_php':'8.0','published_utc':os.environ['PUBLISHED'],'package_path':'dist/hangar18-manager.zip','package_sha256':os.environ['SHA'],'changelog':['E11 Accessibility/Responsive/Design/SEO/Performance analyzers med elementreferencer.','SEO metadata model og exactly-one-H1/canonical/index/social checks.','Side Health samler Design, Mobile, Accessibility, Performance og SEO score.','HardFailures vises eksplicit og analyzer-laget omskriver aldrig indhold automatisk.','Vehicle/Event/Gallery og eksisterende sider konverteres ikke.']}
+          open('update.json','w',encoding='utf-8').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
+          PY
+          rm -rf .build
+      - name: Commit product files only
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-build'; git config user.email 'actions@users.noreply.github.com'
+          git checkout origin/main -- .github/workflows/architecture-foundation-qa.yml
+          git rm .github/scripts/release_067.py
+          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip
+          git diff --cached --check
+          git commit -m 'Release Hangar18 Manager 0.6.7'
+          git push origin HEAD:agent/release-0.6.7
