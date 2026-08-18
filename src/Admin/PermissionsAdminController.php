@@ -61,10 +61,10 @@ final class PermissionsAdminController
     /** @return array<string,list<string>> */
     private static function currentRoleCapabilities(): array
     {
-        $slugs=array_keys((new RoleDefinitionCatalog())->definitions());$slugs[]='administrator';$out=[];
+        if(!function_exists('get_role')){return [];}$slugs=array_keys((new RoleDefinitionCatalog())->definitions());$slugs[]='administrator';$out=[];
         foreach($slugs as $slug){$role=get_role($slug);if($role===null){continue;}$caps=[];foreach((array)$role->capabilities as $cap=>$granted){if($granted){$caps[]=(string)$cap;}}sort($caps,SORT_STRING);$out[$slug]=$caps;}return $out;
     }
-    private static function checkbox(string $name,string $label,bool $checked,bool $enabled): void{echo '<label class="h18-ud-permission-check"><input type="checkbox" name="'.esc_attr($name).'" value="1"'.checked($checked,true,false).($enabled?'':' disabled').'> '.esc_html($label).'</label>';}
+    private static function checkbox(string $name,string $label,bool $isChecked,bool $enabled): void{$checkedAttr=$isChecked?' checked="checked"':'';echo '<label class="h18-ud-permission-check"><input type="checkbox" name="'.esc_attr($name).'" value="1"'.$checkedAttr.($enabled?'':' disabled').'> '.esc_html($label).'</label>';}
     private static function guard(): void{if(!current_user_can('manage_options')){wp_die(esc_html__('Kun administratorer kan ændre permissions.','hangar18-manager'));}check_admin_referer(self::NONCE_ACTION);}
     private static function redirect(string $status,string $message): void{wp_safe_redirect(add_query_arg(['page'=>IntegrationAdminBootstrap::PAGE_SLUG,'ud_status'=>$status,'ud_message'=>mb_substr($message,0,700)],admin_url('admin.php')));exit;}
 }
