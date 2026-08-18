@@ -4617,7 +4617,7 @@ jQuery(function ($) {
         const identity = h18PromptNewPageIdentity('Ny side');
         if (!identity || !identity.slug) { return; }
         const $button = $(this);
-        const originalText = $button.text();
+        const originalHtml = $button.html();
         $button.prop('disabled', true).text('Opretter…');
         $.post(Hangar18Manager.ajaxUrl || window.ajaxurl, {
             action: 'h18_create_blank_page',
@@ -4633,7 +4633,7 @@ jQuery(function ($) {
         }).fail(function (xhr) {
             window.alert((xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) || 'Siden kunne ikke oprettes.');
         }).always(function () {
-            $button.prop('disabled', false).text(originalText);
+            $button.prop('disabled', false).html(originalHtml);
         });
     });
 
