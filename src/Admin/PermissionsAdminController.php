@@ -6,11 +6,8 @@ namespace Hangar18\UltimateDesigner\Admin;
 
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionDesignLockRepository;
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressRoleInstaller;
-use Hangar18\UltimateDesigner\Permissions\CapabilityCatalog;
-use Hangar18\UltimateDesigner\Permissions\DesignLockSettings;
 use Hangar18\UltimateDesigner\Permissions\RoleDefinitionCatalog;
 use Hangar18\UltimateDesigner\Permissions\RoleInstallationPlanner;
-use RuntimeException;
 
 /** I7 additive permissions rollout + Design Lock policy UI. */
 final class PermissionsAdminController
@@ -20,8 +17,18 @@ final class PermissionsAdminController
 
     public static function register(): void
     {
+        add_action('admin_enqueue_scripts',[self::class,'enqueueAssets']);
         add_action('admin_post_h18_ud_install_roles',[self::class,'installRoles']);
         add_action('admin_post_h18_ud_save_design_lock',[self::class,'saveDesignLock']);
+    }
+
+    /** @param mixed $hook */
+    public static function enqueueAssets($hook): void
+    {
+        $page=isset($_GET['page'])?sanitize_key((string)wp_unslash($_GET['page'])):'';
+        if($page!==IntegrationAdminBootstrap::PAGE_SLUG&&strpos((string)$hook,IntegrationAdminBootstrap::PAGE_SLUG)===false){return;}
+        $pluginFile=dirname(__DIR__,2).'/hangar18-manager.php';$version=class_exists('Hangar18_Manager')?(string)\Hangar18_Manager::VERSION:'0';$cssPath=dirname(__DIR__,2).'/assets/ultimate-designer-permissions.css';
+        wp_enqueue_style('hangar18-ultimate-designer-permissions',plugins_url('assets/ultimate-designer-permissions.css',$pluginFile),[],$version.'-'.(string)(@filemtime($cssPath)?:0));
     }
 
     public static function renderPanel(): void
