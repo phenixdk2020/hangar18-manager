@@ -12,9 +12,6 @@ use Hangar18\UltimateDesigner\QA\ReleaseReadiness;
 
 /**
  * Safe admin-only bridge from the legacy plugin shell to the extracted Ultimate Designer services.
- *
- * This class deliberately does NOT register frontend hooks, renderers or migration handlers.
- * It only exposes shadow-mode status/readiness in wp-admin while the legacy frontend remains authoritative.
  */
 final class IntegrationAdminBootstrap
 {
@@ -29,6 +26,7 @@ final class IntegrationAdminBootstrap
         }
         self::$registered = true;
         add_action('admin_menu', [self::class, 'registerMenu'], 30);
+        SiteTemplateAdminController::register();
     }
 
     public static function registerMenu(): void
@@ -89,9 +87,10 @@ final class IntegrationAdminBootstrap
         echo '<p class="description">Integrationsoverblik i shadow mode. Den nuværende Hangar18-frontend og Vehicle/Event/Gallery er stadig autoritative.</p>';
 
         echo '<div class="notice notice-info inline"><p><strong>Ingen sidekonvertering:</strong> Denne skærm aktiverer ikke nye renderere, ændrer ikke URLs og overskriver ikke eksisterende sider.</p></div>';
+        self::renderStatusNotice();
 
         echo '<div class="h18-ud-status-grid">';
-        self::card('Site Builder', sprintf('%d Header · %d Footer · %d Menu', $headerCount, $footerCount, $menuCount), 'Kerne implementeret; frontend-cutover er deaktiveret.');
+        self::card('Site Builder', sprintf('%d Header · %d Footer · %d Menu', $headerCount, $footerCount, $menuCount), 'Templates kan nu redigeres visuelt i shadow mode; frontend-cutover er fortsat deaktiveret.');
         self::card('Global assignment (shadow)', 'Header: ' . ($globalHeader ?: 'ingen') . ' · Footer: ' . ($globalFooter ?: 'ingen'), 'Assignments ligger i separat v1-option og påvirker ikke legacy header/footer endnu.');
         self::card('Asset metadata', (string) $assetCount . ' registreret', 'Metadata-lag oven på native WordPress Media IDs.');
         self::card('Permissions', sprintf('%d/%d capabilities på aktuel bruger', count($currentCapabilities), count($capabilities)), 'Legacy edit_pages-gate er fortsat aktiv under migrationen.');
@@ -99,10 +98,12 @@ final class IntegrationAdminBootstrap
         self::card('Manual release gates', (string) count($manualPending) . ' pending', 'Konvertering forbliver blokeret indtil de manuelle/live gates er gennemført.');
         echo '</div>';
 
+        SiteTemplateAdminController::renderPanel();
+
         echo '<h2>Integration backlog</h2>';
         echo '<table class="widefat striped h18-ud-backlog"><thead><tr><th>Fase</th><th>Status</th><th>Næste leverance</th></tr></thead><tbody>';
-        self::backlogRow('I1', 'Aktiv', 'Admin integration: Site Builder, Side Health, Assets, Permissions, Portability og QA-overblik.');
-        self::backlogRow('I2', 'Næste', 'Visuel Header/Footer editor på samme Sections-tree uden frontend-aktivering.');
+        self::backlogRow('I1', 'Færdig', 'Admin integration: Site Builder, Side Health, Assets, Permissions, Portability og QA-overblik.');
+        self::backlogRow('I2', 'Aktiv', 'Visuel Header/Footer editor på samme Sections-tree uden frontend-aktivering.');
         self::backlogRow('I3', 'Næste', 'Menu UI v2: presets, off-canvas/fullscreen/mega-panel editor og keyboard-preview.');
         self::backlogRow('I4', 'Næste', 'Side Health-panelet kobles til den eksisterende sideeditor med element-links.');
         self::backlogRow('I5', 'Næste', 'Asset Manager UI: collections/tags/usage/focal point/duplicates/derivatives.');
@@ -120,6 +121,17 @@ final class IntegrationAdminBootstrap
         echo '</ul>';
 
         echo '</div>';
+    }
+
+    private static function renderStatusNotice(): void
+    {
+        $status = isset($_GET['ud_status']) ? sanitize_key((string) wp_unslash($_GET['ud_status'])) : '';
+        $message = isset($_GET['ud_message']) ? sanitize_text_field((string) wp_unslash($_GET['ud_message'])) : '';
+        if ($status === '' || $message === '') {
+            return;
+        }
+        $class = $status === 'error' ? 'notice notice-error inline' : 'notice notice-success inline';
+        echo '<div class="' . esc_attr($class) . '"><p>' . esc_html($message) . '</p></div>';
     }
 
     private static function card(string $title, string $value, string $description): void

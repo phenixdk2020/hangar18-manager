@@ -10,6 +10,8 @@ on:
     paths:
       - 'src/**'
       - 'tests/Architecture/**'
+      - 'assets/ultimate-designer-admin.js'
+      - 'assets/ultimate-designer-admin.css'
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
@@ -56,7 +58,7 @@ jobs:
       - run: bash tests/Architecture/v073-heading-linebreak-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: bash tests/Architecture/integration-admin-contract.sh
-      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js
 
   browser-engine-qa:
     name: E14 browser engines (Chromium/Firefox/WebKit)
