@@ -106,12 +106,23 @@ final class RevisionService
     {
         $normalize = function ($value) use (&$normalize) {
             if (!is_array($value)) { return $value; }
-            if (array_is_list($value)) { return array_map($normalize, $value); }
+            if ($this->isList($value)) { return array_map($normalize, $value); }
             ksort($value);
             foreach ($value as $key => $item) { $value[$key] = $normalize($item); }
             return $value;
         };
         $json = json_encode($normalize($state), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         return is_string($json) ? $json : '{}';
+    }
+
+    /** PHP 8.0-compatible replacement for array_is_list(). */
+    private function isList(array $value): bool
+    {
+        $expected = 0;
+        foreach ($value as $key => $_) {
+            if ($key !== $expected) { return false; }
+            $expected++;
+        }
+        return true;
     }
 }
