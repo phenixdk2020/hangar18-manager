@@ -57,7 +57,7 @@ def write_manifest(package):
         'Tilføjer UD-049 Page Templates, der opretter frie draft WordPress/Hangar18-sider med friske section keys og audit-origin.',
         'Template-oprettede sider bliver automatisk Hangar18-managed og redigerbare i sideeditoren.',
         'Løfter page-editor schema bagudkompatibelt til 1.18.'
-      ]}
+      ]
     (ROOT/'update.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     return sha
 
@@ -78,6 +78,7 @@ def verify(package,sha):
     shutil.rmtree(verify,ignore_errors=True); shutil.rmtree(ROOT/'.build',ignore_errors=True)
 
 def main():
+    run(['python3','.github/scripts/prepare_v0522.py'])
     run(['python3','.github/scripts/patch_v0522.py'])
     run(['php','-l','hangar18-manager.php'])
     run(['node','--check','assets/admin.js'])
