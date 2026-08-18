@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.7.8",
+  "version": "0.7.9",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T17:30:52Z",
+  "published_utc": "2026-08-18T17:41:43Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "5491ebe1568b93f8450c1221a6e3e71e9dd9dd6be34a559d25710076fdc4e152",
+  "package_sha256": "7945ec477af07414b3248d8be1b60fa576102557bd7d9821a9d4bfb1ea71b2c3",
   "changelog": [
-    "I5 Asset Manager UI med folders/collections/tags, responsive focal point og usage-inspector oven på native Media IDs.",
-    "SHA-256 dubletscan er read-only; ingen automatisk sletning eller fletning.",
-    "WebP/AVIF genereres som namespaced .h18.webp/.h18.avif derivater; original og eksisterende derivater overskrives aldrig.",
-    "Menu UI har eksplicit Tilgængelige sider med valg/fravalg; sider eksisterer uafhængigt af menuen.",
+    "I6 sidepakker kan eksporteres og valideres preview-only uden side-write.",
+    "Artifact import er dry-run-first med conflicts/remaps og HMAC-signeret plan-token.",
+    "Bekræftet import går kun til isoleret Portability Workspace.",
+    "Pre-import backup og workspace restore er integreret; uløste portable refs blokerer mutation.",
     "Frontend og Vehicle/Event/Gallery er uændrede; ingen sider er konverteret."
   ]
 }

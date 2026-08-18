@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.7.8
+Version: 0.7.9
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.9 – I6 Import / Export ==
+
+Nyt:
+- Sidepakker kan eksporteres med schema/checksum og valideres/previewes ved import uden side-write.
+- Artifact packages kan eksporteres fra shadow templates/menuer/components og Portability Workspace.
+- Artifact import starter altid med dry-run og viser actions, conflicts og ID-remaps.
+- Confirmation er bundet til et tidsbegrænset HMAC-signeret dry-run token for præcis package/strategi/plan.
+- Uløste asset/artifact references blokerer mutation.
+- Bekræftet import går kun til isoleret Portability Workspace og tager automatisk pre-import backup.
+- Workspace kan gendannes fra backup; eksisterende sider, frontend og Vehicle/Event/Gallery ændres ikke.
 
 
 == Version 0.7.8 – I5 Asset Manager + menuvalg ==
