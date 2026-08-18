@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  build-v0524:
+  build-v0524-r2:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 .github/scripts/prepare_v0524.py
           python3 .github/scripts/patch_v0524.py
           php -l hangar18-manager.php
           node --check assets/admin.js
