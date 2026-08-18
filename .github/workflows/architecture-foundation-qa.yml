@@ -1,9 +1,10 @@
-name: Architecture Foundation QA
+name: Architecture QA
 
 on:
   push:
     branches:
       - agent/architecture-foundation
+      - agent/runtime-bridge
   pull_request:
     paths:
       - 'src/**'
@@ -47,3 +48,6 @@ jobs:
 
       - name: Page schema compatibility test
         run: php tests/Architecture/page-schema-smoke.php
+
+      - name: Runtime bridge shadow-mode test
+        run: php tests/Architecture/runtime-bridge-smoke.php
