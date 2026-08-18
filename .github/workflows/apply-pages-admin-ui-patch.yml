@@ -6,13 +6,18 @@ on:
       - agent/pages-admin-ui
     paths:
       - '.github/workflows/apply-pages-admin-ui-patch.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apply-pages-admin-ui-patch.yml'
 
 permissions:
   contents: write
 
 jobs:
   apply-patch:
-    if: ${{ !contains(github.event.head_commit.message, 'Apply pages admin UI patch') }}
+    if: ${{ github.event_name == 'pull_request' || !contains(github.event.head_commit.message, 'Apply pages admin UI patch') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
@@ -44,8 +49,6 @@ jobs:
               'blank page ajax action'
           )
 
-          # Existing template creation must mark the new draft as managed BEFORE
-          # normalize_page_editor_data() validates its new slug.
           template_page_marker = "$page=get_post($post_id);\n        try{$sections=$this->instantiate_page_template_sections"
           template_page_fixed = "$page=get_post($post_id);update_post_meta($post_id,'_h18_page_editor_managed','1');\n        try{$sections=$this->instantiate_page_template_sections"
           php = replace_once(php, template_page_marker, template_page_fixed, 'template managed-before-normalize fix')
