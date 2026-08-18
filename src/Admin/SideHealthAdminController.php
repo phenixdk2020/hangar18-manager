@@ -46,8 +46,10 @@ final class SideHealthAdminController
     {
         if (!current_user_can('edit_pages')) {
             wp_send_json_error(['message' => 'Manglende rettighed til Side Health.'], 403);
+            return;
         }
         check_ajax_referer(self::NONCE_ACTION, 'nonce');
+
         try {
             $stateRaw = isset($_POST['state_json']) ? (string) wp_unslash($_POST['state_json']) : '';
             $seoRaw = isset($_POST['seo_json']) ? (string) wp_unslash($_POST['seo_json']) : '{}';
@@ -63,8 +65,6 @@ final class SideHealthAdminController
             if (count($sections) > 100) {
                 throw new RuntimeException('Side Health snapshot indeholder for mange elementer.');
             }
-            // Whitelist the page envelope. Element arrays are already bounded by the
-            // request-size/section limits and remain read-only analyzer input.
             $normalized = [
                 'Version' => is_string($state['Version'] ?? null) ? (string) $state['Version'] : '',
                 'PageSlug' => sanitize_key((string) ($state['PageSlug'] ?? '')),
@@ -75,9 +75,14 @@ final class SideHealthAdminController
                 'Sections' => $sections,
             ];
             $report = (new SideHealthService())->analyze($normalized, $seo, []);
-            wp_send_json_success(['report' => $report]);
         } catch (\Throwable $e) {
             wp_send_json_error(['message' => mb_substr($e->getMessage(), 0, 500)], 400);
+            return;
         }
+
+        // Keep the transport success response outside the analyzer try/catch.
+        // WordPress exits here; tests can safely intercept the response without it
+        // being misclassified as an analyzer exception.
+        wp_send_json_success(['report' => $report]);
     }
 }
