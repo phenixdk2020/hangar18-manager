@@ -11158,6 +11158,10 @@ HTML;
                                 <button type="button" class="button button-small" id="h18-editor-discard-draft">Kassér kladde</button>
                             </span>
                         </span>
+                        <div class="h18-editor-save-controls">
+                            <button type="submit" class="button button-primary" id="h18-editor-save-top" title="Gem som permanent version (Ctrl/Cmd+S)">Gem</button>
+                            <span id="h18-editor-save-status" class="h18-editor-save-status" aria-live="polite">Gemt</span>
+                        </div>
                         <button type="button" class="button h18-command-palette-open" id="h18-command-palette-open" aria-haspopup="dialog" aria-controls="h18-command-palette" aria-expanded="false" title="Åbn kommandopaletten (Ctrl/Cmd+K)">⌘K Kommandoer</button>
                         <span>Visningen gør arbejdsområdet smallere. Den offentlige side åbnes med knappen ovenfor.</span>
                     </div>
