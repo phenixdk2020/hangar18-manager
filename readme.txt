@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.6.8
+Version: 0.6.9
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.6.9 – E13 Portability ==
+
+Nyt:
+- Page + global styles JSON med package/page schema og SHA-256 checksum samt identisk roundtrip.
+- Components/templates/menus/forms kan pakkes med stabile ExportId-referencer.
+- Dry-run er standard; collisions vises før write og kan remappes, skips eller blokeres eksplicit.
+- artifact:// og asset:// references remappes kun via validerede mapping-tabeller.
+- Asset manifest matcher target Media IDs via SHA-256 og rapporterer Broken references i stedet for silent drop.
+- Bekræftet import tager automatisk pre-import backup og kører mutationsdelen atomisk med rollback ved referencefejl.
+- E8 pre-publish backup regressionstestes fortsat. Ingen eksisterende sider konverteres endnu.
 
 
 == Version 0.6.8 – E12 AI suggestion layer ==

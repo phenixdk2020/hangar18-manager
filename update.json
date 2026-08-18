@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.6.8",
+  "version": "0.6.9",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T12:20:54Z",
+  "published_utc": "2026-08-18T12:30:20Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "09e41972de071d9f24d7f1f252bab1fe8000b5d2cc2af23ece29120a96b42430",
+  "package_sha256": "f4bf3526350100ac9bad0191b40324ae0ddd7b1ee4a9c3751fe12f27068e0ecf",
   "changelog": [
-    "E12 provider-neutral AI suggestion layer uden direkte write-adgang.",
-    "AI tekstforslag kræver eksplicit accept og indeholder reversible Apply/Undo-data.",
-    "Prompt-to-layout skal bestå Page Schema-validering før preview/insert.",
-    "AI design/accessibility forslag er bundet til konkrete element/property-referencer og kan afvises.",
-    "Dedikeret hangar18_use_ai capability; ingen provider/API credentials er konfigureret."
+    "E13 page/global styles JSON med schema/checksum og identisk roundtrip.",
+    "Components/templates/menus/forms artifact packages med collision-safe ID/reference remapping.",
+    "Dry-run/conflict plan er standard og kan ikke skrive før eksplicit confirmation.",
+    "SHA-256 asset manifest mapping rapporterer Broken references; imports kører atomisk.",
+    "Automatic pre-import backup og eksisterende E8 pre-publish backup er regressionstestet. Ingen sider konverteres endnu."
   ]
 }

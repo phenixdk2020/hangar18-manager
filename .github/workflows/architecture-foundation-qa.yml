@@ -6,7 +6,6 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
-      - agent/release-0.6.9
   pull_request:
     paths:
       - 'src/**'
@@ -16,11 +15,10 @@ on:
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   architecture-smoke:
-    if: github.ref != 'refs/heads/agent/release-0.6.9' && github.head_ref != 'agent/release-0.6.9'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -47,60 +45,3 @@ jobs:
       - run: php tests/Architecture/e12-ai-smoke.php
       - run: php tests/Architecture/e13-portability-smoke.php
       - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
-
-  release-069:
-    if: github.ref == 'refs/heads/agent/release-0.6.9' && !contains(github.event.head_commit.message || '', 'Release Hangar18 Manager 0.6.9')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: {ref: agent/release-0.6.9, fetch-depth: 0}
-      - uses: shivammathur/setup-php@v2
-        with: {php-version: '8.0', coverage: none}
-      - run: python3 .github/scripts/release_069.py
-      - name: Validate
-        run: |
-          set -euo pipefail
-          php -l hangar18-manager.php
-          node --check assets/admin.js
-          bash tests/Architecture/protected-domain-contract.sh
-          php tests/Architecture/architecture-smoke.php
-          php tests/Architecture/page-schema-smoke.php
-          php tests/Architecture/runtime-bridge-smoke.php
-          php tests/Architecture/compatibility-comparator-smoke.php
-          php tests/Architecture/ud-060-starter-schemas-smoke.php
-          php tests/Architecture/e6-site-builder-smoke.php
-          php tests/Architecture/e7-interaction-smoke.php
-          php tests/Architecture/e8-workflow-smoke.php
-          php tests/Architecture/e9-assets-smoke.php
-          php tests/Architecture/e10-permissions-smoke.php
-          php tests/Architecture/e11-quality-smoke.php
-          php tests/Architecture/e12-ai-smoke.php
-          php tests/Architecture/e13-portability-smoke.php
-          grep -F 'Version: 0.6.9' hangar18-manager.php
-          grep -F "const VERSION = '0.6.9';" hangar18-manager.php
-      - name: Build
-        run: |
-          set -euo pipefail
-          rm -rf .build; mkdir -p .build/hangar18-manager dist; rm -f dist/hangar18-manager.zip
-          cp hangar18-manager.php readme.txt .build/hangar18-manager/
-          cp -R assets src .build/hangar18-manager/
-          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
-          unzip -t dist/hangar18-manager.zip
-          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"; export SHA
-          PUBLISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; export PUBLISHED
-          python3 - <<'PY'
-          import json,os
-          d={'schema_version':'1.0','plugin':'hangar18-manager','version':'0.6.9','min_wp':'6.4','min_php':'8.0','published_utc':os.environ['PUBLISHED'],'package_path':'dist/hangar18-manager.zip','package_sha256':os.environ['SHA'],'changelog':['E13 page/global styles JSON med schema/checksum og identisk roundtrip.','Components/templates/menus/forms artifact packages med collision-safe ID/reference remapping.','Dry-run/conflict plan er standard og kan ikke skrive før eksplicit confirmation.','SHA-256 asset manifest mapping rapporterer Broken references; imports kører atomisk.','Automatic pre-import backup og eksisterende E8 pre-publish backup er regressionstestet. Ingen sider konverteres endnu.']}
-          open('update.json','w',encoding='utf-8').write(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
-          PY
-          rm -rf .build
-      - name: Commit product files only
-        run: |
-          set -euo pipefail
-          git config user.name 'hangar18-build'; git config user.email 'actions@users.noreply.github.com'
-          git checkout origin/main -- .github/workflows/architecture-foundation-qa.yml
-          git rm .github/scripts/release_069.py
-          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip
-          git diff --cached --check
-          git commit -m 'Release Hangar18 Manager 0.6.9'
-          git push origin HEAD:agent/release-0.6.9
