@@ -1,55 +1,68 @@
-name: Sync Hangar18 release source
+name: Build Hangar18 Manager 0.5.29 candidate
 
 on:
   push:
     branches:
-      - main
+      - qa/v0.5.29-release
     paths:
-      - 'dist/hangar18-manager.zip'
-      - 'update.json'
       - '.github/workflows/sync-release-source.yml'
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  sync-source:
+  build-v0529:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate package and extract source
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.29-release
+          fetch-depth: 0
+      - name: Patch and source QA
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf .build
-          mkdir -p .build
+          python3 .github/scripts/prepare_v0529.py
+          python3 .github/scripts/patch_v0529.py
+          python3 .github/scripts/harden_v0529.py
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          python3 .github/scripts/qa_v0529.py
+      - name: Build and verify package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          mkdir -p .build/hangar18-manager/assets dist
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp assets/admin.css assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
           unzip -t dist/hangar18-manager.zip
-          unzip -q dist/hangar18-manager.zip -d .build
-          VERSION=$(python3 -c "import json; print(json.load(open('update.json'))['version'])")
-          grep -F "Version: ${VERSION}" .build/hangar18-manager/hangar18-manager.php
-          grep -F "const VERSION = '${VERSION}';" .build/hangar18-manager/hangar18-manager.php
-          php -l .build/hangar18-manager/hangar18-manager.php
-          node --check .build/hangar18-manager/assets/admin.js
-
-      - name: Synchronize repository source
+          SHA=$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')
+          python3 - "$SHA" <<'PY'
+          import json,sys
+          from datetime import datetime,timezone
+          sha=sys.argv[1]
+          data={'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.29','min_wp':'6.4','min_php':'8.0','published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),'package_path':'dist/hangar18-manager.zip','package_sha256':sha,'changelog':['Tilføjer E5 UD-056 Advanced Query med bounded AND/OR-grupper.','Advanced Query kan blande primitive datafelter, Relation-felter og private Data Tags taxonomy-filtre.','Data entries får den private h18_data_tag taxonomy med bounded kommasepareret tag-editor.','Preview og frontend-shortcode bruger samme normalized evaluator og publicerede kandidatdatasæt uden rå SQL.','Pagination understøtter 1–50 resultater pr. side med query-specifikke page keys og stabil sortering.','Advanced evaluator begrænser kandidatdatasættet til 2000 publicerede entries og markerer Truncated ved loftet.','Page-editor schema forbliver 1.21; Data SchemaVersion forbliver 2.']}
+          open('update.json','w',encoding='utf-8').write(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+          PY
+          mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          cmp hangar18-manager.php .verify/hangar18-manager/hangar18-manager.php
+          cmp readme.txt .verify/hangar18-manager/readme.txt
+          cmp assets/admin.css .verify/hangar18-manager/assets/admin.css
+          cmp assets/admin.js .verify/hangar18-manager/assets/admin.js
+          test "$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')" = "$(python3 -c "import json;print(json.load(open('update.json'))['package_sha256'])")"
+          rm -rf .build .verify
+      - name: Commit validated candidate
         shell: bash
         run: |
           set -euo pipefail
-          cp .build/hangar18-manager/hangar18-manager.php hangar18-manager.php
-          cp .build/hangar18-manager/readme.txt readme.txt
-          mkdir -p assets
-          cp .build/hangar18-manager/assets/admin.css assets/admin.css
-          cp .build/hangar18-manager/assets/admin.js assets/admin.js
-          rm -rf .build
-          git config user.name "hangar18-build"
-          git config user.email "actions@users.noreply.github.com"
-          git add hangar18-manager.php readme.txt assets/admin.css assets/admin.js
-          if git diff --cached --quiet; then
-            echo "Repository source is already synchronized."
-            exit 0
-          fi
-          git commit -m "Sync Hangar18 Manager ${VERSION:-release} source"
-          git push
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add hangar18-manager.php assets/admin.js assets/admin.css readme.txt update.json dist/hangar18-manager.zip
+          git commit -m 'Release Hangar18 Manager 0.5.29 candidate'
+          git push origin HEAD:qa/v0.5.29-release
