@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.3
+Version: 0.8.4
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.4 – I10 Shadow Acceptance Ledger ==
+
+Nyt:
+- Side-specifik shadow acceptance kræver syv manuelle checks: desktop, tablet, mobile, save, preview, revision og rollback.
+- Acceptance kræver miljø/browser/device, evidensreference og eksplicit human confirmation.
+- AcceptedForSequence beregnes server-side og kan ikke sættes direkte fra request.
+- Acceptance bindes til den aktuelle shadow SourceHash; en genskabt/ændret shadow gør gammel acceptance automatisk stale.
+- Acceptance lukker ikke de globale I9-gates og aktiverer ikke en offentlig side.
+- Ingen activate/cutover/publish-handler tilføjes; WordPress-posts, URLs og hangar18_manager_pages_v1 forbliver uændrede.
+- Vehicle/Event/Gallery forbliver låst af CompatibilityPolicy på legacy v0.5.30-runtime.
 
 
 == Version 0.8.3 – I10 Conversion Planner ==
