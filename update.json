@@ -1,17 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.6.9",
+  "version": "0.7.0",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T12:30:20Z",
+  "published_utc": "2026-08-18T12:41:49Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "f4bf3526350100ac9bad0191b40324ae0ddd7b1ee4a9c3751fe12f27068e0ecf",
+  "package_sha256": "81256ac32f2a148216f5be0c75508155b5f49fee68db63f49a72469c60cd2ed4",
   "changelog": [
-    "E13 page/global styles JSON med schema/checksum og identisk roundtrip.",
-    "Components/templates/menus/forms artifact packages med collision-safe ID/reference remapping.",
-    "Dry-run/conflict plan er standard og kan ikke skrive før eksplicit confirmation.",
-    "SHA-256 asset manifest mapping rapporterer Broken references; imports kører atomisk.",
-    "Automatic pre-import backup og eksisterende E8 pre-publish backup er regressionstestet. Ingen sider konverteres endnu."
+    "E14 automated QA baseline med Chromium/Firefox/WebKit engine tests, keyboard/focus/reduced-motion flows.",
+    "Security audit, performance budgets, migration/rollback og MVP/v1 end-to-end gates er grønne.",
+    "ReleaseReadiness holder manual/live acceptance adskilt fra automated CI.",
+    "Administrator/designer onboarding og final migration-rækkefølge er dokumenteret.",
+    "Manual Chrome/Edge/Firefox/Safari brand-test, screen-reader, test2 live E2E, Vehicle/Event/Gallery regression og live-copy migration er fortsat pending.",
+    "Ingen eksisterende sider er konverteret i v0.7.0."
   ]
 }
