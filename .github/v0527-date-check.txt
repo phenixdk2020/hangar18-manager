@@ -1,0 +1,19 @@
+private function page_condition_datetime_timestamp($value) {
+        $value = trim((string) $value);
+        if ($value === '') { return 0; }
+        $timezone = wp_timezone();
+        $formats = ['!Y-m-d\\TH:i', '!Y-m-d H:i', '!Y-m-d'];
+        foreach ($formats as $format) {
+            $date = DateTimeImmutable::createFromFormat($format, $value, $timezone);
+            if ($date instanceof DateTimeImmutable) {
+                $errors = DateTimeImmutable::getLastErrors();
+                if ($errors === false || (((int) ($errors['warning_count'] ?? 0)) === 0 && ((int) ($errors['error_count'] ?? 0)) === 0)) {
+                    $roundtrip = $date->format(str_replace('!', '', $format));
+                    if ($roundtrip === $value) { return $date->getTimestamp(); }
+                }
+            }
+        }
+        return 0;
+    }
+
+    
