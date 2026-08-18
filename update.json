@@ -1,18 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T13:32:48Z",
+  "published_utc": "2026-08-18T14:13:40Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "8def9387828ed1940dcac09ad6d20b26f2d126895558cb32174d6b20cf5cf748",
+  "package_sha256": "a5582cd4366b2990cad605f99a2897d62e5a4721355ed74a08906fca8e53ef19",
   "changelog": [
-    "Gem-kommentaren er eksplicit valgfri og browser-validity ryddes før submit.",
-    "Admin assets cache-bustes med version + filemtime.",
-    "Typografi-fanens nested CSS-fejl er rettet.",
-    "Brødtekst-/overskrift-font samt Body/H1/H2/H3 størrelser vises igen i Inspector.",
-    "Aktiv editorversion vises i sideeditoren.",
-    "Vehicle/Event/Gallery-kontrakten er uændret."
+    "Almindelige sideelementers Overskrift er eksplicit valgfri.",
+    "Enter/newlines bevares i canvas-preview; tom linje bliver nyt afsnit på frontend.",
+    "Legacy WhatIf-reglen kan ikke længere gøre Gem-kommentaren required.",
+    "Automatisk ændringsresumé fortsætter som standard, egen kommentar er valgfri.",
+    "PHP 8.0/8.2/8.3 QA og Vehicle/Event/Gallery-kontrakten er grøn."
   ]
 }
