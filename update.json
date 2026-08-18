@@ -1,18 +1,16 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T10:52:57Z",
+  "published_utc": "2026-08-18T11:10:04Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "6e1acf649a5e95416a4e1ecba6460f76924a5e2443f8474b7b2eecabe8f4484d",
+  "package_sha256": "02656d1809d436139643d5e6fbdb1ca5d8d767f71460309ff331e65dcfbafd89",
   "changelog": [
-    "Architecture Foundation og passive shadow-mode services er nu med i releasepakken under src/.",
-    "UD-060 tilføjer generiske Vehicle/Event/Gallery starter schemas uden specialmotor eller automatisk migration.",
-    "Sider-modulet bruger hele den tilgængelige WordPress-adminbredde og giver et større builder-canvas.",
-    "Ny tom side kan oprettes direkte fra Sider; oprettelse fra Page Template er gjort tydeligere.",
-    "Retter template-oprettelse, så nye managed side-slugs ikke falder tilbage til Hjem.",
+    "Retter overlap mellem Inspector-faner og settings i Sider-editorens højre sidebar.",
+    "Inspector-faner bruger responsivt wrapping grid med sikker afstand til indstillingsfelterne.",
+    "Inputs, selects og tekstfelter holdes inden for Inspector-panelets bredde.",
     "Vehicle/Event/Gallery beholder v0.5.30 legacy runtime, markup, CSS hooks, data og URLs uændret."
   ]
 }

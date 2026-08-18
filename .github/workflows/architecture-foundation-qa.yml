@@ -13,14 +13,12 @@ on:
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - '.github/workflows/architecture-foundation-qa.yml'
-      - '.github/scripts/release_v061.py'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   architecture-smoke:
-    if: github.head_ref != 'agent/release-0.6.1'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -61,109 +59,3 @@ jobs:
 
       - name: UD-060 starter schema preset test
         run: php tests/Architecture/ud-060-starter-schemas-smoke.php
-
-  release-v061:
-    if: github.head_ref == 'agent/release-0.6.1'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout release branch
-        uses: actions/checkout@v4
-        with:
-          ref: agent/release-0.6.1
-          fetch-depth: 0
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          coverage: none
-
-      - name: Prepare v0.6.1 source
-        run: python3 .github/scripts/release_v061.py
-
-      - name: Validate source and compatibility
-        shell: bash
-        run: |
-          set -euo pipefail
-          php -l hangar18-manager.php
-          node --check assets/admin.js
-          find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
-          bash tests/Architecture/protected-domain-contract.sh
-          php tests/Architecture/architecture-smoke.php
-          php tests/Architecture/page-schema-smoke.php
-          php tests/Architecture/runtime-bridge-smoke.php
-          php tests/Architecture/compatibility-comparator-smoke.php
-          php tests/Architecture/ud-060-starter-schemas-smoke.php
-          grep -F 'Version: 0.6.1' hangar18-manager.php
-          grep -F "const VERSION = '0.6.1';" hangar18-manager.php
-          grep -F 'v0.6.1 – Inspector tabs må ikke overlappe settings' assets/admin.css
-          git diff --check
-
-      - name: Build v0.6.1 package and manifest
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf dist .build .verify
-          mkdir -p dist .build/hangar18-manager/assets
-          cp hangar18-manager.php .build/hangar18-manager/
-          cp readme.txt .build/hangar18-manager/
-          cp assets/admin.css .build/hangar18-manager/assets/
-          cp assets/admin.js .build/hangar18-manager/assets/
-          cp -R src .build/hangar18-manager/src
-          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
-          unzip -t dist/hangar18-manager.zip
-          mkdir -p .verify
-          unzip -q dist/hangar18-manager.zip -d .verify
-          grep -F 'Version: 0.6.1' .verify/hangar18-manager/hangar18-manager.php
-          grep -F "const VERSION = '0.6.1';" .verify/hangar18-manager/hangar18-manager.php
-          grep -F 'v0.6.1 – Inspector tabs må ikke overlappe settings' .verify/hangar18-manager/assets/admin.css
-          test -f .verify/hangar18-manager/src/Autoload.php
-          find .verify/hangar18-manager/src -name '*.php' -print0 | xargs -0 -n1 php -l
-          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"
-          export SHA
-          python3 - <<'PY'
-          import json, os
-          from datetime import datetime, timezone
-          manifest = {
-              'schema_version': '1.0',
-              'plugin': 'hangar18-manager',
-              'version': '0.6.1',
-              'min_wp': '6.4',
-              'min_php': '8.0',
-              'published_utc': datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z'),
-              'package_path': 'dist/hangar18-manager.zip',
-              'package_sha256': os.environ['SHA'],
-              'changelog': [
-                  'Retter overlap mellem Inspector-faner og settings i Sider-editorens højre sidebar.',
-                  'Inspector-faner bruger responsivt wrapping grid med sikker afstand til indstillingsfelterne.',
-                  'Inputs, selects og tekstfelter holdes inden for Inspector-panelets bredde.',
-                  'Vehicle/Event/Gallery beholder v0.5.30 legacy runtime, markup, CSS hooks, data og URLs uændret.'
-              ]
-          }
-          with open('update.json', 'w', encoding='utf-8') as f:
-              json.dump(manifest, f, ensure_ascii=False, indent=2)
-              f.write('\n')
-          PY
-          python3 - <<'PY'
-          import hashlib, json
-          data = json.load(open('update.json', encoding='utf-8'))
-          digest = hashlib.sha256(open('dist/hangar18-manager.zip','rb').read()).hexdigest()
-          assert data['version'] == '0.6.1'
-          assert data['package_sha256'] == digest
-          print('v0.6.1 package manifest: PASS')
-          PY
-          rm -rf .verify .build
-
-      - name: Commit release candidate and clean helpers
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'hangar18-build'
-          git config user.email 'actions@users.noreply.github.com'
-          git checkout origin/main -- .github/workflows/architecture-foundation-qa.yml
-          git rm .github/scripts/release_v061.py
-          git add hangar18-manager.php readme.txt update.json
-          git add -f dist/hangar18-manager.zip
-          git diff --cached --check
-          git commit -m 'Release Hangar18 Manager 0.6.1'
-          git push origin HEAD:agent/release-0.6.1
