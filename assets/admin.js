@@ -432,7 +432,7 @@ jQuery(function ($) {
         const labels = {
             hero: 'Topbanner / hero', text: 'Tekst', text_image: 'Tekst og billede', image: 'Stort billede',
             buttons: 'Handlingsknapper', card: 'Indholdskort', card_grid: 'Kort-række / kolonner', highlight: 'Fremhævet tekst',
-            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', tabs: 'Faner / tabs', accordion: 'Accordion', carousel: 'Carousel / slider', container: 'Container', flex: 'Flex container', grid: 'Grid container', component: 'Linked component', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
+            icon: 'Ikon / SVG', divider: 'Skillelinje', list: 'Liste', badge: 'Badge / mærkat', quote: 'Citat', tabs: 'Faner / tabs', accordion: 'Accordion', carousel: 'Carousel / slider', container: 'Container', flex: 'Flex container', grid: 'Grid container', query_list: 'Repeater / Query list', component: 'Linked component', embed: 'Embed / medie-URL', shortcode: 'Shortcode (avanceret)',
             spacer: 'Afstand', html: 'Importeret blok / HTML', css: 'Side-CSS', mail_form: 'Mailformular', poll: 'Afstemning', legacy: 'Eksisterende indhold'
         };
         return labels[String(type || '')] || 'Sektion';
@@ -1181,9 +1181,66 @@ jQuery(function ($) {
         });
     }
 
+
+
+    /* v0.5.26 – UD-057 Repeater / Query list */
+    function queryListOperatorMapV0526(type) {
+        const maps = {
+            text: [['eq','Er lig med'],['neq','Er ikke lig med'],['contains','Indeholder']],
+            number: [['eq','='],['neq','≠'],['gt','>'],['gte','≥'],['lt','<'],['lte','≤']],
+            bool: [['eq','Er lig med']],
+            date: [['eq','På dato'],['before','Før'],['after','Efter']],
+            media: [['eq','Er lig med'],['neq','Er ikke lig med']]
+        };
+        return maps[String(type || '')] || [['eq','Er lig med']];
+    }
+    function refreshQueryListControlsV0526($row) {
+        if (!$row || !$row.length || String($row.attr('data-section-type') || '') !== 'query_list') { return; }
+        const typeKey = String(canvasFieldValue($row,'QueryListType','') || '');
+        const definition = pageDynamicDataCatalogV0524[typeKey] || null;
+        const fields = definition && Array.isArray(definition.Fields) ? definition.Fields : [];
+        const $field = pageSectionControls($row,'.h18-query-list-filter-field').first();
+        let currentField = String($field.val() || $field.attr('data-current') || '');
+        $field.empty().append($('<option>',{value:'',text:'Intet filter'}));
+        fields.forEach(function(field){ $field.append($('<option>',{value:String(field.Key),text:String(field.Label || field.Key),'data-field-type':String(field.Type || 'text')})); });
+        if (!$field.find('option[value="'+currentField.replace(/"/g,'\\"')+'"]').length) { currentField=''; }
+        $field.val(currentField).attr('data-current',currentField);
+
+        const selectedField = fields.find(function(field){ return String(field.Key)===currentField; }) || null;
+        const $operator = pageSectionControls($row,'.h18-query-list-filter-operator').first();
+        let currentOperator = String($operator.val() || $operator.attr('data-current') || 'eq');
+        $operator.empty();
+        queryListOperatorMapV0526(selectedField ? selectedField.Type : 'text').forEach(function(item){ $operator.append($('<option>',{value:item[0],text:item[1]})); });
+        if (!$operator.find('option[value="'+currentOperator.replace(/"/g,'\\"')+'"]').length) { currentOperator='eq'; }
+        $operator.val(currentOperator).attr('data-current',currentOperator);
+
+        const $sort = pageSectionControls($row,'.h18-query-list-sort').first();
+        let currentSort = String($sort.val() || $sort.attr('data-current') || 'modified');
+        $sort.empty().append($('<option>',{value:'modified',text:'Senest ændret'}),$('<option>',{value:'created',text:'Oprettet'}),$('<option>',{value:'title',text:'Titel'}));
+        fields.forEach(function(field){ if(String(field.Type)!=='bool') $sort.append($('<option>',{value:'field:'+String(field.Key),text:String(field.Label || field.Key)})); });
+        if (!$sort.find('option').filter(function(){return String($(this).val())===currentSort;}).length) { currentSort='modified'; }
+        $sort.val(currentSort).attr('data-current',currentSort);
+
+        const componentId = String(canvasFieldValue($row,'QueryListComponentId','') || '');
+        const component = pageLinkedComponents[componentId] || null;
+        const $variant = pageSectionControls($row,'.h18-query-list-component-variant').first();
+        let currentVariant = String($variant.val() || $variant.attr('data-current') || '');
+        $variant.empty().append($('<option>',{value:'',text:'Base'}));
+        const variants = component && component.Variants && typeof component.Variants === 'object' ? Object.values(component.Variants) : [];
+        variants.forEach(function(variant){ if(variant&&variant.Id)$variant.append($('<option>',{value:String(variant.Id),text:String(variant.Name || 'Variant')})); });
+        if (!$variant.find('option').filter(function(){return String($(this).val())===currentVariant;}).length) { currentVariant=''; }
+        $variant.val(currentVariant).attr('data-current',currentVariant);
+    }
+    $(document).on('change','.h18-query-list-type,.h18-query-list-filter-field,.h18-query-list-filter-operator,.h18-query-list-component',function(){
+        const $row=pageSectionForElement($(this)); refreshQueryListControlsV0526($row); renderCanvasPreview($row); scheduleEditorHistoryCapture(0);
+    });
+    $(document).on('input change','.h18-query-list-filter-value,[name$="[QueryListLimit]"],[name$="[QueryListColumns]"],[name$="[QueryListMobileColumns]"],[name$="[QueryListGapPx]"],[name$="[QueryListMobileGapPx]"],[name$="[QueryListEmptyText]"],[name$="[QueryListOrder]"]',function(){ const $row=pageSectionForElement($(this)); if($row.length)renderCanvasPreview($row); });
+
+
     function refreshPageSectionType($row) {
         const type = String(pageSectionControls($row, '.h18-page-section-type').val() || pageSectionControls($row, 'input[name$="[Type]"]').val() || 'text');
         $row.attr('data-section-type', type);
+        refreshQueryListControlsV0526($row);
         pageSectionControls($row, '.h18-section-type-field').each(function () {
             const types = String($(this).attr('data-types') || '').split(/\s+/);
             $(this).toggle(types.includes(type));
@@ -1772,6 +1829,20 @@ jQuery(function ($) {
             const childCount = $pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').filter(function () { return String(pageSectionControls($(this), '.h18-layout-parent-key').val() || '') === selfKey; }).length;
             const detail = type === 'grid' ? String(canvasFieldValue($row,'LayoutColumns',2)) + ' kolonner' : (type === 'flex' ? String(canvasFieldValue($row,'LayoutDirection','Row')) + ' · gap ' + String(canvasFieldValue($row,'LayoutGapPx',16)) + ' px' : 'blok-container');
             $inner.append($('<div>', { class: 'h18-canvas-layout-shell h18-canvas-layout-shell--' + type }).append($('<strong>', { text: childCount + ' under-element' + (childCount === 1 ? '' : 'er') }), $('<small>', { text: detail })));
+        } else if (type === 'query_list') {
+            const typeKey = String(canvasFieldValue($row,'QueryListType','') || '');
+            const definition = pageDynamicDataCatalogV0524[typeKey] || null;
+            const componentId = String(canvasFieldValue($row,'QueryListComponentId','') || '');
+            const component = pageLinkedComponents[componentId] || null;
+            const limit = Math.max(1,Math.min(100,parseInt(canvasFieldValue($row,'QueryListLimit',10),10)||10));
+            const sampleEntries = definition && Array.isArray(definition.Entries) ? definition.Entries.slice(0,Math.min(limit,3)) : [];
+            const $preview = $('<div>',{class:'h18-canvas-query-list'});
+            $preview.append($('<strong>',{text:'Query List · '+(definition ? String(definition.PluralLabel || definition.Key) : 'vælg datatype')}));
+            $preview.append($('<small>',{text:(component ? 'Template: '+String(component.Name || 'Linked component') : 'Vælg template-komponent')+' · op til '+limit+' resultater'}));
+            const $samples=$('<div>',{class:'h18-canvas-query-list-samples'});
+            if(sampleEntries.length){ sampleEntries.forEach(function(entry){$samples.append($('<span>',{text:String(entry.Title || ('Entry '+entry.Id))}));}); }
+            else {$samples.append($('<span>',{text:'Ingen preview entries i valgt datatype'}));}
+            $preview.append($samples); $inner.append($preview);
         } else if (type === 'component') {
             const componentId = String(canvasFieldValue($row, 'ComponentId', ''));
             const component = pageLinkedComponents[componentId];

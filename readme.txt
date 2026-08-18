@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.5.25
+Version: 0.5.26
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -1095,3 +1095,14 @@ Kompatibilitet og sikkerhed:
 * Historikken dækker feltændringer, live-canvas, sektioner, kort og rækkefølge.
 * Status viser ugemte ændringer, og browseren advarer ved navigation væk fra en ændret side.
 * Ingen page-editor schemaændring; permanente WordPress-revisioner/backups er uændrede.
+
+
+## v0.5.26 – E5 UD-057 Repeater / Query list
+- Nyt `Repeater / Query list`-element i den visuelle sidebygger.
+- Genbruger Query Builder v1 til datatype, filter, sortering og limit.
+- En linked component fungerer som template og renderes én gang pr. query-resultat.
+- Hvert resultat bliver current data context under render, så eksisterende dynamic bindings virker uden en særskilt template-motor.
+- Understøtter component variant, desktop/mobil-kolonner, gap og tom-resultattekst.
+- Query List-komponentreferencer indgår i Usage Inspector og blokerer sikker sletning af komponent/variant.
+- Runtime beskytter mod rekursive Query List/component-loops og gendanner altid det tidligere data context.
+- Page-editor schema: 1.20.

@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.25
+ * Version: 0.5.26
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.25';
+    const VERSION = '0.5.26';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -78,6 +78,7 @@ final class Hangar18_Manager {
 
     private static $instance = null;
     private $active_dynamic_data_context = null;
+    private $active_query_list_stack = [];
 
     public static function instance() {
         if (self::$instance === null) {
@@ -724,7 +725,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.19',
+                'Version' => '1.20',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -7131,6 +7132,7 @@ HTML;
             'container'  => 'Container',
             'flex'       => 'Flex container',
             'grid'       => 'Grid container',
+            'query_list' => 'Repeater / Query list',
             'component'  => 'Linked component',
             'embed'      => 'Embed / medie-URL',
             'shortcode'  => 'Shortcode (avanceret)',
@@ -7266,6 +7268,20 @@ HTML;
             'ComponentVariant'      => '',
             'ComponentOverrides'    => [],
             'Bindings'              => [],
+            'QueryListType'         => '',
+            'QueryListFilterField'  => '',
+            'QueryListFilterOperator' => 'eq',
+            'QueryListFilterValue'  => '',
+            'QueryListSort'         => 'modified',
+            'QueryListOrder'        => 'DESC',
+            'QueryListLimit'        => 10,
+            'QueryListComponentId'  => '',
+            'QueryListComponentVariant' => '',
+            'QueryListColumns'      => 1,
+            'QueryListMobileColumns'=> 1,
+            'QueryListGapPx'        => 18,
+            'QueryListMobileGapPx'  => 14,
+            'QueryListEmptyText'    => 'Ingen resultater.',
             'Order'                 => (int) $order,
             'Title'                 => '',
             'Content'               => '',
@@ -7508,6 +7524,22 @@ HTML;
             }
         }
         $bindings = $this->normalize_dynamic_bindings($raw['Bindings'] ?? []);
+        $query_list_type = sanitize_key((string) ($raw['QueryListType'] ?? ''));
+        $query_list_filter_field = sanitize_key((string) ($raw['QueryListFilterField'] ?? ''));
+        $query_list_filter_operator = sanitize_key((string) ($raw['QueryListFilterOperator'] ?? 'eq'));
+        if (!in_array($query_list_filter_operator, ['eq','neq','contains','gt','gte','lt','lte','before','after'], true)) { $query_list_filter_operator = 'eq'; }
+        $query_list_filter_value = sanitize_text_field((string) ($raw['QueryListFilterValue'] ?? ''));
+        if (strlen($query_list_filter_value) > 500) { $query_list_filter_value = substr($query_list_filter_value, 0, 500); }
+        $query_list_sort_raw = (string) ($raw['QueryListSort'] ?? 'modified');
+        if (in_array($query_list_sort_raw, ['title','modified','created'], true)) { $query_list_sort = $query_list_sort_raw; }
+        elseif (strpos($query_list_sort_raw, 'field:') === 0) { $query_list_sort = 'field:' . sanitize_key(substr($query_list_sort_raw, 6)); }
+        else { $query_list_sort = 'modified'; }
+        $query_list_order = strtoupper((string) ($raw['QueryListOrder'] ?? 'DESC'));
+        if (!in_array($query_list_order, ['ASC','DESC'], true)) { $query_list_order = 'DESC'; }
+        $query_list_component_id = sanitize_key((string) ($raw['QueryListComponentId'] ?? ''));
+        $query_list_component_variant = sanitize_key((string) ($raw['QueryListComponentVariant'] ?? ''));
+        $query_list_empty_text = sanitize_text_field((string) ($raw['QueryListEmptyText'] ?? 'Ingen resultater.'));
+        if ($query_list_empty_text === '') { $query_list_empty_text = 'Ingen resultater.'; }
 
         $alignment = (string) ($raw['DesktopAlignment'] ?? 'Left');
         if (!in_array($alignment, ['Left', 'Center'], true)) {
@@ -7667,6 +7699,20 @@ HTML;
             'ComponentVariant'      => $component_variant,
             'ComponentOverrides'    => $component_overrides,
             'Bindings'              => $bindings,
+            'QueryListType'         => $query_list_type,
+            'QueryListFilterField'  => $query_list_filter_field,
+            'QueryListFilterOperator' => $query_list_filter_operator,
+            'QueryListFilterValue'  => $query_list_filter_value,
+            'QueryListSort'         => $query_list_sort,
+            'QueryListOrder'        => $query_list_order,
+            'QueryListLimit'        => $this->clamp_int($raw['QueryListLimit'] ?? 10, 1, 100, 10),
+            'QueryListComponentId'  => $query_list_component_id,
+            'QueryListComponentVariant' => $query_list_component_variant,
+            'QueryListColumns'      => $this->clamp_int($raw['QueryListColumns'] ?? 1, 1, 6, 1),
+            'QueryListMobileColumns'=> $this->clamp_int($raw['QueryListMobileColumns'] ?? 1, 1, 2, 1),
+            'QueryListGapPx'        => $this->clamp_int($raw['QueryListGapPx'] ?? 18, 0, 80, 18),
+            'QueryListMobileGapPx'  => $this->clamp_int($raw['QueryListMobileGapPx'] ?? 14, 0, 60, 14),
+            'QueryListEmptyText'    => $query_list_empty_text,
             'Order'                 => $this->clamp_int($raw['Order'] ?? $section['Order'], 1, 10000, $section['Order']),
             'Title'                 => $title,
             'Content'               => $type === 'css'
@@ -7895,7 +7941,7 @@ HTML;
         }
 
         return [
-            'Version'            => '1.19',
+            'Version'            => '1.20',
             'PageSlug'           => $slug,
             'PageTitle'          => $title,
             'ContentVersion'     => $content_version,
@@ -8431,7 +8477,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.19',
+            'Version'        => '1.20',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'          => $data['PageTitle'],
             'ContentVersion'     => $data['ContentVersion'] ?? 0,
@@ -8499,7 +8545,7 @@ HTML;
             $type = sanitize_key((string) ($raw_section['Type'] ?? 'text'));
             if (in_array($type, ['legacy','component'], true)) { throw new RuntimeException('Legacy og linked components kan ikke gemmes inde i et ikke-linked pattern.'); }
         }
-        $data = $this->normalize_page_editor_data(['Version'=>'1.19','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
+        $data = $this->normalize_page_editor_data(['Version'=>'1.20','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
         $sections = array_values((array) $data['Sections']);
         $roots = array_values(array_filter($sections, static function($section){ return sanitize_key((string) ($section['LayoutParentKey'] ?? '')) === ''; }));
         if (count($roots) !== 1) { throw new RuntimeException('Et pattern skal have præcis ét root-element.'); }
@@ -8568,7 +8614,7 @@ HTML;
     private function normalize_page_template_sections(array $raw_sections) {
         $raw_sections=array_slice($raw_sections,0,25); if(!$raw_sections)throw new RuntimeException('Sidetemplaten skal indeholde mindst ét element.');
         foreach($raw_sections as $raw_section){if(!is_array($raw_section))continue;$type=sanitize_key((string)($raw_section['Type']??'text'));if(in_array($type,['legacy','component'],true))throw new RuntimeException('Page Templates kan ikke indeholde legacy eller linked components; templaten skal være en selvstændig kopi.');}
-        $data=$this->normalize_page_editor_data(['Version'=>'1.19','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
+        $data=$this->normalize_page_editor_data(['Version'=>'1.20','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
         $sections=array_values((array)$data['Sections']);
         foreach($sections as &$section){$section['ComponentId']='';$section['ComponentRevision']=0;$section['ComponentVariant']='';$section['ComponentOverrides']=[];}unset($section);
         return $sections;
@@ -8608,7 +8654,7 @@ HTML;
     public function ajax_create_page_from_template() {
         if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at oprette sider.'],403);check_ajax_referer('h18_page_templates_v0522','nonce');$template_id=sanitize_key((string)wp_unslash($_POST['template_id']??''));$title=sanitize_text_field((string)wp_unslash($_POST['page_title']??''));$slug=sanitize_title((string)wp_unslash($_POST['page_slug']??''));$templates=$this->get_page_templates();if(!isset($templates[$template_id]))wp_send_json_error(['message'=>'Page Template blev ikke fundet.'],404);if($title===''||$slug==='')wp_send_json_error(['message'=>'Ny side skal have titel og slug.'],400);if(get_page_by_path($slug,OBJECT,'page'))wp_send_json_error(['message'=>'Der findes allerede en side med denne slug.'],409);
         $post_id=wp_insert_post(['post_type'=>'page','post_status'=>'draft','post_title'=>$title,'post_name'=>$slug,'post_content'=>''],true);if(is_wp_error($post_id))wp_send_json_error(['message'=>$post_id->get_error_message()],400);$page=get_post($post_id);
-        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.19','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
+        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.20','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
         catch(Throwable $e){wp_delete_post($post_id,true);wp_send_json_error(['message'=>$e->getMessage()],400);}
     }
 
@@ -8639,8 +8685,8 @@ HTML;
         foreach ($raw_sections as $raw_section) {
             if (!is_array($raw_section)) { continue; }
             $raw_type = sanitize_key((string) ($raw_section['Type'] ?? 'text'));
-            if (in_array($raw_type, ['legacy', 'component'], true)) {
-                throw new RuntimeException('Linked components kan ikke indeholde legacy-indhold eller andre linked components.');
+            if (in_array($raw_type, ['legacy', 'component', 'query_list'], true)) {
+                throw new RuntimeException('Linked components kan ikke indeholde legacy-indhold, linked components eller Query List-elementer.');
             }
         }
         $normalized = $this->normalize_page_editor_data([
@@ -8740,13 +8786,19 @@ HTML;
         foreach ($store as $slug => $page_data) {
             if (!is_array($page_data) || empty($page_data['Sections']) || !is_array($page_data['Sections'])) { continue; }
             foreach ($page_data['Sections'] as $section) {
-                if (!is_array($section) || sanitize_key((string) ($section['Type'] ?? '')) !== 'component') { continue; }
-                if (sanitize_key((string) ($section['ComponentId'] ?? '')) !== $component_id) { continue; }
+                if (!is_array($section)) { continue; }
+                $reference_type = sanitize_key((string) ($section['Type'] ?? ''));
+                if (!in_array($reference_type, ['component','query_list'], true)) { continue; }
+                $referenced_component_id = $reference_type === 'query_list'
+                    ? sanitize_key((string) ($section['QueryListComponentId'] ?? ''))
+                    : sanitize_key((string) ($section['ComponentId'] ?? ''));
+                if ($referenced_component_id !== $component_id) { continue; }
                 $usage[] = [
                     'PageSlug' => sanitize_title((string) $slug),
                     'PageTitle' => sanitize_text_field((string) ($page_data['PageTitle'] ?? ($definitions[$slug] ?? $slug))),
                     'SectionKey' => sanitize_key((string) ($section['Key'] ?? '')),
-                    'Variant' => sanitize_key((string) ($section['ComponentVariant'] ?? '')),
+                    'Variant' => sanitize_key((string) ($reference_type === 'query_list' ? ($section['QueryListComponentVariant'] ?? '') : ($section['ComponentVariant'] ?? ''))),
+                    'ReferenceType' => $reference_type,
                 ];
             }
         }
@@ -9215,12 +9267,98 @@ HTML;
         return $html . '</div>';
     }
 
+
+
+    private function query_list_query_from_section(array $section) {
+        return [
+            'Type' => (string) ($section['QueryListType'] ?? ''),
+            'Field' => (string) ($section['QueryListFilterField'] ?? ''),
+            'Operator' => (string) ($section['QueryListFilterOperator'] ?? 'eq'),
+            'Value' => (string) ($section['QueryListFilterValue'] ?? ''),
+            'Sort' => (string) ($section['QueryListSort'] ?? 'modified'),
+            'Order' => (string) ($section['QueryListOrder'] ?? 'DESC'),
+            'Limit' => (int) ($section['QueryListLimit'] ?? 10),
+        ];
+    }
+
+    private function render_page_editor_query_list($page_id, array $section) {
+        $component_id = sanitize_key((string) ($section['QueryListComponentId'] ?? ''));
+        if ($component_id === '') {
+            return current_user_can('edit_pages') ? '<div class="h18-query-list-error">Query List mangler en template-komponent.</div>' : '';
+        }
+        if (in_array($component_id, $this->active_query_list_stack, true) || count($this->active_query_list_stack) >= 3) {
+            return current_user_can('edit_pages') ? '<div class="h18-query-list-error">Query List-loop blev blokeret.</div>' : '';
+        }
+
+        try {
+            $normalized = null;
+            $posts = $this->run_custom_data_query($this->query_list_query_from_section($section), $normalized);
+        } catch (Throwable $e) {
+            return current_user_can('edit_pages') ? '<div class="h18-query-list-error">' . esc_html($e->getMessage()) . '</div>' : '';
+        }
+
+        $background_class = strtolower((string) ($section['Background'] ?? 'White'));
+        $classes = trim('h18-editor-section h18-editor-query-list h18-editor-section--' . sanitize_html_class($background_class) . ' ' . $this->page_editor_visibility_classes($section));
+        $id = 'h18-section-' . sanitize_html_class((string) ($section['Key'] ?? 'query-list'));
+        $style = $this->page_editor_section_style($section);
+        $columns = $this->clamp_int($section['QueryListColumns'] ?? 1, 1, 6, 1);
+        $mobile_columns = $this->clamp_int($section['QueryListMobileColumns'] ?? 1, 1, 2, 1);
+        $gap = $this->clamp_int($section['QueryListGapPx'] ?? 18, 0, 80, 18);
+        $mobile_gap = $this->clamp_int($section['QueryListMobileGapPx'] ?? 14, 0, 60, 14);
+        $design = $this->get_header_design_settings();
+        $mobile_breakpoint = (int) ($design['BreakpointMobileMaxPx'] ?? 782);
+        $title_html = trim((string) ($section['Title'] ?? '')) !== '' ? '<h2>' . esc_html((string) $section['Title']) . '</h2>' : '';
+        $empty_text = sanitize_text_field((string) ($section['QueryListEmptyText'] ?? 'Ingen resultater.'));
+        $query_hash = substr(hash('sha256', wp_json_encode($normalized) . '|' . $component_id . '|' . sanitize_key((string) ($section['QueryListComponentVariant'] ?? ''))), 0, 16);
+        $responsive_css = '<style>@media(max-width:' . $mobile_breakpoint . 'px){#' . esc_attr($id) . '>.h18-query-list-items{grid-template-columns:repeat(' . $mobile_columns . ',minmax(0,1fr));gap:' . $mobile_gap . 'px}}</style>';
+
+        if (!$posts) {
+            return $responsive_css . '<section id="' . esc_attr($id) . '" class="' . esc_attr($classes) . '" style="' . esc_attr($style) . '" data-query-hash="' . esc_attr($query_hash) . '">' . $title_html . '<p class="h18-query-list-empty">' . esc_html($empty_text) . '</p></section>';
+        }
+
+        $previous_context = $this->active_dynamic_data_context;
+        $this->active_query_list_stack[] = $component_id;
+        $items = '';
+        try {
+            foreach ($posts as $post) {
+                if (!$post instanceof WP_Post) { continue; }
+                $context = $this->resolve_dynamic_data_context((string) $normalized['Type'], (int) $post->ID);
+                if (!is_array($context)) { continue; }
+                $instance = [
+                    'Key' => sanitize_key((string) ($section['Key'] ?? 'query-list') . '-entry-' . (int) $post->ID),
+                    'ComponentId' => $component_id,
+                    'ComponentRevision' => 0,
+                    'ComponentVariant' => sanitize_key((string) ($section['QueryListComponentVariant'] ?? '')),
+                    'ComponentOverrides' => [],
+                ];
+                [$component_sections, $component] = $this->resolve_page_component_instance_sections($page_id, $instance);
+                if (!$component || !$component_sections) { continue; }
+                $this->active_dynamic_data_context = $context;
+                $items .= '<div class="h18-query-list-item" data-entry-id="' . (int) $post->ID . '" data-component-id="' . esc_attr($component_id) . '">' . $this->render_page_editor_layout_tree($page_id, $component_sections) . '</div>';
+            }
+        } finally {
+            $this->active_dynamic_data_context = $previous_context;
+            array_pop($this->active_query_list_stack);
+        }
+
+        if ($items === '') {
+            $items = '<p class="h18-query-list-empty">' . esc_html($empty_text) . '</p>';
+        } else {
+            $items = '<div class="h18-query-list-items" style="display:grid;grid-template-columns:repeat(' . $columns . ',minmax(0,1fr));gap:' . $gap . 'px">' . $items . '</div>';
+        }
+        return $responsive_css . '<section id="' . esc_attr($id) . '" class="' . esc_attr($classes) . '" style="' . esc_attr($style) . '" data-query-hash="' . esc_attr($query_hash) . '">' . $title_html . $items . '</section>';
+    }
+
+
     private function render_page_editor_section_front($page_id, array $section, $layout_children = '') {
         if (empty($section['Active'])) {
             return '';
         }
         if (is_array($this->active_dynamic_data_context)) {
             $section = $this->apply_dynamic_bindings_to_section($section, $this->active_dynamic_data_context);
+        }
+        if ($section['Type'] === 'query_list') {
+            return $this->render_page_editor_query_list($page_id, $section);
         }
         if ($section['Type'] === 'component') {
             [$component_sections, $component] = $this->resolve_page_component_instance_sections($page_id, $section);
@@ -9802,6 +9940,37 @@ HTML;
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+
+
+                    <div class="h18-section-type-field h18-section-module-box h18-query-list-editor" data-types="query_list">
+                        <h4>Repeater / Query list</h4>
+                        <p class="description">Kører Query Builder v1 og renderer den valgte linked component én gang pr. resultat. Hvert resultat bliver current data context inde i templaten.</p>
+                        <?php
+                        $h18_query_types = $this->get_custom_data_types();
+                        $h18_query_components = $this->get_page_components();
+                        $h18_query_schema = isset($h18_query_types[$section['QueryListType']]) ? $h18_query_types[$section['QueryListType']] : null;
+                        $h18_query_fields = $h18_query_schema ? (array) $h18_query_schema['Fields'] : [];
+                        $h18_query_component = isset($h18_query_components[$section['QueryListComponentId']]) ? $h18_query_components[$section['QueryListComponentId']] : null;
+                        ?>
+                        <div class="h18-module-fields-grid h18-module-fields-grid--two">
+                            <div class="h18-field"><label><strong>Datatype</strong></label><select class="h18-query-list-type" name="<?php echo esc_attr($prefix); ?>[QueryListType]"><option value="">Vælg datatype</option><?php foreach ($h18_query_types as $h18_type_key => $h18_type) : ?><option value="<?php echo esc_attr($h18_type_key); ?>" <?php selected($section['QueryListType'], $h18_type_key); ?>><?php echo esc_html($h18_type['PluralLabel']); ?></option><?php endforeach; ?></select></div>
+                            <div class="h18-field"><label><strong>Template-komponent</strong></label><select class="h18-query-list-component" name="<?php echo esc_attr($prefix); ?>[QueryListComponentId]"><option value="">Vælg linked component</option><?php foreach ($h18_query_components as $h18_component_id => $h18_component) : ?><option value="<?php echo esc_attr($h18_component_id); ?>" <?php selected($section['QueryListComponentId'], $h18_component_id); ?>><?php echo esc_html($h18_component['Name']); ?></option><?php endforeach; ?></select></div>
+                            <div class="h18-field"><label><strong>Variant</strong></label><select class="h18-query-list-component-variant" data-current="<?php echo esc_attr($section['QueryListComponentVariant']); ?>" name="<?php echo esc_attr($prefix); ?>[QueryListComponentVariant]"><option value="">Base</option><?php if ($h18_query_component) : foreach ((array) ($h18_query_component['Variants'] ?? []) as $h18_variant_id => $h18_variant) : ?><option value="<?php echo esc_attr($h18_variant_id); ?>" <?php selected($section['QueryListComponentVariant'], $h18_variant_id); ?>><?php echo esc_html($h18_variant['Name']); ?></option><?php endforeach; endif; ?></select></div>
+                            <div class="h18-field"><label><strong>Filterfelt</strong></label><select class="h18-query-list-filter-field" data-current="<?php echo esc_attr($section['QueryListFilterField']); ?>" name="<?php echo esc_attr($prefix); ?>[QueryListFilterField]"><option value="">Intet filter</option><?php foreach ($h18_query_fields as $h18_field) : ?><option value="<?php echo esc_attr($h18_field['Key']); ?>" data-field-type="<?php echo esc_attr($h18_field['Type']); ?>" <?php selected($section['QueryListFilterField'], $h18_field['Key']); ?>><?php echo esc_html($h18_field['Label']); ?></option><?php endforeach; ?></select></div>
+                            <div class="h18-field"><label><strong>Operator</strong></label><select class="h18-query-list-filter-operator" data-current="<?php echo esc_attr($section['QueryListFilterOperator']); ?>" name="<?php echo esc_attr($prefix); ?>[QueryListFilterOperator]"><option value="eq">Er lig med</option></select></div>
+                            <div class="h18-field"><label><strong>Filterværdi</strong></label><input class="h18-query-list-filter-value" type="text" name="<?php echo esc_attr($prefix); ?>[QueryListFilterValue]" value="<?php echo esc_attr($section['QueryListFilterValue']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Sortering</strong></label><select class="h18-query-list-sort" data-current="<?php echo esc_attr($section['QueryListSort']); ?>" name="<?php echo esc_attr($prefix); ?>[QueryListSort]"><option value="modified">Senest ændret</option><option value="created">Oprettet</option><option value="title">Titel</option><?php foreach ($h18_query_fields as $h18_field) : if (($h18_field['Type'] ?? '') === 'bool') continue; ?><option value="field:<?php echo esc_attr($h18_field['Key']); ?>" <?php selected($section['QueryListSort'], 'field:' . $h18_field['Key']); ?>><?php echo esc_html($h18_field['Label']); ?></option><?php endforeach; ?></select></div>
+                            <div class="h18-field"><label><strong>Retning</strong></label><select name="<?php echo esc_attr($prefix); ?>[QueryListOrder]"><option value="DESC" <?php selected($section['QueryListOrder'],'DESC'); ?>>Faldende</option><option value="ASC" <?php selected($section['QueryListOrder'],'ASC'); ?>>Stigende</option></select></div>
+                            <div class="h18-field"><label><strong>Maks. resultater</strong></label><input type="number" min="1" max="100" name="<?php echo esc_attr($prefix); ?>[QueryListLimit]" value="<?php echo esc_attr($section['QueryListLimit']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Kolonner desktop</strong></label><input type="number" min="1" max="6" name="<?php echo esc_attr($prefix); ?>[QueryListColumns]" value="<?php echo esc_attr($section['QueryListColumns']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Kolonner mobil</strong></label><input type="number" min="1" max="2" name="<?php echo esc_attr($prefix); ?>[QueryListMobileColumns]" value="<?php echo esc_attr($section['QueryListMobileColumns']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Gap desktop (px)</strong></label><input type="number" min="0" max="80" name="<?php echo esc_attr($prefix); ?>[QueryListGapPx]" value="<?php echo esc_attr($section['QueryListGapPx']); ?>" /></div>
+                            <div class="h18-field"><label><strong>Gap mobil (px)</strong></label><input type="number" min="0" max="60" name="<?php echo esc_attr($prefix); ?>[QueryListMobileGapPx]" value="<?php echo esc_attr($section['QueryListMobileGapPx']); ?>" /></div>
+                            <div class="h18-field h18-field--full"><label><strong>Tomt resultat</strong></label><input type="text" maxlength="160" name="<?php echo esc_attr($prefix); ?>[QueryListEmptyText]" value="<?php echo esc_attr($section['QueryListEmptyText']); ?>" /></div>
+                        </div>
+                    </div>
+
 
                     <div class="h18-section-type-field h18-section-module-box h18-component-instance-editor" data-types="component">
                         <h4>Linked component</h4>
@@ -10644,7 +10813,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.19',
+                    'Version' => '1.20',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -10764,7 +10933,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.19',
+            'Version'        => '1.20',
             'PageSlug'       => $slug,
             'PageTitle'          => $this->post_text('editor_page_title'),
             'ContentVersion'     => $next_content_version,
@@ -10796,7 +10965,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.19',
+                'Version' => '1.20',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];
