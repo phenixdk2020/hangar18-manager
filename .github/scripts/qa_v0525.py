@@ -33,12 +33,12 @@ expected={
 for t,token in expected.items():
     if token not in op: raise SystemExit('Operator map mismatch for '+t)
 
-# Filter field must exist in schema before meta key construction.
+# Filter and sort fields must exist in schema before meta key construction.
 s=php.index('private function normalize_custom_data_query');e=php.index('private function custom_data_query_compare',s);norm=php[s:e]
 if '!isset($field_map[$field_key])' not in norm: raise SystemExit('Unknown filter fields are not rejected')
 if '!isset($operators[$operator])' not in norm: raise SystemExit('Operator is not checked against field type')
 if "DateTime::createFromFormat('!Y-m-d'" not in norm or '!is_numeric($value_raw)' not in norm: raise SystemExit('Type-specific query values are not validated')
-if "strpos($sort_raw, 'field:') === 0" not in norm or '!isset($field_map[$sort_field])' not in norm: raise SystemExit('Sort field is not schema-validated')
+if "strpos($sort_raw, 'field:') === 0" not in norm or "$sort_field !== ''" not in norm or 'isset($field_map[$sort_field])' not in norm: raise SystemExit('Sort field is not schema-validated')
 
 # Query core must use WordPress query args, publish-only, bounded rows, and sanitized meta keys from normalized schema.
 s=php.index('private function run_custom_data_query');e=php.index('private function custom_data_query_shortcode_from_normalized',s);core=php[s:e]
