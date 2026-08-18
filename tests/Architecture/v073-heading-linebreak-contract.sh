@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# v0.7.3 final regression contract.
 # Ordinary section heading is explicitly optional.
 grep -F "Overskrift (valgfri)" hangar18-manager.php >/dev/null
 if grep -E 'class="h18-section-title-input"[^>]*required' hangar18-manager.php >/dev/null; then
