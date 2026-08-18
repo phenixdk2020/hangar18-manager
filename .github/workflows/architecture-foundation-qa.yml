@@ -1,102 +1,77 @@
-name: Hangar18 0.7.1 Release
+name: Architecture QA
 
 on:
   push:
     branches:
-      - agent/release-0.7.1
+      - agent/architecture-foundation
+      - agent/runtime-bridge-v2
+      - agent/ud-060-starter-schemas
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/Architecture/**'
+      - 'docs/architecture-*.md'
+      - 'docs/ud-*.md'
+      - 'docs/ultimate-designer-onboarding.md'
+      - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release-071:
-    if: ${{ !contains(github.event.head_commit.message || '', 'Release Hangar18 Manager 0.7.1') }}
+  architecture-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.0','8.2','8.3']
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Architecture isolation guard
+        run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+      - name: Protected Vehicle/Event/Gallery contract
+        run: bash tests/Architecture/protected-domain-contract.sh
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '${{ matrix.php-version }}', coverage: none}
+      - name: PHP syntax
+        run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: php tests/Architecture/architecture-smoke.php
+      - run: php tests/Architecture/page-schema-smoke.php
+      - run: php tests/Architecture/runtime-bridge-smoke.php
+      - run: php tests/Architecture/compatibility-comparator-smoke.php
+      - run: php tests/Architecture/ud-060-starter-schemas-smoke.php
+      - run: php tests/Architecture/e6-site-builder-smoke.php
+      - run: php tests/Architecture/e7-interaction-smoke.php
+      - run: php tests/Architecture/e8-workflow-smoke.php
+      - run: php tests/Architecture/e9-assets-smoke.php
+      - run: php tests/Architecture/e10-permissions-smoke.php
+      - run: php tests/Architecture/e11-quality-smoke.php
+      - run: php tests/Architecture/e12-ai-smoke.php
+      - run: php tests/Architecture/e13-portability-smoke.php
+      - name: UD-115 security audit
+        run: bash tests/Architecture/e14-security-audit.sh
+      - name: UD-116 performance budget
+        run: php tests/Architecture/e14-performance-budget.php
+      - name: UD-117 migration rollback
+        run: php tests/Architecture/e14-migration-rollback-smoke.php
+      - name: UD-118/119 MVP and v1 E2E
+        run: php tests/Architecture/e14-e2e-smoke.php
+      - name: Public runtime JavaScript syntax
+        run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
+
+  browser-engine-qa:
+    name: E14 browser engines (Chromium/Firefox/WebKit)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: agent/release-0.7.1
-          fetch-depth: 0
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.0'
-          coverage: none
-      - name: Apply release metadata
-        run: python3 .github/scripts/release_071.py
-      - name: Validate save-summary release
+          node-version: '20'
+      - name: Install Playwright test runner
         run: |
-          set -euo pipefail
-          php -l hangar18-manager.php
-          node --check assets/admin.js
-          node --check assets/site-builder-runtime.js
-          node --check assets/interaction-runtime.js
-          bash tests/Architecture/e8-save-summary-contract.sh
-          bash tests/Architecture/protected-domain-contract.sh
-          find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
-          php tests/Architecture/architecture-smoke.php
-          php tests/Architecture/page-schema-smoke.php
-          php tests/Architecture/runtime-bridge-smoke.php
-          php tests/Architecture/compatibility-comparator-smoke.php
-          php tests/Architecture/ud-060-starter-schemas-smoke.php
-          php tests/Architecture/e6-site-builder-smoke.php
-          php tests/Architecture/e7-interaction-smoke.php
-          php tests/Architecture/e8-workflow-smoke.php
-          php tests/Architecture/e9-assets-smoke.php
-          php tests/Architecture/e10-permissions-smoke.php
-          php tests/Architecture/e11-quality-smoke.php
-          php tests/Architecture/e12-ai-smoke.php
-          php tests/Architecture/e13-portability-smoke.php
-          bash tests/Architecture/e14-security-audit.sh
-          php tests/Architecture/e14-performance-budget.php
-          php tests/Architecture/e14-migration-rollback-smoke.php
-          php tests/Architecture/e14-e2e-smoke.php
-          grep -F 'Version: 0.7.1' hangar18-manager.php
-          grep -F "const VERSION = '0.7.1';" hangar18-manager.php
-      - name: Build ZIP and update manifest
-        run: |
-          set -euo pipefail
-          rm -rf .build
-          mkdir -p .build/hangar18-manager dist
-          rm -f dist/hangar18-manager.zip
-          cp hangar18-manager.php readme.txt .build/hangar18-manager/
-          cp -R assets src .build/hangar18-manager/
-          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
-          unzip -t dist/hangar18-manager.zip
-          unzip -l dist/hangar18-manager.zip | grep -F 'hangar18-manager/assets/admin.js'
-          unzip -l dist/hangar18-manager.zip | grep -F 'hangar18-manager/src/Workflow/RevisionService.php'
-          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"; export SHA
-          PUBLISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; export PUBLISHED
-          python3 - <<'PY'
-          import json, os
-          data = {
-            'schema_version':'1.0',
-            'plugin':'hangar18-manager',
-            'version':'0.7.1',
-            'min_wp':'6.4',
-            'min_php':'8.0',
-            'published_utc':os.environ['PUBLISHED'],
-            'package_path':'dist/hangar18-manager.zip',
-            'package_sha256':os.environ['SHA'],
-            'changelog':[
-              'Gem og Ctrl/Cmd+S kræver ikke længere en håndskrevet ændringsbeskrivelse.',
-              'Editor laver automatisk et kort change-summary for titel, elementer, indhold, typografi, design, layout, responsive og dynamic-data ændringer.',
-              'Server-side fallback laver resumé hvis browserresumé mangler.',
-              'Versionshistorikken gemmer AutoChangeSummary og UserChangeNote separat samt backward-compatible ChangeNote.',
-              'Save-summary QA er grøn på PHP 8.0/8.2/8.3; Vehicle/Event/Gallery-kontrakten er uændret.'
-            ]
-          }
-          open('update.json','w',encoding='utf-8').write(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
-          PY
-          python3 -m json.tool update.json >/dev/null
-          rm -rf .build
-      - name: Commit product release and remove temporary branch-specific QA
-        run: |
-          set -euo pipefail
-          git config user.name 'hangar18-build'
-          git config user.email 'actions@users.noreply.github.com'
-          git checkout 82dee7c4e38e242d81dada6a75b66616501367a5 -- .github/workflows/architecture-foundation-qa.yml
-          git rm .github/scripts/release_071.py
-          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip .github/workflows/architecture-foundation-qa.yml
-          git diff --cached --check
-          git commit -m 'Release Hangar18 Manager 0.7.1'
-          git push origin HEAD:agent/release-0.7.1
+          npm init -y >/dev/null 2>&1
+          npm install --no-save @playwright/test
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run UD-113/114 browser and keyboard matrix
+        run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs

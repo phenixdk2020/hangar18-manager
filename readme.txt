@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.7.0
+Version: 0.7.1
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.1 – Automatisk gemmeresumé ==
+
+Nyt:
+- Håndskrevet ændringsbeskrivelse er ikke længere obligatorisk ved Gem eller Ctrl/Cmd+S.
+- Editor sammenligner indlæst og aktuel side og laver automatisk et kort resumé af titel, tilføjede/fjernede/flyttede elementer samt indhold, typografi, design, layout, responsive og dynamic-data ændringer.
+- Det automatiske resumé vises før gemning og genberegnes ved submit.
+- Serveren laver fallback-resumé, hvis browserresuméet mangler.
+- Versionshistorikken gemmer AutoChangeSummary og UserChangeNote separat og bevarer kombineret ChangeNote for bagudkompatibilitet.
+- Egen kommentar er valgfri og bruges til fx begrundelse eller oplysninger som ikke kan udledes af side-state.
+- Save-summary QA er grøn på PHP 8.0, 8.2 og 8.3, og Vehicle/Event/Gallery-kontrakten er uændret.
 
 
 == Version 0.7.0 – E14 Automated QA baseline ==
