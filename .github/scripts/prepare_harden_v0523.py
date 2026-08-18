@@ -14,7 +14,7 @@ js=once(js,
 """
 new="""# Canvas status badge; actual frontend is server-resolved, while editor values remain explicit fallback controls.
 canvas_start=js.index('    function canvasBuildPreviewContent($row, $preview) {')
-canvas_end=js.index('    function canvasMediaFocalSettings', canvas_start)
+canvas_end=js.index('    function renderCanvasPreview($row) {', canvas_start)
 canvas_block=js[canvas_start:canvas_end]
 canvas_block=once(canvas_block,
 \"\"\"        const type = String($row.attr('data-section-type') || 'text');
