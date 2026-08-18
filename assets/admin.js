@@ -4593,3 +4593,12 @@ jQuery(function ($) {
     $qbFieldV0525.on('change',function(){$qbOperatorV0525.attr('data-current','eq');refreshQbOperatorsV0525();});$qbOperatorV0525.on('change',function(){$(this).attr('data-current',String($(this).val()||'eq'));});refreshQbOperatorsV0525();
 
 });
+
+
+    /* v0.5.28 – UD-054 Relation / Group / Repeater fields */
+    function refreshStructuredDataFieldRowV0528($row){if(!$row||!$row.length)return;const type=String($row.find('.h18-data-field-type').val()||'text');$row.find('.h18-data-relation-config').toggle(type==='relation');$row.find('.h18-data-nested-config').toggle(type==='group'||type==='repeater');$row.find('.h18-data-repeater-config').toggle(type==='repeater');}
+    $('.h18-data-field-row').each(function(){refreshStructuredDataFieldRowV0528($(this));});
+    $(document).on('change','.h18-data-field-type',function(){refreshStructuredDataFieldRowV0528($(this).closest('.h18-data-field-row'));});
+    $(document).on('click','#h18-data-add-field',function(){window.setTimeout(function(){$('.h18-data-field-row').each(function(){refreshStructuredDataFieldRowV0528($(this));});},0);});
+    $(document).on('click','.h18-data-repeater-add',function(){const $rep=$(this).closest('.h18-data-repeater');const max=Math.max(1,Math.min(20,parseInt($rep.attr('data-max-items'),10)||10));const $items=$rep.find('>.h18-data-repeater-items');if($items.children('.h18-data-repeater-item').length>=max){window.alert('Repeateren har nået sin maksimumgrænse på '+max+' rækker.');return;}const tpl=$rep.find('>template.h18-data-repeater-template').get(0);if(!tpl)return;let next=0;$items.children('.h18-data-repeater-item').each(function(){next=Math.max(next,(parseInt($(this).attr('data-item-index'),10)||0)+1);});const html=tpl.innerHTML.replaceAll('__ITEM__',String(next));const $row=$(html.trim());$row.find('legend').first().text('Række '+(next+1));$items.append($row);});
+    $(document).on('click','.h18-data-repeater-remove',function(){const $items=$(this).closest('.h18-data-repeater-items');$(this).closest('.h18-data-repeater-item').remove();$items.children('.h18-data-repeater-item').each(function(i){$(this).find('legend').first().text('Række '+(i+1));});});

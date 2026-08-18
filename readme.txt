@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.5.27
+Version: 0.5.28
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -1118,3 +1118,13 @@ Kompatibilitet og sikkerhed:
 - Conditions er præsentationslogik og er eksplicit ikke en authorization/security boundary.
 - Maks. 8 conditions pr. element; ukendte typer/operatorer droppes under normalisering.
 - Page-editor schema: 1.21.
+
+
+## v0.5.28 – E5 UD-054 Relation / Group / Repeater fields
+- Datatype schema builder understøtter nu Relation, Group og Repeater ud over de fem primitive felttyper.
+- Relation kræver en eksisterende mål-datatype og gemmer et valideret entry-ID; mål-datatyper kan ikke slettes mens relationer peger på dem.
+- Group og Repeater bruger op til 12 typed underfelter af text/number/bool/date/media.
+- Repeater er bounded til 1–20 rækker pr. schemafelt og har add/remove UI i entry-editoren.
+- Nested værdier bruger samme server-side sanitizer som primitive felter og Required-validering.
+- Query Builder v1 skjuler/rejecter strukturerede felter; relation/advanced query udvides separat i UD-056.
+- Data SchemaVersion løftes til 2; page-editor schema forbliver 1.21.

@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.27
+ * Version: 0.5.28
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.27';
+    const VERSION = '0.5.28';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -6413,7 +6413,62 @@ HTML;
             'bool' => 'Ja/nej',
             'date' => 'Dato',
             'media' => 'Medie / billede',
+            'relation' => 'Relation',
+            'group' => 'Gruppe',
+            'repeater' => 'Repeater',
         ];
+    }
+
+    private function custom_data_nested_field_types() {
+        return [
+            'text' => 'Tekst',
+            'number' => 'Tal',
+            'bool' => 'Ja/nej',
+            'date' => 'Dato',
+            'media' => 'Medie / billede',
+        ];
+    }
+
+    private function normalize_custom_data_nested_fields($raw) {
+        if (is_string($raw)) {
+            $lines = preg_split('/\r\n|\r|\n/', $raw);
+            $parsed = [];
+            foreach ((array) $lines as $line) {
+                $line = trim((string) $line); if ($line === '') { continue; }
+                $parts = array_map('trim', explode('|', $line));
+                $parsed[] = [
+                    'Key' => $parts[0] ?? '',
+                    'Label' => $parts[1] ?? ($parts[0] ?? ''),
+                    'Type' => $parts[2] ?? 'text',
+                    'Required' => in_array(strtolower((string) ($parts[3] ?? '')), ['1','true','yes','ja','required'], true),
+                ];
+            }
+            $raw = $parsed;
+        }
+        if (!is_array($raw)) { return []; }
+        $allowed = $this->custom_data_nested_field_types();
+        $fields = []; $used = [];
+        foreach (array_slice(array_values($raw), 0, 12) as $item) {
+            if (!is_array($item)) { continue; }
+            $key = sanitize_key((string) ($item['Key'] ?? ''));
+            $label = sanitize_text_field((string) ($item['Label'] ?? ''));
+            $type = sanitize_key((string) ($item['Type'] ?? 'text'));
+            if ($key === '' || !preg_match('/^[a-z0-9][a-z0-9_-]{0,47}$/', $key)) { throw new RuntimeException('Underfelter skal have en gyldig nøgle på højst 48 tegn.'); }
+            if (isset($used[$key])) { throw new RuntimeException("Underfelt-nøglen '{$key}' findes mere end én gang."); }
+            if ($label === '') { throw new RuntimeException("Underfeltet '{$key}' mangler et navn."); }
+            if (!isset($allowed[$type])) { throw new RuntimeException("Underfeltet '{$key}' bruger en ikke-tilladt nested felttype."); }
+            $used[$key] = true;
+            $fields[] = ['Key'=>$key,'Label'=>$label,'Type'=>$type,'Required'=>!empty($item['Required']),'Order'=>count($fields)+1];
+        }
+        return $fields;
+    }
+
+    private function custom_data_nested_schema_text(array $fields) {
+        $lines = [];
+        foreach ($fields as $field) {
+            $lines[] = (string) $field['Key'] . '|' . (string) $field['Label'] . '|' . (string) $field['Type'] . '|' . (!empty($field['Required']) ? 'required' : '');
+        }
+        return implode("\n", $lines);
     }
 
     private function normalize_custom_data_type(array $raw, $existing_key = '') {
@@ -6446,11 +6501,19 @@ HTML;
             if ($label === '') { throw new RuntimeException("Feltet '{$field_key}' mangler et navn."); }
             if (!isset($allowed[$type])) { throw new RuntimeException("Feltet '{$field_key}' har en ukendt felttype."); }
             $used[$field_key] = true;
+            $relation_target = $type === 'relation' ? sanitize_key((string) ($field['RelationTargetType'] ?? '')) : '';
+            if ($type === 'relation' && $relation_target === '') { throw new RuntimeException("Relationsfeltet '{$field_key}' skal vælge en mål-datatype."); }
+            $nested_raw = $field['NestedFields'] ?? ($field['NestedSchemaText'] ?? []);
+            $nested_fields = in_array($type, ['group','repeater'], true) ? $this->normalize_custom_data_nested_fields($nested_raw) : [];
+            if (in_array($type, ['group','repeater'], true) && !$nested_fields) { throw new RuntimeException("Feltet '{$field_key}' skal have mindst ét underfelt."); }
             $fields[] = [
                 'Key' => $field_key,
                 'Label' => $label,
                 'Type' => $type,
                 'Required' => !empty($field['Required']),
+                'RelationTargetType' => $relation_target,
+                'NestedFields' => $nested_fields,
+                'RepeaterMaxItems' => $type === 'repeater' ? $this->clamp_int($field['RepeaterMaxItems'] ?? 10, 1, 20, 10) : 0,
                 'Order' => count($fields) + 1,
             ];
         }
@@ -6460,7 +6523,7 @@ HTML;
             'SingularLabel' => $singular,
             'PluralLabel' => $plural,
             'Fields' => $fields,
-            'SchemaVersion' => 1,
+            'SchemaVersion' => 2,
         ];
     }
 
@@ -6480,6 +6543,22 @@ HTML;
         ksort($types, SORT_NATURAL | SORT_FLAG_CASE);
         return $types;
     }
+
+
+
+    private function custom_data_relation_schema_usage($target_key) {
+        $target_key = sanitize_key((string) $target_key);
+        if ($target_key === '') { return []; }
+        $usage = [];
+        foreach ($this->get_custom_data_types() as $type_key => $type) {
+            foreach ((array) ($type['Fields'] ?? []) as $field) {
+                if (($field['Type'] ?? '') !== 'relation' || sanitize_key((string) ($field['RelationTargetType'] ?? '')) !== $target_key) { continue; }
+                $usage[] = ['TypeKey'=>$type_key,'TypeLabel'=>(string)$type['SingularLabel'],'FieldKey'=>(string)$field['Key'],'FieldLabel'=>(string)$field['Label']];
+            }
+        }
+        return $usage;
+    }
+
 
     private function custom_data_entry_query($type_key, $limit = 100) {
         return get_posts([
@@ -6517,12 +6596,61 @@ HTML;
         return $values;
     }
 
+
+
+    private function custom_data_structured_has_content($value) {
+        if (is_array($value)) {
+            foreach ($value as $item) { if ($this->custom_data_structured_has_content($item)) { return true; } }
+            return false;
+        }
+        if (is_bool($value)) { return true; }
+        return $value !== null && trim((string) $value) !== '';
+    }
+
+    private function sanitize_custom_data_nested_values(array $fields, $raw, array &$errors, $path) {
+        $raw = is_array($raw) ? $raw : [];
+        $result = [];
+        foreach ($fields as $nested) {
+            $nested_errors = [];
+            $nested_value = $this->sanitize_custom_data_value($nested, $raw[(string)$nested['Key']] ?? null, $nested_errors);
+            foreach ($nested_errors as $error) { $errors[] = sanitize_text_field((string) $path) . ': ' . $error; }
+            $result[(string)$nested['Key']] = $nested_value;
+        }
+        return $result;
+    }
+
+
     private function sanitize_custom_data_value(array $field, $value, array &$errors) {
         $key = (string) $field['Key'];
         $label = (string) $field['Label'];
         $type = (string) $field['Type'];
         $required = !empty($field['Required']);
         if ($type === 'bool') { return !empty($value); }
+        if ($type === 'relation') {
+            $relation_id = absint(is_scalar($value) ? $value : 0);
+            if ($required && $relation_id <= 0) { $errors[] = "Feltet '{$label}' er obligatorisk."; return 0; }
+            if ($relation_id <= 0) { return 0; }
+            $target = sanitize_key((string) ($field['RelationTargetType'] ?? ''));
+            if ($target === '' || !$this->custom_data_entry_for_type($relation_id, $target)) { $errors[] = "Feltet '{$label}' peger ikke på en gyldig relation."; return 0; }
+            return $relation_id;
+        }
+        if ($type === 'group') {
+            $nested = $this->sanitize_custom_data_nested_values((array) ($field['NestedFields'] ?? []), is_array($value) ? $value : [], $errors, $label);
+            if ($required && !$this->custom_data_structured_has_content($nested)) { $errors[] = "Feltet '{$label}' er obligatorisk."; }
+            return $nested;
+        }
+        if ($type === 'repeater') {
+            $source = is_array($value) && isset($value['items']) && is_array($value['items']) ? $value['items'] : (is_array($value) ? $value : []);
+            $limit = $this->clamp_int($field['RepeaterMaxItems'] ?? 10, 1, 20, 10);
+            $items = [];
+            foreach (array_slice(array_values($source), 0, $limit) as $index => $item) {
+                if (!is_array($item) || !empty($item['_remove'])) { continue; }
+                $nested = $this->sanitize_custom_data_nested_values((array) ($field['NestedFields'] ?? []), $item, $errors, $label . ' #' . ($index + 1));
+                if ($this->custom_data_structured_has_content($nested)) { $items[] = $nested; }
+            }
+            if ($required && !$items) { $errors[] = "Feltet '{$label}' skal have mindst én række."; }
+            return array_slice($items, 0, $limit);
+        }
         $value = is_scalar($value) ? trim((string) $value) : '';
         if ($required && $value === '') { $errors[] = "Feltet '{$label}' er obligatorisk."; return ''; }
         if ($value === '') { return $type === 'media' ? 0 : ''; }
@@ -6570,6 +6698,12 @@ HTML;
             $type = $this->normalize_custom_data_type($raw, $existing_key);
             $types = $this->get_custom_data_types();
             if ($existing_key === '' && isset($types[$type['Key']])) { throw new RuntimeException('Der findes allerede en datatype med denne nøgle.'); }
+            $known_targets = $types; $known_targets[$type['Key']] = $type;
+            foreach ($type['Fields'] as $field) {
+                if (($field['Type'] ?? '') === 'relation' && !isset($known_targets[(string) ($field['RelationTargetType'] ?? '')])) {
+                    throw new RuntimeException("Relationsfeltet '{$field['Label']}' peger på en datatype, der ikke findes.");
+                }
+            }
             $now = gmdate('c');
             $created = $existing_key !== '' && isset($types[$existing_key]) ? (string) ($types[$existing_key]['CreatedUtc'] ?? '') : $now;
             $type['CreatedUtc'] = $created !== '' ? $created : $now;
@@ -6594,6 +6728,8 @@ HTML;
         if ($key === '' || !isset($types[$key])) { $this->set_notice('error', 'Datatypen blev ikke fundet.'); $this->custom_data_redirect(); }
         $count = $this->custom_data_entry_count($key);
         if ($count > 0) { $this->set_notice('error', "Datatypen kan ikke slettes, fordi den har {$count} entries."); $this->custom_data_redirect($key); }
+        $relation_usage = $this->custom_data_relation_schema_usage($key);
+        if ($relation_usage) { $this->set_notice('error', 'Datatypen kan ikke slettes, fordi ' . count($relation_usage) . ' relationsfelt(er) stadig peger på den.'); $this->custom_data_redirect($key); }
         $name = (string) $types[$key]['SingularLabel'];
         unset($types[$key]);
         update_option(self::CUSTOM_DATA_TYPES_OPTION, $types, false);
@@ -6657,24 +6793,43 @@ HTML;
         $this->custom_data_redirect($type_key);
     }
 
-    private function render_custom_data_field_input(array $field, $value) {
-        $key = (string) $field['Key'];
-        $name = 'data_values[' . $key . ']';
+
+
+    private function render_custom_data_value_input(array $field, $value, $name) {
         $type = (string) $field['Type'];
         if ($type === 'bool') {
-            echo '<input type="hidden" name="' . esc_attr($name) . '" value="0" /><label class="h18-data-bool"><input type="checkbox" name="' . esc_attr($name) . '" value="1" ' . checked(!empty($value), true, false) . ' /> Ja</label>';
-            return;
+            echo '<input type="hidden" name="' . esc_attr($name) . '" value="0" /><label class="h18-data-bool"><input type="checkbox" name="' . esc_attr($name) . '" value="1" ' . checked(!empty($value), true, false) . ' /> Ja</label>'; return;
         }
         if ($type === 'number') { echo '<input type="number" step="any" name="' . esc_attr($name) . '" value="' . esc_attr((string) $value) . '" />'; return; }
         if ($type === 'date') { echo '<input type="date" name="' . esc_attr($name) . '" value="' . esc_attr((string) $value) . '" />'; return; }
         if ($type === 'media') {
-            $media_id = absint($value);
-            echo '<div class="h18-data-media-field"><input class="h18-data-media-id" type="hidden" name="' . esc_attr($name) . '" value="' . esc_attr($media_id) . '" /><div class="h18-data-media-preview">';
-            if ($media_id) { echo wp_get_attachment_image($media_id, 'thumbnail'); }
-            echo '</div><button type="button" class="button h18-data-media-pick">Vælg medie</button> <button type="button" class="button-link-delete h18-data-media-clear">Fjern</button></div>';
-            return;
+            $media_id = absint($value); echo '<div class="h18-data-media-field"><input class="h18-data-media-id" type="hidden" name="' . esc_attr($name) . '" value="' . esc_attr($media_id) . '" /><div class="h18-data-media-preview">'; if ($media_id) { echo wp_get_attachment_image($media_id, 'thumbnail'); } echo '</div><button type="button" class="button h18-data-media-pick">Vælg medie</button> <button type="button" class="button-link-delete h18-data-media-clear">Fjern</button></div>'; return;
         }
-        echo '<input type="text" name="' . esc_attr($name) . '" value="' . esc_attr((string) $value) . '" />';
+        echo '<input type="text" name="' . esc_attr($name) . '" value="' . esc_attr(is_scalar($value) ? (string) $value : '') . '" />';
+    }
+
+    private function render_custom_data_nested_inputs(array $fields, $values, $name_prefix) {
+        $values = is_array($values) ? $values : [];
+        echo '<div class="h18-data-nested-fields">';
+        foreach ($fields as $nested) {
+            $key = (string) $nested['Key']; echo '<div class="h18-field"><label><strong>' . esc_html((string)$nested['Label']) . (!empty($nested['Required']) && $nested['Type'] !== 'bool' ? ' *' : '') . '</strong><small>' . esc_html($this->custom_data_nested_field_types()[$nested['Type']] ?? $nested['Type']) . '</small></label>';
+            $this->render_custom_data_value_input($nested, $values[$key] ?? '', $name_prefix . '[' . $key . ']'); echo '</div>';
+        }
+        echo '</div>';
+    }
+
+
+    private function render_custom_data_field_input(array $field, $value) {
+        $key = (string) $field['Key']; $name = 'data_values[' . $key . ']'; $type = (string) $field['Type'];
+        if ($type === 'relation') {
+            $target = sanitize_key((string) ($field['RelationTargetType'] ?? '')); $entries = $target !== '' ? $this->custom_data_entry_query($target, 200) : []; $current = absint($value);
+            echo '<select name="' . esc_attr($name) . '"><option value="0">Ingen relation</option>'; foreach ($entries as $entry) { echo '<option value="' . (int)$entry->ID . '" ' . selected($current,(int)$entry->ID,false) . '>' . esc_html((string)$entry->post_title) . '</option>'; } echo '</select>'; return;
+        }
+        if ($type === 'group') { echo '<fieldset class="h18-data-group"><legend>' . esc_html((string)$field['Label']) . '</legend>'; $this->render_custom_data_nested_inputs((array)($field['NestedFields']??[]),is_array($value)?$value:[],$name); echo '</fieldset>'; return; }
+        if ($type === 'repeater') {
+            $items=is_array($value)?array_values($value):[]; if(!$items)$items=[[]]; $limit=$this->clamp_int($field['RepeaterMaxItems']??10,1,20,10); echo '<div class="h18-data-repeater" data-max-items="'.(int)$limit.'"><div class="h18-data-repeater-items">'; foreach(array_slice($items,0,$limit) as $i=>$item){echo '<fieldset class="h18-data-repeater-item" data-item-index="'.(int)$i.'"><legend>Række '.((int)$i+1).'</legend>'; $this->render_custom_data_nested_inputs((array)($field['NestedFields']??[]),is_array($item)?$item:[],$name.'[items]['.(int)$i.']'); echo '<button type="button" class="button-link-delete h18-data-repeater-remove">Fjern række</button></fieldset>';} echo '</div><template class="h18-data-repeater-template"><fieldset class="h18-data-repeater-item" data-item-index="__ITEM__"><legend>Række</legend>'; $this->render_custom_data_nested_inputs((array)($field['NestedFields']??[]),[],$name.'[items][__ITEM__]'); echo '<button type="button" class="button-link-delete h18-data-repeater-remove">Fjern række</button></fieldset></template><button type="button" class="button h18-data-repeater-add">+ Tilføj række</button></div>'; return;
+        }
+        $this->render_custom_data_value_input($field,$value,$name);
     }
 
 
@@ -6729,7 +6884,7 @@ HTML;
         $sort = in_array($sort_raw, ['title','modified','created'], true) ? $sort_raw : '';
         if ($sort === '' && strpos($sort_raw, 'field:') === 0) {
             $sort_field = sanitize_key(substr($sort_raw, 6));
-            if ($sort_field !== '' && isset($field_map[$sort_field]) && !in_array((string) $field_map[$sort_field]['Type'], ['bool'], true)) {
+            if ($sort_field !== '' && isset($field_map[$sort_field]) && in_array((string) $field_map[$sort_field]['Type'], ['text','number','date','media'], true)) {
                 $sort = 'field:' . $sort_field;
             }
         }
@@ -6838,7 +6993,7 @@ HTML;
         $entry_values = $entry && $selected ? $this->custom_data_entry_values($entry->ID, $selected) : [];
         $entries = $selected ? $this->custom_data_entry_query($selected['Key'], 100) : [];
         $can_schema = current_user_can('manage_options');
-        $blank_field = ['Key'=>'felt','Label'=>'Felt','Type'=>'text','Required'=>false,'Order'=>1];
+        $blank_field = ['Key'=>'felt','Label'=>'Felt','Type'=>'text','Required'=>false,'RelationTargetType'=>'','NestedFields'=>[],'RepeaterMaxItems'=>10,'Order'=>1];
         $query_preview = !empty($_GET['query_preview']) && $selected;
         $qb_raw = [
             'Type' => $selected ? $selected['Key'] : '',
@@ -6858,7 +7013,7 @@ HTML;
         <div class="wrap h18-admin h18-data-admin">
             <h1>Data</h1>
             <?php $this->render_notice(); ?>
-            <div class="h18-help-box"><strong>E5 Dynamic CMS:</strong> Datatyperne her er generiske schemas. v0.5.23 understøtter text, number, bool, date og media samt valideret CRUD. Senere binding/query-funktioner bygges direkte oven på samme datamodel.</div>
+            <div class="h18-help-box"><strong>E5 Dynamic CMS:</strong> Datatyperne understøtter primitive felter samt Relation, Group og Repeater. Relationer peger på en konkret datatype; Group/Repeater bruger validerede typed underfelter.</div>
             <nav class="h18-page-tabs h18-data-type-tabs" aria-label="Vælg datatype">
                 <?php foreach ($types as $type_key => $type) : ?><a class="<?php echo $selected && $selected['Key'] === $type_key ? 'is-active' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-data&type=' . rawurlencode($type_key))); ?>"><?php echo esc_html($type['PluralLabel']); ?></a><?php endforeach; ?>
                 <?php if ($can_schema) : ?><a class="<?php echo $is_new ? 'is-active' : ''; ?>" href="<?php echo esc_url(admin_url('admin.php?page=hangar18-data&type=new')); ?>">+ Ny datatype</a><?php endif; ?>
@@ -6889,10 +7044,10 @@ HTML;
                     <form method="get" action="<?php echo esc_url(admin_url('admin.php')); ?>" class="h18-data-query-form">
                         <input type="hidden" name="page" value="hangar18-data" /><input type="hidden" name="type" value="<?php echo esc_attr($selected['Key']); ?>" /><input type="hidden" name="query_preview" value="1" />
                         <div class="h18-module-fields-grid h18-module-fields-grid--four">
-                            <div class="h18-field"><label><strong>Filterfelt</strong></label><select id="h18-qb-field" name="qb_field"><option value="">Intet filter</option><?php foreach ($selected['Fields'] as $field) : ?><option value="<?php echo esc_attr($field['Key']); ?>" data-field-type="<?php echo esc_attr($field['Type']); ?>" <?php selected((string) $qb_raw['Field'], (string) $field['Key']); ?>><?php echo esc_html($field['Label'] . ' · ' . $field['Type']); ?></option><?php endforeach; ?></select></div>
+                            <div class="h18-field"><label><strong>Filterfelt</strong></label><select id="h18-qb-field" name="qb_field"><option value="">Intet filter</option><?php foreach ($selected['Fields'] as $field) : if (!in_array($field['Type'], ['text','number','bool','date','media'], true)) continue; ?><option value="<?php echo esc_attr($field['Key']); ?>" data-field-type="<?php echo esc_attr($field['Type']); ?>" <?php selected((string) $qb_raw['Field'], (string) $field['Key']); ?>><?php echo esc_html($field['Label'] . ' · ' . $field['Type']); ?></option><?php endforeach; ?></select></div>
                             <div class="h18-field"><label><strong>Operator</strong></label><select id="h18-qb-operator" name="qb_operator" data-current="<?php echo esc_attr((string) $qb_raw['Operator']); ?>"></select></div>
                             <div class="h18-field"><label><strong>Værdi</strong></label><input id="h18-qb-value" type="text" name="qb_value" value="<?php echo esc_attr((string) $qb_raw['Value']); ?>" /><p class="description">Bool: ja/nej. Dato: ÅÅÅÅ-MM-DD. Media: attachment-ID.</p></div>
-                            <div class="h18-field"><label><strong>Sortér</strong></label><select name="qb_sort"><option value="modified" <?php selected($qb_raw['Sort'],'modified'); ?>>Senest ændret</option><option value="created" <?php selected($qb_raw['Sort'],'created'); ?>>Oprettet</option><option value="title" <?php selected($qb_raw['Sort'],'title'); ?>>Titel</option><?php foreach ($selected['Fields'] as $field) : if ($field['Type'] === 'bool') continue; ?><option value="field:<?php echo esc_attr($field['Key']); ?>" <?php selected($qb_raw['Sort'],'field:' . $field['Key']); ?>><?php echo esc_html($field['Label']); ?></option><?php endforeach; ?></select></div>
+                            <div class="h18-field"><label><strong>Sortér</strong></label><select name="qb_sort"><option value="modified" <?php selected($qb_raw['Sort'],'modified'); ?>>Senest ændret</option><option value="created" <?php selected($qb_raw['Sort'],'created'); ?>>Oprettet</option><option value="title" <?php selected($qb_raw['Sort'],'title'); ?>>Titel</option><?php foreach ($selected['Fields'] as $field) : if ($field['Type'] === 'bool') continue; ?><?php if (!in_array($field['Type'], ['text','number','date','media'], true)) continue; ?><option value="field:<?php echo esc_attr($field['Key']); ?>" <?php selected($qb_raw['Sort'],'field:' . $field['Key']); ?>><?php echo esc_html($field['Label']); ?></option><?php endforeach; ?></select></div>
                             <div class="h18-field"><label><strong>Retning</strong></label><select name="qb_order"><option value="DESC" <?php selected(strtoupper((string)$qb_raw['Order']),'DESC'); ?>>Faldende</option><option value="ASC" <?php selected(strtoupper((string)$qb_raw['Order']),'ASC'); ?>>Stigende</option></select></div>
                             <div class="h18-field"><label><strong>Limit</strong></label><input type="number" name="qb_limit" min="1" max="100" value="<?php echo esc_attr((int) $qb_raw['Limit']); ?>" /></div>
                         </div>
@@ -6952,8 +7107,11 @@ HTML;
             <span class="dashicons dashicons-move h18-data-field-drag" title="Flyt felt"></span>
             <div class="h18-field"><label><strong>Nøgle</strong></label><input class="h18-data-field-key" type="text" name="<?php echo esc_attr($prefix); ?>[Key]" value="<?php echo esc_attr($field['Key']); ?>" required /></div>
             <div class="h18-field"><label><strong>Navn</strong></label><input class="h18-data-field-label" type="text" name="<?php echo esc_attr($prefix); ?>[Label]" value="<?php echo esc_attr($field['Label']); ?>" required /></div>
-            <div class="h18-field"><label><strong>Type</strong></label><select name="<?php echo esc_attr($prefix); ?>[Type]"><?php foreach ($this->custom_data_field_types() as $type_key => $type_label) : ?><option value="<?php echo esc_attr($type_key); ?>" <?php selected($field['Type'], $type_key); ?>><?php echo esc_html($type_label); ?></option><?php endforeach; ?></select></div>
+            <div class="h18-field"><label><strong>Type</strong></label><select class="h18-data-field-type" name="<?php echo esc_attr($prefix); ?>[Type]"><?php foreach ($this->custom_data_field_types() as $type_key => $type_label) : ?><option value="<?php echo esc_attr($type_key); ?>" <?php selected($field['Type'], $type_key); ?>><?php echo esc_html($type_label); ?></option><?php endforeach; ?></select></div>
             <label class="h18-data-required"><input type="checkbox" name="<?php echo esc_attr($prefix); ?>[Required]" value="1" <?php checked(!empty($field['Required'])); ?> /> Obligatorisk</label>
+            <div class="h18-field h18-data-relation-config"><label><strong>Mål-datatype</strong></label><select name="<?php echo esc_attr($prefix); ?>[RelationTargetType]"><option value="">Vælg datatype</option><?php foreach ($this->get_custom_data_types() as $target_key => $target_type) : ?><option value="<?php echo esc_attr($target_key); ?>" <?php selected((string)($field['RelationTargetType']??''),$target_key); ?>><?php echo esc_html($target_type['PluralLabel']); ?></option><?php endforeach; ?></select></div>
+            <div class="h18-field h18-data-nested-config"><label><strong>Underfelter</strong></label><textarea name="<?php echo esc_attr($prefix); ?>[NestedSchemaText]" rows="4" placeholder="key|Navn|text|required"><?php echo esc_textarea($this->custom_data_nested_schema_text((array)($field['NestedFields']??[]))); ?></textarea><small>Én linje pr. felt: key|Navn|text|required. Tilladt: text, number, bool, date, media.</small></div>
+            <div class="h18-field h18-data-repeater-config"><label><strong>Maks. rækker</strong></label><input type="number" min="1" max="20" name="<?php echo esc_attr($prefix); ?>[RepeaterMaxItems]" value="<?php echo esc_attr((int)($field['RepeaterMaxItems']??10)); ?>" /></div>
             <input class="h18-data-field-remove" type="hidden" name="<?php echo esc_attr($prefix); ?>[Remove]" value="0" />
             <button type="button" class="button-link-delete h18-data-remove-field">Fjern</button>
         </div>
@@ -7169,6 +7327,7 @@ HTML;
 
     private function page_condition_value_is_empty($value, $field_type = '') {
         if ($value === null || $value === '') { return true; }
+        if (is_array($value) && !$value) { return true; }
         if ($field_type === 'media' && absint($value) <= 0) { return true; }
         return false;
     }
