@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.7.5",
+  "version": "0.7.6",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T16:24:48Z",
+  "published_utc": "2026-08-18T16:38:59Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "b4cf13f0799bfcca2596506f6dae10a3aa9d833487fbbecffe3715386b4c7969",
+  "package_sha256": "372f85f1f88c73016085d7fe069572e5b9837aad91196dd9eeb35d5157ef6645",
   "changelog": [
-    "I2 Visual Header/Footer Builder i shadow mode med samme Sections-tree som sideeditoren.",
-    "Opret/rediger/slet, add/remove, drag/drop og tastaturvenlig op/ned-rækkefølge.",
-    "Nested Parent Key preview samt persistent typography/design/farver/alignment/padding.",
-    "Dedikerede Ultimate Designer admin-assets indlæses kun på builder-siden.",
-    "Capability/nonce/sanitization security gate er grøn; ingen frontend/global cutover eller sidekonvertering."
+    "I3 Menu UI v2 i shadow mode med adskilt menu-data og presentation.",
+    "Desktop/mobile/motion presets, nested drag/reorder/indent og mega-panel ComponentId.",
+    "Keyboard-preview med piletaster/submenu/Escape samt ikon/badge preview.",
+    "Dangerous javascript/data/vbscript URL-schemes afvises; capability/nonce/sanitization gates er grønne.",
+    "Offentlig legacy-menu og eksisterende sider/Vehicle/Event/Gallery forbliver uændrede."
   ]
 }

@@ -1,7 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.7.5
+Version: 0.7.6
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.6 – I3 Menu UI v2 ==
+
+Nyt:
+- Shadow-only Menu UI v2 oven på den generiske MenuService.
+- Desktop presets: klassisk, floating pill, mega-menu og side rail.
+- Mobil presets: klassisk, off-canvas, fullscreen overlay og bottom navigation.
+- Hover/aktiv motion presets med reduced-motion hensyn i preview.
+- Nested menu-data med drag/drop, op/ned, indent/outdent, ikon, badge, beskrivelse og ComponentId mega-panel.
+- Keyboard-preview med top-level piletaster, submenu åbning og Escape.
+- Menu presentation gemmes separat fra menu-data og eksisterende gamle menu-records får sikre defaults.
+- Dangerous javascript/data/vbscript URL-schemes afvises, og controlleren kræver capability + nonce + sanitization.
+- Den offentlige legacy-menu og eksisterende sider/Vehicle/Event/Gallery er fortsat uændrede.
 
 
 == Version 0.7.5 – I2 Visual Header/Footer Builder ==
