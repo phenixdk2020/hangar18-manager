@@ -4602,6 +4602,52 @@ jQuery(function ($) {
     function refreshQbOperatorsV0525(){if(!$qbOperatorV0525.length)return;const $option=$qbFieldV0525.find('option:selected');const type=String($option.attr('data-field-type')||'text');let current=String($qbOperatorV0525.attr('data-current')||$qbOperatorV0525.val()||'eq');const options=$qbFieldV0525.val()? (qbOperatorsV0525[type]||qbOperatorsV0525.text) : [['eq','—']];$qbOperatorV0525.empty();options.forEach(function(item){$qbOperatorV0525.append($('<option>',{value:item[0],text:item[1]}));});if(!$qbOperatorV0525.find('option[value="'+current.replace(/"/g,'\\"')+'"]').length)current=options[0][0];$qbOperatorV0525.val(current).attr('data-current',current);$('#h18-qb-value').prop('disabled',!$qbFieldV0525.val());}
     $qbFieldV0525.on('change',function(){$qbOperatorV0525.attr('data-current','eq');refreshQbOperatorsV0525();});$qbOperatorV0525.on('change',function(){$(this).attr('data-current',String($(this).val()||'eq'));});refreshQbOperatorsV0525();
 
+
+    /* v0.5.31 – tydelig oprettelse af sider */
+    function h18PromptNewPageIdentity(defaultTitle) {
+        const title = window.prompt('Titel på den nye WordPress-side:', defaultTitle || 'Ny side');
+        if (!title || !String(title).trim()) { return null; }
+        const suggested = slugify(String(title));
+        const slug = window.prompt('Slug til den nye side:', suggested);
+        if (!slug || !String(slug).trim()) { return null; }
+        return { title: String(title).trim(), slug: slugify(String(slug)) };
+    }
+
+    $(document).on('click', '#h18-create-blank-page', function () {
+        const identity = h18PromptNewPageIdentity('Ny side');
+        if (!identity || !identity.slug) { return; }
+        const $button = $(this);
+        const originalHtml = $button.html();
+        $button.prop('disabled', true).text('Opretter…');
+        $.post(Hangar18Manager.ajaxUrl || window.ajaxurl, {
+            action: 'h18_create_blank_page',
+            nonce: Hangar18Manager.pageTemplateNonce,
+            page_title: identity.title,
+            page_slug: identity.slug
+        }).done(function (response) {
+            if (!response || !response.success || !response.data) {
+                window.alert((response && response.data && response.data.message) || 'Siden kunne ikke oprettes.');
+                return;
+            }
+            if (response.data.manager_url) { window.location.href = response.data.manager_url; }
+        }).fail(function (xhr) {
+            window.alert((xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) || 'Siden kunne ikke oprettes.');
+        }).always(function () {
+            $button.prop('disabled', false).html(originalHtml);
+        });
+    });
+
+    $(document).on('click', '#h18-create-from-template', function () {
+        $('.h18-builder-sidebar-tab[data-builder-tab="components"]').trigger('click');
+        const target = document.getElementById('h18-page-templates-list');
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if (typeof pageTemplatesV0522 !== 'undefined' && !Object.keys(pageTemplatesV0522).length) {
+            window.alert('Der er ingen Page Templates endnu. Du kan oprette en tom side nu eller gemme den aktuelle side som template først.');
+        }
+    });
+
 });
 
 

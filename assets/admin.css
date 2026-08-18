@@ -770,3 +770,16 @@ body.h18-command-palette-visible{overflow:hidden}
 
 /* v0.5.30 – UD-059 Binding formatters + fallback */
 .h18-binding-options{display:grid;grid-template-columns:minmax(150px,1fr) minmax(190px,1.2fr) minmax(130px,1fr);gap:7px;margin-top:7px;padding:9px;border:1px solid #dcdcde;border-radius:6px;background:#f6f7f7}.h18-binding-options .h18-binding-empty-toggle{grid-column:1/-1;font-size:12px}.h18-binding-options.is-url-or-media .h18-binding-prefix,.h18-binding-options.is-url-or-media .h18-binding-suffix{display:none}@media(max-width:900px){.h18-binding-options{grid-template-columns:1fr}}
+
+
+/* v0.5.31 – Sider: full-width workspace og tydelig sideoprettelse */
+.h18-pages-admin{max-width:none!important;margin-right:20px}
+.h18-pages-create-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:16px 0;padding:16px 18px;border:1px solid #c3c4c7;border-left:5px solid #3858e9;border-radius:9px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.h18-pages-create-copy{display:flex;min-width:0;flex-direction:column;gap:3px}.h18-pages-create-copy strong{font-size:15px;color:#1d2327}.h18-pages-create-copy span{color:#646970}
+.h18-pages-create-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.h18-pages-create-actions .button{display:inline-flex;align-items:center;gap:6px;min-height:38px}.h18-pages-create-actions .dashicons{width:18px;height:18px;font-size:18px}
+.h18-pages-admin .h18-visual-builder{grid-template-columns:minmax(220px,250px) minmax(700px,1fr) minmax(320px,380px);gap:18px}
+.h18-pages-admin .h18-builder-canvas{min-width:0;min-height:calc(100vh - 255px)}
+.h18-pages-admin .h18-builder-palette,.h18-pages-admin .h18-builder-inspector{min-width:0}
+@media(max-width:1500px){.h18-pages-admin .h18-visual-builder{grid-template-columns:210px minmax(480px,1fr) 330px}}
+@media(max-width:1180px){.h18-pages-admin .h18-visual-builder{grid-template-columns:200px minmax(0,1fr)}.h18-pages-admin .h18-builder-inspector{position:static;grid-column:1/-1;max-height:none}}
+@media(max-width:782px){.h18-pages-admin{margin-right:10px}.h18-pages-create-bar{align-items:stretch;flex-direction:column}.h18-pages-create-actions{display:grid;grid-template-columns:1fr}.h18-pages-create-actions .button{justify-content:center}.h18-pages-admin .h18-visual-builder{grid-template-columns:1fr}.h18-pages-admin .h18-builder-palette{position:static}.h18-pages-admin .h18-builder-inspector{grid-column:auto}}
