@@ -51,3 +51,6 @@ jobs:
 
       - name: Runtime bridge shadow-mode test
         run: php tests/Architecture/runtime-bridge-smoke.php
+
+      - name: Compatibility comparator test
+        run: php tests/Architecture/compatibility-comparator-smoke.php
