@@ -9,7 +9,7 @@ grep -F "current_user_can('manage_options')" "$controller" >/dev/null
 grep -F 'check_admin_referer(self::NONCE_ACTION)' "$controller" >/dev/null
 grep -F "get_option('hangar18_manager_pages_v1',[])" "$controller" >/dev/null
 grep -F "SatisfiesManualLiveCopyGate'=>false" "$preflight" >/dev/null
-grep -F "!\$confirmed||\$environment===''||\$evidenceRef===''" "$validator" >/dev/null
+grep -F "if(\$status==='pass'&&(!\$confirmed||\$environment===''||\$evidenceRef===''))" "$validator" >/dev/null
 grep -F "'migration-rollback-live-copy'=>false" src/QA/ReleaseReadiness.php >/dev/null
 grep -F 'Automated preflight never marks a manual gate as passed.' "$controller" >/dev/null
 
