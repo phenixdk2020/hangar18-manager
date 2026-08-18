@@ -1,3 +1,4 @@
+# Synchronize commit: triggers the branch-local release workflow after it exists.
 from pathlib import Path
 
 php_path=Path('hangar18-manager.php'); readme_path=Path('readme.txt')
