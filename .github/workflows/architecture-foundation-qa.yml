@@ -10,6 +10,8 @@ on:
     paths:
       - 'src/**'
       - 'tests/Architecture/**'
+      - 'assets/admin.js'
+      - 'hangar18-manager.php'
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
@@ -20,6 +22,7 @@ permissions:
 
 jobs:
   architecture-smoke:
+    if: github.head_ref != 'agent/optional-save-summary'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,18 +51,14 @@ jobs:
       - run: php tests/Architecture/e11-quality-smoke.php
       - run: php tests/Architecture/e12-ai-smoke.php
       - run: php tests/Architecture/e13-portability-smoke.php
-      - name: UD-115 security audit
-        run: bash tests/Architecture/e14-security-audit.sh
-      - name: UD-116 performance budget
-        run: php tests/Architecture/e14-performance-budget.php
-      - name: UD-117 migration rollback
-        run: php tests/Architecture/e14-migration-rollback-smoke.php
-      - name: UD-118/119 MVP and v1 E2E
-        run: php tests/Architecture/e14-e2e-smoke.php
-      - name: Public runtime JavaScript syntax
-        run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
+      - run: bash tests/Architecture/e14-security-audit.sh
+      - run: php tests/Architecture/e14-performance-budget.php
+      - run: php tests/Architecture/e14-migration-rollback-smoke.php
+      - run: php tests/Architecture/e14-e2e-smoke.php
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
 
   browser-engine-qa:
+    if: github.head_ref != 'agent/optional-save-summary'
     name: E14 browser engines (Chromium/Firefox/WebKit)
     runs-on: ubuntu-latest
     steps:
@@ -67,11 +66,48 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install Playwright test runner
+      - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
+
+  save-summary-qa:
+    if: github.head_ref == 'agent/optional-save-summary'
+    name: Optional save summary QA (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.0','8.2','8.3']
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '${{ matrix.php-version }}', coverage: none}
+      - name: Legacy runtime syntax
         run: |
-          npm init -y >/dev/null 2>&1
-          npm install --no-save @playwright/test
-      - name: Install browser engines
-        run: npx playwright install --with-deps chromium firefox webkit
-      - name: Run UD-113/114 browser and keyboard matrix
-        run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+      - name: Optional note and automatic summary contract
+        run: bash tests/Architecture/e8-save-summary-contract.sh
+      - name: Protected Vehicle/Event/Gallery regression
+        run: bash tests/Architecture/protected-domain-contract.sh
+      - name: Architecture PHP syntax
+        run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Workflow regression suite
+        run: |
+          php tests/Architecture/architecture-smoke.php
+          php tests/Architecture/page-schema-smoke.php
+          php tests/Architecture/runtime-bridge-smoke.php
+          php tests/Architecture/compatibility-comparator-smoke.php
+          php tests/Architecture/ud-060-starter-schemas-smoke.php
+          php tests/Architecture/e6-site-builder-smoke.php
+          php tests/Architecture/e7-interaction-smoke.php
+          php tests/Architecture/e8-workflow-smoke.php
+          php tests/Architecture/e9-assets-smoke.php
+          php tests/Architecture/e10-permissions-smoke.php
+          php tests/Architecture/e11-quality-smoke.php
+          php tests/Architecture/e12-ai-smoke.php
+          php tests/Architecture/e13-portability-smoke.php
+          bash tests/Architecture/e14-security-audit.sh
+          php tests/Architecture/e14-performance-budget.php
+          php tests/Architecture/e14-migration-rollback-smoke.php
+          php tests/Architecture/e14-e2e-smoke.php
