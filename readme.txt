@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.7.7
+Version: 0.7.8
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.8 – I5 Asset Manager + menuvalg ==
+
+Nyt:
+- I5 Asset Manager UI oven på native WordPress Media IDs med mapper, collections, tags og metadata.
+- Responsive focal point for desktop/tablet/mobil med live preview.
+- Usage-inspector finder MediaId-referencer på sider, components, templates og data/meta.
+- SHA-256 dubletscan er read-only og sletter/fletter aldrig filer automatisk.
+- WebP/AVIF genereres som namespaced .h18.webp/.h18.avif derivater; original og eksisterende derivater overskrives aldrig.
+- Menu UI har eksplicit Tilgængelige sider med valg/fravalg; en side kan eksistere uden at være i menuen.
+- Frontend og Vehicle/Event/Gallery forbliver uændrede; ingen sider konverteres.
 
 
 == Version 0.7.7 – I4 Live Side Health ==
