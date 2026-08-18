@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.6.6
+Version: 0.6.7
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.6.7 – E11 Side Health ==
+
+Nyt:
+- Accessibility analyzer for heading order, alt text, labels, focus og målbar kontrast med elementreference.
+- Responsive analyzer finder fixed-width overflow, små touch targets, lille tekst og kritisk skjult mobilindhold.
+- Design consistency analyzer finder off-token farver, lokale font overrides og spacing/radius outliers.
+- SEO metadata-model/analyzer for title, description, H1, canonical/index/follow og social metadata.
+- Performance analyzer finder store assets, dyb DOM/layout nesting og unødvendige feature-moduler.
+- Side Health samler Design, Mobile, Accessibility, Performance og SEO score og viser HardFailures separat.
+- Analyzer-laget er read-only og omskriver aldrig sider automatisk.
 
 
 == Version 0.6.6 – E10 Permissions ==
