@@ -1,0 +1,68 @@
+name: Inspect v0.5.21 component context
+
+on:
+  push:
+    branches:
+      - development/v0.5.21
+    paths:
+      - '.github/workflows/inspect-v0521-context.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development/v0.5.21
+          fetch-depth: 0
+      - name: Extract relevant source windows
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          out=[]
+          def section(path, needles, before=12, after=45):
+              lines=Path(path).read_text().splitlines()
+              for needle in needles:
+                  hits=[i for i,line in enumerate(lines) if needle in line]
+                  out.append(f'\n===== {path} :: {needle} :: hits={len(hits)} =====')
+                  for i in hits[:4]:
+                      a=max(0,i-before); b=min(len(lines),i+after+1)
+                      out.extend(f'{n+1:05d}: {lines[n]}' for n in range(a,b))
+          section('hangar18-manager.php',[
+              'const PAGE_PRESETS_OPTION',
+              "add_action('wp_ajax_h18_save_page_preset'",
+              "'pagePresetNonce'",
+              'private function get_page_presets()',
+              'public function ajax_save_page_preset()',
+              'public function ajax_delete_page_preset()',
+              'private function default_page_section()',
+              "'LayoutParentKey'",
+              'private function normalize_page_section(',
+              'private function render_page_editor_section_front(',
+              '$page_presets = $this->get_page_presets();',
+              'h18-page-presets-data',
+              'private function render_page_editor_section_admin(',
+          ])
+          section('assets/admin.js',[
+              'const $pageNavigatorList',
+              'const pageUserPresets = {}',
+              'function rebuildPageNavigator()',
+              'function renderUserPresets()',
+              'function sectionPresetData($row)',
+              'function applySectionPreset(',
+              "action: 'h18_save_page_preset'",
+              "action: 'h18_delete_page_preset'",
+              'function refreshPageSectionType($row)',
+              'function canvasBuildPreviewContent(',
+          ])
+          Path('.github/v0521-context.txt').write_text('\n'.join(out)+'\n')
+          PY
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add .github/v0521-context.txt
+          git commit -m 'QA: record v0.5.21 component context'
+          git push origin HEAD:development/v0.5.21
