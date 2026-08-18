@@ -267,12 +267,14 @@ jQuery(function ($) {
     const $pageNavigatorCount = $('#h18-page-navigator-count');
     const $pageUserPresetsList = $('#h18-user-presets-list');
     const $pageLinkedComponentsList = $('#h18-linked-components-list');
+    const $pageTemplatesList = $('#h18-page-templates-list');
     let pageSectionNextIndex = 0;
     let pageCardSerial = 0;
     let $inspectedSection = $();
     let currentInspectorPanel = 'content';
     const pageUserPresets = {};
     const pageLinkedComponents = {};
+    const pageTemplatesV0522 = {};
     let navigatorLockedOrderSnapshotV0521 = null;
     let currentCanvasDevice = 'desktop';
     let currentCanvasState = 'normal';
@@ -314,6 +316,11 @@ jQuery(function ($) {
     } catch (componentError) {
         window.console && console.warn('Hangar18: kunne ikke læse linked component-bibliotek.', componentError);
     }
+    try {
+        const templateNode = document.getElementById('h18-page-templates-data');
+        const parsedTemplates = templateNode ? JSON.parse(templateNode.textContent || '[]') : [];
+        (Array.isArray(parsedTemplates) ? parsedTemplates : []).forEach(function(template){ if(template&&template.Id) pageTemplatesV0522[String(template.Id)]=template; });
+    } catch(templateError){ window.console&&console.warn('Hangar18: kunne ikke læse Page Templates.',templateError); }
 
     const builtInSectionPresets = {
         'hero-cta': { Type: 'hero', Title: 'Velkommen', Content: '<p>Skriv en kort introduktion, der fortæller hvad siden handler om.</p>', Background: 'Olive', DesktopAlignment: 'Center', MobileAlignment: 'Center', PaddingPx: 36, MobilePaddingPx: 22, HeroHeightPx: 320, MobileHeroHeightPx: 220, OverlayOpacityPercent: 35, Button1Label: 'Læs mere', Button1Url: '#', Active: true },
@@ -511,8 +518,10 @@ jQuery(function ($) {
             return;
         }
         presets.forEach(function (preset) {
+            const patternSections = Array.isArray(preset.Sections) ? preset.Sections : (preset.Section ? [preset.Section] : []);
+            const firstSection = patternSections.length ? patternSections[0] : null;
             const $row = $('<div>', { class: 'h18-user-preset-row', 'data-preset-id': String(preset.Id) });
-            $row.append($('<button>', { type: 'button', class: 'h18-user-preset-insert' }).append($('<strong>', { text: String(preset.Name || 'Komponent') })).append($('<small>', { text: inspectorTypeLabel(preset.Section && preset.Section.Type) })));
+            $row.append($('<button>', { type: 'button', class: 'h18-user-preset-insert' }).append($('<strong>', { text: String(preset.Name || 'Pattern') })).append($('<small>', { text: (firstSection ? inspectorTypeLabel(firstSection.Type) : 'Pattern') + ' · ' + patternSections.length + ' element(er)' })));
             $row.append($('<button>', { type: 'button', class: 'h18-user-preset-delete', title: 'Slet komponent', 'aria-label': 'Slet komponent' }).append($('<span>', { class: 'dashicons dashicons-trash' })));
             $pageUserPresetsList.append($row);
         });
@@ -603,16 +612,34 @@ jQuery(function ($) {
     }
 
 
+
+    function applyPatternV0522(preset) {
+        const sections = Array.isArray(preset && preset.Sections) ? preset.Sections : (preset && preset.Section ? [preset.Section] : []);
+        if (!sections.length) { return $(); }
+        const keyMap = {}; const rows = [];
+        sections.forEach(function(section){
+            const copy=Object.assign({},section); delete copy.LayoutParentKey; delete copy.Key; delete copy.Order;
+            const $row=applySectionPreset(copy); if(!$row.length)return;
+            const oldKey=String(section.Key||''); const newKey=String($row.find('.h18-page-section-key').val()||''); if(oldKey)keyMap[oldKey]=newKey; rows.push({row:$row,source:section});
+        });
+        rows.forEach(function(item){ const oldParent=String(item.source.LayoutParentKey||''); pageSectionControls(item.row,'.h18-layout-parent-key').val(oldParent&&keyMap[oldParent]?keyMap[oldParent]:''); });
+        syncPageSectionOrder(); rebuildPageNavigator(); refreshLayoutHierarchyV0519(); refreshAllCanvasPreviews(); if(rows.length)inspectPageSection(rows[0].row); scheduleEditorHistoryCapture(0); return rows.length?rows[0].row:$();
+    }
+
     function componentDefinitionSectionV0521(component, sectionKey) {
         if (!component || !Array.isArray(component.Sections)) { return null; }
         return component.Sections.find(function (section) { return String(section.Key || '') === String(sectionKey || ''); }) || null;
     }
 
-    function componentInputDefaultV0521(component, input) {
+    function componentInputDefaultV0521(component, input, variantId) {
         const section = componentDefinitionSectionV0521(component, input && input.SectionKey);
         if (!section) { return ''; }
         const field = String(input.Field || '');
-        return section[field] == null ? '' : section[field];
+        let value = section[field] == null ? '' : section[field];
+        const variants = component && component.Variants && typeof component.Variants === 'object' ? component.Variants : {};
+        const variant = variantId && variants[variantId] ? variants[variantId] : null;
+        if (variant && variant.Values && Object.prototype.hasOwnProperty.call(variant.Values, String(input.InputId || ''))) value = variant.Values[String(input.InputId || '')];
+        return value;
     }
 
     function parseComponentOverridesV0521($row) {
@@ -639,10 +666,18 @@ jQuery(function ($) {
             return;
         }
         pageSectionControls($row, '.h18-component-revision').val(parseInt(component.Revision,10)||1);
+        const $variantSelect = pageSectionControls($row, '.h18-component-variant-select').first();
+        const currentVariant = String($variantSelect.val() || '');
+        const variants = component.Variants && typeof component.Variants === 'object' ? Object.values(component.Variants) : [];
+        $variantSelect.empty().append($('<option>',{value:'',text:'Base'})); variants.forEach(function(variant){$variantSelect.append($('<option>',{value:String(variant.Id),text:String(variant.Name||'Variant')}));});
+        $variantSelect.val(variants.some(function(v){return String(v.Id)===currentVariant;})?currentVariant:'');
+        const activeVariant = String($variantSelect.val() || '');
         const usage = parseInt(component.UsageCount,10)||0;
         $status.empty().append($('<p>', { class: 'h18-component-status-line' }).append($('<strong>', { text: String(component.Name || 'Linked component') }), $('<span>', { text: 'Revision ' + String(component.Revision || 1) + ' · bruges ' + usage + ' sted(er)' })));
         const overrides = parseComponentOverridesV0521($row);
         const inputs = Array.isArray(component.Inputs) ? component.Inputs : [];
+        const $variantActions = $('<div>',{class:'h18-component-variant-actions'});
+        if(inputs.length){$variantActions.append($('<button>',{type:'button',class:'button h18-component-save-variant',text:activeVariant?'Opdater valgt variant':'Gem aktuelle værdier som variant'}));if(activeVariant)$variantActions.append($('<button>',{type:'button',class:'button-link-delete h18-component-delete-variant',text:'Slet variant'}));$editor.append($variantActions);}
         if (!inputs.length) {
             $editor.append($('<p>', { class: 'description', text: 'Denne komponent har ingen frigivne lokale inputs. Layout og indhold følger den globale definition.' }));
             return;
@@ -650,7 +685,7 @@ jQuery(function ($) {
         inputs.forEach(function (input) {
             const inputId = String(input.InputId || '');
             const field = String(input.Field || '');
-            const defaultValue = componentInputDefaultV0521(component, input);
+            const defaultValue = componentInputDefaultV0521(component, input, activeVariant);
             const effective = Object.prototype.hasOwnProperty.call(overrides, inputId) ? overrides[inputId] : defaultValue;
             const $field = $('<label>', { class: 'h18-component-override-field' }).append($('<span>', { text: String(input.Label || field) }));
             let $control;
@@ -708,9 +743,19 @@ jQuery(function ($) {
     });
     $(document).on('change', '.h18-component-select', function () {
         const $row = pageSectionForElement(this);
+        pageSectionControls($row,'.h18-component-variant-select').val('');
         writeComponentOverridesV0521($row, {});
         renderComponentInstanceEditorV0521($row); renderCanvasPreview($row); rebuildPageNavigator(); scheduleEditorHistoryCapture(0);
     });
+
+
+    $(document).on('change','.h18-component-variant-select',function(){const $row=pageSectionForElement(this);writeComponentOverridesV0521($row,{});renderComponentInstanceEditorV0521($row);renderCanvasPreview($row);scheduleEditorHistoryCapture(0);});
+
+    function componentVariantValuesV0522($row){const values={};pageSectionControls($row,'.h18-component-override-control').each(function(){const id=String($(this).attr('data-input-id')||'');if(id)values[id]=String($(this).val()==null?'':$(this).val());});return values;}
+
+    $(document).on('click','.h18-component-save-variant',function(event){event.preventDefault();const $row=pageSectionForElement(this);const componentId=String(pageSectionControls($row,'.h18-component-select').val()||'');const component=pageLinkedComponents[componentId];if(!component)return;const variantId=String(pageSectionControls($row,'.h18-component-variant-select').val()||'');let currentName='';if(variantId&&component.Variants&&component.Variants[variantId])currentName=String(component.Variants[variantId].Name||'');const name=window.prompt(variantId?'Variantnavn:':'Navn til ny variant:',currentName||'Ny variant');if(!name)return;const $button=$(this).prop('disabled',true).text('Gemmer…');$.post(Hangar18Manager.ajaxUrl||window.ajaxurl,{action:'h18_save_page_component_variant',nonce:Hangar18Manager.pageComponentNonce,component_id:componentId,variant_id:variantId,name:String(name).trim(),values:JSON.stringify(componentVariantValuesV0522($row))}).done(function(response){if(!response||!response.success||!response.data||!response.data.component){window.alert((response&&response.data&&response.data.message)||'Varianten kunne ikke gemmes.');return;}pageLinkedComponents[componentId]=response.data.component;pageSectionControls($row,'.h18-component-variant-select').val(String(response.data.variant_id||''));writeComponentOverridesV0521($row,{});renderLinkedComponentsV0521();refreshAllComponentEditorsV0521();}).fail(function(xhr){window.alert((xhr.responseJSON&&xhr.responseJSON.data&&xhr.responseJSON.data.message)||'Varianten kunne ikke gemmes.');}).always(function(){$button.prop('disabled',false);renderComponentInstanceEditorV0521($row);});});
+
+    $(document).on('click','.h18-component-delete-variant',function(event){event.preventDefault();const $row=pageSectionForElement(this);const componentId=String(pageSectionControls($row,'.h18-component-select').val()||'');const variantId=String(pageSectionControls($row,'.h18-component-variant-select').val()||'');if(!componentId||!variantId||!window.confirm('Slet denne variant? Instanser der bruger den skal fjernes/skiftes først.'))return;$.post(Hangar18Manager.ajaxUrl||window.ajaxurl,{action:'h18_delete_page_component_variant',nonce:Hangar18Manager.pageComponentNonce,component_id:componentId,variant_id:variantId}).done(function(response){if(!response||!response.success){window.alert((response&&response.data&&response.data.message)||'Varianten kunne ikke slettes.');return;}const component=pageLinkedComponents[componentId];if(component&&component.Variants)delete component.Variants[variantId];pageSectionControls($row,'.h18-component-variant-select').val('');writeComponentOverridesV0521($row,{});renderComponentInstanceEditorV0521($row);renderCanvasPreview($row);});});
 
     function componentSubtreeRowsV0521($root) {
         if (!$root || !$root.length) { return []; }
@@ -870,6 +915,19 @@ jQuery(function ($) {
         $.post(Hangar18Manager.ajaxUrl || window.ajaxurl,{action:'h18_delete_page_component',nonce:Hangar18Manager.pageComponentNonce,component_id:id}).done(function(response){if(response&&response.success){delete pageLinkedComponents[id];renderLinkedComponentsV0521();}else{window.alert((response&&response.data&&response.data.message)||'Komponenten kunne ikke slettes.');}});
     });
     $('#h18-save-linked-component').on('click',function(){ if($inspectedSection.length)openSaveLinkedComponentDialogV0521(''); });
+
+
+    function pageTemplateSectionsV0522(){const rows=[];let invalid='';$pageSections.children('.h18-page-section-row:not(.h18-page-section-removed)').each(function(index){const $row=$(this);const type=String($row.attr('data-section-type')||'text');if(['legacy','component'].includes(type)){invalid=type;return false;}const data=sectionPresetData($row);if(!data){invalid=type;return false;}data.Key=String($row.find('.h18-page-section-key').val()||'');data.Order=(index+1)*10;data.LayoutParentKey=String(pageSectionControls($row,'.h18-layout-parent-key').val()||'');rows.push(data);});return invalid?{error:invalid,sections:[]}:{error:'',sections:rows};}
+
+    function renderPageTemplatesV0522(){if(!$pageTemplatesList.length)return;const templates=Object.values(pageTemplatesV0522).sort(function(a,b){return String(a.Name||'').localeCompare(String(b.Name||''),'da');});$pageTemplatesList.empty();if(!templates.length){$pageTemplatesList.html('<p class="description">Ingen Page Templates endnu.</p>');return;}templates.forEach(function(template){const usage=parseInt(template.UsageCount,10)||0;const $row=$('<div>',{class:'h18-user-preset-row h18-page-template-row','data-template-id':String(template.Id)});$row.append($('<button>',{type:'button',class:'h18-page-template-create'}).append($('<strong>',{text:String(template.Name||'Page Template')}),$('<small>',{text:(Array.isArray(template.Sections)?template.Sections.length:0)+' elementer · '+usage+' oprettede sider'})));$row.append($('<button>',{type:'button',class:'h18-page-template-usage',title:'Vis oprettede sider','aria-label':'Vis oprettede sider'}).append($('<span>',{class:'dashicons dashicons-admin-page'})));$row.append($('<button>',{type:'button',class:'h18-page-template-delete',title:'Slet template','aria-label':'Slet template'}).append($('<span>',{class:'dashicons dashicons-trash'})));$pageTemplatesList.append($row);});}
+
+    $('#h18-save-page-template').on('click',function(){const collected=pageTemplateSectionsV0522();if(collected.error){window.alert('Page Template kan ikke gemmes, mens siden indeholder legacy eller linked component-instanser. Konvertér/detach dem først.');return;}if(!collected.sections.length){window.alert('Siden har ingen elementer at gemme.');return;}const currentTitle=String($('[name="editor_page_title"]').val()||'Side');const name=window.prompt('Navn til Page Template:',currentTitle);if(!name)return;const $button=$(this).prop('disabled',true).text('Gemmer…');$.post(Hangar18Manager.ajaxUrl||window.ajaxurl,{action:'h18_save_page_template',nonce:Hangar18Manager.pageTemplateNonce,name:String(name).trim(),page_title:currentTitle,sections:JSON.stringify(collected.sections)}).done(function(response){if(!response||!response.success||!response.data||!response.data.template){window.alert((response&&response.data&&response.data.message)||'Page Template kunne ikke gemmes.');return;}pageTemplatesV0522[String(response.data.template.Id)]=response.data.template;renderPageTemplatesV0522();}).fail(function(xhr){window.alert((xhr.responseJSON&&xhr.responseJSON.data&&xhr.responseJSON.data.message)||'Page Template kunne ikke gemmes.');}).always(function(){$button.prop('disabled',false).text('Gem denne side som template');});});
+
+    $(document).on('click','.h18-page-template-create',function(){const id=String($(this).closest('.h18-page-template-row').attr('data-template-id')||'');const template=pageTemplatesV0522[id];if(!template)return;const title=window.prompt('Titel på den nye WordPress-side:',String(template.PageTitle||template.Name||'Ny side'));if(!title)return;const suggested=String(title).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');const slug=window.prompt('Slug til den nye side:',suggested);if(!slug)return;$.post(Hangar18Manager.ajaxUrl||window.ajaxurl,{action:'h18_create_page_from_template',nonce:Hangar18Manager.pageTemplateNonce,template_id:id,page_title:String(title).trim(),page_slug:String(slug).trim()}).done(function(response){if(!response||!response.success){window.alert((response&&response.data&&response.data.message)||'Siden kunne ikke oprettes.');return;}if(response.data.manager_url)window.location.href=response.data.manager_url;}).fail(function(xhr){window.alert((xhr.responseJSON&&xhr.responseJSON.data&&xhr.responseJSON.data.message)||'Siden kunne ikke oprettes.');});});
+
+    $(document).on('click','.h18-page-template-usage',function(){const id=String($(this).closest('.h18-page-template-row').attr('data-template-id')||'');const template=pageTemplatesV0522[id];if(!template)return;const usage=Array.isArray(template.Usage)?template.Usage:[];window.alert(usage.length?'Sider oprettet fra “'+String(template.Name||'Template')+'”:\n\n'+usage.map(function(item){return '• '+String(item.PageTitle||item.PageSlug)+' / '+String(item.PageSlug||'');}).join('\n'):'Ingen sider er oprettet fra denne template endnu.');});
+
+    $(document).on('click','.h18-page-template-delete',function(){const id=String($(this).closest('.h18-page-template-row').attr('data-template-id')||'');const template=pageTemplatesV0522[id];if(!template)return;if(!window.confirm('Slet Page Template “'+String(template.Name||'Template')+'”? Allerede oprettede sider påvirkes ikke.'))return;$.post(Hangar18Manager.ajaxUrl||window.ajaxurl,{action:'h18_delete_page_template',nonce:Hangar18Manager.pageTemplateNonce,template_id:id}).done(function(response){if(response&&response.success){delete pageTemplatesV0522[id];renderPageTemplatesV0522();}else window.alert((response&&response.data&&response.data.message)||'Template kunne ikke slettes.');});});
 
     function restoreInspectedSection() {
         if (!$inspectedSection.length) {
@@ -1620,7 +1678,7 @@ jQuery(function ($) {
             const overrides = parseComponentOverridesV0521($row);
             $inner.append($('<div>', { class: 'h18-canvas-linked-component' }).append(
                 $('<span>', { class: 'dashicons dashicons-admin-links' }),
-                $('<div>').append($('<strong>', { text: component ? String(component.Name || 'Linked component') : 'Vælg linked component' }), $('<small>', { text: component ? 'Global revision ' + String(component.Revision || 1) + ' · ' + Object.keys(overrides).length + ' lokal(e) override(s)' : 'Ingen definition valgt' }))
+                $('<div>').append($('<strong>', { text: component ? String(component.Name || 'Linked component') : 'Vælg linked component' }), $('<small>', { text: component ? 'Global revision ' + String(component.Revision || 1) + (String(canvasFieldValue($row,'ComponentVariant','')) ? ' · variant' : ' · base') + ' · ' + Object.keys(overrides).length + ' lokal(e) override(s)' : 'Ingen definition valgt' }))
             ));
         } else if (type === 'carousel') {
             addTitle('Carousel');
@@ -2155,6 +2213,7 @@ jQuery(function ($) {
         }
         renderUserPresets();
         renderLinkedComponentsV0521();
+        renderPageTemplatesV0522();
         refreshAllComponentEditorsV0521();
         rebuildPageNavigator();
         ensureCanvasToolbar();
@@ -2729,9 +2788,7 @@ jQuery(function ($) {
     $(document).on('click', '.h18-user-preset-insert', function () {
         const presetId = String($(this).closest('.h18-user-preset-row').attr('data-preset-id') || '');
         const preset = pageUserPresets[presetId];
-        if (preset && preset.Section) {
-            applySectionPreset(preset.Section);
-        }
+        if (preset) { applyPatternV0522(preset); }
     });
 
     $('#h18-inspector-copy-key').on('click', function () {
@@ -2775,11 +2832,12 @@ jQuery(function ($) {
             return;
         }
         if (String($inspectedSection.attr('data-section-type') || '') === 'component') { window.alert('Linked component-instanser gemmes ikke som patterns.'); return; }
-        const data = sectionPresetData($inspectedSection);
-        if (!data || data.Type === 'legacy') {
-            window.alert('Denne sektion kan ikke gemmes som komponent.');
+        const sections = componentSubtreeDataV0521($inspectedSection);
+        if (!sections.length || sections.some(function(section){ return ['legacy','component'].includes(String(section.Type || '')); })) {
+            window.alert('Legacy og linked components kan ikke gemmes inde i et pattern.');
             return;
         }
+        const data = sections[0];
         const defaultName = String($inspectedSection.find('.h18-page-section-title-summary').text() || inspectorTypeLabel(data.Type)).trim();
         const name = window.prompt('Navn på den genbrugelige komponent:', defaultName || 'Ny komponent');
         if (!name) {
@@ -2787,7 +2845,7 @@ jQuery(function ($) {
         }
         const $button = $(this).prop('disabled', true).text('Gemmer…');
         $.post(Hangar18Manager.ajaxUrl || window.ajaxurl, {
-            action: 'h18_save_page_preset', nonce: Hangar18Manager.pagePresetNonce, name: name, section: JSON.stringify(data)
+            action: 'h18_save_page_preset', nonce: Hangar18Manager.pagePresetNonce, name: name, sections: JSON.stringify(sections)
         }).done(function (response) {
             if (!response || !response.success || !response.data || !response.data.preset) {
                 window.alert((response && response.data && response.data.message) || 'Pattern kunne ikke gemmes.');

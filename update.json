@@ -1,19 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.21",
+  "version": "0.5.22",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T04:10:24Z",
+  "published_utc": "2026-08-18T04:35:59Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "102a30426814986b79d24ef7320e94c76fd194bba5a8308d68887f68bf699cf6",
+  "package_sha256": "1c51083729f2cf076865250d6d8809976d5aac29104bcee1a3685d26c08bac53",
   "changelog": [
-    "Tilføjer UD-043 Navigator rename/hide/lock/reorder med realtime canvas-synkronisering.",
-    "Tilføjer UD-044 linked subtree components i separat global component-store.",
-    "Tilføjer UD-045 atomisk propagation ved render-time resolution af den globale definition.",
-    "Tilføjer UD-046 eksplicit frigivne Title/Content/Image/Button inputs med lokale overrides og låst layout/design.",
-    "Tilføjer UD-050 usage inspector og blokeret delete når component stadig bruges.",
-    "Eksisterende presets bevares som ikke-linked Patterns.",
-    "Løfter page-editor schema bagudkompatibelt til 1.17."
+    "Tilføjer UD-047 Component Variants oven på samme linked definition og eksponerede inputmodel.",
+    "Variant anvendes før lokale instance-overrides; lokale overrides har dermed højeste prioritet.",
+    "Tilføjer UD-048 nested subtree Patterns med friske keys og transparent kompatibilitet med gamle enkeltsektion-presets.",
+    "Tilføjer UD-049 Page Templates, der opretter frie draft WordPress/Hangar18-sider med friske section keys og audit-origin.",
+    "Template-oprettede sider bliver automatisk Hangar18-managed og redigerbare i sideeditoren.",
+    "Løfter page-editor schema bagudkompatibelt til 1.18."
   ]
 }
