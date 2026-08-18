@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.6.5
+Version: 0.6.6
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.6.6 – E10 Permissions ==
+
+Nyt:
+- Named least-privilege capabilities for settings, design, components, templates, data schemas, content, assets, publish, custom code, events og galleries.
+- Rolleopskrifter for Administrator, Designer, Editor, Eventansvarlig og Gallery Manager.
+- Design/structure lock beskytter layout og styling men kan frigive konkrete content fields.
+- Component editable inputs begrænser content-only roller til eksplicit frigivne felter.
+- Domain scope kan begrænse roller til fx Event eller Gallery data.
+- WordPress role installer er eksplicit/passiv og overtager ikke nuværende legacy permissions endnu.
+- PHP 8.0/8.2/8.3 QA og Vehicle/Event/Gallery-kontrakten er grøn.
 
 
 == Version 0.6.5 – E9 Asset Manager ==
