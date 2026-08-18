@@ -1,7 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.2
+Version: 0.8.3
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.3 – I10 Conversion Planner ==
+
+Nyt:
+- Kontrolleret I10 conversion planner med fast rækkefølge: sammenligningsside, Hjem, Om, Kontakt, Bliv medlem og til sidst Vehicle/Event/Gallery.
+- Alle manglende I9 manuelle gates vises som eksplicitte blockers for fremtidig cutover.
+- Shadow workspace kan kopiere ikke-beskyttede legacy editor-states med deterministisk source hash uden at ændre originalen.
+- Planner-fasen har PublicMutationAvailable=false; shadow-records har PublicActivation=false og Accepted=false.
+- Der registreres ingen activate/cutover/publish-handler i denne version, og WordPress-posts, URLs samt hangar18_manager_pages_v1 ændres ikke.
+- Vehicle/Event/Gallery forbliver eksplicit blokeret af CompatibilityPolicy og legacy v0.5.30-runtime.
 
 
 == Version 0.8.2 – I9 Manual QA & rollback rehearsal ==

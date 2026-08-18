@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T18:55:32Z",
+  "published_utc": "2026-08-18T19:10:33Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "9165f64a436e764517fab85abdba1c3d921d7265dd55b3d42442042a40dba9dd",
+  "package_sha256": "c3486a138ce56ab09ea679c5318a1fef2b173d68eeb5edb95b8a5194e5eec664",
   "changelog": [
-    "I9 Manual QA Dashboard registrerer evidens for alle otte obligatoriske I10-gates.",
-    "Manuel PASS kræver confirmation, miljø og evidensreference og gemmer bruger-ID/UTC-tid.",
-    "Automatiske tests/preflight kan ikke markere manuelle gates som godkendt.",
-    "Rollback preflight kører kun på en in-memory kopi og skriver ikke til legacy page-store.",
-    "I10 forbliver blokeret indtil de krævede manuelle/live gates faktisk er gennemført; frontend og Vehicle/Event/Gallery er uændrede."
+    "I10 conversion planner følger fast rækkefølge med ikke-kritisk sammenligningsside før core-sider og beskyttede domæner.",
+    "Alle I9 manuelle gates er eksplicitte blockers for fremtidig public cutover.",
+    "Shadow workspace kopierer kun ikke-beskyttede legacy editor-states og har PublicActivation=false/Accepted=false.",
+    "v0.8.3 registrerer ingen activate/cutover/publish-handler og ændrer ikke WordPress-posts, URLs eller legacy page-store.",
+    "Vehicle/Event/Gallery forbliver blokeret af CompatibilityPolicy på legacy v0.5.30-runtime."
   ]
 }
