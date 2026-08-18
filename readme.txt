@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.6.2
+Version: 0.6.3
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -1182,3 +1182,13 @@ Kompatibilitet og sikkerhed:
 - E6 Site Builder core: Header/Footer templates, versioneret menu-tree, klassisk accessible menu-renderer, passive runtime assets og Site Builder presets.
 - Single/archive/system template assignment kan resolveres efter context og priority.
 - Eksisterende sider samt Vehicle/Event/Gallery og legacy header/footer/menu konverteres ikke i denne release.
+
+
+== Version 0.6.3 – E7 Interaction core ==
+
+- Generic accessible forms og server-side validation.
+- Ordered submit action chains med logging og fejlpolitik.
+- Mail/save/redirect actions samt signed HTTPS webhook med timeout/retry og wp_safe_remote_post.
+- Modal/popup builder-core med shared Sections tree, ARIA, focus trap, ESC og scroll lock i passiv runtime.
+- Click/time/scroll/context popup triggers og generiske navigate/scroll/open-modal/toggle actions.
+- Eksisterende sider og Vehicle/Event/Gallery forbliver uændret.
