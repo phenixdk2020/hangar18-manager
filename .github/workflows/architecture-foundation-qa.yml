@@ -13,6 +13,7 @@ on:
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
+      - 'docs/integration-backlog-after-ud120.md'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
@@ -53,6 +54,8 @@ jobs:
       - run: php tests/Architecture/e14-migration-rollback-smoke.php
       - run: php tests/Architecture/e14-e2e-smoke.php
       - run: bash tests/Architecture/v073-heading-linebreak-contract.sh
+      - run: php tests/Architecture/integration-admin-smoke.php
+      - run: bash tests/Architecture/integration-admin-contract.sh
       - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
 
   browser-engine-qa:
