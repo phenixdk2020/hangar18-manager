@@ -1,0 +1,11 @@
+v0.5.27 data-context preview anchor prepared
+prepare_status=0
+v0.5.27 UD-058 Conditional Visibility patch applied
+patch_status=0
+v0.5.27 canvas condition preview hook hardened
+harden_status=0
+No syntax errors detected in hangar18-manager.php
+php_status=0
+js_status=0
+Date conditions are not site-timezone normalized
+qa_status=1
