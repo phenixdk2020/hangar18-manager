@@ -1,8 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.5.23
+Version: 0.5.24
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.24 – E5 Dynamic binding ==
+
+Nyt:
+- UD-053: hver Hangar18-side kan vælge en current data context som datatype + konkret entry
+- elementegenskaber kan bindes til current context: Title, Content, MediaId og begge knappers tekst/link
+- bindinger er typevaliderede: media kan kun drive billeder, links kun text fields, mens text/number/bool/date kan drive sikre tekstegenskaber
+- static elementværdier ændres ikke og bruges som fallback, hvis context eller felt ikke længere findes
+- runtime validerer altid datatype, entry og field-type igen; admin-UI er ikke sikkerhedsgrænsen
+- canvas-preview bruger samme current context og viser også dynamiske WordPress-medier
+- Bindings serialiseres med Patterns, linked component definitions og Page Templates uden at introducere ny delt identitet
+- page-editor schema løftes bagudkompatibelt til 1.19
+- foundation er klar til UD-057 Repeater/Query list, der senere kan skifte current context pr. resultat
 
 == Version 0.5.23 – E5 Dynamic CMS foundation ==
 

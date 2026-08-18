@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.23
+ * Version: 0.5.24
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.23';
+    const VERSION = '0.5.24';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -77,6 +77,7 @@ final class Hangar18_Manager {
     const OVERRIDE_END   = '<!-- HANGAR18-WEB-OVERRIDE-END -->';
 
     private static $instance = null;
+    private $active_dynamic_data_context = null;
 
     public static function instance() {
         if (self::$instance === null) {
@@ -722,7 +723,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.18',
+                'Version' => '1.19',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -6753,6 +6754,143 @@ HTML;
     }
 
 
+
+
+    /* ================================================================
+       DYNAMIC BINDING ENGINE — v0.5.24 / E5 UD-053
+       ================================================================ */
+
+    private function dynamic_binding_property_types() {
+        return [
+            'Title' => ['text','number','bool','date'],
+            'Content' => ['text','number','bool','date'],
+            'MediaId' => ['media'],
+            'Button1Label' => ['text','number','bool','date'],
+            'Button1Url' => ['text'],
+            'Button2Label' => ['text','number','bool','date'],
+            'Button2Url' => ['text'],
+        ];
+    }
+
+    private function normalize_dynamic_bindings($raw) {
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) { $raw = $decoded; }
+        }
+        if (!is_array($raw)) { return []; }
+        $allowed = $this->dynamic_binding_property_types();
+        $bindings = [];
+        foreach ($raw as $property => $field_key) {
+            $property = (string) $property;
+            if (!isset($allowed[$property])) { continue; }
+            $field_key = sanitize_key((string) $field_key);
+            if ($field_key === '') { continue; }
+            $bindings[$property] = $field_key;
+        }
+        return $bindings;
+    }
+
+    private function dynamic_data_context_catalog_for_editor() {
+        $types = $this->get_custom_data_types();
+        $catalog = [];
+        foreach ($types as $type_key => $type) {
+            $catalog[$type_key] = [
+                'Key' => $type_key,
+                'SingularLabel' => (string) $type['SingularLabel'],
+                'PluralLabel' => (string) $type['PluralLabel'],
+                'Fields' => array_values((array) $type['Fields']),
+                'Entries' => [],
+            ];
+        }
+        if (!$catalog) { return []; }
+        $entries = get_posts([
+            'post_type' => self::DATA_ENTRY_POST_TYPE,
+            'post_status' => ['publish','draft','private'],
+            'posts_per_page' => 500,
+            'orderby' => 'modified',
+            'order' => 'DESC',
+            'no_found_rows' => true,
+        ]);
+        foreach ($entries as $entry) {
+            if (!$entry instanceof WP_Post) { continue; }
+            $type_key = sanitize_key((string) get_post_meta($entry->ID, '_h18_data_type', true));
+            if ($type_key === '' || !isset($catalog[$type_key]) || count($catalog[$type_key]['Entries']) >= 100) { continue; }
+            $schema = $types[$type_key];
+            $values = $this->custom_data_entry_values($entry->ID, $schema);
+            $media_urls = [];
+            foreach ($schema['Fields'] as $field) {
+                if (($field['Type'] ?? '') !== 'media') { continue; }
+                $field_key = (string) $field['Key'];
+                $media_id = absint($values[$field_key] ?? 0);
+                $url = $media_id ? wp_get_attachment_image_url($media_id, 'medium') : '';
+                $media_urls[$field_key] = $url ? esc_url_raw($url) : '';
+            }
+            $catalog[$type_key]['Entries'][] = [
+                'Id' => (int) $entry->ID,
+                'Title' => (string) $entry->post_title,
+                'Values' => $values,
+                'MediaUrls' => $media_urls,
+            ];
+        }
+        return array_values($catalog);
+    }
+
+    private function resolve_dynamic_data_context($type_key, $entry_id) {
+        $type_key = sanitize_key((string) $type_key);
+        $entry_id = absint($entry_id);
+        if ($type_key === '' || $entry_id <= 0) { return null; }
+        $types = $this->get_custom_data_types();
+        if (!isset($types[$type_key])) { return null; }
+        $entry = $this->custom_data_entry_for_type($entry_id, $type_key);
+        if (!$entry instanceof WP_Post) { return null; }
+        $field_map = [];
+        foreach ($types[$type_key]['Fields'] as $field) {
+            $field_map[(string) $field['Key']] = $field;
+        }
+        return [
+            'TypeKey' => $type_key,
+            'EntryId' => $entry_id,
+            'EntryTitle' => (string) $entry->post_title,
+            'Schema' => $types[$type_key],
+            'Fields' => $field_map,
+            'Values' => $this->custom_data_entry_values($entry_id, $types[$type_key]),
+        ];
+    }
+
+    private function dynamic_binding_text_value($value) {
+        if (is_bool($value)) { return $value ? 'Ja' : 'Nej'; }
+        if (is_scalar($value)) { return (string) $value; }
+        return '';
+    }
+
+    private function apply_dynamic_bindings_to_section(array $section, array $context) {
+        $bindings = $this->normalize_dynamic_bindings($section['Bindings'] ?? []);
+        if (!$bindings) { return $section; }
+        $property_types = $this->dynamic_binding_property_types();
+        $fields = isset($context['Fields']) && is_array($context['Fields']) ? $context['Fields'] : [];
+        $values = isset($context['Values']) && is_array($context['Values']) ? $context['Values'] : [];
+        foreach ($bindings as $property => $field_key) {
+            if (!isset($fields[$field_key]) || !array_key_exists($field_key, $values)) { continue; }
+            $field_type = (string) ($fields[$field_key]['Type'] ?? '');
+            if (!in_array($field_type, $property_types[$property] ?? [], true)) { continue; }
+            $value = $values[$field_key];
+            if ($property === 'MediaId') {
+                $section[$property] = absint($value);
+                continue;
+            }
+            $text = $this->dynamic_binding_text_value($value);
+            if (in_array($property, ['Button1Url','Button2Url'], true)) {
+                $section[$property] = esc_url_raw($text);
+            } elseif ($property === 'Content') {
+                $section[$property] = wp_kses_post($text);
+            } else {
+                $section[$property] = sanitize_text_field($text);
+            }
+        }
+        return $section;
+    }
+
+
     /* ================================================================
        PAGE EDITOR AND FUNCTION MODULES
        ================================================================ */
@@ -6935,6 +7073,7 @@ HTML;
             'ComponentRevision'     => 0,
             'ComponentVariant'      => '',
             'ComponentOverrides'    => [],
+            'Bindings'              => [],
             'Order'                 => (int) $order,
             'Title'                 => '',
             'Content'               => '',
@@ -7176,6 +7315,7 @@ HTML;
                 $component_overrides[$override_id] = wp_kses_post($override_value);
             }
         }
+        $bindings = $this->normalize_dynamic_bindings($raw['Bindings'] ?? []);
 
         $alignment = (string) ($raw['DesktopAlignment'] ?? 'Left');
         if (!in_array($alignment, ['Left', 'Center'], true)) {
@@ -7334,6 +7474,7 @@ HTML;
             'ComponentRevision'     => $component_revision,
             'ComponentVariant'      => $component_variant,
             'ComponentOverrides'    => $component_overrides,
+            'Bindings'              => $bindings,
             'Order'                 => $this->clamp_int($raw['Order'] ?? $section['Order'], 1, 10000, $section['Order']),
             'Title'                 => $title,
             'Content'               => $type === 'css'
@@ -7554,13 +7695,21 @@ HTML;
         ) {
             $content_version = 1;
         }
+        $data_context_type = sanitize_key((string) ($raw['DataContextType'] ?? ''));
+        $data_context_entry_id = absint($raw['DataContextEntryId'] ?? 0);
+        if ($data_context_type === '' || $data_context_entry_id <= 0 || !$this->resolve_dynamic_data_context($data_context_type, $data_context_entry_id)) {
+            $data_context_type = '';
+            $data_context_entry_id = 0;
+        }
 
         return [
-            'Version'        => '1.18',
-            'PageSlug'       => $slug,
-            'PageTitle'      => $title,
-            'ContentVersion' => $content_version,
-            'Sections'       => $sections,
+            'Version'            => '1.19',
+            'PageSlug'           => $slug,
+            'PageTitle'          => $title,
+            'ContentVersion'     => $content_version,
+            'DataContextType'    => $data_context_type,
+            'DataContextEntryId' => $data_context_entry_id,
+            'Sections'           => $sections,
         ];
     }
 
@@ -8090,11 +8239,13 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.18',
+            'Version'        => '1.19',
             'PageSlug'       => $data['PageSlug'],
-            'PageTitle'      => $data['PageTitle'],
-            'ContentVersion' => $data['ContentVersion'] ?? 0,
-            'Sections'       => array_slice($sections, 0, 25),
+            'PageTitle'          => $data['PageTitle'],
+            'ContentVersion'     => $data['ContentVersion'] ?? 0,
+            'DataContextType'    => $data['DataContextType'] ?? '',
+            'DataContextEntryId' => $data['DataContextEntryId'] ?? 0,
+            'Sections'           => array_slice($sections, 0, 25),
         ], $page);
     }
 
@@ -8156,7 +8307,7 @@ HTML;
             $type = sanitize_key((string) ($raw_section['Type'] ?? 'text'));
             if (in_array($type, ['legacy','component'], true)) { throw new RuntimeException('Legacy og linked components kan ikke gemmes inde i et ikke-linked pattern.'); }
         }
-        $data = $this->normalize_page_editor_data(['Version'=>'1.18','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
+        $data = $this->normalize_page_editor_data(['Version'=>'1.19','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
         $sections = array_values((array) $data['Sections']);
         $roots = array_values(array_filter($sections, static function($section){ return sanitize_key((string) ($section['LayoutParentKey'] ?? '')) === ''; }));
         if (count($roots) !== 1) { throw new RuntimeException('Et pattern skal have præcis ét root-element.'); }
@@ -8225,7 +8376,7 @@ HTML;
     private function normalize_page_template_sections(array $raw_sections) {
         $raw_sections=array_slice($raw_sections,0,25); if(!$raw_sections)throw new RuntimeException('Sidetemplaten skal indeholde mindst ét element.');
         foreach($raw_sections as $raw_section){if(!is_array($raw_section))continue;$type=sanitize_key((string)($raw_section['Type']??'text'));if(in_array($type,['legacy','component'],true))throw new RuntimeException('Page Templates kan ikke indeholde legacy eller linked components; templaten skal være en selvstændig kopi.');}
-        $data=$this->normalize_page_editor_data(['Version'=>'1.18','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
+        $data=$this->normalize_page_editor_data(['Version'=>'1.19','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
         $sections=array_values((array)$data['Sections']);
         foreach($sections as &$section){$section['ComponentId']='';$section['ComponentRevision']=0;$section['ComponentVariant']='';$section['ComponentOverrides']=[];}unset($section);
         return $sections;
@@ -8265,7 +8416,7 @@ HTML;
     public function ajax_create_page_from_template() {
         if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at oprette sider.'],403);check_ajax_referer('h18_page_templates_v0522','nonce');$template_id=sanitize_key((string)wp_unslash($_POST['template_id']??''));$title=sanitize_text_field((string)wp_unslash($_POST['page_title']??''));$slug=sanitize_title((string)wp_unslash($_POST['page_slug']??''));$templates=$this->get_page_templates();if(!isset($templates[$template_id]))wp_send_json_error(['message'=>'Page Template blev ikke fundet.'],404);if($title===''||$slug==='')wp_send_json_error(['message'=>'Ny side skal have titel og slug.'],400);if(get_page_by_path($slug,OBJECT,'page'))wp_send_json_error(['message'=>'Der findes allerede en side med denne slug.'],409);
         $post_id=wp_insert_post(['post_type'=>'page','post_status'=>'draft','post_title'=>$title,'post_name'=>$slug,'post_content'=>''],true);if(is_wp_error($post_id))wp_send_json_error(['message'=>$post_id->get_error_message()],400);$page=get_post($post_id);
-        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.18','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
+        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.19','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
         catch(Throwable $e){wp_delete_post($post_id,true);wp_send_json_error(['message'=>$e->getMessage()],400);}
     }
 
@@ -8876,6 +9027,9 @@ HTML;
         if (empty($section['Active'])) {
             return '';
         }
+        if (is_array($this->active_dynamic_data_context)) {
+            $section = $this->apply_dynamic_bindings_to_section($section, $this->active_dynamic_data_context);
+        }
         if ($section['Type'] === 'component') {
             [$component_sections, $component] = $this->resolve_page_component_instance_sections($page_id, $section);
             if (!$component || !$component_sections) { return ''; }
@@ -9188,6 +9342,10 @@ HTML;
     }
 
     private function render_page_editor_front($page_id, array $data) {
+        $this->active_dynamic_data_context = $this->resolve_dynamic_data_context(
+            (string) ($data['DataContextType'] ?? ''),
+            (int) ($data['DataContextEntryId'] ?? 0)
+        );
         $html = $this->page_editor_frontend_css($page_id) . '<div class="h18-editor-page">';
         $sections = array_values((array) $data['Sections']);
         $has_layout_hierarchy = false;
@@ -9427,6 +9585,30 @@ HTML;
                             </select>
                         </div>
                         <input class="h18-advanced-content-authorized" type="hidden" name="<?php echo esc_attr($prefix); ?>[AdvancedContentAuthorized]" value="<?php echo !empty($section['AdvancedContentAuthorized']) ? '1' : '0'; ?>" />
+                    </div>
+
+
+                    <div class="h18-section-module-box h18-dynamic-binding-box">
+                        <h4>Dynamic data binding</h4>
+                        <p class="description">Bind sikre elementegenskaber til current data context. Hvis context/field ikke findes, bruges elementets statiske værdi.</p>
+                        <?php
+                        $binding_rows = [
+                            'Title' => ['Overskrift', 'hero text text_image image buttons card card_grid tabs accordion carousel container flex grid highlight icon list badge quote mail_form poll', 'text number bool date'],
+                            'Content' => ['Tekst / indhold', 'hero text text_image buttons card card_grid tabs accordion carousel container flex grid highlight icon list quote mail_form poll', 'text number bool date'],
+                            'MediaId' => ['Billede', 'hero text_image image', 'media'],
+                            'Button1Label' => ['Knap 1 – tekst', 'hero buttons', 'text number bool date'],
+                            'Button1Url' => ['Knap 1 – link', 'hero buttons', 'text'],
+                            'Button2Label' => ['Knap 2 – tekst', 'hero buttons', 'text number bool date'],
+                            'Button2Url' => ['Knap 2 – link', 'hero buttons', 'text'],
+                        ];
+                        foreach ($binding_rows as $binding_property => $binding_config) :
+                            $binding_value = (string) (($section['Bindings'][$binding_property] ?? ''));
+                        ?>
+                            <div class="h18-field h18-dynamic-binding-row" data-types="<?php echo esc_attr($binding_config[1]); ?>">
+                                <label><strong><?php echo esc_html($binding_config[0]); ?></strong></label>
+                                <select class="h18-dynamic-binding-select" name="<?php echo esc_attr($prefix); ?>[Bindings][<?php echo esc_attr($binding_property); ?>]" data-binding-property="<?php echo esc_attr($binding_property); ?>" data-allowed-types="<?php echo esc_attr($binding_config[2]); ?>" data-binding-value="<?php echo esc_attr($binding_value); ?>"><option value="">Statisk værdi</option></select>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
 
                     <div class="h18-section-type-field h18-section-module-box h18-component-instance-editor" data-types="component">
@@ -9870,6 +10052,7 @@ HTML;
         $page_presets = $this->get_page_presets();
         $page_components = $this->get_page_components_for_editor();
         $page_templates = $this->get_page_templates_for_editor();
+        $dynamic_data_catalog = $this->dynamic_data_context_catalog_for_editor();
         ?>
         <div class="wrap h18-admin h18-pages-admin">
             <h1>Sider</h1>
@@ -9938,6 +10121,24 @@ HTML;
                     <div class="h18-page-editor-title h18-layout-card">
                         <div class="h18-field"><label><strong>WordPress-sidetitel</strong></label><input type="text" name="editor_page_title" value="<?php echo esc_attr($data['PageTitle']); ?>" required /><p class="description">Menupunktets viste navn ændres fortsat under Menu.</p></div>
                         <div class="h18-field"><label><strong>Hvad er ændret?</strong></label><textarea name="page_change_note" rows="3" maxlength="500" placeholder="Fx Rettet overskrift, ændret luft mellem kort og udskiftet kontaktknappen."></textarea><p class="description">Skal udfyldes ved en rigtig gemning. Teksten gemmes sammen med versionsnummer, tidspunkt, bruger og backup. Ved WhatIf er feltet valgfrit.</p></div>
+                    </div>
+
+
+                    <div class="h18-page-data-context h18-layout-card">
+                        <div class="h18-field">
+                            <label><strong>Current data context – datatype</strong></label>
+                            <select id="h18-page-data-context-type" name="data_context_type">
+                                <option value="">Ingen – brug statiske værdier</option>
+                                <?php foreach ($dynamic_data_catalog as $context_type) : ?>
+                                    <option value="<?php echo esc_attr($context_type['Key']); ?>" <?php selected((string) ($data['DataContextType'] ?? ''), (string) $context_type['Key']); ?>><?php echo esc_html($context_type['PluralLabel']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="description">Bindings bruger kun den valgte entry. Static elementværdier bevares som fallback.</p>
+                        </div>
+                        <div class="h18-field">
+                            <label><strong>Current data context – entry</strong></label>
+                            <select id="h18-page-data-context-entry" name="data_context_entry_id" data-current-entry="<?php echo esc_attr((int) ($data['DataContextEntryId'] ?? 0)); ?>"><option value="0">Ingen entry</option></select>
+                        </div>
                     </div>
 
                     <div class="h18-page-preview-toolbar">
@@ -10098,6 +10299,7 @@ HTML;
                 <script id="h18-page-presets-data" type="application/json"><?php echo wp_json_encode(array_values($page_presets), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
                 <script id="h18-page-components-data" type="application/json"><?php echo wp_json_encode(array_values($page_components), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
                 <script id="h18-page-templates-data" type="application/json"><?php echo wp_json_encode(array_values($page_templates), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+                <script id="h18-dynamic-data-catalog" type="application/json"><?php echo wp_json_encode(array_values($dynamic_data_catalog), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
                 <template id="h18-page-section-template"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>
                 <template id="h18-page-card-template"><?php $this->render_page_editor_card_admin($this->default_page_card(10), '__SECTION_INDEX__', '__CARD_INDEX__'); ?></template>
             <?php endif; ?>
@@ -10250,7 +10452,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.18',
+                    'Version' => '1.19',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -10370,11 +10572,13 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.18',
+            'Version'        => '1.19',
             'PageSlug'       => $slug,
-            'PageTitle'      => $this->post_text('editor_page_title'),
-            'ContentVersion' => $next_content_version,
-            'Sections'       => $sections,
+            'PageTitle'          => $this->post_text('editor_page_title'),
+            'ContentVersion'     => $next_content_version,
+            'DataContextType'    => sanitize_key((string) wp_unslash($_POST['data_context_type'] ?? '')),
+            'DataContextEntryId' => absint($_POST['data_context_entry_id'] ?? 0),
+            'Sections'           => $sections,
         ], $page);
 
         if (!empty($_POST['whatif'])) {
@@ -10400,7 +10604,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.18',
+                'Version' => '1.19',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];
