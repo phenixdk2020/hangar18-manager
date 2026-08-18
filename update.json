@@ -1,19 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.29",
+  "version": "0.5.30",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T06:22:54Z",
+  "published_utc": "2026-08-18T06:31:19Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "cedfa08ccb259ad2bb672d899d94e745ea213e9d0e0534b94143a60bd0d82257",
+  "package_sha256": "5739e034affb0f1427df53842abfd3430e437c50ad0111ae50c8e4c1dda85a46",
   "changelog": [
-    "Tilføjer E5 UD-056 Advanced Query med bounded AND/OR-grupper.",
-    "Advanced Query kan blande primitive datafelter, Relation-felter og private Data Tags taxonomy-filtre.",
-    "Data entries får den private h18_data_tag taxonomy med bounded kommasepareret tag-editor.",
-    "Preview og frontend-shortcode bruger samme normalized evaluator og publicerede kandidatdatasæt uden rå SQL.",
-    "Pagination understøtter 1–50 resultater pr. side med query-specifikke page keys og stabil sortering.",
-    "Advanced evaluator begrænser kandidatdatasættet til 2000 publicerede entries og markerer Truncated ved loftet.",
-    "Page-editor schema forbliver 1.21; Data SchemaVersion forbliver 2."
+    "Tilføjer E5 UD-059 Field Formatters og fallback pr. dynamic binding.",
+    "Det eksisterende Bindings-map bevares; nye indstillinger ligger bagudkompatibelt i BindingOptions.",
+    "Formatters omfatter tekst, upper/lower, tal med 0/1/2 decimaler, datoformater og Ja/Nej.",
+    "Fallback kan beholde statisk elementværdi, bruge custom værdi eller give tomt output.",
+    "FallbackWhenEmpty er opt-in og default false, så eksisterende empty-value bindinger bevarer tidligere adfærd.",
+    "Prefix/suffix understøttes på tekstoutput; URL/media saniteres fortsat typespecifikt.",
+    "Runtime og canvas-preview bruger samme formatter/fallback-model, og options følger Patterns/Components/Templates.",
+    "Page-editor schema løftes bagudkompatibelt til 1.22."
   ]
 }

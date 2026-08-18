@@ -766,3 +766,7 @@ body.h18-command-palette-visible{overflow:hidden}
 
 /* v0.5.29 – UD-056 Advanced Query */
 .h18-aq-group{margin:12px 0;padding:12px;border:1px solid #dcdcde;border-radius:8px;background:#f6f7f7}.h18-aq-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.h18-aq-filters{display:grid;gap:8px}.h18-aq-filter{display:grid;grid-template-columns:140px minmax(160px,1fr) 140px minmax(160px,1fr) auto;gap:8px;align-items:center}.h18-data-pagination{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}.h18-data-pagination a{padding:5px 9px;border:1px solid currentColor;border-radius:5px;text-decoration:none}.h18-data-pagination a[aria-current=page]{font-weight:700;background:rgba(0,0,0,.06)}@media(max-width:1000px){.h18-aq-filter{grid-template-columns:1fr 1fr}.h18-aq-filter>*:last-child{justify-self:start}}
+
+
+/* v0.5.30 – UD-059 Binding formatters + fallback */
+.h18-binding-options{display:grid;grid-template-columns:minmax(150px,1fr) minmax(190px,1.2fr) minmax(130px,1fr);gap:7px;margin-top:7px;padding:9px;border:1px solid #dcdcde;border-radius:6px;background:#f6f7f7}.h18-binding-options .h18-binding-empty-toggle{grid-column:1/-1;font-size:12px}.h18-binding-options.is-url-or-media .h18-binding-prefix,.h18-binding-options.is-url-or-media .h18-binding-suffix{display:none}@media(max-width:900px){.h18-binding-options{grid-template-columns:1fr}}

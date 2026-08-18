@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.29
+ * Version: 0.5.30
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.29';
+    const VERSION = '0.5.30';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -727,7 +727,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.21',
+                'Version' => '1.22',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -7273,6 +7273,86 @@ HTML;
         return $bindings;
     }
 
+    private function dynamic_binding_formatters() {
+        return [
+            'Auto'=>'Automatisk',
+            'Text'=>'Tekst',
+            'Upper'=>'STORE BOGSTAVER',
+            'Lower'=>'små bogstaver',
+            'Number0'=>'Tal · 0 decimaler',
+            'Number1'=>'Tal · 1 decimal',
+            'Number2'=>'Tal · 2 decimaler',
+            'DateShort'=>'Dato · 31.12.2026',
+            'DateIso'=>'Dato · 2026-12-31',
+            'DateLong'=>'Dato · 31. december 2026',
+            'BoolYesNo'=>'Ja / Nej',
+        ];
+    }
+
+    private function normalize_dynamic_binding_options($raw) {
+        if (is_string($raw) && $raw !== '') {
+            $decoded=json_decode($raw,true); if(is_array($decoded))$raw=$decoded;
+        }
+        if(!is_array($raw))return[];
+        $properties=$this->dynamic_binding_property_types();$formatters=$this->dynamic_binding_formatters();$out=[];
+        foreach($raw as $property=>$option){
+            $property=(string)$property;if(!isset($properties[$property])||!is_array($option))continue;
+            $formatter=(string)($option['Formatter']??'Auto');if(!isset($formatters[$formatter]))$formatter='Auto';
+            $fallback_mode=(string)($option['FallbackMode']??'Static');if(!in_array($fallback_mode,['Static','Custom','Empty'],true))$fallback_mode='Static';
+            $fallback=sanitize_text_field((string)($option['Fallback']??''));if(strlen($fallback)>2000)$fallback=substr($fallback,0,2000);
+            $prefix=sanitize_text_field((string)($option['Prefix']??''));if(strlen($prefix)>100)$prefix=substr($prefix,0,100);
+            $suffix=sanitize_text_field((string)($option['Suffix']??''));if(strlen($suffix)>100)$suffix=substr($suffix,0,100);
+            $out[$property]=['Formatter'=>$formatter,'FallbackMode'=>$fallback_mode,'Fallback'=>$fallback,'FallbackWhenEmpty'=>!empty($option['FallbackWhenEmpty']),'Prefix'=>$prefix,'Suffix'=>$suffix];
+        }
+        return$out;
+    }
+
+    private function dynamic_binding_option_for_property(array $options,$property) {
+        return isset($options[$property])&&is_array($options[$property])?$options[$property]:['Formatter'=>'Auto','FallbackMode'=>'Static','Fallback'=>'','FallbackWhenEmpty'=>false,'Prefix'=>'','Suffix'=>''];
+    }
+
+    private function dynamic_binding_value_is_empty($value,$field_type='') {
+        if($value===null||$value==='')return true;
+        if(is_array($value)&&!$value)return true;
+        if($field_type==='media'&&absint($value)<=0)return true;
+        return false;
+    }
+
+    private function dynamic_binding_format_value($value,$field_type,$formatter) {
+        $formatter=(string)$formatter;$field_type=(string)$field_type;
+        if($formatter==='Auto')return $this->dynamic_binding_text_value($value);
+        if($formatter==='Text')return $this->dynamic_binding_text_value($value);
+        if($formatter==='Upper'||$formatter==='Lower'){
+            if(!in_array($field_type,['text','number','bool','date'],true))return null;$text=$this->dynamic_binding_text_value($value);
+            if($formatter==='Upper')return function_exists('mb_strtoupper')?mb_strtoupper($text,'UTF-8'):strtoupper($text);
+            return function_exists('mb_strtolower')?mb_strtolower($text,'UTF-8'):strtolower($text);
+        }
+        if(in_array($formatter,['Number0','Number1','Number2'],true)){
+            if(!is_numeric($value))return null;$decimals=(int)substr($formatter,-1);return number_format_i18n((float)$value,$decimals);
+        }
+        if(in_array($formatter,['DateShort','DateIso','DateLong'],true)){
+            $raw=trim((string)$value);$date=DateTimeImmutable::createFromFormat('!Y-m-d',$raw,wp_timezone());$errors=DateTimeImmutable::getLastErrors();
+            if(!$date||($errors!==false&&(((int)($errors['warning_count']??0))>0||((int)($errors['error_count']??0))>0))||$date->format('Y-m-d')!==$raw)return null;
+            $format=$formatter==='DateShort'?'d.m.Y':($formatter==='DateIso'?'Y-m-d':'j. F Y');return wp_date($format,$date->getTimestamp(),wp_timezone());
+        }
+        if($formatter==='BoolYesNo')return $this->bool_value($value,false)?'Ja':'Nej';
+        return null;
+    }
+
+    private function apply_dynamic_binding_output(array &$section,$property,$value) {
+        if($property==='MediaId'){$section[$property]=absint($value);return;}
+        $text=is_scalar($value)?(string)$value:'';
+        if(in_array($property,['Button1Url','Button2Url'],true))$section[$property]=esc_url_raw($text);
+        elseif($property==='Content')$section[$property]=wp_kses_post($text);
+        else $section[$property]=sanitize_text_field($text);
+    }
+
+    private function apply_dynamic_binding_fallback(array &$section,$property,array $option) {
+        $mode=(string)($option['FallbackMode']??'Static');if($mode==='Static')return;
+        if($mode==='Empty'){$this->apply_dynamic_binding_output($section,$property,$property==='MediaId'?0:'');return;}
+        $fallback=(string)($option['Fallback']??'');$this->apply_dynamic_binding_output($section,$property,$fallback);
+    }
+
     private function dynamic_data_context_catalog_for_editor() {
         $types = $this->get_custom_data_types();
         $catalog = [];
@@ -7347,32 +7427,25 @@ HTML;
     }
 
     private function apply_dynamic_bindings_to_section(array $section, array $context) {
-        $bindings = $this->normalize_dynamic_bindings($section['Bindings'] ?? []);
-        if (!$bindings) { return $section; }
-        $property_types = $this->dynamic_binding_property_types();
-        $fields = isset($context['Fields']) && is_array($context['Fields']) ? $context['Fields'] : [];
-        $values = isset($context['Values']) && is_array($context['Values']) ? $context['Values'] : [];
-        foreach ($bindings as $property => $field_key) {
-            if (!isset($fields[$field_key]) || !array_key_exists($field_key, $values)) { continue; }
-            $field_type = (string) ($fields[$field_key]['Type'] ?? '');
-            if (!in_array($field_type, $property_types[$property] ?? [], true)) { continue; }
-            $value = $values[$field_key];
-            if ($property === 'MediaId') {
-                $section[$property] = absint($value);
-                continue;
+        $bindings=$this->normalize_dynamic_bindings($section['Bindings']??[]);if(!$bindings)return$section;
+        $options=$this->normalize_dynamic_binding_options($section['BindingOptions']??[]);$property_types=$this->dynamic_binding_property_types();$fields=isset($context['Fields'])&&is_array($context['Fields'])?$context['Fields']:[];$values=isset($context['Values'])&&is_array($context['Values'])?$context['Values']:[];
+        foreach($bindings as $property=>$field_key){
+            $option=$this->dynamic_binding_option_for_property($options,$property);$resolved=false;
+            if(isset($fields[$field_key])&&array_key_exists($field_key,$values)){
+                $field_type=(string)($fields[$field_key]['Type']??'');
+                if(in_array($field_type,$property_types[$property]??[],true)){
+                    $value=$values[$field_key];$empty=$this->dynamic_binding_value_is_empty($value,$field_type);
+                    if(!$empty||empty($option['FallbackWhenEmpty'])){
+                        if($property==='MediaId'){$formatted=absint($value);$resolved=true;}
+                        else{$formatted=$this->dynamic_binding_format_value($value,$field_type,(string)$option['Formatter']);if($formatted!==null){if(!in_array($property,['Button1Url','Button2Url'],true))$formatted=(string)$option['Prefix'].$formatted.(string)$option['Suffix'];$resolved=true;}}
+                        if($resolved)$this->apply_dynamic_binding_output($section,$property,$formatted);
+                    }
+                }
             }
-            $text = $this->dynamic_binding_text_value($value);
-            if (in_array($property, ['Button1Url','Button2Url'], true)) {
-                $section[$property] = esc_url_raw($text);
-            } elseif ($property === 'Content') {
-                $section[$property] = wp_kses_post($text);
-            } else {
-                $section[$property] = sanitize_text_field($text);
-            }
+            if(!$resolved)$this->apply_dynamic_binding_fallback($section,$property,$option);
         }
-        return $section;
+        return$section;
     }
-
 
 
 
@@ -7718,6 +7791,7 @@ HTML;
             'ComponentVariant'      => '',
             'ComponentOverrides'    => [],
             'Bindings'              => [],
+            'BindingOptions'        => [],
             'ConditionMode'         => 'All',
             'Conditions'            => [],
             'QueryListType'         => '',
@@ -7976,6 +8050,7 @@ HTML;
             }
         }
         $bindings = $this->normalize_dynamic_bindings($raw['Bindings'] ?? []);
+        $binding_options = $this->normalize_dynamic_binding_options($raw['BindingOptions'] ?? []);
         $condition_mode = (string) ($raw['ConditionMode'] ?? 'All');
         if (!in_array($condition_mode, ['All','Any'], true)) { $condition_mode = 'All'; }
         $conditions_raw = $raw['Conditions'] ?? [];
@@ -8159,6 +8234,7 @@ HTML;
             'ComponentVariant'      => $component_variant,
             'ComponentOverrides'    => $component_overrides,
             'Bindings'              => $bindings,
+            'BindingOptions'        => $binding_options,
             'ConditionMode'         => $condition_mode,
             'Conditions'            => $conditions,
             'QueryListType'         => $query_list_type,
@@ -8403,7 +8479,7 @@ HTML;
         }
 
         return [
-            'Version'            => '1.21',
+            'Version'            => '1.22',
             'PageSlug'           => $slug,
             'PageTitle'          => $title,
             'ContentVersion'     => $content_version,
@@ -8939,7 +9015,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.21',
+            'Version'        => '1.22',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'          => $data['PageTitle'],
             'ContentVersion'     => $data['ContentVersion'] ?? 0,
@@ -9007,7 +9083,7 @@ HTML;
             $type = sanitize_key((string) ($raw_section['Type'] ?? 'text'));
             if (in_array($type, ['legacy','component'], true)) { throw new RuntimeException('Legacy og linked components kan ikke gemmes inde i et ikke-linked pattern.'); }
         }
-        $data = $this->normalize_page_editor_data(['Version'=>'1.21','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
+        $data = $this->normalize_page_editor_data(['Version'=>'1.22','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
         $sections = array_values((array) $data['Sections']);
         $roots = array_values(array_filter($sections, static function($section){ return sanitize_key((string) ($section['LayoutParentKey'] ?? '')) === ''; }));
         if (count($roots) !== 1) { throw new RuntimeException('Et pattern skal have præcis ét root-element.'); }
@@ -9076,7 +9152,7 @@ HTML;
     private function normalize_page_template_sections(array $raw_sections) {
         $raw_sections=array_slice($raw_sections,0,25); if(!$raw_sections)throw new RuntimeException('Sidetemplaten skal indeholde mindst ét element.');
         foreach($raw_sections as $raw_section){if(!is_array($raw_section))continue;$type=sanitize_key((string)($raw_section['Type']??'text'));if(in_array($type,['legacy','component'],true))throw new RuntimeException('Page Templates kan ikke indeholde legacy eller linked components; templaten skal være en selvstændig kopi.');}
-        $data=$this->normalize_page_editor_data(['Version'=>'1.21','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
+        $data=$this->normalize_page_editor_data(['Version'=>'1.22','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
         $sections=array_values((array)$data['Sections']);
         foreach($sections as &$section){$section['ComponentId']='';$section['ComponentRevision']=0;$section['ComponentVariant']='';$section['ComponentOverrides']=[];}unset($section);
         return $sections;
@@ -9116,7 +9192,7 @@ HTML;
     public function ajax_create_page_from_template() {
         if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at oprette sider.'],403);check_ajax_referer('h18_page_templates_v0522','nonce');$template_id=sanitize_key((string)wp_unslash($_POST['template_id']??''));$title=sanitize_text_field((string)wp_unslash($_POST['page_title']??''));$slug=sanitize_title((string)wp_unslash($_POST['page_slug']??''));$templates=$this->get_page_templates();if(!isset($templates[$template_id]))wp_send_json_error(['message'=>'Page Template blev ikke fundet.'],404);if($title===''||$slug==='')wp_send_json_error(['message'=>'Ny side skal have titel og slug.'],400);if(get_page_by_path($slug,OBJECT,'page'))wp_send_json_error(['message'=>'Der findes allerede en side med denne slug.'],409);
         $post_id=wp_insert_post(['post_type'=>'page','post_status'=>'draft','post_title'=>$title,'post_name'=>$slug,'post_content'=>''],true);if(is_wp_error($post_id))wp_send_json_error(['message'=>$post_id->get_error_message()],400);$page=get_post($post_id);
-        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.21','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
+        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.22','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
         catch(Throwable $e){wp_delete_post($post_id,true);wp_send_json_error(['message'=>$e->getMessage()],400);}
     }
 
@@ -10398,10 +10474,19 @@ HTML;
                         ];
                         foreach ($binding_rows as $binding_property => $binding_config) :
                             $binding_value = (string) (($section['Bindings'][$binding_property] ?? ''));
+                            $binding_option = $this->dynamic_binding_option_for_property((array)($section['BindingOptions'] ?? []), $binding_property);
                         ?>
                             <div class="h18-field h18-dynamic-binding-row" data-types="<?php echo esc_attr($binding_config[1]); ?>">
                                 <label><strong><?php echo esc_html($binding_config[0]); ?></strong></label>
                                 <select class="h18-dynamic-binding-select" name="<?php echo esc_attr($prefix); ?>[Bindings][<?php echo esc_attr($binding_property); ?>]" data-binding-property="<?php echo esc_attr($binding_property); ?>" data-allowed-types="<?php echo esc_attr($binding_config[2]); ?>" data-binding-value="<?php echo esc_attr($binding_value); ?>"><option value="">Statisk værdi</option></select>
+                                <div class="h18-binding-options" data-binding-property="<?php echo esc_attr($binding_property); ?>">
+                                    <select class="h18-binding-formatter" name="<?php echo esc_attr($prefix); ?>[BindingOptions][<?php echo esc_attr($binding_property); ?>][Formatter]"><?php foreach($this->dynamic_binding_formatters() as $formatter_key=>$formatter_label):?><option value="<?php echo esc_attr($formatter_key); ?>" <?php selected($binding_option['Formatter'],$formatter_key); ?>><?php echo esc_html($formatter_label); ?></option><?php endforeach;?></select>
+                                    <select class="h18-binding-fallback-mode" name="<?php echo esc_attr($prefix); ?>[BindingOptions][<?php echo esc_attr($binding_property); ?>][FallbackMode]"><option value="Static" <?php selected($binding_option['FallbackMode'],'Static'); ?>>Fallback: statisk elementværdi</option><option value="Custom" <?php selected($binding_option['FallbackMode'],'Custom'); ?>>Fallback: egen værdi</option><option value="Empty" <?php selected($binding_option['FallbackMode'],'Empty'); ?>>Fallback: tom</option></select>
+                                    <input class="h18-binding-fallback" type="text" maxlength="2000" name="<?php echo esc_attr($prefix); ?>[BindingOptions][<?php echo esc_attr($binding_property); ?>][Fallback]" value="<?php echo esc_attr($binding_option['Fallback']); ?>" placeholder="Egen fallback" />
+                                    <label class="h18-binding-empty-toggle"><input class="h18-binding-fallback-empty" type="checkbox" name="<?php echo esc_attr($prefix); ?>[BindingOptions][<?php echo esc_attr($binding_property); ?>][FallbackWhenEmpty]" value="1" <?php checked(!empty($binding_option['FallbackWhenEmpty'])); ?> /> Brug fallback når feltet er tomt</label>
+                                    <input class="h18-binding-prefix" type="text" maxlength="100" name="<?php echo esc_attr($prefix); ?>[BindingOptions][<?php echo esc_attr($binding_property); ?>][Prefix]" value="<?php echo esc_attr($binding_option['Prefix']); ?>" placeholder="Prefix" />
+                                    <input class="h18-binding-suffix" type="text" maxlength="100" name="<?php echo esc_attr($prefix); ?>[BindingOptions][<?php echo esc_attr($binding_property); ?>][Suffix]" value="<?php echo esc_attr($binding_option['Suffix']); ?>" placeholder="Suffix" />
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -11289,7 +11374,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.21',
+                    'Version' => '1.22',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -11409,7 +11494,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.21',
+            'Version'        => '1.22',
             'PageSlug'       => $slug,
             'PageTitle'          => $this->post_text('editor_page_title'),
             'ContentVersion'     => $next_content_version,
@@ -11441,7 +11526,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.21',
+                'Version' => '1.22',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

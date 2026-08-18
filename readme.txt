@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.5.29
+Version: 0.5.30
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -1139,3 +1139,14 @@ Kompatibilitet og sikkerhed:
 - Pagination: 1–50 resultater pr. side, stabil sortering og separate query-string page keys pr. query.
 - Kandidatsættet er bounded til 2000 publicerede entries og markerer `Truncated`, hvis grænsen nås.
 - Page-editor schema forbliver 1.21; Data SchemaVersion forbliver 2.
+
+
+## v0.5.30 – E5 UD-059 Field formatters + fallback
+- Dynamic bindings får et separat, bagudkompatibelt `BindingOptions`-lag; den eksisterende `Bindings[property]=field` model ændres ikke.
+- Formatters: Auto/Text, upper/lower, tal med 0/1/2 decimaler, kort/ISO/lang dato samt Ja/Nej.
+- Fallback modes: behold statisk elementværdi, custom fallback eller tom værdi.
+- `FallbackWhenEmpty` er opt-in og default false, så eksisterende bindinger beholder tidligere empty-value adfærd.
+- Prefix/suffix kan anvendes på tekstoutput; URL/media springer prefix/suffix over og saniteres fortsat typespecifikt.
+- Runtime og canvas-preview anvender samme formatter/fallback-model.
+- BindingOptions følger med i Patterns, linked component definitions og Page Templates.
+- Page-editor schema løftes bagudkompatibelt til 1.22.
