@@ -3,7 +3,7 @@ name: Sync Hangar18 release source
 on:
   push:
     branches:
-      - qa/v0.5.22-release
+      - qa/v0.5.22-release-r2
     paths:
       - '.github/workflows/sync-release-source.yml'
 
@@ -11,12 +11,14 @@ permissions:
   contents: write
 
 jobs:
-  release-v0522:
+  release-v0522-r2:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: qa/v0.5.22-release
+          ref: qa/v0.5.22-release-r2
           fetch-depth: 0
-      - name: Release candidate r2
+      - name: Point runner at independent QA branch
+        run: sed -i "s#BRANCH='qa/v0.5.22-release'#BRANCH='qa/v0.5.22-release-r2'#" .github/scripts/release_v0522.py
+      - name: Release candidate r2 independent
         run: python3 .github/scripts/release_v0522.py
