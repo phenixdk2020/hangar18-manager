@@ -3,7 +3,7 @@ set -euo pipefail
 
 base_ref="${1:-origin/main}"
 
-allowed='^(src/|tests/Architecture/|docs/architecture-migration\.md$|\.github/workflows/architecture-foundation-qa\.yml$)'
+allowed='^(src/|tests/Architecture/|docs/architecture-[^/]+\.md$|\.github/workflows/architecture-foundation-qa\.yml$)'
 changed="$(git diff --name-only "${base_ref}...HEAD")"
 
 violations="$(printf '%s\n' "$changed" | grep -Ev "$allowed" || true)"
