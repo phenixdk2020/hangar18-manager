@@ -11,26 +11,75 @@ permissions:
   contents: write
 
 jobs:
-  source-v0522:
+  package-v0522:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: qa/v0.5.22-source-candidate
           fetch-depth: 0
-      - name: Apply already-validated E4 patch
+      - name: Revalidate materialized source
         run: |
           set -euo pipefail
-          python3 .github/scripts/prepare_v0522.py
-          python3 .github/scripts/patch_v0522.py
           php -l hangar18-manager.php
           node --check assets/admin.js
           python3 .github/scripts/qa_v0522.py
-      - name: Commit validated source only
+      - name: Build ZIP and manifest
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp assets/admin.css assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          python3 - <<'PY'
+          import hashlib,json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          package=Path('dist/hangar18-manager.zip')
+          manifest={
+            'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.22','min_wp':'6.4','min_php':'8.0',
+            'published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+            'package_path':'dist/hangar18-manager.zip','package_sha256':hashlib.sha256(package.read_bytes()).hexdigest(),
+            'changelog':[
+              'Tilføjer UD-047 Component Variants oven på samme linked definition og eksponerede inputmodel.',
+              'Variant anvendes før lokale instance-overrides; lokale overrides har dermed højeste prioritet.',
+              'Tilføjer UD-048 nested subtree Patterns med friske keys og transparent kompatibilitet med gamle enkeltsektion-presets.',
+              'Tilføjer UD-049 Page Templates, der opretter frie draft WordPress/Hangar18-sider med friske section keys og audit-origin.',
+              'Template-oprettede sider bliver automatisk Hangar18-managed og redigerbare i sideeditoren.',
+              'Løfter page-editor schema bagudkompatibelt til 1.18.'
+            ]}
+          Path('update.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(manifest['package_sha256'])
+          PY
+      - name: Re-open and validate ZIP
+        run: |
+          set -euo pipefail
+          mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          grep -F 'Version: 0.5.22' .verify/hangar18-manager/hangar18-manager.php
+          grep -F "const VERSION = '0.5.22';" .verify/hangar18-manager/hangar18-manager.php
+          grep -F "'Version'        => '1.18'" .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'normalize_page_component_variants' .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'renderPageTemplatesV0522' .verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          manifest=json.loads(Path('update.json').read_text())
+          actual=hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest()
+          assert manifest['version']=='0.5.22' and manifest['package_sha256']==actual
+          print('v0.5.22 package QA passed:',actual)
+          PY
+          rm -rf .build .verify
+      - name: Commit package artifacts only
         run: |
           set -euo pipefail
           git config user.name hangar18-build
           git config user.email actions@users.noreply.github.com
-          git add hangar18-manager.php assets/admin.js assets/admin.css readme.txt
-          git commit -m 'QA: materialize v0.5.22 validated source'
+          git add update.json dist/hangar18-manager.zip
+          git commit -m 'QA: package v0.5.22 validated candidate'
           git push origin HEAD:qa/v0.5.22-source-candidate
