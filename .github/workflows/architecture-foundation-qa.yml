@@ -69,6 +69,9 @@ jobs:
       - name: E8 Workflow core test
         run: php tests/Architecture/e8-workflow-smoke.php
 
+      - name: E9 Assets core test
+        run: php tests/Architecture/e9-assets-smoke.php
+
       - name: Passive runtime JavaScript syntax
         run: |
           node --check assets/site-builder-runtime.js
