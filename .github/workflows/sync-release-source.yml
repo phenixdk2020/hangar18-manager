@@ -1,55 +1,39 @@
-name: Sync Hangar18 release source
+name: Validate Hangar18 Manager 0.5.29 source
 
 on:
   push:
     branches:
-      - main
+      - qa/v0.5.29-source
     paths:
-      - 'dist/hangar18-manager.zip'
-      - 'update.json'
       - '.github/workflows/sync-release-source.yml'
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  sync-source:
+  source-v0529:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate package and extract source
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.29-source
+          fetch-depth: 0
+      - name: Run source QA and persist result
         shell: bash
         run: |
-          set -euo pipefail
-          rm -rf .build
-          mkdir -p .build
-          unzip -t dist/hangar18-manager.zip
-          unzip -q dist/hangar18-manager.zip -d .build
-          VERSION=$(python3 -c "import json; print(json.load(open('update.json'))['version'])")
-          grep -F "Version: ${VERSION}" .build/hangar18-manager/hangar18-manager.php
-          grep -F "const VERSION = '${VERSION}';" .build/hangar18-manager/hangar18-manager.php
-          php -l .build/hangar18-manager/hangar18-manager.php
-          node --check .build/hangar18-manager/assets/admin.js
-
-      - name: Synchronize repository source
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp .build/hangar18-manager/hangar18-manager.php hangar18-manager.php
-          cp .build/hangar18-manager/readme.txt readme.txt
-          mkdir -p assets
-          cp .build/hangar18-manager/assets/admin.css assets/admin.css
-          cp .build/hangar18-manager/assets/admin.js assets/admin.js
-          rm -rf .build
-          git config user.name "hangar18-build"
-          git config user.email "actions@users.noreply.github.com"
-          git add hangar18-manager.php readme.txt assets/admin.css assets/admin.js
-          if git diff --cached --quiet; then
-            echo "Repository source is already synchronized."
-            exit 0
-          fi
-          git commit -m "Sync Hangar18 Manager ${VERSION:-release} source"
-          git push
+          set +e
+          LOG=.github/v0529-source-qa.txt
+          : > "$LOG"
+          python3 .github/scripts/patch_v0529.py >> "$LOG" 2>&1
+          echo "patch_status=$?" >> "$LOG"
+          php -l hangar18-manager.php >> "$LOG" 2>&1
+          echo "php_status=$?" >> "$LOG"
+          node --check assets/admin.js >> "$LOG" 2>&1
+          echo "js_status=$?" >> "$LOG"
+          python3 .github/scripts/qa_v0529.py >> "$LOG" 2>&1
+          echo "qa_status=$?" >> "$LOG"
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add "$LOG"
+          git commit -m 'QA: record v0.5.29 source validation'
+          git push origin HEAD:qa/v0.5.29-source
