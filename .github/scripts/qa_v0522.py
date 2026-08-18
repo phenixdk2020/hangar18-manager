@@ -66,28 +66,27 @@ if del_block.find('get_page_component_variant_usage') < 0 or del_block.find('uns
 if del_block.find('get_page_component_variant_usage') > del_block.find('unset($components[$component_id]'):
     raise SystemExit('Variant delete mutates before usage protection')
 
-# Pattern storage must not contain shared component identity.
+# Pattern storage must always detach shared component identity.
 pattern_start=php.index('private function normalize_page_pattern_sections')
 pattern_end=php.index('public function ajax_delete_page_preset',pattern_start)
 pattern_block=php[pattern_start:pattern_end]
-for forbidden in ["$section['ComponentId']='", "$section['ComponentRevision']=1", "'ComponentId'=>$"]:
-    if forbidden in pattern_block:
-        raise SystemExit('Pattern accidentally preserves shared component identity: '+forbidden)
-if "$section['ComponentId']='';" not in pattern_block:
-    raise SystemExit('Pattern does not explicitly detach component identity')
+if "$section['ComponentId']='';" not in pattern_block or "$section['ComponentRevision']=0;" not in pattern_block or "$section['ComponentVariant']='';" not in pattern_block:
+    raise SystemExit('Pattern does not explicitly detach linked component identity')
 
 # Template creation must produce an independent page snapshot; origin meta is audit-only.
 create_start=php.index('public function ajax_create_page_from_template')
 create_end=php.index('private function page_component_allowed_input_fields',create_start)
 create_block=php[create_start:create_end]
-for forbidden in ['ComponentId'=>$template_id, 'TemplateId'=>', 'PAGE_TEMPLATES_OPTION',$template_id]:
-    pass
-if 'update_post_meta($post_id,\'_h18_page_template_origin\',$template_id)' not in create_block:
+if "update_post_meta($post_id,'_h18_page_template_origin',$template_id)" not in create_block:
     raise SystemExit('Template origin audit metadata missing')
 if 'save_page_editor_data($slug,$data)' not in create_block:
     raise SystemExit('Template-created page is not detached into normal page editor storage')
 if 'instantiate_page_template_sections' not in create_block:
     raise SystemExit('Template page does not regenerate section keys')
+# The template id may appear only in origin metadata/lookup; it must not be persisted as a page-editor linkage field.
+for forbidden in ["'TemplateId'", "'PageTemplateId'", "'TemplateLink'"]:
+    if forbidden in create_block:
+        raise SystemExit('Template-created page contains shared template linkage field: '+forbidden)
 
 # Deleting a Page Template must never delete or modify pages created from it.
 tpl_del_start=php.index('public function ajax_delete_page_template')
