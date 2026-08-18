@@ -6,6 +6,7 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
+      - agent/integration-admin-v074
   pull_request:
     paths:
       - 'src/**'
@@ -13,27 +14,28 @@ on:
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
+      - 'docs/integration-backlog-after-ud120.md'
+      - 'hangar18-manager.php'
+      - 'assets/admin.css'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   architecture-smoke:
+    if: github.ref != 'refs/heads/agent/integration-admin-v074' && github.head_ref != 'agent/integration-admin-v074'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         php-version: ['8.0','8.2','8.3']
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: {fetch-depth: 0}
       - run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
       - run: bash tests/Architecture/protected-domain-contract.sh
       - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-version }}
-          coverage: none
+        with: {php-version: '${{ matrix.php-version }}', coverage: none}
       - run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/Architecture/architecture-smoke.php
       - run: php tests/Architecture/page-schema-smoke.php
@@ -56,13 +58,72 @@ jobs:
       - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
 
   browser-engine-qa:
+    if: github.ref != 'refs/heads/agent/integration-admin-v074' && github.head_ref != 'agent/integration-admin-v074'
     name: E14 browser engines (Chromium/Firefox/WebKit)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+        with: {node-version: '20'}
       - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
+
+  apply-integration-admin:
+    if: github.ref == 'refs/heads/agent/integration-admin-v074' || github.head_ref == 'agent/integration-admin-v074'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/integration-admin-v074
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.0', coverage: none}
+      - name: Apply admin-only integration bridge
+        run: python3 .github/scripts/apply_integration_admin_v074.py
+      - name: Validate patched runtime
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          php -l src/Admin/IntegrationAdminBootstrap.php
+          php tests/Architecture/integration-admin-smoke.php
+          bash tests/Architecture/integration-admin-contract.sh
+          bash tests/Architecture/protected-domain-contract.sh
+          node --check assets/admin.js
+      - name: Commit patched product files if changed
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add hangar18-manager.php assets/admin.css
+          if git diff --cached --quiet; then
+            echo 'Integration patch already applied.'
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m 'Wire admin-only Ultimate Designer integration dashboard'
+          git push origin HEAD:agent/integration-admin-v074
+
+  integration-admin-qa:
+    needs: apply-integration-admin
+    if: always() && needs.apply-integration-admin.result == 'success' && (github.ref == 'refs/heads/agent/integration-admin-v074' || github.head_ref == 'agent/integration-admin-v074')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.0','8.2','8.3']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/integration-admin-v074
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+      - run: |
+          php -l hangar18-manager.php
+          php -l src/Admin/IntegrationAdminBootstrap.php
+          php tests/Architecture/integration-admin-smoke.php
+          bash tests/Architecture/integration-admin-contract.sh
+          bash tests/Architecture/protected-domain-contract.sh
+          php tests/Architecture/e8-workflow-smoke.php
+          php tests/Architecture/e14-e2e-smoke.php
