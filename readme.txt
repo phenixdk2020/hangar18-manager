@@ -1,7 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.0
+Version: 0.8.1
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.1 – I8 AI forslag ==
+
+Nyt:
+- Provider-neutral AI registry via hangar18_ud_ai_providers; provider adapters håndterer selv credentials.
+- AI settings gemmer kun Enabled og ProviderId; API keys/secrets/passwords gemmes ikke i WordPress options.
+- Tekstforslag kører i isoleret sandbox og oprettes altid som pending forslag.
+- Accept/reject er bundet til et tidsbegrænset HMAC-signeret proposal-token.
+- Accept producerer kun reversible Apply/Undo-data; I8 skriver ikke forslag direkte til sider.
+- AI kræver hangar18_use_ai eller administrator fallback og ændrer ikke frontend, Vehicle/Event/Gallery eller eksisterende sider.
 
 
 == Version 0.8.0 – I7 Permissions & Design Lock ==
