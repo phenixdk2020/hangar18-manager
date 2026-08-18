@@ -76,6 +76,8 @@ The existing v0.5.30 page-editor state is stored in WordPress option `hangar18_m
 
 The new repository boundary therefore uses a string page key and the compatibility adapter preserves the exact existing option name and slug-keyed map. No ID conversion or alternate storage is introduced.
 
+The current v0.5.30 admin log is stored in `hangar18_manager_log` with fields `time`, `level`, `checkpoint`, `message` and `user`, retaining the newest 750 entries. `LegacyOptionLogger` preserves that same option, record shape and retention policy for later integration.
+
 ## Current foundation slice
 
 The current slice is intentionally non-invasive and contains:
@@ -90,6 +92,7 @@ The current slice is intentionally non-invasive and contains:
 - `src/Contracts/SchemaValidator.php`
 - `src/Contracts/RenderEngine.php`
 - `src/Contracts/SecurityGate.php`
+- `src/Contracts/Logger.php`
 - `src/Registry/ElementRegistry.php`
 - `src/Registry/PropertyRegistry.php`
 - `src/Migration/MigrationRegistry.php`
@@ -97,6 +100,7 @@ The current slice is intentionally non-invasive and contains:
 - `src/Compatibility/CompatibilityPolicy.php`
 - `src/Infrastructure/WordPress/LegacyOptionPageRepository.php`
 - `src/Infrastructure/WordPress/WordPressSecurityGate.php`
+- `src/Infrastructure/WordPress/LegacyOptionLogger.php`
 - `tests/Architecture/architecture-smoke.php`
 - `tests/Architecture/page-schema-smoke.php`
 - `tests/Architecture/assert-foundation-isolation.sh`
