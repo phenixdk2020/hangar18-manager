@@ -14,8 +14,12 @@ on:
       - 'assets/ultimate-designer-admin.css'
       - 'assets/ultimate-designer-menu-admin.js'
       - 'assets/ultimate-designer-menu-admin.css'
+      - 'assets/ultimate-designer-menu-pages.js'
+      - 'assets/ultimate-designer-menu-pages.css'
       - 'assets/ultimate-designer-side-health.js'
       - 'assets/ultimate-designer-side-health.css'
+      - 'assets/ultimate-designer-asset-admin.js'
+      - 'assets/ultimate-designer-asset-admin.css'
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
@@ -59,9 +63,11 @@ jobs:
       - run: bash tests/Architecture/v073-heading-linebreak-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: php tests/Architecture/i3-menu-admin-smoke.php
+      - run: bash tests/Architecture/i3-menu-page-chooser-contract.sh
       - run: php tests/Architecture/i4-side-health-admin-smoke.php
+      - run: bash tests/Architecture/i5-asset-admin-contract.sh
       - run: bash tests/Architecture/integration-admin-contract.sh
-      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-side-health.js
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js
 
   browser-engine-qa:
     name: E14 browser engines (Chromium/Firefox/WebKit)
