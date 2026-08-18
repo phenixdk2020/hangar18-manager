@@ -1,7 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.7.6
+Version: 0.7.7
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.7 – I4 Live Side Health ==
+
+Nyt:
+- Side Health vises direkte i den eksisterende Sider-editor uden at konvertere siden.
+- Analysen bruger den aktuelle DOM/form-state og medregner derfor også ugemte ændringer.
+- Samlet score samt Design, Mobile, Accessibility, Performance og SEO delscorer.
+- Filtrerbare issues med severity, code og konkrete ElementKey-links til Navigator.
+- Klik på et issue vælger/scroller til det konkrete element i den eksisterende editor.
+- Read-only AJAX bridge er capability/nonce-beskyttet og begrænser JSON-størrelse og antal elementer.
+- Side Health-controlleren indeholder ingen page-save/update/delete primitives.
+- Vehicle/Event/Gallery og frontend-rendering er fortsat uændret.
 
 
 == Version 0.7.6 – I3 Menu UI v2 ==
