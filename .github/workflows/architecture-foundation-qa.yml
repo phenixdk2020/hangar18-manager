@@ -64,7 +64,7 @@ jobs:
         run: php tests/Architecture/ud-060-starter-schemas-smoke.php
 
   release-v060:
-    if: (github.ref == 'refs/heads/agent/release-0.6.0' || github.head_ref == 'agent/release-0.6.0') && !contains(github.event.head_commit.message || github.event.pull_request.title, 'Release Hangar18 Manager 0.6.0')
+    if: github.event_name == 'pull_request' && github.head_ref == 'agent/release-0.6.0'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout release branch
