@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Second branch commit intentionally triggers the release workflow now that it exists on this branch.
 php_path = Path('hangar18-manager.php')
 readme_path = Path('readme.txt')
 
