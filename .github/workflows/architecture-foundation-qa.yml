@@ -63,5 +63,10 @@ jobs:
       - name: E6 Site Builder core test
         run: php tests/Architecture/e6-site-builder-smoke.php
 
-      - name: Site Builder runtime JavaScript syntax
-        run: node --check assets/site-builder-runtime.js
+      - name: E7 Interaction core test
+        run: php tests/Architecture/e7-interaction-smoke.php
+
+      - name: Passive runtime JavaScript syntax
+        run: |
+          node --check assets/site-builder-runtime.js
+          node --check assets/interaction-runtime.js
