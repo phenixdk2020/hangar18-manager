@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Controlled v0.7.2 release trigger.
 php_path=Path('hangar18-manager.php')
 readme_path=Path('readme.txt')
 php=php_path.read_text(encoding='utf-8')
