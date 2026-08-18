@@ -16,11 +16,12 @@ jQuery(function ($) {
     function controls($row, selector) {
         if (!$row || !$row.length) { return $(); }
         let $result = $row.find(selector);
-        const index = String($row.attr('data-section-index') || '');
-        if (index) {
-            $result = $result.add($('#h18-page-inspector-target .h18-page-section-body').filter(function () {
-                return String($(this).closest('.h18-page-section-row').attr('data-section-index') || '') === index;
-            }).find(selector));
+        // The legacy editor physically moves the selected row's body into the
+        // Inspector. The source row keeps .is-selected, so include Inspector
+        // controls only for that exact row. This avoids leaking values between
+        // elements while keeping Auto-kasser/Table compatible with Inspector.
+        if ($row.hasClass('is-selected')) {
+            $result = $result.add($('#h18-page-inspector-target').find(selector));
         }
         return $result;
     }
