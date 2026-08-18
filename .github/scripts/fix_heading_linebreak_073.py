@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 
+# Controlled v0.7.3 editor patch trigger.
 php_path = Path('hangar18-manager.php')
 js_path = Path('assets/admin.js')
 css_path = Path('assets/admin.css')
