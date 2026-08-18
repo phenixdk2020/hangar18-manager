@@ -8,7 +8,7 @@ on:
     paths:
       - 'src/**'
       - 'tests/Architecture/**'
-      - 'docs/architecture-migration.md'
+      - 'docs/architecture-*.md'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
@@ -28,6 +28,9 @@ jobs:
 
       - name: Foundation isolation guard
         run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+
+      - name: Protected domain contract
+        run: bash tests/Architecture/protected-domain-contract.sh
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
