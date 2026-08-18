@@ -1,0 +1,125 @@
+name: Release Hangar18 Manager 0.6.2
+
+on:
+  push:
+    branches:
+      - agent/release-0.6.2
+
+permissions:
+  contents: write
+
+jobs:
+  release-v062:
+    if: ${{ !contains(github.event.head_commit.message, 'Release 0.6.2 candidate') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/release-0.6.2
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          coverage: none
+
+      - name: Prepare source version and changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          php_path = Path('hangar18-manager.php')
+          readme_path = Path('readme.txt')
+          php = php_path.read_text(encoding='utf-8')
+          readme = readme_path.read_text(encoding='utf-8')
+          for old,new,label in [
+              (' * Version: 0.6.1',' * Version: 0.6.2','plugin header'),
+              ("const VERSION = '0.6.1';","const VERSION = '0.6.2';",'version constant'),
+          ]:
+              if old not in php:
+                  raise SystemExit(f'{label} anchor not found')
+              php = php.replace(old,new,1)
+          if 'Version: 0.6.1' not in readme:
+              raise SystemExit('readme version anchor not found')
+          readme = readme.replace('Version: 0.6.1','Version: 0.6.2',1)
+          readme += '''\n\n== Version 0.6.2 – Editorfix + Site Builder core ==\n\n- Retter Fed/Kursiv-toggle i mini-editoren, så gentagne til/fra-skift ikke opbygger nestede tags.\n- Tilføjer tydelig Typografi-fane i Inspector med font og brødtekst/H1/H2/H3-størrelser.\n- Bevarer Inspector-overlap-hotfixet fra 0.6.1.\n- E6 Site Builder core: Header/Footer templates, versioneret menu-tree, klassisk accessible menu-renderer, passive runtime assets og Site Builder presets.\n- Single/archive/system template assignment kan resolveres efter context og priority.\n- Eksisterende sider samt Vehicle/Event/Gallery og legacy header/footer/menu konverteres ikke i denne release.\n'''
+          php_path.write_text(php,encoding='utf-8')
+          readme_path.write_text(readme,encoding='utf-8')
+          PY
+
+      - name: Validate source and compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          node --check assets/site-builder-runtime.js
+          bash tests/Architecture/protected-domain-contract.sh
+          php tests/Architecture/architecture-smoke.php
+          php tests/Architecture/page-schema-smoke.php
+          php tests/Architecture/runtime-bridge-smoke.php
+          php tests/Architecture/compatibility-comparator-smoke.php
+          php tests/Architecture/ud-060-starter-schemas-smoke.php
+          php tests/Architecture/e6-site-builder-smoke.php
+          grep -F 'Version: 0.6.2' hangar18-manager.php
+          grep -F "const VERSION = '0.6.2';" hangar18-manager.php
+          grep -F 'data-inspector-tab="typography"' hangar18-manager.php
+          grep -F 'h18MiniEditorToggleTag' assets/admin.js
+
+      - name: Build package and update manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .build
+          mkdir -p .build/hangar18-manager dist
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp -R assets .build/hangar18-manager/
+          cp -R src .build/hangar18-manager/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          unzip -l dist/hangar18-manager.zip | grep -F 'hangar18-manager/src/SiteBuilder/MenuService.php'
+          unzip -l dist/hangar18-manager.zip | grep -F 'hangar18-manager/assets/site-builder-runtime.js'
+          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"
+          export SHA
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          manifest = {
+              'schema_version':'1.0',
+              'plugin':'hangar18-manager',
+              'version':'0.6.2',
+              'min_wp':'6.4',
+              'min_php':'8.0',
+              'published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+              'package_path':'dist/hangar18-manager.zip',
+              'package_sha256':os.environ['SHA'],
+              'changelog':[
+                  'Retter Fed/Kursiv-toggle i mini-editoren og undgår nestede strong/em-tags ved gentagen toggling.',
+                  'Tilføjer separat Typografi-fane med brødtekst/H1/H2/H3-størrelser og fontvalg.',
+                  'E6 Site Builder core tilføjer Header/Footer templates, versioneret menu-tree, accessible klassisk menu og Site Builder presets.',
+                  'Single/archive/system template assignment understøtter context og priority.',
+                  'Eksisterende sider samt Vehicle/Event/Gallery og legacy header/footer/menu forbliver uændret og konverteres først i slut-fasen.'
+              ]
+          }
+          with open('update.json','w',encoding='utf-8') as f:
+              json.dump(manifest,f,ensure_ascii=False,indent=2)
+              f.write('\n')
+          PY
+          test "$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')" = "$(python3 -c "import json;print(json.load(open('update.json'))['package_sha256'])")"
+          git diff --check
+
+      - name: Commit release candidate and clean helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/release-v062.yml
+          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip
+          git diff --cached --check
+          git commit -m 'Release 0.6.2 candidate'
+          git push origin HEAD:agent/release-0.6.2
