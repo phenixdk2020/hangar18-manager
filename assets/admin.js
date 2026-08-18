@@ -4730,6 +4730,153 @@ jQuery(function ($) {
     let h18EditorDirtyV064 = false;
     let h18EditorSubmittingV064 = false;
 
+    // v0.7.1: deterministic automatic change summary; manual note remains optional.
+    const $h18AutoSummaryInputV071 = $('#h18-page-auto-change-summary');
+    const $h18AutoSummaryPreviewV071 = $('#h18-page-auto-change-summary-preview');
+    let h18AutoSummaryBaselineV071 = null;
+    let h18AutoSummaryTimerV071 = null;
+
+    function h18SummaryFieldPathV071(name) {
+        const raw = String(name || '');
+        const tokens = [];
+        const re = /\[([^\]]*)\]/g;
+        let match;
+        while ((match = re.exec(raw)) !== null) { tokens.push(String(match[1] || '')); }
+        let cut = -1;
+        for (let i = 0; i < tokens.length; i += 1) {
+            if (/^\d+$/.test(tokens[i])) { cut = i; break; }
+        }
+        const remaining = cut >= 0 ? tokens.slice(cut + 1) : tokens;
+        return remaining.length ? remaining.join('.') : raw;
+    }
+
+    function h18SummaryInputValueV071($input) {
+        const type = String($input.attr('type') || '').toLowerCase();
+        if (type === 'radio') { return $input.is(':checked') ? String($input.val() || '') : '__h18_skip__'; }
+        if (type === 'checkbox') { return $input.is(':checked') ? '1' : '0'; }
+        if ($input.is('select[multiple]')) {
+            const value = $input.val();
+            return Array.isArray(value) ? value.map(String).sort().join('|') : '';
+        }
+        return String($input.val() == null ? '' : $input.val());
+    }
+
+    function h18SummarySectionLabelV071($row, key, type) {
+        const candidates = [
+            String(pageSectionControls($row, '.h18-section-navigator-label').val() || ''),
+            String($row.find('.h18-page-section-title-summary').first().text() || ''),
+            String(pageSectionControls($row, '[name$="[Title]"]').first().val() || ''),
+            inspectorTypeLabel(type || String($row.attr('data-section-type') || '')),
+            key
+        ];
+        for (let i = 0; i < candidates.length; i += 1) {
+            const value = String(candidates[i] || '').trim();
+            if (value) { return value.replace(/\s+/g, ' ').slice(0, 80); }
+        }
+        return 'Element';
+    }
+
+    function h18CollectChangeSummaryModelV071() {
+        const sections = [];
+        $pageSections.children('.h18-page-section-row').each(function (index) {
+            const $row = $(this);
+            if ($row.hasClass('h18-page-section-removed')) { return; }
+            const type = String($row.attr('data-section-type') || 'text');
+            const key = String($row.find('.h18-page-section-key').first().val() || ('section-' + index));
+            const fields = {};
+            $row.find(':input[name]').each(function () {
+                const $input = $(this);
+                const inputType = String($input.attr('type') || '').toLowerCase();
+                if (['button','submit','reset','file'].includes(inputType)) { return; }
+                const path = h18SummaryFieldPathV071($input.attr('name'));
+                if (!path || /(^|\.)(Order|ResetVotes)$/.test(path)) { return; }
+                const value = h18SummaryInputValueV071($input);
+                if (value === '__h18_skip__') { return; }
+                fields[path] = Object.prototype.hasOwnProperty.call(fields, path) ? (String(fields[path]) + '|' + value) : value;
+            });
+            sections.push({ key: key, type: type, label: h18SummarySectionLabelV071($row, key, type), fields: fields });
+        });
+        return {
+            title: String($h18PageEditorFormV064.find('[name="editor_page_title"]').val() || '').trim(),
+            order: sections.map(function (section) { return section.key; }),
+            sections: sections
+        };
+    }
+
+    function h18SummaryCategoryV071(path) {
+        const value = String(path || '').toLowerCase();
+        if (/(mobile|tablet|responsive|breakpoint)/.test(value)) { return 'Mobil/responsive'; }
+        if (/(binding|query|relation|repeater|condition|datacontext|dynamic)/.test(value)) { return 'Dynamisk indhold'; }
+        if (/(font|typograph|lineheight|letterspacing|textalign|headingtag|headinglevel)/.test(value)) { return 'Typografi'; }
+        if (/(background|color|border|radius|shadow|padding|margin|spacing|gap|width|height|opacity|transform)/.test(value)) { return 'Design'; }
+        if (/(layout|parent|grid|flex|align|justify|position|columns|rows|direction|wrap)/.test(value)) { return 'Layout'; }
+        return 'Indhold';
+    }
+
+    function h18SummaryNamesV071(items) {
+        const names = Array.from(new Set((items || []).filter(Boolean)));
+        const shown = names.slice(0, 3).map(function (name) { return '“' + String(name).replace(/[“”]/g, '') + '”'; });
+        return shown.join(', ') + (names.length > shown.length ? ' +' + (names.length - shown.length) + ' mere' : '');
+    }
+
+    function h18BuildAutomaticSummaryV071() {
+        const before = h18AutoSummaryBaselineV071;
+        const after = h18CollectChangeSummaryModelV071();
+        if (!before) { return 'Siden er ændret.'; }
+        const parts = [];
+        if (before.title !== after.title) { parts.push('Sidetitel ændret'); }
+
+        const beforeMap = {};
+        const afterMap = {};
+        before.sections.forEach(function (section) { beforeMap[section.key] = section; });
+        after.sections.forEach(function (section) { afterMap[section.key] = section; });
+        const added = after.sections.filter(function (section) { return !beforeMap[section.key]; });
+        const removed = before.sections.filter(function (section) { return !afterMap[section.key]; });
+        if (added.length) { parts.push(added.length + ' element' + (added.length === 1 ? '' : 'er') + ' tilføjet: ' + h18SummaryNamesV071(added.map(function (section) { return section.label; }))); }
+        if (removed.length) { parts.push(removed.length + ' element' + (removed.length === 1 ? '' : 'er') + ' fjernet: ' + h18SummaryNamesV071(removed.map(function (section) { return section.label; }))); }
+
+        const beforeCommonOrder = before.order.filter(function (key) { return Boolean(afterMap[key]); });
+        const afterCommonOrder = after.order.filter(function (key) { return Boolean(beforeMap[key]); });
+        if (JSON.stringify(beforeCommonOrder) !== JSON.stringify(afterCommonOrder)) { parts.push('Elementrækkefølge ændret'); }
+
+        const categoryTargets = {};
+        Object.keys(beforeMap).forEach(function (key) {
+            if (!afterMap[key]) { return; }
+            const left = beforeMap[key].fields || {};
+            const right = afterMap[key].fields || {};
+            const paths = Array.from(new Set(Object.keys(left).concat(Object.keys(right))));
+            paths.forEach(function (path) {
+                if (String(left[path] == null ? '' : left[path]) === String(right[path] == null ? '' : right[path])) { return; }
+                const category = h18SummaryCategoryV071(path);
+                categoryTargets[category] = categoryTargets[category] || [];
+                categoryTargets[category].push(afterMap[key].label || key);
+            });
+        });
+
+        ['Indhold','Typografi','Design','Layout','Mobil/responsive','Dynamisk indhold'].forEach(function (category) {
+            if (!categoryTargets[category] || !categoryTargets[category].length) { return; }
+            parts.push(category + ' ændret på ' + h18SummaryNamesV071(categoryTargets[category]));
+        });
+
+        let summary = parts.length ? parts.slice(0, 8).join(' · ') : 'Ingen synlige ændringer registreret; ny version gemmes';
+        if (summary.length > 420) { summary = summary.slice(0, 417).replace(/[\s,;:.]+$/, '') + '…'; }
+        return summary;
+    }
+
+    function h18RefreshAutomaticSummaryV071() {
+        if (!$h18AutoSummaryInputV071.length) { return ''; }
+        const summary = h18BuildAutomaticSummaryV071();
+        $h18AutoSummaryInputV071.val(summary);
+        if ($h18AutoSummaryPreviewV071.length) { $h18AutoSummaryPreviewV071.text(summary); }
+        return summary;
+    }
+
+    function h18ScheduleAutomaticSummaryV071() {
+        window.clearTimeout(h18AutoSummaryTimerV071);
+        h18AutoSummaryTimerV071 = window.setTimeout(h18RefreshAutomaticSummaryV071, 120);
+    }
+
+
     function h18EditorSetSaveStatusV064(text, state) {
         if (!$h18EditorSaveStatusV064.length) { return; }
         $h18EditorSaveStatusV064.text(text).attr('data-save-state', state || 'saved');
@@ -4742,19 +4889,16 @@ jQuery(function ($) {
     }
 
     if ($h18PageEditorFormV064.length) {
+        h18AutoSummaryBaselineV071 = h18CollectChangeSummaryModelV071();
+        h18RefreshAutomaticSummaryV071();
         $h18PageEditorFormV064.on('input change', ':input', function () {
             h18EditorMarkDirtyV064();
+            h18ScheduleAutomaticSummaryV071();
         });
 
         $h18PageEditorFormV064.on('submit', function (event) {
+            h18RefreshAutomaticSummaryV071();
             const whatIf = $h18PageEditorFormV064.find('[name="whatif"]').is(':checked');
-            const $note = $h18PageEditorFormV064.find('[name="page_change_note"]');
-            if (!whatIf && $note.length && !String($note.val() || '').trim()) {
-                event.preventDefault();
-                h18EditorSetSaveStatusV064('Beskriv ændringen før Gem', 'error');
-                $note.trigger('focus');
-                return;
-            }
             h18EditorSubmittingV064 = true;
             h18EditorDirtyV064 = false;
             h18EditorSetSaveStatusV064(whatIf ? 'Simulerer…' : 'Gemmer…', 'saving');
