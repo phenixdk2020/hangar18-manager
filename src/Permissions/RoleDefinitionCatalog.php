@@ -22,13 +22,13 @@ final class RoleDefinitionCatalog
                 'Capabilities'=>[
                     CapabilityCatalog::MANAGE_DESIGN,CapabilityCatalog::MANAGE_COMPONENTS,
                     CapabilityCatalog::MANAGE_TEMPLATES,CapabilityCatalog::EDIT_CONTENT,
-                    CapabilityCatalog::MANAGE_ASSETS,
+                    CapabilityCatalog::MANAGE_ASSETS,CapabilityCatalog::USE_AI,
                 ],
                 'Domains'=>['*'],
             ],
             'hangar18_editor'=>[
                 'Label'=>'Hangar18 Editor',
-                'Capabilities'=>[CapabilityCatalog::EDIT_CONTENT,CapabilityCatalog::MANAGE_ASSETS],
+                'Capabilities'=>[CapabilityCatalog::EDIT_CONTENT,CapabilityCatalog::MANAGE_ASSETS,CapabilityCatalog::USE_AI],
                 'Domains'=>['*'],
             ],
             'hangar18_event_manager'=>[
