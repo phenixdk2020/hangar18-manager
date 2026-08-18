@@ -1,7 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.5
+Version: 0.8.6
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.6 – I10 Signed Cutover Preflight ==
+
+Nyt:
+- Source-drift detection sammenligner shadow-copyens SourceHash med den aktuelle legacy editor-state før fremtidig cutover kan godkendes.
+- Cutover preflight kræver komplette manuelle I9-gates, korrekt I10-rækkefølge, gyldig shadow acceptance samt WordPress page ID og permalink.
+- Eligible preflight snapshots signeres med HMAC og bindes til præcis target-identitet, source hashes og blockers.
+- Signerede preflight-records er tidsbegrænsede og bliver stale/ugyldige ved source-drift eller ændret preflight-state.
+- Preflight har altid Executable=false og PublicMutationAvailable=false; den giver ingen aktiveringsret.
+- Admin-UI viser blockers, source hashes og om et gemt signeret preflight stadig er current.
+- Der findes stadig ingen activate/cutover/publish-handler, og WordPress-posts, URLs samt hangar18_manager_pages_v1 ændres ikke.
+- Vehicle/Event/Gallery forbliver blokeret af CompatibilityPolicy på legacy runtime.
 
 
 == Version 0.8.5 – Auto-kasser, Tabel og kompakt Side Health ==
