@@ -1,19 +1,19 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.24",
+  "version": "0.5.25",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T05:01:36Z",
+  "published_utc": "2026-08-18T05:09:39Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "e88bf6c84faa51268de69ea83773c83b9cc358b45fea8f005187f4ddf73ca391",
+  "package_sha256": "5f6cb2ffeacebf9e7902f816da7a298d875aa98fa8ed305c543d21bbb75ab352",
   "changelog": [
-    "Tilføjer E5 UD-053 current data context pr. Hangar18-side.",
-    "Title, Content, MediaId og knaptekst/links kan bindes typevalideret til custom data fields.",
-    "Static elementværdier bevares som fallback og overskrives kun ved gyldig runtime binding.",
-    "Runtime genvaliderer datatype, entry, field og property-type; URL og media saniteres separat.",
-    "Canvas-preview bruger samme current context og viser dynamiske medier.",
-    "Bindings bevares i Patterns, linked component definitions og Page Templates uden entry-identitet.",
-    "Page-editor schema løftes bagudkompatibelt til 1.19."
+    "Tilføjer E5 UD-055 Query Builder v1 for custom data.",
+    "Query understøtter datatype, ét typevalideret filter, sortering, retning og limit.",
+    "Admin-preview og frontend-shortcode bruger samme run_custom_data_query()-motor.",
+    "Frontend-resultater omfatter kun publicerede entries; drafts/private eksponeres ikke.",
+    "Filter/sort-felter valideres mod datatype-schema og query bygges med WordPress get_posts uden rå SQL.",
+    "Limit håndhæves server-side til 1–100.",
+    "Page-editor schema forbliver 1.19."
   ]
 }

@@ -4431,4 +4431,11 @@ jQuery(function ($) {
     $(document).on('click','.h18-data-media-pick',function(event){event.preventDefault();const $field=$(this).closest('.h18-data-media-field');const frame=wp.media({title:'Vælg medie',button:{text:'Brug medie'},multiple:false});frame.on('select',function(){const media=frame.state().get('selection').first().toJSON();const thumb=media.sizes&&media.sizes.thumbnail?media.sizes.thumbnail.url:media.url;$field.find('.h18-data-media-id').val(media.id||0);$field.find('.h18-data-media-preview').html($('<img>',{src:thumb,alt:media.alt||''}));});frame.open();});
     $(document).on('click','.h18-data-media-clear',function(event){event.preventDefault();const $field=$(this).closest('.h18-data-media-field');$field.find('.h18-data-media-id').val('0');$field.find('.h18-data-media-preview').empty();});
 
+
+    /* v0.5.25 – Query Builder v1 */
+    const $qbFieldV0525=$('#h18-qb-field');const $qbOperatorV0525=$('#h18-qb-operator');
+    const qbOperatorsV0525={text:[['eq','Er lig med'],['neq','Er ikke lig med'],['contains','Indeholder']],number:[['eq','='],['neq','≠'],['gt','>'],['gte','≥'],['lt','<'],['lte','≤']],bool:[['eq','Er lig med']],date:[['eq','På dato'],['before','Før'],['after','Efter']],media:[['eq','Er lig med'],['neq','Er ikke lig med']]};
+    function refreshQbOperatorsV0525(){if(!$qbOperatorV0525.length)return;const $option=$qbFieldV0525.find('option:selected');const type=String($option.attr('data-field-type')||'text');let current=String($qbOperatorV0525.attr('data-current')||$qbOperatorV0525.val()||'eq');const options=$qbFieldV0525.val()? (qbOperatorsV0525[type]||qbOperatorsV0525.text) : [['eq','—']];$qbOperatorV0525.empty();options.forEach(function(item){$qbOperatorV0525.append($('<option>',{value:item[0],text:item[1]}));});if(!$qbOperatorV0525.find('option[value="'+current.replace(/"/g,'\\"')+'"]').length)current=options[0][0];$qbOperatorV0525.val(current).attr('data-current',current);$('#h18-qb-value').prop('disabled',!$qbFieldV0525.val());}
+    $qbFieldV0525.on('change',function(){$qbOperatorV0525.attr('data-current','eq');refreshQbOperatorsV0525();});$qbOperatorV0525.on('change',function(){$(this).attr('data-current',String($(this).val()||'eq'));});refreshQbOperatorsV0525();
+
 });
