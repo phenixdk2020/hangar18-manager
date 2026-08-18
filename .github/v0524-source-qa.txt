@@ -1,0 +1,7 @@
+dynamic catalog JSON: expected 1 anchor, found 0
+patch_status=1
+No syntax errors detected in hangar18-manager.php
+php_status=0
+js_status=0
+Failed v0.5.24 assertions: ['version', 'schema 1.19', 'runtime property', 'binding allowlist', 'binding normalize', 'catalog', 'context resolve', 'static fallback architecture', 'media sanitizer', 'url sanitizer', 'content sanitizer', 'page context fields', 'section bindings', 'runtime apply', 'runtime context set', 'admin catalog JSON', 'admin page context', 'binding controls', 'JS catalog', 'JS preview', 'JS media preview', 'nested serialization', 'preset restore', 'CSS', 'readme']
+qa_status=1
