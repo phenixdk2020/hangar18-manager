@@ -59,3 +59,9 @@ jobs:
 
       - name: UD-060 starter schema preset test
         run: php tests/Architecture/ud-060-starter-schemas-smoke.php
+
+      - name: E6 Site Builder core test
+        run: php tests/Architecture/e6-site-builder-smoke.php
+
+      - name: Site Builder runtime JavaScript syntax
+        run: node --check assets/site-builder-runtime.js
