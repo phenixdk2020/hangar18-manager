@@ -23,6 +23,8 @@ Until a replacement path has passed regression QA, the following must remain unc
 
 A refactor commit must not switch a protected domain to a new renderer merely because equivalent classes exist in `src/`.
 
+The concrete v0.5.30 Vehicle/Event/Gallery hooks are characterized separately in `architecture-legacy-domain-contract-v0530.md`.
+
 ## Migration rule
 
 The refactor uses a strangler approach:
@@ -60,6 +62,20 @@ The target follows the Ultimate Designer design specification:
 - REST boundary for the future React/TypeScript editor;
 - domain features such as Vehicle/Event/Gallery represented as schemas/presets/components on the generic engine rather than separate engines.
 
+## Legacy data compatibility already characterized
+
+The existing v0.5.30 page-editor state is stored in WordPress option `hangar18_manager_pages_v1`, keyed by page slug. The normalized page state uses schema 1.22 with:
+
+- `Version`
+- `PageSlug`
+- `PageTitle`
+- `ContentVersion`
+- `DataContextType`
+- `DataContextEntryId`
+- `Sections`
+
+The new repository boundary therefore uses a string page key and the compatibility adapter preserves the exact existing option name and slug-keyed map. No ID conversion or alternate storage is introduced.
+
 ## Current foundation slice
 
 The current slice is intentionally non-invasive and contains:
@@ -71,14 +87,20 @@ The current slice is intentionally non-invasive and contains:
 - `src/Contracts/PropertyDefinition.php`
 - `src/Contracts/PageRepository.php`
 - `src/Contracts/SchemaMigration.php`
+- `src/Contracts/SchemaValidator.php`
 - `src/Contracts/RenderEngine.php`
 - `src/Contracts/SecurityGate.php`
 - `src/Registry/ElementRegistry.php`
 - `src/Registry/PropertyRegistry.php`
 - `src/Migration/MigrationRegistry.php`
+- `src/Schema/PageSchemaValidator.php`
 - `src/Compatibility/CompatibilityPolicy.php`
+- `src/Infrastructure/WordPress/LegacyOptionPageRepository.php`
+- `src/Infrastructure/WordPress/WordPressSecurityGate.php`
 - `tests/Architecture/architecture-smoke.php`
+- `tests/Architecture/page-schema-smoke.php`
 - `tests/Architecture/assert-foundation-isolation.sh`
+- `tests/Architecture/protected-domain-contract.sh`
 - `.github/workflows/architecture-foundation-qa.yml`
 
 These files are not wired into the WordPress runtime yet. Therefore the public v0.5.30 rendering path remains unchanged by this slice.
@@ -88,6 +110,8 @@ These files are not wired into the WordPress runtime yet. Therefore the public v
 The Architecture Foundation workflow runs on PHP 8.0, 8.2 and 8.3 and must pass:
 
 1. Foundation isolation guard against `origin/main`.
-2. PHP syntax validation for all new architecture/test PHP files.
-3. Registry and migration smoke tests.
-4. Explicit compatibility assertions that Vehicle, Event and Gallery remain on the legacy runtime during the foundation phase.
+2. Protected Vehicle/Event/Gallery v0.5.30 contract test.
+3. PHP syntax validation for all new architecture/test PHP files.
+4. Registry and migration smoke tests.
+5. Page schema 1.22 compatibility validation tests.
+6. Explicit compatibility assertions that Vehicle, Event and Gallery remain on the legacy runtime during the foundation phase.
