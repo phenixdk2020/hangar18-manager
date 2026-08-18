@@ -1,7 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.7.9
+Version: 0.8.0
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.0 – I7 Permissions & Design Lock ==
+
+Nyt:
+- Role/capability migration preview viser præcist hvad der vil blive oprettet og tilføjet før installation.
+- Rolle-installation er additive-only: ingen eksisterende capability eller rolle fjernes.
+- Installation kræver manage_options, nonce og eksplicit confirmation.
+- UD Administrator/Designer/Editor/Event/Gallery roller kan oprettes/opdateres via den eksisterende WordPress role API.
+- WordPress Administrator beholder sin eksisterende rolle og får kun manglende UD capabilities tilføjet.
+- Design Lock policy kan konfigurere struktur/design-lås og frigivne content-properties.
+- Design Lock håndhæves ikke i legacy Sider-editoren før I10; edit_pages fallback bevares.
+- Ingen bruger får automatisk ændret rolle. Frontend og Vehicle/Event/Gallery ændres ikke.
 
 
 == Version 0.7.9 – I6 Import / Export ==
