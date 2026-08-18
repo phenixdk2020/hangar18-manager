@@ -1,0 +1,11 @@
+v0.5.22 patch prepared
+prepare_status=0
+resolve_start=php.index('    private function resolve_page_component_instance_sections')
+prepare_anchor_status=0
+pattern subtree save data: expected 1 anchor, found 0
+patch_status=1
+No syntax errors detected in hangar18-manager.php
+php_status=0
+js_status=0
+Failed v0.5.22 assertions: ['version', 'schema', 'template store', 'template nonce', 'variant field', 'variant normalize', 'variant ajax', 'variant max', 'variant usage guard', 'variant resolution order', 'preserve variants', 'pattern subtree normalize', 'legacy pattern compatibility', 'pattern new Sections', 'pattern fresh key map', 'pattern rejects shared content', 'template normalize', 'template store read', 'template save', 'template create', 'template fresh keys', 'template draft', 'template managed', 'template origin audit', 'template no component linkage', 'dynamic managed definitions', 'template UI', 'template create UI', 'readme']
+qa_status=1
