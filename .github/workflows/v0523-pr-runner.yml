@@ -1,0 +1,35 @@
+name: PR runner v0.5.23 source
+
+on:
+  pull_request:
+    branches:
+      - qa/v0.5.23-runner-base
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  source-v0523:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.23-runner-head
+          fetch-depth: 0
+      - name: Apply and validate Dynamic Data foundation
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/patch_v0523.py
+          python3 .github/scripts/harden_v0523.py
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          python3 .github/scripts/qa_v0523.py
+      - name: Commit validated source to QA head
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add hangar18-manager.php assets/admin.js assets/admin.css readme.txt
+          git commit -m 'QA: materialize v0.5.23 validated source'
+          git push origin HEAD:qa/v0.5.23-runner-head
