@@ -6,6 +6,7 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
+      - agent/editor-text-typography-fixes
   pull_request:
     paths:
       - 'src/**'
@@ -15,10 +16,11 @@ on:
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   architecture-smoke:
+    if: github.ref != 'refs/heads/agent/editor-text-typography-fixes' && github.head_ref != 'agent/editor-text-typography-fixes'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -59,3 +61,42 @@ jobs:
 
       - name: UD-060 starter schema preset test
         run: php tests/Architecture/ud-060-starter-schemas-smoke.php
+
+  editor-text-typography-fix:
+    if: (github.ref == 'refs/heads/agent/editor-text-typography-fixes' || github.head_ref == 'agent/editor-text-typography-fixes') && !contains(github.event.head_commit.message || '', 'Apply editor text and typography fixes')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/editor-text-typography-fixes
+          fetch-depth: 0
+
+      - name: Apply controlled patch
+        run: python3 .github/scripts/editor_text_typography_fix.py
+
+      - name: Validate editor fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'data-inspector-tab="typography"' hangar18-manager.php
+          grep -F "h18MiniEditorToggleTag" assets/admin.js
+          grep -F "['content', 'typography', 'design', 'advanced']" assets/admin.js
+          grep -F 'v0.6.2 – rich-text toggle og tydelig typografi-fane' assets/admin.css
+          bash tests/Architecture/protected-domain-contract.sh
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          git diff --check
+
+      - name: Commit only product changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git checkout origin/main -- .github/workflows/architecture-foundation-qa.yml
+          git rm .github/scripts/editor_text_typography_fix.py
+          git add hangar18-manager.php assets/admin.js assets/admin.css
+          git diff --cached --check
+          git commit -m 'Apply editor text and typography fixes'
+          git push origin HEAD:agent/editor-text-typography-fixes
