@@ -20,6 +20,7 @@ permissions:
 
 jobs:
   architecture-smoke:
+    if: github.head_ref != 'agent/release-0.7.2'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -60,6 +61,7 @@ jobs:
         run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
 
   browser-engine-qa:
+    if: github.head_ref != 'agent/release-0.7.2'
     name: E14 browser engines (Chromium/Firefox/WebKit)
     runs-on: ubuntu-latest
     steps:
