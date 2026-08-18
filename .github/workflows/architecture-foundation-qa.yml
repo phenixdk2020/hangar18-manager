@@ -6,7 +6,6 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
-      - agent/release-0.8.5
   pull_request:
     paths:
       - 'src/**'
@@ -36,11 +35,10 @@ on:
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   architecture-smoke:
-    if: github.ref != 'refs/heads/agent/release-0.8.5' && github.head_ref != 'agent/release-0.8.5'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -94,7 +92,6 @@ jobs:
       - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js && node --check assets/ultimate-designer-portability.js && node --check assets/ultimate-designer-layout-tools.js
 
   browser-engine-qa:
-    if: github.ref != 'refs/heads/agent/release-0.8.5' && github.head_ref != 'agent/release-0.8.5'
     name: E14 browser engines (Chromium/Firefox/WebKit)
     runs-on: ubuntu-latest
     steps:
@@ -104,81 +101,3 @@ jobs:
       - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
-
-  release-085:
-    if: github.ref == 'refs/heads/agent/release-0.8.5' && !contains(github.event.head_commit.message || '', 'Release Hangar18 Manager 0.8.5')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/release-0.8.5
-          fetch-depth: 0
-      - uses: shivammathur/setup-php@v2
-        with: {php-version: '8.0', coverage: none}
-      - name: Apply release metadata
-        run: python3 .github/scripts/release_085.py
-      - name: Validate release candidate
-        run: |
-          set -euo pipefail
-          php -l hangar18-manager.php
-          node --check assets/admin.js
-          node --check assets/ultimate-designer-layout-tools.js
-          node --check assets/ultimate-designer-side-health.js
-          bash tests/Architecture/protected-domain-contract.sh
-          bash tests/Architecture/e14-security-audit.sh
-          bash tests/Architecture/v073-heading-linebreak-contract.sh
-          bash tests/Architecture/v085-layout-table-contract.sh
-          bash tests/Architecture/v085-layout-table-health-contract.sh
-          php tests/Architecture/i10-conversion-planner-smoke.php
-          php tests/Architecture/i10-conversion-acceptance-smoke.php
-          grep -F 'Version: 0.8.5' hangar18-manager.php
-          grep -F "const VERSION = '0.8.5';" hangar18-manager.php
-      - name: Build plugin package and update manifest
-        run: |
-          set -euo pipefail
-          rm -rf .build
-          mkdir -p .build/hangar18-manager dist
-          rm -f dist/hangar18-manager.zip
-          cp hangar18-manager.php readme.txt .build/hangar18-manager/
-          cp -R assets src .build/hangar18-manager/
-          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
-          unzip -t dist/hangar18-manager.zip
-          unzip -l dist/hangar18-manager.zip | grep -F 'hangar18-manager/assets/ultimate-designer-layout-tools.js'
-          unzip -l dist/hangar18-manager.zip | grep -F 'hangar18-manager/assets/ultimate-designer-side-health.js'
-          unzip -l dist/hangar18-manager.zip | grep -F 'hangar18-manager/src/Admin/EditorLayoutToolsAdminController.php'
-          SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"; export SHA
-          PUBLISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; export PUBLISHED
-          python3 - <<'PY'
-          import json, os
-          data = {
-            'schema_version':'1.0',
-            'plugin':'hangar18-manager',
-            'version':'0.8.5',
-            'min_wp':'6.4',
-            'min_php':'8.0',
-            'published_utc':os.environ['PUBLISHED'],
-            'package_path':'dist/hangar18-manager.zip',
-            'package_sha256':os.environ['SHA'],
-            'changelog':[
-              'Auto-kasser fordeler 1/2/3+ kasser automatisk i lige desktop-kolonner oven på eksisterende Grid/Container.',
-              'Hver Kasse beholder egne farver, typografi, fontstørrelser, padding, border, shadow og responsive indstillinger.',
-              'Nyt visuelt Tabel-værktøj med rækker, kolonner, header, zebra, farver, fontstørrelse, celle-padding og mobil-scroll.',
-              'Side Health starter sammenklappet og viser en kompakt score/status, så Inspector ikke overskygges.',
-              'Inspector-koblingen følger det valgte element korrekt, også når body flyttes ind i Inspector.',
-              'Ingen public cutover; Vehicle/Event/Gallery forbliver på legacy runtime.'
-            ]
-          }
-          open('update.json','w',encoding='utf-8').write(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
-          PY
-          python3 -m json.tool update.json >/dev/null
-          rm -rf .build
-      - name: Commit release product files
-        run: |
-          set -euo pipefail
-          git config user.name 'hangar18-build'
-          git config user.email 'actions@users.noreply.github.com'
-          git rm .github/scripts/release_085.py
-          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip
-          git diff --cached --check
-          git commit -m 'Release Hangar18 Manager 0.8.5'
-          git push origin HEAD:agent/release-0.8.5
