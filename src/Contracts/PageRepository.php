@@ -6,16 +6,18 @@ namespace Hangar18\UltimateDesigner\Contracts;
 
 /**
  * Storage boundary for versioned designer page state.
- * Implementations may use WordPress posts/meta/options, but domain/editor code
- * must not depend directly on those storage details.
+ *
+ * The v0.5.30 editor store is keyed by page slug. Keeping the repository key
+ * as a string allows the compatibility adapter to read/write the existing
+ * option without changing IDs, slugs or stored data structure.
  */
 interface PageRepository
 {
     /** @return array<string,mixed>|null */
-    public function load(int $pageId): ?array;
+    public function load(string $pageKey): ?array;
 
     /** @param array<string,mixed> $state */
-    public function save(int $pageId, array $state): void;
+    public function save(string $pageKey, array $state): void;
 
-    public function exists(int $pageId): bool;
+    public function exists(string $pageKey): bool;
 }
