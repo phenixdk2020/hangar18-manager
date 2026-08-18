@@ -10505,15 +10505,16 @@ HTML;
                         </div>
 
                         <div class="h18-field h18-section-type-field" data-types="hero text text_image image buttons card card_grid tabs accordion carousel container flex grid highlight icon list badge quote html mail_form poll">
-                            <label><strong class="h18-section-title-label"><?php echo $section['Type'] === 'poll' ? 'Spørgsmål' : 'Overskrift'; ?></strong></label>
+                            <label><strong class="h18-section-title-label"><?php echo $section['Type'] === 'poll' ? 'Spørgsmål' : 'Overskrift (valgfri)'; ?></strong></label>
                             <input class="h18-section-title-input" type="text" name="<?php echo esc_attr($prefix); ?>[Title]" value="<?php echo esc_attr($section['Title']); ?>" />
+                            <?php if ($section['Type'] !== 'poll') : ?><p class="description">Valgfri. Lad feltet være tomt, hvis elementet kun skal vise tekst/indhold uden en overskrift.</p><?php endif; ?>
                         </div>
 
                         <div class="h18-field h18-section-type-field h18-page-section-content" data-types="hero text text_image image buttons card card_grid tabs accordion carousel container flex grid highlight icon list quote embed shortcode html css mail_form poll">
                             <label><strong><?php echo $section['Type'] === 'image' ? 'Billedtekst' : ($section['Type'] === 'css' ? 'CSS' : 'Tekst'); ?></strong></label>
                             <div class="h18-mini-editor-toolbar h18-section-type-field" data-types="hero text text_image image buttons card card_grid highlight list quote html mail_form poll"><button type="button" class="button h18-mini-format" data-format="bold"><strong>B</strong></button><button type="button" class="button h18-mini-format" data-format="italic"><em>I</em></button><button type="button" class="button h18-mini-format" data-format="link">Link</button><button type="button" class="button h18-mini-format" data-format="list">Punktliste</button></div>
                             <textarea name="<?php echo esc_attr($prefix); ?>[Content]" rows="5"><?php echo esc_textarea($section['Content']); ?></textarea>
-                            <p class="description h18-standard-content-help">Almindelig tekst samt enkel formatering som fed, kursiv, links og lister er tilladt.</p>
+                            <p class="description h18-standard-content-help"><strong>Enter = linjeskift.</strong> En tom linje starter et nyt afsnit. Almindelig tekst samt enkel formatering som fed, kursiv, links og lister er tilladt.</p>
                             <p class="description h18-section-type-field" data-types="html"><strong>Importeret blok:</strong> HTML-koden er bevaret for at fastholde det nuværende udseende. Tekst og links kan redigeres direkte her.</p>
                             <p class="description h18-section-type-field" data-types="css"><strong>Avanceret side-CSS:</strong> Bevarer den eksisterende sides farver, kolonner og responsive regler. Ret kun feltet, hvis du kender CSS.</p>
                             <p class="description h18-section-type-field" data-types="embed"><strong>Embed:</strong> Indsæt kun en HTTPS-URL fra en WordPress oEmbed-understøttet tjeneste. Ukendte URL'er vises som et almindeligt link.</p>

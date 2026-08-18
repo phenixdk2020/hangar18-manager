@@ -871,3 +871,7 @@ body.h18-command-palette-visible{overflow:hidden}
 @media(max-width:782px){
     .h18-page-preview-toolbar .h18-editor-save-controls{order:20;width:100%;margin-left:0;padding-left:0;justify-content:flex-end}
 }
+
+
+/* v0.7.3 – preserve natural textarea line breaks in canvas preview. */
+.h18-pages-admin .h18-canvas-preview-text{white-space:pre-line}
