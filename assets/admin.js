@@ -268,6 +268,8 @@ jQuery(function ($) {
     const $pageUserPresetsList = $('#h18-user-presets-list');
     const $pageLinkedComponentsList = $('#h18-linked-components-list');
     const $pageTemplatesList = $('#h18-page-templates-list');
+    const $pageDataContextTypeV0524 = $('#h18-page-data-context-type');
+    const $pageDataContextEntryV0524 = $('#h18-page-data-context-entry');
     let pageSectionNextIndex = 0;
     let pageCardSerial = 0;
     let $inspectedSection = $();
@@ -275,6 +277,7 @@ jQuery(function ($) {
     const pageUserPresets = {};
     const pageLinkedComponents = {};
     const pageTemplatesV0522 = {};
+    const pageDynamicDataCatalogV0524 = {};
     let navigatorLockedOrderSnapshotV0521 = null;
     let currentCanvasDevice = 'desktop';
     let currentCanvasState = 'normal';
@@ -321,6 +324,84 @@ jQuery(function ($) {
         const parsedTemplates = templateNode ? JSON.parse(templateNode.textContent || '[]') : [];
         (Array.isArray(parsedTemplates) ? parsedTemplates : []).forEach(function(template){ if(template&&template.Id) pageTemplatesV0522[String(template.Id)]=template; });
     } catch(templateError){ window.console&&console.warn('Hangar18: kunne ikke læse Page Templates.',templateError); }
+    try {
+        const dataNode = document.getElementById('h18-dynamic-data-catalog');
+        const parsedDataTypes = dataNode ? JSON.parse(dataNode.textContent || '[]') : [];
+        (Array.isArray(parsedDataTypes) ? parsedDataTypes : []).forEach(function (type) {
+            if (type && type.Key) { pageDynamicDataCatalogV0524[String(type.Key)] = type; }
+        });
+    } catch (dynamicDataError) {
+        window.console && console.warn('Hangar18: kunne ikke læse dynamic data catalog.', dynamicDataError);
+    }
+
+
+    function dynamicContextDefinitionV0524() {
+        return pageDynamicDataCatalogV0524[String($pageDataContextTypeV0524.val() || '')] || null;
+    }
+    function dynamicContextEntryV0524() {
+        const definition = dynamicContextDefinitionV0524();
+        const id = parseInt($pageDataContextEntryV0524.val(), 10) || 0;
+        if (!definition || !Array.isArray(definition.Entries) || !id) { return null; }
+        return definition.Entries.find(function (entry) { return parseInt(entry.Id,10) === id; }) || null;
+    }
+    function refreshPageDataContextEntriesV0524(preserveCurrent) {
+        if (!$pageDataContextEntryV0524.length) { return; }
+        const definition = dynamicContextDefinitionV0524();
+        let current = preserveCurrent ? (parseInt($pageDataContextEntryV0524.attr('data-current-entry'),10) || parseInt($pageDataContextEntryV0524.val(),10) || 0) : 0;
+        $pageDataContextEntryV0524.empty().append($('<option>', { value: '0', text: 'Ingen entry' }));
+        if (definition && Array.isArray(definition.Entries)) {
+            definition.Entries.forEach(function (entry) { $pageDataContextEntryV0524.append($('<option>', { value: String(entry.Id), text: String(entry.Title || ('Entry ' + entry.Id)) })); });
+        }
+        if (!$pageDataContextEntryV0524.find('option[value="' + String(current) + '"]').length) { current = 0; }
+        $pageDataContextEntryV0524.val(String(current)).attr('data-current-entry', String(current));
+    }
+    function refreshDynamicBindingsV0524($scope) {
+        const definition = dynamicContextDefinitionV0524();
+        const fields = definition && Array.isArray(definition.Fields) ? definition.Fields : [];
+        const $selects = $scope && $scope.length ? $scope.find('.h18-dynamic-binding-select').addBack('.h18-dynamic-binding-select') : $('.h18-dynamic-binding-select');
+        $selects.each(function () {
+            const $select = $(this);
+            const $row = pageSectionForElement($select);
+            const sectionType = String($row.attr('data-section-type') || 'text');
+            const $bindingRow = $select.closest('.h18-dynamic-binding-row');
+            const sectionTypes = String($bindingRow.attr('data-types') || '').split(/\s+/).filter(Boolean);
+            $bindingRow.toggle(sectionTypes.includes(sectionType));
+            const allowedTypes = String($select.attr('data-allowed-types') || '').split(/\s+/).filter(Boolean);
+            let current = String($select.attr('data-binding-value') || $select.val() || '');
+            $select.empty().append($('<option>', { value: '', text: 'Statisk værdi' }));
+            fields.forEach(function (field) {
+                if (!field || !allowedTypes.includes(String(field.Type || ''))) { return; }
+                $select.append($('<option>', { value: String(field.Key || ''), text: String(field.Label || field.Key) + ' · ' + String(field.Type || '') }));
+            });
+            if (current && !$select.find('option[value="' + current.replace(/"/g,'\\"') + '"]').length) {
+                $select.append($('<option>', { value: current, text: current + ' · felt mangler/er inkompatibelt', disabled: true }));
+            }
+            $select.val(current).attr('data-binding-value', current);
+        });
+    }
+    function dynamicPreviewBindingV0524($row, property) {
+        const $select = pageSectionControls($row, '.h18-dynamic-binding-select[data-binding-property="' + property + '"]').first();
+        const fieldKey = String($select.val() || $select.attr('data-binding-value') || '');
+        if (!$select.length || !fieldKey) { return { bound:false }; }
+        const definition = dynamicContextDefinitionV0524();
+        const entry = dynamicContextEntryV0524();
+        if (!definition || !entry) { return { bound:false }; }
+        const field = (Array.isArray(definition.Fields) ? definition.Fields : []).find(function (item) { return String(item.Key || '') === fieldKey; });
+        if (!field) { return { bound:false }; }
+        const allowed = String($select.attr('data-allowed-types') || '').split(/\s+/).filter(Boolean);
+        if (!allowed.includes(String(field.Type || ''))) { return { bound:false }; }
+        const values = entry.Values && typeof entry.Values === 'object' ? entry.Values : {};
+        if (!Object.prototype.hasOwnProperty.call(values, fieldKey)) { return { bound:false }; }
+        let value = values[fieldKey];
+        if (typeof value === 'boolean' && property !== 'MediaId') { value = value ? 'Ja' : 'Nej'; }
+        const mediaUrls = entry.MediaUrls && typeof entry.MediaUrls === 'object' ? entry.MediaUrls : {};
+        return { bound:true, value:value == null ? '' : value, mediaUrl:String(mediaUrls[fieldKey] || '') };
+    }
+    $pageDataContextTypeV0524.on('change', function () { refreshPageDataContextEntriesV0524(false); refreshDynamicBindingsV0524($pageSections); refreshAllCanvasPreviews(); scheduleEditorHistoryCapture(0); });
+    $pageDataContextEntryV0524.on('change', function () { $(this).attr('data-current-entry', String($(this).val() || 0)); refreshAllCanvasPreviews(); scheduleEditorHistoryCapture(0); });
+    $(document).on('change', '.h18-dynamic-binding-select', function () { $(this).attr('data-binding-value', String($(this).val() || '')); renderCanvasPreview(pageSectionForElement(this)); scheduleEditorHistoryCapture(0); });
+    refreshPageDataContextEntriesV0524(true);
+    refreshDynamicBindingsV0524($pageSections);
 
     const builtInSectionPresets = {
         'hero-cta': { Type: 'hero', Title: 'Velkommen', Content: '<p>Skriv en kort introduktion, der fortæller hvad siden handler om.</p>', Background: 'Olive', DesktopAlignment: 'Center', MobileAlignment: 'Center', PaddingPx: 36, MobilePaddingPx: 22, HeroHeightPx: 320, MobileHeroHeightPx: 220, OverlayOpacityPercent: 35, Button1Label: 'Læs mere', Button1Url: '#', Active: true },
@@ -534,11 +615,17 @@ jQuery(function ($) {
         const data = { Type: String($row.attr('data-section-type') || 'text') };
         if (data.Type === 'component') { return null; }
         const cards = {};
+        const bindings = {};
         pageSectionControls($row, '[name]').each(function () {
             const $field = $(this);
             const name = String($field.attr('name') || '');
-            let match = name.match(/^sections\[[^\]]+\]\[Cards\]\[([^\]]+)\]\[([^\]]+)\]$/);
+            let match = name.match(/^sections\[[^\]]+\]\[Bindings\]\[([^\]]+)\]$/);
             const value = $field.is(':checkbox') ? $field.is(':checked') : $field.val();
+            if (match) {
+                if (value) { bindings[String(match[1])] = String(value); }
+                return;
+            }
+            match = name.match(/^sections\[[^\]]+\]\[Cards\]\[([^\]]+)\]\[([^\]]+)\]$/);
             if (match) {
                 const cardIndex = String(match[1]);
                 const fieldName = String(match[2]);
@@ -560,6 +647,7 @@ jQuery(function ($) {
             data[fieldName] = value;
         });
         data.Cards = Object.keys(cards).sort(function (a, b) { return Number(a) - Number(b); }).map(function (index) { return cards[index]; });
+        data.Bindings = bindings;
         return data;
     }
 
@@ -593,12 +681,17 @@ jQuery(function ($) {
             return $row;
         }
         Object.keys(presetData).forEach(function (fieldName) {
-            if (['Type', 'Cards', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {
+            if (['Type', 'Cards', 'Bindings', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {
                 return;
             }
             setSectionPresetField($row, fieldName, presetData[fieldName]);
         });
         $row.find('.h18-page-section-type').val(type);
+        if (presetData.Bindings && typeof presetData.Bindings === 'object') {
+            Object.keys(presetData.Bindings).forEach(function (property) {
+                pageSectionControls($row, '.h18-dynamic-binding-select[data-binding-property="' + property + '"]').attr('data-binding-value', String(presetData.Bindings[property] || ''));
+            });
+        }
         if (Array.isArray(presetData.Cards) && ['card_grid', 'tabs', 'accordion', 'carousel'].includes(type)) {
             const $container = pageSectionControls($row, '.h18-page-cards-sortable');
             $container.children('.h18-page-card-row').remove();
@@ -1126,6 +1219,7 @@ jQuery(function ($) {
         refreshPrimitiveVariantV0516($row);
         refreshCollectionEditorV0517($row);
         if (type === 'component') { renderComponentInstanceEditorV0521($row); }
+        refreshDynamicBindingsV0524($row);
         rebuildPageNavigator();
         refreshLayoutHierarchyV0519();
         renderCanvasPreview($row);
@@ -1319,6 +1413,12 @@ jQuery(function ($) {
     }
 
     function canvasFieldValue($row, fieldName, fallback) {
+        if (fieldName === 'MediaUrl') {
+            const mediaBinding = dynamicPreviewBindingV0524($row, 'MediaId');
+            if (mediaBinding.bound) { return mediaBinding.mediaUrl || ''; }
+        }
+        const dynamicBinding = dynamicPreviewBindingV0524($row, fieldName);
+        if (dynamicBinding.bound) { return dynamicBinding.value; }
         const $field = pageSectionControls($row, '[name$="[' + fieldName + ']"]').first();
         if (!$field.length) {
             return fallback;
