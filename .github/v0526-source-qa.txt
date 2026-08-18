@@ -1,0 +1,7 @@
+JS query list type label: expected 1 anchor, found 0
+patch_status=1
+No syntax errors detected in hangar18-manager.php
+php_status=0
+js_status=0
+Failed v0.5.26 assertions: ['version', 'schema 1.20', 'type label', 'default fields', 'normalized fields', 'component containment block', 'usage includes query list', 'query adapter', 'renderer', 'shared query core', 'context per result', 'context assigned', 'context restored', 'cycle guard', 'unique runtime key', 'component renderer reuse', 'variant', 'admin controls', 'JS controls', 'canvas preview', 'CSS', 'readme']
+qa_status=1
