@@ -3,7 +3,7 @@ name: Sync Hangar18 release source
 on:
   push:
     branches:
-      - qa/v0.5.22-release-r2
+      - qa/v0.5.22-source-candidate
     paths:
       - '.github/workflows/sync-release-source.yml'
 
@@ -11,14 +11,26 @@ permissions:
   contents: write
 
 jobs:
-  release-v0522-r3:
+  source-v0522:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: qa/v0.5.22-release-r2
+          ref: qa/v0.5.22-source-candidate
           fetch-depth: 0
-      - name: Point candidate runner at this QA branch
-        run: sed -i "s#BRANCH='qa/v0.5.22-release'#BRANCH='qa/v0.5.22-release-r2'#" .github/scripts/release_v0522.py
-      - name: Build validated v0.5.22 candidate
-        run: python3 .github/scripts/release_v0522.py
+      - name: Apply already-validated E4 patch
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/prepare_v0522.py
+          python3 .github/scripts/patch_v0522.py
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          python3 .github/scripts/qa_v0522.py
+      - name: Commit validated source only
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add hangar18-manager.php assets/admin.js assets/admin.css readme.txt
+          git commit -m 'QA: materialize v0.5.22 validated source'
+          git push origin HEAD:qa/v0.5.22-source-candidate
