@@ -1,17 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T12:57:23Z",
+  "published_utc": "2026-08-18T13:32:48Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "137ae050abcc39352a872dcdc5332948e6ae3e150b515eeaec273892da938d22",
+  "package_sha256": "8def9387828ed1940dcac09ad6d20b26f2d126895558cb32174d6b20cf5cf748",
   "changelog": [
-    "Gem og Ctrl/Cmd+S kræver ikke længere en håndskrevet ændringsbeskrivelse.",
-    "Editor laver automatisk et kort change-summary for titel, elementer, indhold, typografi, design, layout, responsive og dynamic-data ændringer.",
-    "Server-side fallback laver resumé hvis browserresumé mangler.",
-    "Versionshistorikken gemmer AutoChangeSummary og UserChangeNote separat samt backward-compatible ChangeNote.",
-    "Save-summary QA er grøn på PHP 8.0/8.2/8.3; Vehicle/Event/Gallery-kontrakten er uændret."
+    "Gem-kommentaren er eksplicit valgfri og browser-validity ryddes før submit.",
+    "Admin assets cache-bustes med version + filemtime.",
+    "Typografi-fanens nested CSS-fejl er rettet.",
+    "Brødtekst-/overskrift-font samt Body/H1/H2/H3 størrelser vises igen i Inspector.",
+    "Aktiv editorversion vises i sideeditoren.",
+    "Vehicle/Event/Gallery-kontrakten er uændret."
   ]
 }

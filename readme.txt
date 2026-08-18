@@ -1,7 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.7.1
+Version: 0.7.2
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.2 – Gem og Typografi rettet ==
+
+Rettet:
+- Egen kommentar ved Gem er eksplicit valgfri i markup og JavaScript; stale/custom browser-validity ryddes før submit.
+- Admin CSS/JS cache-bustes med pluginversion + filemtime, så en gammel admin.js ikke bliver hængende efter opdatering.
+- Editor viser aktiv version direkte i sideeditorens header.
+- Typografi-fanen var tom fordi CSS skjulte parent-containeren til typography-panelet. Nesting-reglen er rettet.
+- Typografi viser nu de eksisterende funktionelle indstillinger: brødtekst-font, overskrift-font, brødtekst-størrelse samt H1/H2/H3-størrelser.
+- PHP 8.0/8.2/8.3 QA, workflow regression og Vehicle/Event/Gallery-kontrakten er grøn.
 
 
 == Version 0.7.1 – Automatisk gemmeresumé ==
