@@ -84,3 +84,12 @@ Existing page conversion is the last phase. Vehicle/Event/Gallery remain protect
 6. Convert Vehicle/Event/Gallery only after their protected compatibility gates pass.
 7. Keep rollback until final acceptance.
 8. Remove legacy code only after every converted domain is accepted.
+
+### I10 implementation slices
+
+- **I10-A — Planner/shadow workspace (v0.8.3, complete):** fixed conversion order, I9 gate evaluation and copy-only shadow records. No activate/cutover/publish handler exists.
+- **I10-B — Shadow acceptance ledger (v0.8.4):** manual page-specific evidence for desktop/tablet/mobile plus save/preview/revision/rollback. Acceptance is derived by the server and bound to the exact shadow `SourceHash`; rebuilding a shadow invalidates stale acceptance. This does not activate a public page.
+- **I10-C — Public comparison-page cutover (blocked):** may only be implemented/exposed after all eight I9 manual gates are actually PASS. It must start with the non-critical comparison page and retain an explicit rollback path.
+- **I10-D — Core page cutover (blocked):** Hjem → Om → Kontakt → Bliv medlem, one at a time, only after acceptance of the previous stage.
+- **I10-E — Protected domain cutover (blocked):** Vehicle/Event/Gallery remain on the protected legacy runtime until their separate compatibility policy/gates are explicitly accepted.
+- **I10-F — Legacy removal (blocked):** legacy code is removed only after every converted page/domain has final acceptance and rollback retention requirements are satisfied.
