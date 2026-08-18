@@ -11,23 +11,21 @@ permissions:
   contents: write
 
 jobs:
-  diagnose-v0522-r2:
+  diagnose-v0522-r3:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: qa/v0.5.22-release-r2
           fetch-depth: 0
-      - name: Run source validation and persist result
+      - name: Run source validation r3 and persist result
         shell: bash
         run: |
           set +e
-          LOG=.github/v0522-r2-source-qa.txt
+          LOG=.github/v0522-r3-source-qa.txt
           : > "$LOG"
           python3 .github/scripts/prepare_v0522.py >> "$LOG" 2>&1
           echo "prepare_status=$?" >> "$LOG"
-          grep -F "resolve_start=php.index('    private function resolve_page_component_instance_sections')" .github/scripts/patch_v0522.py >> "$LOG" 2>&1
-          echo "prepare_anchor_status=$?" >> "$LOG"
           python3 .github/scripts/patch_v0522.py >> "$LOG" 2>&1
           echo "patch_status=$?" >> "$LOG"
           php -l hangar18-manager.php >> "$LOG" 2>&1
@@ -39,5 +37,5 @@ jobs:
           git config user.name hangar18-build
           git config user.email actions@users.noreply.github.com
           git add "$LOG"
-          git commit -m 'QA: record v0.5.22 r2 source validation'
+          git commit -m 'QA: record v0.5.22 r3 source validation'
           git push origin HEAD:qa/v0.5.22-release-r2
