@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.6.1
+Version: 0.6.2
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -1172,3 +1172,13 @@ Kompatibilitet og sikkerhed:
 - Runtime og canvas-preview anvender samme formatter/fallback-model.
 - BindingOptions følger med i Patterns, linked component definitions og Page Templates.
 - Page-editor schema løftes bagudkompatibelt til 1.22.
+
+
+== Version 0.6.2 – Editorfix + Site Builder core ==
+
+- Retter Fed/Kursiv-toggle i mini-editoren, så gentagne til/fra-skift ikke opbygger nestede tags.
+- Tilføjer tydelig Typografi-fane i Inspector med font og brødtekst/H1/H2/H3-størrelser.
+- Bevarer Inspector-overlap-hotfixet fra 0.6.1.
+- E6 Site Builder core: Header/Footer templates, versioneret menu-tree, klassisk accessible menu-renderer, passive runtime assets og Site Builder presets.
+- Single/archive/system template assignment kan resolveres efter context og priority.
+- Eksisterende sider samt Vehicle/Event/Gallery og legacy header/footer/menu konverteres ikke i denne release.
