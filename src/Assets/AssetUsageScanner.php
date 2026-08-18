@@ -41,8 +41,8 @@ final class AssetUsageScanner
         foreach ($value as $key => $child) {
             $keyString = (string) $key;
             $childPath = $path . '.' . $keyString;
-            if (in_array($keyString, $this->mediaKeys, true) && (is_int($child) || ctype_digit((string) $child))) {
-                $mediaId = (int) $child;
+            if (in_array($keyString, $this->mediaKeys, true)) {
+                $mediaId = $this->mediaId($child);
                 if ($mediaId > 0) {
                     $usage[$mediaId] ??= [];
                     $reference = ['Resource'=>$resource,'Path'=>$childPath];
@@ -51,5 +51,17 @@ final class AssetUsageScanner
             }
             $this->walk($child, $resource, $childPath, $usage);
         }
+    }
+
+    /** @param mixed $value */
+    private function mediaId($value): int
+    {
+        if (is_int($value) || (is_string($value) && ctype_digit($value))) { return (int) $value; }
+        // WordPress get_post_meta($id) commonly exposes scalar meta as ['123'].
+        if (is_array($value) && count($value) === 1) {
+            $first = reset($value);
+            if (is_int($first) || (is_string($first) && ctype_digit($first))) { return (int) $first; }
+        }
+        return 0;
     }
 }

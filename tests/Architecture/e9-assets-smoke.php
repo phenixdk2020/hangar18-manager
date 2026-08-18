@@ -60,7 +60,9 @@ $source = $tmpDir . '/photo.jpg';
 file_put_contents($source, 'original-image-bytes');
 $result = (new ImageOptimizationService($optimizer))->optimize($source, 'image/jpeg', ['Quality'=>82]);
 e9Assert($result['preserved'] === true && file_get_contents($source) === 'original-image-bytes', 'Optimization must never replace the original.');
-e9Assert(count($result['derivatives']) === 2 && is_file($tmpDir . '/photo.webp') && is_file($tmpDir . '/photo.avif'), 'Optimization pipeline must create supported derivatives.');
+e9Assert(count($result['derivatives']) === 2 && is_file($tmpDir . '/photo.h18.webp') && is_file($tmpDir . '/photo.h18.avif'), 'Optimization pipeline must create namespaced supported derivatives.');
+$second = (new ImageOptimizationService($optimizer))->optimize($source, 'image/jpeg', ['Quality'=>82]);
+e9Assert(count($second['derivatives']) === 0 && in_array('webp:target-exists',$second['skipped'],true) && in_array('avif:target-exists',$second['skipped'],true), 'Optimization must never overwrite existing derivatives.');
 
 $dup1 = $tmpDir . '/duplicate-a.jpg';
 $dup2 = $tmpDir . '/duplicate-b.jpg';

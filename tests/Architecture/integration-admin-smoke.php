@@ -31,6 +31,7 @@ $h18Scripts = [];
 
 function get_option(string $key, $default = false) { global $h18Options; return $h18Options[$key] ?? $default; }
 function update_option(string $key, $value, $autoload = null): bool { global $h18Options; $h18Options[$key]=$value; return true; }
+function get_posts($args=[]): array { return []; }
 function add_action(string $hook, $callback, int $priority = 10): void { global $h18Actions; $h18Actions[] = [$hook,$callback,$priority]; }
 function add_submenu_page($parent,$pageTitle,$menuTitle,$capability,$slug,$callback): string { global $h18Submenus; $h18Submenus[] = compact('parent','pageTitle','menuTitle','capability','slug','callback'); return $slug; }
 function current_user_can(string $capability): bool { return $capability === 'edit_pages'; }
@@ -55,7 +56,7 @@ function plugins_url(string $path='', string $plugin=''): string { return 'https
 function wp_enqueue_style($handle,$src,$deps=[],$ver=false,$media='all'): void { global $h18Styles; $h18Styles[$handle]=compact('src','deps','ver','media'); }
 function wp_enqueue_script($handle,$src,$deps=[],$ver=false,$inFooter=false): void { global $h18Scripts; $h18Scripts[$handle]=['src'=>$src,'deps'=>$deps,'ver'=>$ver,'in_footer'=>$inFooter]; }
 
-final class Hangar18_Manager { public const MENU_SLUG='hangar18-manager'; public const VERSION='0.7.5-test'; }
+final class Hangar18_Manager { public const MENU_SLUG='hangar18-manager'; public const VERSION='0.7.8-test'; }
 
 require_once dirname(__DIR__,2) . '/src/Autoload.php';
 \Hangar18\UltimateDesigner\Autoload::register();
@@ -69,7 +70,7 @@ function integrationAssert(bool $condition, string $message): void {
 
 IntegrationAdminBootstrap::register();
 $hooks = array_map(static fn(array $row): string => (string)$row[0], $h18Actions);
-foreach (['admin_menu','admin_post_h18_ud_create_site_template','admin_post_h18_ud_save_site_template','admin_post_h18_ud_delete_site_template','admin_enqueue_scripts'] as $hook) {
+foreach (['admin_menu','admin_post_h18_ud_create_site_template','admin_post_h18_ud_save_site_template','admin_post_h18_ud_delete_site_template','admin_enqueue_scripts','admin_post_h18_ud_save_asset_metadata','admin_post_h18_ud_generate_asset_derivatives','wp_ajax_h18_ud_asset_duplicates'] as $hook) {
     integrationAssert(in_array($hook,$hooks,true), 'Integration bootstrap missing admin-only hook: '.$hook);
 }
 foreach ($hooks as $hook) {
@@ -97,7 +98,7 @@ $_GET['ud_template']='header-test';
 ob_start();
 IntegrationAdminBootstrap::render();
 $html = (string) ob_get_clean();
-foreach (['Ultimate Designer','Ingen sidekonvertering','Site Builder','Manual release gates','I1','I2','I10','Visual Header/Footer Builder','SHADOW · ingen cutover','Gem template','Live preview','header-root','brand','Typografi og design','Brødtekst (px)','H1 (px)','Baggrund'] as $needle) {
+foreach (['Ultimate Designer','Ingen sidekonvertering','Site Builder','Manual release gates','I1','I2','I10','Visual Header/Footer Builder','SHADOW · ingen cutover','Gem template','Live preview','header-root','brand','Typografi og design','Brødtekst (px)','H1 (px)','Baggrund','Menuvalg','Tilvalg/fravalg pr. side','I5 · Asset Manager','NATIVE MEDIA IDs · ORIGINAL BEVARES'] as $needle) {
     integrationAssert(strpos($html,$needle) !== false, 'Integration dashboard missing: '.$needle);
 }
 integrationAssert(strpos($html,'1 Header · 1 Footer · 1 Menu') !== false, 'Repository-backed Site Builder counts are incorrect.');
@@ -129,4 +130,4 @@ foreach ([
 }
 integrationAssert(($section['Content'] ?? '')==="Linje 1\nLinje 2", 'I2 content line breaks must survive normalization.');
 
-fwrite(STDOUT,"Ultimate Designer integration admin I1/I2: PASS\n");
+fwrite(STDOUT,"Ultimate Designer integration admin I1-I5: PASS\n");

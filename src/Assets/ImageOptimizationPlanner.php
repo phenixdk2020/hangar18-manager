@@ -25,8 +25,8 @@ final class ImageOptimizationPlanner
         $targets = [];
         $skipped = [];
         foreach ([
-            ['Format'=>'webp','Mime'=>'image/webp','Suffix'=>'.webp'],
-            ['Format'=>'avif','Mime'=>'image/avif','Suffix'=>'.avif'],
+            ['Format'=>'webp','Mime'=>'image/webp','Suffix'=>'.h18.webp'],
+            ['Format'=>'avif','Mime'=>'image/avif','Suffix'=>'.h18.avif'],
         ] as $candidate) {
             if ($sourceMime === $candidate['Mime']) {
                 $skipped[] = $candidate['Format'] . ':already-source';
