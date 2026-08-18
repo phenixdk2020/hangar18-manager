@@ -1,55 +1,79 @@
-name: Sync Hangar18 release source
+name: Verify Hangar18 Manager 0.5.22
 
 on:
   push:
     branches:
-      - main
+      - qa/v0.5.22-final
     paths:
-      - 'dist/hangar18-manager.zip'
-      - 'update.json'
       - '.github/workflows/sync-release-source.yml'
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  sync-source:
+  verify-v0522:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate package and extract source
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.22-final
+          fetch-depth: 0
+      - name: Verify package, source and E4 semantics
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf .build
-          mkdir -p .build
+          TARGET=6fee8116e755905f9acc5ebcbb3185dd8565e81b
+          VERSION=$(python3 -c "import json;print(json.load(open('update.json'))['version'])")
+          EXPECTED=$(python3 -c "import json;print(json.load(open('update.json'))['package_sha256'])")
+          ACTUAL=$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')
+          test "$VERSION" = "0.5.22"
+          test "$EXPECTED" = "$ACTUAL"
+          rm -rf .verify && mkdir .verify
           unzip -t dist/hangar18-manager.zip
-          unzip -q dist/hangar18-manager.zip -d .build
-          VERSION=$(python3 -c "import json; print(json.load(open('update.json'))['version'])")
-          grep -F "Version: ${VERSION}" .build/hangar18-manager/hangar18-manager.php
-          grep -F "const VERSION = '${VERSION}';" .build/hangar18-manager/hangar18-manager.php
-          php -l .build/hangar18-manager/hangar18-manager.php
-          node --check .build/hangar18-manager/assets/admin.js
-
-      - name: Synchronize repository source
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          cmp hangar18-manager.php .verify/hangar18-manager/hangar18-manager.php
+          cmp readme.txt .verify/hangar18-manager/readme.txt
+          cmp assets/admin.css .verify/hangar18-manager/assets/admin.css
+          cmp assets/admin.js .verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          from pathlib import Path
+          php=Path('hangar18-manager.php').read_text()
+          js=Path('assets/admin.js').read_text()
+          checks={
+            'version': 'Version: 0.5.22' in php and "const VERSION = '0.5.22';" in php,
+            'schema': "'Version'        => '1.18'" in php,
+            'variant store': 'normalize_page_component_variants' in php and "'ComponentVariant'" in php,
+            'variant precedence': '$overrides = array_replace($variant_values, $local_overrides);' in php,
+            'variant sanitizer': 'sanitize_page_component_override' in php,
+            'pattern subtree': 'normalize_page_pattern_sections' in php and 'applyPatternV0522' in js,
+            'pattern compatibility': "isset($entry['Section']) && is_array($entry['Section']) ? [$entry['Section']]" in php,
+            'templates': 'PAGE_TEMPLATES_OPTION' in php and 'ajax_create_page_from_template' in php,
+            'template detached': 'instantiate_page_template_sections' in php and "update_post_meta($post_id,'_h18_page_template_origin',$template_id)" in php,
+            'managed pages': "'_h18_page_editor_managed'" in php,
+          }
+          failed=[k for k,v in checks.items() if not v]
+          if failed: raise SystemExit('E4 semantic QA failed: '+repr(failed))
+          print('E4 semantic QA passed')
+          PY
+          git fetch --tags --force
+          if git rev-parse -q --verify refs/tags/v0.5.22 >/dev/null; then
+            TAG_SHA=$(git rev-list -n1 v0.5.22)
+            test "$TAG_SHA" = "$TARGET"
+          else
+            git tag v0.5.22 "$TARGET"
+            git push origin refs/tags/v0.5.22
+          fi
+          TAG_SHA=$(git rev-list -n1 v0.5.22)
+          printf 'PASS\nversion=%s\npackage_sha256=%s\nrelease_commit=%s\ntag_commit=%s\n' "$VERSION" "$ACTUAL" "$TARGET" "$TAG_SHA" > .github/v0522-final-qa.txt
+          rm -rf .verify
+      - name: Persist QA result on QA branch
         shell: bash
         run: |
           set -euo pipefail
-          cp .build/hangar18-manager/hangar18-manager.php hangar18-manager.php
-          cp .build/hangar18-manager/readme.txt readme.txt
-          mkdir -p assets
-          cp .build/hangar18-manager/assets/admin.css assets/admin.css
-          cp .build/hangar18-manager/assets/admin.js assets/admin.js
-          rm -rf .build
-          git config user.name "hangar18-build"
-          git config user.email "actions@users.noreply.github.com"
-          git add hangar18-manager.php readme.txt assets/admin.css assets/admin.js
-          if git diff --cached --quiet; then
-            echo "Repository source is already synchronized."
-            exit 0
-          fi
-          git commit -m "Sync Hangar18 Manager ${VERSION:-release} source"
-          git push
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add .github/v0522-final-qa.txt
+          git commit -m 'QA: v0.5.22 final package and tag verified'
+          git push origin HEAD:qa/v0.5.22-final
