@@ -28,19 +28,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Architecture isolation guard
         run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
-
       - name: Protected domain contract
         run: bash tests/Architecture/protected-domain-contract.sh
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
           coverage: none
-
       - name: PHP syntax check
         run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Architecture smoke test
@@ -63,6 +59,8 @@ jobs:
         run: php tests/Architecture/e9-assets-smoke.php
       - name: E10 Permissions core test
         run: php tests/Architecture/e10-permissions-smoke.php
+      - name: E11 Quality core test
+        run: php tests/Architecture/e11-quality-smoke.php
       - name: Passive runtime JavaScript syntax
         run: |
           node --check assets/site-builder-runtime.js
