@@ -1,0 +1,86 @@
+name: PR runner v0.5.23 package
+
+on:
+  pull_request:
+    branches:
+      - qa/v0.5.23-package-base
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  package-v0523:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: qa/v0.5.23-package-head
+          fetch-depth: 0
+      - name: Revalidate materialized source
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          python3 .github/scripts/qa_v0523.py
+          grep -F 'Version: 0.5.23' hangar18-manager.php
+          grep -F "const VERSION = '0.5.23';" hangar18-manager.php
+          grep -F "'Version'        => '1.19'" hangar18-manager.php
+      - name: Build and validate package
+        run: |
+          set -euo pipefail
+          rm -rf .build .verify
+          mkdir -p .build/hangar18-manager/assets
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp assets/admin.css assets/admin.js .build/hangar18-manager/assets/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          python3 - <<'PY'
+          import hashlib,json
+          from datetime import datetime,timezone
+          from pathlib import Path
+          package=Path('dist/hangar18-manager.zip')
+          manifest={
+            'schema_version':'1.0','plugin':'hangar18-manager','version':'0.5.23','min_wp':'6.4','min_php':'8.0',
+            'published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+            'package_path':'dist/hangar18-manager.zip','package_sha256':hashlib.sha256(package.read_bytes()).hexdigest(),
+            'changelog':[
+              'Tilføjer UD-051 schema-builder til egne datatyper med text, number, bool, date og media samt required/default.',
+              'Tilføjer UD-052 schema-drevet CRUD for data-poster med capability/nonce-validering og WordPress Media Library.',
+              'Tilføjer UD-053 Dynamic Binding til overskrift, tekst, medie og knaptekst/links med statisk fallback.',
+              'Datatype/entry-delete og breaking schema-ændringer blokeres, mens gemte bindinger bruger dem.',
+              'Data-context føres gennem nested layout og linked components som foundation for Query/Repeater.',
+              'Løfter page-editor schema bagudkompatibelt til 1.19.'
+            ]
+          }
+          Path('update.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(manifest['package_sha256'])
+          PY
+          mkdir .verify
+          unzip -q dist/hangar18-manager.zip -d .verify
+          php -l .verify/hangar18-manager/hangar18-manager.php
+          node --check .verify/hangar18-manager/assets/admin.js
+          grep -F 'Version: 0.5.23' .verify/hangar18-manager/hangar18-manager.php
+          grep -F "const VERSION = '0.5.23';" .verify/hangar18-manager/hangar18-manager.php
+          grep -F "'Version'        => '1.19'" .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'resolve_page_section_dynamic_bindings' .verify/hangar18-manager/hangar18-manager.php
+          grep -F 'refreshDynamicBindingsV0523' .verify/hangar18-manager/assets/admin.js
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          manifest=json.loads(Path('update.json').read_text())
+          actual=hashlib.sha256(Path('dist/hangar18-manager.zip').read_bytes()).hexdigest()
+          assert manifest['version']=='0.5.23'
+          assert manifest['package_sha256']==actual
+          print('v0.5.23 package QA passed:',actual)
+          PY
+          rm -rf .build .verify
+      - name: Commit package artifacts to QA head
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git add update.json dist/hangar18-manager.zip
+          git commit -m 'QA: package v0.5.23 validated candidate'
+          git push origin HEAD:qa/v0.5.23-package-head
