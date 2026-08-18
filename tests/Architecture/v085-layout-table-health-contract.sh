@@ -5,7 +5,7 @@ js='assets/ultimate-designer-layout-tools.js'
 css='assets/ultimate-designer-layout-tools.css'
 health_js='assets/ultimate-designer-side-health.js'
 health_css='assets/ultimate-designer-side-health.css'
-controller='src/Admin/SideHealthAdminController.php'
+controller='src/Admin/EditorLayoutToolsAdminController.php'
 
 for file in "$js" "$css" "$health_js" "$health_css" "$controller"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
@@ -45,7 +45,8 @@ grep -F '.h18-ud-side-health-panel.is-collapsed .h18-ud-health-body{display:none
 
 # Assets are admin-page-only and loaded after the existing page editor script.
 grep -F "'hangar18-ultimate-designer-layout-tools'" "$controller" >/dev/null
-grep -F "['jquery', 'hangar18-manager-admin']" "$controller" >/dev/null
+grep -F "['jquery', 'jquery-ui-sortable', 'hangar18-manager-admin']" "$controller" >/dev/null
+grep -F "\$page !== 'hangar18-pages'" "$controller" >/dev/null
 if grep -E "add_action\('(wp|init|template_redirect|wp_head|wp_footer)'" "$controller" >/dev/null; then
   echo 'FAIL: v0.8.5 page editor enhancements register a frontend hook'
   exit 1
