@@ -37,10 +37,11 @@ $restored = $service->restore($resource, (string) $rev1['Id'], 8, 'Gendan først
 e8Assert((string) $restored['RestoreOf'] === (string) $rev1['Id'], 'Restore must append a new revision referencing its source.');
 e8Assert(count($service->history($resource)) === 3, 'Restore must preserve history rather than overwrite it.');
 
-$diff = (new StructuredRevisionDiff())->compare($state1, $state2);
-e8Assert(count($diff) > 0, 'Structured diff must report state changes.');
-$diffJson = json_encode($diff);
-e8Assert(is_string($diffJson) && str_contains($diffJson, 'Sections'), 'Structured diff must retain property paths.');
+$diff = (new StructuredRevisionDiff())->diff($state1, $state2);
+e8Assert(count($diff['added']) === 1, 'Structured diff must report added sections.');
+e8Assert(count($diff['changed']) === 1, 'Structured diff must report changed section properties.');
+e8Assert(($diff['added'][0]['Key'] ?? '') === 'b', 'Structured diff must retain added element key.');
+e8Assert(($diff['changed'][0]['Properties'][0]['Property'] ?? '') === 'Title', 'Structured diff must name changed property.');
 
 $stagingRepo = new InMemoryStagingRepository();
 $staging = new StagingService($stagingRepo, $revisions);
@@ -64,7 +65,6 @@ $resolved = $preview->resolve($issued['token']);
 e8Assert(is_array($resolved) && ($resolved['state']['PageTitle'] ?? '') === 'Hjem', 'Preview must resolve unpublished working state read-only.');
 $tokens->revoke($issued['token']);
 e8Assert($tokens->validate($issued['token']) === null, 'Revoked preview token must be rejected.');
-
 e8Assert($tokens->validate('not-a-token') === null, 'Malformed preview token must fail closed.');
 
 fwrite(STDOUT, "E8 Workflow core UD-081..088: PASS\n");
