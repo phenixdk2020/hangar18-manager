@@ -43,7 +43,8 @@ final class AiAdminController
         echo '<div class="h18-ud-ai-grid"><section class="h18-ud-ai-card"><h3>Provider settings</h3><p class="description">Credentials gemmes ikke i WordPress options. En provider-adapter registreres via <code>hangar18_ud_ai_providers</code> og håndterer selv secrets uden for dette settings-lag.</p>';
         echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';wp_nonce_field(self::NONCE_ACTION);echo '<input type="hidden" name="action" value="h18_ud_save_ai_settings"><label>Provider<select name="provider_id"'.($canConfigure?'':' disabled').'><option value="">Ingen provider</option>';
         foreach($labels as $id=>$label){echo '<option value="'.esc_attr($id).'"'.selected($providerId,$id,false).'>'.esc_html($label).' · '.esc_html($id).'</option>';}
-        echo '</select></label><label class="h18-ud-ai-check"><input type="checkbox" name="enabled" value="1"'.checked(!empty($settings['Enabled']),true,false).($canConfigure?'':' disabled').'> Aktivér AI-forslag</label>';
+        $checked=!empty($settings['Enabled'])?' checked="checked"':'';
+        echo '</select></label><label class="h18-ud-ai-check"><input type="checkbox" name="enabled" value="1"'.$checked.($canConfigure?'':' disabled').'> Aktivér AI-forslag</label>';
         if($canConfigure){echo '<button class="button" type="submit">Gem AI settings</button>';}echo '</form>';
         echo '<div class="h18-ud-ai-state"><strong>Status</strong><span>'.($enabled?'Aktiv':'Inaktiv').'</span><span>'.($providerReady?'Provider registreret':'Provider ikke registreret').'</span><span>'.count($labels).' provider(e) tilgængelig(e)</span></div></section>';
         echo '<section class="h18-ud-ai-card"><h3>Tekstforslag sandbox</h3><p class="description">Sandboxen ændrer ingen side. Den bruger kun den tekst du indsætter og producerer et pending forslag.</p>';
