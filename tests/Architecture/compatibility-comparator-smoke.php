@@ -6,7 +6,9 @@ require_once dirname(__DIR__, 2) . '/src/Autoload.php';
 
 \Hangar18\UltimateDesigner\Autoload::register();
 
+use Hangar18\UltimateDesigner\Compatibility\CompatibilityPolicy;
 use Hangar18\UltimateDesigner\Compatibility\MarkupComparator;
+use Hangar18\UltimateDesigner\Compatibility\ProtectedDomainContractCatalog;
 use Hangar18\UltimateDesigner\Compatibility\StateComparator;
 
 function comparatorAssert(bool $condition, string $message): void
@@ -51,5 +53,18 @@ $markupChanged = $markupComparator->compare(
 );
 comparatorAssert(!$markupChanged->equivalent(), 'Missing protected hooks must fail compatibility.');
 comparatorAssert(count($markupChanged->differences()) >= 2, 'Missing protected hooks must be reported.');
+
+comparatorAssert(
+    ProtectedDomainContractCatalog::domains() === CompatibilityPolicy::PROTECTED_DOMAINS,
+    'Protected domain catalog and runtime policy must contain exactly the same domains.'
+);
+
+foreach (ProtectedDomainContractCatalog::domains() as $domain) {
+    comparatorAssert(CompatibilityPolicy::mustUseLegacyRuntime($domain), "Catalog domain '{$domain}' is not protected by runtime policy.");
+    comparatorAssert(ProtectedDomainContractCatalog::slug($domain) !== '', "Catalog domain '{$domain}' has no legacy slug.");
+    comparatorAssert(ProtectedDomainContractCatalog::marker($domain) !== '', "Catalog domain '{$domain}' has no legacy marker.");
+    comparatorAssert(ProtectedDomainContractCatalog::adminActions($domain) !== [], "Catalog domain '{$domain}' has no admin actions.");
+    comparatorAssert(ProtectedDomainContractCatalog::markupHooks($domain) !== [], "Catalog domain '{$domain}' has no markup hooks.");
+}
 
 fwrite(STDOUT, "Compatibility comparator smoke test: PASS\n");
