@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T16:38:59Z",
+  "published_utc": "2026-08-18T16:52:37Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "372f85f1f88c73016085d7fe069572e5b9837aad91196dd9eeb35d5157ef6645",
+  "package_sha256": "e8e8591de7fb14ce66976b7f9795701dc92f5b4562ceb586e658bfd61f121ddf",
   "changelog": [
-    "I3 Menu UI v2 i shadow mode med adskilt menu-data og presentation.",
-    "Desktop/mobile/motion presets, nested drag/reorder/indent og mega-panel ComponentId.",
-    "Keyboard-preview med piletaster/submenu/Escape samt ikon/badge preview.",
-    "Dangerous javascript/data/vbscript URL-schemes afvises; capability/nonce/sanitization gates er grønne.",
-    "Offentlig legacy-menu og eksisterende sider/Vehicle/Event/Gallery forbliver uændrede."
+    "I4 Live Side Health direkte i den eksisterende Sider-editor.",
+    "Analysen medregner ugemte DOM/form-ændringer og viser samlet + fem delscorer.",
+    "Issues kan filtreres og linker til konkrete Navigator element keys.",
+    "Read-only AJAX er capability/nonce/size-bounded og indeholder ingen page-write primitives.",
+    "Frontend og Vehicle/Event/Gallery forbliver uændrede."
   ]
 }
