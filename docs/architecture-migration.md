@@ -62,16 +62,32 @@ The target follows the Ultimate Designer design specification:
 
 ## Current foundation slice
 
-The first slice is intentionally non-invasive and contains:
+The current slice is intentionally non-invasive and contains:
 
 - `src/Autoload.php`
 - `src/Core/Version.php`
 - `src/Core/Architecture.php`
 - `src/Contracts/ElementDefinition.php`
 - `src/Contracts/PropertyDefinition.php`
+- `src/Contracts/PageRepository.php`
+- `src/Contracts/SchemaMigration.php`
+- `src/Contracts/RenderEngine.php`
+- `src/Contracts/SecurityGate.php`
 - `src/Registry/ElementRegistry.php`
 - `src/Registry/PropertyRegistry.php`
+- `src/Migration/MigrationRegistry.php`
 - `src/Compatibility/CompatibilityPolicy.php`
 - `tests/Architecture/architecture-smoke.php`
+- `tests/Architecture/assert-foundation-isolation.sh`
+- `.github/workflows/architecture-foundation-qa.yml`
 
 These files are not wired into the WordPress runtime yet. Therefore the public v0.5.30 rendering path remains unchanged by this slice.
+
+## QA gates for this slice
+
+The Architecture Foundation workflow runs on PHP 8.0, 8.2 and 8.3 and must pass:
+
+1. Foundation isolation guard against `origin/main`.
+2. PHP syntax validation for all new architecture/test PHP files.
+3. Registry and migration smoke tests.
+4. Explicit compatibility assertions that Vehicle, Event and Gallery remain on the legacy runtime during the foundation phase.
