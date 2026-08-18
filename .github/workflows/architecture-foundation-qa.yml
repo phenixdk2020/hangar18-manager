@@ -44,3 +44,6 @@ jobs:
 
       - name: Architecture smoke test
         run: php tests/Architecture/architecture-smoke.php
+
+      - name: Page schema compatibility test
+        run: php tests/Architecture/page-schema-smoke.php
