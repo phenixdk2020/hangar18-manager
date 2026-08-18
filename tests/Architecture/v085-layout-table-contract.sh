@@ -3,7 +3,7 @@ set -euo pipefail
 
 JS='assets/ultimate-designer-layout-tools.js'
 CSS='assets/ultimate-designer-layout-tools.css'
-CTRL='src/Admin/LayoutToolsAdminController.php'
+CTRL='src/Admin/EditorLayoutToolsAdminController.php'
 BOOT='src/Admin/IntegrationAdminBootstrap.php'
 MAIN='hangar18-manager.php'
 
@@ -21,6 +21,8 @@ grep -F "LayoutColumns" "$JS" >/dev/null
 grep -F "LayoutGapPx" "$JS" >/dev/null
 grep -F "MobileLayoutColumns" "$JS" >/dev/null
 grep -F "setParent" "$JS" >/dev/null
+grep -F "\$row.hasClass('is-selected')" "$JS" >/dev/null
+grep -F "#h18-page-inspector-target" "$JS" >/dev/null
 
 # Every Kasse is still a normal Container, so its own existing Inspector design
 # and typography properties remain available independently.
@@ -48,12 +50,12 @@ grep -F "mobile: 'scroll'" "$JS" >/dev/null
 grep -F "wp_kses_post((string) (\$raw['Content'] ?? ''))" "$MAIN" >/dev/null
 
 # Dedicated UI is admin-only and only enqueued on the existing Sider screen.
-grep -F "PAGE_SLUG = 'hangar18-pages'" "$CTRL" >/dev/null
+grep -F "\$page !== 'hangar18-pages'" "$CTRL" >/dev/null
 grep -F "add_action('admin_enqueue_scripts'" "$CTRL" >/dev/null
 grep -F 'hangar18-ultimate-designer-layout-tools' "$CTRL" >/dev/null
-grep -F 'LayoutToolsAdminController::register();' "$BOOT" >/dev/null
+grep -F 'EditorLayoutToolsAdminController::register();' "$BOOT" >/dev/null
 if grep -E "add_action\('(wp|init|template_redirect|wp_head|wp_footer)'" "$CTRL" >/dev/null; then
-  echo 'FAIL: LayoutToolsAdminController registers frontend hook'
+  echo 'FAIL: EditorLayoutToolsAdminController registers frontend hook'
   exit 1
 fi
 
