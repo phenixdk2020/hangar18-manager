@@ -1,0 +1,18 @@
+v0.5.29 Data Tags title-line anchor prepared
+prepare_status=0
+v0.5.29 UD-056 Advanced Query patch applied
+patch_status=0
+No syntax errors detected in hangar18-manager.php
+php_status=0
+/home/runner/work/hangar18-manager/hangar18-manager/assets/admin.js:4613
+    function groupRow(g){g=g||{Relation:'AND',Filters:[]};const $g=$('<div>',{class:'h18-aq-group'}),$head=$('<div>',{class:'h18-aq-head'}),$rel=$('<select>',{class:'h18-aq-relation'}).append('<option value="AND">AND i gruppen</option><option value="OR">OR i gruppen</option>').val(g.Relation||'AND'),$filters=$('<div>',{class:'h18-aq-filters'});(g.Filters||[]).slice(0,6).forEach(f=>$filters.append(filterRow(f)));$head.append($rel,$('<button>',{type:'button',class:'button h18-aq-add-filter',text:'+ Filter'}),$('<button>',{type:'button',class:'button-link-delete h18-aq-remove-group',text:'Fjern gruppe'}));$g.append($head,$filters);$rel.on('change',sync);return $g;}
+    ^^^^^^^^
+
+SyntaxError: Unexpected token 'function'
+    at wrapSafe (node:internal/modules/cjs/loader:1713:18)
+    at checkSyntax (node:internal/main/check_syntax:78:3)
+
+Node.js v22.23.2
+js_status=1
+v0.5.29 UD-056 Advanced Query security/architecture QA passed
+qa_status=0
