@@ -20,6 +20,8 @@ on:
       - 'assets/ultimate-designer-side-health.css'
       - 'assets/ultimate-designer-asset-admin.js'
       - 'assets/ultimate-designer-asset-admin.css'
+      - 'assets/ultimate-designer-portability.js'
+      - 'assets/ultimate-designer-portability.css'
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
@@ -56,6 +58,7 @@ jobs:
       - run: php tests/Architecture/e11-quality-smoke.php
       - run: php tests/Architecture/e12-ai-smoke.php
       - run: php tests/Architecture/e13-portability-smoke.php
+      - run: php tests/Architecture/i6-portability-workspace-smoke.php
       - run: bash tests/Architecture/e14-security-audit.sh
       - run: php tests/Architecture/e14-performance-budget.php
       - run: php tests/Architecture/e14-migration-rollback-smoke.php
@@ -67,8 +70,9 @@ jobs:
       - run: php tests/Architecture/i4-side-health-admin-smoke.php
       - run: php tests/Architecture/i5-asset-usage-meta-smoke.php
       - run: bash tests/Architecture/i5-asset-admin-contract.sh
+      - run: bash tests/Architecture/i6-portability-admin-contract.sh
       - run: bash tests/Architecture/integration-admin-contract.sh
-      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js && node --check assets/ultimate-designer-portability.js
 
   browser-engine-qa:
     name: E14 browser engines (Chromium/Firefox/WebKit)
