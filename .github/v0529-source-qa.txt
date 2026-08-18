@@ -1,0 +1,7 @@
+entry tag input: expected 1 anchor, found 0
+patch_status=1
+No syntax errors detected in hangar18-manager.php
+php_status=0
+js_status=0
+Failed v0.5.29 assertions: ['version', 'taxonomy constant', 'taxonomy register', 'shortcode', 'normalizer', 'runner', 'groups', 'relation', 'taxonomy filter', 'publish only', 'candidate bound', 'pagination', 'config bound', 'tag save', 'tag input', 'admin', 'JS', 'CSS', 'readme']
+qa_status=1
