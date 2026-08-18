@@ -1,17 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T19:40:59Z",
+  "published_utc": "2026-08-18T20:53:16Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "404f9b81e2ade722b73f09e072df3430e699b263de40dabb83d812d8cb591867",
+  "package_sha256": "bd0b37d52c281d946cdc4c57b5817341825916e156c7f2bcd1860c5aff9e2d4d",
   "changelog": [
-    "I10 shadow acceptance kræver syv manuelle checks: desktop/tablet/mobile/save/preview/revision/rollback.",
-    "Acceptance kræver miljø, evidensreference og eksplicit human confirmation og beregnes server-side.",
-    "Acceptance bindes til den aktuelle shadow SourceHash; genskabt shadow gør gammel acceptance stale.",
-    "Acceptance lukker ikke globale I9-gates og v0.8.4 har stadig ingen activate/cutover/publish-handler eller page-write.",
-    "Vehicle/Event/Gallery forbliver blokeret af CompatibilityPolicy på legacy v0.5.30-runtime."
+    "Auto-kasser fordeler 1/2/3+ kasser automatisk i lige desktop-kolonner oven på eksisterende Grid/Container.",
+    "Hver Kasse beholder egne farver, typografi, fontstørrelser, padding, border, shadow og responsive indstillinger.",
+    "Nyt visuelt Tabel-værktøj med rækker, kolonner, header, zebra, farver, fontstørrelse, celle-padding og mobil-scroll.",
+    "Side Health starter sammenklappet og viser en kompakt score/status, så Inspector ikke overskygges.",
+    "Inspector-koblingen følger det valgte element korrekt, også når body flyttes ind i Inspector.",
+    "Ingen public cutover; Vehicle/Event/Gallery forbliver på legacy runtime."
   ]
 }
