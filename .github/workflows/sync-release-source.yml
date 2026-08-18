@@ -18,7 +18,7 @@ jobs:
         with:
           ref: qa/v0.5.23-source-candidate
           fetch-depth: 0
-      - name: Apply Dynamic Data foundation
+      - name: Apply Dynamic Data foundation r2
         run: |
           set -euo pipefail
           python3 .github/scripts/patch_v0523.py
