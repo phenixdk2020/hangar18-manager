@@ -7,7 +7,7 @@ namespace Hangar18\UltimateDesigner\Assets;
 use Hangar18\UltimateDesigner\Contracts\ImageOptimizer;
 use RuntimeException;
 
-/** UD-092 creates optional derivatives without replacing or deleting the source file. */
+/** UD-092 creates optional derivatives without replacing/deleting source or pre-existing targets. */
 final class ImageOptimizationService
 {
     private ImageOptimizer $optimizer;
@@ -33,9 +33,19 @@ final class ImageOptimizationService
         $directory = dirname($sourcePath);
         $filename = pathinfo($sourcePath, PATHINFO_FILENAME);
         $derivatives = [];
+        $skipped = $plan['Skipped'];
         foreach ($plan['Targets'] as $target) {
             $targetPath = $directory . DIRECTORY_SEPARATOR . $filename . $target['Suffix'];
-            if ($targetPath === $sourcePath) { continue; }
+            if ($targetPath === $sourcePath) {
+                $skipped[] = $target['Format'] . ':source-collision';
+                continue;
+            }
+            // Never overwrite another upload or a derivative produced earlier. The
+            // administrator may inspect/remove stale derivatives outside this tool.
+            if (file_exists($targetPath)) {
+                $skipped[] = $target['Format'] . ':target-exists';
+                continue;
+            }
             $result = $this->optimizer->optimize($sourcePath, $targetPath, $target['Format'], $options);
             $derivatives[] = [
                 'Format'=>$target['Format'],
@@ -45,6 +55,6 @@ final class ImageOptimizationService
                 'Message'=>(string) ($result['message'] ?? ''),
             ];
         }
-        return ['source'=>$sourcePath,'preserved'=>is_file($sourcePath),'derivatives'=>$derivatives,'skipped'=>$plan['Skipped']];
+        return ['source'=>$sourcePath,'preserved'=>is_file($sourcePath),'derivatives'=>$derivatives,'skipped'=>array_values(array_unique($skipped))];
     }
 }
