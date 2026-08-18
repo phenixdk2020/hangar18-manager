@@ -1,17 +1,19 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.5.20",
+  "version": "0.5.21",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-17T23:19:11Z",
+  "published_utc": "2026-08-18T04:10:24Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "a117230dcf0d603feda85bef8ae1b0e07ebf95ec911203f7e4f8a2e0336f7448",
+  "package_sha256": "102a30426814986b79d24ef7320e94c76fd194bba5a8308d68887f68bf699cf6",
   "changelog": [
-    "Afslutter E3 Design System med redigerbare builder-breakpoints og globale motion/focus-tokens.",
-    "Tilføjer Focus, Active og Disabled states samt transition presets pr. element.",
-    "Live canvas og kommandopalette kan forhåndsvise Normal, Hover, Focus, Aktiv og Disabled.",
-    "Standard-breakpoints 782/1199 bevarer eksisterende responsive sider; Header legacy breakpoints ændres ikke.",
-    "Løfter DesignerSchemaVersion kompatibelt til 1.1 og page-editor schema til 1.16."
+    "Tilføjer UD-043 Navigator rename/hide/lock/reorder med realtime canvas-synkronisering.",
+    "Tilføjer UD-044 linked subtree components i separat global component-store.",
+    "Tilføjer UD-045 atomisk propagation ved render-time resolution af den globale definition.",
+    "Tilføjer UD-046 eksplicit frigivne Title/Content/Image/Button inputs med lokale overrides og låst layout/design.",
+    "Tilføjer UD-050 usage inspector og blokeret delete når component stadig bruges.",
+    "Eksisterende presets bevares som ikke-linked Patterns.",
+    "Løfter page-editor schema bagudkompatibelt til 1.17."
   ]
 }

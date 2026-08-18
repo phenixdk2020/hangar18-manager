@@ -1,6 +1,1 @@
-RuntimeError: command failed: python3 .github/scripts/harden_v0521.py
-stdout:
-
-stderr:
-context action anchor missing: { action: 'component', label: 'Gem som komponent', disabled: type === 'legacy' },
-
+RuntimeError: Unexpected release scope: ['.github/v0521-release-error.txt']

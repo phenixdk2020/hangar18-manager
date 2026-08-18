@@ -1,8 +1,24 @@
 === Hangar18 Manager ===
-Version: 0.5.20
+Version: 0.5.21
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.21 – E4 linked component engine foundation ==
+
+Nyt:
+- UD-043: Navigator tree får separat lagnavn, rename, hide/show, lock/unlock og realtime reorder-beskyttelse
+- låste lag kan ikke trækkes, skjules eller duplikeres ved et uheld i editoren
+- UD-044: et valgt layout-subtree kan gemmes som en rigtig linked component med intern nesting bevaret
+- linked components gemmes i separat versioneret WordPress-option; eksisterende presets bevares som ikke-linked Patterns
+- UD-045: component-instanser gemmer kun ComponentId + lokale overrides og resolver altid den aktuelle globale definition ved render, så én atomisk option-opdatering propagere til alle instanser
+- global definition har monotont Revision-nummer; instans-editor viser aktuel revision og usage
+- UD-046: ved oprettelse/opdatering vælger designeren eksplicit hvilke Title/Content/Image/Button inputs der frigives; layout/design er ikke overridable lokalt
+- risky Content inputs for CSS/HTML/Shortcode/Embed frigives ikke
+- linked component kan ikke indeholde legacy eller andre linked components, så recursive component cycles er blokeret i foundation
+- UD-050: usage inspector scanner alle gemte Hangar18-sider og viser side + section key; komponent med usage kan ikke slettes
+- component-instanser har eget canvas-kort og indgår i responsive visibility/layout som én node
+- page-editor schema løftes bagudkompatibelt til 1.17
 
 == Version 0.5.20 – E3 Design System completion ==
 

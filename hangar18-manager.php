@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.20
+ * Version: 0.5.21
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.20';
+    const VERSION = '0.5.21';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -40,6 +40,7 @@ final class Hangar18_Manager {
     const PAGE_EDITOR_OPTION        = 'hangar18_manager_pages_v1';
     const PAGE_VERSION_HISTORY_OPTION = 'hangar18_manager_page_versions_v1';
     const PAGE_PRESETS_OPTION         = 'hangar18_manager_page_presets_v1';
+    const PAGE_COMPONENTS_OPTION      = 'hangar18_manager_page_components_v1';
     const FORM_SUBMISSIONS_OPTION   = 'hangar18_manager_form_submissions_v1';
     const POLL_VOTES_OPTION         = 'hangar18_manager_poll_votes_v1';
     const MENU_ORDER_OPTION        = 'hangar18_manager_menu_order_v20';
@@ -116,6 +117,8 @@ final class Hangar18_Manager {
         add_action('admin_post_h18_save_page_editor', [$this, 'handle_save_page_editor']);
         add_action('wp_ajax_h18_save_page_preset', [$this, 'ajax_save_page_preset']);
         add_action('wp_ajax_h18_delete_page_preset', [$this, 'ajax_delete_page_preset']);
+        add_action('wp_ajax_h18_save_page_component', [$this, 'ajax_save_page_component']);
+        add_action('wp_ajax_h18_delete_page_component', [$this, 'ajax_delete_page_component']);
         add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);
         add_action('admin_post_h18_restore_page_before_editor', [$this, 'handle_restore_page_before_editor']);
         add_action('admin_post_h18_send_page_form', [$this, 'handle_send_page_form']);
@@ -706,7 +709,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.16',
+                'Version' => '1.17',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -1250,8 +1253,9 @@ final class Hangar18_Manager {
             'useGallery'        => 'Tilføj valgte billeder',
             'removeImage'       => 'Fjern',
             'galleryEmpty'      => 'Albummet har ingen billeder endnu.',
-            'ajaxUrl'           => admin_url('admin-ajax.php'),
-            'pagePresetNonce'   => wp_create_nonce('h18_page_presets_v051'),
+            'ajaxUrl'              => admin_url('admin-ajax.php'),
+            'pagePresetNonce'      => wp_create_nonce('h18_page_presets_v051'),
+            'pageComponentNonce'   => wp_create_nonce('h18_page_components_v0521'),
         ]);
     }
 
@@ -6382,6 +6386,7 @@ HTML;
             'container'  => 'Container',
             'flex'       => 'Flex container',
             'grid'       => 'Grid container',
+            'component'  => 'Linked component',
             'embed'      => 'Embed / medie-URL',
             'shortcode'  => 'Shortcode (avanceret)',
             'spacer'     => 'Afstand',
@@ -6509,6 +6514,11 @@ HTML;
             'Key'                   => 'sektion-' . wp_generate_uuid4(),
             'Type'                  => $type,
             'Active'                => true,
+            'NavigatorLabel'        => '',
+            'NavigatorLocked'       => false,
+            'ComponentId'           => '',
+            'ComponentRevision'     => 0,
+            'ComponentOverrides'    => [],
             'Order'                 => (int) $order,
             'Title'                 => '',
             'Content'               => '',
@@ -6729,6 +6739,26 @@ HTML;
         if ($key === '') {
             $key = 'sektion-' . substr(md5(wp_generate_uuid4()), 0, 12);
         }
+        $navigator_label = sanitize_text_field((string) ($raw['NavigatorLabel'] ?? ''));
+        $navigator_label = function_exists('mb_substr') ? mb_substr($navigator_label, 0, 80) : substr($navigator_label, 0, 80);
+        $navigator_locked = array_key_exists('NavigatorLocked', $raw) ? $this->bool_value($raw['NavigatorLocked'], false) : false;
+        $component_id = sanitize_key((string) ($raw['ComponentId'] ?? ''));
+        $component_revision = max(0, (int) ($raw['ComponentRevision'] ?? 0));
+        $component_overrides_raw = $raw['ComponentOverrides'] ?? [];
+        if ((!is_array($component_overrides_raw) || !$component_overrides_raw) && isset($raw['ComponentOverridesJson']) && is_string($raw['ComponentOverridesJson'])) {
+            $decoded_component_overrides = json_decode((string) $raw['ComponentOverridesJson'], true);
+            if (is_array($decoded_component_overrides)) { $component_overrides_raw = $decoded_component_overrides; }
+        }
+        $component_overrides = [];
+        if (is_array($component_overrides_raw)) {
+            foreach (array_slice($component_overrides_raw, 0, 40, true) as $override_id => $override_value) {
+                $override_id = sanitize_key((string) $override_id);
+                if ($override_id === '' || is_array($override_value) || is_object($override_value)) { continue; }
+                $override_value = (string) $override_value;
+                if (strlen($override_value) > 20000) { $override_value = substr($override_value, 0, 20000); }
+                $component_overrides[$override_id] = wp_kses_post($override_value);
+            }
+        }
 
         $alignment = (string) ($raw['DesktopAlignment'] ?? 'Left');
         if (!in_array($alignment, ['Left', 'Center'], true)) {
@@ -6881,6 +6911,11 @@ HTML;
             'Key'                   => $key,
             'Type'                  => $type,
             'Active'                => array_key_exists('Active', $raw) ? $this->bool_value($raw['Active'], false) : true,
+            'NavigatorLabel'        => $navigator_label,
+            'NavigatorLocked'       => $navigator_locked,
+            'ComponentId'           => $component_id,
+            'ComponentRevision'     => $component_revision,
+            'ComponentOverrides'    => $component_overrides,
             'Order'                 => $this->clamp_int($raw['Order'] ?? $section['Order'], 1, 10000, $section['Order']),
             'Title'                 => $title,
             'Content'               => $type === 'css'
@@ -7103,7 +7138,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.16',
+            'Version'        => '1.17',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7637,7 +7672,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.16',
+            'Version'        => '1.17',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7793,6 +7828,262 @@ HTML;
         update_option(self::PAGE_PRESETS_OPTION, $presets, false);
         $this->log('INFO', 'PAGE_PRESET_DELETED', "Genbrugelig komponent '{$name}' ({$preset_id}) blev slettet.");
         wp_send_json_success(['preset_id' => $preset_id]);
+    }
+
+
+
+    private function page_component_allowed_input_fields() {
+        return ['Title', 'Content', 'MediaId', 'Button1Label', 'Button1Url', 'Button2Label', 'Button2Url'];
+    }
+
+    private function page_component_input_id($section_key, $field) {
+        return 'input-' . substr(hash('sha256', sanitize_key((string) $section_key) . '|' . sanitize_key((string) $field)), 0, 16);
+    }
+
+    private function page_component_input_default(array $section, $field) {
+        if ($field === 'MediaId') { return (string) absint($section['MediaId'] ?? 0); }
+        return (string) ($section[$field] ?? '');
+    }
+
+    private function sanitize_page_component_override($field, $value) {
+        if ($field === 'MediaId') { return absint($value); }
+        if (in_array($field, ['Button1Url', 'Button2Url'], true)) { return esc_url_raw((string) $value); }
+        if ($field === 'Content') { return wp_kses_post((string) $value); }
+        return sanitize_text_field((string) $value);
+    }
+
+    private function normalize_page_component_definition(array $raw) {
+        $raw_sections = isset($raw['Sections']) && is_array($raw['Sections']) ? array_slice($raw['Sections'], 0, 25) : [];
+        if (!$raw_sections) { throw new RuntimeException('Komponenten skal indeholde mindst ét element.'); }
+        foreach ($raw_sections as $raw_section) {
+            if (!is_array($raw_section)) { continue; }
+            $raw_type = sanitize_key((string) ($raw_section['Type'] ?? 'text'));
+            if (in_array($raw_type, ['legacy', 'component'], true)) {
+                throw new RuntimeException('Linked components kan ikke indeholde legacy-indhold eller andre linked components.');
+            }
+        }
+        $normalized = $this->normalize_page_editor_data([
+            'Version' => '1.17',
+            'PageSlug' => self::HOME_SLUG,
+            'PageTitle' => 'Linked component',
+            'ContentVersion' => 0,
+            'Sections' => $raw_sections,
+        ], null);
+        $sections = array_values((array) $normalized['Sections']);
+        $roots = array_values(array_filter($sections, static function($section) {
+            return sanitize_key((string) ($section['LayoutParentKey'] ?? '')) === '';
+        }));
+        if (count($roots) !== 1) {
+            throw new RuntimeException('En linked component skal have præcis ét root-element.');
+        }
+        $section_by_key = [];
+        foreach ($sections as &$section) {
+            $section['ComponentId'] = '';
+            $section['ComponentRevision'] = 0;
+            $section['ComponentOverrides'] = [];
+            $section_by_key[(string) $section['Key']] = $section;
+        }
+        unset($section);
+
+        $inputs = [];
+        $raw_inputs = isset($raw['Inputs']) && is_array($raw['Inputs']) ? array_slice($raw['Inputs'], 0, 40) : [];
+        $allowed = $this->page_component_allowed_input_fields();
+        foreach ($raw_inputs as $input) {
+            if (!is_array($input)) { continue; }
+            $section_key = sanitize_key((string) ($input['SectionKey'] ?? ''));
+            $field = (string) ($input['Field'] ?? '');
+            if ($section_key === '' || !isset($section_by_key[$section_key]) || !in_array($field, $allowed, true)) { continue; }
+            $target = $section_by_key[$section_key];
+            $target_type = (string) ($target['Type'] ?? 'text');
+            if ($field === 'Content' && in_array($target_type, ['css','html','shortcode','embed'], true)) { continue; }
+            if ($field === 'MediaId' && !in_array($target_type, ['hero','text_image','image'], true)) { continue; }
+            if (in_array($field, ['Button1Label','Button1Url','Button2Label','Button2Url'], true) && !in_array($target_type, ['hero','buttons'], true)) { continue; }
+            $input_id = $this->page_component_input_id($section_key, $field);
+            $label = sanitize_text_field((string) ($input['Label'] ?? $field));
+            if ($label === '') { $label = $field; }
+            $inputs[$input_id] = [
+                'InputId' => $input_id,
+                'SectionKey' => $section_key,
+                'Field' => $field,
+                'Label' => $label,
+            ];
+        }
+        return ['Sections' => $sections, 'Inputs' => array_values($inputs)];
+    }
+
+    private function get_page_components() {
+        $stored = get_option(self::PAGE_COMPONENTS_OPTION, []);
+        if (!is_array($stored)) { return []; }
+        $components = [];
+        foreach (array_slice($stored, 0, 50, true) as $id => $entry) {
+            if (!is_array($entry)) { continue; }
+            $component_id = sanitize_key((string) ($entry['Id'] ?? $id));
+            $name = sanitize_text_field((string) ($entry['Name'] ?? 'Linked component'));
+            if ($component_id === '' || $name === '') { continue; }
+            try {
+                $definition = $this->normalize_page_component_definition([
+                    'Sections' => $entry['Sections'] ?? [],
+                    'Inputs' => $entry['Inputs'] ?? [],
+                ]);
+            } catch (Throwable $e) {
+                $this->log('WARN', 'PAGE_COMPONENT_INVALID', "{$component_id}: " . $e->getMessage());
+                continue;
+            }
+            $components[$component_id] = [
+                'Id' => $component_id,
+                'Name' => $name,
+                'Revision' => max(1, (int) ($entry['Revision'] ?? 1)),
+                'UpdatedUtc' => sanitize_text_field((string) ($entry['UpdatedUtc'] ?? '')),
+                'Sections' => $definition['Sections'],
+                'Inputs' => $definition['Inputs'],
+            ];
+        }
+        return $components;
+    }
+
+    private function get_page_component_usage($component_id) {
+        $component_id = sanitize_key((string) $component_id);
+        if ($component_id === '') { return []; }
+        $usage = [];
+        $store = $this->get_page_editor_store();
+        $definitions = $this->editable_page_definitions();
+        foreach ($store as $slug => $page_data) {
+            if (!is_array($page_data) || empty($page_data['Sections']) || !is_array($page_data['Sections'])) { continue; }
+            foreach ($page_data['Sections'] as $section) {
+                if (!is_array($section) || sanitize_key((string) ($section['Type'] ?? '')) !== 'component') { continue; }
+                if (sanitize_key((string) ($section['ComponentId'] ?? '')) !== $component_id) { continue; }
+                $usage[] = [
+                    'PageSlug' => sanitize_title((string) $slug),
+                    'PageTitle' => sanitize_text_field((string) ($page_data['PageTitle'] ?? ($definitions[$slug] ?? $slug))),
+                    'SectionKey' => sanitize_key((string) ($section['Key'] ?? '')),
+                ];
+            }
+        }
+        return $usage;
+    }
+
+    private function get_page_components_for_editor() {
+        $components = $this->get_page_components();
+        foreach ($components as $id => &$component) {
+            $component['Usage'] = $this->get_page_component_usage($id);
+            $component['UsageCount'] = count($component['Usage']);
+        }
+        unset($component);
+        return $components;
+    }
+
+    public function ajax_save_page_component() {
+        if (!current_user_can('edit_pages')) {
+            wp_send_json_error(['message' => 'Du har ikke rettigheder til at gemme linked components.'], 403);
+        }
+        check_ajax_referer('h18_page_components_v0521', 'nonce');
+        $name = sanitize_text_field((string) wp_unslash($_POST['name'] ?? ''));
+        $name = function_exists('mb_substr') ? mb_substr($name, 0, 80) : substr($name, 0, 80);
+        $sections_json = (string) wp_unslash($_POST['sections'] ?? '');
+        $inputs_json = (string) wp_unslash($_POST['inputs'] ?? '[]');
+        if ($name === '') { wp_send_json_error(['message' => 'Komponenten skal have et navn.'], 400); }
+        if ($sections_json === '' || strlen($sections_json) > 350000 || strlen($inputs_json) > 100000) {
+            wp_send_json_error(['message' => 'Komponentdata mangler eller er for stor.'], 400);
+        }
+        $sections = json_decode($sections_json, true);
+        $inputs = json_decode($inputs_json, true);
+        if (!is_array($sections) || !is_array($inputs) || json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error(['message' => 'Komponentdata er ikke gyldig JSON.'], 400);
+        }
+        try {
+            $definition = $this->normalize_page_component_definition(['Sections' => $sections, 'Inputs' => $inputs]);
+            $components = $this->get_page_components();
+            $component_id = sanitize_key((string) wp_unslash($_POST['component_id'] ?? ''));
+            $existing = ($component_id !== '' && isset($components[$component_id])) ? $components[$component_id] : null;
+            if (!$existing) { $component_id = 'component-' . sanitize_key(wp_generate_uuid4()); }
+            if ($existing) {
+                $usage_before_update = $this->get_page_component_usage($component_id);
+                if ($usage_before_update) {
+                    $old_input_ids = array_values(array_filter(array_map(static function($input) { return sanitize_key((string) ($input['InputId'] ?? '')); }, (array) $existing['Inputs'])));
+                    $new_input_ids = array_values(array_filter(array_map(static function($input) { return sanitize_key((string) ($input['InputId'] ?? '')); }, (array) $definition['Inputs'])));
+                    sort($old_input_ids); sort($new_input_ids);
+                    if ($old_input_ids !== $new_input_ids) {
+                        throw new RuntimeException('Komponenten er i brug. Frigivne input-ID’er skal bevares ved global opdatering; opdater fra det oprindelige source-subtree eller fjern usage først.');
+                    }
+                }
+            }
+            $revision = $existing ? ((int) $existing['Revision'] + 1) : 1;
+            $entry = [
+                'Id' => $component_id,
+                'Name' => $name,
+                'Revision' => $revision,
+                'UpdatedUtc' => gmdate('c'),
+                'Sections' => $definition['Sections'],
+                'Inputs' => $definition['Inputs'],
+            ];
+            $components[$component_id] = $entry;
+            if (count($components) > 50) { throw new RuntimeException('Der kan højst gemmes 50 linked components.'); }
+            update_option(self::PAGE_COMPONENTS_OPTION, $components, false);
+            $entry['Usage'] = $this->get_page_component_usage($component_id);
+            $entry['UsageCount'] = count($entry['Usage']);
+            $this->log('INFO', 'PAGE_COMPONENT_SAVED', "Linked component '{$name}' {$component_id} revision {$revision} gemt atomisk.");
+            wp_send_json_success(['component' => $entry]);
+        } catch (Throwable $e) {
+            wp_send_json_error(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function ajax_delete_page_component() {
+        if (!current_user_can('edit_pages')) {
+            wp_send_json_error(['message' => 'Du har ikke rettigheder til at slette linked components.'], 403);
+        }
+        check_ajax_referer('h18_page_components_v0521', 'nonce');
+        $component_id = sanitize_key((string) wp_unslash($_POST['component_id'] ?? ''));
+        $components = $this->get_page_components();
+        if ($component_id === '' || !isset($components[$component_id])) {
+            wp_send_json_error(['message' => 'Komponenten blev ikke fundet.'], 404);
+        }
+        $usage = $this->get_page_component_usage($component_id);
+        if ($usage) {
+            wp_send_json_error(['message' => 'Komponenten bruges stadig på ' . count($usage) . ' side(r) og kan ikke slettes.', 'usage' => $usage], 409);
+        }
+        $name = (string) $components[$component_id]['Name'];
+        unset($components[$component_id]);
+        update_option(self::PAGE_COMPONENTS_OPTION, $components, false);
+        $this->log('INFO', 'PAGE_COMPONENT_DELETED', "Linked component '{$name}' ({$component_id}) blev slettet.");
+        wp_send_json_success(['component_id' => $component_id]);
+    }
+
+    private function resolve_page_component_instance_sections($page_id, array $instance) {
+        $component_id = sanitize_key((string) ($instance['ComponentId'] ?? ''));
+        if ($component_id === '') { return [[], null]; }
+        $components = $this->get_page_components();
+        if (!isset($components[$component_id])) { return [[], null]; }
+        $component = $components[$component_id];
+        $sections = $component['Sections'];
+        $overrides = isset($instance['ComponentOverrides']) && is_array($instance['ComponentOverrides']) ? $instance['ComponentOverrides'] : [];
+        $section_index = [];
+        foreach ($sections as $index => $section) { $section_index[(string) $section['Key']] = $index; }
+        foreach ($component['Inputs'] as $input) {
+            $input_id = sanitize_key((string) ($input['InputId'] ?? ''));
+            $section_key = sanitize_key((string) ($input['SectionKey'] ?? ''));
+            $field = (string) ($input['Field'] ?? '');
+            if ($input_id === '' || !array_key_exists($input_id, $overrides) || !isset($section_index[$section_key])) { continue; }
+            $value = $this->sanitize_page_component_override($field, $overrides[$input_id]);
+            $target = &$sections[$section_index[$section_key]];
+            $target[$field] = $value;
+            if ($field === 'MediaId' && absint($value) > 0) { $target['MediaUrl'] = ''; }
+            unset($target);
+        }
+        $prefix = 'cmp-' . substr(hash('sha256', (int) $page_id . '|' . sanitize_key((string) ($instance['Key'] ?? '')) . '|' . $component_id), 0, 12) . '-';
+        $key_map = [];
+        foreach ($sections as $section) { $key_map[(string) $section['Key']] = sanitize_key($prefix . (string) $section['Key']); }
+        foreach ($sections as &$section) {
+            $old_key = (string) $section['Key'];
+            $old_parent = sanitize_key((string) ($section['LayoutParentKey'] ?? ''));
+            $section['Key'] = $key_map[$old_key];
+            $section['LayoutParentKey'] = $old_parent !== '' && isset($key_map[$old_parent]) ? $key_map[$old_parent] : '';
+            $section['ComponentId'] = '';
+            $section['ComponentRevision'] = 0;
+            $section['ComponentOverrides'] = [];
+        }
+        unset($section);
+        return [$sections, $component];
     }
 
     private function page_module_storage_key($page_id, $section_key) {
@@ -8119,6 +8410,13 @@ HTML;
     private function render_page_editor_section_front($page_id, array $section, $layout_children = '') {
         if (empty($section['Active'])) {
             return '';
+        }
+        if ($section['Type'] === 'component') {
+            [$component_sections, $component] = $this->resolve_page_component_instance_sections($page_id, $section);
+            if (!$component || !$component_sections) { return ''; }
+            $classes = trim('h18-editor-component ' . $this->page_editor_visibility_classes($section));
+            $id = 'h18-section-' . sanitize_html_class((string) $section['Key']);
+            return '<div id="' . esc_attr($id) . '" class="' . esc_attr($classes) . '" data-h18-component="' . esc_attr($component['Id']) . '" data-h18-component-revision="' . esc_attr($component['Revision']) . '">' . $this->render_page_editor_layout_tree($page_id, $component_sections) . '</div>';
         }
         if ($section['Type'] === 'legacy') {
             return (string) $section['LegacyHtml'];
@@ -8579,6 +8877,7 @@ HTML;
     private function render_page_editor_section_admin($page, array $section, $index, $is_template = false) {
         $prefix = 'sections[' . $index . ']';
         $type_labels = $this->page_section_type_labels();
+        $component_options = $this->get_page_components();
         $export_poll = '';
         $export_forms = '';
         $test_form = '';
@@ -8604,6 +8903,8 @@ HTML;
             <input class="h18-page-section-key" type="hidden" name="<?php echo esc_attr($prefix); ?>[Key]" value="<?php echo esc_attr($section['Key']); ?>" />
             <input class="h18-page-section-remove" type="hidden" name="<?php echo esc_attr($prefix); ?>[Remove]" value="0" />
             <input class="h18-page-section-imported-group" type="hidden" name="<?php echo esc_attr($prefix); ?>[ImportedGroupType]" value="<?php echo esc_attr($section['ImportedGroupType']); ?>" />
+            <input class="h18-section-navigator-label" type="hidden" name="<?php echo esc_attr($prefix); ?>[NavigatorLabel]" value="<?php echo esc_attr($section['NavigatorLabel']); ?>" />
+            <input class="h18-section-navigator-locked" type="hidden" name="<?php echo esc_attr($prefix); ?>[NavigatorLocked]" value="<?php echo !empty($section['NavigatorLocked']) ? '1' : '0'; ?>" />
 
             <header class="h18-page-section-header">
                 <span class="dashicons dashicons-move h18-page-section-drag" title="Flyt sektion"></span>
@@ -8661,6 +8962,24 @@ HTML;
                             </select>
                         </div>
                         <input class="h18-advanced-content-authorized" type="hidden" name="<?php echo esc_attr($prefix); ?>[AdvancedContentAuthorized]" value="<?php echo !empty($section['AdvancedContentAuthorized']) ? '1' : '0'; ?>" />
+                    </div>
+
+                    <div class="h18-section-type-field h18-section-module-box h18-component-instance-editor" data-types="component">
+                        <h4>Linked component</h4>
+                        <p class="description">Definitionen er global. Kun eksplicit frigivne inputs kan overskrives lokalt; layout og design forbliver linked.</p>
+                        <div class="h18-field">
+                            <label><strong>Komponent</strong></label>
+                            <select class="h18-component-select" name="<?php echo esc_attr($prefix); ?>[ComponentId]">
+                                <option value="">Vælg linked component</option>
+                                <?php foreach ($component_options as $component_option) : ?>
+                                    <option value="<?php echo esc_attr($component_option['Id']); ?>" <?php selected($section['ComponentId'], $component_option['Id']); ?>><?php echo esc_html($component_option['Name'] . ' · r' . $component_option['Revision']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <input class="h18-component-revision" type="hidden" name="<?php echo esc_attr($prefix); ?>[ComponentRevision]" value="<?php echo esc_attr($section['ComponentRevision']); ?>" />
+                            <input class="h18-component-overrides-json" type="hidden" name="<?php echo esc_attr($prefix); ?>[ComponentOverridesJson]" value="<?php echo esc_attr(wp_json_encode($section['ComponentOverrides'])); ?>" />
+                        </div>
+                        <div class="h18-component-instance-status"></div>
+                        <div class="h18-component-overrides-editor"></div>
                     </div>
 
                     <div class="h18-section-type-field h18-section-module-box" data-types="hero text_image image">
@@ -9082,6 +9401,7 @@ HTML;
         $conversion_test = $page instanceof WP_Post ? $this->conversion_test_page_for_source($page->ID) : null;
         $versions = $page instanceof WP_Post ? $this->get_page_version_history($slug) : [];
         $page_presets = $this->get_page_presets();
+        $page_components = $this->get_page_components_for_editor();
         ?>
         <div class="wrap h18-admin h18-pages-admin">
             <h1>Sider</h1>
@@ -9223,8 +9543,10 @@ HTML;
                                     <button type="button" class="h18-builder-component-item" data-section-preset="cta-band"><span class="dashicons dashicons-megaphone"></span><strong>CTA-bånd</strong><small>Fremhævet handlingssektion</small></button>
                                     <button type="button" class="h18-builder-component-item" data-section-preset="contact-form"><span class="dashicons dashicons-email-alt"></span><strong>Kontaktblok</strong><small>Tekst og mailformular</small></button>
                                 </div>
-                                <div class="h18-user-components-heading"><h4>Egne komponenter</h4><span>Gemmes i WordPress</span></div>
-                                <div id="h18-user-presets-list" class="h18-user-presets-list"><p class="description">Vælg en sektion og brug “Gem som komponent” i Inspector.</p></div>
+                                <div class="h18-user-components-heading"><h4>Linked components</h4><span>Global definition</span></div>
+                                <div id="h18-linked-components-list" class="h18-user-presets-list"><p class="description">Vælg et subtree og brug “Gem som linked component” i Inspector.</p></div>
+                                <div class="h18-user-components-heading"><h4>Patterns</h4><span>Ikke-linked kopier</span></div>
+                                <div id="h18-user-presets-list" class="h18-user-presets-list"><p class="description">Vælg en sektion og brug “Gem som pattern” i Inspector.</p></div>
                             </div>
                         </aside>
 
@@ -9254,9 +9576,10 @@ HTML;
                                     <button type="button" class="button" id="h18-inspector-duplicate" disabled>Duplikér element</button>
                                     <button type="button" class="button" id="h18-inspector-copy-design" disabled>Kopiér design</button>
                                     <button type="button" class="button" id="h18-inspector-paste-design" disabled>Indsæt design</button>
-                                    <button type="button" class="button button-primary" id="h18-save-section-preset" disabled>Gem som komponent</button>
+                                    <button type="button" class="button" id="h18-save-section-preset" disabled>Gem som pattern</button>
+                                    <button type="button" class="button button-primary" id="h18-save-linked-component" disabled>Gem subtree som linked component</button>
                                 </div>
-                                <p class="description">Genbrugelige komponenter gemmes centralt i WordPress og kan indsættes på alle sider i Hangar18-editoren.</p>
+                                <p class="description">Patterns indsættes som frie kopier. Linked components deler én global definition og kan kun overskrives gennem frigivne inputs.</p>
                             </div>
                         </aside>
                     </div>
@@ -9302,6 +9625,7 @@ HTML;
                 </section>
 
                 <script id="h18-page-presets-data" type="application/json"><?php echo wp_json_encode(array_values($page_presets), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+                <script id="h18-page-components-data" type="application/json"><?php echo wp_json_encode(array_values($page_components), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
                 <template id="h18-page-section-template"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>
                 <template id="h18-page-card-template"><?php $this->render_page_editor_card_admin($this->default_page_card(10), '__SECTION_INDEX__', '__CARD_INDEX__'); ?></template>
             <?php endif; ?>
@@ -9454,7 +9778,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.16',
+                    'Version' => '1.17',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -9551,6 +9875,7 @@ HTML;
             $raw['CarouselShowDots'] = !empty($raw['CarouselShowDots']);
             $raw['LayoutWrap'] = !empty($raw['LayoutWrap']);
             $raw['MobileLayoutStack'] = !empty($raw['MobileLayoutStack']);
+            $raw['NavigatorLocked'] = !empty($raw['NavigatorLocked']);
             $key = sanitize_key((string) ($raw['Key'] ?? ''));
             $existing_section = isset($current_by_key[$key]) && is_array($current_by_key[$key]) ? $current_by_key[$key] : [];
             $submitted_type = sanitize_key((string) ($raw['Type'] ?? 'text'));
@@ -9573,7 +9898,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.16',
+            'Version'        => '1.17',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -9603,7 +9928,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.16',
+                'Version' => '1.17',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];
