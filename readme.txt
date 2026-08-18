@@ -1,8 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.5.24
+Version: 0.5.25
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.25 – E5 Query Builder v1 ==
+
+Nyt:
+- UD-055: generisk Query Builder v1 for custom data med datatype, ét typevalideret filter, sortering, retning og limit
+- text understøtter eq/neq/contains; number eq/neq/gt/gte/lt/lte; date eq/before/after; bool og media sikre equality-filtre
+- sortering kan ske efter titel, oprettet, ændret eller kompatibelt schemafelt
+- limit håndhæves server-side til 1–100 resultater
+- admin-preview og frontend-shortcode bruger præcis samme run_custom_data_query()-motor
+- frontend-shortcode [hangar18_data_query ...] viser kun publicerede data-entry-titler; drafts/private eksponeres ikke
+- Query Builder bygger udelukkende WP_Query/get_posts-argumenter og query-klare _h18_field_<key> meta fra v0.5.23; ingen rå SQL
+- generated shortcode vises efter preview, så samme query kan reproduceres på frontend
+- page-editor schema forbliver 1.19
+- advanced AND/OR, relation og pagination er fortsat UD-056; template-repeat pr. resultat er UD-057
 
 == Version 0.5.24 – E5 Dynamic binding ==
 
