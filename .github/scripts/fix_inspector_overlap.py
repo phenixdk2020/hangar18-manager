@@ -64,5 +64,5 @@ patch = r'''
 }
 '''
 
-path.write_text(css.rstrip() + patch + '\n', encoding='utf-8')
+path.write_text(css.rstrip() + patch.rstrip() + '\n', encoding='utf-8')
 print('Inspector overlap CSS hotfix applied')
