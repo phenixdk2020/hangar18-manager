@@ -11,12 +11,11 @@ use Hangar18\UltimateDesigner\Contracts\ElementDefinition;
 use Hangar18\UltimateDesigner\Contracts\PropertyDefinition;
 use Hangar18\UltimateDesigner\Core\Architecture;
 use Hangar18\UltimateDesigner\Core\Version;
-use RuntimeException;
 
 function assertTrue(bool $condition, string $message): void
 {
     if (!$condition) {
-        throw new RuntimeException($message);
+        throw new \RuntimeException($message);
     }
 }
 
@@ -54,7 +53,7 @@ assertTrue(!CompatibilityPolicy::mustUseLegacyRuntime('generic'), 'Generic domai
 $duplicateRejected = false;
 try {
     $architecture->elements()->register($element);
-} catch (RuntimeException $exception) {
+} catch (\RuntimeException $exception) {
     $duplicateRejected = true;
 }
 assertTrue($duplicateRejected, 'Element registry must reject duplicate element types.');
