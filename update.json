@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T11:35:59Z",
+  "published_utc": "2026-08-18T11:52:05Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "ffbd7ee4db156bdd07a3320d3d676544c7adb2c1459aef8c0801bd709c145d88",
+  "package_sha256": "6f3156712d4bd57b3d5a73a3a9b0fbf813a869743c1f4aa51cde8264dddf8df0",
   "changelog": [
-    "E7 tilføjer generic accessible forms og server-side validation.",
-    "Ordered submit action chains understøtter mail, save og safe redirect med logging/error policy.",
-    "Signed HTTPS webhook bruger HMAC SHA-256, bounded timeout/retry og WordPress safe HTTP API.",
-    "Modal/popup core tilføjer ARIA, focus trap, ESC, scroll lock samt click/time/scroll/context triggers.",
-    "Passive interaction runtime konverterer ikke eksisterende sider eller Vehicle/Event/Gallery."
+    "Tydelig Gem-knap i sideeditorens top-toolbar samt Ctrl/Cmd+S, save-status og advarsel ved ugemte ændringer.",
+    "E8 Workflow core tilføjer autosave snapshots og permanente revisioner med user/time/note/state hash.",
+    "Revision restore bevarer historik, og structured diff viser added/removed/moved/property changes.",
+    "Expiring/revocable preview tokens og working/public staging med atomic publish og pre-publish backup.",
+    "Vehicle/Event/Gallery og eksisterende sider konverteres ikke i denne release."
   ]
 }
