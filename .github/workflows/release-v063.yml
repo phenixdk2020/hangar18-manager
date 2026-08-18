@@ -1,0 +1,83 @@
+name: Release Hangar18 Manager 0.6.3
+
+on:
+  push:
+    branches:
+      - agent/release-0.6.3
+
+permissions:
+  contents: write
+
+jobs:
+  release-v063:
+    if: ${{ !contains(github.event.head_commit.message, 'Release 0.6.3 candidate') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/release-0.6.3
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          coverage: none
+      - name: Prepare version
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('hangar18-manager.php'); s=p.read_text(encoding='utf-8')
+          for old,new in [(' * Version: 0.6.2',' * Version: 0.6.3'),("const VERSION = '0.6.2';","const VERSION = '0.6.3';")]:
+              if old not in s: raise SystemExit('version anchor not found: '+old)
+              s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          r=Path('readme.txt'); t=r.read_text(encoding='utf-8')
+          if 'Version: 0.6.2' not in t: raise SystemExit('readme version anchor not found')
+          t=t.replace('Version: 0.6.2','Version: 0.6.3',1)
+          t+='''\n\n== Version 0.6.3 – E7 Interaction core ==\n\n- Generic accessible forms og server-side validation.\n- Ordered submit action chains med logging og fejlpolitik.\n- Mail/save/redirect actions samt signed HTTPS webhook med timeout/retry og wp_safe_remote_post.\n- Modal/popup builder-core med shared Sections tree, ARIA, focus trap, ESC og scroll lock i passiv runtime.\n- Click/time/scroll/context popup triggers og generiske navigate/scroll/open-modal/toggle actions.\n- Eksisterende sider og Vehicle/Event/Gallery forbliver uændret.\n'''
+          r.write_text(t,encoding='utf-8')
+          PY
+      - name: QA
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          node --check assets/admin.js
+          node --check assets/site-builder-runtime.js
+          node --check assets/interaction-runtime.js
+          bash tests/Architecture/protected-domain-contract.sh
+          php tests/Architecture/architecture-smoke.php
+          php tests/Architecture/page-schema-smoke.php
+          php tests/Architecture/runtime-bridge-smoke.php
+          php tests/Architecture/compatibility-comparator-smoke.php
+          php tests/Architecture/ud-060-starter-schemas-smoke.php
+          php tests/Architecture/e6-site-builder-smoke.php
+          php tests/Architecture/e7-interaction-smoke.php
+      - name: Build package
+        run: |
+          set -euo pipefail
+          rm -rf .build; mkdir -p .build/hangar18-manager dist
+          cp hangar18-manager.php readme.txt .build/hangar18-manager/
+          cp -R assets src .build/hangar18-manager/
+          rm -f dist/hangar18-manager.zip
+          (cd .build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -t dist/hangar18-manager.zip
+          SHA="$(sha256sum dist/hangar18-manager.zip|awk '{print $1}')"; export SHA
+          python3 - <<'PY'
+          import json,os
+          from datetime import datetime,timezone
+          m={'schema_version':'1.0','plugin':'hangar18-manager','version':'0.6.3','min_wp':'6.4','min_php':'8.0','published_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),'package_path':'dist/hangar18-manager.zip','package_sha256':os.environ['SHA'],'changelog':['E7 tilføjer generic accessible forms og server-side validation.','Ordered submit action chains understøtter mail, save og safe redirect med logging/error policy.','Signed HTTPS webhook bruger HMAC SHA-256, bounded timeout/retry og WordPress safe HTTP API.','Modal/popup core tilføjer ARIA, focus trap, ESC, scroll lock samt click/time/scroll/context triggers.','Passive interaction runtime konverterer ikke eksisterende sider eller Vehicle/Event/Gallery.']}
+          open('update.json','w',encoding='utf-8').write(json.dumps(m,ensure_ascii=False,indent=2)+'\n')
+          PY
+          test "$SHA" = "$(python3 -c "import json;print(json.load(open('update.json'))['package_sha256'])")"
+          git diff --check
+      - name: Commit candidate
+        run: |
+          set -euo pipefail
+          git config user.name hangar18-build
+          git config user.email actions@users.noreply.github.com
+          git rm .github/workflows/release-v063.yml
+          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip
+          git diff --cached --check
+          git commit -m 'Release 0.6.3 candidate'
+          git push origin HEAD:agent/release-0.6.3
