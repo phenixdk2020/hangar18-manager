@@ -18,6 +18,7 @@ final class CapabilityCatalog
     public const MANAGE_ASSETS = 'hangar18_manage_assets';
     public const PUBLISH = 'hangar18_publish';
     public const USE_CUSTOM_CODE = 'hangar18_use_custom_code';
+    public const USE_AI = 'hangar18_use_ai';
     public const MANAGE_EVENTS = 'hangar18_manage_events';
     public const MANAGE_GALLERIES = 'hangar18_manage_galleries';
 
@@ -27,7 +28,7 @@ final class CapabilityCatalog
         return [
             self::MANAGE_SETTINGS,self::MANAGE_DESIGN,self::MANAGE_COMPONENTS,self::MANAGE_TEMPLATES,
             self::MANAGE_DATA_SCHEMAS,self::EDIT_CONTENT,self::MANAGE_ASSETS,self::PUBLISH,
-            self::USE_CUSTOM_CODE,self::MANAGE_EVENTS,self::MANAGE_GALLERIES,
+            self::USE_CUSTOM_CODE,self::USE_AI,self::MANAGE_EVENTS,self::MANAGE_GALLERIES,
         ];
     }
 
@@ -40,7 +41,7 @@ final class CapabilityCatalog
             'template.create'=>self::MANAGE_TEMPLATES,'template.update'=>self::MANAGE_TEMPLATES,'template.assign'=>self::MANAGE_TEMPLATES,
             'schema.create'=>self::MANAGE_DATA_SCHEMAS,'schema.update'=>self::MANAGE_DATA_SCHEMAS,'schema.delete'=>self::MANAGE_DATA_SCHEMAS,
             'content.edit'=>self::EDIT_CONTENT,'asset.manage'=>self::MANAGE_ASSETS,
-            'publish'=>self::PUBLISH,'custom_code.edit'=>self::USE_CUSTOM_CODE,
+            'publish'=>self::PUBLISH,'custom_code.edit'=>self::USE_CUSTOM_CODE,'ai.use'=>self::USE_AI,
             'event.manage'=>self::MANAGE_EVENTS,'gallery.manage'=>self::MANAGE_GALLERIES,
         ];
         $action = strtolower(trim($action));
