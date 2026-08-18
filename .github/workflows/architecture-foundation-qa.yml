@@ -5,11 +5,13 @@ on:
     branches:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
+      - agent/ud-060-starter-schemas
   pull_request:
     paths:
       - 'src/**'
       - 'tests/Architecture/**'
       - 'docs/architecture-*.md'
+      - 'docs/ud-*.md'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
@@ -27,7 +29,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Foundation isolation guard
+      - name: Architecture isolation guard
         run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
 
       - name: Protected domain contract
@@ -54,3 +56,6 @@ jobs:
 
       - name: Compatibility comparator test
         run: php tests/Architecture/compatibility-comparator-smoke.php
+
+      - name: UD-060 starter schema preset test
+        run: php tests/Architecture/ud-060-starter-schemas-smoke.php
