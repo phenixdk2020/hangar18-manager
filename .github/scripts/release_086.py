@@ -1,4 +1,4 @@
-# Synchronize commit: triggers the branch-local release workflow after it exists.
+# Synchronize commit 2: the Architecture QA workflow now contains the release-0.8.6 branch trigger.
 from pathlib import Path
 
 php_path=Path('hangar18-manager.php'); readme_path=Path('readme.txt')
