@@ -4722,6 +4722,68 @@ jQuery(function ($) {
         }
     });
 
+
+    // v0.6.4 workflow UX: prominent manual Save, Ctrl/Cmd+S and unsaved-change guard.
+    const $h18PageEditorFormV064 = $('#h18-page-editor-form');
+    const $h18EditorSaveTopV064 = $('#h18-editor-save-top');
+    const $h18EditorSaveStatusV064 = $('#h18-editor-save-status');
+    let h18EditorDirtyV064 = false;
+    let h18EditorSubmittingV064 = false;
+
+    function h18EditorSetSaveStatusV064(text, state) {
+        if (!$h18EditorSaveStatusV064.length) { return; }
+        $h18EditorSaveStatusV064.text(text).attr('data-save-state', state || 'saved');
+    }
+
+    function h18EditorMarkDirtyV064() {
+        if (!$h18PageEditorFormV064.length || h18EditorSubmittingV064) { return; }
+        h18EditorDirtyV064 = true;
+        h18EditorSetSaveStatusV064('Ikke gemt', 'dirty');
+    }
+
+    if ($h18PageEditorFormV064.length) {
+        $h18PageEditorFormV064.on('input change', ':input', function () {
+            h18EditorMarkDirtyV064();
+        });
+
+        $h18PageEditorFormV064.on('submit', function (event) {
+            const whatIf = $h18PageEditorFormV064.find('[name="whatif"]').is(':checked');
+            const $note = $h18PageEditorFormV064.find('[name="page_change_note"]');
+            if (!whatIf && $note.length && !String($note.val() || '').trim()) {
+                event.preventDefault();
+                h18EditorSetSaveStatusV064('Beskriv ændringen før Gem', 'error');
+                $note.trigger('focus');
+                return;
+            }
+            h18EditorSubmittingV064 = true;
+            h18EditorDirtyV064 = false;
+            h18EditorSetSaveStatusV064(whatIf ? 'Simulerer…' : 'Gemmer…', 'saving');
+            $h18EditorSaveTopV064.prop('disabled', true);
+        });
+
+        $(document).on('keydown.h18SaveV064', function (event) {
+            const key = String(event.key || '').toLowerCase();
+            if ((event.ctrlKey || event.metaKey) && !event.altKey && key === 's') {
+                event.preventDefault();
+                if (h18EditorSubmittingV064) { return; }
+                const form = $h18PageEditorFormV064.get(0);
+                const button = $h18EditorSaveTopV064.get(0);
+                if (form && typeof form.requestSubmit === 'function') {
+                    form.requestSubmit(button || undefined);
+                } else if (form) {
+                    $h18PageEditorFormV064.trigger('submit');
+                }
+            }
+        });
+
+        $(window).on('beforeunload.h18SaveV064', function (event) {
+            if (!h18EditorDirtyV064 || h18EditorSubmittingV064) { return; }
+            event.preventDefault();
+            event.returnValue = '';
+            return '';
+        });
+    }
+
 });
 
 

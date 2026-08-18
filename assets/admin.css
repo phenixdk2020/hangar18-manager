@@ -856,3 +856,15 @@ body.h18-command-palette-visible{overflow:hidden}
     .h18-pages-admin .h18-inspector-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
     .h18-builder-inspector[data-inspector-panel="typography"] .h18-module-fields-grid--four{grid-template-columns:1fr}
 }
+
+
+/* v0.6.4 – synlig Gem-knap og save-status */
+.h18-page-preview-toolbar .h18-editor-save-controls{display:flex;align-items:center;gap:8px;margin-left:auto;padding-left:8px}
+.h18-page-preview-toolbar .h18-editor-save-controls #h18-editor-save-top{min-width:92px;font-weight:700}
+.h18-page-preview-toolbar .h18-editor-save-controls .h18-editor-save-status{margin-left:0;font-size:12px;font-weight:600;color:#2271b1;white-space:nowrap}
+.h18-page-preview-toolbar .h18-editor-save-controls .h18-editor-save-status[data-save-state="dirty"]{color:#996800}
+.h18-page-preview-toolbar .h18-editor-save-controls .h18-editor-save-status[data-save-state="saving"]{color:#135e96}
+.h18-page-preview-toolbar .h18-editor-save-controls .h18-editor-save-status[data-save-state="error"]{color:#b32d2e}
+@media(max-width:782px){
+    .h18-page-preview-toolbar .h18-editor-save-controls{order:20;width:100%;margin-left:0;padding-left:0;justify-content:flex-end}
+}
