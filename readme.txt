@@ -1,7 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.6.4
+Version: 0.6.5
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.6.5 – E9 Asset Manager ==
+
+Nyt:
+- Asset metadata-overlay med mapper, collections og tags uden at ændre native WordPress Media IDs.
+- Usage inspector scanner sider, komponenter og data entries for MediaId-referencer før senere sletning.
+- Responsive focal points omsættes til object-position for desktop/tablet/mobile.
+- WebP/AVIF-optimeringspipeline opretter kun understøttede derivater og bevarer altid originalen.
+- SHA-256 dubletdetektion er read-only og sletter/fletter aldrig automatisk.
+- PHP 8.0/8.2/8.3 QA og Vehicle/Event/Gallery-kontrakten er grøn.
 
 
 == Version 0.6.4 – Gem-toolbar og E8 Workflow ==
