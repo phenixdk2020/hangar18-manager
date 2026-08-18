@@ -6,6 +6,7 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
+      - agent/fix-heading-linebreak-073
   pull_request:
     paths:
       - 'src/**'
@@ -13,14 +14,17 @@ on:
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
+      - 'hangar18-manager.php'
+      - 'assets/admin.js'
+      - 'assets/admin.css'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   architecture-smoke:
-    if: github.head_ref != 'agent/release-0.7.2'
+    if: github.head_ref != 'agent/release-0.7.2' && github.head_ref != 'agent/fix-heading-linebreak-073' && github.ref != 'refs/heads/agent/fix-heading-linebreak-073'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -61,7 +65,7 @@ jobs:
         run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
 
   browser-engine-qa:
-    if: github.head_ref != 'agent/release-0.7.2'
+    if: github.head_ref != 'agent/release-0.7.2' && github.head_ref != 'agent/fix-heading-linebreak-073' && github.ref != 'refs/heads/agent/fix-heading-linebreak-073'
     name: E14 browser engines (Chromium/Firefox/WebKit)
     runs-on: ubuntu-latest
     steps:
@@ -77,3 +81,60 @@ jobs:
         run: npx playwright install --with-deps chromium firefox webkit
       - name: Run UD-113/114 browser and keyboard matrix
         run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
+
+  apply-v073-fix:
+    if: github.ref == 'refs/heads/agent/fix-heading-linebreak-073' && !contains(github.event.head_commit.message || '', 'Apply v0.7.3 heading and line-break fix')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/fix-heading-linebreak-073
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          coverage: none
+      - name: Apply controlled patch
+        run: python3 .github/scripts/fix_heading_linebreak_073.py
+      - name: Validate patch
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          bash tests/Architecture/v073-heading-linebreak-contract.sh
+          bash tests/Architecture/protected-domain-contract.sh
+      - name: Commit product patch
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/scripts/fix_heading_linebreak_073.py
+          git add hangar18-manager.php assets/admin.js assets/admin.css tests/Architecture/v073-heading-linebreak-contract.sh .github/workflows/architecture-foundation-qa.yml
+          git diff --cached --check
+          git commit -m 'Apply v0.7.3 heading and line-break fix'
+          git push origin HEAD:agent/fix-heading-linebreak-073
+
+  v073-feature-qa:
+    if: (github.ref == 'refs/heads/agent/fix-heading-linebreak-073' && contains(github.event.head_commit.message || '', 'Apply v0.7.3 heading and line-break fix')) || github.head_ref == 'agent/fix-heading-linebreak-073'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.0','8.2','8.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+      - name: Syntax and editor contracts
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          bash tests/Architecture/v073-heading-linebreak-contract.sh
+          bash tests/Architecture/protected-domain-contract.sh
+      - name: Workflow/quality regression
+        run: |
+          php tests/Architecture/e8-workflow-smoke.php
+          php tests/Architecture/e11-quality-smoke.php
+          php tests/Architecture/e14-e2e-smoke.php
