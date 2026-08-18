@@ -8,6 +8,7 @@ on:
     paths:
       - 'src/**'
       - 'tests/Architecture/**'
+      - 'docs/architecture-migration.md'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
@@ -22,6 +23,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Foundation isolation guard
+        run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
