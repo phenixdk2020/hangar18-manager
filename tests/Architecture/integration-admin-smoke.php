@@ -7,7 +7,7 @@ $h18Options = [
         'header-test' => [
             'SchemaVersion'=>'1.0','Id'=>'header-test','Kind'=>'header','Name'=>'Header test','Revision'=>1,'UpdatedUtc'=>'2026-08-18T00:00:00Z',
             'Sections'=>[
-                ['Key'=>'header-root','Type'=>'flex','LayoutParentKey'=>'','Title'=>'','Content'=>''],
+                ['Key'=>'header-root','Type'=>'flex','LayoutParentKey'=>'','Title'=>'','Content'=>'','DesignMode'=>'Custom','SectionBodyFontFamily'=>'Arial','SectionHeadingFontFamily'=>'Georgia','BodyFontSizePx'=>18,'H1FontSizePx'=>36,'H2FontSizePx'=>30,'H3FontSizePx'=>24,'DesktopAlignment'=>'Center','CustomBackgroundColor'=>'#ffffff','CustomTextColor'=>'#30382a','CustomHeadingColor'=>'#30382a','PaddingPx'=>12],
                 ['Key'=>'brand','Type'=>'text','LayoutParentKey'=>'header-root','Title'=>'','Content'=>'Hangar18'],
             ],
         ],
@@ -43,6 +43,8 @@ function esc_url($text): string { return (string) $text; }
 function esc_textarea($text): string { return esc_html($text); }
 function sanitize_key($value): string { return preg_replace('/[^a-z0-9_-]/','',strtolower((string)$value)) ?? ''; }
 function sanitize_text_field($value): string { return trim(strip_tags((string)$value)); }
+function sanitize_hex_color($value) { $value=(string)$value; return preg_match('/^#[0-9a-fA-F]{6}$/',$value) ? strtolower($value) : null; }
+function wp_kses_post($value): string { return (string)$value; }
 function wp_unslash($value) { return $value; }
 function admin_url(string $path=''): string { return 'https://example.test/wp-admin/'.$path; }
 function add_query_arg(array $args, string $url): string { return $url.'?'.http_build_query($args); }
@@ -82,6 +84,9 @@ integrationAssert(count($h18Submenus) === 1, 'Ultimate Designer submenu must be 
 integrationAssert($h18Submenus[0]['slug'] === 'hangar18-ultimate-designer', 'Unexpected integration submenu slug.');
 integrationAssert($h18Submenus[0]['capability'] === 'edit_pages', 'Migration phase must preserve edit_pages capability gate.');
 
+$_GET['page']='something-else';
+SiteTemplateAdminController::enqueueAssets('unrelated_page');
+integrationAssert($h18Styles === [] && $h18Scripts === [], 'I2 assets must not load on unrelated admin pages.');
 $_GET['page']='hangar18-ultimate-designer';
 SiteTemplateAdminController::enqueueAssets('hangar18_page_hangar18-ultimate-designer');
 integrationAssert(isset($h18Styles['hangar18-ultimate-designer-admin']), 'I2 CSS must be enqueued on Ultimate Designer page.');
@@ -92,7 +97,7 @@ $_GET['ud_template']='header-test';
 ob_start();
 IntegrationAdminBootstrap::render();
 $html = (string) ob_get_clean();
-foreach (['Ultimate Designer','Ingen sidekonvertering','Site Builder','Manual release gates','I1','I2','I10','Visual Header/Footer Builder','SHADOW · ingen cutover','Gem template','Live preview','header-root','brand'] as $needle) {
+foreach (['Ultimate Designer','Ingen sidekonvertering','Site Builder','Manual release gates','I1','I2','I10','Visual Header/Footer Builder','SHADOW · ingen cutover','Gem template','Live preview','header-root','brand','Typografi og design','Brødtekst (px)','H1 (px)','Baggrund'] as $needle) {
     integrationAssert(strpos($html,$needle) !== false, 'Integration dashboard missing: '.$needle);
 }
 integrationAssert(strpos($html,'1 Header · 1 Footer · 1 Menu') !== false, 'Repository-backed Site Builder counts are incorrect.');
@@ -100,5 +105,28 @@ integrationAssert(strpos($html,'1 registreret') !== false, 'Asset metadata count
 integrationAssert(strpos($html,'Header: header-test · Footer: ingen') !== false, 'Shadow assignment status is incorrect.');
 integrationAssert(strpos($html,'name="action" value="h18_ud_save_site_template"') !== false, 'Visual builder save action missing.');
 integrationAssert(strpos($html,'assignGlobal') === false, 'Visual builder must not expose public/global cutover action in I2.');
+
+// Verify that design/typography fields survive the server-side save normalization.
+$_POST['sections'] = [[
+    'Key'=>'hero','Type'=>'text','LayoutParentKey'=>'','Title'=>'Test','Content'=>"Linje 1\nLinje 2",
+    'DesignMode'=>'Custom','SectionBodyFontFamily'=>'Arial','SectionHeadingFontFamily'=>'Georgia',
+    'BodyFontSizePx'=>'21','H1FontSizePx'=>'44','H2FontSizePx'=>'36','H3FontSizePx'=>'28',
+    'DesktopAlignment'=>'Center','CustomBackgroundColor'=>'#112233','CustomTextColor'=>'#ddeeff',
+    'CustomHeadingColor'=>'#abcdef','PaddingPx'=>'24','Remove'=>'0',
+]];
+$method = new ReflectionMethod(SiteTemplateAdminController::class,'postedSections');
+$method->setAccessible(true);
+$normalized = $method->invoke(null);
+integrationAssert(count($normalized)===1, 'I2 server normalizer must keep active element.');
+$section=$normalized[0];
+foreach ([
+    'DesignMode'=>'Custom','SectionBodyFontFamily'=>'Arial','SectionHeadingFontFamily'=>'Georgia',
+    'BodyFontSizePx'=>21,'H1FontSizePx'=>44,'H2FontSizePx'=>36,'H3FontSizePx'=>28,
+    'DesktopAlignment'=>'Center','CustomBackgroundColor'=>'#112233','CustomTextColor'=>'#ddeeff',
+    'CustomHeadingColor'=>'#abcdef','PaddingPx'=>24,
+] as $key=>$expected) {
+    integrationAssert(($section[$key] ?? null)===$expected, 'I2 style persistence failed for '.$key);
+}
+integrationAssert(($section['Content'] ?? '')==="Linje 1\nLinje 2", 'I2 content line breaks must survive normalization.');
 
 fwrite(STDOUT,"Ultimate Designer integration admin I1/I2: PASS\n");
