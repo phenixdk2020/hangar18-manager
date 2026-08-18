@@ -3,6 +3,8 @@ set -euo pipefail
 
 fail=0
 
+# Dangerous execution/deserialization primitives remain forbidden everywhere in the
+# extracted architecture, including controllers/adapters.
 for pattern in 'eval[[:space:]]*\(' 'shell_exec[[:space:]]*\(' 'passthru[[:space:]]*\(' 'system[[:space:]]*\(' 'unserialize[[:space:]]*\('; do
   if grep -RInE "$pattern" src --include='*.php'; then
     echo "SECURITY HIGH: forbidden primitive matched: $pattern"
@@ -10,11 +12,31 @@ for pattern in 'eval[[:space:]]*\(' 'shell_exec[[:space:]]*\(' 'passthru[[:space
   fi
 done
 
-# New architecture services must not read request globals directly. HTTP adapters/controllers
-# should own request parsing and pass validated values into services.
-if grep -RInE '\$_(GET|POST|REQUEST|FILES|COOKIE)\b' src --include='*.php'; then
-  echo 'SECURITY HIGH: service layer reads raw request globals directly.'
+# Domain/services must never parse raw request globals. Admin/Rest are explicit HTTP
+# controller boundaries: they may parse requests, but must validate/sanitize before
+# passing values to the extracted services.
+service_request_hits="$(
+  find src -type f -name '*.php' \
+    ! -path 'src/Admin/*' \
+    ! -path 'src/Rest/*' \
+    -print0 | xargs -0 grep -nHE '\$_(GET|POST|REQUEST|FILES|COOKIE)\b' || true
+)"
+if [[ -n "$service_request_hits" ]]; then
+  printf '%s\n' "$service_request_hits"
+  echo 'SECURITY HIGH: domain/service layer reads raw request globals directly.'
   fail=1
+fi
+
+# I1/I2 admin HTTP boundary: every mutating Site Builder handler passes through the
+# same capability + nonce guard, and request values are normalized before storage.
+controller='src/Admin/SiteTemplateAdminController.php'
+if [[ -f "$controller" ]]; then
+  grep -F "current_user_can('edit_pages')" "$controller" >/dev/null || { echo 'SECURITY HIGH: I2 controller capability guard missing.'; fail=1; }
+  grep -F 'check_admin_referer(self::NONCE_ACTION)' "$controller" >/dev/null || { echo 'SECURITY HIGH: I2 controller nonce guard missing.'; fail=1; }
+  grep -F 'sanitize_key' "$controller" >/dev/null || { echo 'SECURITY HIGH: I2 identifier sanitization missing.'; fail=1; }
+  grep -F 'sanitize_text_field' "$controller" >/dev/null || { echo 'SECURITY HIGH: I2 text sanitization missing.'; fail=1; }
+  grep -F 'wp_kses_post' "$controller" >/dev/null || { echo 'SECURITY HIGH: I2 rich-content sanitization missing.'; fail=1; }
+  grep -F 'sanitize_hex_color' "$controller" >/dev/null || { echo 'SECURITY HIGH: I2 color sanitization missing.'; fail=1; }
 fi
 
 # Capability and safety boundaries required by the design.
@@ -31,4 +53,4 @@ if [[ "$fail" -ne 0 ]]; then
   exit 1
 fi
 
-echo 'E14 security audit (new architecture scope): PASS'
+echo 'E14 security audit (services + HTTP controller boundaries): PASS'
