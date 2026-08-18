@@ -1,7 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.6.9
+Version: 0.7.0
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.0 – E14 Automated QA baseline ==
+
+Nyt:
+- Automated browser-engine matrix på Chromium, Firefox og WebKit for menu-keyboard, modal focus trap, formularfokus og reduced motion.
+- Security gate for den nye arkitektur samt eksplicit capability/preview/import safety checks.
+- Performance budgets for public runtime, portability flow og Side Health.
+- Migration/rollback fixture med checksum-protected backup og exact restore.
+- MVP/v1 end-to-end tests for save/preview/publish/restore, Site Builder, menu, form, quality og portability.
+- ReleaseReadiness adskiller automated evidence fra manual/live evidence; grøn CI kan ikke markere live acceptance som færdig.
+- Administrator/designer onboarding og endelig migration-rækkefølge er dokumenteret.
+- Manual Chrome/Edge/Firefox/Safari brand-test, screen-reader, test2 live E2E, Vehicle/Event/Gallery regression og live-copy migration er stadig pending.
+- Ingen eksisterende sider er konverteret.
 
 
 == Version 0.6.9 – E13 Portability ==
