@@ -7,9 +7,13 @@ require_once dirname(__DIR__, 2) . '/src/Autoload.php';
 \Hangar18\UltimateDesigner\Autoload::register();
 
 use Hangar18\UltimateDesigner\Compatibility\CompatibilityPolicy;
+use Hangar18\UltimateDesigner\Compatibility\DomainMarkupAuditService;
 use Hangar18\UltimateDesigner\Compatibility\MarkupComparator;
 use Hangar18\UltimateDesigner\Compatibility\ProtectedDomainContractCatalog;
+use Hangar18\UltimateDesigner\Compatibility\ShadowPageStateAuditor;
 use Hangar18\UltimateDesigner\Compatibility\StateComparator;
+use Hangar18\UltimateDesigner\Contracts\PageRepository;
+use Hangar18\UltimateDesigner\Schema\PageSchemaValidator;
 
 function comparatorAssert(bool $condition, string $message): void
 {
@@ -66,5 +70,62 @@ foreach (ProtectedDomainContractCatalog::domains() as $domain) {
     comparatorAssert(ProtectedDomainContractCatalog::adminActions($domain) !== [], "Catalog domain '{$domain}' has no admin actions.");
     comparatorAssert(ProtectedDomainContractCatalog::markupHooks($domain) !== [], "Catalog domain '{$domain}' has no markup hooks.");
 }
+
+$vehicleContractMarkup = implode('', array_map(
+    static fn(string $hook): string => '<div class="' . $hook . '"></div>',
+    ProtectedDomainContractCatalog::markupHooks('vehicle')
+));
+$domainAudit = new DomainMarkupAuditService();
+comparatorAssert(
+    $domainAudit->audit('vehicle', $vehicleContractMarkup, $vehicleContractMarkup)->equivalent(),
+    'Identical Vehicle markup satisfying the protected contract must pass.'
+);
+comparatorAssert(
+    !$domainAudit->audit('vehicle', $vehicleContractMarkup, '<div class="h18-vehicle-register"></div>')->equivalent(),
+    'Vehicle candidate missing protected hooks must fail domain audit.'
+);
+
+$pageState = [
+    'Version' => '1.22',
+    'PageSlug' => 'hjem',
+    'PageTitle' => 'Hjem',
+    'ContentVersion' => 1,
+    'DataContextType' => '',
+    'DataContextEntryId' => 0,
+    'Sections' => [
+        ['Key' => 'one', 'Type' => 'text', 'LayoutParentKey' => ''],
+    ],
+];
+$repository = new class($pageState) implements PageRepository {
+    /** @var array<string,array<string,mixed>> */
+    private array $store;
+
+    /** @param array<string,mixed> $state */
+    public function __construct(array $state)
+    {
+        $this->store = ['hjem' => $state];
+    }
+
+    public function load(string $pageKey): ?array
+    {
+        return $this->store[$pageKey] ?? null;
+    }
+
+    public function save(string $pageKey, array $state): void
+    {
+        $this->store[$pageKey] = $state;
+    }
+
+    public function exists(string $pageKey): bool
+    {
+        return array_key_exists($pageKey, $this->store);
+    }
+};
+
+$stateAudit = new ShadowPageStateAuditor($repository, new PageSchemaValidator());
+comparatorAssert($stateAudit->audit('hjem', $pageState)->equivalent(), 'Identical repository/legacy page state must pass shadow audit.');
+$changedPageState = $pageState;
+$changedPageState['PageTitle'] = 'Changed';
+comparatorAssert(!$stateAudit->audit('hjem', $changedPageState)->equivalent(), 'Changed legacy/repository state must fail shadow audit.');
 
 fwrite(STDOUT, "Compatibility comparator smoke test: PASS\n");
