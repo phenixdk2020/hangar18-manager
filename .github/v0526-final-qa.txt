@@ -1,0 +1,5 @@
+PASS
+version=0.5.26
+package_sha256=6e0cb92bd7851cae7817751df35e307c22a1209042c18e6d5f047181550b567a
+release_commit=a62135e13dc3c7fbc5d483bb8a7a6ffe81ba103f
+tag_commit=a62135e13dc3c7fbc5d483bb8a7a6ffe81ba103f
