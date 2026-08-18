@@ -1,18 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T12:41:49Z",
+  "published_utc": "2026-08-18T12:57:23Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "81256ac32f2a148216f5be0c75508155b5f49fee68db63f49a72469c60cd2ed4",
+  "package_sha256": "137ae050abcc39352a872dcdc5332948e6ae3e150b515eeaec273892da938d22",
   "changelog": [
-    "E14 automated QA baseline med Chromium/Firefox/WebKit engine tests, keyboard/focus/reduced-motion flows.",
-    "Security audit, performance budgets, migration/rollback og MVP/v1 end-to-end gates er grønne.",
-    "ReleaseReadiness holder manual/live acceptance adskilt fra automated CI.",
-    "Administrator/designer onboarding og final migration-rækkefølge er dokumenteret.",
-    "Manual Chrome/Edge/Firefox/Safari brand-test, screen-reader, test2 live E2E, Vehicle/Event/Gallery regression og live-copy migration er fortsat pending.",
-    "Ingen eksisterende sider er konverteret i v0.7.0."
+    "Gem og Ctrl/Cmd+S kræver ikke længere en håndskrevet ændringsbeskrivelse.",
+    "Editor laver automatisk et kort change-summary for titel, elementer, indhold, typografi, design, layout, responsive og dynamic-data ændringer.",
+    "Server-side fallback laver resumé hvis browserresumé mangler.",
+    "Versionshistorikken gemmer AutoChangeSummary og UserChangeNote separat samt backward-compatible ChangeNote.",
+    "Save-summary QA er grøn på PHP 8.0/8.2/8.3; Vehicle/Event/Gallery-kontrakten er uændret."
   ]
 }
