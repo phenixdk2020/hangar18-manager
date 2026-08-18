@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.5.28
+Version: 0.5.29
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
@@ -1128,3 +1128,14 @@ Kompatibilitet og sikkerhed:
 - Nested værdier bruger samme server-side sanitizer som primitive felter og Required-validering.
 - Query Builder v1 skjuler/rejecter strukturerede felter; relation/advanced query udvides separat i UD-056.
 - Data SchemaVersion løftes til 2; page-editor schema forbliver 1.21.
+
+
+## v0.5.29 – E5 UD-056 Advanced Query
+- Advanced Query understøtter op til 4 AND/OR-grupper med op til 6 filtre pr. gruppe.
+- Filtre kan blande primitive datafelter, Relation-felter og Data Tags taxonomy.
+- Data entries får en privat `h18_data_tag` taxonomy med kommasepareret tag-editor.
+- Relation-filter valideres mod relation-feltets scalar target-ID; Group/Repeater kan ikke bruges som direkte query-filter.
+- Advanced preview og frontend-shortcode bruger samme normalized evaluator uden rå SQL.
+- Pagination: 1–50 resultater pr. side, stabil sortering og separate query-string page keys pr. query.
+- Kandidatsættet er bounded til 2000 publicerede entries og markerer `Truncated`, hvis grænsen nås.
+- Page-editor schema forbliver 1.21; Data SchemaVersion forbliver 2.

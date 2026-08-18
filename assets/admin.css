@@ -762,3 +762,7 @@ body.h18-command-palette-visible{overflow:hidden}
 
 /* v0.5.28 – UD-054 Relation / Group / Repeater fields */
 .h18-data-field-row{grid-template-columns:auto minmax(120px,1fr) minmax(160px,1fr) minmax(150px,.8fr) auto auto}.h18-data-relation-config,.h18-data-nested-config,.h18-data-repeater-config{grid-column:2/-1}.h18-data-nested-config textarea{width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.h18-data-group,.h18-data-repeater-item{margin:8px 0;padding:12px;border:1px solid #dcdcde;border-radius:7px}.h18-data-nested-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.h18-data-repeater-items{display:grid;gap:10px;margin-bottom:10px}@media(max-width:900px){.h18-data-nested-fields{grid-template-columns:1fr}}
+
+
+/* v0.5.29 – UD-056 Advanced Query */
+.h18-aq-group{margin:12px 0;padding:12px;border:1px solid #dcdcde;border-radius:8px;background:#f6f7f7}.h18-aq-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.h18-aq-filters{display:grid;gap:8px}.h18-aq-filter{display:grid;grid-template-columns:140px minmax(160px,1fr) 140px minmax(160px,1fr) auto;gap:8px;align-items:center}.h18-data-pagination{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}.h18-data-pagination a{padding:5px 9px;border:1px solid currentColor;border-radius:5px;text-decoration:none}.h18-data-pagination a[aria-current=page]{font-weight:700;background:rgba(0,0,0,.06)}@media(max-width:1000px){.h18-aq-filter{grid-template-columns:1fr 1fr}.h18-aq-filter>*:last-child{justify-self:start}}
