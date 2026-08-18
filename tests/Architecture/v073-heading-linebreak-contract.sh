@@ -14,7 +14,7 @@ grep -F '.h18-pages-admin .h18-canvas-preview-text{white-space:pre-line}' assets
 grep -F 'return wpautop(wp_kses_post((string) $content));' hangar18-manager.php >/dev/null
 
 # Manual save note must never be toggled back to required by the old WhatIf handler.
-if grep -F "const required = !$pageWhatIf.is(':checked');" assets/admin.js >/dev/null; then
+if grep -F 'const required = !$pageWhatIf.is('"'"':checked'"'"');' assets/admin.js >/dev/null; then
   echo 'FAIL: legacy save-note required toggle still exists'
   exit 1
 fi
