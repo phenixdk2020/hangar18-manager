@@ -39,7 +39,7 @@ final class EditorLayoutToolsAdminController
         wp_enqueue_script(
             'hangar18-ultimate-designer-layout-tools',
             $pluginUrl . 'assets/ultimate-designer-layout-tools.js',
-            ['jquery', 'jquery-ui-sortable'],
+            ['jquery', 'jquery-ui-sortable', 'hangar18-manager-admin'],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.5',
             true
         );
