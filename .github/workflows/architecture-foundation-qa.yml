@@ -12,6 +12,7 @@ on:
       - 'tests/Architecture/**'
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
+      - 'docs/ultimate-designer-onboarding.md'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
@@ -26,11 +27,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
-      - run: bash tests/Architecture/protected-domain-contract.sh
+      - name: Architecture isolation guard
+        run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+      - name: Protected Vehicle/Event/Gallery contract
+        run: bash tests/Architecture/protected-domain-contract.sh
       - uses: shivammathur/setup-php@v2
         with: {php-version: '${{ matrix.php-version }}', coverage: none}
-      - run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: PHP syntax
+        run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/Architecture/architecture-smoke.php
       - run: php tests/Architecture/page-schema-smoke.php
       - run: php tests/Architecture/runtime-bridge-smoke.php
@@ -44,4 +48,30 @@ jobs:
       - run: php tests/Architecture/e11-quality-smoke.php
       - run: php tests/Architecture/e12-ai-smoke.php
       - run: php tests/Architecture/e13-portability-smoke.php
-      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
+      - name: UD-115 security audit
+        run: bash tests/Architecture/e14-security-audit.sh
+      - name: UD-116 performance budget
+        run: php tests/Architecture/e14-performance-budget.php
+      - name: UD-117 migration rollback
+        run: php tests/Architecture/e14-migration-rollback-smoke.php
+      - name: UD-118/119 MVP and v1 E2E
+        run: php tests/Architecture/e14-e2e-smoke.php
+      - name: Public runtime JavaScript syntax
+        run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
+
+  browser-engine-qa:
+    name: E14 browser engines (Chromium/Firefox/WebKit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright test runner
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save @playwright/test
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run UD-113/114 browser and keyboard matrix
+        run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
