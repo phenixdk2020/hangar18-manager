@@ -4603,7 +4603,7 @@ jQuery(function ($) {
     $qbFieldV0525.on('change',function(){$qbOperatorV0525.attr('data-current','eq');refreshQbOperatorsV0525();});$qbOperatorV0525.on('change',function(){$(this).attr('data-current',String($(this).val()||'eq'));});refreshQbOperatorsV0525();
 
 
-    /* v0.5.31 – tydelig oprettelse af sider */
+    /* v0.6.0 – tydelig oprettelse af sider */
     function h18PromptNewPageIdentity(defaultTitle) {
         const title = window.prompt('Titel på den nye WordPress-side:', defaultTitle || 'Ny side');
         if (!title || !String(title).trim()) { return null; }
