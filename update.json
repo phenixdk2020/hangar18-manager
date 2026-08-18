@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T16:52:37Z",
+  "published_utc": "2026-08-18T17:30:52Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "e8e8591de7fb14ce66976b7f9795701dc92f5b4562ceb586e658bfd61f121ddf",
+  "package_sha256": "5491ebe1568b93f8450c1221a6e3e71e9dd9dd6be34a559d25710076fdc4e152",
   "changelog": [
-    "I4 Live Side Health direkte i den eksisterende Sider-editor.",
-    "Analysen medregner ugemte DOM/form-ændringer og viser samlet + fem delscorer.",
-    "Issues kan filtreres og linker til konkrete Navigator element keys.",
-    "Read-only AJAX er capability/nonce/size-bounded og indeholder ingen page-write primitives.",
-    "Frontend og Vehicle/Event/Gallery forbliver uændrede."
+    "I5 Asset Manager UI med folders/collections/tags, responsive focal point og usage-inspector oven på native Media IDs.",
+    "SHA-256 dubletscan er read-only; ingen automatisk sletning eller fletning.",
+    "WebP/AVIF genereres som namespaced .h18.webp/.h18.avif derivater; original og eksisterende derivater overskrives aldrig.",
+    "Menu UI har eksplicit Tilgængelige sider med valg/fravalg; sider eksisterer uafhængigt af menuen.",
+    "Frontend og Vehicle/Event/Gallery er uændrede; ingen sider er konverteret."
   ]
 }
