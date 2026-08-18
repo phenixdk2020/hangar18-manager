@@ -379,23 +379,24 @@ jQuery(function ($) {
             $select.val(current).attr('data-binding-value', current);
         });
     }
+
+
+    /* v0.5.30 – UD-059 Binding formatters + fallback */
+    function bindingOptionsV0530($row, property) {
+        const $box=pageSectionControls($row,'.h18-binding-options[data-binding-property="'+property+'"]').first();
+        return {Formatter:String($box.find('.h18-binding-formatter').val()||'Auto'),FallbackMode:String($box.find('.h18-binding-fallback-mode').val()||'Static'),Fallback:String($box.find('.h18-binding-fallback').val()||''),FallbackWhenEmpty:$box.find('.h18-binding-fallback-empty').is(':checked'),Prefix:String($box.find('.h18-binding-prefix').val()||''),Suffix:String($box.find('.h18-binding-suffix').val()||'')};
+    }
+    function bindingPreviewEmptyV0530(value, fieldType){return value===null||value===undefined||value===''||(Array.isArray(value)&&!value.length)||(fieldType==='media'&&(parseInt(value,10)||0)<=0);}
+    function bindingPreviewFormatV0530(value, fieldType, formatter){formatter=String(formatter||'Auto');if(formatter==='Auto'||formatter==='Text'){if(typeof value==='boolean')return value?'Ja':'Nej';return (value==null||typeof value==='object')?null:String(value);}if(formatter==='Upper'||formatter==='Lower'){if(value==null||typeof value==='object')return null;const text=String(value);return formatter==='Upper'?text.toLocaleUpperCase('da-DK'):text.toLocaleLowerCase('da-DK');}if(['Number0','Number1','Number2'].includes(formatter)){const number=Number(value);if(!Number.isFinite(number))return null;const decimals=parseInt(formatter.slice(-1),10)||0;return new Intl.NumberFormat('da-DK',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}).format(number);}if(['DateShort','DateIso','DateLong'].includes(formatter)){const raw=String(value||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(raw))return null;const parts=raw.split('-').map(Number),date=new Date(Date.UTC(parts[0],parts[1]-1,parts[2]));if(formatter==='DateIso')return raw;if(formatter==='DateShort')return String(parts[2]).padStart(2,'0')+'.'+String(parts[1]).padStart(2,'0')+'.'+parts[0];return new Intl.DateTimeFormat('da-DK',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(date);}if(formatter==='BoolYesNo')return (value===true||value===1||['1','true','yes','ja','on'].includes(String(value).toLowerCase()))?'Ja':'Nej';return null;}
+    function bindingPreviewFallbackV0530($row,property,option){if(option.FallbackMode==='Static')return{bound:false};if(option.FallbackMode==='Empty')return{bound:true,value:property==='MediaId'?0:'',mediaUrl:''};return{bound:true,value:property==='MediaId'?(parseInt(option.Fallback,10)||0):option.Fallback,mediaUrl:''};}
+
     function dynamicPreviewBindingV0524($row, property) {
-        const $select = pageSectionControls($row, '.h18-dynamic-binding-select[data-binding-property="' + property + '"]').first();
-        const fieldKey = String($select.val() || $select.attr('data-binding-value') || '');
-        if (!$select.length || !fieldKey) { return { bound:false }; }
-        const definition = dynamicContextDefinitionV0524();
-        const entry = dynamicContextEntryV0524();
-        if (!definition || !entry) { return { bound:false }; }
-        const field = (Array.isArray(definition.Fields) ? definition.Fields : []).find(function (item) { return String(item.Key || '') === fieldKey; });
-        if (!field) { return { bound:false }; }
-        const allowed = String($select.attr('data-allowed-types') || '').split(/\s+/).filter(Boolean);
-        if (!allowed.includes(String(field.Type || ''))) { return { bound:false }; }
-        const values = entry.Values && typeof entry.Values === 'object' ? entry.Values : {};
-        if (!Object.prototype.hasOwnProperty.call(values, fieldKey)) { return { bound:false }; }
-        let value = values[fieldKey];
-        if (typeof value === 'boolean' && property !== 'MediaId') { value = value ? 'Ja' : 'Nej'; }
-        const mediaUrls = entry.MediaUrls && typeof entry.MediaUrls === 'object' ? entry.MediaUrls : {};
-        return { bound:true, value:value == null ? '' : value, mediaUrl:String(mediaUrls[fieldKey] || '') };
+        const $select=pageSectionControls($row,'.h18-dynamic-binding-select[data-binding-property="'+property+'"]').first();const fieldKey=String($select.val()||$select.attr('data-binding-value')||'');if(!$select.length||!fieldKey)return{bound:false};
+        const option=bindingOptionsV0530($row,property),definition=dynamicContextDefinitionV0524(),entry=dynamicContextEntryV0524();if(!definition||!entry)return bindingPreviewFallbackV0530($row,property,option);
+        const field=(Array.isArray(definition.Fields)?definition.Fields:[]).find(function(item){return String(item.Key)===fieldKey;});const values=entry.Values&&typeof entry.Values==='object'?entry.Values:{};if(!field||!Object.prototype.hasOwnProperty.call(values,fieldKey))return bindingPreviewFallbackV0530($row,property,option);
+        const raw=values[fieldKey],fieldType=String(field.Type||'');if(bindingPreviewEmptyV0530(raw,fieldType)&&option.FallbackWhenEmpty)return bindingPreviewFallbackV0530($row,property,option);
+        if(property==='MediaId'){const mediaUrls=entry.MediaUrls&&typeof entry.MediaUrls==='object'?entry.MediaUrls:{};return{bound:true,value:parseInt(raw,10)||0,mediaUrl:String(mediaUrls[fieldKey]||'')};}
+        let value=bindingPreviewFormatV0530(raw,fieldType,option.Formatter);if(value===null)return bindingPreviewFallbackV0530($row,property,option);if(!['Button1Url','Button2Url'].includes(property))value=option.Prefix+value+option.Suffix;return{bound:true,value:value,mediaUrl:''};
     }
     $pageDataContextTypeV0524.on('change', function () { refreshPageDataContextEntriesV0524(false); refreshDynamicBindingsV0524($pageSections); refreshAllCanvasPreviews(); $pageSections.children('.h18-page-section-row').each(function(){evaluateConditionPreviewV0527($(this));}); scheduleEditorHistoryCapture(0); });
     $pageDataContextEntryV0524.on('change', function () { $(this).attr('data-current-entry', String($(this).val() || 0)); refreshAllCanvasPreviews(); $pageSections.children('.h18-page-section-row').each(function(){evaluateConditionPreviewV0527($(this));}); scheduleEditorHistoryCapture(0); });
@@ -616,6 +617,7 @@ jQuery(function ($) {
         if (data.Type === 'component') { return null; }
         const cards = {};
         const bindings = {};
+        const bindingOptions = {};
         pageSectionControls($row, '[name]').each(function () {
             const $field = $(this);
             const name = String($field.attr('name') || '');
@@ -624,6 +626,10 @@ jQuery(function ($) {
             if (match) {
                 if (value) { bindings[String(match[1])] = String(value); }
                 return;
+            }
+            match = name.match(/^sections\[[^\]]+\]\[BindingOptions\]\[([^\]]+)\]\[([^\]]+)\]$/);
+            if (match) {
+                const property=String(match[1]), optionKey=String(match[2]); bindingOptions[property]=bindingOptions[property]||{}; bindingOptions[property][optionKey]=value; return;
             }
             match = name.match(/^sections\[[^\]]+\]\[Cards\]\[([^\]]+)\]\[([^\]]+)\]$/);
             if (match) {
@@ -648,6 +654,7 @@ jQuery(function ($) {
         });
         data.Cards = Object.keys(cards).sort(function (a, b) { return Number(a) - Number(b); }).map(function (index) { return cards[index]; });
         data.Bindings = bindings;
+        data.BindingOptions = bindingOptions;
         return data;
     }
 
@@ -681,7 +688,7 @@ jQuery(function ($) {
             return $row;
         }
         Object.keys(presetData).forEach(function (fieldName) {
-            if (['Type', 'Cards', 'Bindings', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {
+            if (['Type', 'Cards', 'Bindings', 'BindingOptions', 'Key', 'Order', 'Remove', 'LayoutParentKey'].includes(fieldName)) {
                 return;
             }
             setSectionPresetField($row, fieldName, presetData[fieldName]);
@@ -691,6 +698,9 @@ jQuery(function ($) {
             Object.keys(presetData.Bindings).forEach(function (property) {
                 pageSectionControls($row, '.h18-dynamic-binding-select[data-binding-property="' + property + '"]').attr('data-binding-value', String(presetData.Bindings[property] || ''));
             });
+        }
+        if (presetData.BindingOptions && typeof presetData.BindingOptions === 'object') {
+            Object.keys(presetData.BindingOptions).forEach(function(property){const option=presetData.BindingOptions[property]||{};const $box=pageSectionControls($row,'.h18-binding-options[data-binding-property="'+property+'"]');Object.keys(option).forEach(function(key){const $control=$box.find('[name$="['+key+']"]');if($control.is(':checkbox'))$control.prop('checked',Boolean(option[key]));else $control.val(option[key]==null?'':String(option[key]));});});
         }
         if (Array.isArray(presetData.Cards) && ['card_grid', 'tabs', 'accordion', 'carousel'].includes(type)) {
             const $container = pageSectionControls($row, '.h18-page-cards-sortable');
@@ -4612,3 +4622,8 @@ jQuery(function ($) {
     $r.append($kind,$field,$op,$value,$('<button>',{type:'button',class:'button-link-delete h18-aq-remove-filter',text:'Fjern'}));$kind.on('change',function(){f.Field='';f.Operator='';refresh();sync();});$field.on('change',function(){f.Field=String($field.val()||'');f.Operator='';refresh();sync();});$op.add($value).on('change input',sync);refresh();return $r;}
     function groupRow(g){g=g||{Relation:'AND',Filters:[]};const $g=$('<div>',{class:'h18-aq-group'}),$head=$('<div>',{class:'h18-aq-head'}),$rel=$('<select>',{class:'h18-aq-relation'}).append('<option value="AND">AND i gruppen</option><option value="OR">OR i gruppen</option>').val(g.Relation||'AND'),$filters=$('<div>',{class:'h18-aq-filters'});(g.Filters||[]).slice(0,6).forEach(f=>$filters.append(filterRow(f)));$head.append($rel,$('<button>',{type:'button',class:'button h18-aq-add-filter',text:'+ Filter'}),$('<button>',{type:'button',class:'button-link-delete h18-aq-remove-group',text:'Fjern gruppe'}));$g.append($head,$filters);$rel.on('change',sync);return $g;}
     function render(){if(groups.length>4)groups=groups.slice(0,4);$root.empty();groups.forEach(g=>$root.append(groupRow(g)));sync();}render();$('#h18-aq-add-group').on('click',function(){if($root.children('.h18-aq-group').length>=4){window.alert('Maks. 4 grupper.');return;}$root.append(groupRow({Relation:'AND',Filters:[]}));sync();});$root.on('click','.h18-aq-add-filter',function(){const $g=$(this).closest('.h18-aq-group'),$filters=$g.find('>.h18-aq-filters');if($filters.children().length>=6){window.alert('Maks. 6 filtre pr. gruppe.');return;}$filters.append(filterRow({Kind:'field',Field:'',Operator:'eq',Value:''}));sync();}).on('click','.h18-aq-remove-filter',function(){$(this).closest('.h18-aq-filter').remove();sync();}).on('click','.h18-aq-remove-group',function(){$(this).closest('.h18-aq-group').remove();if(!$root.children().length)$root.append(groupRow({Relation:'AND',Filters:[]}));sync();});$('#h18-advanced-query-form').on('submit',sync);})();
+
+
+    $(document).on('change input','.h18-binding-formatter,.h18-binding-fallback-mode,.h18-binding-fallback,.h18-binding-fallback-empty,.h18-binding-prefix,.h18-binding-suffix',function(){const $row=pageSectionForElement($(this));const $box=$(this).closest('.h18-binding-options');$box.find('.h18-binding-fallback').toggle(String($box.find('.h18-binding-fallback-mode').val()||'Static')==='Custom');if($row.length)renderCanvasPreview($row);scheduleEditorHistoryCapture(250);});
+    function refreshBindingOptionUiV0530($scope){($scope&&$scope.length?$scope:$(document)).find('.h18-binding-options').each(function(){const $box=$(this),property=String($box.attr('data-binding-property')||'');$box.toggleClass('is-url-or-media',['Button1Url','Button2Url','MediaId'].includes(property));$box.find('.h18-binding-fallback').toggle(String($box.find('.h18-binding-fallback-mode').val()||'Static')==='Custom');});}
+    refreshBindingOptionUiV0530($('.h18-pages-admin'));
