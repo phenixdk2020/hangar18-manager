@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T12:05:14Z",
+  "published_utc": "2026-08-18T12:12:01Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "77845545a10af3ad3d284ce3a562038e66eed47f285cfe0bdf5306e3f36df78d",
+  "package_sha256": "1caeee6451bae9d16593e91e27901683c720f5b95f13ea8bd1a521f9cb584929",
   "changelog": [
-    "E10 named least-privilege capability matrix og rolleopskrifter.",
-    "Design/structure lock beskytter layout og styling med eksplicit frigivne content fields.",
-    "Component editable inputs og domain-scoped Event/Gallery roller.",
-    "WordPress role installer er passiv og overtager ikke legacy permissions endnu.",
+    "E11 Accessibility/Responsive/Design/SEO/Performance analyzers med elementreferencer.",
+    "SEO metadata model og exactly-one-H1/canonical/index/social checks.",
+    "Side Health samler Design, Mobile, Accessibility, Performance og SEO score.",
+    "HardFailures vises eksplicit og analyzer-laget omskriver aldrig indhold automatisk.",
     "Vehicle/Event/Gallery og eksisterende sider konverteres ikke."
   ]
 }
