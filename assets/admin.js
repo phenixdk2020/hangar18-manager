@@ -4308,4 +4308,27 @@ jQuery(function ($) {
         });
     }
 
+
+    /* v0.5.23 – Generic Dynamic Data schema + entry editor */
+    const $dataSchemaFields = $('#h18-data-schema-fields');
+    const dataFieldTemplate = document.getElementById('h18-data-field-template');
+    let dataFieldSerialV0523 = 1000;
+    function syncDataFieldRowsV0523(){
+        if(!$dataSchemaFields.length)return;
+        $dataSchemaFields.children('.h18-data-field-row:not(.is-removed)').each(function(index){$(this).find('.h18-data-field-drag').attr('title','Felt '+(index+1));});
+    }
+    if($dataSchemaFields.length){$dataSchemaFields.sortable({items:'> .h18-data-field-row:not(.is-removed)',handle:'.h18-data-field-drag',axis:'y',tolerance:'pointer',update:syncDataFieldRowsV0523});syncDataFieldRowsV0523();}
+    $('#h18-data-add-field').on('click',function(){
+        if(!dataFieldTemplate||!$dataSchemaFields.length)return;
+        if($dataSchemaFields.children('.h18-data-field-row:not(.is-removed)').length>=30){window.alert('En datatype kan højst have 30 felter.');return;}
+        dataFieldSerialV0523+=1;
+        const html=dataFieldTemplate.innerHTML.replaceAll('__INDEX__',String(dataFieldSerialV0523));
+        const $row=$(html.trim());$row.find('.h18-data-field-key').val('');$row.find('.h18-data-field-label').val('');$dataSchemaFields.append($row);syncDataFieldRowsV0523();
+    });
+    $(document).on('click','.h18-data-remove-field',function(){const $row=$(this).closest('.h18-data-field-row');$row.find('.h18-data-field-remove').val('1');$row.addClass('is-removed').hide();syncDataFieldRowsV0523();});
+    $(document).on('blur','.h18-data-field-label',function(){const $row=$(this).closest('.h18-data-field-row');const $key=$row.find('.h18-data-field-key');if(!$key.val().trim())$key.val(slugify($(this).val()).replace(/-/g,'_'));});
+    $('#h18-data-type-singular').on('blur',function(){const $key=$('#h18-data-type-key');if($key.length&&!$key.val().trim())$key.val(slugify($(this).val()).replace(/-/g,'_'));});
+    $(document).on('click','.h18-data-media-pick',function(event){event.preventDefault();const $field=$(this).closest('.h18-data-media-field');const frame=wp.media({title:'Vælg medie',button:{text:'Brug medie'},multiple:false});frame.on('select',function(){const media=frame.state().get('selection').first().toJSON();const thumb=media.sizes&&media.sizes.thumbnail?media.sizes.thumbnail.url:media.url;$field.find('.h18-data-media-id').val(media.id||0);$field.find('.h18-data-media-preview').html($('<img>',{src:thumb,alt:media.alt||''}));});frame.open();});
+    $(document).on('click','.h18-data-media-clear',function(event){event.preventDefault();const $field=$(this).closest('.h18-data-media-field');$field.find('.h18-data-media-id').val('0');$field.find('.h18-data-media-preview').empty();});
+
 });
