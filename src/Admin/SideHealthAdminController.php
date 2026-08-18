@@ -10,6 +10,10 @@ use RuntimeException;
 /**
  * I4 read-only bridge between the legacy page editor DOM state and Side Health.
  * It never writes page state and is available only to authenticated page editors.
+ *
+ * v0.8.5 also enqueues the passive page-editor enhancement assets for Auto-kasser
+ * and Tabel. Those assets only manipulate the existing editor form/schema and do
+ * not register frontend/runtime hooks.
  */
 final class SideHealthAdminController
 {
@@ -31,8 +35,10 @@ final class SideHealthAdminController
         }
         $pluginFile = dirname(__DIR__, 2) . '/hangar18-manager.php';
         $version = class_exists('Hangar18_Manager') ? (string) \Hangar18_Manager::VERSION : '0';
-        $jsPath = dirname(__DIR__, 2) . '/assets/ultimate-designer-side-health.js';
-        $cssPath = dirname(__DIR__, 2) . '/assets/ultimate-designer-side-health.css';
+        $assetRoot = dirname(__DIR__, 2) . '/assets/';
+
+        $jsPath = $assetRoot . 'ultimate-designer-side-health.js';
+        $cssPath = $assetRoot . 'ultimate-designer-side-health.css';
         wp_enqueue_style('hangar18-ultimate-designer-side-health', plugins_url('assets/ultimate-designer-side-health.css', $pluginFile), [], $version . '-' . (string) (@filemtime($cssPath) ?: 0));
         wp_enqueue_script('hangar18-ultimate-designer-side-health', plugins_url('assets/ultimate-designer-side-health.js', $pluginFile), ['jquery'], $version . '-' . (string) (@filemtime($jsPath) ?: 0), true);
         wp_localize_script('hangar18-ultimate-designer-side-health', 'Hangar18SideHealth', [
@@ -40,6 +46,22 @@ final class SideHealthAdminController
             'nonce' => wp_create_nonce(self::NONCE_ACTION),
             'debounceMs' => 650,
         ]);
+
+        $layoutJsPath = $assetRoot . 'ultimate-designer-layout-tools.js';
+        $layoutCssPath = $assetRoot . 'ultimate-designer-layout-tools.css';
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-layout-tools',
+            plugins_url('assets/ultimate-designer-layout-tools.css', $pluginFile),
+            [],
+            $version . '-' . (string) (@filemtime($layoutCssPath) ?: 0)
+        );
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-layout-tools',
+            plugins_url('assets/ultimate-designer-layout-tools.js', $pluginFile),
+            ['jquery', 'hangar18-manager-admin'],
+            $version . '-' . (string) (@filemtime($layoutJsPath) ?: 0),
+            true
+        );
     }
 
     public static function analyze(): void
