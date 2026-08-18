@@ -36,7 +36,13 @@ final class PagePackageService
             'Page'=>$this->json->hash($page),
             'GlobalStyles'=>$this->json->hash($globalStyles),
         ];
-        return $this->json->encode($payload);
+
+        // Preserve the normalized source key order inside Page/GlobalStyles so a
+        // decoded roundtrip is structurally identical. Checksums remain canonical,
+        // therefore semantically equivalent object ordering still validates.
+        $encoded = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        if (!is_string($encoded)) { throw new RuntimeException('Page package could not be encoded as JSON.'); }
+        return $encoded . "\n";
     }
 
     /** @return array{Page:array<string,mixed>,GlobalStyles:array<string,mixed>,Checksums:array<string,string>} */
