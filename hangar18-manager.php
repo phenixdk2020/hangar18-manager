@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.19
+ * Version: 0.5.20
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.19';
+    const VERSION = '0.5.20';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -706,7 +706,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.15',
+                'Version' => '1.16',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -784,6 +784,11 @@ final class Hangar18_Manager {
         --h18-space-m:<?php echo esc_html((int) $d['SpacingMediumPx']); ?>px;
         --h18-space-l:<?php echo esc_html((int) $d['SpacingLargePx']); ?>px;
         --h18-space-xl:<?php echo esc_html((int) $d['SpacingXlPx']); ?>px;
+        --h18-motion-fast:<?php echo esc_html((int) $d['MotionFastMs']); ?>ms;
+        --h18-motion-normal:<?php echo esc_html((int) $d['MotionNormalMs']); ?>ms;
+        --h18-motion-slow:<?php echo esc_html((int) $d['MotionSlowMs']); ?>ms;
+        --h18-focus-ring:<?php echo esc_html($d['FocusRingColor']); ?>;
+        --h18-focus-ring-width:<?php echo esc_html((int) $d['FocusRingWidthPx']); ?>px;
         --h18-menu-transition:<?php echo esc_html($transition); ?>ms;
     }
 
@@ -1294,7 +1299,7 @@ final class Hangar18_Manager {
     private function default_header_design() {
         return [
             'Version' => '2.3',
-            'DesignerSchemaVersion' => '1.0',
+            'DesignerSchemaVersion' => '1.1',
             'PrimaryColor' => '#30382a',
             'SecondaryColor' => '#525a5f',
             'AccentColor' => '#c3ae83',
@@ -1317,6 +1322,13 @@ final class Hangar18_Manager {
             'SpacingMediumPx' => 16,
             'SpacingLargePx' => 24,
             'SpacingXlPx' => 40,
+            'BreakpointMobileMaxPx' => 782,
+            'BreakpointTabletMaxPx' => 1199,
+            'MotionFastMs' => 120,
+            'MotionNormalMs' => 220,
+            'MotionSlowMs' => 420,
+            'FocusRingColor' => '#8b4a2b',
+            'FocusRingWidthPx' => 3,
             'MenuPresentation' => 'Classic',
             'MenuHoverEffect' => 'None',
             'MenuActiveStyle' => 'None',
@@ -1414,7 +1426,7 @@ final class Hangar18_Manager {
 
         return [
             'Version'                           => '2.3',
-            'DesignerSchemaVersion'             => '1.0',
+            'DesignerSchemaVersion'             => '1.1',
             'PrimaryColor'                      => $normalize_color($saved['PrimaryColor'] ?? $default['PrimaryColor'], $default['PrimaryColor']),
             'SecondaryColor'                    => $normalize_color($saved['SecondaryColor'] ?? $default['SecondaryColor'], $default['SecondaryColor']),
             'AccentColor'                       => $normalize_color($saved['AccentColor'] ?? $default['AccentColor'], $default['AccentColor']),
@@ -1437,6 +1449,13 @@ final class Hangar18_Manager {
             'SpacingMediumPx'                   => $this->clamp_int($saved['SpacingMediumPx'] ?? $default['SpacingMediumPx'], 0, 64, $default['SpacingMediumPx']),
             'SpacingLargePx'                    => $this->clamp_int($saved['SpacingLargePx'] ?? $default['SpacingLargePx'], 0, 96, $default['SpacingLargePx']),
             'SpacingXlPx'                       => $this->clamp_int($saved['SpacingXlPx'] ?? $default['SpacingXlPx'], 0, 140, $default['SpacingXlPx']),
+            'BreakpointMobileMaxPx'             => $this->clamp_int($saved['BreakpointMobileMaxPx'] ?? $default['BreakpointMobileMaxPx'], 480, 900, $default['BreakpointMobileMaxPx']),
+            'BreakpointTabletMaxPx'             => $this->clamp_int($saved['BreakpointTabletMaxPx'] ?? $default['BreakpointTabletMaxPx'], 901, 1600, $default['BreakpointTabletMaxPx']),
+            'MotionFastMs'                      => $this->clamp_int($saved['MotionFastMs'] ?? $default['MotionFastMs'], 0, 1000, $default['MotionFastMs']),
+            'MotionNormalMs'                    => $this->clamp_int($saved['MotionNormalMs'] ?? $default['MotionNormalMs'], 0, 1500, $default['MotionNormalMs']),
+            'MotionSlowMs'                      => $this->clamp_int($saved['MotionSlowMs'] ?? $default['MotionSlowMs'], 0, 2500, $default['MotionSlowMs']),
+            'FocusRingColor'                    => $normalize_color($saved['FocusRingColor'] ?? $default['FocusRingColor'], $default['FocusRingColor']),
+            'FocusRingWidthPx'                  => $this->clamp_int($saved['FocusRingWidthPx'] ?? $default['FocusRingWidthPx'], 1, 8, $default['FocusRingWidthPx']),
             'MenuPresentation'                  => in_array((string) ($saved['MenuPresentation'] ?? ''), $allowed_menu_presentations, true) ? (string) $saved['MenuPresentation'] : $default['MenuPresentation'],
             'MenuHoverEffect'                   => in_array((string) ($saved['MenuHoverEffect'] ?? ''), $allowed_menu_hover, true) ? (string) $saved['MenuHoverEffect'] : $default['MenuHoverEffect'],
             'MenuActiveStyle'                   => in_array((string) ($saved['MenuActiveStyle'] ?? ''), $allowed_menu_active, true) ? (string) $saved['MenuActiveStyle'] : $default['MenuActiveStyle'],
@@ -6599,6 +6618,13 @@ HTML;
             'HoverHeadingColor'      => '#30382a',
             'HoverBorderColor'       => '#c3ae83',
             'HoverOpacityPercent'    => 100,
+            'TransitionPreset'       => 'Inherit',
+            'FocusRingStyle'         => 'Global',
+            'FocusRingColor'         => '#8b4a2b',
+            'FocusRingWidthPx'       => 3,
+            'FocusRingOffsetPx'      => 2,
+            'ActiveEffect'           => 'None',
+            'DisabledOpacityPercent' => 55,
             'ShowDesktop'            => true,
             'ShowTablet'             => true,
             'ShowMobile'             => true,
@@ -6813,6 +6839,13 @@ HTML;
         $hover_text = sanitize_hex_color((string) ($raw['HoverTextColor'] ?? '#30382a')) ?: '#30382a';
         $hover_heading = sanitize_hex_color((string) ($raw['HoverHeadingColor'] ?? '#30382a')) ?: '#30382a';
         $hover_border = sanitize_hex_color((string) ($raw['HoverBorderColor'] ?? '#c3ae83')) ?: '#c3ae83';
+        $transition_preset = (string) ($raw['TransitionPreset'] ?? 'Inherit');
+        if (!in_array($transition_preset, ['Inherit','Fast','Normal','Slow','Custom'], true)) { $transition_preset = 'Inherit'; }
+        $focus_ring_style = (string) ($raw['FocusRingStyle'] ?? 'Global');
+        if (!in_array($focus_ring_style, ['Global','Custom','None'], true)) { $focus_ring_style = 'Global'; }
+        $focus_ring_color = sanitize_hex_color((string) ($raw['FocusRingColor'] ?? '#8b4a2b')) ?: '#8b4a2b';
+        $active_effect = (string) ($raw['ActiveEffect'] ?? 'None');
+        if (!in_array($active_effect, ['None','Press','ScaleDown'], true)) { $active_effect = 'None'; }
         $tablet_alignment = (string) ($raw['TabletAlignment'] ?? 'Inherit');
         if (!in_array($tablet_alignment, ['Inherit', 'Left', 'Center'], true)) { $tablet_alignment = 'Inherit'; }
 
@@ -6963,6 +6996,13 @@ HTML;
             'HoverHeadingColor'      => $hover_heading,
             'HoverBorderColor'       => $hover_border,
             'HoverOpacityPercent'    => $this->clamp_int($raw['HoverOpacityPercent'] ?? 100, 0, 100, 100),
+            'TransitionPreset'       => $transition_preset,
+            'FocusRingStyle'         => $focus_ring_style,
+            'FocusRingColor'         => $focus_ring_color,
+            'FocusRingWidthPx'       => $this->clamp_int($raw['FocusRingWidthPx'] ?? 3, 1, 8, 3),
+            'FocusRingOffsetPx'      => $this->clamp_int($raw['FocusRingOffsetPx'] ?? 2, 0, 12, 2),
+            'ActiveEffect'           => $active_effect,
+            'DisabledOpacityPercent' => $this->clamp_int($raw['DisabledOpacityPercent'] ?? 55, 10, 100, 55),
             'ShowDesktop'            => array_key_exists('ShowDesktop', $raw) ? !empty($raw['ShowDesktop']) : true,
             'ShowTablet'             => array_key_exists('ShowTablet', $raw) ? !empty($raw['ShowTablet']) : true,
             'ShowMobile'             => array_key_exists('ShowMobile', $raw) ? !empty($raw['ShowMobile']) : true,
@@ -7063,7 +7103,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.15',
+            'Version'        => '1.16',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7597,7 +7637,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.15',
+            'Version'        => '1.16',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7842,6 +7882,17 @@ HTML;
         $hover_border = $hover_style_custom ? (string) ($section['HoverBorderColor'] ?? '#c3ae83') : (string) ($section['CustomBorderColor'] ?? '#c3ae83');
         $hover_opacity = $hover_style_custom ? (max(0, min(100, (int) ($section['HoverOpacityPercent'] ?? 100))) / 100) : $opacity;
         $hover_background_image = $hover_style_custom ? 'none' : $effect_image;
+        $transition_preset = (string) ($section['TransitionPreset'] ?? 'Inherit');
+        $transition_css = 'var(--h18-motion-normal,220ms)';
+        if ($transition_preset === 'Fast') { $transition_css = 'var(--h18-motion-fast,120ms)'; }
+        elseif ($transition_preset === 'Slow') { $transition_css = 'var(--h18-motion-slow,420ms)'; }
+        elseif ($transition_preset === 'Custom') { $transition_css = (int) ($section['HoverTransitionMs'] ?? 220) . 'ms'; }
+        $focus_style = (string) ($section['FocusRingStyle'] ?? 'Global');
+        $focus_color = $focus_style === 'Custom' ? (string) ($section['FocusRingColor'] ?? '#8b4a2b') : 'var(--h18-focus-ring,#8b4a2b)';
+        $focus_width = $focus_style === 'Custom' ? (int) ($section['FocusRingWidthPx'] ?? 3) . 'px' : 'var(--h18-focus-ring-width,3px)';
+        if ($focus_style === 'None') { $focus_width = '0px'; }
+        $focus_offset = (int) ($section['FocusRingOffsetPx'] ?? 2) . 'px';
+        $disabled_opacity = max(10, min(100, (int) ($section['DisabledOpacityPercent'] ?? 55))) / 100;
         $hover_y = '0px';
         $hover_scale = '1';
         $hover_shadow = $shadow;
@@ -7946,7 +7997,12 @@ HTML;
             '--h18-hover-heading:' . $hover_heading . ';' .
             '--h18-hover-border:' . $hover_border . ';' .
             '--h18-hover-opacity:' . $hover_opacity . ';' .
-            '--h18-hover-transition:' . (int) ($section['HoverTransitionMs'] ?? 220) . 'ms;';
+            '--h18-hover-transition:' . (int) ($section['HoverTransitionMs'] ?? 220) . 'ms;' .
+            '--h18-state-transition:' . $transition_css . ';' .
+            '--h18-focus-color:' . $focus_color . ';' .
+            '--h18-focus-width:' . $focus_width . ';' .
+            '--h18-focus-offset:' . $focus_offset . ';' .
+            '--h18-disabled-opacity:' . $disabled_opacity . ';';
     }
 
     private function page_editor_visibility_classes(array $section) {
@@ -7955,6 +8011,8 @@ HTML;
         if (empty($section['ShowTablet'])) { $classes[] = 'h18-hide-tablet'; }
         if (empty($section['ShowMobile'])) { $classes[] = 'h18-hide-mobile'; }
         if (($section['HoverStyleMode'] ?? 'Inherit') === 'Custom') { $classes[] = 'h18-hover-style-custom'; }
+        if (($section['ActiveEffect'] ?? 'None') === 'Press') { $classes[] = 'h18-active-effect-press'; }
+        elseif (($section['ActiveEffect'] ?? 'None') === 'ScaleDown') { $classes[] = 'h18-active-effect-scale'; }
         return implode(' ', $classes);
     }
 
@@ -7970,6 +8028,11 @@ HTML;
 
     private function page_editor_frontend_css($page_id) {
         $id = (int) $page_id;
+        $design = $this->get_header_design_settings();
+        $mobile_breakpoint = (int) ($design['BreakpointMobileMaxPx'] ?? 782);
+        $tablet_breakpoint = (int) ($design['BreakpointTabletMaxPx'] ?? 1199);
+        $tablet_min = $mobile_breakpoint + 1;
+        $desktop_min = $tablet_breakpoint + 1;
         return '<style id="h18-page-editor-style-' . $id . '">' .
             '.h18-editor-page{width:100%;box-sizing:border-box}.h18-editor-section{box-sizing:border-box;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0) var(--h18-pad-x,var(--h18-pad,0));border-radius:var(--h18-radius,0);text-align:var(--h18-align,left)}' .
             '.h18-editor-section--offwhite{background:#f2f0e8}.h18-editor-section--sand{background:#c3ae83;color:#30382a}.h18-editor-section--olive{background:#30382a;color:#fff}.h18-editor-section--steel{background:#525a5f;color:#fff}.h18-editor-section--olive h1,.h18-editor-section--olive h2,.h18-editor-section--olive h3,.h18-editor-section--steel h1,.h18-editor-section--steel h2,.h18-editor-section--steel h3{color:#fff}' .
@@ -7984,7 +8047,7 @@ HTML;
             '.h18-editor-page .wp-block-columns{display:flex;align-items:stretch;gap:16px}.h18-editor-page .wp-block-column{flex:1 1 0;min-width:0}.h18-editor-page .wp-block-button__link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}' .
             '.h18-imported-group{box-sizing:border-box;width:100%}.h18-imported-group>.h18-editor-section{margin:0!important;padding:0!important;border-radius:0!important;background:transparent!important;text-align:var(--h18-align,left)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-justify,flex-start)!important;margin-top:22px}.h18-editor-page .h18-imported-tagline.h18-imported-group{margin-top:var(--h18-top,0)!important;margin-bottom:var(--h18-bottom,0)!important}.h18-imported-group .h18-editor-button{min-height:52px;padding:13px 24px;border:0;border-radius:29px}.h18-imported-group.h18-editor-section--offwhite .h18-editor-button,.h18-imported-group.h18-editor-section--sand .h18-editor-button{background:#30382a;color:#fff}.h18-imported-group.h18-editor-section--olive .h18-editor-button{background:#c3ae83;color:#30382a}' .
             '.h18-editor-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:1px solid #c3ae83;border-radius:5px;background:#c3ae83;color:#20261d;text-decoration:none;font-weight:700}.h18-editor-button--secondary{background:transparent;color:inherit}' .
-            '.h18-layout-children{box-sizing:border-box;min-width:0;gap:var(--h18-layout-gap,16px)}.h18-layout-container-children{display:grid;grid-template-columns:minmax(0,1fr)}.h18-layout-flex-children{display:flex;flex-direction:var(--h18-layout-direction,row);flex-wrap:var(--h18-layout-wrap,wrap);justify-content:var(--h18-layout-justify,flex-start);align-items:var(--h18-layout-align,stretch)}.h18-layout-grid-children{display:grid;grid-template-columns:repeat(var(--h18-layout-columns,2),minmax(0,1fr));align-items:var(--h18-layout-align,stretch)}.h18-layout-children>.h18-editor-section{min-width:0;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0) var(--h18-pad-x,var(--h18-pad,0));text-align:var(--h18-align,left)}@media(max-width:782px){.h18-layout-children{gap:var(--h18-layout-mobile-gap,12px)}.h18-layout-flex-children{flex-direction:var(--h18-layout-mobile-direction,column)}.h18-layout-grid-children{grid-template-columns:repeat(var(--h18-layout-mobile-columns,1),minmax(0,1fr))}}' .
+            '.h18-layout-children{box-sizing:border-box;min-width:0;gap:var(--h18-layout-gap,16px)}.h18-layout-container-children{display:grid;grid-template-columns:minmax(0,1fr)}.h18-layout-flex-children{display:flex;flex-direction:var(--h18-layout-direction,row);flex-wrap:var(--h18-layout-wrap,wrap);justify-content:var(--h18-layout-justify,flex-start);align-items:var(--h18-layout-align,stretch)}.h18-layout-grid-children{display:grid;grid-template-columns:repeat(var(--h18-layout-columns,2),minmax(0,1fr));align-items:var(--h18-layout-align,stretch)}.h18-layout-children>.h18-editor-section{min-width:0;margin-top:var(--h18-top,0);margin-bottom:var(--h18-bottom,24px);padding:var(--h18-pad,0) var(--h18-pad-x,var(--h18-pad,0));text-align:var(--h18-align,left)}@media(max-width:' . $mobile_breakpoint . 'px){.h18-layout-children{gap:var(--h18-layout-mobile-gap,12px)}.h18-layout-flex-children{flex-direction:var(--h18-layout-mobile-direction,column)}.h18-layout-grid-children{grid-template-columns:repeat(var(--h18-layout-mobile-columns,1),minmax(0,1fr))}}' .
             '.h18-page-form,.h18-page-poll{max-width:760px;margin-inline:auto;text-align:left}.h18-page-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.h18-page-form-field{display:flex;flex-direction:column;gap:6px}.h18-page-form-field--wide{grid-column:1/-1}.h18-page-form input,.h18-page-form textarea{box-sizing:border-box;width:100%;padding:11px;border:1px solid #8c8f94;border-radius:4px}.h18-page-form input[type=checkbox]{width:auto;padding:0}.h18-page-form button,.h18-page-poll button{min-height:44px;padding:10px 20px;border:0;border-radius:5px;background:#c3ae83;color:#20261d;font-weight:700;cursor:pointer}' .
             '.h18-module-message{padding:12px 14px;margin-bottom:16px;border-left:4px solid #2271b1;background:#f0f6fc}.h18-module-message--success{border-color:#2e7d32;background:#edf7ed}.h18-module-message--error{border-color:#b32d2e;background:#fcf0f1}' .
             '.h18-poll-options{display:grid;gap:10px;margin:18px 0}.h18-poll-option{display:flex;align-items:center;gap:9px}.h18-poll-results{display:grid;gap:10px;margin-top:20px}.h18-poll-result-bar{height:10px;background:#dcdcde;border-radius:99px;overflow:hidden}.h18-poll-result-bar span{display:block;height:100%;background:#c3ae83}' .
@@ -7992,14 +8055,15 @@ HTML;
             '.h18-editor-spacer{height:var(--h18-spacer,32px)}' .
             ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section){box-sizing:border-box;width:var(--h18-element-width,100%);max-width:var(--h18-element-max-width,none);min-height:var(--h18-element-min-height,0);margin-left:auto;margin-right:auto;background-color:var(--h18-section-bg)!important;background-image:var(--h18-section-bg-image,none);background-position:var(--h18-section-bg-position,center);background-size:var(--h18-section-bg-size,cover);background-repeat:no-repeat;color:var(--h18-section-text)!important;border:var(--h18-section-border-width,0) solid var(--h18-section-border,transparent);border-radius:var(--h18-radius-tl,var(--h18-radius,0)) var(--h18-radius-tr,var(--h18-radius,0)) var(--h18-radius-br,var(--h18-radius,0)) var(--h18-radius-bl,var(--h18-radius,0));box-shadow:var(--h18-section-shadow,none);opacity:var(--h18-section-opacity,1);font-family:var(--h18-section-body-font);font-size:var(--h18-section-body-size);transform:translate(var(--h18-transform-x,0px),var(--h18-transform-y,0px)) translateY(var(--h18-hover-y,0px)) scale(var(--h18-transform-scale,1)) scale(var(--h18-hover-scale,1)) rotate(var(--h18-transform-rotate,0deg));transition:transform var(--h18-hover-transition,220ms) ease,box-shadow var(--h18-hover-transition,220ms) ease,opacity var(--h18-hover-transition,220ms) ease,background-color var(--h18-hover-transition,220ms) ease,color var(--h18-hover-transition,220ms) ease,border-color var(--h18-hover-transition,220ms) ease}' .
             '@media(hover:hover){:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover{--h18-hover-y:var(--h18-hover-active-y,0px);--h18-hover-scale:var(--h18-hover-active-scale,1);background-color:var(--h18-hover-bg,var(--h18-section-bg))!important;background-image:var(--h18-hover-bg-image,var(--h18-section-bg-image,none));color:var(--h18-hover-text,var(--h18-section-text))!important;border-color:var(--h18-hover-border,var(--h18-section-border,transparent));opacity:var(--h18-hover-opacity,var(--h18-section-opacity,1));box-shadow:var(--h18-hover-shadow,var(--h18-section-shadow,none))}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover h1,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover h2,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover h3{color:var(--h18-hover-heading,var(--h18-section-heading))!important}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover .h18-editor-grid-card h3{color:inherit!important}body.page .h18-editor-page .h18-hover-style-custom:hover{background-image:none!important}}' .
+            '.h18-editor-section :is(a,button,input,select,textarea,[tabindex]):focus-visible{outline:var(--h18-focus-width,var(--h18-focus-ring-width,3px)) solid var(--h18-focus-color,var(--h18-focus-ring,#8b4a2b));outline-offset:var(--h18-focus-offset,2px);transition:outline-color var(--h18-state-transition,var(--h18-motion-normal,220ms)) ease,box-shadow var(--h18-state-transition,var(--h18-motion-normal,220ms)) ease}.h18-editor-section.h18-active-effect-press :is(a,button,[role=button]):active{transform:translateY(1px)}.h18-editor-section.h18-active-effect-scale :is(a,button,[role=button]):active{transform:scale(.97)}.h18-editor-section :is(button,input,select,textarea):disabled,.h18-editor-section [aria-disabled=true]{opacity:var(--h18-disabled-opacity,.55);cursor:not-allowed}.h18-editor-section :is(a,button,[role=button]){transition-duration:var(--h18-state-transition,var(--h18-motion-normal,220ms))}' .
             '@media(prefers-reduced-motion:reduce){:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section){transition:none!important}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section):hover{--h18-hover-y:0px;--h18-hover-scale:1}}' .
-            '@media(min-width:1200px){body.page .h18-editor-page .h18-hide-desktop{display:none!important}}' .
-            '@media(min-width:783px) and (max-width:1199px){body.page .h18-editor-page .h18-hide-tablet{display:none!important}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section){margin-top:var(--h18-tablet-top,var(--h18-top,0));margin-bottom:var(--h18-tablet-bottom,var(--h18-bottom,24px));padding:var(--h18-tablet-pad,var(--h18-pad,0)) var(--h18-tablet-pad-x,var(--h18-pad-x,var(--h18-pad,0)));text-align:var(--h18-tablet-align,var(--h18-align,left));width:var(--h18-tablet-element-width,var(--h18-element-width,100%));min-height:var(--h18-tablet-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-tablet-transform-x);--h18-transform-y:var(--h18-tablet-transform-y);--h18-transform-scale:var(--h18-tablet-transform-scale);--h18-transform-rotate:var(--h18-tablet-transform-rotate)}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-left,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-center,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-right{ text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-group>.h18-editor-section{text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-composite .h18-editor-actions,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .h18-editor-actions{justify-content:var(--h18-tablet-justify,var(--h18-justify,flex-start))!important}}' .
+            '@media(min-width:' . $desktop_min . 'px){body.page .h18-editor-page .h18-hide-desktop{display:none!important}}' .
+            '@media(min-width:' . $tablet_min . 'px) and (max-width:' . $tablet_breakpoint . 'px){body.page .h18-editor-page .h18-hide-tablet{display:none!important}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section){margin-top:var(--h18-tablet-top,var(--h18-top,0));margin-bottom:var(--h18-tablet-bottom,var(--h18-bottom,24px));padding:var(--h18-tablet-pad,var(--h18-pad,0)) var(--h18-tablet-pad-x,var(--h18-pad-x,var(--h18-pad,0)));text-align:var(--h18-tablet-align,var(--h18-align,left));width:var(--h18-tablet-element-width,var(--h18-element-width,100%));min-height:var(--h18-tablet-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-tablet-transform-x);--h18-transform-y:var(--h18-tablet-transform-y);--h18-transform-scale:var(--h18-tablet-transform-scale);--h18-transform-rotate:var(--h18-tablet-transform-rotate)}:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-left,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-center,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .has-text-align-right{ text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-group>.h18-editor-section{text-align:var(--h18-tablet-align,var(--h18-align,left))!important}body.page .h18-editor-page>.h18-imported-composite .h18-editor-actions,:is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .h18-editor-actions{justify-content:var(--h18-tablet-justify,var(--h18-justify,flex-start))!important}}' .
             ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) h1{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h1-size)}' .
             ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) h2{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h2-size)}' .
             ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) h3{color:var(--h18-section-heading)!important;font-family:var(--h18-section-heading-font);font-size:var(--h18-section-h3-size)}' .
             ':is(body.page .h18-editor-page>.h18-editor-section,body.page .h18-editor-page .h18-layout-children>.h18-editor-section) .h18-editor-grid-card h3{color:inherit!important}' .
-            '@media(max-width:782px){body.page .h18-editor-page .h18-hide-mobile{display:none!important}.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center);width:var(--h18-mobile-element-width,var(--h18-element-width,100%));min-height:var(--h18-mobile-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-mobile-transform-x);--h18-transform-y:var(--h18-mobile-transform-y);--h18-transform-scale:var(--h18-mobile-transform-scale);--h18-transform-rotate:var(--h18-mobile-transform-rotate)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-editor-media img,.h18-editor-image img{width:var(--h18-mobile-image-width,var(--h18-image-width,100%));height:var(--h18-mobile-image-height,var(--h18-image-height,auto))}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
+            '@media(max-width:' . $mobile_breakpoint . 'px){body.page .h18-editor-page .h18-hide-mobile{display:none!important}.h18-editor-section{margin-top:var(--h18-mobile-top,0);margin-bottom:var(--h18-mobile-bottom,18px);padding:var(--h18-mobile-pad,0) var(--h18-mobile-pad-x,var(--h18-mobile-pad,0));text-align:var(--h18-mobile-align,center);width:var(--h18-mobile-element-width,var(--h18-element-width,100%));min-height:var(--h18-mobile-element-min-height,var(--h18-element-min-height,0));--h18-transform-x:var(--h18-mobile-transform-x);--h18-transform-y:var(--h18-mobile-transform-y);--h18-transform-scale:var(--h18-mobile-transform-scale);--h18-transform-rotate:var(--h18-mobile-transform-rotate)}.h18-editor-section .has-text-align-left,.h18-editor-section .has-text-align-center,.h18-editor-section .has-text-align-right{ text-align:var(--h18-mobile-align,center)!important}.h18-imported-group>.h18-editor-section{text-align:var(--h18-mobile-align,center)!important}.h18-imported-composite .h18-editor-actions{justify-content:var(--h18-mobile-justify,center)!important}.h18-editor-text-image{grid-template-columns:1fr}.h18-editor-text-image .h18-editor-media{order:-1}.h18-editor-media img,.h18-editor-image img{width:var(--h18-mobile-image-width,var(--h18-image-width,100%));height:var(--h18-mobile-image-height,var(--h18-image-height,auto))}.h18-page-form-grid{grid-template-columns:1fr}.h18-editor-actions{justify-content:var(--h18-mobile-justify,center)}.h18-editor-spacer{height:var(--h18-mobile-spacer,24px)}.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)}.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr));gap:var(--h18-mobile-grid-gap,14px)}.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px);text-align:var(--h18-card-mobile-align,left)}.h18-editor-page .wp-block-columns{flex-direction:column}}' .
             '</style>';
     }
 
@@ -8821,6 +8885,19 @@ HTML;
                                         <div class="h18-field"><label><strong>Opacity (%)</strong></label><input type="number" min="0" max="100" name="<?php echo esc_attr($prefix); ?>[HoverOpacityPercent]" value="<?php echo esc_attr($section['HoverOpacityPercent']); ?>" /></div>
                                     </div>
                                 </div>
+                                <div class="h18-interaction-state-box">
+                                    <h4>Interaktions-states</h4>
+                                    <p class="description">Focus, Active og Disabled gælder interaktive kontroller inde i dette element. Standarderne arver det globale designsystem.</p>
+                                    <div class="h18-module-fields-grid h18-module-fields-grid--four">
+                                        <div class="h18-field"><label><strong>Transition</strong></label><select name="<?php echo esc_attr($prefix); ?>[TransitionPreset]"><option value="Inherit" <?php selected($section['TransitionPreset'],'Inherit'); ?>>Global Normal</option><option value="Fast" <?php selected($section['TransitionPreset'],'Fast'); ?>>Fast</option><option value="Normal" <?php selected($section['TransitionPreset'],'Normal'); ?>>Normal</option><option value="Slow" <?php selected($section['TransitionPreset'],'Slow'); ?>>Slow</option><option value="Custom" <?php selected($section['TransitionPreset'],'Custom'); ?>>Brug Hover-transition</option></select></div>
+                                        <div class="h18-field"><label><strong>Focus ring</strong></label><select name="<?php echo esc_attr($prefix); ?>[FocusRingStyle]"><option value="Global" <?php selected($section['FocusRingStyle'],'Global'); ?>>Global</option><option value="Custom" <?php selected($section['FocusRingStyle'],'Custom'); ?>>Tilpasset</option><option value="None" <?php selected($section['FocusRingStyle'],'None'); ?>>Ingen</option></select></div>
+                                        <div class="h18-field"><label><strong>Focus farve</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[FocusRingColor]" value="<?php echo esc_attr($section['FocusRingColor']); ?>" /></div>
+                                        <div class="h18-field"><label><strong>Focus bredde (px)</strong></label><input type="number" min="1" max="8" name="<?php echo esc_attr($prefix); ?>[FocusRingWidthPx]" value="<?php echo esc_attr($section['FocusRingWidthPx']); ?>" /></div>
+                                        <div class="h18-field"><label><strong>Focus offset (px)</strong></label><input type="number" min="0" max="12" name="<?php echo esc_attr($prefix); ?>[FocusRingOffsetPx]" value="<?php echo esc_attr($section['FocusRingOffsetPx']); ?>" /></div>
+                                        <div class="h18-field"><label><strong>Active-effekt</strong></label><select name="<?php echo esc_attr($prefix); ?>[ActiveEffect]"><option value="None" <?php selected($section['ActiveEffect'],'None'); ?>>Ingen</option><option value="Press" <?php selected($section['ActiveEffect'],'Press'); ?>>Tryk 1 px</option><option value="ScaleDown" <?php selected($section['ActiveEffect'],'ScaleDown'); ?>>Scale 97%</option></select></div>
+                                        <div class="h18-field"><label><strong>Disabled opacity (%)</strong></label><input type="number" min="10" max="100" name="<?php echo esc_attr($prefix); ?>[DisabledOpacityPercent]" value="<?php echo esc_attr($section['DisabledOpacityPercent']); ?>" /></div>
+                                    </div>
+                                </div>
                                 <div class="h18-bg-gradient-fields h18-module-fields-grid h18-module-fields-grid--four">
                                     <div class="h18-field"><label><strong>Gradient start</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[GradientStartColor]" value="<?php echo esc_attr($section['GradientStartColor']); ?>" /></div>
                                     <div class="h18-field"><label><strong>Gradient slut</strong></label><input type="color" name="<?php echo esc_attr($prefix); ?>[GradientEndColor]" value="<?php echo esc_attr($section['GradientEndColor']); ?>" /></div>
@@ -9377,7 +9454,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.15',
+                    'Version' => '1.16',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -9496,7 +9573,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.15',
+            'Version'        => '1.16',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -9526,7 +9603,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.15',
+                'Version' => '1.16',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];
@@ -11584,7 +11661,7 @@ HTML;
     private function header_design_from_post() {
         return $this->normalize_header_design([
             'Version'                           => '2.3',
-            'DesignerSchemaVersion'             => '1.0',
+            'DesignerSchemaVersion'             => '1.1',
             'PrimaryColor'                      => $this->post_text('PrimaryColor'),
             'SecondaryColor'                    => $this->post_text('SecondaryColor'),
             'AccentColor'                       => $this->post_text('AccentColor'),
@@ -11607,6 +11684,13 @@ HTML;
             'SpacingMediumPx'                   => $_POST['SpacingMediumPx'] ?? 16,
             'SpacingLargePx'                    => $_POST['SpacingLargePx'] ?? 24,
             'SpacingXlPx'                       => $_POST['SpacingXlPx'] ?? 40,
+            'BreakpointMobileMaxPx'             => $_POST['BreakpointMobileMaxPx'] ?? 782,
+            'BreakpointTabletMaxPx'             => $_POST['BreakpointTabletMaxPx'] ?? 1199,
+            'MotionFastMs'                      => $_POST['MotionFastMs'] ?? 120,
+            'MotionNormalMs'                    => $_POST['MotionNormalMs'] ?? 220,
+            'MotionSlowMs'                      => $_POST['MotionSlowMs'] ?? 420,
+            'FocusRingColor'                    => $this->post_text('FocusRingColor'),
+            'FocusRingWidthPx'                  => $_POST['FocusRingWidthPx'] ?? 3,
             'MenuPresentation'                  => $this->post_text('MenuPresentation'),
             'MenuHoverEffect'                   => $this->post_text('MenuHoverEffect'),
             'MenuActiveStyle'                   => $this->post_text('MenuActiveStyle'),
@@ -11833,6 +11917,25 @@ HTML;
                         $this->field('RadiusSmallPx', 'Afrunding S (px)', $s['RadiusSmallPx'], 'number');
                         $this->field('RadiusMediumPx', 'Afrunding M (px)', $s['RadiusMediumPx'], 'number');
                         $this->field('RadiusLargePx', 'Afrunding L (px)', $s['RadiusLargePx'], 'number');
+                        ?>
+                    </section>
+                    <section class="h18-panel">
+                        <h3>Responsive breakpoints</h3>
+                        <p class="description">Globale breakpoints for sidebyggerens Desktop/Tablet/Mobil. Standard 782/1199 bevarer det nuværende layout.</p>
+                        <?php
+                        $this->field('BreakpointMobileMaxPx', 'Mobil maks. bredde (px)', $s['BreakpointMobileMaxPx'], 'number');
+                        $this->field('BreakpointTabletMaxPx', 'Tablet maks. bredde (px)', $s['BreakpointTabletMaxPx'], 'number');
+                        ?>
+                    </section>
+                    <section class="h18-panel">
+                        <h3>Motion og fokus</h3>
+                        <p class="description">Globale tokens for transitioner og keyboard-fokus. Reduced Motion respekteres fortsat.</p>
+                        <?php
+                        $this->field('MotionFastMs', 'Motion Fast (ms)', $s['MotionFastMs'], 'number');
+                        $this->field('MotionNormalMs', 'Motion Normal (ms)', $s['MotionNormalMs'], 'number');
+                        $this->field('MotionSlowMs', 'Motion Slow (ms)', $s['MotionSlowMs'], 'number');
+                        $this->field('FocusRingColor', 'Global fokusfarve', $s['FocusRingColor'], 'color');
+                        $this->field('FocusRingWidthPx', 'Global fokusbredde (px)', $s['FocusRingWidthPx'], 'number');
                         ?>
                     </section>
                     <section class="h18-panel">

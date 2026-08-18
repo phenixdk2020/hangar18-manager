@@ -1,8 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.5.19
+Version: 0.5.20
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.20 – E3 Design System completion ==
+
+Nyt:
+- globale redigerbare builder-breakpoints med standard 782 px mobil og 1199 px tablet, så eksisterende sider bevarer nuværende responsive adfærd
+- globale motion-tokens: Fast, Normal og Slow samt global focus-ring farve og bredde
+- elementer kan vælge Transition: Global, Fast, Normal, Slow eller eksisterende Custom hover-transition
+- Focus-state med global, tilpasset eller ingen focus ring samt farve, bredde og offset
+- Active-state med Ingen, Tryk 1 px eller Scale 97% for interaktive descendants
+- Disabled-state med justerbar opacity for disabled/aria-disabled kontroller
+- live canvas og kommandopalette kan nu vise Normal, Hover, Focus, Aktiv og Disabled
+- page-editor media queries bruger de globale breakpoints uden at ændre headerens eksisterende responsive legacy-regler
+- prefers-reduced-motion bevares; motion-tokens ændrer ikke brugerens reducerede motion-præference
+- DesignerSchemaVersion løftes kompatibelt til 1.1 og page-editor schema til 1.16
 
 == Version 0.5.19 – Section/Container/Flex/Grid layout foundation ==
 

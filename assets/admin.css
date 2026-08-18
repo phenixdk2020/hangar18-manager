@@ -732,3 +732,6 @@ body.h18-command-palette-visible{overflow:hidden}
 .h18-layout-parent-box{border-color:#b9d7ed;background:#f7fbfe}.h18-canvas-layout-shell{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:12px;border:2px dashed rgba(34,113,177,.35);border-radius:6px;background:rgba(240,246,252,.58)}.h18-canvas-layout-shell small{color:#50575e}
 @media(max-width:900px){.h18-page-section-row.h18-layout-child-row{margin-left:14px;width:calc(100% - 14px)}}
 
+/* v0.5.20 – design-system states */
+.h18-interaction-state-box{margin-top:14px;padding-top:12px;border-top:1px solid #dcdcde}.h18-interaction-state-box h4{margin:0 0 6px}.h18-page-preview-toolbar .h18-preview-state{white-space:nowrap}
+
