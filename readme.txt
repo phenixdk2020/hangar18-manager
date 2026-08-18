@@ -1,7 +1,16 @@
 === Hangar18 Manager ===
-Version: 0.6.0
+Version: 0.6.1
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.6.1 – Inspector layout hotfix ==
+
+Rettet:
+- Sider-editorens Inspector-faner og settings kan ikke længere overlappe hinanden i den smalle højre sidebar.
+- Inspector-fanerne bruger et responsivt wrapping grid med tydelig afstand til indstillingerne nedenunder.
+- Inputs, selects og tekstfelter holdes inden for Inspector-panelets bredde.
+- Vehicle/Event/Gallery runtime, data, markup og CSS hooks er uændret.
 
 
 == Version 0.6.0 – Architecture Foundation, UD-060 og større sideeditor ==
