@@ -4338,11 +4338,10 @@ jQuery(function ($) {
     const $pageWhatIf = $pageEditorForm.find('[name="whatif"]');
 
     function syncPageChangeNoteRequirement() {
-        if (!$pageChangeNote.length) {
-            return;
-        }
-        const required = !$pageWhatIf.is(':checked');
-        $pageChangeNote.prop('required', required).attr('aria-required', required ? 'true' : 'false');
+        if (!$pageChangeNote.length) { return; }
+        $pageChangeNote.prop('required', false).removeAttr('required').attr('aria-required', 'false').each(function () {
+            if (typeof this.setCustomValidity === 'function') { this.setCustomValidity(''); }
+        });
     }
 
     if ($pageEditorForm.length) {

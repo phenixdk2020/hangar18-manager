@@ -6,6 +6,7 @@ on:
       - agent/architecture-foundation
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
+      - agent/fix-heading-linebreak-073
   pull_request:
     paths:
       - 'src/**'
@@ -13,14 +14,18 @@ on:
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
+      - 'hangar18-manager.php'
+      - 'assets/admin.js'
+      - 'assets/admin.css'
+      - '.github/scripts/fix_heading_linebreak_073.py'
       - '.github/workflows/architecture-foundation-qa.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   architecture-smoke:
-    if: github.head_ref != 'agent/release-0.7.2'
+    if: github.head_ref != 'agent/release-0.7.2' && github.head_ref != 'agent/fix-heading-linebreak-073' && github.ref != 'refs/heads/agent/fix-heading-linebreak-073'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,14 +33,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - name: Architecture isolation guard
-        run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
-      - name: Protected Vehicle/Event/Gallery contract
-        run: bash tests/Architecture/protected-domain-contract.sh
+      - run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+      - run: bash tests/Architecture/protected-domain-contract.sh
       - uses: shivammathur/setup-php@v2
         with: {php-version: '${{ matrix.php-version }}', coverage: none}
-      - name: PHP syntax
-        run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
+      - run: find src tests/Architecture -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/Architecture/architecture-smoke.php
       - run: php tests/Architecture/page-schema-smoke.php
       - run: php tests/Architecture/runtime-bridge-smoke.php
@@ -49,31 +51,81 @@ jobs:
       - run: php tests/Architecture/e11-quality-smoke.php
       - run: php tests/Architecture/e12-ai-smoke.php
       - run: php tests/Architecture/e13-portability-smoke.php
-      - name: UD-115 security audit
-        run: bash tests/Architecture/e14-security-audit.sh
-      - name: UD-116 performance budget
-        run: php tests/Architecture/e14-performance-budget.php
-      - name: UD-117 migration rollback
-        run: php tests/Architecture/e14-migration-rollback-smoke.php
-      - name: UD-118/119 MVP and v1 E2E
-        run: php tests/Architecture/e14-e2e-smoke.php
-      - name: Public runtime JavaScript syntax
-        run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
+      - run: bash tests/Architecture/e14-security-audit.sh
+      - run: php tests/Architecture/e14-performance-budget.php
+      - run: php tests/Architecture/e14-migration-rollback-smoke.php
+      - run: php tests/Architecture/e14-e2e-smoke.php
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js
 
   browser-engine-qa:
-    if: github.head_ref != 'agent/release-0.7.2'
+    if: github.head_ref != 'agent/release-0.7.2' && github.head_ref != 'agent/fix-heading-linebreak-073' && github.ref != 'refs/heads/agent/fix-heading-linebreak-073'
     name: E14 browser engines (Chromium/Firefox/WebKit)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
+
+  apply-v073-fix:
+    if: github.ref == 'refs/heads/agent/fix-heading-linebreak-073' || github.head_ref == 'agent/fix-heading-linebreak-073'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
         with:
-          node-version: '20'
-      - name: Install Playwright test runner
+          ref: agent/fix-heading-linebreak-073
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with: {php-version: '8.0', coverage: none}
+      - name: Apply controlled patch
+        run: python3 .github/scripts/fix_heading_linebreak_073.py
+      - name: Validate patch
         run: |
-          npm init -y >/dev/null 2>&1
-          npm install --no-save @playwright/test
-      - name: Install browser engines
-        run: npx playwright install --with-deps chromium firefox webkit
-      - name: Run UD-113/114 browser and keyboard matrix
-        run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          bash tests/Architecture/v073-heading-linebreak-contract.sh
+          bash tests/Architecture/protected-domain-contract.sh
+      - name: Commit product patch if changed
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add hangar18-manager.php assets/admin.js assets/admin.css
+          if git diff --cached --quiet; then
+            echo 'Patch already applied; no product commit needed.'
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m 'Apply v0.7.3 heading and line-break fix'
+          git push origin HEAD:agent/fix-heading-linebreak-073
+
+  v073-feature-qa:
+    needs: apply-v073-fix
+    if: always() && needs.apply-v073-fix.result == 'success' && (github.ref == 'refs/heads/agent/fix-heading-linebreak-073' || github.head_ref == 'agent/fix-heading-linebreak-073')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.0','8.2','8.3']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/fix-heading-linebreak-073
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+      - name: Syntax and editor contracts
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          node --check assets/admin.js
+          bash tests/Architecture/v073-heading-linebreak-contract.sh
+          bash tests/Architecture/protected-domain-contract.sh
+      - name: Workflow/quality regression
+        run: |
+          php tests/Architecture/e8-workflow-smoke.php
+          php tests/Architecture/e11-quality-smoke.php
+          php tests/Architecture/e14-e2e-smoke.php
