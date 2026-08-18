@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  release-v0522-r3:
+  release-v0522-r4:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,5 +20,5 @@ jobs:
           fetch-depth: 0
       - name: Point candidate runner at this QA branch
         run: sed -i "s#BRANCH='qa/v0.5.22-release'#BRANCH='qa/v0.5.22-release-r2'#" .github/scripts/release_v0522.py
-      - name: Build validated v0.5.22 candidate
+      - name: Build validated v0.5.22 candidate r4
         run: python3 .github/scripts/release_v0522.py
