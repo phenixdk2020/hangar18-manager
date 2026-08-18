@@ -18,5 +18,5 @@ jobs:
         with:
           ref: qa/v0.5.21-release
           fetch-depth: 0
-      - name: Release candidate r2
+      - name: Release candidate r3
         run: python3 .github/scripts/release_v0521.py
