@@ -15,7 +15,8 @@ for controller in \
   src/Admin/SideHealthAdminController.php \
   src/Admin/AssetManagerAdminController.php \
   src/Admin/PortabilityAdminController.php \
-  src/Admin/PermissionsAdminController.php; do
+  src/Admin/PermissionsAdminController.php \
+  src/Admin/AiAdminController.php; do
   if grep -E "$frontend_hook_pattern" "$controller" >/dev/null; then echo "FAIL: admin controller registers frontend/runtime hook: $controller"; exit 1; fi
 done
 
@@ -26,16 +27,18 @@ grep -F 'Side Health' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'Asset Manager' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'Portability Workspace' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'Design Lock' src/Admin/IntegrationAdminBootstrap.php >/dev/null
-grep -F "backlogRow('I6','Færdig'" src/Admin/IntegrationAdminBootstrap.php >/dev/null
-grep -F "backlogRow('I7','Aktiv'" src/Admin/IntegrationAdminBootstrap.php >/dev/null
+grep -F 'AI forslag' src/Admin/IntegrationAdminBootstrap.php >/dev/null
+grep -F "backlogRow('I7','Færdig'" src/Admin/IntegrationAdminBootstrap.php >/dev/null
+grep -F "backlogRow('I8','Aktiv'" src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'wp_ajax_h18_ud_side_health' src/Admin/SideHealthAdminController.php >/dev/null
 grep -F 'wp_ajax_h18_ud_asset_duplicates' src/Admin/AssetManagerAdminController.php >/dev/null
 grep -F 'wp_ajax_h18_ud_plan_artifact_import' src/Admin/PortabilityAdminController.php >/dev/null
 grep -F 'PermissionsAdminController::register();' src/Admin/IntegrationAdminBootstrap.php >/dev/null
+grep -F 'AiAdminController::register();' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'v0.7.4 – Ultimate Designer integration dashboard' assets/admin.css >/dev/null
 
-if grep -RInE 'ultimate-designer-(admin|menu-admin|menu-pages|side-health|asset-admin|portability|permissions)\.(js|css)' src --include='*.php' | grep -vE '^src/Admin/' >/dev/null; then
+if grep -RInE 'ultimate-designer-(admin|menu-admin|menu-pages|side-health|asset-admin|portability|permissions|ai)\.(js|css)' src --include='*.php' | grep -vE '^src/Admin/' >/dev/null; then
   echo 'FAIL: Ultimate Designer admin asset referenced outside Admin namespace'; exit 1
 fi
 
-echo 'Ultimate Designer integration admin safety contract I1-I7: PASS'
+echo 'Ultimate Designer integration admin safety contract I1-I8: PASS'
