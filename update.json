@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T12:12:01Z",
+  "published_utc": "2026-08-18T12:20:54Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "1caeee6451bae9d16593e91e27901683c720f5b95f13ea8bd1a521f9cb584929",
+  "package_sha256": "09e41972de071d9f24d7f1f252bab1fe8000b5d2cc2af23ece29120a96b42430",
   "changelog": [
-    "E11 Accessibility/Responsive/Design/SEO/Performance analyzers med elementreferencer.",
-    "SEO metadata model og exactly-one-H1/canonical/index/social checks.",
-    "Side Health samler Design, Mobile, Accessibility, Performance og SEO score.",
-    "HardFailures vises eksplicit og analyzer-laget omskriver aldrig indhold automatisk.",
-    "Vehicle/Event/Gallery og eksisterende sider konverteres ikke."
+    "E12 provider-neutral AI suggestion layer uden direkte write-adgang.",
+    "AI tekstforslag kræver eksplicit accept og indeholder reversible Apply/Undo-data.",
+    "Prompt-to-layout skal bestå Page Schema-validering før preview/insert.",
+    "AI design/accessibility forslag er bundet til konkrete element/property-referencer og kan afvises.",
+    "Dedikeret hangar18_use_ai capability; ingen provider/API credentials er konfigureret."
   ]
 }

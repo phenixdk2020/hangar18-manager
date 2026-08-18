@@ -1,7 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.6.7
+Version: 0.6.8
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.6.8 – E12 AI suggestion layer ==
+
+Nyt:
+- Provider-neutral AI integration point uden repository/write-adgang.
+- AI tekstforslag ændrer aldrig content uden eksplicit accept og indeholder reversible Apply/Undo-data.
+- Prompt-to-layout kandidat skal bestå den normale Page Schema-validering før preview/insert.
+- AI design review må kun foreslå ændringer på eksisterende element/property-referencer.
+- AI accessibility-forslag begrænses til konkrete alt/label-fund og kan afvises individuelt.
+- Dedikeret hangar18_use_ai capability; ingen provider/API credentials konfigureres i denne release.
+- PHP 8.0/8.2/8.3 QA og Vehicle/Event/Gallery-kontrakten er grøn.
 
 
 == Version 0.6.7 – E11 Side Health ==
