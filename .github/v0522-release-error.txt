@@ -1,0 +1,6 @@
+RuntimeError: command failed: python3 .github/scripts/patch_v0522.py
+stdout:
+
+stderr:
+clear nested variant: expected 1 anchor, found 2
+
