@@ -1,7 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.7.2
+Version: 0.7.3
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.3 – Valgfri overskrift og linjeskift ==
+
+Rettet:
+- Overskrift på almindelige sideelementer er eksplicit valgfri; elementet kan bestå af ren tekst uden overskrift.
+- Afstemning beholder sin semantiske Spørgsmål-overskrift.
+- Enter i tekstfeltet bevares som synligt linjeskift i canvas-preview; tom linje giver nyt afsnit på frontend via wpautop.
+- Den ældre WhatIf-baserede JavaScript-regel kan ikke længere gøre Gem-kommentaren required igen.
+- Egen Gem-kommentar forbliver valgfri og automatisk ændringsresumé bruges som standard.
+- PHP 8.0/8.2/8.3 QA, workflow/quality E2E og Vehicle/Event/Gallery-kontrakten er grøn.
 
 
 == Version 0.7.2 – Gem og Typografi rettet ==
