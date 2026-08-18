@@ -1,0 +1,6 @@
+RuntimeError: command failed: python3 .github/scripts/prepare_v0521.py
+stdout:
+
+stderr:
+Component-data template patch-definition anchor missing
+
