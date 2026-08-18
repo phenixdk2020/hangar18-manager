@@ -1,7 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.6.3
+Version: 0.6.4
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.6.4 – Gem-toolbar og E8 Workflow ==
+
+Nyt og rettet:
+- Tydelig Gem-knap i toppen af sideeditoren samt Ctrl/Cmd+S.
+- Save-status viser Gemt, Ikke gemt, Gemmer eller valideringsfejl, og browseren advarer ved ugemte ændringer.
+- E8 Workflow core: autosave snapshots uden revisionsspam og permanente revisioner med bruger, tidspunkt, note og state hash.
+- Restore opretter en ny revision i stedet for at overskrive historikken.
+- Structured revision diff for added/removed/moved/property changes.
+- Expiring/revocable HMAC-signerede preview tokens for desktop/tablet/mobile working-state preview.
+- Working/public staging model med atomisk publish og pre-publish backup.
+- PHP 8.0/8.2/8.3 QA er grøn; Vehicle/Event/Gallery legacy-runtime er uændret.
 
 
 == Version 0.6.1 – Inspector layout hotfix ==
