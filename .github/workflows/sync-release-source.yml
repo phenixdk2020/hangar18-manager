@@ -11,19 +11,21 @@ permissions:
   contents: write
 
 jobs:
-  source-v0524:
+  source-v0524-r2:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: qa/v0.5.24-source
           fetch-depth: 0
-      - name: Run source QA and persist result
+      - name: Run source QA r2 and persist result
         shell: bash
         run: |
           set +e
-          LOG=.github/v0524-source-qa.txt
+          LOG=.github/v0524-source-qa-r2.txt
           : > "$LOG"
+          python3 .github/scripts/prepare_v0524.py >> "$LOG" 2>&1
+          echo "prepare_status=$?" >> "$LOG"
           python3 .github/scripts/patch_v0524.py >> "$LOG" 2>&1
           echo "patch_status=$?" >> "$LOG"
           php -l hangar18-manager.php >> "$LOG" 2>&1
@@ -35,5 +37,5 @@ jobs:
           git config user.name hangar18-build
           git config user.email actions@users.noreply.github.com
           git add "$LOG"
-          git commit -m 'QA: record v0.5.24 source validation'
+          git commit -m 'QA: record v0.5.24 source validation r2'
           git push origin HEAD:qa/v0.5.24-source
