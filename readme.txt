@@ -1,7 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.7.3
+Version: 0.7.4
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.7.4 – Ultimate Designer integration dashboard ==
+
+Nyt:
+- Den namespacede Ultimate Designer-arkitektur autoloades nu fra pluginet i admin-kontekst.
+- Ny Hangar18 Manager → Ultimate Designer-side viser Site Builder templates/menuer, assets, permissions og QA-status.
+- I1–I10 integrationsbackloggen er synlig og dokumenteret.
+- Manual/live release gates vises separat fra automated QA.
+- Integrationen er admin-only: ingen frontend-renderer, side, URL eller Vehicle/Event/Gallery-domain skiftes.
+- PHP 8.0/8.2/8.3 integration QA og protected-domain regression er grøn.
 
 
 == Version 0.7.3 – Valgfri overskrift og linjeskift ==
