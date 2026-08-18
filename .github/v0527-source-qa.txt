@@ -1,0 +1,13 @@
+context condition preview refresh: expected 1 anchor, found 0
+patch_status=1
+v0.5.27 canvas condition preview hook hardened
+harden_status=0
+No syntax errors detected in hangar18-manager.php
+php_status=0
+js_status=0
+Traceback (most recent call last):
+  File "/home/runner/work/hangar18-manager/hangar18-manager/.github/scripts/qa_v0527.py", line 17, in <module>
+    'condition before binding':php.index('!$this->evaluate_page_conditions($section, $this->active_dynamic_data_context)') < php.index('$section = $this->apply_dynamic_bindings_to_section($section, $this->active_dynamic_data_context)', php.index('private function render_page_editor_section_front')),
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: substring not found
+qa_status=1
