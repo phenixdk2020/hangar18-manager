@@ -10,7 +10,6 @@ def once(text, old, new, label):
 php_path=Path('hangar18-manager.php'); js_path=Path('assets/admin.js')
 php=php_path.read_text(); js=js_path.read_text()
 
-# Preserve local override identity for components already in use: an update may not silently replace exposed input IDs.
 old="""            $revision = $existing ? ((int) $existing['Revision'] + 1) : 1;
             $entry = [
 """
@@ -30,7 +29,6 @@ new="""            if ($existing) {
 """
 php=once(php,old,new,'component input identity guard')
 
-# Mark canvas row as locked while navigator is rebuilt.
 old="""            const locked = String(pageSectionControls($row, '.h18-section-navigator-locked').val() || '0') === '1';
             const selected = $inspectedSection.length && $inspectedSection.get(0) === $row.get(0);
 """
@@ -40,7 +38,6 @@ new="""            const locked = String(pageSectionControls($row, '.h18-section
 """
 js=once(js,old,new,'locked row class')
 
-# Locked section cannot be deleted.
 old="""    $(document).on('click', '.h18-page-section-delete', function (event) {
         event.preventDefault();
         const $row = $(this).closest('.h18-page-section-row');
@@ -54,7 +51,6 @@ new="""    $(document).on('click', '.h18-page-section-delete', function (event) 
 """
 js=once(js,old,new,'locked delete')
 
-# Locked section cannot change element type.
 old="""    $(document).on('change', '.h18-page-section-type', function () {
         const $row = pageSectionForElement(this);
         const type = String($(this).val() || 'text');
@@ -71,7 +67,6 @@ new="""    $(document).on('change', '.h18-page-section-type', function () {
 """
 js=once(js,old,new,'locked type change')
 
-# Linked component save must reject any legacy/component node anywhere in subtree, not only root.
 old="""        const sections = componentSubtreeDataV0521($inspectedSection);
         if (!sections.length) { return; }
         const existing = componentId ? pageLinkedComponents[String(componentId)] : null;
@@ -87,7 +82,6 @@ new="""        const subtreeRows = componentSubtreeRowsV0521($inspectedSection);
 """
 js=once(js,old,new,'nested component subtree guard')
 
-# Context menu follows lock state for all structural actions.
 old="""    function contextMenuItemsV0515($row) {
         const type = String($row.attr('data-section-type') || 'text');
         const active = pageSectionControls($row, '.h18-section-active').is(':checked');
@@ -104,7 +98,7 @@ new="""    function contextMenuItemsV0515($row) {
 js=once(js,old,new,'context lock prelude')
 repls={
 "{ action: 'duplicate', label: 'Duplikér element', disabled: type === 'legacy' },":"{ action: 'duplicate', label: 'Duplikér element', disabled: type === 'legacy' || lockedV0521 },",
-"{ action: 'component', label: 'Gem som komponent', disabled: type === 'legacy' },":"{ action: 'component', label: 'Gem som pattern', disabled: type === 'legacy' || type === 'component' || lockedV0521 },",
+"{ action: 'component', label: 'Gem som pattern', disabled: type === 'legacy' },":"{ action: 'component', label: 'Gem som pattern', disabled: type === 'legacy' || type === 'component' || lockedV0521 },",
 "{ action: 'toggle-active', label: active ? 'Skjul element' : 'Vis element' },":"{ action: 'toggle-active', label: active ? 'Skjul element' : 'Vis element', disabled: lockedV0521 },",
 "{ action: 'move-up', label: 'Flyt op' },":"{ action: 'move-up', label: 'Flyt op', disabled: lockedV0521 },",
 "{ action: 'move-down', label: 'Flyt ned' },":"{ action: 'move-down', label: 'Flyt ned', disabled: lockedV0521 },",
