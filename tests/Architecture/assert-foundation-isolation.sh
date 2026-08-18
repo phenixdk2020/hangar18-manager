@@ -2,7 +2,7 @@
 set -euo pipefail
 
 base_ref="${1:-origin/main}"
-allowed='^(src/|tests/Architecture/|assets/(site-builder-runtime|interaction-runtime|ultimate-designer-admin|ultimate-designer-menu-admin|ultimate-designer-menu-pages|ultimate-designer-side-health|ultimate-designer-asset-admin|ultimate-designer-portability|ultimate-designer-permissions)\.(js|css)$|docs/(architecture-|ud-)[^/]+\.md$|docs/ultimate-designer-onboarding\.md$|docs/integration-backlog-after-ud120\.md$|\.github/workflows/architecture-foundation-qa\.yml$)'
+allowed='^(src/|tests/Architecture/|assets/(site-builder-runtime|interaction-runtime|ultimate-designer-admin|ultimate-designer-menu-admin|ultimate-designer-menu-pages|ultimate-designer-side-health|ultimate-designer-asset-admin|ultimate-designer-portability|ultimate-designer-permissions|ultimate-designer-ai)\.(js|css)$|docs/(architecture-|ud-)[^/]+\.md$|docs/ultimate-designer-onboarding\.md$|docs/integration-backlog-after-ud120\.md$|\.github/workflows/architecture-foundation-qa\.yml$)'
 changed="$(git diff --name-only "${base_ref}...HEAD")"
 violations="$(printf '%s\n' "$changed" | grep -Ev "$allowed" || true)"
 if [[ -n "$violations" ]]; then
