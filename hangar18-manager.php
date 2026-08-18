@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.5.21
+ * Version: 0.5.22
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.5.21';
+    const VERSION = '0.5.22';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -41,6 +41,7 @@ final class Hangar18_Manager {
     const PAGE_VERSION_HISTORY_OPTION = 'hangar18_manager_page_versions_v1';
     const PAGE_PRESETS_OPTION         = 'hangar18_manager_page_presets_v1';
     const PAGE_COMPONENTS_OPTION      = 'hangar18_manager_page_components_v1';
+    const PAGE_TEMPLATES_OPTION       = 'hangar18_manager_page_templates_v1';
     const FORM_SUBMISSIONS_OPTION   = 'hangar18_manager_form_submissions_v1';
     const POLL_VOTES_OPTION         = 'hangar18_manager_poll_votes_v1';
     const MENU_ORDER_OPTION        = 'hangar18_manager_menu_order_v20';
@@ -119,6 +120,11 @@ final class Hangar18_Manager {
         add_action('wp_ajax_h18_delete_page_preset', [$this, 'ajax_delete_page_preset']);
         add_action('wp_ajax_h18_save_page_component', [$this, 'ajax_save_page_component']);
         add_action('wp_ajax_h18_delete_page_component', [$this, 'ajax_delete_page_component']);
+        add_action('wp_ajax_h18_save_page_component_variant', [$this, 'ajax_save_page_component_variant']);
+        add_action('wp_ajax_h18_delete_page_component_variant', [$this, 'ajax_delete_page_component_variant']);
+        add_action('wp_ajax_h18_save_page_template', [$this, 'ajax_save_page_template']);
+        add_action('wp_ajax_h18_delete_page_template', [$this, 'ajax_delete_page_template']);
+        add_action('wp_ajax_h18_create_page_from_template', [$this, 'ajax_create_page_from_template']);
         add_action('admin_post_h18_create_page_conversion_test', [$this, 'handle_create_page_conversion_test']);
         add_action('admin_post_h18_restore_page_before_editor', [$this, 'handle_restore_page_before_editor']);
         add_action('admin_post_h18_send_page_form', [$this, 'handle_send_page_form']);
@@ -709,7 +715,7 @@ final class Hangar18_Manager {
 
             $store = $this->get_page_editor_store();
             $this->publish_configuration_file('Hangar18-Pages.json', [
-                'Version' => '1.17',
+                'Version' => '1.18',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ]);
@@ -1256,6 +1262,7 @@ final class Hangar18_Manager {
             'ajaxUrl'              => admin_url('admin-ajax.php'),
             'pagePresetNonce'      => wp_create_nonce('h18_page_presets_v051'),
             'pageComponentNonce'   => wp_create_nonce('h18_page_components_v0521'),
+            'pageTemplateNonce'    => wp_create_nonce('h18_page_templates_v0522'),
         ]);
     }
 
@@ -6357,12 +6364,26 @@ HTML;
        ================================================================ */
 
     private function editable_page_definitions() {
-        return [
+        $definitions = [
             self::HOME_SLUG => 'Hjem',
             'om-foreningen' => 'Om foreningen',
             'bliv-medlem'   => 'Bliv medlem',
             'kontakt'       => 'Kontakt',
         ];
+        $managed = get_posts([
+            'post_type' => 'page',
+            'post_status' => ['publish','draft','private'],
+            'posts_per_page' => -1,
+            'meta_key' => '_h18_page_editor_managed',
+            'meta_value' => '1',
+            'orderby' => 'title',
+            'order' => 'ASC',
+        ]);
+        foreach ($managed as $page) {
+            if (!$page instanceof WP_Post || $page->post_name === '') { continue; }
+            if (!isset($definitions[$page->post_name])) { $definitions[$page->post_name] = $page->post_title; }
+        }
+        return $definitions;
     }
 
     private function page_section_type_labels() {
@@ -6518,6 +6539,7 @@ HTML;
             'NavigatorLocked'       => false,
             'ComponentId'           => '',
             'ComponentRevision'     => 0,
+            'ComponentVariant'      => '',
             'ComponentOverrides'    => [],
             'Order'                 => (int) $order,
             'Title'                 => '',
@@ -6744,6 +6766,7 @@ HTML;
         $navigator_locked = array_key_exists('NavigatorLocked', $raw) ? $this->bool_value($raw['NavigatorLocked'], false) : false;
         $component_id = sanitize_key((string) ($raw['ComponentId'] ?? ''));
         $component_revision = max(0, (int) ($raw['ComponentRevision'] ?? 0));
+        $component_variant = sanitize_key((string) ($raw['ComponentVariant'] ?? ''));
         $component_overrides_raw = $raw['ComponentOverrides'] ?? [];
         if ((!is_array($component_overrides_raw) || !$component_overrides_raw) && isset($raw['ComponentOverridesJson']) && is_string($raw['ComponentOverridesJson'])) {
             $decoded_component_overrides = json_decode((string) $raw['ComponentOverridesJson'], true);
@@ -6915,6 +6938,7 @@ HTML;
             'NavigatorLocked'       => $navigator_locked,
             'ComponentId'           => $component_id,
             'ComponentRevision'     => $component_revision,
+            'ComponentVariant'      => $component_variant,
             'ComponentOverrides'    => $component_overrides,
             'Order'                 => $this->clamp_int($raw['Order'] ?? $section['Order'], 1, 10000, $section['Order']),
             'Title'                 => $title,
@@ -7138,7 +7162,7 @@ HTML;
         }
 
         return [
-            'Version'        => '1.17',
+            'Version'        => '1.18',
             'PageSlug'       => $slug,
             'PageTitle'      => $title,
             'ContentVersion' => $content_version,
@@ -7672,7 +7696,7 @@ HTML;
         unset($section);
 
         return $this->normalize_page_editor_data([
-            'Version'        => '1.17',
+            'Version'        => '1.18',
             'PageSlug'       => $data['PageSlug'],
             'PageTitle'      => $data['PageTitle'],
             'ContentVersion' => $data['ContentVersion'] ?? 0,
@@ -7730,106 +7754,126 @@ HTML;
     }
 
 
+    private function normalize_page_pattern_sections(array $raw_sections) {
+        $raw_sections = array_slice($raw_sections, 0, 25);
+        if (!$raw_sections) { throw new RuntimeException('Pattern skal indeholde mindst ét element.'); }
+        foreach ($raw_sections as $raw_section) {
+            if (!is_array($raw_section)) { continue; }
+            $type = sanitize_key((string) ($raw_section['Type'] ?? 'text'));
+            if (in_array($type, ['legacy','component'], true)) { throw new RuntimeException('Legacy og linked components kan ikke gemmes inde i et ikke-linked pattern.'); }
+        }
+        $data = $this->normalize_page_editor_data(['Version'=>'1.18','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Pattern','ContentVersion'=>0,'Sections'=>$raw_sections], null);
+        $sections = array_values((array) $data['Sections']);
+        $roots = array_values(array_filter($sections, static function($section){ return sanitize_key((string) ($section['LayoutParentKey'] ?? '')) === ''; }));
+        if (count($roots) !== 1) { throw new RuntimeException('Et pattern skal have præcis ét root-element.'); }
+        foreach ($sections as &$section) {
+            $section['NavigatorLabel']=''; $section['NavigatorLocked']=false; $section['ComponentId']=''; $section['ComponentRevision']=0; $section['ComponentVariant']=''; $section['ComponentOverrides']=[];
+        }
+        unset($section);
+        return $sections;
+    }
+
     private function get_page_presets() {
         $stored = get_option(self::PAGE_PRESETS_OPTION, []);
-        if (!is_array($stored)) {
-            return [];
-        }
-
-        $presets = [];
-        foreach (array_slice($stored, 0, 50, true) as $id => $entry) {
-            if (!is_array($entry) || !isset($entry['Section']) || !is_array($entry['Section'])) {
-                continue;
-            }
-            $preset_id = sanitize_key((string) ($entry['Id'] ?? $id));
-            $name = sanitize_text_field((string) ($entry['Name'] ?? 'Genbrugelig komponent'));
-            if ($preset_id === '' || $name === '') {
-                continue;
-            }
-            $section = $this->normalize_page_section($entry['Section'], 0);
-            if ($section['Type'] === 'legacy') {
-                continue;
-            }
-            $section['Key'] = '';
-            $section['Order'] = 10;
-            $presets[$preset_id] = [
-                'Id'         => $preset_id,
-                'Name'       => $name,
-                'UpdatedUtc' => sanitize_text_field((string) ($entry['UpdatedUtc'] ?? '')),
-                'Section'    => $section,
-            ];
+        if (!is_array($stored)) { return []; }
+        $presets=[];
+        foreach (array_slice($stored,0,50,true) as $id=>$entry) {
+            if (!is_array($entry)) { continue; }
+            $raw_sections = isset($entry['Sections']) && is_array($entry['Sections']) ? $entry['Sections'] : (isset($entry['Section']) && is_array($entry['Section']) ? [$entry['Section']] : []);
+            if (!$raw_sections) { continue; }
+            $preset_id=sanitize_key((string)($entry['Id']??$id)); $name=sanitize_text_field((string)($entry['Name']??'Pattern'));
+            if($preset_id===''||$name==='')continue;
+            try{$sections=$this->normalize_page_pattern_sections($raw_sections);}catch(Throwable $e){$this->log('WARN','PAGE_PATTERN_INVALID',"{$preset_id}: ".$e->getMessage());continue;}
+            $presets[$preset_id]=['Id'=>$preset_id,'Name'=>$name,'UpdatedUtc'=>sanitize_text_field((string)($entry['UpdatedUtc']??'')),'Sections'=>$sections,'Section'=>$sections[0]];
         }
         return $presets;
     }
 
     public function ajax_save_page_preset() {
-        if (!current_user_can('edit_pages')) {
-            wp_send_json_error(['message' => 'Du har ikke rettigheder til at gemme komponenter.'], 403);
-        }
-        check_ajax_referer('h18_page_presets_v051', 'nonce');
-
-        $name = sanitize_text_field((string) wp_unslash($_POST['name'] ?? ''));
-        $name = function_exists('mb_substr') ? mb_substr($name, 0, 80) : substr($name, 0, 80);
-        $json = (string) wp_unslash($_POST['section'] ?? '');
-        if ($name === '') {
-            wp_send_json_error(['message' => 'Komponenten skal have et navn.'], 400);
-        }
-        if ($json === '' || strlen($json) > 120000) {
-            wp_send_json_error(['message' => 'Komponentdata mangler eller er for stor.'], 400);
-        }
-
-        $raw = json_decode($json, true);
-        if (!is_array($raw) || json_last_error() !== JSON_ERROR_NONE) {
-            wp_send_json_error(['message' => 'Komponentdata er ikke gyldig JSON.'], 400);
-        }
-
-        $section = $this->normalize_page_section($raw, 0);
-        if ($section['Type'] === 'legacy') {
-            wp_send_json_error(['message' => 'Eksisterende legacy-indhold kan ikke gemmes som komponent.'], 400);
-        }
-        $section['Key'] = '';
-        $section['Order'] = 10;
-
-        $presets = $this->get_page_presets();
-        $preset_id = sanitize_key((string) wp_unslash($_POST['preset_id'] ?? ''));
-        if ($preset_id === '' || !isset($presets[$preset_id])) {
-            $preset_id = 'preset-' . sanitize_key(wp_generate_uuid4());
-        }
-
-        $entry = [
-            'Id'         => $preset_id,
-            'Name'       => $name,
-            'UpdatedUtc' => gmdate('c'),
-            'Section'    => $section,
-        ];
-        $presets[$preset_id] = $entry;
-        if (count($presets) > 50) {
-            $presets = array_slice($presets, -50, null, true);
-        }
-        update_option(self::PAGE_PRESETS_OPTION, $presets, false);
-
-        $this->log('INFO', 'PAGE_PRESET_SAVED', "Genbrugelig komponent '{$name}' gemt som {$preset_id}.");
-        wp_send_json_success(['preset' => $entry]);
+        if (!current_user_can('edit_pages')) { wp_send_json_error(['message'=>'Du har ikke rettigheder til at gemme patterns.'],403); }
+        check_ajax_referer('h18_page_presets_v051','nonce');
+        $name=sanitize_text_field((string)wp_unslash($_POST['name']??'')); $name=function_exists('mb_substr')?mb_substr($name,0,80):substr($name,0,80);
+        if($name==='')wp_send_json_error(['message'=>'Pattern skal have et navn.'],400);
+        $sections_json=(string)wp_unslash($_POST['sections']??''); $section_json=(string)wp_unslash($_POST['section']??'');
+        $json=$sections_json!==''?$sections_json:$section_json;
+        if($json===''||strlen($json)>350000)wp_send_json_error(['message'=>'Patterndata mangler eller er for stor.'],400);
+        $decoded=json_decode($json,true); if(!is_array($decoded)||json_last_error()!==JSON_ERROR_NONE)wp_send_json_error(['message'=>'Patterndata er ikke gyldig JSON.'],400);
+        if($sections_json==='')$decoded=[$decoded];
+        try{$sections=$this->normalize_page_pattern_sections($decoded);}catch(Throwable $e){wp_send_json_error(['message'=>$e->getMessage()],400);}
+        $presets=$this->get_page_presets(); $preset_id=sanitize_key((string)wp_unslash($_POST['preset_id']??''));
+        if($preset_id===''||!isset($presets[$preset_id]))$preset_id='preset-'.sanitize_key(wp_generate_uuid4());
+        $entry=['Id'=>$preset_id,'Name'=>$name,'UpdatedUtc'=>gmdate('c'),'Sections'=>$sections,'Section'=>$sections[0]];
+        $presets[$preset_id]=$entry; if(count($presets)>50)$presets=array_slice($presets,-50,null,true);
+        update_option(self::PAGE_PRESETS_OPTION,$presets,false);
+        $this->log('INFO','PAGE_PATTERN_SAVED',"Pattern '{$name}' gemt som {$preset_id} med ".count($sections).' element(er).');
+        wp_send_json_success(['preset'=>$entry]);
     }
 
     public function ajax_delete_page_preset() {
         if (!current_user_can('edit_pages')) {
-            wp_send_json_error(['message' => 'Du har ikke rettigheder til at slette komponenter.'], 403);
+            wp_send_json_error(['message' => 'Du har ikke rettigheder til at slette patterns.'], 403);
         }
         check_ajax_referer('h18_page_presets_v051', 'nonce');
 
         $preset_id = sanitize_key((string) wp_unslash($_POST['preset_id'] ?? ''));
         $presets = $this->get_page_presets();
         if ($preset_id === '' || !isset($presets[$preset_id])) {
-            wp_send_json_error(['message' => 'Komponenten blev ikke fundet.'], 404);
+            wp_send_json_error(['message' => 'Pattern blev ikke fundet.'], 404);
         }
         $name = (string) $presets[$preset_id]['Name'];
         unset($presets[$preset_id]);
         update_option(self::PAGE_PRESETS_OPTION, $presets, false);
-        $this->log('INFO', 'PAGE_PRESET_DELETED', "Genbrugelig komponent '{$name}' ({$preset_id}) blev slettet.");
+        $this->log('INFO', 'PAGE_PRESET_DELETED', "Pattern '{$name}' ({$preset_id}) blev slettet.");
         wp_send_json_success(['preset_id' => $preset_id]);
     }
 
+
+    private function normalize_page_template_sections(array $raw_sections) {
+        $raw_sections=array_slice($raw_sections,0,25); if(!$raw_sections)throw new RuntimeException('Sidetemplaten skal indeholde mindst ét element.');
+        foreach($raw_sections as $raw_section){if(!is_array($raw_section))continue;$type=sanitize_key((string)($raw_section['Type']??'text'));if(in_array($type,['legacy','component'],true))throw new RuntimeException('Page Templates kan ikke indeholde legacy eller linked components; templaten skal være en selvstændig kopi.');}
+        $data=$this->normalize_page_editor_data(['Version'=>'1.18','PageSlug'=>self::HOME_SLUG,'PageTitle'=>'Page Template','ContentVersion'=>0,'Sections'=>$raw_sections],null);
+        $sections=array_values((array)$data['Sections']);
+        foreach($sections as &$section){$section['ComponentId']='';$section['ComponentRevision']=0;$section['ComponentVariant']='';$section['ComponentOverrides']=[];}unset($section);
+        return $sections;
+    }
+
+    private function get_page_templates() {
+        $stored=get_option(self::PAGE_TEMPLATES_OPTION,[]);if(!is_array($stored))return[];$templates=[];
+        foreach(array_slice($stored,0,30,true) as $id=>$entry){if(!is_array($entry)||empty($entry['Sections'])||!is_array($entry['Sections']))continue;$template_id=sanitize_key((string)($entry['Id']??$id));$name=sanitize_text_field((string)($entry['Name']??'Page Template'));if($template_id===''||$name==='')continue;try{$sections=$this->normalize_page_template_sections($entry['Sections']);}catch(Throwable $e){continue;}$templates[$template_id]=['Id'=>$template_id,'Name'=>$name,'PageTitle'=>sanitize_text_field((string)($entry['PageTitle']??$name)),'UpdatedUtc'=>sanitize_text_field((string)($entry['UpdatedUtc']??'')),'Sections'=>$sections];}
+        return $templates;
+    }
+
+    private function get_page_template_usage($template_id) {
+        $template_id=sanitize_key((string)$template_id);if($template_id==='')return[];$posts=get_posts(['post_type'=>'page','post_status'=>['publish','draft','private'],'posts_per_page'=>-1,'meta_key'=>'_h18_page_template_origin','meta_value'=>$template_id,'orderby'=>'title','order'=>'ASC']);$usage=[];
+        foreach($posts as $page){if($page instanceof WP_Post)$usage[]=['PageId'=>(int)$page->ID,'PageSlug'=>(string)$page->post_name,'PageTitle'=>(string)$page->post_title];}
+        return $usage;
+    }
+
+    private function get_page_templates_for_editor() {$templates=$this->get_page_templates();foreach($templates as $id=>&$template){$template['Usage']=$this->get_page_template_usage($id);$template['UsageCount']=count($template['Usage']);}unset($template);return$templates;}
+
+    public function ajax_save_page_template() {
+        if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at gemme Page Templates.'],403);check_ajax_referer('h18_page_templates_v0522','nonce');
+        $name=sanitize_text_field((string)wp_unslash($_POST['name']??''));$page_title=sanitize_text_field((string)wp_unslash($_POST['page_title']??$name));$json=(string)wp_unslash($_POST['sections']??'');if($name===''||$json===''||strlen($json)>450000)wp_send_json_error(['message'=>'Template-navn eller indhold mangler.'],400);$raw=json_decode($json,true);if(!is_array($raw)||json_last_error()!==JSON_ERROR_NONE)wp_send_json_error(['message'=>'Template-data er ikke gyldig JSON.'],400);
+        try{$sections=$this->normalize_page_template_sections($raw);}catch(Throwable $e){wp_send_json_error(['message'=>$e->getMessage()],400);}
+        $templates=$this->get_page_templates();$id=sanitize_key((string)wp_unslash($_POST['template_id']??''));if($id===''||!isset($templates[$id]))$id='template-'.sanitize_key(wp_generate_uuid4());$entry=['Id'=>$id,'Name'=>$name,'PageTitle'=>$page_title!==''?$page_title:$name,'UpdatedUtc'=>gmdate('c'),'Sections'=>$sections];$templates[$id]=$entry;if(count($templates)>30)wp_send_json_error(['message'=>'Der kan højst gemmes 30 Page Templates.'],400);update_option(self::PAGE_TEMPLATES_OPTION,$templates,false);$entry['Usage']=$this->get_page_template_usage($id);$entry['UsageCount']=count($entry['Usage']);wp_send_json_success(['template'=>$entry]);
+    }
+
+    public function ajax_delete_page_template() {
+        if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at slette Page Templates.'],403);check_ajax_referer('h18_page_templates_v0522','nonce');$id=sanitize_key((string)wp_unslash($_POST['template_id']??''));$templates=$this->get_page_templates();if($id===''||!isset($templates[$id]))wp_send_json_error(['message'=>'Page Template blev ikke fundet.'],404);unset($templates[$id]);update_option(self::PAGE_TEMPLATES_OPTION,$templates,false);wp_send_json_success(['template_id'=>$id]);
+    }
+
+    private function instantiate_page_template_sections(array $sections) {
+        $map=[];foreach($sections as $section){$old=sanitize_key((string)($section['Key']??''));if($old!=='')$map[$old]='sektion-'.substr(md5(wp_generate_uuid4()),0,12);}$result=[];
+        foreach($sections as $index=>$section){$old=sanitize_key((string)($section['Key']??''));$parent=sanitize_key((string)($section['LayoutParentKey']??''));$copy=$section;$copy['Key']=$map[$old]??('sektion-'.substr(md5(wp_generate_uuid4()),0,12));$copy['LayoutParentKey']=$parent!==''&&isset($map[$parent])?$map[$parent]:'';$copy['Order']=($index+1)*10;$copy['ComponentId']='';$copy['ComponentRevision']=0;$copy['ComponentVariant']='';$copy['ComponentOverrides']=[];$result[]=$copy;}
+        return$result;
+    }
+
+    public function ajax_create_page_from_template() {
+        if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at oprette sider.'],403);check_ajax_referer('h18_page_templates_v0522','nonce');$template_id=sanitize_key((string)wp_unslash($_POST['template_id']??''));$title=sanitize_text_field((string)wp_unslash($_POST['page_title']??''));$slug=sanitize_title((string)wp_unslash($_POST['page_slug']??''));$templates=$this->get_page_templates();if(!isset($templates[$template_id]))wp_send_json_error(['message'=>'Page Template blev ikke fundet.'],404);if($title===''||$slug==='')wp_send_json_error(['message'=>'Ny side skal have titel og slug.'],400);if(get_page_by_path($slug,OBJECT,'page'))wp_send_json_error(['message'=>'Der findes allerede en side med denne slug.'],409);
+        $post_id=wp_insert_post(['post_type'=>'page','post_status'=>'draft','post_title'=>$title,'post_name'=>$slug,'post_content'=>''],true);if(is_wp_error($post_id))wp_send_json_error(['message'=>$post_id->get_error_message()],400);$page=get_post($post_id);
+        try{$sections=$this->instantiate_page_template_sections($templates[$template_id]['Sections']);$data=$this->normalize_page_editor_data(['Version'=>'1.18','PageSlug'=>$slug,'PageTitle'=>$title,'ContentVersion'=>1,'Sections'=>$sections],$page);update_post_meta($post_id,'_h18_page_editor_managed','1');update_post_meta($post_id,'_h18_page_template_origin',$template_id);$this->save_page_editor_data($slug,$data);$result=wp_update_post(['ID'=>$post_id,'page_template'=>'default','post_content'=>$this->wrap_with_shell($this->build_page_editor_core($slug,$data),$post_id)],true);if(is_wp_error($result))throw new RuntimeException($result->get_error_message());wp_send_json_success(['page_id'=>$post_id,'page_slug'=>$slug,'manager_url'=>admin_url('admin.php?page=hangar18-pages&page_slug='.rawurlencode($slug)),'edit_url'=>get_edit_post_link($post_id,'raw')]);}
+        catch(Throwable $e){wp_delete_post($post_id,true);wp_send_json_error(['message'=>$e->getMessage()],400);}
+    }
 
 
     private function page_component_allowed_input_fields() {
@@ -7911,6 +7955,13 @@ HTML;
         return ['Sections' => $sections, 'Inputs' => array_values($inputs)];
     }
 
+
+    private function normalize_page_component_variants($raw_variants, array $inputs, array $sections) {
+        if(!is_array($raw_variants))return[];$input_map=[];foreach($inputs as $input){$id=sanitize_key((string)($input['InputId']??''));if($id!=='')$input_map[$id]=$input;}$section_map=[];foreach($sections as $section)$section_map[(string)$section['Key']]=$section;$variants=[];
+        foreach(array_slice($raw_variants,0,12,true) as $id=>$variant){if(!is_array($variant))continue;$variant_id=sanitize_key((string)($variant['Id']??$id));$name=sanitize_text_field((string)($variant['Name']??'Variant'));if($variant_id===''||$name==='')continue;$values=[];$raw_values=isset($variant['Values'])&&is_array($variant['Values'])?$variant['Values']:[];foreach($raw_values as $input_id=>$value){$input_id=sanitize_key((string)$input_id);if(!isset($input_map[$input_id]))continue;$input=$input_map[$input_id];$field=(string)$input['Field'];$sanitized=$this->sanitize_page_component_override($field,$value);$section=$section_map[(string)$input['SectionKey']]??[];$base=$this->page_component_input_default($section,$field);if((string)$sanitized===(string)$base)continue;$values[$input_id]=$sanitized;}$variants[$variant_id]=['Id'=>$variant_id,'Name'=>$name,'Values'=>$values];}
+        return$variants;
+    }
+
     private function get_page_components() {
         $stored = get_option(self::PAGE_COMPONENTS_OPTION, []);
         if (!is_array($stored)) { return []; }
@@ -7929,6 +7980,7 @@ HTML;
                 $this->log('WARN', 'PAGE_COMPONENT_INVALID', "{$component_id}: " . $e->getMessage());
                 continue;
             }
+            $variants = $this->normalize_page_component_variants($entry['Variants'] ?? [], $definition['Inputs'], $definition['Sections']);
             $components[$component_id] = [
                 'Id' => $component_id,
                 'Name' => $name,
@@ -7936,6 +7988,7 @@ HTML;
                 'UpdatedUtc' => sanitize_text_field((string) ($entry['UpdatedUtc'] ?? '')),
                 'Sections' => $definition['Sections'],
                 'Inputs' => $definition['Inputs'],
+                'Variants' => $variants,
             ];
         }
         return $components;
@@ -7956,6 +8009,7 @@ HTML;
                     'PageSlug' => sanitize_title((string) $slug),
                     'PageTitle' => sanitize_text_field((string) ($page_data['PageTitle'] ?? ($definitions[$slug] ?? $slug))),
                     'SectionKey' => sanitize_key((string) ($section['Key'] ?? '')),
+                    'Variant' => sanitize_key((string) ($section['ComponentVariant'] ?? '')),
                 ];
             }
         }
@@ -8015,6 +8069,7 @@ HTML;
                 'UpdatedUtc' => gmdate('c'),
                 'Sections' => $definition['Sections'],
                 'Inputs' => $definition['Inputs'],
+                'Variants' => $existing ? ($existing['Variants'] ?? []) : [],
             ];
             $components[$component_id] = $entry;
             if (count($components) > 50) { throw new RuntimeException('Der kan højst gemmes 50 linked components.'); }
@@ -8049,6 +8104,18 @@ HTML;
         wp_send_json_success(['component_id' => $component_id]);
     }
 
+
+    private function get_page_component_variant_usage($component_id,$variant_id){$usage=array_filter($this->get_page_component_usage($component_id),static function($item)use($variant_id){return sanitize_key((string)($item['Variant']??''))===sanitize_key((string)$variant_id);});return array_values($usage);}
+
+    public function ajax_save_page_component_variant(){
+        if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at gemme component variants.'],403);check_ajax_referer('h18_page_components_v0521','nonce');$component_id=sanitize_key((string)wp_unslash($_POST['component_id']??''));$variant_id=sanitize_key((string)wp_unslash($_POST['variant_id']??''));$name=sanitize_text_field((string)wp_unslash($_POST['name']??''));$json=(string)wp_unslash($_POST['values']??'{}');$components=$this->get_page_components();if(!isset($components[$component_id])||$name==='')wp_send_json_error(['message'=>'Komponent eller variantnavn mangler.'],400);$raw=json_decode($json,true);if(!is_array($raw)||json_last_error()!==JSON_ERROR_NONE)wp_send_json_error(['message'=>'Variantdata er ugyldig.'],400);$component=$components[$component_id];$input_map=[];foreach($component['Inputs'] as $input)$input_map[(string)$input['InputId']]=$input;$section_map=[];foreach($component['Sections'] as $section)$section_map[(string)$section['Key']]=$section;$values=[];foreach($raw as $input_id=>$value){$input_id=sanitize_key((string)$input_id);if(!isset($input_map[$input_id]))continue;$input=$input_map[$input_id];$field=(string)$input['Field'];$sanitized=$this->sanitize_page_component_override($field,$value);$base=$this->page_component_input_default($section_map[(string)$input['SectionKey']]??[],$field);if((string)$sanitized!==(string)$base)$values[$input_id]=$sanitized;}
+        $variants=$component['Variants']??[];if($variant_id===''||!isset($variants[$variant_id]))$variant_id='variant-'.sanitize_key(wp_generate_uuid4());$variants[$variant_id]=['Id'=>$variant_id,'Name'=>$name,'Values'=>$values];if(count($variants)>12)wp_send_json_error(['message'=>'En komponent kan højst have 12 variants.'],400);$component['Variants']=$variants;$component['Revision']=(int)$component['Revision']+1;$component['UpdatedUtc']=gmdate('c');$components[$component_id]=$component;update_option(self::PAGE_COMPONENTS_OPTION,$components,false);$component['Usage']=$this->get_page_component_usage($component_id);$component['UsageCount']=count($component['Usage']);wp_send_json_success(['component'=>$component,'variant_id'=>$variant_id]);
+    }
+
+    public function ajax_delete_page_component_variant(){
+        if(!current_user_can('edit_pages'))wp_send_json_error(['message'=>'Du har ikke rettigheder til at slette component variants.'],403);check_ajax_referer('h18_page_components_v0521','nonce');$component_id=sanitize_key((string)wp_unslash($_POST['component_id']??''));$variant_id=sanitize_key((string)wp_unslash($_POST['variant_id']??''));$components=$this->get_page_components();if(!isset($components[$component_id])||empty($components[$component_id]['Variants'][$variant_id]))wp_send_json_error(['message'=>'Varianten blev ikke fundet.'],404);$usage=$this->get_page_component_variant_usage($component_id,$variant_id);if($usage)wp_send_json_error(['message'=>'Varianten bruges stadig på '.count($usage).' side(r).','usage'=>$usage],409);unset($components[$component_id]['Variants'][$variant_id]);$components[$component_id]['Revision']=(int)$components[$component_id]['Revision']+1;$components[$component_id]['UpdatedUtc']=gmdate('c');update_option(self::PAGE_COMPONENTS_OPTION,$components,false);wp_send_json_success(['component_id'=>$component_id,'variant_id'=>$variant_id]);
+    }
+
     private function resolve_page_component_instance_sections($page_id, array $instance) {
         $component_id = sanitize_key((string) ($instance['ComponentId'] ?? ''));
         if ($component_id === '') { return [[], null]; }
@@ -8056,7 +8123,10 @@ HTML;
         if (!isset($components[$component_id])) { return [[], null]; }
         $component = $components[$component_id];
         $sections = $component['Sections'];
-        $overrides = isset($instance['ComponentOverrides']) && is_array($instance['ComponentOverrides']) ? $instance['ComponentOverrides'] : [];
+        $variant_id = sanitize_key((string) ($instance['ComponentVariant'] ?? ''));
+        $variant_values = ($variant_id !== '' && isset($component['Variants'][$variant_id]) && is_array($component['Variants'][$variant_id]['Values'] ?? null)) ? $component['Variants'][$variant_id]['Values'] : [];
+        $local_overrides = isset($instance['ComponentOverrides']) && is_array($instance['ComponentOverrides']) ? $instance['ComponentOverrides'] : [];
+        $overrides = array_replace($variant_values, $local_overrides);
         $section_index = [];
         foreach ($sections as $index => $section) { $section_index[(string) $section['Key']] = $index; }
         foreach ($component['Inputs'] as $input) {
@@ -8080,6 +8150,7 @@ HTML;
             $section['LayoutParentKey'] = $old_parent !== '' && isset($key_map[$old_parent]) ? $key_map[$old_parent] : '';
             $section['ComponentId'] = '';
             $section['ComponentRevision'] = 0;
+            $section['ComponentVariant'] = '';
             $section['ComponentOverrides'] = [];
         }
         unset($section);
@@ -8976,6 +9047,8 @@ HTML;
                                 <?php endforeach; ?>
                             </select>
                             <input class="h18-component-revision" type="hidden" name="<?php echo esc_attr($prefix); ?>[ComponentRevision]" value="<?php echo esc_attr($section['ComponentRevision']); ?>" />
+                            <label><strong>Variant</strong></label>
+                            <select class="h18-component-variant-select" name="<?php echo esc_attr($prefix); ?>[ComponentVariant]"><option value="">Base</option></select>
                             <input class="h18-component-overrides-json" type="hidden" name="<?php echo esc_attr($prefix); ?>[ComponentOverridesJson]" value="<?php echo esc_attr(wp_json_encode($section['ComponentOverrides'])); ?>" />
                         </div>
                         <div class="h18-component-instance-status"></div>
@@ -9402,6 +9475,7 @@ HTML;
         $versions = $page instanceof WP_Post ? $this->get_page_version_history($slug) : [];
         $page_presets = $this->get_page_presets();
         $page_components = $this->get_page_components_for_editor();
+        $page_templates = $this->get_page_templates_for_editor();
         ?>
         <div class="wrap h18-admin h18-pages-admin">
             <h1>Sider</h1>
@@ -9547,6 +9621,9 @@ HTML;
                                 <div id="h18-linked-components-list" class="h18-user-presets-list"><p class="description">Vælg et subtree og brug “Gem som linked component” i Inspector.</p></div>
                                 <div class="h18-user-components-heading"><h4>Patterns</h4><span>Ikke-linked kopier</span></div>
                                 <div id="h18-user-presets-list" class="h18-user-presets-list"><p class="description">Vælg en sektion og brug “Gem som pattern” i Inspector.</p></div>
+                                <div class="h18-user-components-heading"><h4>Page Templates</h4><span>Frie sidekopier</span></div>
+                                <button type="button" class="button" id="h18-save-page-template">Gem denne side som template</button>
+                                <div id="h18-page-templates-list" class="h18-user-presets-list"><p class="description">Gem hele den aktuelle side som en ikke-linked template.</p></div>
                             </div>
                         </aside>
 
@@ -9626,6 +9703,7 @@ HTML;
 
                 <script id="h18-page-presets-data" type="application/json"><?php echo wp_json_encode(array_values($page_presets), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
                 <script id="h18-page-components-data" type="application/json"><?php echo wp_json_encode(array_values($page_components), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+                <script id="h18-page-templates-data" type="application/json"><?php echo wp_json_encode(array_values($page_templates), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
                 <template id="h18-page-section-template"><?php $this->render_page_editor_section_admin($page, $this->default_page_section('text', 10), '__INDEX__', true); ?></template>
                 <template id="h18-page-card-template"><?php $this->render_page_editor_card_admin($this->default_page_card(10), '__SECTION_INDEX__', '__CARD_INDEX__'); ?></template>
             <?php endif; ?>
@@ -9778,7 +9856,7 @@ HTML;
             $central_warning = '';
             try {
                 $this->publish_configuration_file('Hangar18-Pages.json', [
-                    'Version' => '1.17',
+                    'Version' => '1.18',
                     'Saved'   => gmdate('c'),
                     'Pages'   => $store,
                 ]);
@@ -9898,7 +9976,7 @@ HTML;
         }
 
         $data = $this->normalize_page_editor_data([
-            'Version'        => '1.17',
+            'Version'        => '1.18',
             'PageSlug'       => $slug,
             'PageTitle'      => $this->post_text('editor_page_title'),
             'ContentVersion' => $next_content_version,
@@ -9928,7 +10006,7 @@ HTML;
             $this->save_page_editor_data($slug, $data);
             $store = $this->get_page_editor_store();
             $published = [
-                'Version' => '1.17',
+                'Version' => '1.18',
                 'Saved'   => gmdate('c'),
                 'Pages'   => $store,
             ];

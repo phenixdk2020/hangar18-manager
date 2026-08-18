@@ -1,8 +1,24 @@
 === Hangar18 Manager ===
-Version: 0.5.21
+Version: 0.5.22
 
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
+
+== Version 0.5.22 – E4 Components completion ==
+
+Nyt:
+- UD-047: linked component variants deler base-definition og gemmer kun kontrollerede værdier for allerede frigivne component inputs
+- variant anvendes før lokale instance-overrides, så lokale overrides fortsat har højeste prioritet
+- variants oprettes/opdateres direkte fra en component-instance; variant med usage kan ikke slettes
+- component revision stiger ved variantændringer, og global definition-update bevarer eksisterende variants
+- UD-048: eksisterende presets er nu eksplicit Patterns og kan gemme/indsætte et helt nested subtree med friske keys og bevaret intern parent-struktur
+- gamle én-sektions presets migreres transparent til subtree Pattern-format ved læsning
+- Patterns forbliver ikke-linked og indeholder aldrig linked component-instanser eller legacy
+- UD-049: Page Templates gemmer hele selvstændige sider og kan oprette nye draft WordPress/Hangar18-sider med friske section keys
+- template-oprettede sider markeres som Hangar18-managed og bliver automatisk tilgængelige i sideeditorens sidevælger
+- Page Template usage spores som origin-metadata til audit, men siden er en fri kopi; senere template-ændringer påvirker den ikke
+- Page Templates afviser legacy og linked component-instanser for at garantere ingen skjulte shared-instance side effects
+- page-editor schema løftes bagudkompatibelt til 1.18
 
 == Version 0.5.21 – E4 linked component engine foundation ==
 
