@@ -3,7 +3,7 @@ set -euo pipefail
 
 base_ref="${1:-origin/main}"
 
-allowed='^(src/|tests/Architecture/|docs/(architecture-|ud-)[^/]+\.md$|\.github/workflows/architecture-foundation-qa\.yml$)'
+allowed='^(src/|tests/Architecture/|assets/site-builder-runtime\.(js|css)$|docs/(architecture-|ud-)[^/]+\.md$|\.github/workflows/architecture-foundation-qa\.yml$)'
 changed="$(git diff --name-only "${base_ref}...HEAD")"
 
 violations="$(printf '%s\n' "$changed" | grep -Ev "$allowed" || true)"
@@ -16,4 +16,4 @@ if [[ -n "$violations" ]]; then
 fi
 
 echo "Architecture isolation: PASS"
-echo "Existing v0.5.30 runtime files remain untouched."
+echo "Existing v0.5.30 runtime files remain untouched; passive Site Builder runtime assets are allowed but not enqueued."
