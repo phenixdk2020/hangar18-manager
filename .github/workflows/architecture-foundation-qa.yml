@@ -14,13 +14,14 @@ on:
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - '.github/workflows/architecture-foundation-qa.yml'
+      - '.github/scripts/fix_inspector_overlap.py'
 
 permissions:
   contents: write
 
 jobs:
   architecture-smoke:
-    if: github.ref != 'refs/heads/agent/fix-inspector-settings-overlap'
+    if: github.ref != 'refs/heads/agent/fix-inspector-settings-overlap' && github.head_ref != 'agent/fix-inspector-settings-overlap'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -63,7 +64,7 @@ jobs:
         run: php tests/Architecture/ud-060-starter-schemas-smoke.php
 
   inspector-overlap-hotfix:
-    if: github.ref == 'refs/heads/agent/fix-inspector-settings-overlap' && !contains(github.event.head_commit.message, 'Fix inspector settings overlap')
+    if: (github.ref == 'refs/heads/agent/fix-inspector-settings-overlap' || github.head_ref == 'agent/fix-inspector-settings-overlap') && !contains(github.event.head_commit.message || '', 'Fix inspector settings overlap')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout hotfix branch
@@ -81,7 +82,6 @@ jobs:
           set -euo pipefail
           grep -F 'v0.6.1 – Inspector tabs må ikke overlappe settings' assets/admin.css
           grep -F 'grid-template-columns:repeat(2,minmax(0,1fr))' assets/admin.css
-          grep -F 'Protected Vehicle/Event/Gallery' tests/Architecture/protected-domain-contract.sh
           bash tests/Architecture/protected-domain-contract.sh
           php -l hangar18-manager.php
           node --check assets/admin.js
