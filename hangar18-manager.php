@@ -11120,7 +11120,13 @@ HTML;
 
                     <div class="h18-page-editor-title h18-layout-card">
                         <div class="h18-field"><label><strong>WordPress-sidetitel</strong></label><input type="text" name="editor_page_title" value="<?php echo esc_attr($data['PageTitle']); ?>" required /><p class="description">Menupunktets viste navn ændres fortsat under Menu.</p></div>
-                        <div class="h18-field"><label><strong>Hvad er ændret?</strong></label><textarea name="page_change_note" rows="3" maxlength="500" placeholder="Fx Rettet overskrift, ændret luft mellem kort og udskiftet kontaktknappen."></textarea><p class="description">Skal udfyldes ved en rigtig gemning. Teksten gemmes sammen med versionsnummer, tidspunkt, bruger og backup. Ved WhatIf er feltet valgfrit.</p></div>
+                        <div class="h18-field">
+                            <label><strong>Egen kommentar (valgfri)</strong></label>
+                            <textarea name="page_change_note" rows="3" maxlength="500" placeholder="Valgfrit: skriv evt. hvorfor du lavede ændringen eller noget systemet ikke selv kan se."></textarea>
+                            <input type="hidden" name="page_auto_change_summary" id="h18-page-auto-change-summary" value="" />
+                            <p class="description">Du behøver ikke skrive noget for at gemme. Systemet laver automatisk et kort resumé af ændringerne og gemmer det i versionshistorikken. Din egen kommentar tilføjes kun, hvis du skriver en.</p>
+                            <p class="description"><strong>Automatisk resumé:</strong> <span id="h18-page-auto-change-summary-preview">Beregnes ud fra ændringerne på siden…</span></p>
+                        </div>
                     </div>
 
 
@@ -11499,6 +11505,92 @@ HTML;
         update_option(self::POLL_VOTES_OPTION, $all, false);
     }
 
+    private function page_change_summary_section_label_v071($section, $fallback = '') {
+        if (!is_array($section)) {
+            return $fallback !== '' ? $fallback : 'element';
+        }
+        foreach (['NavigatorLabel', 'Title', 'Heading', 'Name', 'Key'] as $field) {
+            $value = trim((string) ($section[$field] ?? ''));
+            if ($value !== '') {
+                return mb_substr(wp_strip_all_tags($value), 0, 80);
+            }
+        }
+        return $fallback !== '' ? $fallback : 'element';
+    }
+
+    private function summarize_page_editor_changes_v071($before, $after) {
+        $before = is_array($before) ? $before : [];
+        $after = is_array($after) ? $after : [];
+        $parts = [];
+
+        if (trim((string) ($before['PageTitle'] ?? '')) !== trim((string) ($after['PageTitle'] ?? ''))) {
+            $parts[] = 'Sidetitel ændret';
+        }
+
+        $before_sections = is_array($before['Sections'] ?? null) ? array_values($before['Sections']) : [];
+        $after_sections = is_array($after['Sections'] ?? null) ? array_values($after['Sections']) : [];
+        $before_map = [];
+        $after_map = [];
+        $before_order = [];
+        $after_order = [];
+
+        foreach ($before_sections as $index => $section) {
+            if (!is_array($section)) { continue; }
+            $key = trim((string) ($section['Key'] ?? ''));
+            if ($key === '') { $key = '__before_' . $index; }
+            $before_map[$key] = $section;
+            $before_order[] = $key;
+        }
+        foreach ($after_sections as $index => $section) {
+            if (!is_array($section)) { continue; }
+            $key = trim((string) ($section['Key'] ?? ''));
+            if ($key === '') { $key = '__after_' . $index; }
+            $after_map[$key] = $section;
+            $after_order[] = $key;
+        }
+
+        $added = array_values(array_diff(array_keys($after_map), array_keys($before_map)));
+        $removed = array_values(array_diff(array_keys($before_map), array_keys($after_map)));
+        if ($added) {
+            $labels = array_map(function ($key) use ($after_map) {
+                return '“' . $this->page_change_summary_section_label_v071($after_map[$key], $key) . '”';
+            }, array_slice($added, 0, 3));
+            $parts[] = count($added) . ' element' . (count($added) === 1 ? '' : 'er') . ' tilføjet' . ($labels ? ': ' . implode(', ', $labels) : '');
+        }
+        if ($removed) {
+            $labels = array_map(function ($key) use ($before_map) {
+                return '“' . $this->page_change_summary_section_label_v071($before_map[$key], $key) . '”';
+            }, array_slice($removed, 0, 3));
+            $parts[] = count($removed) . ' element' . (count($removed) === 1 ? '' : 'er') . ' fjernet' . ($labels ? ': ' . implode(', ', $labels) : '');
+        }
+
+        $before_common_order = array_values(array_filter($before_order, function ($key) use ($after_map) { return isset($after_map[$key]); }));
+        $after_common_order = array_values(array_filter($after_order, function ($key) use ($before_map) { return isset($before_map[$key]); }));
+        if ($before_common_order !== $after_common_order) {
+            $parts[] = 'Elementrækkefølge ændret';
+        }
+
+        $changed = [];
+        foreach (array_intersect(array_keys($before_map), array_keys($after_map)) as $key) {
+            $left = $before_map[$key];
+            $right = $after_map[$key];
+            unset($left['Order'], $left['ResetVotes'], $right['Order'], $right['ResetVotes']);
+            if (wp_json_encode($left) !== wp_json_encode($right)) {
+                $changed[] = $this->page_change_summary_section_label_v071($after_map[$key], $key);
+            }
+        }
+        if ($changed) {
+            $shown = array_slice(array_values(array_unique($changed)), 0, 3);
+            $quoted = array_map(function ($label) { return '“' . $label . '”'; }, $shown);
+            $parts[] = 'Indhold/design ændret på ' . implode(', ', $quoted) . (count($changed) > count($shown) ? ' +' . (count($changed) - count($shown)) . ' mere' : '');
+        }
+
+        if (!$parts) {
+            $parts[] = 'Ingen synlige ændringer registreret; ny version gemt';
+        }
+        return mb_substr(implode(' · ', $parts), 0, 420);
+    }
+
     public function handle_save_page_editor() {
         $this->require_capability();
         check_admin_referer('h18_save_page_editor');
@@ -11516,7 +11608,8 @@ HTML;
         }
 
         $current = $this->get_page_editor_data($slug, $page);
-        $change_note = sanitize_textarea_field((string) wp_unslash($_POST['page_change_note'] ?? ''));
+        $user_change_note = sanitize_textarea_field((string) wp_unslash($_POST['page_change_note'] ?? ''));
+        $auto_change_summary = sanitize_text_field((string) wp_unslash($_POST['page_auto_change_summary'] ?? ''));
         $current_content_version = $this->clamp_int($current['ContentVersion'] ?? 0, 0, 9999, 0);
         $next_content_version = min(9999, $current_content_version + 1);
         if ($next_content_version < 1) {
@@ -11593,10 +11686,18 @@ HTML;
             $this->redirect_page_editor($slug);
         }
 
-        if (trim($change_note) === '') {
-            $this->set_notice('error', 'Skriv kort, hvad du har ændret, før siden gemmes som en ny version.');
-            $this->redirect_page_editor($slug);
+        if (trim($auto_change_summary) === '') {
+            $auto_change_summary = $this->summarize_page_editor_changes_v071($current, $data);
         }
+        if (trim($auto_change_summary) === '') {
+            $auto_change_summary = 'Siden er gemt med ændringer.';
+        }
+        $change_note = 'Automatisk: ' . $auto_change_summary;
+        if (trim($user_change_note) !== '') {
+            $change_note .= "
+Egen kommentar: " . $user_change_note;
+        }
+        $change_note = mb_substr($change_note, 0, 1000);
 
         try {
             $full_backup = $this->create_full_managed_backup(
@@ -11649,7 +11750,9 @@ HTML;
                 'SavedUtc'       => gmdate('c'),
                 'UserId'         => (int) $user->ID,
                 'UserDisplay'    => $user_display !== '' ? $user_display : 'Ukendt bruger',
-                'ChangeNote'     => $change_note,
+                'ChangeNote'       => $change_note,
+                'AutoChangeSummary' => $auto_change_summary,
+                'UserChangeNote'   => $user_change_note,
                 'FullBackupFile' => basename($full_backup),
                 'SnapshotFile'   => $snapshot_file,
                 'ContentHash'    => hash('sha256', wp_json_encode($data)),
@@ -11664,7 +11767,7 @@ HTML;
             if ($snapshot_warning !== '') {
                 $this->set_notice('warning', "Siden er gemt som v{$next_content_version}, og den fulde før-backup er oprettet. Sidekopien efter gemning fejlede: {$snapshot_warning}");
             } else {
-                $this->set_notice('success', "Siden er gemt som v{$next_content_version} med {$active} aktive sektioner. Ændringsbeskrivelse, fuld backup, sidekopi og WordPress-revision er oprettet.");
+                $this->set_notice('success', "Siden er gemt som v{$next_content_version} med {$active} aktive sektioner. Automatisk ændringsresumé, fuld backup, sidekopi og WordPress-revision er oprettet.");
             }
         } catch (Throwable $e) {
             $this->log('ERROR', 'PAGE_EDITOR_SAVE_FAILED', $e->getMessage());
