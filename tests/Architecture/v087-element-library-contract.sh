@@ -34,8 +34,8 @@ if grep -E "add_action\('(wp|init|template_redirect|wp_head|wp_footer)'" "$CTRL"
   echo 'FAIL: element library controller registers a frontend hook'
   exit 1
 fi
-if grep -Ei 'wp_update_post|update_post_meta|update_option|delete_option|cutover|public.*mutation' "$CTRL" "$JS" >/dev/null; then
-  echo 'FAIL: element library contains a persistence/cutover primitive'
+if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$CTRL" "$JS" >/dev/null; then
+  echo 'FAIL: element library contains a persistence/public-cutover primitive'
   exit 1
 fi
 
