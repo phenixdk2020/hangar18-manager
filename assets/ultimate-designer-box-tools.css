@@ -1,0 +1,212 @@
+.h18-ud-box-inspector {
+    margin-top: 14px;
+    border-left: 4px solid #c3ae83;
+}
+
+.h18-ud-box-inspector > h4 {
+    margin: 0 0 6px;
+}
+
+.h18-ud-box-group-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 16px 0 8px;
+    padding-top: 12px;
+    border-top: 1px solid #dcdcde;
+}
+
+.h18-ud-box-group-title:first-of-type {
+    margin-top: 12px;
+}
+
+.h18-ud-box-group-title small {
+    color: #646970;
+    font-weight: 400;
+}
+
+.h18-ud-box-control-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+}
+
+.h18-ud-box-control-grid--colors {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.h18-ud-box-control-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.h18-ud-box-control-row > span:first-child {
+    font-weight: 600;
+}
+
+.h18-ud-box-control-row input[type="number"],
+.h18-ud-box-control-row input[type="text"] {
+    width: 100%;
+    max-width: 100%;
+}
+
+.h18-ud-box-input-with-suffix {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.h18-ud-box-input-with-suffix em {
+    color: #646970;
+    font-style: normal;
+    min-width: 20px;
+}
+
+.h18-ud-box-color-control {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+}
+
+.h18-ud-box-color-control input[type="color"] {
+    width: 46px;
+    height: 34px;
+    padding: 2px;
+}
+
+.h18-ud-box-color-control code {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.h18-ud-box-radius-line {
+    display: grid;
+    grid-template-columns: minmax(160px, .8fr) minmax(240px, 1.2fr);
+    gap: 12px;
+    align-items: end;
+}
+
+.h18-ud-box-radius-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.h18-ud-box-radius-presets .button {
+    min-height: 32px;
+}
+
+.h18-ud-box-corner-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 10px 0 8px;
+}
+
+.h18-ud-box-corner-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 10px;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    background: #f6f7f7;
+}
+
+.h18-ud-box-layout-note {
+    margin-top: 8px;
+}
+
+.h18-page-section-row[data-h18-auto-box-row="1"] .h18-canvas-layout-shell {
+    display: none;
+}
+
+.h18-ud-auto-box-canvas {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px dashed #8c8f94;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .72);
+}
+
+.h18-ud-auto-box-canvas-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+    margin-bottom: 10px;
+}
+
+.h18-ud-auto-box-canvas-head span {
+    color: #646970;
+    font-size: 12px;
+}
+
+.h18-ud-auto-box-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--h18-ud-box-columns, 1), minmax(120px, 1fr));
+    gap: var(--h18-ud-box-gap, 16px);
+    align-items: stretch;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.h18-ud-auto-box-tile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    min-width: 120px;
+    min-height: 92px;
+    padding: 14px;
+    border-style: solid;
+    cursor: pointer;
+    text-align: left;
+    box-sizing: border-box;
+    transition: outline-color .15s ease, transform .15s ease;
+}
+
+.h18-ud-auto-box-tile:hover,
+.h18-ud-auto-box-tile:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+    transform: translateY(-1px);
+}
+
+.h18-ud-auto-box-tile small {
+    color: inherit;
+    opacity: .76;
+}
+
+.h18-ud-auto-box-empty {
+    grid-column: 1 / -1;
+    padding: 18px;
+    border: 1px dashed #c3c4c7;
+    border-radius: 6px;
+    color: #646970;
+    text-align: center;
+}
+
+.h18-page-section-row[data-h18-box="1"] > .h18-page-section-header::after {
+    content: "individuelt design";
+    margin-left: auto;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #f6f7f7;
+    color: #646970;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+@media (max-width: 1200px) {
+    .h18-ud-box-control-grid,
+    .h18-ud-box-control-grid--colors,
+    .h18-ud-box-corner-grid,
+    .h18-ud-box-radius-line {
+        grid-template-columns: 1fr;
+    }
+}
