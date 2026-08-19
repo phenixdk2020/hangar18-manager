@@ -13,6 +13,7 @@ on:
       - agent/v0811-direct-kasse-runtime
       - agent/v0812-auto-kasse-child-preview
       - agent/v0813-kasse-authority-history-fix
+      - agent/v0815-kasse-undo-single-runtime-fix
   pull_request:
     paths:
       - 'src/**'
@@ -109,6 +110,7 @@ jobs:
       - run: bash tests/Architecture/v0811-direct-kasse-runtime-contract.sh
       - run: bash tests/Architecture/v0812-auto-kasse-drop-contract.sh
       - run: bash tests/Architecture/v0813-kasse-authority-history-contract.sh
+      - run: bash tests/Architecture/v0815-kasse-undo-single-runtime-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: php tests/Architecture/i3-menu-admin-smoke.php
       - run: bash tests/Architecture/i3-menu-page-chooser-contract.sh
@@ -131,6 +133,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
-      - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test
+      - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test jquery
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npx playwright test -c tests/Architecture/browser/playwright.config.cjs

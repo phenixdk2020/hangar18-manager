@@ -1,0 +1,30 @@
+name: Editor Runtime Fast QA
+
+on:
+  push:
+    branches:
+      - agent/v0815-kasse-undo-single-runtime-fix
+  pull_request:
+    paths:
+      - 'assets/ultimate-designer-nesting-tools.js'
+      - 'src/Admin/EditorLayoutToolsAdminController.php'
+      - 'tests/Architecture/browser/**'
+      - '.github/workflows/editor-runtime-fast-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  editor-runtime-chrome:
+    name: Kasse/Undo system Chrome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - run: google-chrome --version
+      - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test jquery
+      - run: >-
+          npx playwright test
+          -c tests/Architecture/browser/playwright.system-chrome.config.cjs
+          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible"

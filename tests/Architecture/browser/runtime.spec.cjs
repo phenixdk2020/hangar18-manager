@@ -1,8 +1,21 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
 const path = require('path');
 
 const siteBuilder = path.resolve(__dirname, '../../../assets/site-builder-runtime.js');
 const interaction = path.resolve(__dirname, '../../../assets/interaction-runtime.js');
+const nestingRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-nesting-tools.js');
+const editorLayoutController = path.resolve(__dirname, '../../../src/Admin/EditorLayoutToolsAdminController.php');
+const jqueryRuntime = require.resolve('jquery');
+
+function historyGuardScript() {
+  const source = fs.readFileSync(editorLayoutController, 'utf8');
+  const match = source.match(/private static function enqueueEditorHistoryGuardV0813\(\): void[\s\S]*?\$before = <<<'JS'\n([\s\S]*?)\nJS;\n\s*wp_add_inline_script\('hangar18-manager-admin'/);
+  if (!match) {
+    throw new Error('Could not extract editor history guard from EditorLayoutToolsAdminController.php');
+  }
+  return match[1].replace(/\r/g, '').replace(/\\r(?=\n|$)/g, '');
+}
 
 test('menu supports mobile toggle, arrows, submenu and Escape', async ({ page }) => {
   await page.setContent(`<!doctype html><html><body>
@@ -95,4 +108,91 @@ test('reduced motion changes scroll action to auto', async ({ page }) => {
   await page.locator('#jump').click();
   const behavior = await page.evaluate(() => window.__h18ScrollBehavior);
   expect(behavior).toBe('auto');
+});
+
+test('Auto-kasser keeps two Kasser visible after base preview rebuild', async ({ page }) => {
+  await page.setContent(`<!doctype html><html><body>
+    <div class="h18-builder-canvas"></div>
+    <div id="h18-page-inspector-target"></div>
+    <div id="h18-page-sections-sortable">
+      <section class="h18-page-section-row" data-section-type="grid" data-section-index="1">
+        <input class="h18-page-section-key" value="auto-1">
+        <input class="h18-section-navigator-label" value="Auto-kasser">
+        <input class="h18-layout-parent-key" value="">
+        <input name="Sections[1][LayoutColumns]" value="2">
+        <input name="Sections[1][LayoutGapPx]" value="16">
+        <div class="h18-canvas-preview"><div class="base-preview">Auto base</div></div>
+      </section>
+      <section class="h18-page-section-row" data-section-type="container" data-section-index="2">
+        <input class="h18-page-section-key" value="box-1">
+        <input class="h18-section-navigator-label" value="Kasse">
+        <input class="h18-layout-parent-key" value="auto-1">
+        <div class="h18-canvas-preview"><div class="base-preview">Kasse A</div></div>
+      </section>
+      <section class="h18-page-section-row" data-section-type="container" data-section-index="3">
+        <input class="h18-page-section-key" value="box-2">
+        <input class="h18-section-navigator-label" value="Kasse">
+        <input class="h18-layout-parent-key" value="auto-1">
+        <div class="h18-canvas-preview"><div class="base-preview">Kasse B</div></div>
+      </section>
+    </div>
+  </body></html>`);
+  await page.addScriptTag({ path: jqueryRuntime });
+  await page.addScriptTag({ path: nestingRuntime });
+
+  const autoRow = page.locator('.h18-page-section-row[data-section-type="grid"]');
+  await expect(autoRow.locator('.h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(2, { timeout: 2000 });
+  await expect(page.locator('.h18-page-section-row[data-section-index="2"]')).toHaveAttribute('data-h18-v0811-child-source', '1');
+  await expect(page.locator('.h18-page-section-row[data-section-index="3"]')).toHaveAttribute('data-h18-v0811-child-source', '1');
+  await expect(autoRow.locator('.h18-v0811-runtime-badge').first()).toHaveText('v0.8.15');
+
+  await autoRow.locator(':scope > .h18-canvas-preview').evaluate((preview) => {
+    preview.innerHTML = '<div class="base-preview">Base editor rebuilt this preview</div>';
+  });
+
+  await expect(autoRow.locator('.h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(2, { timeout: 2000 });
+});
+
+test('Undo restore guard discards derived history capture instead of replaying it later', async ({ page }) => {
+  await page.setContent(`<!doctype html><html><body>
+    <button id="h18-editor-undo" type="button">Fortryd</button>
+    <form id="h18-page-editor-form"><div id="history-host"></div></form>
+  </body></html>`);
+  await page.addScriptTag({ content: historyGuardScript() });
+
+  const state = await page.evaluate(async () => {
+    window.__h18RecordCount = 0;
+    window.__h18MutationCount = 0;
+    window.editorHistoryRecordNow = function editorHistoryRecordNow() {
+      window.__h18RecordCount += 1;
+    };
+
+    const form = document.getElementById('h18-page-editor-form');
+    const observer = new MutationObserver(function () {
+      window.__h18MutationCount += 1;
+    });
+    observer.observe(form, { childList: true, subtree: true });
+
+    document.getElementById('h18-editor-undo').click();
+    window.setTimeout(window.editorHistoryRecordNow, 10);
+    form.appendChild(document.createElement('span'));
+
+    await new Promise((resolve) => window.setTimeout(resolve, 620));
+    const duringRestore = {
+      records: window.__h18RecordCount,
+      mutations: window.__h18MutationCount
+    };
+
+    form.appendChild(document.createElement('b'));
+    await new Promise((resolve) => window.setTimeout(resolve, 60));
+
+    return {
+      duringRestore,
+      mutationsAfterRestore: window.__h18MutationCount
+    };
+  });
+
+  expect(state.duringRestore.records).toBe(0);
+  expect(state.duringRestore.mutations).toBe(0);
+  expect(state.mutationsAfterRestore).toBeGreaterThan(0);
 });

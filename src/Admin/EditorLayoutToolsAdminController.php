@@ -54,7 +54,6 @@ final class EditorLayoutToolsAdminController
             true
         );
         self::enqueueKasseDragAuthorityV0813();
-        self::enqueueAutoKasseAuthorityV0814();
         wp_enqueue_style(
             'hangar18-ultimate-designer-layout-tools',
             $pluginUrl . 'assets/ultimate-designer-layout-tools.css',
@@ -182,8 +181,7 @@ final class EditorLayoutToolsAdminController
         var args = Array.prototype.slice.call(arguments, 2);
         var guard = window.__h18HistoryTransactionV0814;
         if (guard && guard.isSuppressed() && typeof callback === 'function' && callback.name === 'editorHistoryRecordNow') {
-            var wait = Math.max(Number(delay) || 0, guard.remaining() + 30);
-            return NativeSetTimeout(function () { callback.apply(window, args); }, wait);
+            return 0;
         }
         return NativeSetTimeout.apply(window, [callback, delay].concat(args));
     };
@@ -237,11 +235,10 @@ JS;
     }
 
     /**
-     * v0.8.14 gives Auto-kasser one unambiguous meaning: it is a Grid parent,
-     * not "Grid + an automatically created Container". Kasser are then dropped
-     * into that Grid explicitly. This adapter registers after layout-tools (so it
-     * can neutralize the historical auto-row tool) but before nesting-tools (so
-     * the Auto-kasse drop can be consumed exactly once).
+     * Historical v0.8.14 Auto-kasse adapter retained only as dead reference for
+     * rollback archaeology. It is deliberately NOT enqueued. The direct nesting
+     * runtime owns all Kasse/Auto-kasser placement, while layout-tools only
+     * configures the Grid created by the Auto-kasser palette item.
      */
     private static function enqueueAutoKasseAuthorityV0814(): void
     {
