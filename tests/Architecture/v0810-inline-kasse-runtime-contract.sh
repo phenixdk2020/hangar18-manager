@@ -26,25 +26,36 @@ require_text 'data-section-type="grid"' 'existing Grid creation path'
 require_text "var BOX='Kasse',AUTO='Auto-kasser'" 'Kasse/Auto-kasser runtime labels'
 require_text 'setParent($t,gk);setParent($n,gk);' 'two-box grouping into one Grid parent'
 
-# v0.8.10 no longer depends on the separate v0.8.9 composition asset being
-# enqueued. The historical file may remain in the repository, but the controller
-# must not register it as the authoritative runtime.
 if grep -F "'hangar18-ultimate-designer-visual-composition'" "$CTRL" >/dev/null; then
   echo 'FAIL: v0.8.10 controller still references the separate visual-composition handle'
   exit 1
 fi
 
-php -r '
-$s=file_get_contents("src/Admin/EditorLayoutToolsAdminController.php");
-$start=strpos($s, "$js = <<<\x27JS\x27\n");
-if ($start === false) { fwrite(STDERR, "FAIL: inline JS block start not found\n"); exit(1); }
-$start += strlen("$js = <<<\x27JS\x27\n");
-$end=strpos($s, "\nJS;", $start);
-if ($end === false) { fwrite(STDERR, "FAIL: inline JS block end not found\n"); exit(1); }
-file_put_contents("/tmp/h18-v0810-inline.js", substr($s, $start, $end-$start));
-'
+cat > /tmp/h18-v0810-extract.php <<'PHP'
+<?php
+$source = file_get_contents('src/Admin/EditorLayoutToolsAdminController.php');
+$marker = '$js = <<<' . "'JS'" . "\n";
+$start = strpos($source, $marker);
+if ($start === false) {
+    fwrite(STDERR, "FAIL: inline JS block start not found\n");
+    exit(1);
+}
+$start += strlen($marker);
+$end = strpos($source, "\nJS;", $start);
+if ($end === false) {
+    fwrite(STDERR, "FAIL: inline JS block end not found\n");
+    exit(1);
+}
+$js = substr($source, $start, $end - $start);
+if ($js === '') {
+    fwrite(STDERR, "FAIL: inline JS block is empty\n");
+    exit(1);
+}
+file_put_contents('/tmp/h18-v0810-inline.js', $js);
+echo 'Extracted v0.8.10 inline JS: ' . strlen($js) . " bytes\n";
+PHP
 
-test -s /tmp/h18-v0810-inline.js || { echo 'FAIL: extracted inline JS is empty'; exit 1; }
+php /tmp/h18-v0810-extract.php
 node --check /tmp/h18-v0810-inline.js
 php -l "$CTRL" >/dev/null
 
