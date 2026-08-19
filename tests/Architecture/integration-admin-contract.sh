@@ -53,7 +53,7 @@ grep -F 'WordPressOptionConversionAcceptanceRepository' src/Admin/IntegrationAdm
 grep -F 'WordPressOptionCutoverPreflightRepository' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'v0.7.4 – Ultimate Designer integration dashboard' assets/admin.css >/dev/null
 
-if grep -RInE 'ultimate-designer-(admin|menu-admin|menu-pages|side-health|asset-admin|portability|permissions|ai|qa|conversion|layout-tools|box-tools|element-library)\.(js|css)' src --include='*.php' | grep -vE '^src/Admin/' >/dev/null; then
+if grep -RInE 'ultimate-designer-(admin|menu-admin|menu-pages|side-health|asset-admin|portability|permissions|ai|qa|conversion|layout-tools|box-tools|nesting-tools|element-library)\.(js|css)' src --include='*.php' | grep -vE '^src/Admin/' >/dev/null; then
   echo 'FAIL: Ultimate Designer admin asset referenced outside Admin namespace'; exit 1
 fi
 
