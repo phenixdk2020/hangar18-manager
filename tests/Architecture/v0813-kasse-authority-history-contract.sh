@@ -8,9 +8,20 @@ for file in "$CTRL" "$NEST"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
+require_contains() {
+  local file="$1"
+  local needle="$2"
+  local label="$3"
+  if ! grep -F -- "$needle" "$file" >/dev/null; then
+    echo "FAIL: $label"
+    echo "  missing: $needle"
+    exit 1
+  fi
+}
+
 # v0.8.13: exactly one live Kasse placement runtime.
-grep -F 'enqueueEditorHistoryGuardV0813' "$CTRL" >/dev/null
-grep -F 'enqueueKasseDragAuthorityV0813' "$CTRL" >/dev/null
+require_contains "$CTRL" 'enqueueEditorHistoryGuardV0813' 'history guard is not registered'
+require_contains "$CTRL" 'enqueueKasseDragAuthorityV0813' 'Kasse drag authority shim is not registered'
 if grep -F 'self::enqueueV0810KasseRuntime();' "$CTRL" >/dev/null; then
   echo 'FAIL: obsolete v0.8.10 Kasse runtime is still enqueued'
   exit 1
@@ -19,38 +30,42 @@ if grep -F "'hangar18-ultimate-designer-visual-composition'" "$CTRL" >/dev/null;
   echo 'FAIL: obsolete visual-composition runtime is live'
   exit 1
 fi
-
-grep -F 'data-h18-v0813-kasse-authority' "$CTRL" >/dev/null
-grep -F "removeAttribute('data-h18-layout-tool')" "$CTRL" >/dev/null
-grep -F "setTimeout(function () { item.setAttribute('data-h18-layout-tool', 'box'); }, 0);" "$CTRL" >/dev/null
+require_contains "$CTRL" 'data-h18-v0813-kasse-authority' 'v0.8.13 authority marker is missing'
+require_contains "$CTRL" "removeAttribute('data-h18-layout-tool')" 'layout-tools Kasse claim is not neutralized during dragstart'
+require_contains "$CTRL" "setTimeout(function () { item.setAttribute('data-h18-layout-tool', 'box'); }, 0);" 'Kasse palette metadata is not restored after dragstart'
 
 # Undo/redo guard suppresses only the editor-history observer during restore settling.
-grep -F '__h18HistoryObserverGuardV0813' "$CTRL" >/dev/null
-grep -F "meta.target.id === 'h18-page-editor-form'" "$CTRL" >/dev/null
-grep -F '#h18-editor-undo,#h18-editor-redo' "$CTRL" >/dev/null
-grep -F 'suppress(180)' "$CTRL" >/dev/null
+require_contains "$CTRL" '__h18HistoryObserverGuardV0813' 'Undo/Redo observer guard is missing'
+require_contains "$CTRL" "meta.target.id === 'h18-page-editor-form'" 'Undo/Redo guard is not scoped to the page-editor history observer'
+require_contains "$CTRL" '#h18-editor-undo,#h18-editor-redo' 'Undo/Redo controls do not activate the settle guard'
+require_contains "$CTRL" 'suppress(180)' 'Undo/Redo settle window is missing'
 
 # Kasse in Kasse is allowed subject to cycle/depth guard; side placement alone creates Auto-kasser.
-grep -F 'function canMoveIntoBox($row, $box)' "$NEST" >/dev/null
+require_contains "$NEST" 'function canMoveIntoBox($row, $box)' 'inside-Kasse acceptance guard is missing'
 if grep -F '!isBox($box) || isBox($row)' "$NEST" >/dev/null; then
   echo 'FAIL: Kasse source is still categorically rejected as a child'
   exit 1
 fi
-grep -F 'function subtreeDepth($row)' "$NEST" >/dev/null
-grep -F 'function parentDepth($row)' "$NEST" >/dev/null
-grep -F 'function finishNewBoxInside(beforeKeys, targetKey)' "$NEST" >/dev/null
-grep -F "mode: 'inside'" "$NEST" >/dev/null
-grep -F "mode: 'side'" "$NEST" >/dev/null
-grep -F 'createAutoForBoxes($source, $target, side)' "$NEST" >/dev/null
-grep -F 'placeBoxBeside($source, $target, side)' "$NEST" >/dev/null
+require_contains "$NEST" 'function subtreeDepth($row)' 'subtree depth guard is missing'
+require_contains "$NEST" 'function parentDepth($row)' 'parent depth guard is missing'
+require_contains "$NEST" 'function wouldCreateCycle($row, $box)' 'cycle guard is missing'
+require_contains "$NEST" 'function finishNewBoxInside(beforeKeys, targetKey)' 'new Kasse cannot finish as a child of another Kasse'
+require_contains "$NEST" "state.mode = 'inside';" 'palette Kasse does not resolve an inside-drop mode'
+require_contains "$NEST" "state.mode = 'side';" 'palette Kasse does not resolve a side-drop mode'
+require_contains "$NEST" 'createAutoForBoxes($source, $target, side)' 'side-drop cannot create/reuse Auto-kasser composition'
+require_contains "$NEST" 'placeBoxBeside($source, $target, side)' 'side placement path is missing'
 
 # One palette drop is consumed once. A dragend after a handled drop may not create another element.
-grep -F 'dropHandled: false' "$NEST" >/dev/null
-grep -F 'state.dropHandled = true' "$NEST" >/dev/null
-grep -F 'if (!state.dropHandled)' "$NEST" >/dev/null
+require_contains "$NEST" 'dropHandled: false' 'palette drag state lacks idempotent dropHandled flag'
+require_contains "$NEST" 'state.dropHandled = true' 'drop handler does not mark the drop consumed'
+require_contains "$NEST" 'if (!state.dropHandled)' 'dragend does not guard against duplicate completion'
+require_contains "$NEST" 'suppressPaletteClickUntil' 'post-drag palette click suppression is missing'
+require_contains "$NEST" 'stopImmediatePropagation' 'post-drag click is not fully consumed'
 
 # Nested Kasse previews retain their own visible contents/dropzone.
-grep -F 'clonePreview($child, isBox($child))' "$NEST" >/dev/null
+require_contains "$NEST" 'clonePreview($child, isBox($child))' 'nested Kasse preview strips its own contents/dropzone'
+require_contains "$NEST" 'h18-v0813-nested-box' 'nested Kasse visible proxy is missing'
+require_contains "$NEST" 'data-h18-v0813-box-drop' 'explicit inside-Kasse drop target is missing'
 
 # No public persistence/cutover primitives.
 if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" >/dev/null; then
