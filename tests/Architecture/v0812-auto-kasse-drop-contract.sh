@@ -11,18 +11,17 @@ grep -F 'if (preserveBoxContents)' "$JS" >/dev/null
 grep -F 'const $clone = clonePreview($box, true);' "$JS" >/dev/null
 grep -F "'data-h18-v0812-auto-kasse-drop': '1'" "$JS" >/dev/null
 
-# A drop on the visible Auto-kasser tile must map back to the hidden source Kasse.
-grep -F "element.closest('.h18-v0811-auto-box[data-h18-v0811-box]')" "$JS" >/dev/null
-grep -F "rowByKey(String(autoTile.getAttribute('data-h18-v0811-box') || ''))" "$JS" >/dev/null
+# A drop on a visible Auto-kasse or nested-Kasse proxy maps back to its hidden source Kasse.
+grep -F ".h18-v0811-auto-box[data-h18-v0811-box],.h18-v0813-nested-box[data-h18-v0811-box]" "$JS" >/dev/null
+grep -F "rowByKey(String(proxy.getAttribute('data-h18-v0811-box') || ''))" "$JS" >/dev/null
 
-# Existing-row sortable hit-testing must use the visible Auto-kasser tile/drop-zone,
-# because the source Kasse row is intentionally hidden while nested in Auto-kasser.
-grep -F "\$('.h18-v0811-auto-box[data-h18-v0811-box]').each(function ()" "$JS" >/dev/null
-grep -F "const zone = \$tile.find('.h18-ud-box-drop-zone').get(0) || this;" "$JS" >/dev/null
+# Existing-row sortable hit-testing uses visible proxy/drop-zones because nested source rows stay hidden.
+grep -F "$('.h18-v0811-auto-box[data-h18-v0811-box],.h18-v0813-nested-box[data-h18-v0811-box]').each(function ()" "$JS" >/dev/null
+grep -F "const zone = $proxy.find('.h18-ud-box-drop-zone[data-h18-v0813-box-drop]').get(0) || this;" "$JS" >/dev/null
 
-# Visual target feedback must also be applied to the visible Auto-kasser tile.
-grep -F "\$('.h18-v0811-auto-box').removeClass('h18-ud-nesting-drop-target')" "$JS" >/dev/null
-grep -F "\$('.h18-v0811-auto-box[data-h18-v0811-box=\"' + key + '\"]')" "$JS" >/dev/null
+# Visual target feedback is applied to visible proxies.
+grep -F "$('.h18-v0811-auto-box,.h18-v0813-nested-box').removeClass('h18-ud-nesting-drop-target')" "$JS" >/dev/null
+grep -F ".h18-v0813-nested-box[data-h18-v0811-box=\"' + key + '\"]" "$JS" >/dev/null
 
 # Existing hierarchy/persistence model remains unchanged.
 grep -F '.h18-layout-parent-key' "$JS" >/dev/null
@@ -33,4 +32,4 @@ if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|upd
 fi
 
 node --check "$JS"
-echo 'v0.8.12 Auto-kasse child preview/drop contract: PASS'
+echo 'v0.8.12+ Auto-kasse child preview/drop contract: PASS'
