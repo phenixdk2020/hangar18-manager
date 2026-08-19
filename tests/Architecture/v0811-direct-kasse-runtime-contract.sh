@@ -17,7 +17,8 @@ if grep -F 'data-h18-v0811-child-source="1"]:not(.is-selected)' "$CSS" >/dev/nul
 fi
 
 # Real child previews are composed inside the Kasse and edit remains routed through the source row/Inspector.
-grep -F 'function clonePreview($row)' "$JS" >/dev/null
+# Later hotfixes may add optional arguments to clonePreview(), so assert the function/purpose rather than its exact signature.
+grep -F 'function clonePreview($row' "$JS" >/dev/null
 grep -F 'h18-v0811-child-card' "$JS" >/dev/null
 grep -F 'h18-v0811-edit-child' "$JS" >/dev/null
 grep -F "text: 'v0.8.11'" "$JS" >/dev/null
