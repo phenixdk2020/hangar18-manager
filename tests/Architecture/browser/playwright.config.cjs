@@ -2,7 +2,7 @@ const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: __dirname,
-  testMatch: /runtime\.spec\.cjs/,
+  testMatch: /(runtime|history-guard-v0816)\.spec\.cjs/,
   timeout: 30000,
   fullyParallel: false,
   retries: 0,
