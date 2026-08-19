@@ -1,19 +1,45 @@
 .h18-page-section-row[data-h18-box="1"]{transition:outline-color .14s ease,box-shadow .14s ease}
 .h18-page-section-row.h18-ud-nesting-drop-target{outline:3px solid #2271b1;outline-offset:3px;box-shadow:0 0 0 5px rgba(34,113,177,.12)}
 .h18-page-section-row.h18-ud-nesting-drop-target>.h18-canvas-preview::before{content:"Slip her for at lægge elementet i kassen";display:block;margin:0 0 9px;padding:7px 10px;border:1px dashed #2271b1;border-radius:6px;background:#f0f6fc;color:#135e96;font-size:12px;font-weight:600;text-align:center}
+
+/* v0.8.11: nested source rows stay in DOM/storage but never occupy canvas space. */
+#h18-page-sections-sortable[data-h18-v0811-kasse-runtime="1"]>.h18-page-section-row[data-h18-v0811-child-source="1"]{display:none!important}
+#h18-page-sections-sortable>.h18-page-section-row[data-h18-nested-in-box]:not([data-h18-nested-in-box=""]){display:none!important}
+
 .h18-ud-box-contents-preview{margin-top:10px;padding:10px;border:1px solid #dcdcde;border-radius:7px;background:#f6f7f7}
-.h18-ud-box-contents-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.h18-ud-box-contents-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
 .h18-ud-box-contents-head strong{font-size:12px}
 .h18-ud-box-contents-head span{color:#646970;font-size:11px}
-.h18-ud-box-contents-items{display:flex;flex-direction:column;gap:6px}
+.h18-ud-box-contents-items{display:flex;flex-direction:column;gap:8px}
 .h18-ud-box-empty-drop{padding:8px 10px;border:1px dashed #c3c4c7;border-radius:6px;background:#fff;color:#646970;font-size:12px;text-align:center}
 .h18-ud-box-drop-zone{display:flex;align-items:center;justify-content:center;min-height:54px;margin-top:9px;padding:10px 12px;border:2px dashed #8c8f94;border-radius:7px;background:#fff;color:#50575e;font-size:12px;font-weight:600;text-align:center;transition:border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease}
 .h18-ud-box-drop-zone.is-active,.h18-page-section-row.h18-ud-nesting-drop-target .h18-ud-box-drop-zone{border-color:#2271b1;background:#eaf4fb;color:#135e96;box-shadow:inset 0 0 0 1px rgba(34,113,177,.12)}
 .h18-ud-existing-row-drag .h18-ud-box-drop-zone{min-height:66px}
-.h18-ud-box-child-chip{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:6px;align-items:center;width:100%;padding:7px 8px;border:1px solid #c3c4c7;border-radius:6px;background:#fff;color:#1d2327;cursor:pointer;text-align:left}
-.h18-ud-box-child-chip:hover,.h18-ud-box-child-chip:focus-visible{border-color:#2271b1;color:#135e96}
-.h18-ud-box-child-chip:focus-visible{outline:2px solid #2271b1;outline-offset:1px}
-.h18-ud-box-child-chip .dashicons{width:18px;height:18px;font-size:16px;line-height:18px}
-.h18-ud-box-child-chip small{color:#646970;font-size:10px}
+
+.h18-v0811-runtime-badge{font-size:10px;font-weight:700;color:#0a4b78;background:#eaf4fb;border:1px solid #72aee6;border-radius:999px;padding:2px 7px}
+.h18-v0811-child-list{display:flex;flex-direction:column;gap:10px}
+.h18-v0811-child-card{border:1px solid #c3c4c7;border-radius:7px;background:#fff;overflow:hidden}
+.h18-v0811-child-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 9px;background:#f6f7f7;border-bottom:1px solid #dcdcde}
+.h18-v0811-child-bar strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.h18-v0811-child-preview{padding:8px;background:#fff;min-height:24px}
+.h18-v0811-child-preview>.h18-canvas-preview{margin:0!important;pointer-events:none!important;box-shadow:none!important}
+.h18-v0811-child-preview input,.h18-v0811-child-preview select,.h18-v0811-child-preview textarea,.h18-v0811-child-preview button{pointer-events:none!important}
+
+/* Always visible so the user can see exactly where a second Kasse must be dropped. */
+.h18-v0811-side-zones{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 0}
+.h18-v0811-side-zone{display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px;border:2px dashed #b4b8bd;border-radius:7px;background:#fbfbfc;color:#646970;text-align:center;font-size:11px;font-weight:700;transition:border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease}
+#h18-page-sections-sortable.h18-v0811-box-drag .h18-v0811-side-zone{border-color:#72aee6;background:#f0f6fc;color:#135e96}
+.h18-v0811-side-zone.is-active{border-color:#2271b1!important;background:#dceeff!important;color:#0a4b78!important;box-shadow:0 0 0 3px rgba(34,113,177,.14)}
+
+.h18-v0811-auto-grid{display:grid!important;grid-template-columns:repeat(var(--h18-v0811-cols,1),minmax(0,1fr))!important;gap:var(--h18-v0811-gap,16px)!important;align-items:stretch}
+.h18-v0811-auto-box{min-width:0;border:1px solid #c3c4c7;border-radius:8px;background:#fff;overflow:hidden}
+.h18-v0811-auto-box-preview{padding:8px}
+.h18-v0811-auto-box-preview>.h18-canvas-preview{margin:0!important;pointer-events:none!important;box-shadow:none!important}
+
+/* v0.8.10 is no longer the visible composer when v0.8.11 is active. */
+#h18-page-sections-sortable[data-h18-v0811-kasse-runtime="1"] .h18-v0810-side-zones{display:none!important}
+
 .h18-page-section-row.h18-ud-just-nested{animation:h18UdNestedFlash .9s ease}
 @keyframes h18UdNestedFlash{0%,100%{box-shadow:none}35%{box-shadow:0 0 0 4px rgba(34,113,177,.22)}}
+
+@media(max-width:1180px){.h18-v0811-auto-grid{grid-template-columns:1fr!important}.h18-v0811-side-zones{grid-template-columns:1fr}}
