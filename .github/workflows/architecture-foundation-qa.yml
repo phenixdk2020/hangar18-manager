@@ -31,6 +31,8 @@ on:
       - 'assets/ultimate-designer-layout-tools.css'
       - 'assets/ultimate-designer-box-tools.js'
       - 'assets/ultimate-designer-box-tools.css'
+      - 'assets/ultimate-designer-nesting-tools.js'
+      - 'assets/ultimate-designer-nesting-tools.css'
       - 'assets/ultimate-designer-element-library.js'
       - 'assets/ultimate-designer-element-library.css'
       - 'docs/architecture-*.md'
@@ -85,6 +87,7 @@ jobs:
       - run: bash tests/Architecture/v085-layout-table-health-contract.sh
       - run: bash tests/Architecture/v087-element-library-contract.sh
       - run: bash tests/Architecture/v087-box-tools-contract.sh
+      - run: bash tests/Architecture/v087-nesting-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: php tests/Architecture/i3-menu-admin-smoke.php
       - run: bash tests/Architecture/i3-menu-page-chooser-contract.sh
@@ -98,7 +101,7 @@ jobs:
       - run: bash tests/Architecture/i10-conversion-admin-contract.sh
       - run: bash tests/Architecture/i10-cutover-preflight-admin-contract.sh
       - run: bash tests/Architecture/integration-admin-contract.sh
-      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js && node --check assets/ultimate-designer-portability.js && node --check assets/ultimate-designer-layout-tools.js && node --check assets/ultimate-designer-box-tools.js && node --check assets/ultimate-designer-element-library.js
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js && node --check assets/ultimate-designer-portability.js && node --check assets/ultimate-designer-layout-tools.js && node --check assets/ultimate-designer-box-tools.js && node --check assets/ultimate-designer-nesting-tools.js && node --check assets/ultimate-designer-element-library.js
 
   browser-engine-qa:
     name: E14 browser engines (Chromium/Firefox/WebKit)
