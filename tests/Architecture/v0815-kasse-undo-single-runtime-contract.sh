@@ -4,9 +4,10 @@ set -euo pipefail
 CTRL='src/Admin/EditorLayoutToolsAdminController.php'
 LAYOUT='assets/ultimate-designer-layout-tools.js'
 NEST='assets/ultimate-designer-nesting-tools.js'
+NEST_CSS='assets/ultimate-designer-nesting-tools.css'
 BOX_CONTENT='assets/ultimate-designer-box-content-layout.js'
 
-for file in "$CTRL" "$LAYOUT" "$NEST" "$BOX_CONTENT"; do
+for file in "$CTRL" "$LAYOUT" "$NEST" "$NEST_CSS" "$BOX_CONTENT"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -45,6 +46,18 @@ require_contains "$NEST" "state.mode = 'auto';" 'new Kasse Auto-kasser mode is m
 require_contains "$NEST" "existingBoxDrag.mode = 'auto';" 'existing Kasse Auto-kasser mode is missing'
 require_contains "$NEST" "text: 'v0.8.15'" 'v0.8.15 runtime badge is missing'
 require_contains "$NEST" 'data-h18-v0815-kasse-runtime' 'v0.8.15 runtime marker is missing'
+
+# v0.8.16 direct Auto-kasser drop safety.
+# Storage metadata alone may never hide a source row; only the runtime's child-source
+# marker may do so after the visible composition has been rendered/refreshed.
+if grep -F '#h18-page-sections-sortable>.h18-page-section-row[data-h18-nested-in-box]:not([data-h18-nested-in-box=""]){display:none!important}' "$NEST_CSS" >/dev/null; then
+  echo 'FAIL: Kasse can still disappear solely because parent metadata was written'
+  exit 1
+fi
+require_contains "$NEST_CSS" 'data-h18-v0811-child-source="1"]{display:none!important}' 'authoritative child-source hiding rule is missing'
+require_contains "$NEST_CSS" 'h18-v0811-box-drag>.h18-page-section-row[data-section-type="grid"]>.h18-canvas-preview>.h18-v0814-auto-drop-zone' 'Auto-kasser drop zone does not expand over the full Grid canvas'
+require_contains "$NEST_CSS" 'position:absolute;inset:0' 'full Auto-kasser direct-drop hit area is missing'
+require_contains "$NEST_CSS" 'pointer-events:none' 'full Auto-kasser hit area blocks more specific Kasse-in-Kasse targeting'
 
 # Hidden source rows may not become visually orphaned if the base editor rebuilds a canvas preview.
 require_contains "$NEST" 'function compositionMissing()' 'composition loss detector is missing'
@@ -86,7 +99,7 @@ if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*
   exit 1
 fi
 if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" "$BOX_CONTENT" >/dev/null; then
-  echo 'FAIL: Undo hotfix introduced a public persistence/cutover primitive'
+  echo 'FAIL: Undo/Kasse hotfix introduced a public persistence/cutover primitive'
   exit 1
 fi
 
