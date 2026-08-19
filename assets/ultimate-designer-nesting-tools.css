@@ -6,7 +6,10 @@
 .h18-ud-box-contents-head strong{font-size:12px}
 .h18-ud-box-contents-head span{color:#646970;font-size:11px}
 .h18-ud-box-contents-items{display:flex;flex-direction:column;gap:6px}
-.h18-ud-box-empty-drop{padding:10px;border:1px dashed #c3c4c7;border-radius:6px;background:#fff;color:#646970;font-size:12px;text-align:center}
+.h18-ud-box-empty-drop{padding:8px 10px;border:1px dashed #c3c4c7;border-radius:6px;background:#fff;color:#646970;font-size:12px;text-align:center}
+.h18-ud-box-drop-zone{display:flex;align-items:center;justify-content:center;min-height:54px;margin-top:9px;padding:10px 12px;border:2px dashed #8c8f94;border-radius:7px;background:#fff;color:#50575e;font-size:12px;font-weight:600;text-align:center;transition:border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease}
+.h18-ud-box-drop-zone.is-active,.h18-page-section-row.h18-ud-nesting-drop-target .h18-ud-box-drop-zone{border-color:#2271b1;background:#eaf4fb;color:#135e96;box-shadow:inset 0 0 0 1px rgba(34,113,177,.12)}
+.h18-ud-existing-row-drag .h18-ud-box-drop-zone{min-height:66px}
 .h18-ud-box-child-chip{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:6px;align-items:center;width:100%;padding:7px 8px;border:1px solid #c3c4c7;border-radius:6px;background:#fff;color:#1d2327;cursor:pointer;text-align:left}
 .h18-ud-box-child-chip:hover,.h18-ud-box-child-chip:focus-visible{border-color:#2271b1;color:#135e96}
 .h18-ud-box-child-chip:focus-visible{outline:2px solid #2271b1;outline-offset:1px}
