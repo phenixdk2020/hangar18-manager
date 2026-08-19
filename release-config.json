@@ -1,13 +1,13 @@
 {
-  "version": "0.8.7",
-  "title": "Ultimate Designer UX — visuelle elementer, kasser og nesting",
+  "version": "0.8.8",
+  "title": "Designer UX — scrollbar, rigtig Kasse-nesting og Header/Footer baseline",
   "changelog": [
-    "Nyt visuelt elementbibliotek med søgning, kategorier, favoritter, Seneste, beskrivelser og drag-preview.",
-    "Auto-kasser vises tydeligt side om side i editoren med separat desktop- og mobil-spacing.",
-    "En Kasse kan indeholde flere almindelige elementer som Billede, Tekst, Overskrift og Knap via den eksisterende LayoutParentKey-model.",
-    "Hver Kasse kan styre sit interne child-layout: lodret/vandret retning, justify, align, wrap, desktop/mobile gap og mobil-stacking.",
-    "Hver Kasse kan have egne farver, skrifter, fontstørrelser, padding, kantbredde og hjørneradius; 0 px giver firkantede hjørner.",
-    "Tabel forbliver et semantisk tabelværktøj og kan sættes til 0 px kantbredde for helt usynlige cellekanter.",
-    "Vehicle/Event/Gallery forbliver på den beskyttede legacy runtime, og I10 public cutover er fortsat låst."
+    "Elementer/Funktioner-panelet har nu sin egen lodrette scrollbar, uafhængigt af canvas og Inspector.",
+    "Kasser har en tydelig indvendig drop-zone, så elementer kan trækkes IND I en Kasse i stedet for kun før eller efter den.",
+    "Både nye elementer fra elementbiblioteket og allerede oprettede elementer kan nestes i Kasser via den eksisterende LayoutParentKey-model.",
+    "Eksisterende elementer kan flyttes ind i Kasser via den eksisterende jQuery UI-sortering, og rækkefølgen synkroniseres efter drop.",
+    "Header/Footer-migrationen har fået en read-only legacy baseline med marker-kontrol og deterministisk source hash som fundament for senere shadow-import.",
+    "Den nuværende offentlige Header/Footer-rendering ændres ikke, og Vehicle/Event/Gallery forbliver på den beskyttede runtime.",
+    "Public Header/Footer/I10 cutover er fortsat låst; v0.8.8 er beregnet til manuel test af Designer-funktionerne."
   ]
 }
