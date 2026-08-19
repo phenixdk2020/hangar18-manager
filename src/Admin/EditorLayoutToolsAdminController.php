@@ -41,6 +41,10 @@ final class EditorLayoutToolsAdminController
         $boxCssPath = $pluginDir . '/assets/ultimate-designer-box-tools.css';
         $nestingJsPath = $pluginDir . '/assets/ultimate-designer-nesting-tools.js';
         $nestingCssPath = $pluginDir . '/assets/ultimate-designer-nesting-tools.css';
+        $boxContentJsPath = $pluginDir . '/assets/ultimate-designer-box-content-layout.js';
+        $boxContentCssPath = $pluginDir . '/assets/ultimate-designer-box-content-layout.css';
+        $tableAppearanceJsPath = $pluginDir . '/assets/ultimate-designer-table-appearance.js';
+        $tableAppearanceCssPath = $pluginDir . '/assets/ultimate-designer-table-appearance.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-layout-tools',
@@ -82,6 +86,34 @@ final class EditorLayoutToolsAdminController
             $pluginUrl . 'assets/ultimate-designer-nesting-tools.css',
             ['hangar18-ultimate-designer-box-tools'],
             is_file($nestingCssPath) ? (string) filemtime($nestingCssPath) : '0.8.7'
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-box-content-layout',
+            $pluginUrl . 'assets/ultimate-designer-box-content-layout.js',
+            ['jquery', 'hangar18-manager-admin', 'hangar18-ultimate-designer-nesting-tools'],
+            is_file($boxContentJsPath) ? (string) filemtime($boxContentJsPath) : '0.8.7',
+            true
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-box-content-layout',
+            $pluginUrl . 'assets/ultimate-designer-box-content-layout.css',
+            ['hangar18-ultimate-designer-nesting-tools'],
+            is_file($boxContentCssPath) ? (string) filemtime($boxContentCssPath) : '0.8.7'
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-table-appearance',
+            $pluginUrl . 'assets/ultimate-designer-table-appearance.js',
+            ['jquery', 'hangar18-manager-admin', 'hangar18-ultimate-designer-layout-tools'],
+            is_file($tableAppearanceJsPath) ? (string) filemtime($tableAppearanceJsPath) : '0.8.7',
+            true
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-table-appearance',
+            $pluginUrl . 'assets/ultimate-designer-table-appearance.css',
+            ['hangar18-ultimate-designer-layout-tools'],
+            is_file($tableAppearanceCssPath) ? (string) filemtime($tableAppearanceCssPath) : '0.8.7'
         );
     }
 }
