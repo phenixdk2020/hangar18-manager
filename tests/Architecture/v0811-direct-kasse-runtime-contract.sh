@@ -17,11 +17,10 @@ if grep -F 'data-h18-v0811-child-source="1"]:not(.is-selected)' "$CSS" >/dev/nul
 fi
 
 # Real child previews are composed inside the Kasse and edit remains routed through the source row/Inspector.
-# Later hotfixes may add optional arguments to clonePreview(), so assert the function/purpose rather than its exact signature.
 grep -F 'function clonePreview($row' "$JS" >/dev/null
 grep -F 'h18-v0811-child-card' "$JS" >/dev/null
 grep -F 'h18-v0811-edit-child' "$JS" >/dev/null
-grep -F "text: 'v0.8.11'" "$JS" >/dev/null
+grep -E "text: 'v0\.8\.(11|12|13)'" "$JS" >/dev/null
 
 # Top-level Kasser expose explicit left/right targets and both new/existing Kasse drag paths use them.
 grep -F 'h18-v0811-side-zones' "$JS" >/dev/null
@@ -42,9 +41,9 @@ grep -F 'grid-template-columns:repeat(var(--h18-v0811-cols,1)' "$CSS" >/dev/null
 
 # Runtime remains admin UX only; no WordPress persistence/cutover primitives may appear here.
 if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$JS" >/dev/null; then
-  echo 'FAIL: v0.8.11 Kasse runtime introduced persistence/public-cutover primitive'
+  echo 'FAIL: direct Kasse runtime introduced persistence/public-cutover primitive'
   exit 1
 fi
 
 node --check "$JS"
-echo 'v0.8.11 direct Kasse composition contract: PASS'
+echo 'v0.8.11+ direct Kasse composition contract: PASS'
