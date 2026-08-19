@@ -19,10 +19,21 @@ grep -F '.h18-builder-palette-item' "$JS" >/dev/null
 grep -F 'h18-element-library-search' "$JS" >/dev/null
 grep -F 'h18-library-filter' "$JS" >/dev/null
 grep -F 'hangar18UltimateDesignerElementFavoritesV087' "$JS" >/dev/null
+grep -F 'hangar18UltimateDesignerElementRecentV087' "$JS" >/dev/null
+grep -F 'const recentLimit = 8;' "$JS" >/dev/null
 grep -F 'window.localStorage' "$JS" >/dev/null
 grep -F "['favorites', '★ Favoritter']" "$JS" >/dev/null
+grep -F "['recent', '↻ Seneste']" "$JS" >/dev/null
+grep -F 'h18-library-card-description' "$JS" >/dev/null
+grep -F 'h18-library-card-category' "$JS" >/dev/null
+grep -F 'h18-library-drag-ghost' "$JS" >/dev/null
+grep -F 'transfer.setDragImage' "$JS" >/dev/null
+grep -F 'markRecent($(this))' "$JS" >/dev/null
 grep -F 'h18-library-item-shell' "$CSS" >/dev/null
 grep -F 'h18-library-favorite' "$CSS" >/dev/null
+grep -F 'h18-library-card-button' "$CSS" >/dev/null
+grep -F 'h18-library-recent-badge' "$CSS" >/dev/null
+grep -F 'h18-library-drag-ghost' "$CSS" >/dev/null
 
 # The enhancer is admin-only and only loaded on the existing Sider editor.
 grep -F "\$page !== 'hangar18-pages'" "$CTRL" >/dev/null
@@ -53,4 +64,4 @@ if git diff --name-only origin/main...HEAD | grep -E '(^|/)(Vehicle|Event|Galler
   exit 1
 fi
 
-echo 'v0.8.7 element library + command palette preservation contract: PASS'
+echo 'v0.8.7 visual element library + recent items + drag preview contract: PASS'
