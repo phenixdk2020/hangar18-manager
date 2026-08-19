@@ -181,7 +181,7 @@ final class EditorLayoutToolsAdminController
         var args = Array.prototype.slice.call(arguments, 2);
         var guard = window.__h18HistoryTransactionV0814;
         if (guard && guard.isSuppressed() && typeof callback === 'function' && callback.name === 'editorHistoryRecordNow') {
-            return NativeSetTimeout(function () {}, 0);
+            return 0;
         }
         return NativeSetTimeout.apply(window, [callback, delay].concat(args));
     };
