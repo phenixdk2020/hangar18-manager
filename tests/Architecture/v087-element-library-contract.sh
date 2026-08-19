@@ -26,12 +26,15 @@ grep -F "['favorites', '★ Favoritter']" "$JS" >/dev/null
 grep -F "['recent', '↻ Seneste']" "$JS" >/dev/null
 grep -F 'h18-library-card-description' "$JS" >/dev/null
 grep -F 'h18-library-card-category' "$JS" >/dev/null
+grep -F 'function refreshGroupHeadings()' "$JS" >/dev/null
+grep -F 'h18-library-group-heading' "$JS" >/dev/null
 grep -F 'h18-library-drag-ghost' "$JS" >/dev/null
 grep -F 'transfer.setDragImage' "$JS" >/dev/null
 grep -F 'markRecent($(this))' "$JS" >/dev/null
 grep -F 'h18-library-item-shell' "$CSS" >/dev/null
 grep -F 'h18-library-favorite' "$CSS" >/dev/null
 grep -F 'h18-library-card-button' "$CSS" >/dev/null
+grep -F 'h18-library-group-heading' "$CSS" >/dev/null
 grep -F 'h18-library-recent-badge' "$CSS" >/dev/null
 grep -F 'h18-library-drag-ghost' "$CSS" >/dev/null
 
@@ -64,4 +67,4 @@ if git diff --name-only origin/main...HEAD | grep -E '(^|/)(Vehicle|Event|Galler
   exit 1
 fi
 
-echo 'v0.8.7 visual element library + recent items + drag preview contract: PASS'
+echo 'v0.8.7 visual element library + grouping + recent items + drag preview contract: PASS'
