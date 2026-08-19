@@ -29,6 +29,7 @@ No automated QA result may replace a required manual/live acceptance gate.
 | UX-4 — Unsaved page preview | ⬜ Backlog | Preview current unsaved editor state without saving or changing the public page. |
 | B1 — Backup page restore | ⬜ Backlog | Restore a page backup either over the original or as a new `-kopi` draft, with automatic safety backup before replacement. |
 | B2 — Versioned full-site backup/export | ⬜ Backlog | Versioned, exportable site package with site data, configuration and used media plus restore/import workflow. |
+| DOC-1 — Ultimate Designer visual manual | ⬜ Backlog | Versioned user manual with screenshot + name + purpose + usage examples for every element/function, plus layout concepts, responsive behavior and troubleshooting. |
 
 ## I1 — Admin integration / shadow dashboard — COMPLETE
 
@@ -260,6 +261,29 @@ Required capabilities:
 - keep restore/import auditable and reversible;
 - never silently replace existing media/pages on import: collisions must be reported and resolved explicitly;
 - investigate whether the package should also contain a database snapshot and/or plugin/theme code for a true whole-WordPress disaster-recovery package; if included, this must be a separate high-risk restore mode with explicit confirmation and hosting compatibility checks.
+
+### DOC-1 — Ultimate Designer visual user manual
+
+Create a versioned visual user manual after the editor interaction model is stable, so screenshots and instructions correspond to the released runtime rather than an intermediate build.
+
+Required manual structure:
+
+- **Quick start:** create a page, add an element, edit it in Inspector, preview, save/version and undo/redo;
+- **Element catalogue:** every element/function gets its own entry with screenshot/icon, exact UI name, purpose, when to use it and a short practical example;
+- **Layout catalogue:** explain Section, Container/Kasse, Auto-kasser/Grid, Flex and true Table separately, including which objects may contain which children;
+- **Auto-kasser example:** show 1, 2, 3 and more Kasser in a Grid and explain automatic column distribution, `LayoutGapPx`/Mellemrum between Kasser, mobile stacking and per-Kasse padding/design;
+- **Kasse example:** show Text, Image, Button and nested Kasse as children and explain internal `LayoutGapPx`, padding, alignment and nesting-depth rules;
+- **Inspector reference:** explain content, typography, colors, borders, radius, opacity, spacing, responsive overrides, hover/state controls and dynamic bindings;
+- **Drag/drop map:** screenshots showing exactly where an element may be dropped, including visual active-target states for Kasse-in-Kasse and Kasse-in-Auto-kasser;
+- **Responsive guide:** Desktop/Tablet/Mobile controls and which values inherit versus override;
+- **Version/backup guide:** save history, Undo/Redo, page versions, backup/restore, copy restore and full-site backup/export once those functions are released;
+- **Troubleshooting:** common mistakes such as confusing Grid container with Kasse, dropping beside versus inside, hidden/nested source rows, stale browser cache and how to verify the active runtime badge;
+- **Worked recipes:** examples such as two-column Image + Text, three feature cards, hero + CTA, event/contact layout and reusable content blocks;
+- **Accessibility notes:** heading hierarchy, alt text, keyboard operation, contrast and focus states;
+- manual must be tied to a plugin/manual version and show `Gælder for Hangar18 Manager vX.Y.Z`;
+- screenshots must be captured from the same released version the manual describes;
+- provide the manual both as a normal repository/documentation source and as contextual help from wp-admin, for example a `? Hjælp` button linking to the relevant chapter for the currently selected element;
+- later optionally generate a printable/exportable PDF from the same canonical manual source rather than maintaining separate text manually.
 
 ## Current next actions
 
