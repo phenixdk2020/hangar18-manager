@@ -2,35 +2,53 @@ const { test, expect } = require('@playwright/test');
 const path = require('path');
 
 const nestingRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-nesting-tools.js');
+const nestingCss = path.resolve(__dirname, '../../../assets/ultimate-designer-nesting-tools.css');
 const jqueryRuntime = require.resolve('jquery');
 
-async function dropExistingBoxIntoAuto(page, boxKey) {
+async function dropExistingBoxDirectlyOnAutoCanvas(page, boxKey) {
   await page.evaluate(async (key) => {
     const $ = window.jQuery;
     const $sections = $('#h18-page-sections-sortable');
     const $row = $sections.children('.h18-page-section-row').filter(function () {
       return String($(this).find('.h18-page-section-key').first().val() || '') === key;
     }).first();
-    const zone = document.querySelector('.h18-v0814-auto-drop-zone[data-h18-v0814-auto-drop="auto-1"]');
-    if (!zone) { throw new Error('Auto-kasser drop zone is missing before sortable move'); }
-    const rect = zone.getBoundingClientRect();
-    const pageX = rect.left + (rect.width / 2) + window.pageXOffset;
-    const pageY = rect.top + (rect.height / 2) + window.pageYOffset;
 
     $sections.trigger('sortstart', [{ item: $row }]);
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const preview = document.querySelector('.h18-page-section-row[data-section-type="grid"] > .h18-canvas-preview');
+    const zone = document.querySelector('.h18-v0814-auto-drop-zone[data-h18-v0814-auto-drop="auto-1"]');
+    if (!preview || !zone) { throw new Error('Auto-kasser canvas/drop-zone is missing before sortable move'); }
+
+    const previewRect = preview.getBoundingClientRect();
+    const zoneRect = zone.getBoundingClientRect();
+
+    // The production CSS must expand the zone across the complete Auto-kasser
+    // canvas while a Kasse is dragged. This specifically avoids the old test
+    // shortcut that dropped in the small footer zone.
+    if (zoneRect.top > previewRect.top + 2 || zoneRect.bottom < previewRect.bottom - 2) {
+      throw new Error('Auto-kasser direct-drop hit area does not cover the full canvas');
+    }
+
+    const pageX = previewRect.left + Math.min(40, previewRect.width / 4) + window.pageXOffset;
+    const pageY = previewRect.top + 12 + window.pageYOffset;
+
     $sections.trigger($.Event('sort', { pageX, pageY }));
+    if (!$sections.children('.h18-page-section-row[data-section-type="grid"]').hasClass('h18-v0814-auto-drop-target')) {
+      throw new Error('Direct Auto-kasser canvas did not become the active drop target');
+    }
     $sections.trigger('sortstop');
 
-    await new Promise((resolve) => window.setTimeout(resolve, 220));
+    await new Promise((resolve) => window.setTimeout(resolve, 240));
   }, boxKey);
 }
 
-test('two existing Kasser stay visible when moved into empty Auto-kasser', async ({ page }) => {
+test('two existing Kasser stay visible when dropped directly on Auto-kasser canvas', async ({ page }) => {
   await page.setContent(`<!doctype html><html><head><style>
     #h18-page-sections-sortable{width:760px}
     .h18-page-section-row{display:block;width:720px;margin:8px 0;padding:8px;border:1px solid #ccc}
-    .h18-canvas-preview{display:block;width:680px;min-height:60px;padding:8px}
-    .h18-v0814-auto-drop-zone{display:block;min-height:40px;padding:10px}
+    .h18-canvas-preview{display:block;width:680px;min-height:150px;padding:8px}
+    .base-preview{height:60px}
   </style></head><body>
     <div class="h18-builder-canvas"></div>
     <div id="h18-page-inspector-target"></div>
@@ -61,6 +79,7 @@ test('two existing Kasser stay visible when moved into empty Auto-kasser', async
     </div>
   </body></html>`);
 
+  await page.addStyleTag({ path: nestingCss });
   await page.addScriptTag({ path: jqueryRuntime });
   await page.addScriptTag({ path: nestingRuntime });
 
@@ -68,15 +87,15 @@ test('two existing Kasser stay visible when moved into empty Auto-kasser', async
   await expect(autoRow.locator('.h18-v0814-auto-drop-zone')).toHaveCount(1, { timeout: 2000 });
   await expect(autoRow.locator('.h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(0);
 
-  await dropExistingBoxIntoAuto(page, 'box-1');
+  await dropExistingBoxDirectlyOnAutoCanvas(page, 'box-1');
   await expect(page.locator('.h18-page-section-row[data-section-index="2"] .h18-layout-parent-key')).toHaveValue('auto-1');
-  await expect(page.locator('.h18-page-section-row[data-section-index="2"]')).toHaveAttribute('data-h18-v0811-child-source', '1');
   await expect(autoRow.locator('.h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(1, { timeout: 2000 });
+  await expect(page.locator('.h18-page-section-row[data-section-index="2"]')).toBeHidden();
 
-  await dropExistingBoxIntoAuto(page, 'box-2');
+  await dropExistingBoxDirectlyOnAutoCanvas(page, 'box-2');
   await expect(page.locator('.h18-page-section-row[data-section-index="3"] .h18-layout-parent-key')).toHaveValue('auto-1');
-  await expect(page.locator('.h18-page-section-row[data-section-index="3"]')).toHaveAttribute('data-h18-v0811-child-source', '1');
   await expect(autoRow.locator('.h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(2, { timeout: 2000 });
+  await expect(page.locator('.h18-page-section-row[data-section-index="3"]')).toBeHidden();
   await expect(autoRow.locator('.h18-v0811-runtime-badge').first()).toHaveText('v0.8.15');
 
   await autoRow.locator(':scope > .h18-canvas-preview').evaluate((preview) => {
