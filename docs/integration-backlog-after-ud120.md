@@ -1,9 +1,9 @@
 # Ultimate Designer — integration backlog after UD-120
 
 **Statusdato:** 19. august 2026  
-**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.6**
+**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.13**
 
-The UD-001..120 design backlog now has architecture/core coverage and the wp-admin integration backlog is largely implemented. The remaining work is deliberately concentrated in manual QA evidence and the final controlled conversion. **Existing Hangar18 pages are still not converted.**
+The UD-001..120 design backlog now has architecture/core coverage and the wp-admin integration backlog is largely implemented. The remaining work is deliberately concentrated in manual QA evidence, editor stabilization and the final controlled conversion. **Existing Hangar18 pages are still not converted.**
 
 ## Non-negotiable migration rule
 
@@ -25,6 +25,10 @@ No automated QA result may replace a required manual/live acceptance gate.
 | I8 — AI UI/provider configuration | ✅ Complete | Provider-neutral registry/settings, no credentials in options, pending suggestions and reversible Apply/Undo plans. |
 | I9 — Manual QA evidence dashboard | 🟡 Framework complete | Evidence ledger and copy-only rollback preflight exist; required live/manual evidence is still pending. |
 | I10 — Final controlled conversion | 🟡 Preflight complete / cutover locked | Planner, shadow workspace, acceptance ledger, source-drift checks and signed non-executable preflight are implemented. |
+| UX-3 — Workspace rails | 🟡 Implemented / deferred merge | Elementer/Funktioner and Inspector can collapse independently to narrow rails so Sideopbygning receives more width. |
+| UX-4 — Unsaved page preview | ⬜ Backlog | Preview current unsaved editor state without saving or changing the public page. |
+| B1 — Backup page restore | ⬜ Backlog | Restore a page backup either over the original or as a new `-kopi` draft, with automatic safety backup before replacement. |
+| B2 — Versioned full-site backup/export | ⬜ Backlog | Versioned, exportable site package with site data, configuration and used media plus restore/import workflow. |
 
 ## I1 — Admin integration / shadow dashboard — COMPLETE
 
@@ -202,11 +206,67 @@ Fixed conversion order:
 - **I10-G — Legacy removal (BLOCKED):**
   - remove legacy code only after final acceptance of every converted page/domain and after rollback retention is no longer required.
 
+## Deferred editor / backup backlog
+
+These items are intentionally deferred while Kasse/Auto-kasser, nested drops and Undo/Redo are stabilized. They must not be mixed into the active Kasse hotfix.
+
+### UX-3 — Foldable Elementer/Funktioner + Inspector
+
+- independent collapse controls for the left `Elementer / funktioner` panel and the right `Inspector`;
+- collapsed state becomes a narrow side rail (target 44 px);
+- both panels may be collapsed simultaneously so `Sideopbygning` receives almost the full available width;
+- state is browser-local and must not write page content or schema;
+- existing tablet/mobile stacked behavior remains authoritative below the desktop breakpoint.
+
+### UX-4 — Preview current unsaved page
+
+- add `Forhåndsvis side` beside normal editor actions;
+- preview must render the **current unsaved editor state**, not only the last saved WordPress page;
+- no page save, version increment, public mutation or menu change is allowed;
+- preview should support Desktop / Tablet / Mobil and visually omit editor chrome, drag handles and Inspector controls;
+- `Åbn offentlig side` remains a separate action showing the last saved/public state.
+
+### B1 — Restore page backups
+
+For every readable page contained in a managed backup, expose two explicit restore modes:
+
+1. **Erstat original**
+   - create a new safety backup of the current original before any write;
+   - restore the selected backup state to the original Page ID/slug;
+   - preserve a clear audit/log entry with source backup/version;
+   - failure must leave the pre-restore safety backup available for rollback.
+
+2. **Opret som kopi**
+   - create a new WordPress draft;
+   - default title `<originalt navn> - kopi` and collision-safe slug `<original-slug>-kopi[-N]`;
+   - original page, menu assignment and public URL remain untouched;
+   - copied Page Editor data must be rebound to the copy rather than accidentally referencing the original slug/store entry.
+
+### B2 — Versioned full-site backup / restore / export
+
+Extend `Opret samlet backup nu` from a loose JSON snapshot into a versioned, exportable site package.
+
+Required capabilities:
+
+- assign every completed backup an immutable human-readable backup version/ID, for example `H18-BACKUP-000123`, plus creation UTC and plugin version;
+- package manifest with schema version, SHA-256 checksums and source site identity;
+- include all Hangar18-managed pages and page versions, Header/Footer settings/templates, menu configuration, design/global settings, forms/polls/data, plugin-managed metadata and other required Hangar18 configuration;
+- include a media manifest for every image/file actually referenced by the backed-up site content;
+- export the referenced original media files and required generated derivatives in the package so the backup can be restored on another installation without broken image references;
+- support ZIP export/download of a selected backup version;
+- support validation/dry-run before restore/import: package/schema/checksum, missing/colliding pages, media mapping, URLs and required plugin/runtime version;
+- support **full restore** from a selected backup version, always creating a fresh safety backup first;
+- support selective restore where practical (for example one page) without changing unrelated content;
+- keep restore/import auditable and reversible;
+- never silently replace existing media/pages on import: collisions must be reported and resolved explicitly;
+- investigate whether the package should also contain a database snapshot and/or plugin/theme code for a true whole-WordPress disaster-recovery package; if included, this must be a separate high-risk restore mode with explicit confirmation and hosting compatibility checks.
+
 ## Current next actions
 
-1. Run and record all I9 manual QA evidence on `test2`.
-2. Fix any live QA / Side Health issues without converting existing pages.
-3. Create or refresh the comparison-page shadow copy.
-4. Record page-specific acceptance against the current `SourceHash`.
-5. Run and persist the v0.8.6 signed preflight.
-6. Only then design/approve a separate public activation + rollback mechanism for the comparison page.
+1. **Stabilize Kasse/Auto-kasser first:** one authoritative placement runtime, correct Kasse→Kasse/Auto-kasser and element→Kasse drop behavior, and deterministic Undo/Redo one history step per user action.
+2. Run and record all I9 manual QA evidence on `test2` after the editor regression is stable.
+3. Fix any remaining live QA / Side Health issues without converting existing pages.
+4. Create or refresh the comparison-page shadow copy.
+5. Record page-specific acceptance against the current `SourceHash`.
+6. Run and persist the signed preflight.
+7. Only then design/approve a separate public activation + rollback mechanism for the comparison page.

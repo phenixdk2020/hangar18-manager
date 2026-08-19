@@ -148,7 +148,7 @@ jQuery(function ($) {
         setLabel($row, AUTO_LABEL);
         setField($row, 'Title', '');
         setField($row, 'Content', '');
-        setField($row, 'LayoutColumns', 2);
+        setField($row, 'LayoutColumns', 1);
         setField($row, 'MobileLayoutColumns', 1);
         setField($row, 'LayoutGapPx', 16);
         setField($row, 'MobileLayoutGapPx', 12);
@@ -183,9 +183,9 @@ jQuery(function ($) {
         $clone.find('[id]').removeAttr('id');
         $clone.find('[name]').removeAttr('name');
         if (preserveBoxContents) {
-            $clone.find('.h18-ud-auto-box-grid,.h18-v0810-side-zones,.h18-v0811-side-zones').remove();
+            $clone.find('.h18-ud-auto-box-grid,.h18-v0810-side-zones,.h18-v0811-side-zones,.h18-v0814-auto-drop-zone').remove();
         } else {
-            $clone.find('.h18-ud-box-contents-preview,.h18-ud-auto-box-grid,.h18-v0810-side-zones,.h18-v0811-side-zones').remove();
+            $clone.find('.h18-ud-box-contents-preview,.h18-ud-auto-box-grid,.h18-v0810-side-zones,.h18-v0811-side-zones,.h18-v0814-auto-drop-zone').remove();
         }
         $clone.find('input,select,textarea,button').prop('disabled', true).attr('tabindex', '-1');
         if (preserveBoxContents) {
@@ -207,7 +207,7 @@ jQuery(function ($) {
         const $head = $('<div>', { class: 'h18-ud-box-contents-head' }).append(
             $('<strong>', { text: 'Indhold i kassen' }),
             $('<span>', { text: $children.length + ' element' + ($children.length === 1 ? '' : 'er') }),
-            $('<em>', { class: 'h18-v0811-runtime-badge', text: 'v0.8.13' })
+            $('<em>', { class: 'h18-v0811-runtime-badge', text: 'v0.8.14' })
         );
         const $items = $('<div>', { class: 'h18-ud-box-contents-items h18-v0811-child-list' });
         if (!$children.length) {
@@ -250,6 +250,7 @@ jQuery(function ($) {
 
     function renderAuto($auto) {
         if (!isAuto($auto)) { return; }
+        const autoKey = rowKey($auto);
         const $boxes = directChildren($auto).filter(function () { return isBox($(this)); });
         const count = $boxes.length;
         const cols = Math.max(1, Math.min(6, count || 1));
@@ -257,10 +258,11 @@ jQuery(function ($) {
         const gap = parseInt(String(controls($auto, '[name$="[LayoutGapPx]"]').first().val() || 16), 10) || 16;
         const $preview = $auto.children('.h18-canvas-preview').first();
         if (!$preview.length) { return; }
-        $preview.find('.h18-ud-auto-box-grid').remove();
+        $preview.find('.h18-ud-auto-box-grid,.h18-v0814-auto-drop-zone').remove();
         const $grid = $('<div>', {
             class: 'h18-ud-auto-box-grid h18-v0811-auto-grid',
-            'data-h18-v0812-auto-kasse-drop': '1'
+            'data-h18-v0812-auto-kasse-drop': '1',
+            'data-h18-v0814-auto-key': autoKey
         }).css({
             '--h18-v0811-cols': String(cols),
             '--h18-v0811-gap': gap + 'px'
@@ -279,7 +281,12 @@ jQuery(function ($) {
             $tile.append($bar, $body);
             $grid.append($tile);
         });
-        $preview.append($grid);
+        const $dropZone = $('<div>', {
+            class: 'h18-v0814-auto-drop-zone',
+            'data-h18-v0814-auto-drop': autoKey,
+            text: count ? 'Slip endnu en Kasse her for at tilføje den til Auto-kasser' : 'Slip en Kasse her for at tilføje den til Auto-kasser'
+        });
+        $preview.append($grid, $dropZone);
     }
 
     function syncSourceVisibility() {
@@ -294,7 +301,7 @@ jQuery(function ($) {
     function refreshComposition() {
         if (renderGuard) { return; }
         renderGuard = true;
-        $sections.attr('data-h18-v0811-kasse-runtime', '1').attr('data-h18-v0813-kasse-runtime', '1');
+        $sections.attr('data-h18-v0811-kasse-runtime', '1').attr('data-h18-v0813-kasse-runtime', '1').attr('data-h18-v0814-kasse-runtime', '1');
         activeRows().each(function () { if (isBox($(this))) { renderBox($(this)); } });
         activeRows().each(function () { if (isAuto($(this))) { renderAuto($(this)); } });
         syncSourceVisibility();
@@ -367,6 +374,12 @@ jQuery(function ($) {
         return !!($box && $box.length && isBox($box) && (parentDepth($box) + 1) <= MAX_NESTING_DEPTH);
     }
 
+    function canMoveBoxIntoAuto($row, $auto) {
+        if (!$row || !$row.length || !$auto || !$auto.length || !isBox($row) || !isAuto($auto)) { return false; }
+        const deepestAfterMove = parentDepth($auto) + 1 + subtreeDepth($row);
+        return deepestAfterMove <= MAX_NESTING_DEPTH;
+    }
+
     function moveRowIntoBox($row, $box) {
         if (!canMoveIntoBox($row, $box)) { return false; }
         const boxKey = rowKey($box);
@@ -374,6 +387,19 @@ jQuery(function ($) {
         const $anchor = $children.length ? $children.last() : $box;
         $row.insertAfter($anchor);
         if (!setParent($row, boxKey)) { return false; }
+        syncFlatOrder();
+        $row.attr('data-h18-v0811-child-source', '1');
+        scheduleRefresh(80);
+        return true;
+    }
+
+    function moveBoxIntoAuto($row, $auto) {
+        if (!canMoveBoxIntoAuto($row, $auto)) { return false; }
+        const autoKey = rowKey($auto);
+        const $children = directChildren($auto).not($row);
+        const $anchor = $children.length ? $children.last() : $auto;
+        $row.insertAfter($anchor);
+        if (!setParent($row, autoKey)) { return false; }
         syncFlatOrder();
         $row.attr('data-h18-v0811-child-source', '1');
         scheduleRefresh(80);
@@ -402,6 +428,26 @@ jQuery(function ($) {
         return $();
     }
 
+    function targetAutoForElement(element) {
+        if (!element || !element.closest) { return $(); }
+        if (element.closest('.h18-v0811-auto-box[data-h18-v0811-box],.h18-ud-box-drop-zone[data-h18-v0813-box-drop]')) {
+            return $();
+        }
+        const zone = element.closest('.h18-v0814-auto-drop-zone[data-h18-v0814-auto-drop]');
+        if (zone) {
+            const $auto = rowByKey(String(zone.getAttribute('data-h18-v0814-auto-drop') || ''));
+            if (isAuto($auto)) { return $auto; }
+        }
+        const grid = element.closest('.h18-ud-auto-box-grid[data-h18-v0814-auto-key]');
+        if (grid) {
+            const $auto = rowByKey(String(grid.getAttribute('data-h18-v0814-auto-key') || ''));
+            if (isAuto($auto)) { return $auto; }
+        }
+        const row = element.closest('.h18-page-section-row');
+        if (row && isAuto($(row))) { return $(row); }
+        return $();
+    }
+
     function boxAtPoint(pageX, pageY, $draggedRow) {
         const clientX = Number(pageX) - (window.pageXOffset || document.documentElement.scrollLeft || 0);
         const clientY = Number(pageY) - (window.pageYOffset || document.documentElement.scrollTop || 0);
@@ -427,6 +473,23 @@ jQuery(function ($) {
             const rect = zone.getBoundingClientRect();
             if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
                 $match = $box;
+            }
+        });
+        return $match;
+    }
+
+    function autoAtPoint(pageX, pageY, $draggedRow) {
+        if (!$draggedRow || !$draggedRow.length || !isBox($draggedRow)) { return $(); }
+        const clientX = Number(pageX) - (window.pageXOffset || document.documentElement.scrollLeft || 0);
+        const clientY = Number(pageY) - (window.pageYOffset || document.documentElement.scrollTop || 0);
+        let $match = $();
+        $('.h18-v0814-auto-drop-zone[data-h18-v0814-auto-drop],.h18-ud-auto-box-grid[data-h18-v0814-auto-key]').each(function () {
+            const key = String(this.getAttribute('data-h18-v0814-auto-drop') || this.getAttribute('data-h18-v0814-auto-key') || '');
+            const $auto = rowByKey(key);
+            if (!canMoveBoxIntoAuto($draggedRow, $auto)) { return; }
+            const rect = this.getBoundingClientRect();
+            if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+                $match = $auto;
             }
         });
         return $match;
@@ -487,9 +550,9 @@ jQuery(function ($) {
     }
 
     function clearTargets() {
-        activeRows().removeClass('h18-ud-nesting-drop-target');
+        activeRows().removeClass('h18-ud-nesting-drop-target h18-v0814-auto-drop-target');
         $('.h18-v0811-auto-box,.h18-v0813-nested-box').removeClass('h18-ud-nesting-drop-target');
-        $('.h18-ud-box-drop-zone,.h18-v0811-side-zone').removeClass('is-active');
+        $('.h18-ud-box-drop-zone,.h18-v0811-side-zone,.h18-v0814-auto-drop-zone,.h18-ud-auto-box-grid').removeClass('is-active h18-v0814-auto-drop-active');
     }
 
     function showBoxTarget($box) {
@@ -502,6 +565,15 @@ jQuery(function ($) {
             $proxy.addClass('h18-ud-nesting-drop-target');
             $proxy.find('.h18-ud-box-drop-zone[data-h18-v0813-box-drop="' + key + '"]').first().addClass('is-active');
         }
+    }
+
+    function showAutoTarget($auto) {
+        clearTargets();
+        if (!$auto || !$auto.length) { return; }
+        const key = rowKey($auto);
+        $auto.addClass('h18-v0814-auto-drop-target');
+        $auto.find('.h18-v0814-auto-drop-zone[data-h18-v0814-auto-drop="' + key + '"]').addClass('is-active');
+        $auto.find('.h18-ud-auto-box-grid[data-h18-v0814-auto-key="' + key + '"]').addClass('h18-v0814-auto-drop-active');
     }
 
     function showSideTarget(zone) {
@@ -542,6 +614,20 @@ jQuery(function ($) {
         }, 80);
     }
 
+    function finishNewBoxInAuto(beforeKeys, targetKey) {
+        window.setTimeout(function () {
+            const $newBox = findNewRow(beforeKeys, 'container');
+            const $target = rowByKey(targetKey);
+            if (!$newBox.length) { scheduleRefresh(100); return; }
+            if (!isBox($newBox)) { configureBox($newBox); }
+            if ($target.length && canMoveBoxIntoAuto($newBox, $target)) {
+                moveBoxIntoAuto($newBox, $target);
+            } else {
+                scheduleRefresh(100);
+            }
+        }, 80);
+    }
+
     function finishNewBoxBeside(beforeKeys, targetKey, side) {
         window.setTimeout(function () {
             const $newBox = findNewRow(beforeKeys, 'container');
@@ -565,6 +651,12 @@ jQuery(function ($) {
         if ($box.length && canAcceptNewBox($box)) {
             state.mode = 'inside';
             state.target = rowKey($box);
+            return;
+        }
+        const $auto = targetAutoForElement(event.target);
+        if ($auto.length) {
+            state.mode = 'auto';
+            state.target = rowKey($auto);
             return;
         }
         state.mode = '';
@@ -596,6 +688,9 @@ jQuery(function ($) {
             } else if (paletteBoxDrag.mode === 'inside') {
                 const $box = rowByKey(paletteBoxDrag.target);
                 if ($box.length) { event.preventDefault(); showBoxTarget($box); }
+            } else if (paletteBoxDrag.mode === 'auto') {
+                const $auto = rowByKey(paletteBoxDrag.target);
+                if ($auto.length) { event.preventDefault(); showAutoTarget($auto); }
             } else {
                 clearTargets();
             }
@@ -613,11 +708,13 @@ jQuery(function ($) {
             const state = paletteBoxDrag;
             resolveNewBoxDrop(event, state);
             state.dropHandled = true;
-            if (state.mode === 'side' || state.mode === 'inside') { event.preventDefault(); }
+            if (state.mode === 'side' || state.mode === 'inside' || state.mode === 'auto') { event.preventDefault(); }
             if (state.mode === 'side' && state.target) {
                 finishNewBoxBeside(state.before, state.target, state.side);
             } else if (state.mode === 'inside' && state.target) {
                 finishNewBoxInside(state.before, state.target);
+            } else if (state.mode === 'auto' && state.target) {
+                finishNewBoxInAuto(state.before, state.target);
             } else {
                 finishNewBoxStandalone(state.before);
             }
@@ -700,6 +797,13 @@ jQuery(function ($) {
                 existingBoxDrag.mode = 'inside';
                 existingBoxDrag.target = rowKey($box);
                 showBoxTarget($box);
+                return;
+            }
+            const $auto = autoAtPoint(event.pageX, event.pageY, $source);
+            if ($auto.length) {
+                existingBoxDrag.mode = 'auto';
+                existingBoxDrag.target = rowKey($auto);
+                showAutoTarget($auto);
             } else {
                 existingBoxDrag.mode = '';
                 existingBoxDrag.target = '';
@@ -725,6 +829,8 @@ jQuery(function ($) {
                 placeBoxBeside($source, $target, state.side);
             } else if (state.mode === 'inside' && $target.length) {
                 moveRowIntoBox($source, $target);
+            } else if (state.mode === 'auto' && $target.length) {
+                moveBoxIntoAuto($source, $target);
             } else {
                 scheduleRefresh(100);
             }

@@ -9,7 +9,6 @@ jQuery(function ($) {
 
     const BOX_LABEL = 'Kasse';
     const PANEL_CLASS = 'h18-ud-box-content-layout';
-    let newBoxKeys = null;
     let refreshTimer = null;
 
     function activeRows() {
@@ -76,36 +75,6 @@ jQuery(function ($) {
             if (String(controls($(this), '.h18-layout-parent-key').first().val() || '') === key) { count += 1; }
         });
         return count;
-    }
-
-    function snapshotKeys() {
-        const keys = new Set();
-        activeRows().each(function () {
-            const key = rowKey($(this));
-            if (key) { keys.add(key); }
-        });
-        return keys;
-    }
-
-    function applyNewBoxDefaults(beforeKeys) {
-        if (!beforeKeys) { return; }
-        window.setTimeout(function () {
-            activeRows().each(function () {
-                const $row = $(this);
-                const key = rowKey($row);
-                if (key && !beforeKeys.has(key) && isBox($row)) {
-                    setField($row, 'LayoutDirection', 'Column');
-                    setField($row, 'LayoutWrap', true);
-                    setField($row, 'LayoutJustify', 'Start');
-                    setField($row, 'LayoutAlign', 'Stretch');
-                    setField($row, 'LayoutGapPx', 12);
-                    setField($row, 'MobileLayoutGapPx', 10);
-                    setField($row, 'MobileLayoutStack', true);
-                    $row.attr('data-h18-box-content-defaults', '1');
-                }
-            });
-            scheduleRefresh(20);
-        }, 80);
     }
 
     function selectControl(label, name, value, options) {
@@ -184,25 +153,10 @@ jQuery(function ($) {
         }
     });
 
-    document.addEventListener('click', function (event) {
-        const tool = event.target.closest && event.target.closest('.h18-builder-palette-item[data-h18-layout-tool="box"]');
-        if (!tool) { return; }
-        newBoxKeys = snapshotKeys();
-        window.setTimeout(function () { applyNewBoxDefaults(newBoxKeys); newBoxKeys = null; }, 0);
-    }, true);
-
-    document.addEventListener('dragstart', function (event) {
-        const tool = event.target.closest && event.target.closest('.h18-builder-palette-item[data-h18-layout-tool="box"]');
-        if (tool) { newBoxKeys = snapshotKeys(); }
-    }, true);
-    document.addEventListener('drop', function () {
-        if (newBoxKeys) {
-            const before = newBoxKeys;
-            newBoxKeys = null;
-            applyNewBoxDefaults(before);
-        }
-    }, true);
-
+    // v0.8.14: this addon is Inspector-only. Kasse creation, drag/drop,
+    // defaults and parent assignment are owned exclusively by the direct
+    // nesting runtime. The former delayed post-drop default writer was removed
+    // because its synthetic input/change events created duplicate history steps.
     $(document).on('click', '.h18-page-section-header, .h18-page-section-edit, .h18-ud-auto-box-tile, .h18-ud-box-child-chip', function () {
         scheduleRefresh(40);
     });

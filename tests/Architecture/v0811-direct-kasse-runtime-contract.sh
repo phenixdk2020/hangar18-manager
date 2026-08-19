@@ -20,7 +20,7 @@ fi
 grep -F 'function clonePreview($row' "$JS" >/dev/null
 grep -F 'h18-v0811-child-card' "$JS" >/dev/null
 grep -F 'h18-v0811-edit-child' "$JS" >/dev/null
-grep -E "text: 'v0\.8\.(11|12|13)'" "$JS" >/dev/null
+grep -E "text: 'v0\.8\.(11|12|13|14)'" "$JS" >/dev/null
 
 # Top-level Kasser expose explicit left/right targets and both new/existing Kasse drag paths use them.
 grep -F 'h18-v0811-side-zones' "$JS" >/dev/null
