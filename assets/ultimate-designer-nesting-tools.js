@@ -173,15 +173,22 @@ jQuery(function ($) {
         return title || typeLabels[rowType($row)] || rowType($row) || 'Element';
     }
 
-    function clonePreview($row) {
+    function clonePreview($row, preserveBoxContents) {
         const $preview = $row.children('.h18-canvas-preview').first();
         if (!$preview.length) { return $(); }
         const $clone = $preview.clone(false, false);
         $clone.removeAttr('id');
         $clone.find('[id]').removeAttr('id');
         $clone.find('[name]').removeAttr('name');
-        $clone.find('.h18-ud-box-contents-preview,.h18-ud-auto-box-grid,.h18-v0810-side-zones,.h18-v0811-side-zones').remove();
+        if (preserveBoxContents) {
+            $clone.find('.h18-ud-auto-box-grid,.h18-v0810-side-zones,.h18-v0811-side-zones').remove();
+        } else {
+            $clone.find('.h18-ud-box-contents-preview,.h18-ud-auto-box-grid,.h18-v0810-side-zones,.h18-v0811-side-zones').remove();
+        }
         $clone.find('input,select,textarea,button').prop('disabled', true).attr('tabindex', '-1');
+        if (preserveBoxContents) {
+            $clone.find('button.h18-v0811-edit-child').prop('disabled', false).removeAttr('tabindex');
+        }
         $clone.find('a').attr('tabindex', '-1');
         return $clone;
     }
@@ -213,7 +220,7 @@ jQuery(function ($) {
                     $('<button>', { type: 'button', class: 'button button-small h18-v0811-edit-child', 'data-h18-v0811-edit-child': childKey, text: 'Rediger' })
                 );
                 const $body = $('<div>', { class: 'h18-v0811-child-preview' });
-                const $clone = clonePreview($child);
+                const $clone = clonePreview($child, false);
                 if ($clone.length) { $body.append($clone); }
                 else { $body.text(childDisplayName($child)); }
                 $card.append($bar, $body);
@@ -244,7 +251,10 @@ jQuery(function ($) {
         const $preview = $auto.children('.h18-canvas-preview').first();
         if (!$preview.length) { return; }
         $preview.find('.h18-ud-auto-box-grid').remove();
-        const $grid = $('<div>', { class: 'h18-ud-auto-box-grid h18-v0811-auto-grid' }).css({
+        const $grid = $('<div>', {
+            class: 'h18-ud-auto-box-grid h18-v0811-auto-grid',
+            'data-h18-v0812-auto-kasse-drop': '1'
+        }).css({
             '--h18-v0811-cols': String(cols),
             '--h18-v0811-gap': gap + 'px'
         });
@@ -257,7 +267,7 @@ jQuery(function ($) {
                 $('<button>', { type: 'button', class: 'button button-small h18-v0811-edit-child', 'data-h18-v0811-edit-child': boxKey, text: 'Rediger Kasse' })
             );
             const $body = $('<div>', { class: 'h18-v0811-auto-box-preview' });
-            const $clone = clonePreview($box);
+            const $clone = clonePreview($box, true);
             if ($clone.length) { $body.append($clone); }
             $tile.append($bar, $body);
             $grid.append($tile);
@@ -325,6 +335,11 @@ jQuery(function ($) {
     }
 
     function targetBoxForElement(element) {
+        const autoTile = element && element.closest ? element.closest('.h18-v0811-auto-box[data-h18-v0811-box]') : null;
+        if (autoTile) {
+            const $autoBox = rowByKey(String(autoTile.getAttribute('data-h18-v0811-box') || ''));
+            if (isBox($autoBox)) { return $autoBox; }
+        }
         const row = element && element.closest ? element.closest('.h18-page-section-row') : null;
         if (row) {
             const $row = $(row);
@@ -333,13 +348,35 @@ jQuery(function ($) {
             if (isBox($parent)) { return $parent; }
         }
         const zone = element && element.closest ? element.closest('.h18-ud-box-drop-zone') : null;
-        return zone ? $(zone).closest('.h18-page-section-row') : $();
+        if (zone) {
+            const tile = zone.closest('.h18-v0811-auto-box[data-h18-v0811-box]');
+            if (tile) {
+                const $tileBox = rowByKey(String(tile.getAttribute('data-h18-v0811-box') || ''));
+                if (isBox($tileBox)) { return $tileBox; }
+            }
+            const $zoneRow = $(zone).closest('.h18-page-section-row');
+            return isBox($zoneRow) ? $zoneRow : $();
+        }
+        return $();
     }
 
     function boxAtPoint(pageX, pageY, $draggedRow) {
         const clientX = Number(pageX) - (window.pageXOffset || document.documentElement.scrollLeft || 0);
         const clientY = Number(pageY) - (window.pageYOffset || document.documentElement.scrollTop || 0);
         let $match = $();
+
+        $('.h18-v0811-auto-box[data-h18-v0811-box]').each(function () {
+            const $tile = $(this);
+            const $box = rowByKey(String($tile.attr('data-h18-v0811-box') || ''));
+            if (!canMoveIntoBox($draggedRow, $box)) { return; }
+            const zone = $tile.find('.h18-ud-box-drop-zone').get(0) || this;
+            const rect = zone.getBoundingClientRect();
+            if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+                $match = $box;
+            }
+        });
+        if ($match.length) { return $match; }
+
         activeRows().each(function () {
             const $box = $(this);
             if (!canMoveIntoBox($draggedRow, $box)) { return; }
@@ -409,14 +446,19 @@ jQuery(function ($) {
 
     function clearTargets() {
         activeRows().removeClass('h18-ud-nesting-drop-target');
+        $('.h18-v0811-auto-box').removeClass('h18-ud-nesting-drop-target');
         $('.h18-ud-box-drop-zone,.h18-v0811-side-zone').removeClass('is-active');
     }
 
     function showBoxTarget($box) {
         clearTargets();
         if ($box.length) {
+            const key = rowKey($box);
             $box.addClass('h18-ud-nesting-drop-target');
             $box.find('.h18-ud-box-drop-zone').first().addClass('is-active');
+            const $tile = $('.h18-v0811-auto-box[data-h18-v0811-box="' + key + '"]');
+            $tile.addClass('h18-ud-nesting-drop-target');
+            $tile.find('.h18-ud-box-drop-zone').first().addClass('is-active');
         }
     }
 
