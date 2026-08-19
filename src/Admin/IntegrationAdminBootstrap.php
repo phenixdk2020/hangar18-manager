@@ -84,6 +84,6 @@ final class IntegrationAdminBootstrap
         echo '</tbody></table><h2>Manuelle gates før public I10 cutover</h2><ul class="ul-disc">';foreach($manualPending as $item){echo '<li><code>'.esc_html($item).'</code></li>';}echo '</ul></div>';
     }
     private static function renderStatusNotice(): void{$status=isset($_GET['ud_status'])?sanitize_key((string)wp_unslash($_GET['ud_status'])):'';$message=isset($_GET['ud_message'])?sanitize_text_field((string)wp_unslash($_GET['ud_message'])):'';if($status===''||$message===''){return;}$class=$status==='error'?'notice notice-error inline':'notice notice-success inline';echo '<div class="'.esc_attr($class).'"><p>'.esc_html($message).'</p></div>';}
-    private static function card(string $title,string $value,string $description): void{echo '<section class="h18-ud-status-card"><h3>'.esc_html($title).'</h3><strong>'.esc_html($value).'</strong><p>'.esc_html($description).'</p></section>;}
+    private static function card(string $title,string $value,string $description): void{echo '<section class="h18-ud-status-card"><h3>'.esc_html($title).'</h3><strong>'.esc_html($value).'</strong><p>'.esc_html($description).'</p></section>';}
     private static function backlogRow(string $phase,string $status,string $description): void{echo '<tr><td><strong>'.esc_html($phase).'</strong></td><td>'.esc_html($status).'</td><td>'.esc_html($description).'</td></tr>';}
 }
