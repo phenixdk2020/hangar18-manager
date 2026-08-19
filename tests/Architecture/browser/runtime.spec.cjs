@@ -14,7 +14,7 @@ function historyGuardScript() {
   if (!match) {
     throw new Error('Could not extract editor history guard from EditorLayoutToolsAdminController.php');
   }
-  return match[1];
+  return match[1].replace(/\r/g, '').replace(/\\r(?=\n|$)/g, '');
 }
 
 test('menu supports mobile toggle, arrows, submenu and Escape', async ({ page }) => {
