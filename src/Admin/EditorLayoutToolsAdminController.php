@@ -43,6 +43,8 @@ final class EditorLayoutToolsAdminController
         $nestingCssPath = $pluginDir . '/assets/ultimate-designer-nesting-tools.css';
         $boxContentJsPath = $pluginDir . '/assets/ultimate-designer-box-content-layout.js';
         $boxContentCssPath = $pluginDir . '/assets/ultimate-designer-box-content-layout.css';
+        $visualCompositionJsPath = $pluginDir . '/assets/ultimate-designer-visual-composition.js';
+        $visualCompositionCssPath = $pluginDir . '/assets/ultimate-designer-visual-composition.css';
         $tableAppearanceJsPath = $pluginDir . '/assets/ultimate-designer-table-appearance.js';
         $tableAppearanceCssPath = $pluginDir . '/assets/ultimate-designer-table-appearance.css';
 
@@ -100,6 +102,20 @@ final class EditorLayoutToolsAdminController
             $pluginUrl . 'assets/ultimate-designer-box-content-layout.css',
             ['hangar18-ultimate-designer-nesting-tools'],
             is_file($boxContentCssPath) ? (string) filemtime($boxContentCssPath) : '0.8.7'
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-visual-composition',
+            $pluginUrl . 'assets/ultimate-designer-visual-composition.js',
+            ['jquery', 'jquery-ui-sortable', 'hangar18-manager-admin', 'hangar18-ultimate-designer-box-content-layout'],
+            is_file($visualCompositionJsPath) ? (string) filemtime($visualCompositionJsPath) : '0.8.9',
+            true
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-visual-composition',
+            $pluginUrl . 'assets/ultimate-designer-visual-composition.css',
+            ['hangar18-ultimate-designer-box-content-layout'],
+            is_file($visualCompositionCssPath) ? (string) filemtime($visualCompositionCssPath) : '0.8.9'
         );
 
         wp_enqueue_script(
