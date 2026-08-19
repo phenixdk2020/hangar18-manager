@@ -2,7 +2,7 @@
 .h18-page-section-row.h18-ud-nesting-drop-target{outline:3px solid #2271b1;outline-offset:3px;box-shadow:0 0 0 5px rgba(34,113,177,.12)}
 .h18-page-section-row.h18-ud-nesting-drop-target>.h18-canvas-preview::before{content:"Slip her for at lægge elementet i kassen";display:block;margin:0 0 9px;padding:7px 10px;border:1px dashed #2271b1;border-radius:6px;background:#f0f6fc;color:#135e96;font-size:12px;font-weight:600;text-align:center}
 
-/* v0.8.11: nested source rows stay in DOM/storage but never occupy canvas space. */
+/* v0.8.11+: nested source rows stay in DOM/storage but never occupy canvas space. */
 #h18-page-sections-sortable[data-h18-v0811-kasse-runtime="1"]>.h18-page-section-row[data-h18-v0811-child-source="1"]{display:none!important}
 #h18-page-sections-sortable>.h18-page-section-row[data-h18-nested-in-box]:not([data-h18-nested-in-box=""]){display:none!important}
 
@@ -31,12 +31,18 @@
 #h18-page-sections-sortable.h18-v0811-box-drag .h18-v0811-side-zone{border-color:#72aee6;background:#f0f6fc;color:#135e96}
 .h18-v0811-side-zone.is-active{border-color:#2271b1!important;background:#dceeff!important;color:#0a4b78!important;box-shadow:0 0 0 3px rgba(34,113,177,.14)}
 
-.h18-v0811-auto-grid{display:grid!important;grid-template-columns:repeat(var(--h18-v0811-cols,1),minmax(0,1fr))!important;gap:var(--h18-v0811-gap,16px)!important;align-items:stretch}
+.h18-v0811-auto-grid{display:grid!important;grid-template-columns:repeat(var(--h18-v0811-cols,1),minmax(0,1fr))!important;gap:var(--h18-v0811-gap,16px)!important;align-items:stretch;min-height:24px;transition:outline-color .14s ease,background .14s ease,box-shadow .14s ease}
 .h18-v0811-auto-box{min-width:0;border:1px solid #c3c4c7;border-radius:8px;background:#fff;overflow:hidden}
 .h18-v0811-auto-box-preview{padding:8px}
 .h18-v0811-auto-box-preview>.h18-canvas-preview{margin:0!important;pointer-events:none!important;box-shadow:none!important}
 
-/* v0.8.10 is no longer the visible composer when v0.8.11 is active. */
+/* v0.8.14: Auto-kasser itself is a first-class Kasse drop target. */
+.h18-v0814-auto-drop-zone{display:flex;align-items:center;justify-content:center;min-height:58px;margin-top:10px;padding:10px 12px;border:2px dashed #8c8f94;border-radius:7px;background:#fbfbfc;color:#50575e;font-size:12px;font-weight:700;text-align:center;transition:border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease}
+#h18-page-sections-sortable.h18-v0811-box-drag .h18-v0814-auto-drop-zone{border-color:#72aee6;background:#f0f6fc;color:#135e96}
+.h18-v0814-auto-drop-zone.is-active,.h18-page-section-row.h18-v0814-auto-drop-target .h18-v0814-auto-drop-zone{border-color:#2271b1!important;background:#dceeff!important;color:#0a4b78!important;box-shadow:0 0 0 3px rgba(34,113,177,.14)}
+.h18-ud-auto-box-grid.h18-v0814-auto-drop-active{outline:3px solid #2271b1;outline-offset:3px;background:#f0f6fc!important;box-shadow:0 0 0 5px rgba(34,113,177,.10)}
+
+/* v0.8.10 is no longer the visible composer when v0.8.11+ is active. */
 #h18-page-sections-sortable[data-h18-v0811-kasse-runtime="1"] .h18-v0810-side-zones{display:none!important}
 
 .h18-page-section-row.h18-ud-just-nested{animation:h18UdNestedFlash .9s ease}
