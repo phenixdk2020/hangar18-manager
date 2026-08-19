@@ -11,6 +11,7 @@ Gøre den eksisterende element-/funktionspalette hurtigere at bruge uden at ænd
 - Browser-lokale favoritter via `localStorage`.
 - Browser-lokal liste over de 8 senest brugte elementer via `localStorage`.
 - Visuelle elementkort med ikon, forklaring og kategori, mens den eksisterende `.h18-builder-palette-item` fortsat er den faktiske klik/drag-knap.
+- Synlige kategorioverskrifter i elementlisten, så Indhold/Layout/Interaktiv/Dynamisk/Avanceret kan aflæses direkte uden at flytte elementknapperne ind i en ny motor.
 - Tydeligt drag-preview/ghost med elementnavn og forklaring via native `dataTransfer.setDragImage()` uden at erstatte den eksisterende drag/drop-motor.
 - Synlig tæller for aktuelle søgeresultater.
 - Accessible filterknapper med `aria-pressed` og favoritknapper med `aria-pressed`.
@@ -25,6 +26,8 @@ Elementbiblioteket er videreført som en rent additiv editor-UX:
 - eksisterende Dashicons genbruges; manglende ikoner suppleres kun i admin-UI'et,
 - filteret **Seneste** viser elementtyper, der er brugt for nylig,
 - klik eller afsluttet drag registrerer elementet i den browser-lokale seneste-liste,
+- kategorier får visuelle sektionsoverskrifter blandt de elementer, der aktuelt matcher filter/søgning,
+- den ældre separate `Layout+`-overskrift skjules visuelt, fordi Layout nu indgår i samme konsistente kategorisystem,
 - layoutværktøjerne Auto-kasser, Kasse og Tabel får egne nøgler, så de kan skelnes fra standard Grid/Container/HTML i Seneste og Favoritter,
 - ældre v0.8.7-favoritter på rå elementtype tolereres, så den eksisterende browser-lokale tilstand ikke kræver migration,
 - drag-previewet er kun et visuelt ghost og udfører ingen side-write eller renderer-ændring.
@@ -74,11 +77,12 @@ Vehicle, Event og Gallery forbliver på deres eksisterende legacy runtime. Denne
 1. søgning, kategorier og favoritter,
 2. Seneste-liste og browser-lokal lagring,
 3. visuelle kort med beskrivelser/kategorier,
-4. native drag-preview uden udskiftning af drag/drop-motoren,
-5. admin-only enqueue,
-6. fravær af persistence/cutover primitives,
-7. bevarelse af Ctrl/Cmd+K command palette,
-8. at ingen protected-domain-fil er ændret i branchen.
+4. synlige kategorioverskrifter uden ny drag/drop-container,
+5. native drag-preview uden udskiftning af drag/drop-motoren,
+6. admin-only enqueue,
+7. fravær af persistence/cutover primitives,
+8. bevarelse af Ctrl/Cmd+K command palette,
+9. at ingen protected-domain-fil er ændret i branchen.
 
 `tests/Architecture/v087-box-tools-contract.sh` verificerer:
 
