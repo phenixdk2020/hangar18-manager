@@ -38,6 +38,7 @@ final class IntegrationAdminBootstrap
         SideHealthAdminController::register();
         EditorLayoutToolsAdminController::register();
         EditorElementLibraryAdminController::register();
+        EditorUnsavedPreviewAdminController::register();
         AssetManagerAdminController::register();
         PortabilityAdminController::register();
         PermissionsAdminController::register();
