@@ -1,0 +1,35 @@
+name: I2A Shadow Import QA
+
+on:
+  push:
+    branches:
+      - agent/i2a-shadow-import-v0820
+  pull_request:
+    paths:
+      - 'src/SiteBuilder/LegacyShellShadowImportService.php'
+      - 'src/Admin/LegacyShellShadowAdminController.php'
+      - 'tests/Architecture/i2a-legacy-shell-shadow-import-*'
+      - '.github/workflows/i2a-shadow-import-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  shadow-import-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.0','8.2','8.3']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+      - run: bash tests/Architecture/protected-domain-contract.sh
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php-version }}'
+          coverage: none
+      - run: php -l src/SiteBuilder/LegacyShellShadowImportService.php && php -l src/Admin/LegacyShellShadowAdminController.php && php -l tests/Architecture/i2a-legacy-shell-shadow-import-smoke.php
+      - run: php tests/Architecture/i2a-legacy-shell-shadow-import-smoke.php
+      - run: bash tests/Architecture/i2a-legacy-shell-shadow-import-contract.sh
