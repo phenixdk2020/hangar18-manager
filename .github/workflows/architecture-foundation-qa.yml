@@ -11,6 +11,7 @@ on:
       - agent/visual-box-composition-v089
       - agent/v0810-inline-kasse-runtime
       - agent/v0811-direct-kasse-runtime
+      - agent/v0812-auto-kasse-child-preview
   pull_request:
     paths:
       - 'src/**'
@@ -105,6 +106,7 @@ jobs:
       - run: bash tests/Architecture/v089-visual-composition-contract.sh
       - run: bash tests/Architecture/v0810-inline-kasse-runtime-contract.sh
       - run: bash tests/Architecture/v0811-direct-kasse-runtime-contract.sh
+      - run: bash tests/Architecture/v0812-auto-kasse-drop-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: php tests/Architecture/i3-menu-admin-smoke.php
       - run: bash tests/Architecture/i3-menu-page-chooser-contract.sh
