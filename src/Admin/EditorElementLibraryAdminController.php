@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Hangar18\UltimateDesigner\Admin;
 
 /**
- * Admin-only UX enhancer for the existing Sider element palette.
+ * Admin-only UX enhancers for the existing Sider element palette/workspace.
  *
- * Search, categories and favorites operate entirely on the rendered palette.
- * Favorites are browser-local and this controller introduces no page storage,
- * public renderer, schema migration or cutover path.
+ * Search, categories, favorites and collapsible workspace widgets operate
+ * entirely on the rendered editor. Browser-local state introduces no page
+ * storage, public renderer, schema migration or cutover path.
  */
 final class EditorElementLibraryAdminController
 {
@@ -35,6 +35,8 @@ final class EditorElementLibraryAdminController
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-element-library.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-element-library.css';
+        $workspaceJsPath = $pluginDir . '/assets/ultimate-designer-workspace-widgets.js';
+        $workspaceCssPath = $pluginDir . '/assets/ultimate-designer-workspace-widgets.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-element-library',
@@ -48,6 +50,20 @@ final class EditorElementLibraryAdminController
             $pluginUrl . 'assets/ultimate-designer-element-library.css',
             [],
             is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.7'
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-workspace-widgets',
+            $pluginUrl . 'assets/ultimate-designer-workspace-widgets.js',
+            ['jquery', 'hangar18-manager-admin', 'hangar18-ultimate-designer-element-library'],
+            is_file($workspaceJsPath) ? (string) filemtime($workspaceJsPath) : '0.8.12',
+            true
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-workspace-widgets',
+            $pluginUrl . 'assets/ultimate-designer-workspace-widgets.css',
+            ['hangar18-ultimate-designer-element-library'],
+            is_file($workspaceCssPath) ? (string) filemtime($workspaceCssPath) : '0.8.12'
         );
     }
 }
