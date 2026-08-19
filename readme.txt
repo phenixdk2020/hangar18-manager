@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.8
+Version: 0.8.9
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.9 – Designer — visuel Kasse-komposition og Auto-kasser ==
+
+Nyt:
+- Elementer med LayoutParentKey til en Kasse vises nu visuelt inde i Kassen i editoren i stedet for som en separat række over eller under den.
+- De oprindelige child-rækker bevares skjult i DOM'en, så eksisterende gemning, versionshistorik og schema fortsat er autoritative uden datamigrering.
+- Indhold i en Kasse vises som rigtige canvas-previews med en Rediger-handling, og elementer kan flyttes mellem Kasser fra den visuelle komposition.
+- Auto-kasser viser nu de faktiske Kasser side om side i editoren i stedet for at lade deres source-rækker stå lodret under hinanden.
+- Antallet af desktop-kolonner i Auto-kasser synkroniseres med antallet af Kasser; på smallere editorbredder stables den visuelle komposition i én kolonne.
+- Når en ny Kasse trækkes fra Layout+-biblioteket, vises tydelige venstre/højre drop-zoner på en eksisterende Kasse til placering ved siden af.
+- Kasser i en eksisterende Auto-kasser-række kan omarrangeres via deres visuelle proxy uden et nyt storage-format.
+- Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URLs og I10 public cutover er fortsat uændrede og beskyttede.
 
 
 == Version 0.8.8 – Designer UX — scrollbar, rigtig Kasse-nesting og Header/Footer baseline ==
