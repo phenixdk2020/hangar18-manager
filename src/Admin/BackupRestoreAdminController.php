@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Hangar18\UltimateDesigner\Admin;
 
+use Hangar18\UltimateDesigner\Backup\ManagedPageBackupRestorePreflightService;
 use Hangar18\UltimateDesigner\Backup\ManagedPageBackupRestoreService;
+use RuntimeException;
 
 /** Admin UI for B1 managed page backup restore/copy. */
 final class BackupRestoreAdminController
@@ -28,12 +30,13 @@ final class BackupRestoreAdminController
         }
 
         $service = new ManagedPageBackupRestoreService();
+        $preflight = new ManagedPageBackupRestorePreflightService();
         $backups = $service->listBackups(30);
         $audit = $service->audit(20);
 
         echo '<section class="h18-ud-panel"><h2>B1 · Gendan sidebackup</h2>';
         echo '<p class="description">Bruger de eksisterende Hangar18 JSON-backups. <strong>Erstat original</strong> tager altid en ny sikkerhedsbackup før første write. <strong>Opret som kopi</strong> laver kun en ny draft og ændrer ikke originalens URL eller menu.</p>';
-        echo '<div class="notice notice-warning inline"><p><strong>Restore er en eksplicit mutation:</strong> kontrollér backup, side og restore-mode før du fortsætter. Full-backups kan også gendanne den tilhørende Page Editor store-entry; ældre enkelt-side backups kan mangle denne del.</p></div>';
+        echo '<div class="notice notice-warning inline"><p><strong>Restore er en eksplicit mutation:</strong> kontrollér backup, side og restore-mode før du fortsætter. Page Editor-sider kan kun erstatte originalen, når backupfilen også indeholder den centrale editor-state; ellers er kun sikker kopi-mode tilgængelig.</p></div>';
 
         if (!$backups) {
             echo '<p>Ingen læsbare managed backups blev fundet i <code>uploads/hangar18-manager-backups</code>.</p></section>';
@@ -45,19 +48,34 @@ final class BackupRestoreAdminController
             $filename = (string) ($backup['Filename'] ?? '');
             $created = (string) ($backup['CreatedUtc'] ?? '');
             $reason = (string) ($backup['Reason'] ?? '');
-            $hasStore = !empty($backup['HasPageEditorStore']);
             foreach ((array) ($backup['Pages'] ?? []) as $page) {
                 if (!is_array($page)) {
                     continue;
                 }
                 $sourceKey = (string) ((int) ($page['ID'] ?? 0) > 0 ? (int) $page['ID'] : ($page['Slug'] ?? ''));
+                $replaceAllowed = false;
+                $replaceReason = 'Restore preflight kunne ikke køres.';
+                $editorSource = 'ukendt';
+                try {
+                    $check = $preflight->analyzeReplace($filename, $sourceKey);
+                    $replaceAllowed = !empty($check['Allowed']);
+                    $replaceReason = (string) ($check['Reason'] ?? '');
+                    $editorSource = (string) ($check['EditorDataSource'] ?? 'ukendt');
+                } catch (\Throwable $error) {
+                    $replaceReason = 'Preflight-fejl: ' . $error->getMessage();
+                }
+
                 echo '<tr><td><code>' . esc_html($filename) . '</code><br><small>' . esc_html($created) . '</small>';
                 if ($reason !== '') {
                     echo '<br><small>' . esc_html($reason) . '</small>';
                 }
                 echo '</td><td><strong>' . esc_html((string) ($page['Title'] ?? '')) . '</strong><br><code>' . esc_html((string) ($page['Slug'] ?? '')) . '</code><br><small>ID ' . esc_html((string) ($page['ID'] ?? 0)) . ' · ' . esc_html((string) ($page['Status'] ?? '')) . '</small></td>';
-                echo '<td>' . ($hasStore ? '<span class="h18-health-ok">Tilgængelig</span>' : '<span class="h18-health-bad">Ikke i denne fil</span>') . '</td><td>';
-                self::renderActionForm('h18_ud_restore_backup_original', $filename, $sourceKey, 'Erstat original', true);
+                echo '<td><code>' . esc_html($editorSource) . '</code><br><small>' . esc_html($replaceReason) . '</small></td><td>';
+                if ($replaceAllowed) {
+                    self::renderActionForm('h18_ud_restore_backup_original', $filename, $sourceKey, 'Erstat original', true);
+                } else {
+                    echo '<button type="button" class="button" disabled title="' . esc_attr($replaceReason) . '">Erstat original · låst</button> ';
+                }
                 self::renderActionForm('h18_ud_restore_backup_copy', $filename, $sourceKey, 'Opret som kopi', false);
                 echo '</td></tr>';
             }
@@ -84,10 +102,13 @@ final class BackupRestoreAdminController
     {
         self::authorize();
         try {
-            $result = (new ManagedPageBackupRestoreService())->restoreOriginal(
-                sanitize_file_name((string) wp_unslash($_POST['backup_file'] ?? '')),
-                sanitize_text_field((string) wp_unslash($_POST['source_key'] ?? ''))
-            );
+            $filename = sanitize_file_name((string) wp_unslash($_POST['backup_file'] ?? ''));
+            $sourceKey = sanitize_text_field((string) wp_unslash($_POST['source_key'] ?? ''));
+            $check = (new ManagedPageBackupRestorePreflightService())->analyzeReplace($filename, $sourceKey);
+            if (empty($check['Allowed'])) {
+                throw new RuntimeException((string) ($check['Reason'] ?? 'Restore preflight afviste backup-kilden.'));
+            }
+            $result = (new ManagedPageBackupRestoreService())->restoreOriginal($filename, $sourceKey);
             self::redirect('success', sprintf(
                 'Side ID %d blev gendannet. Sikkerhedsbackup: %s',
                 (int) ($result['TargetPageId'] ?? 0),
