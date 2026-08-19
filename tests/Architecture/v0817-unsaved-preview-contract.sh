@@ -45,8 +45,9 @@ grep -F "\$page !== 'hangar18-pages'" "$CTRL" >/dev/null
 grep -F "current_user_can('edit_pages')" "$CTRL" >/dev/null
 grep -F 'hangar18-ultimate-designer-unsaved-preview' "$CTRL" >/dev/null
 
-# This feature must have no persistence/network/public mutation path.
-if grep -Ei 'ajax|fetch\(|XMLHttpRequest|wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_|wp_ajax_|form\.submit|\.submit\(' "$JS" "$CTRL" >/dev/null; then
+# This feature must have no executable persistence/network/public mutation path.
+# Match call syntax/WordPress hook identifiers instead of prose in comments.
+if grep -Ei '\$\.ajax\s*\(|jQuery\.ajax\s*\(|fetch\s*\(|new[[:space:]]+XMLHttpRequest|wp_update_post\s*\(|wp_insert_post\s*\(|update_post_meta\s*\(|delete_post_meta\s*\(|update_option\s*\(|delete_option\s*\(|admin_post_[a-z0-9_]+|wp_ajax_[a-z0-9_]+|\.submit\s*\(' "$JS" "$CTRL" >/dev/null; then
   echo 'FAIL: unsaved preview introduced a network/persistence primitive'
   exit 1
 fi
