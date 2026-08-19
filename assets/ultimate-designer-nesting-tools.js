@@ -3,31 +3,43 @@ jQuery(function ($) {
 
     const $sections = $('#h18-page-sections-sortable');
     const $canvas = $('.h18-builder-canvas').first();
+    const $inspector = $('#h18-page-inspector-target');
     if (!$sections.length || !$canvas.length) {
         return;
     }
 
     const BOX_LABEL = 'Kasse';
+    const AUTO_LABEL = 'Auto-kasser';
     const typeLabels = {
         hero: 'Hero', text: 'Tekst', text_image: 'Tekst + billede', image: 'Billede', buttons: 'Knapper',
         card: 'Kort', card_grid: 'Kort-grid', highlight: 'Fremhævning', icon: 'Ikon', list: 'Liste', badge: 'Badge',
         quote: 'Citat', spacer: 'Spacer', divider: 'Skillelinje', tabs: 'Faner', accordion: 'Accordion',
         carousel: 'Carousel', mail_form: 'Formular', poll: 'Afstemning', query_list: 'Dynamisk liste',
         component: 'Komponent', embed: 'Embed', shortcode: 'Shortcode', html: 'HTML', css: 'CSS',
-        container: 'Container', flex: 'Flex', grid: 'Grid'
+        container: 'Kasse', flex: 'Flex', grid: 'Auto-kasser'
     };
 
     let pendingType = '';
     let pendingKeys = new Set();
     let pendingBoxKey = '';
-    let clickBoxKey = '';
-    let clickKeys = new Set();
     let refreshTimer = null;
     let existingDragRow = $();
     let existingDropBoxKey = '';
+    let paletteBoxDrag = null;
+    let existingBoxDrag = null;
+    let renderGuard = false;
 
     function activeRows() {
         return $sections.children('.h18-page-section-row:not(.h18-page-section-removed)');
+    }
+
+    function controls($row, selector) {
+        if (!$row || !$row.length) { return $(); }
+        let $result = $row.find(selector);
+        if ($row.hasClass('is-selected')) {
+            $result = $result.add($inspector.find(selector));
+        }
+        return $result;
     }
 
     function rowKey($row) {
@@ -36,15 +48,6 @@ jQuery(function ($) {
 
     function rowType($row) {
         return String($row.attr('data-section-type') || '');
-    }
-
-    function controls($row, selector) {
-        if (!$row || !$row.length) { return $(); }
-        let $result = $row.find(selector);
-        if ($row.hasClass('is-selected')) {
-            $result = $result.add($('#h18-page-inspector-target').find(selector));
-        }
-        return $result;
     }
 
     function parentKey($row) {
@@ -65,9 +68,14 @@ jQuery(function ($) {
         return !!($row && $row.length && rowType($row) === 'container' && rowLabel($row).indexOf(BOX_LABEL) === 0);
     }
 
-    function selectedBox() {
-        const $row = activeRows().filter('.is-selected').first();
-        return isBox($row) ? $row : $();
+    function isAuto($row) {
+        return !!($row && $row.length && rowType($row) === 'grid' && rowLabel($row) === AUTO_LABEL);
+    }
+
+    function directChildren($row) {
+        const key = rowKey($row);
+        if (!key) { return $(); }
+        return activeRows().filter(function () { return parentKey($(this)) === key; });
     }
 
     function snapshotKeys() {
@@ -92,31 +100,70 @@ jQuery(function ($) {
     }
 
     function setParent($row, key) {
-        if (!$row || !$row.length || !key) { return false; }
+        if (!$row || !$row.length) { return false; }
+        const value = String(key || '');
         const $hidden = controls($row, '.h18-layout-parent-key').first();
         const $select = controls($row, '.h18-layout-parent-select').first();
         if (!$hidden.length) { return false; }
-        $hidden.val(String(key)).trigger('change');
-        if ($select.length) {
-            $select.val(String(key)).trigger('change');
-        }
-        $row.attr('data-h18-nested-in-box', String(key));
+        $hidden.val(value).trigger('change');
+        if ($select.length) { $select.val(value).trigger('change'); }
+        if (value) { $row.attr('data-h18-nested-in-box', value); }
+        else { $row.removeAttr('data-h18-nested-in-box'); }
         return true;
     }
 
-    function targetBoxForElement(element) {
-        const target = element && element.closest ? element.closest('.h18-page-section-row') : null;
-        if (!target) { return $(); }
-        const $target = $(target);
-        if (isBox($target)) { return $target; }
-        const $parent = rowByKey(parentKey($target));
-        return isBox($parent) ? $parent : $();
+    function setLabel($row, value) {
+        const $field = controls($row, '.h18-section-navigator-label').first();
+        if ($field.length) { $field.val(String(value)).trigger('input').trigger('change'); }
     }
 
-    function directChildren($box) {
-        const key = rowKey($box);
-        if (!key) { return $(); }
-        return activeRows().filter(function () { return parentKey($(this)) === key; });
+    function setField($row, name, value) {
+        const $field = controls($row, '[name$="[' + name + ']"]').first();
+        if (!$field.length) { return; }
+        if ($field.is(':checkbox')) {
+            if ($field.is(':checked') !== !!value) { $field.prop('checked', !!value).trigger('change'); }
+        } else if (String($field.val() || '') !== String(value)) {
+            $field.val(String(value)).trigger('input').trigger('change');
+        }
+    }
+
+    function configureBox($row) {
+        if (!$row.length || rowType($row) !== 'container') { return; }
+        setLabel($row, BOX_LABEL);
+        setField($row, 'Title', '');
+        setField($row, 'Content', '');
+        setField($row, 'LayoutDirection', 'Column');
+        setField($row, 'LayoutWrap', true);
+        setField($row, 'LayoutAlign', 'Stretch');
+        setField($row, 'LayoutGapPx', 12);
+        setField($row, 'MobileLayoutGapPx', 10);
+        setField($row, 'MobileLayoutStack', true);
+        $row.attr('data-h18-box', '1');
+    }
+
+    function configureAuto($row) {
+        if (!$row.length || rowType($row) !== 'grid') { return; }
+        setLabel($row, AUTO_LABEL);
+        setField($row, 'Title', '');
+        setField($row, 'Content', '');
+        setField($row, 'LayoutColumns', 2);
+        setField($row, 'MobileLayoutColumns', 1);
+        setField($row, 'LayoutGapPx', 16);
+        setField($row, 'MobileLayoutGapPx', 12);
+        setField($row, 'LayoutAlign', 'Stretch');
+        setParent($row, '');
+        $row.attr('data-h18-auto-box-row', '1');
+    }
+
+    function syncFlatOrder() {
+        let index = 0;
+        $sections.children('.h18-page-section-row').each(function () {
+            const $row = $(this);
+            if ($row.hasClass('h18-page-section-removed')) { return; }
+            index += 1;
+            $row.find('.h18-page-section-order').val(index * 10);
+        });
+        if ($sections.hasClass('ui-sortable')) { $sections.sortable('refresh'); }
     }
 
     function childDisplayName($row) {
@@ -126,30 +173,120 @@ jQuery(function ($) {
         return title || typeLabels[rowType($row)] || rowType($row) || 'Element';
     }
 
-    function clearDropTarget() {
-        activeRows().removeClass('h18-ud-nesting-drop-target');
-        $('.h18-ud-box-drop-zone').removeClass('is-active');
+    function clonePreview($row) {
+        const $preview = $row.children('.h18-canvas-preview').first();
+        if (!$preview.length) { return $(); }
+        const $clone = $preview.clone(false, false);
+        $clone.removeAttr('id');
+        $clone.find('[id]').removeAttr('id');
+        $clone.find('[name]').removeAttr('name');
+        $clone.find('.h18-ud-box-contents-preview,.h18-ud-auto-box-grid,.h18-v0810-side-zones,.h18-v0811-side-zones').remove();
+        $clone.find('input,select,textarea,button').prop('disabled', true).attr('tabindex', '-1');
+        $clone.find('a').attr('tabindex', '-1');
+        return $clone;
     }
 
-    function showDropTarget($box) {
-        clearDropTarget();
-        if ($box && $box.length) {
-            $box.addClass('h18-ud-nesting-drop-target');
-            $box.find('.h18-ud-box-drop-zone').first().addClass('is-active');
+    function renderBox($box) {
+        if (!isBox($box)) { return; }
+        const $preview = $box.children('.h18-canvas-preview').first();
+        if (!$preview.length) { return; }
+        $box.attr('data-h18-box', '1');
+        $preview.find('.h18-ud-box-contents-preview,.h18-v0810-side-zones,.h18-v0811-side-zones').remove();
+
+        const $children = directChildren($box);
+        const $wrap = $('<div>', { class: 'h18-ud-box-contents-preview h18-v0811-box-contents' });
+        const $head = $('<div>', { class: 'h18-ud-box-contents-head' }).append(
+            $('<strong>', { text: 'Indhold i kassen' }),
+            $('<span>', { text: $children.length + ' element' + ($children.length === 1 ? '' : 'er') }),
+            $('<em>', { class: 'h18-v0811-runtime-badge', text: 'v0.8.11' })
+        );
+        const $items = $('<div>', { class: 'h18-ud-box-contents-items h18-v0811-child-list' });
+        if (!$children.length) {
+            $items.append($('<div>', { class: 'h18-ud-box-empty-drop', text: 'Kassen er tom.' }));
+        } else {
+            $children.each(function () {
+                const $child = $(this);
+                const childKey = rowKey($child);
+                const $card = $('<section>', { class: 'h18-v0811-child-card', 'data-h18-v0811-child': childKey });
+                const $bar = $('<div>', { class: 'h18-v0811-child-bar' }).append(
+                    $('<strong>', { text: childDisplayName($child) }),
+                    $('<button>', { type: 'button', class: 'button button-small h18-v0811-edit-child', 'data-h18-v0811-edit-child': childKey, text: 'Rediger' })
+                );
+                const $body = $('<div>', { class: 'h18-v0811-child-preview' });
+                const $clone = clonePreview($child);
+                if ($clone.length) { $body.append($clone); }
+                else { $body.text(childDisplayName($child)); }
+                $card.append($bar, $body);
+                $items.append($card);
+            });
+        }
+        const $dropZone = $('<div>', { class: 'h18-ud-box-drop-zone', text: 'Træk et element hertil for at lægge det IND I kassen' });
+        $wrap.append($head, $items, $dropZone);
+        $preview.append($wrap);
+
+        if (!parentKey($box)) {
+            const boxKey = rowKey($box);
+            const $zones = $('<div>', { class: 'h18-v0811-side-zones' }).append(
+                $('<div>', { class: 'h18-v0811-side-zone', 'data-side': 'left', 'data-box': boxKey, text: '← Slip Kasse til venstre' }),
+                $('<div>', { class: 'h18-v0811-side-zone', 'data-side': 'right', 'data-box': boxKey, text: 'Slip Kasse til højre →' })
+            );
+            $preview.append($zones);
         }
     }
 
-    function syncFlatOrder() {
-        let visibleIndex = 0;
-        $sections.children('.h18-page-section-row').each(function () {
-            const $row = $(this);
-            if ($row.hasClass('h18-page-section-removed')) { return; }
-            visibleIndex += 1;
-            $row.find('.h18-page-section-order').val(visibleIndex * 10);
+    function renderAuto($auto) {
+        if (!isAuto($auto)) { return; }
+        const $boxes = directChildren($auto).filter(function () { return isBox($(this)); });
+        const count = $boxes.length;
+        const cols = Math.max(1, Math.min(6, count || 1));
+        setField($auto, 'LayoutColumns', cols);
+        const gap = parseInt(String(controls($auto, '[name$="[LayoutGapPx]"]').first().val() || 16), 10) || 16;
+        const $preview = $auto.children('.h18-canvas-preview').first();
+        if (!$preview.length) { return; }
+        $preview.find('.h18-ud-auto-box-grid').remove();
+        const $grid = $('<div>', { class: 'h18-ud-auto-box-grid h18-v0811-auto-grid' }).css({
+            '--h18-v0811-cols': String(cols),
+            '--h18-v0811-gap': gap + 'px'
         });
-        if ($sections.hasClass('ui-sortable')) {
-            $sections.sortable('refresh');
-        }
+        $boxes.each(function (index) {
+            const $box = $(this);
+            const boxKey = rowKey($box);
+            const $tile = $('<section>', { class: 'h18-v0811-auto-box', 'data-h18-v0811-box': boxKey });
+            const $bar = $('<div>', { class: 'h18-v0811-child-bar' }).append(
+                $('<strong>', { text: 'Kasse ' + (index + 1) }),
+                $('<button>', { type: 'button', class: 'button button-small h18-v0811-edit-child', 'data-h18-v0811-edit-child': boxKey, text: 'Rediger Kasse' })
+            );
+            const $body = $('<div>', { class: 'h18-v0811-auto-box-preview' });
+            const $clone = clonePreview($box);
+            if ($clone.length) { $body.append($clone); }
+            $tile.append($bar, $body);
+            $grid.append($tile);
+        });
+        $preview.append($grid);
+    }
+
+    function syncSourceVisibility() {
+        activeRows().each(function () {
+            const $row = $(this);
+            const $parent = rowByKey(parentKey($row));
+            const nested = isBox($parent) || isAuto($parent);
+            $row.attr('data-h18-v0811-child-source', nested ? '1' : '0');
+        });
+    }
+
+    function refreshComposition() {
+        if (renderGuard) { return; }
+        renderGuard = true;
+        $sections.attr('data-h18-v0811-kasse-runtime', '1');
+        activeRows().each(function () { if (isBox($(this))) { renderBox($(this)); } });
+        activeRows().each(function () { if (isAuto($(this))) { renderAuto($(this)); } });
+        syncSourceVisibility();
+        renderGuard = false;
+    }
+
+    function scheduleRefresh(delay) {
+        window.clearTimeout(refreshTimer);
+        refreshTimer = window.setTimeout(refreshComposition, typeof delay === 'number' ? delay : 180);
     }
 
     function wouldCreateCycle($row, $box) {
@@ -169,11 +306,9 @@ jQuery(function ($) {
     }
 
     function canMoveIntoBox($row, $box) {
-        if (!$row || !$row.length || !$box || !$box.length) { return false; }
+        if (!$row.length || !$box.length || !isBox($box) || isBox($row)) { return false; }
         if (rowKey($row) === rowKey($box)) { return false; }
-        if (isBox($row)) { return false; }
-        if (wouldCreateCycle($row, $box)) { return false; }
-        return true;
+        return !wouldCreateCycle($row, $box);
     }
 
     function moveRowIntoBox($row, $box) {
@@ -181,121 +316,181 @@ jQuery(function ($) {
         const boxKey = rowKey($box);
         const $children = directChildren($box).not($row);
         const $anchor = $children.length ? $children.last() : $box;
-
         $row.insertAfter($anchor);
         syncFlatOrder();
         if (!setParent($row, boxKey)) { return false; }
-
-        $row.addClass('h18-ud-just-nested');
-        window.setTimeout(function () { $row.removeClass('h18-ud-just-nested'); }, 900);
+        $row.attr('data-h18-v0811-child-source', '1');
+        scheduleRefresh(200);
         return true;
+    }
+
+    function targetBoxForElement(element) {
+        const row = element && element.closest ? element.closest('.h18-page-section-row') : null;
+        if (row) {
+            const $row = $(row);
+            if (isBox($row)) { return $row; }
+            const $parent = rowByKey(parentKey($row));
+            if (isBox($parent)) { return $parent; }
+        }
+        const zone = element && element.closest ? element.closest('.h18-ud-box-drop-zone') : null;
+        return zone ? $(zone).closest('.h18-page-section-row') : $();
     }
 
     function boxAtPoint(pageX, pageY, $draggedRow) {
         const clientX = Number(pageX) - (window.pageXOffset || document.documentElement.scrollLeft || 0);
         const clientY = Number(pageY) - (window.pageYOffset || document.documentElement.scrollTop || 0);
         let $match = $();
-        let smallestArea = Number.POSITIVE_INFINITY;
-
         activeRows().each(function () {
             const $box = $(this);
-            if (!isBox($box) || !canMoveIntoBox($draggedRow, $box)) { return; }
-            const zone = $box.find('.h18-ud-box-drop-zone').get(0) || $box.find('.h18-ud-box-contents-preview').get(0);
+            if (!canMoveIntoBox($draggedRow, $box)) { return; }
+            const zone = $box.find('.h18-ud-box-drop-zone').get(0);
             if (!zone) { return; }
             const rect = zone.getBoundingClientRect();
-            const inside = clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
-            if (!inside) { return; }
-            const area = Math.max(1, rect.width * rect.height);
-            if (area < smallestArea) {
-                smallestArea = area;
+            if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
                 $match = $box;
             }
         });
         return $match;
     }
 
-    function decorateBox($box) {
-        if (!isBox($box)) { return; }
-        const $preview = $box.children('.h18-canvas-preview').first();
-        if (!$preview.length) { return; }
-        $box.attr('data-h18-box', '1');
-        $preview.find('.h18-ud-box-contents-preview').remove();
-        const $children = directChildren($box);
-        const $wrap = $('<div>', { class: 'h18-ud-box-contents-preview' });
-        const $head = $('<div>', { class: 'h18-ud-box-contents-head' }).append(
-            $('<strong>', { text: 'Indhold i kassen' }),
-            $('<span>', { text: $children.length + ' element' + ($children.length === 1 ? '' : 'er') })
-        );
-        const $items = $('<div>', { class: 'h18-ud-box-contents-items' });
-        if (!$children.length) {
-            $items.append($('<div>', {
-                class: 'h18-ud-box-empty-drop',
-                text: 'Kassen er tom.'
-            }));
-        } else {
-            $children.each(function () {
-                const $child = $(this);
-                const key = rowKey($child);
-                $items.append($('<button>', {
-                    type: 'button',
-                    class: 'h18-ud-box-child-chip',
-                    'data-h18-box-child-key': key,
-                    title: 'Redigér ' + childDisplayName($child)
-                }).append(
-                    $('<span>', { class: 'dashicons dashicons-arrow-right-alt2', 'aria-hidden': 'true' }),
-                    $('<span>', { text: childDisplayName($child) }),
-                    $('<small>', { text: typeLabels[rowType($child)] || rowType($child) })
-                ));
-            });
+    function sideZoneAtPoint(pageX, pageY, sourceKey) {
+        const clientX = Number(pageX) - (window.pageXOffset || document.documentElement.scrollLeft || 0);
+        const clientY = Number(pageY) - (window.pageYOffset || document.documentElement.scrollTop || 0);
+        let match = null;
+        $('.h18-v0811-side-zone').each(function () {
+            const target = String(this.getAttribute('data-box') || '');
+            if (!target || target === sourceKey) { return; }
+            const rect = this.getBoundingClientRect();
+            if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+                match = { target: target, side: String(this.getAttribute('data-side') || 'right'), node: this };
+            }
+        });
+        return match;
+    }
+
+    function createAutoForBoxes($source, $target, side) {
+        const before = snapshotKeys();
+        const $gridButton = $('.h18-builder-palette-item[data-section-type="grid"]').not('[data-h18-layout-tool]').first();
+        if (!$gridButton.length) { return; }
+        $gridButton.trigger('click');
+        window.setTimeout(function () {
+            const $grid = findNewRow(before, 'grid');
+            if (!$grid.length) { scheduleRefresh(220); return; }
+            configureAuto($grid);
+            const gridKey = rowKey($grid);
+            setParent($source, gridKey);
+            setParent($target, gridKey);
+            $grid.insertBefore($target);
+            if (side === 'left') {
+                $source.insertAfter($grid);
+                $target.insertAfter($source);
+            } else {
+                $target.insertAfter($grid);
+                $source.insertAfter($target);
+            }
+            syncFlatOrder();
+            scheduleRefresh(240);
+        }, 120);
+    }
+
+    function placeBoxBeside($source, $target, side) {
+        if (!$source.length || !$target.length || !isBox($source) || !isBox($target) || rowKey($source) === rowKey($target)) { return; }
+        const $targetParent = rowByKey(parentKey($target));
+        if (isAuto($targetParent)) {
+            setParent($source, rowKey($targetParent));
+            if (side === 'left') { $source.insertBefore($target); }
+            else { $source.insertAfter($target); }
+            syncFlatOrder();
+            scheduleRefresh(220);
+            return;
         }
-        const $dropZone = $('<div>', {
-            class: 'h18-ud-box-drop-zone',
-            text: 'Træk et element hertil for at lægge det IND I kassen'
-        });
-        $wrap.append($head, $items, $dropZone);
-        $preview.append($wrap);
+        createAutoForBoxes($source, $target, side);
     }
 
-    function refreshBoxes() {
-        activeRows().each(function () {
-            const $row = $(this);
-            if (isBox($row)) { decorateBox($row); }
-        });
+    function clearTargets() {
+        activeRows().removeClass('h18-ud-nesting-drop-target');
+        $('.h18-ud-box-drop-zone,.h18-v0811-side-zone').removeClass('is-active');
     }
 
-    function scheduleRefresh(delay) {
-        window.clearTimeout(refreshTimer);
-        refreshTimer = window.setTimeout(refreshBoxes, typeof delay === 'number' ? delay : 30);
+    function showBoxTarget($box) {
+        clearTargets();
+        if ($box.length) {
+            $box.addClass('h18-ud-nesting-drop-target');
+            $box.find('.h18-ud-box-drop-zone').first().addClass('is-active');
+        }
     }
 
-    function finishNest(beforeKeys, type, boxKey) {
+    function finishNewNested(beforeKeys, type, boxKey) {
         window.setTimeout(function () {
             const $box = rowByKey(boxKey);
             const $newRow = findNewRow(beforeKeys, type);
-            if ($box.length && isBox($box) && $newRow.length && !isBox($newRow)) {
-                moveRowIntoBox($newRow, $box);
-            }
-            clearDropTarget();
-            scheduleRefresh(20);
-        }, 60);
+            if ($box.length && $newRow.length && !isBox($newRow)) { moveRowIntoBox($newRow, $box); }
+            clearTargets();
+            scheduleRefresh(220);
+        }, 90);
+    }
+
+    function finishNewBox(beforeKeys, targetKey, side) {
+        window.setTimeout(function () {
+            const $newBox = findNewRow(beforeKeys, 'container');
+            if (!$newBox.length) { scheduleRefresh(220); return; }
+            if (!isBox($newBox)) { configureBox($newBox); }
+            const $target = rowByKey(targetKey);
+            if ($target.length) { placeBoxBeside($newBox, $target, side); }
+            else { scheduleRefresh(220); }
+        }, 140);
     }
 
     document.addEventListener('dragstart', function (event) {
         const item = event.target.closest && event.target.closest('.h18-builder-palette-item');
-        if (!item || item.hasAttribute('data-h18-layout-tool')) { return; }
-        pendingType = String(item.getAttribute('data-section-type') || 'text');
+        if (!item) { return; }
+        const tool = String(item.getAttribute('data-h18-layout-tool') || '');
+        const type = String(item.getAttribute('data-section-type') || 'text');
+        if (tool === 'box' || (type === 'container' && !tool)) {
+            paletteBoxDrag = { before: snapshotKeys(), target: '', side: 'right' };
+            $sections.addClass('h18-v0811-box-drag');
+            scheduleRefresh(0);
+            return;
+        }
+        if (tool) { return; }
+        pendingType = type;
         pendingKeys = snapshotKeys();
         pendingBoxKey = '';
     }, true);
 
     document.addEventListener('dragover', function (event) {
+        if (paletteBoxDrag) {
+            const zone = event.target.closest && event.target.closest('.h18-v0811-side-zone');
+            $('.h18-v0811-side-zone').removeClass('is-active');
+            if (zone) {
+                event.preventDefault();
+                zone.classList.add('is-active');
+                paletteBoxDrag.target = String(zone.getAttribute('data-box') || '');
+                paletteBoxDrag.side = String(zone.getAttribute('data-side') || 'right');
+            }
+            return;
+        }
         if (!pendingType) { return; }
         const $box = targetBoxForElement(event.target);
         pendingBoxKey = $box.length ? rowKey($box) : '';
-        showDropTarget($box);
+        showBoxTarget($box);
     }, true);
 
     document.addEventListener('drop', function (event) {
+        if (paletteBoxDrag) {
+            const zone = event.target.closest && event.target.closest('.h18-v0811-side-zone');
+            if (zone) {
+                event.preventDefault();
+                paletteBoxDrag.target = String(zone.getAttribute('data-box') || '');
+                paletteBoxDrag.side = String(zone.getAttribute('data-side') || 'right');
+            }
+            const state = paletteBoxDrag;
+            paletteBoxDrag = null;
+            $sections.removeClass('h18-v0811-box-drag');
+            clearTargets();
+            finishNewBox(state.before, state.target, state.side);
+            return;
+        }
         if (!pendingType) { return; }
         const $box = targetBoxForElement(event.target);
         const boxKey = $box.length ? rowKey($box) : pendingBoxKey;
@@ -303,77 +498,104 @@ jQuery(function ($) {
         const beforeKeys = pendingKeys;
         pendingType = '';
         pendingBoxKey = '';
-        if (boxKey) { finishNest(beforeKeys, type, boxKey); }
-        else { clearDropTarget(); scheduleRefresh(80); }
+        if (boxKey) { finishNewNested(beforeKeys, type, boxKey); }
+        else { clearTargets(); scheduleRefresh(220); }
     }, true);
 
     document.addEventListener('dragend', function () {
+        if (paletteBoxDrag) {
+            const state = paletteBoxDrag;
+            paletteBoxDrag = null;
+            $sections.removeClass('h18-v0811-box-drag');
+            clearTargets();
+            finishNewBox(state.before, state.target, state.side);
+        }
         pendingType = '';
         pendingBoxKey = '';
-        clearDropTarget();
-        scheduleRefresh(40);
+        clearTargets();
+        scheduleRefresh(220);
     }, true);
 
     document.addEventListener('click', function (event) {
         const item = event.target.closest && event.target.closest('.h18-builder-palette-item');
         if (!item || item.hasAttribute('data-h18-layout-tool')) { return; }
-        const $box = selectedBox();
-        if (!$box.length) { return; }
-        clickBoxKey = rowKey($box);
-        clickKeys = snapshotKeys();
-        finishNest(clickKeys, String(item.getAttribute('data-section-type') || 'text'), clickBoxKey);
+        const $selected = activeRows().filter('.is-selected').first();
+        if (!isBox($selected)) { return; }
+        finishNewNested(snapshotKeys(), String(item.getAttribute('data-section-type') || 'text'), rowKey($selected));
     }, true);
 
-    // Existing rows are moved by jQuery UI Sortable, not native HTML5 drag events.
-    // Track pointer position during that sortable operation and turn a drop over
-    // the explicit Kasse drop-zone into a LayoutParentKey move.
-    $sections.on('sortstart.h18UdBoxNesting', function (event, ui) {
-        existingDragRow = ui && ui.item ? ui.item : $();
+    $sections.on('sortstart.h18V0811Kasse', function (event, ui) {
+        const $row = ui && ui.item ? ui.item : $();
+        existingDragRow = $row;
         existingDropBoxKey = '';
-        if (existingDragRow.length) {
+        if (isBox($row)) {
+            existingBoxDrag = { source: rowKey($row), target: '', side: 'right' };
+            $sections.addClass('h18-v0811-box-drag');
+            scheduleRefresh(0);
+        } else if ($row.length) {
             $sections.addClass('h18-ud-existing-row-drag');
         }
     });
 
-    $sections.on('sort.h18UdBoxNesting', function (event) {
+    $sections.on('sort.h18V0811Kasse', function (event) {
+        if (existingBoxDrag) {
+            const hit = sideZoneAtPoint(event.pageX, event.pageY, existingBoxDrag.source);
+            $('.h18-v0811-side-zone').removeClass('is-active');
+            if (hit) {
+                existingBoxDrag.target = hit.target;
+                existingBoxDrag.side = hit.side;
+                $(hit.node).addClass('is-active');
+            } else {
+                existingBoxDrag.target = '';
+            }
+            return;
+        }
         if (!existingDragRow.length) { return; }
         const $box = boxAtPoint(event.pageX, event.pageY, existingDragRow);
         existingDropBoxKey = $box.length ? rowKey($box) : '';
-        showDropTarget($box);
+        showBoxTarget($box);
     });
 
-    $sections.on('sortstop.h18UdBoxNesting', function () {
+    $sections.on('sortstop.h18V0811Kasse', function () {
+        if (existingBoxDrag) {
+            const state = existingBoxDrag;
+            existingBoxDrag = null;
+            $sections.removeClass('h18-v0811-box-drag');
+            clearTargets();
+            if (state.target) { placeBoxBeside(rowByKey(state.source), rowByKey(state.target), state.side); }
+            else { scheduleRefresh(220); }
+            existingDragRow = $();
+            return;
+        }
         const $row = existingDragRow;
         const boxKey = existingDropBoxKey;
         existingDragRow = $();
         existingDropBoxKey = '';
         $sections.removeClass('h18-ud-existing-row-drag');
-
         if ($row.length && boxKey) {
             const $box = rowByKey(boxKey);
-            if ($box.length) {
-                moveRowIntoBox($row, $box);
-            }
+            if ($box.length) { moveRowIntoBox($row, $box); }
         }
-        clearDropTarget();
-        scheduleRefresh(30);
+        clearTargets();
+        scheduleRefresh(220);
     });
 
-    $(document).on('click', '.h18-ud-box-child-chip', function (event) {
+    $(document).on('click', '.h18-v0811-edit-child', function (event) {
         event.preventDefault();
         event.stopPropagation();
-        const $row = rowByKey($(this).attr('data-h18-box-child-key'));
+        const $row = rowByKey($(this).attr('data-h18-v0811-edit-child'));
         if ($row.length) { $row.children('.h18-page-section-header').trigger('click'); }
+        scheduleRefresh(220);
     });
 
-    $(document).on('change', '.h18-layout-parent-key, .h18-layout-parent-select, .h18-section-navigator-label', function () {
-        scheduleRefresh(20);
-    });
-    $(document).on('input', '.h18-section-navigator-label', function () { scheduleRefresh(30); });
-    $(document).on('click', '.h18-page-section-delete', function () { scheduleRefresh(80); });
+    $(document).on('change input', '.h18-layout-parent-key,.h18-layout-parent-select,.h18-section-navigator-label', function () { scheduleRefresh(220); });
+    $(document).on('input change', '#h18-page-inspector-target :input', function () { scheduleRefresh(260); });
+    $(document).on('click', '.h18-preview-device,.h18-preview-state,.h18-page-section-delete,.h18-page-section-duplicate,.h18-page-section-header,.h18-page-section-edit', function () { scheduleRefresh(260); });
 
-    const observer = new MutationObserver(function () { scheduleRefresh(40); });
+    const observer = new MutationObserver(function () {
+        if (!renderGuard) { scheduleRefresh(220); }
+    });
     observer.observe($sections.get(0), { childList: true, subtree: false });
 
-    scheduleRefresh(80);
+    scheduleRefresh(260);
 });

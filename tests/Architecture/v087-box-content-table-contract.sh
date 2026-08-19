@@ -20,8 +20,11 @@ grep -F "'LayoutDirection'" "$BOX_JS" >/dev/null
 grep -F "'LayoutGapPx'" "$BOX_JS" >/dev/null
 grep -F "'MobileLayoutGapPx'" "$BOX_JS" >/dev/null
 grep -F "'MobileLayoutStack'" "$BOX_JS" >/dev/null
-grep -F 'function directChildren($box)' "$NEST_JS" >/dev/null
-grep -F 'h18-ud-box-child-chip' "$NEST_JS" >/dev/null
+grep -F 'function directChildren($row)' "$NEST_JS" >/dev/null
+if ! grep -F 'h18-ud-box-child-chip' "$NEST_JS" >/dev/null && ! grep -F 'h18-v0811-child-card' "$NEST_JS" >/dev/null; then
+  echo 'FAIL: box nesting runtime has neither legacy child chips nor v0.8.11 child-card composition'
+  exit 1
+fi
 
 # Existing recursive renderer is still the source of truth for nested children.
 grep -F 'render_page_editor_layout_tree' "$MAIN" >/dev/null
@@ -47,4 +50,5 @@ fi
 
 node --check "$BOX_JS"
 node --check "$TABLE_JS"
-echo 'v0.8.7 multi-element box content + borderless table contract: PASS'
+node --check "$NEST_JS"
+echo 'v0.8.7 multi-element box content + borderless table contract (v0.8.11-compatible): PASS'
