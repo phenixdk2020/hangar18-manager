@@ -55,7 +55,7 @@ final class LegacyShellShadowAdminController
         self::card('Legacy shell source', ((int) ($snapshot['SourcePostId'] ?? 0)) > 0 ? 'Side #' . (int) $snapshot['SourcePostId'] : 'Ikke fundet', (string) ($snapshot['SourcePostTitle'] ?? ''));
         self::card('Header marker', $header ? 'Komplet' : 'Mangler', (int) ($snapshot['HeaderBytes'] ?? 0) . ' bytes');
         self::card('Footer marker', $footer ? 'Komplet' : 'Mangler', (int) ($snapshot['FooterBytes'] ?? 0) . ' bytes');
-        self::card('Legacy design', (int) ($snapshot['DesignKeyCount'] ?? 0) . ' gemte felter', 'Runtime v' . esc_html((string) ($snapshot['RuntimeVersion'] ?? '')));
+        self::card('Legacy design', (int) ($snapshot['DesignKeyCount'] ?? 0) . ' gemte felter', 'Runtime v' . (string) ($snapshot['RuntimeVersion'] ?? ''));
         echo '</div>';
         echo '<p><strong>Kilde-hash:</strong> <code>' . esc_html($hash) . '</code></p>';
         echo '<p class="description">' . esc_html($ready ? 'Baseline er komplet og kan bruges som kilde til næste trin: kontrolleret import til Header/Footer shadow-templates.' : 'Baseline er ikke komplet. Import til Designer skal forblive blokeret indtil både Header- og Footer-markør er fundet.') . '</p>';
@@ -65,11 +65,14 @@ final class LegacyShellShadowAdminController
     /** @return array{PostId:int,PostTitle:string,Content:string} */
     private static function shellSource(): array
     {
-        $home = get_page_by_path('hjem', OBJECT, 'page');
-        if ($home instanceof \WP_Post) {
-            $content = (string) $home->post_content;
-            if (self::hasShell($content)) {
-                return ['PostId' => (int) $home->ID, 'PostTitle' => (string) $home->post_title, 'Content' => $content];
+        if (function_exists('get_page_by_path')) {
+            $output = defined('OBJECT') ? OBJECT : 'OBJECT';
+            $home = get_page_by_path('hjem', $output, 'page');
+            if ($home instanceof \WP_Post) {
+                $content = (string) $home->post_content;
+                if (self::hasShell($content)) {
+                    return ['PostId' => (int) $home->ID, 'PostTitle' => (string) $home->post_title, 'Content' => $content];
+                }
             }
         }
 
