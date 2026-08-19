@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const path = require('path');
 
 const nestingRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-nesting-tools.js');
-const jqueryRuntime = require.resolve('jquery/dist/jquery.min.js');
+const jqueryRuntime = require.resolve('jquery');
 
 async function dropExistingBoxIntoAuto(page, boxKey) {
   await page.evaluate(async (key) => {
