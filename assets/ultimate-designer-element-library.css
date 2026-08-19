@@ -29,4 +29,17 @@
 .h18-library-drag-ghost-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
 .h18-library-drag-ghost-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .h18-library-drag-ghost-copy small{color:#646970;line-height:1.3}
+
+/* v0.8.8 – venstre builderpanel ruller uafhængigt af canvas og Inspector. */
+@media(min-width:1181px){
+.h18-pages-admin .h18-builder-palette{display:flex;flex-direction:column;max-height:calc(100vh - 70px);overflow:hidden;overscroll-behavior:contain}
+.h18-pages-admin .h18-builder-sidebar-tabs{flex:0 0 auto}
+.h18-pages-admin .h18-builder-sidebar-panel{min-height:0}
+.h18-pages-admin .h18-builder-sidebar-panel.is-active{display:block;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;padding-right:4px}
+}
+@media(max-width:1180px){
+.h18-pages-admin .h18-builder-palette{display:block;max-height:none;overflow:visible}
+.h18-pages-admin .h18-builder-sidebar-panel.is-active{overflow:visible;padding-right:0}
+}
+
 @media(max-width:782px){.h18-library-search-row{grid-template-columns:1fr}.h18-library-count{text-align:left}.h18-library-filters .button{flex:1 1 auto}.h18-library-card-description,.h18-library-card-category{margin-left:0;flex-basis:100%}}
