@@ -7,6 +7,7 @@ on:
       - agent/runtime-bridge-v2
       - agent/ud-060-starter-schemas
       - agent/editor-command-palette-v087
+      - agent/editor-scroll-panels-v088
   pull_request:
     paths:
       - 'src/**'
@@ -93,6 +94,7 @@ jobs:
       - run: bash tests/Architecture/v087-box-tools-contract.sh
       - run: bash tests/Architecture/v087-nesting-contract.sh
       - run: bash tests/Architecture/v087-box-content-table-contract.sh
+      - run: bash tests/Architecture/v088-sidebar-scroll-header-footer-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: php tests/Architecture/i3-menu-admin-smoke.php
       - run: bash tests/Architecture/i3-menu-page-chooser-contract.sh
