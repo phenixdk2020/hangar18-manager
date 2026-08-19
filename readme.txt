@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.9
+Version: 0.8.10
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.10 – Designer — aktiv Kasse-runtime og side-by-side ==
+
+Nyt:
+- Kasse-kompositionen er nu bundet direkte til de allerede aktive nesting/box-content handles i Sider-editoren i stedet for at afhænge af det separate v0.8.9-addon.
+- Kasser viser et synligt v0.8.10-badge i editoren, så manuel QA straks kan bekræfte at den nye runtime faktisk er indlæst.
+- Elementer med LayoutParentKey til en Kasse skjules fra den flade canvas-række via en dedikeret data-attribut og vises som rigtige previews inde i Indhold i kassen.
+- Child-markering ændrer ikke længere topniveau-rækkens CSS-klasser og vækker derfor ikke den ældre box-tools observer, som kunne overskrive Auto-kasser-previewet.
+- Både den dedikerede Kasse og et almindeligt Container-element genkendes ved drag fra Elementer-panelet.
+- Nye Kasser/Containere får tydelige venstre/højre Sæt Kasse ved siden af drop-zoner og grupperes i den eksisterende Auto-kasser/Grid-model.
+- Allerede eksisterende Kasser kan nu også trækkes med det normale rækkehåndtag til venstre eller højre for en anden Kasse.
+- Composition observeren er ikke-recursiv og Inspector/preview ændringer har eksplicit refresh, så runtime ikke kan trigge sin egen redraw i loop.
+- Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.
+- v0.8.10 udgives som manuel testkandidat; GitHub Architecture QA #322 står fortsat i runner-kø, mens den præcise inline JavaScript-blok er valideret separat med node --check.
 
 
 == Version 0.8.9 – Designer — visuel Kasse-komposition og Auto-kasser ==

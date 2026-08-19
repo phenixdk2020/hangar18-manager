@@ -1,20 +1,22 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.9",
+  "version": "0.8.10",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-19T06:56:36Z",
+  "published_utc": "2026-08-19T10:35:27Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "431a0b20b3aa3eabb1e587c645fa8f2333456292e174c248d2c6b4633ac7360a",
+  "package_sha256": "906c509e76cd677c03f2efd38273f7c9dbccd9df71f3c9b8eff318e404cfc9bd",
   "changelog": [
-    "Elementer med LayoutParentKey til en Kasse vises nu visuelt inde i Kassen i editoren i stedet for som en separat række over eller under den.",
-    "De oprindelige child-rækker bevares skjult i DOM'en, så eksisterende gemning, versionshistorik og schema fortsat er autoritative uden datamigrering.",
-    "Indhold i en Kasse vises som rigtige canvas-previews med en Rediger-handling, og elementer kan flyttes mellem Kasser fra den visuelle komposition.",
-    "Auto-kasser viser nu de faktiske Kasser side om side i editoren i stedet for at lade deres source-rækker stå lodret under hinanden.",
-    "Antallet af desktop-kolonner i Auto-kasser synkroniseres med antallet af Kasser; på smallere editorbredder stables den visuelle komposition i én kolonne.",
-    "Når en ny Kasse trækkes fra Layout+-biblioteket, vises tydelige venstre/højre drop-zoner på en eksisterende Kasse til placering ved siden af.",
-    "Kasser i en eksisterende Auto-kasser-række kan omarrangeres via deres visuelle proxy uden et nyt storage-format.",
-    "Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URLs og I10 public cutover er fortsat uændrede og beskyttede."
+    "Kasse-kompositionen er nu bundet direkte til de allerede aktive nesting/box-content handles i Sider-editoren i stedet for at afhænge af det separate v0.8.9-addon.",
+    "Kasser viser et synligt v0.8.10-badge i editoren, så manuel QA straks kan bekræfte at den nye runtime faktisk er indlæst.",
+    "Elementer med LayoutParentKey til en Kasse skjules fra den flade canvas-række via en dedikeret data-attribut og vises som rigtige previews inde i Indhold i kassen.",
+    "Child-markering ændrer ikke længere topniveau-rækkens CSS-klasser og vækker derfor ikke den ældre box-tools observer, som kunne overskrive Auto-kasser-previewet.",
+    "Både den dedikerede Kasse og et almindeligt Container-element genkendes ved drag fra Elementer-panelet.",
+    "Nye Kasser/Containere får tydelige venstre/højre Sæt Kasse ved siden af drop-zoner og grupperes i den eksisterende Auto-kasser/Grid-model.",
+    "Allerede eksisterende Kasser kan nu også trækkes med det normale rækkehåndtag til venstre eller højre for en anden Kasse.",
+    "Composition observeren er ikke-recursiv og Inspector/preview ændringer har eksplicit refresh, så runtime ikke kan trigge sin egen redraw i loop.",
+    "Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.",
+    "v0.8.10 udgives som manuel testkandidat; GitHub Architecture QA #322 står fortsat i runner-kø, mens den præcise inline JavaScript-blok er valideret separat med node --check."
   ]
 }
