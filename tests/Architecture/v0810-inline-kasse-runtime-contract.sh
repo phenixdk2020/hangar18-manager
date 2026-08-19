@@ -25,9 +25,15 @@ require_text 'data-section-type="container"' 'ordinary Container palette recogni
 require_text 'data-section-type="grid"' 'existing Grid creation path'
 require_text "var BOX='Kasse',AUTO='Auto-kasser'" 'Kasse/Auto-kasser runtime labels'
 require_text 'setParent($t,gk);setParent($n,gk);' 'two-box grouping into one Grid parent'
+require_text 'mo.observe($s.get(0),{childList:true,subtree:false})' 'non-recursive mutation observer'
+require_text "'#h18-page-inspector-target :input'" 'explicit Inspector refresh path'
 
 if grep -F "'hangar18-ultimate-designer-visual-composition'" "$CTRL" >/dev/null; then
   echo 'FAIL: v0.8.10 controller still references the separate visual-composition handle'
+  exit 1
+fi
+if grep -F 'mo.observe($s.get(0),{childList:true,subtree:true})' "$CTRL" >/dev/null; then
+  echo 'FAIL: recursive observer can self-trigger composition refreshes'
   exit 1
 fi
 
