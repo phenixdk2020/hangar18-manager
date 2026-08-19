@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.11
+Version: 0.8.12
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.12 – Designer — drop ind i Kasser under Auto-kasser ==
+
+Nyt:
+- Kasser, der ligger side om side i Grid/Auto-kasser, viser nu deres rigtige Indhold i kassen-preview og indvendige dropzone i den synlige Kasse-flise.
+- Et element, der trækkes fra Elementer-panelet ned i en synlig Kasse under Auto-kasser, mappes nu tilbage til den korrekte skjulte source-Kasse via LayoutParentKey.
+- Eksisterende elementer, der flyttes med sortable-håndtaget, hit-testes nu mod den synlige Kasse i Auto-kasser og kan derfor også flyttes ind i den.
+- Drop-target markering vises på den synlige Kasse-flise, så det er tydeligt hvilken Kasse modtager elementet.
+- Kasse-source-rækker forbliver skjult i Auto-kasser, mens deres child-elementer gengives synligt inde i Kassen i stedet for at se ud til at forsvinde.
+- Den eksisterende LayoutParentKey/Order-model er fortsat eneste lagringsmodel; der er ikke indført parallel persistence.
+- Architecture QA #344 passerede PHP 8.0, 8.2 og 8.3, v0.8.11-regressionskontrakten, den nye v0.8.12 Auto-kasse drop-kontrakt, samlet Node-syntaxcheck samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.
 
 
 == Version 0.8.11 – Designer — direkte Kasse-komposition og sikre side-dropzoner ==
