@@ -1,0 +1,139 @@
+name: Build Plugin Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'release-config.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hangar18-plugin-release
+  cancel-in-progress: false
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply release metadata
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import json
+          import pathlib
+          import re
+
+          root = pathlib.Path('.')
+          config = json.loads((root / 'release-config.json').read_text(encoding='utf-8'))
+          version = str(config.get('version', '')).strip()
+          title = str(config.get('title', '')).strip() or 'Release'
+          changelog = [str(item).strip() for item in config.get('changelog', []) if str(item).strip()]
+
+          if not re.fullmatch(r'\d+\.\d+\.\d+', version):
+              raise SystemExit('release-config.json contains an invalid semantic version')
+          if not changelog:
+              raise SystemExit('release-config.json must contain at least one changelog item')
+
+          php_path = root / 'hangar18-manager.php'
+          php = php_path.read_text(encoding='utf-8')
+          php, header_count = re.subn(
+              r'(?m)^ \* Version: \d+\.\d+\.\d+\s*$',
+              f' * Version: {version}',
+              php,
+              count=1,
+          )
+          php, const_count = re.subn(
+              r"const VERSION = '\d+\.\d+\.\d+';",
+              f"const VERSION = '{version}';",
+              php,
+              count=1,
+          )
+          if header_count != 1 or const_count != 1:
+              raise SystemExit('Could not update both plugin version declarations')
+          php_path.write_text(php, encoding='utf-8')
+
+          readme_path = root / 'readme.txt'
+          readme = readme_path.read_text(encoding='utf-8')
+          readme, version_count = re.subn(
+              r'(?m)^Version: \d+\.\d+\.\d+\s*$',
+              f'Version: {version}',
+              readme,
+              count=1,
+          )
+          if version_count != 1:
+              raise SystemExit('Could not update readme version')
+
+          marker = f'== Version {version} – {title} =='
+          if marker not in readme:
+              insertion = readme.find('== Version ')
+              if insertion < 0:
+                  raise SystemExit('Could not find readme changelog insertion point')
+              section = marker + '\n\nNyt:\n' + ''.join(f'- {item}\n' for item in changelog) + '\n\n'
+              readme = readme[:insertion] + section + readme[insertion:]
+          readme_path.write_text(readme, encoding='utf-8')
+          PY
+
+      - name: Build installable ZIP
+        shell: bash
+        run: |
+          rm -rf build
+          mkdir -p build/hangar18-manager dist
+          cp hangar18-manager.php readme.txt build/hangar18-manager/
+          cp -R assets src build/hangar18-manager/
+          (cd build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+
+      - name: Write update manifest
+        shell: bash
+        run: |
+          PACKAGE_SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"
+          export PACKAGE_SHA
+          python3 <<'PY'
+          import datetime
+          import json
+          import os
+          import pathlib
+
+          config = json.loads(pathlib.Path('release-config.json').read_text(encoding='utf-8'))
+          manifest = {
+              'schema_version': '1.0',
+              'plugin': 'hangar18-manager',
+              'version': str(config['version']).strip(),
+              'min_wp': '6.4',
+              'min_php': '8.0',
+              'published_utc': datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z'),
+              'package_path': 'dist/hangar18-manager.zip',
+              'package_sha256': os.environ['PACKAGE_SHA'],
+              'changelog': [str(item).strip() for item in config.get('changelog', []) if str(item).strip()],
+          }
+          pathlib.Path('update.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Verify release package
+        shell: bash
+        run: |
+          VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/hangar18-manager.php | sed -n 's/^ \* Version: //p' | head -n1 | tr -d '\r')" = "$VERSION"
+          test "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["version"] ?? "";')" = "$VERSION"
+          echo "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["package_sha256"] ?? "";')  dist/hangar18-manager.zip" | sha256sum -c -
+          unzip -tq dist/hangar18-manager.zip
+
+      - name: Commit release package
+        shell: bash
+        run: |
+          VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip
+          if git diff --cached --quiet; then
+            echo 'Release files are already current.'
+            exit 0
+          fi
+          git commit -m "Release v${VERSION} package [release-package]"
+          git push
