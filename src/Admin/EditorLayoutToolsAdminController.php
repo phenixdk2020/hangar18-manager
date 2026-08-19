@@ -9,7 +9,9 @@ namespace Hangar18\UltimateDesigner\Admin;
  *
  * Auto Boxes reuses the existing Grid + Container storage/runtime. Table reuses
  * the existing sanitized HTML element so this slice does not create a new public
- * renderer, schema migration, URL change or cutover path.
+ * renderer, schema migration, URL change or cutover path. Generic nesting also
+ * reuses LayoutParentKey so normal elements can be placed inside a Box without a
+ * parallel storage model.
  */
 final class EditorLayoutToolsAdminController
 {
@@ -37,6 +39,8 @@ final class EditorLayoutToolsAdminController
         $cssPath = $pluginDir . '/assets/ultimate-designer-layout-tools.css';
         $boxJsPath = $pluginDir . '/assets/ultimate-designer-box-tools.js';
         $boxCssPath = $pluginDir . '/assets/ultimate-designer-box-tools.css';
+        $nestingJsPath = $pluginDir . '/assets/ultimate-designer-nesting-tools.js';
+        $nestingCssPath = $pluginDir . '/assets/ultimate-designer-nesting-tools.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-layout-tools',
@@ -64,6 +68,20 @@ final class EditorLayoutToolsAdminController
             $pluginUrl . 'assets/ultimate-designer-box-tools.css',
             ['hangar18-ultimate-designer-layout-tools'],
             is_file($boxCssPath) ? (string) filemtime($boxCssPath) : '0.8.7'
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-nesting-tools',
+            $pluginUrl . 'assets/ultimate-designer-nesting-tools.js',
+            ['jquery', 'hangar18-manager-admin', 'hangar18-ultimate-designer-layout-tools', 'hangar18-ultimate-designer-box-tools'],
+            is_file($nestingJsPath) ? (string) filemtime($nestingJsPath) : '0.8.7',
+            true
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-nesting-tools',
+            $pluginUrl . 'assets/ultimate-designer-nesting-tools.css',
+            ['hangar18-ultimate-designer-box-tools'],
+            is_file($nestingCssPath) ? (string) filemtime($nestingCssPath) : '0.8.7'
         );
     }
 }
