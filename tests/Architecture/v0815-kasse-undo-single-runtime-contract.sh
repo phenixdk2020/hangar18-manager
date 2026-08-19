@@ -43,13 +43,13 @@ require_contains "$NEST" 'function finishNewBoxInAuto(beforeKeys, targetKey)' 'n
 require_contains "$NEST" "state.mode = 'auto';" 'new Kasse Auto-kasser mode is missing'
 require_contains "$NEST" "existingBoxDrag.mode = 'auto';" 'existing Kasse Auto-kasser mode is missing'
 require_contains "$NEST" "text: 'v0.8.15'" 'v0.8.15 runtime badge is missing'
-require_contains "$NEST" "data-h18-v0815-kasse-runtime" 'v0.8.15 runtime marker is missing'
+require_contains "$NEST" 'data-h18-v0815-kasse-runtime' 'v0.8.15 runtime marker is missing'
 
 # Hidden source rows may not become visually orphaned if the base editor rebuilds a canvas preview.
 require_contains "$NEST" 'function compositionMissing()' 'composition loss detector is missing'
 require_contains "$NEST" 'observer.observe($sections.get(0), { childList: true, subtree: true });' 'composition observer does not watch preview rebuilds'
-require_contains "$NEST" "!$preview.children('.h18-ud-auto-box-grid').length" 'Auto-kasser missing-composition detection is absent'
-require_contains "$NEST" "!$preview.children('.h18-ud-box-contents-preview').length" 'Kasse missing-composition detection is absent'
+require_contains "$NEST" '!$preview.children('"'"'.h18-ud-auto-box-grid'"'"').length' 'Auto-kasser missing-composition detection is absent'
+require_contains "$NEST" '!$preview.children('"'"'.h18-ud-box-contents-preview'"'"').length' 'Kasse missing-composition detection is absent'
 
 # Restore-derived history callbacks are discarded. They must never be delayed until suppression expires.
 require_contains "$CTRL" "callback.name === 'editorHistoryRecordNow'" 'history capture callback guard is missing'
