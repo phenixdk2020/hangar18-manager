@@ -1,22 +1,22 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.10",
+  "version": "0.8.11",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-19T10:35:27Z",
+  "published_utc": "2026-08-19T13:01:40Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "906c509e76cd677c03f2efd38273f7c9dbccd9df71f3c9b8eff318e404cfc9bd",
+  "package_sha256": "1fbe29031bfbf1fdb3b5c23f065393b9293b2db85b975ac4c892a5095c663783",
   "changelog": [
-    "Kasse-kompositionen er nu bundet direkte til de allerede aktive nesting/box-content handles i Sider-editoren i stedet for at afhænge af det separate v0.8.9-addon.",
-    "Kasser viser et synligt v0.8.10-badge i editoren, så manuel QA straks kan bekræfte at den nye runtime faktisk er indlæst.",
-    "Elementer med LayoutParentKey til en Kasse skjules fra den flade canvas-række via en dedikeret data-attribut og vises som rigtige previews inde i Indhold i kassen.",
-    "Child-markering ændrer ikke længere topniveau-rækkens CSS-klasser og vækker derfor ikke den ældre box-tools observer, som kunne overskrive Auto-kasser-previewet.",
-    "Både den dedikerede Kasse og et almindeligt Container-element genkendes ved drag fra Elementer-panelet.",
-    "Nye Kasser/Containere får tydelige venstre/højre Sæt Kasse ved siden af drop-zoner og grupperes i den eksisterende Auto-kasser/Grid-model.",
-    "Allerede eksisterende Kasser kan nu også trækkes med det normale rækkehåndtag til venstre eller højre for en anden Kasse.",
-    "Composition observeren er ikke-recursiv og Inspector/preview ændringer har eksplicit refresh, så runtime ikke kan trigge sin egen redraw i loop.",
-    "Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.",
-    "v0.8.10 udgives som manuel testkandidat; GitHub Architecture QA #322 står fortsat i runner-kø, mens den præcise inline JavaScript-blok er valideret separat med node --check."
+    "Kasse-kompositionen ligger nu direkte i den aktive nesting-runtime i Sider-editoren i stedet for at være endnu et parallelt visuelt overlay.",
+    "Tekst, billeder, knapper og andre elementer med LayoutParentKey til en Kasse beholder deres source-række til lagring/versionering, men source-rækken skjules altid fra den flade canvas — også mens elementet er valgt.",
+    "Under-elementer vises som rigtige klonede canvas-previews inde i Indhold i kassen og kan åbnes i Inspector via Rediger.",
+    "Et synligt v0.8.11-badge i Kassen viser, at den nye runtime faktisk er aktiv på testinstallationen.",
+    "Topniveau-Kasser viser altid tydelige venstre/højre dropzoner, så en anden Kasse kan placeres ved siden af i stedet for over eller under.",
+    "Både nye Kasser fra Elementer-panelet og eksisterende Kasser flyttet med sortable-håndtaget bruger samme side-placement-flow.",
+    "Side-by-side genbruger den eksisterende Grid/Auto-kasser-model og LayoutParentKey/Order; der er ikke indført en ny persistence-model.",
+    "Cycle guard og ordre-synkronisering er bevaret for eksisterende elementer, der flyttes ind i en Kasse.",
+    "Architecture QA #338 passerede PHP 8.0, 8.2 og 8.3, alle Kasse-kontrakter, samlet Node-syntaxcheck samt Chromium, Firefox og WebKit.",
+    "Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede."
   ]
 }
