@@ -4,8 +4,9 @@ set -euo pipefail
 CTRL='src/Admin/EditorLayoutToolsAdminController.php'
 LAYOUT='assets/ultimate-designer-layout-tools.js'
 NEST='assets/ultimate-designer-nesting-tools.js'
+BOX_CONTENT='assets/ultimate-designer-box-content-layout.js'
 
-for file in "$CTRL" "$LAYOUT" "$NEST"; do
+for file in "$CTRL" "$LAYOUT" "$NEST" "$BOX_CONTENT"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -65,14 +66,33 @@ fi
 require_contains "$CTRL" "meta.target.id === 'h18-page-editor-form'" 'MutationObserver history suppression is not scoped to the page editor'
 require_contains "$CTRL" '#h18-editor-undo,#h18-editor-redo' 'Undo/Redo does not start the restore transaction'
 
-# No public persistence/cutover primitives are introduced by this editor hotfix.
-if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" >/dev/null; then
-  echo 'FAIL: v0.8.15 introduced a public persistence/cutover primitive'
+# v0.8.16 closes every legitimate restore entry point and preserves genuine user edits.
+require_contains "$BOX_CONTENT" 'data-h18-v0816-history-guard' 'v0.8.16 history guard runtime marker is missing'
+require_contains "$BOX_CONTENT" '#h18-editor-restore-draft' 'local draft restore is not guarded'
+require_contains "$BOX_CONTENT" '#h18-command-palette-results .h18-command-result' 'command palette Undo/Redo is not guarded'
+require_contains "$BOX_CONTENT" "label === 'Fortryd' || label === 'Gendan'" 'command palette history action detection is missing'
+require_contains "$BOX_CONTENT" 'guard.markTrustedEdit = function' 'trusted post-Undo edit bridge is missing'
+require_contains "$BOX_CONTENT" 'if (guard.hasTrustedEdit()) { return false; }' 'trusted post-Undo edits are still suppressed'
+require_contains "$BOX_CONTENT" 'event.isTrusted !== true' 'programmatic restore events are not separated from real user input'
+require_contains "$BOX_CONTENT" "document.addEventListener('input', markTrustedEditorEdit, true);" 'real input does not reopen history capture'
+require_contains "$BOX_CONTENT" "document.addEventListener('change', markTrustedEditorEdit, true);" 'real change does not reopen history capture'
+require_contains "$BOX_CONTENT" "document.addEventListener('pointerdown', markTrustedStructuralEdit, true);" 'real drag/sort actions do not reopen history capture'
+require_contains "$BOX_CONTENT" '.h18-page-section-drag,' 'section drag is not treated as a genuine post-Undo edit'
+require_contains "$BOX_CONTENT" '.h18-builder-palette-item,' 'palette add/drag is not treated as a genuine post-Undo edit'
+
+# No second history stack or persistence/cutover path is introduced by the extension.
+if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" >/dev/null; then
+  echo 'FAIL: v0.8.16 introduced a second editor history stack'
+  exit 1
+fi
+if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" "$BOX_CONTENT" >/dev/null; then
+  echo 'FAIL: Undo hotfix introduced a public persistence/cutover primitive'
   exit 1
 fi
 
 node --check "$LAYOUT"
 node --check "$NEST"
+node --check "$BOX_CONTENT"
 php -l "$CTRL" >/dev/null
 
-echo 'v0.8.15 Kasse/Undo single-runtime contract: PASS'
+echo 'v0.8.15/v0.8.16 Kasse/Undo all-paths contract: PASS'
