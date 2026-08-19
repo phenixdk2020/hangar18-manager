@@ -482,8 +482,11 @@ jQuery(function ($) {
             const $row = findNewRow(beforeKeys, type);
             if (!$row.length) { return; }
             if (tool === 'auto-row') {
+                // v0.8.14: Auto-kasser is the Grid container itself. It starts
+                // empty and receives explicit Kasse children through the direct
+                // nesting runtime; creating an implicit Container here caused
+                // one user action to produce both Grid + Container.
                 configureAutoRow($row);
-                createInitialBox($row);
             } else if (tool === 'box') {
                 configureBox($row);
                 placeNewBox($row, targetKey);
