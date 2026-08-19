@@ -23,7 +23,6 @@
 .h18-ud-vc-side-drop-zone.is-active{border-color:#2271b1;background:#dceeff;box-shadow:0 0 0 3px rgba(34,113,177,.12)}
 .h18-ud-vc-proxy-dragging .h18-ud-box-drop-zone{border-color:#2271b1;background:#f0f6fc}
 @media(max-width:1180px){
-    .h18-page-section-row.h18-ud-vc-source-hidden{display:block!important}
     .h18-ud-vc-auto-grid{grid-template-columns:1fr!important}
     .h18-ud-vc-side-drop-zones{display:none!important}
 }
