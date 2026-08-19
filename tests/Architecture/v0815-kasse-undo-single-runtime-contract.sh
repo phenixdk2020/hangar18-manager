@@ -51,11 +51,15 @@ require_contains "$NEST" 'observer.observe($sections.get(0), { childList: true, 
 require_contains "$NEST" '!$preview.children('"'"'.h18-ud-auto-box-grid'"'"').length' 'Auto-kasser missing-composition detection is absent'
 require_contains "$NEST" '!$preview.children('"'"'.h18-ud-box-contents-preview'"'"').length' 'Kasse missing-composition detection is absent'
 
-# Restore-derived history callbacks are discarded. They must never be delayed until suppression expires.
+# Restore-derived history callbacks are discarded and must leave no pending timer id.
 require_contains "$CTRL" "callback.name === 'editorHistoryRecordNow'" 'history capture callback guard is missing'
-require_contains "$CTRL" 'return NativeSetTimeout(function () {}, 0);' 'suppressed history capture is not discarded'
+require_contains "$CTRL" 'return 0;' 'suppressed history capture does not report that no timer exists'
 if grep -F 'guard.remaining() + 30' "$CTRL" >/dev/null; then
   echo 'FAIL: restore-derived history capture is still delayed and replayed later'
+  exit 1
+fi
+if grep -F 'return NativeSetTimeout(function () {}, 0);' "$CTRL" >/dev/null; then
+  echo 'FAIL: suppressed history capture leaves a stale pending timer id'
   exit 1
 fi
 require_contains "$CTRL" "meta.target.id === 'h18-page-editor-form'" 'MutationObserver history suppression is not scoped to the page editor'
