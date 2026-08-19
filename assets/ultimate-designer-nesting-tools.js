@@ -23,6 +23,8 @@ jQuery(function ($) {
     let clickBoxKey = '';
     let clickKeys = new Set();
     let refreshTimer = null;
+    let existingDragRow = $();
+    let existingDropBoxKey = '';
 
     function activeRows() {
         return $sections.children('.h18-page-section-row:not(.h18-page-section-removed)');
@@ -126,17 +128,97 @@ jQuery(function ($) {
 
     function clearDropTarget() {
         activeRows().removeClass('h18-ud-nesting-drop-target');
+        $('.h18-ud-box-drop-zone').removeClass('is-active');
     }
 
     function showDropTarget($box) {
         clearDropTarget();
-        if ($box && $box.length) { $box.addClass('h18-ud-nesting-drop-target'); }
+        if ($box && $box.length) {
+            $box.addClass('h18-ud-nesting-drop-target');
+            $box.find('.h18-ud-box-drop-zone').first().addClass('is-active');
+        }
+    }
+
+    function syncFlatOrder() {
+        let visibleIndex = 0;
+        $sections.children('.h18-page-section-row').each(function () {
+            const $row = $(this);
+            if ($row.hasClass('h18-page-section-removed')) { return; }
+            visibleIndex += 1;
+            $row.find('.h18-page-section-order').val(visibleIndex * 10);
+        });
+        if ($sections.hasClass('ui-sortable')) {
+            $sections.sortable('refresh');
+        }
+    }
+
+    function wouldCreateCycle($row, $box) {
+        const sourceKey = rowKey($row);
+        let cursor = rowKey($box);
+        let depth = 0;
+        const seen = new Set();
+        while (cursor) {
+            depth += 1;
+            if (cursor === sourceKey || seen.has(cursor) || depth > 2) { return true; }
+            seen.add(cursor);
+            const $cursor = rowByKey(cursor);
+            if (!$cursor.length) { break; }
+            cursor = parentKey($cursor);
+        }
+        return false;
+    }
+
+    function canMoveIntoBox($row, $box) {
+        if (!$row || !$row.length || !$box || !$box.length) { return false; }
+        if (rowKey($row) === rowKey($box)) { return false; }
+        if (isBox($row)) { return false; }
+        if (wouldCreateCycle($row, $box)) { return false; }
+        return true;
+    }
+
+    function moveRowIntoBox($row, $box) {
+        if (!canMoveIntoBox($row, $box)) { return false; }
+        const boxKey = rowKey($box);
+        const $children = directChildren($box).not($row);
+        const $anchor = $children.length ? $children.last() : $box;
+
+        $row.insertAfter($anchor);
+        syncFlatOrder();
+        if (!setParent($row, boxKey)) { return false; }
+
+        $row.addClass('h18-ud-just-nested');
+        window.setTimeout(function () { $row.removeClass('h18-ud-just-nested'); }, 900);
+        return true;
+    }
+
+    function boxAtPoint(pageX, pageY, $draggedRow) {
+        const clientX = Number(pageX) - (window.pageXOffset || document.documentElement.scrollLeft || 0);
+        const clientY = Number(pageY) - (window.pageYOffset || document.documentElement.scrollTop || 0);
+        let $match = $();
+        let smallestArea = Number.POSITIVE_INFINITY;
+
+        activeRows().each(function () {
+            const $box = $(this);
+            if (!isBox($box) || !canMoveIntoBox($draggedRow, $box)) { return; }
+            const zone = $box.find('.h18-ud-box-drop-zone').get(0) || $box.find('.h18-ud-box-contents-preview').get(0);
+            if (!zone) { return; }
+            const rect = zone.getBoundingClientRect();
+            const inside = clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+            if (!inside) { return; }
+            const area = Math.max(1, rect.width * rect.height);
+            if (area < smallestArea) {
+                smallestArea = area;
+                $match = $box;
+            }
+        });
+        return $match;
     }
 
     function decorateBox($box) {
         if (!isBox($box)) { return; }
         const $preview = $box.children('.h18-canvas-preview').first();
         if (!$preview.length) { return; }
+        $box.attr('data-h18-box', '1');
         $preview.find('.h18-ud-box-contents-preview').remove();
         const $children = directChildren($box);
         const $wrap = $('<div>', { class: 'h18-ud-box-contents-preview' });
@@ -148,7 +230,7 @@ jQuery(function ($) {
         if (!$children.length) {
             $items.append($('<div>', {
                 class: 'h18-ud-box-empty-drop',
-                text: 'Træk Tekst, Billede, Knap eller et andet element ind i kassen.'
+                text: 'Kassen er tom.'
             }));
         } else {
             $children.each(function () {
@@ -166,7 +248,11 @@ jQuery(function ($) {
                 ));
             });
         }
-        $wrap.append($head, $items);
+        const $dropZone = $('<div>', {
+            class: 'h18-ud-box-drop-zone',
+            text: 'Træk et element hertil for at lægge det IND I kassen'
+        });
+        $wrap.append($head, $items, $dropZone);
         $preview.append($wrap);
     }
 
@@ -187,9 +273,7 @@ jQuery(function ($) {
             const $box = rowByKey(boxKey);
             const $newRow = findNewRow(beforeKeys, type);
             if ($box.length && isBox($box) && $newRow.length && !isBox($newRow)) {
-                setParent($newRow, boxKey);
-                $newRow.addClass('h18-ud-just-nested');
-                window.setTimeout(function () { $newRow.removeClass('h18-ud-just-nested'); }, 900);
+                moveRowIntoBox($newRow, $box);
             }
             clearDropTarget();
             scheduleRefresh(20);
@@ -239,6 +323,41 @@ jQuery(function ($) {
         clickKeys = snapshotKeys();
         finishNest(clickKeys, String(item.getAttribute('data-section-type') || 'text'), clickBoxKey);
     }, true);
+
+    // Existing rows are moved by jQuery UI Sortable, not native HTML5 drag events.
+    // Track pointer position during that sortable operation and turn a drop over
+    // the explicit Kasse drop-zone into a LayoutParentKey move.
+    $sections.on('sortstart.h18UdBoxNesting', function (event, ui) {
+        existingDragRow = ui && ui.item ? ui.item : $();
+        existingDropBoxKey = '';
+        if (existingDragRow.length) {
+            $sections.addClass('h18-ud-existing-row-drag');
+        }
+    });
+
+    $sections.on('sort.h18UdBoxNesting', function (event) {
+        if (!existingDragRow.length) { return; }
+        const $box = boxAtPoint(event.pageX, event.pageY, existingDragRow);
+        existingDropBoxKey = $box.length ? rowKey($box) : '';
+        showDropTarget($box);
+    });
+
+    $sections.on('sortstop.h18UdBoxNesting', function () {
+        const $row = existingDragRow;
+        const boxKey = existingDropBoxKey;
+        existingDragRow = $();
+        existingDropBoxKey = '';
+        $sections.removeClass('h18-ud-existing-row-drag');
+
+        if ($row.length && boxKey) {
+            const $box = rowByKey(boxKey);
+            if ($box.length) {
+                moveRowIntoBox($row, $box);
+            }
+        }
+        clearDropTarget();
+        scheduleRefresh(30);
+    });
 
     $(document).on('click', '.h18-ud-box-child-chip', function (event) {
         event.preventDefault();
