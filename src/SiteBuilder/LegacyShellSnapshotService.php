@@ -74,7 +74,7 @@ final class LegacyShellSnapshotService
     /** @param array<mixed> $value @return array<mixed> */
     private function normalizeArray(array $value): array
     {
-        if (!array_is_list($value)) {
+        if (!$this->isList($value)) {
             ksort($value);
         }
         foreach ($value as $key => $item) {
@@ -83,6 +83,15 @@ final class LegacyShellSnapshotService
             }
         }
         return $value;
+    }
+
+    /** @param array<mixed> $value */
+    private function isList(array $value): bool
+    {
+        if ($value === []) {
+            return true;
+        }
+        return array_keys($value) === range(0, count($value) - 1);
     }
 
     /** @param array<string,mixed> $value */
