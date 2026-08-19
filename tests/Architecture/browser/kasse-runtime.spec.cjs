@@ -79,7 +79,7 @@ test('two existing Kasser stay visible when moved into empty Auto-kasser', async
   await expect(autoRow.locator('.h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(2, { timeout: 2000 });
   await expect(autoRow.locator('.h18-v0811-runtime-badge').first()).toHaveText('v0.8.15');
 
-  await autoRow.locator('.h18-canvas-preview').evaluate((preview) => {
+  await autoRow.locator(':scope > .h18-canvas-preview').evaluate((preview) => {
     preview.innerHTML = '<div class="base-preview">Base editor rebuilt this preview</div>';
   });
   await expect(autoRow.locator('.h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(2, { timeout: 2000 });
