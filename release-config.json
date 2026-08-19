@@ -1,15 +1,15 @@
 {
-  "version": "0.8.13",
-  "title": "Designer — én Kasse-runtime, Kasse i Kasse og lineær Fortryd/Gendan",
+  "version": "0.8.14",
+  "title": "Designer — stabil Auto-kasser, Kasse-drop og Fortryd/Gendan",
   "changelog": [
-    "En enkelt Kasse opretter nu kun én Container. Grid/Auto-kasser oprettes kun, når en Kasse eksplicit slippes i venstre/højre side-dropzonen ved en anden topniveau-Kasse.",
-    "Kasser kan nu trækkes IND I andre Kasser inden for den eksisterende cycle-guard og maksimale nesting-dybde på 2.",
-    "Den direkte nesting-runtime er nu eneste aktive Kasse-placeringsautoritet; den gamle v0.8.10 inline Kasse-composer er pensioneret, så flere runtimes ikke længere behandler samme drop.",
-    "Et palette-drag/drop kan kun fuldføres én gang via dropHandled, og et efterfølgende browser-click efter drag undertrykkes, så ét Tekst-drop ikke kan oprette flere Tekst-elementer.",
-    "En nested Kasse beholder sit eget synlige Indhold i kassen-preview og sin indvendige dropzone, så målområdet kan aktiveres og bruges direkte.",
-    "Fortryd/Gendan bruger fortsat den eksisterende 50-trins editorhistorik, men restore-mutationen undertrykkes kortvarigt fra historikkens MutationObserver, så en gendannet tilstand ikke registrerer sig selv som et nyt trin og skaber A/B-oscillation.",
-    "LayoutParentKey/Order er fortsat eneste lagringsmodel; der er ikke indført parallel persistence eller offentlig runtime-cutover.",
-    "Architecture QA #352 passerede PHP 8.0, 8.2 og 8.3, protected Vehicle/Event/Gallery, alle Kasse-kontrakter inkl. v0.8.13, samlet Node-syntaxcheck samt Chromium, Firefox og WebKit.",
-    "Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede."
+    "Auto-kasser oprettes nu som selve Grid-containeren uden automatisk at oprette en ekstra Container/Kasse ved samme handling.",
+    "Auto-kasser har nu et eksplicit synligt Kasse-dropfelt, så nye og eksisterende Kasser kan slippes direkte ind i rækken via den eksisterende LayoutParentKey-model.",
+    "Kasse i Kasse og venstre/højre side-drop bevares med cycle-guard og maksimal nesting-dybde 2; side-drop er fortsat den handling der kan oprette en ny Auto-kasser/Grid-komposition omkring topniveau-Kasser.",
+    "Den forsinkede legacy Kasse-default-writer i box-content-layout ejer ikke længere drag/drop og kan derfor ikke efterbehandle samme drop eller oprette ekstra historikændringer.",
+    "Kasse-preview viser v0.8.14-badge, så den aktive runtime kan verificeres direkte under manuel test.",
+    "Fortryd/Gendan kører nu gennem en restore-transaktion, der holder editorens MutationObserver og afledte editorHistoryRecordNow-captures ude gennem settle-perioden, så en Undo ikke straks optager sin egen restore som et nyt trin.",
+    "Et palette-drop forbliver idempotent med dropHandled og post-drag click-suppression; ét element-drop må kun oprette ét element.",
+    "QA #357 passerede PHP 8.0, 8.2 og 8.3, alle Kasse-kontrakter inkl. v0.8.14, samlet Node-syntaxcheck samt Chromium, Firefox og WebKit.",
+    "Protected Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede."
   ]
 }
