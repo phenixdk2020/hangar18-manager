@@ -37,6 +37,40 @@ Existing page conversion is the last phase. Vehicle/Event/Gallery remain protect
 - Show HardFailures separately from score.
 - Never auto-rewrite the page.
 
+## UX backlog — editor usability after UD-120
+
+These slices are additive UX on top of the existing editor/runtime and do not unlock public conversion.
+
+### UX-1 — Auto-kasser + Tabel (complete)
+
+- Auto-kasser reuse Grid + Container and keep equal-width boxes in one desktop row.
+- Desktop/mobile gap controls.
+- Visual Table element reuses the sanitized HTML element.
+
+### UX-2 — Searchable element library (complete)
+
+- Search and category filters.
+- Browser-local favorites.
+- Existing click and drag/drop palette buttons remain authoritative.
+
+### UX-3 — Visual element library (complete)
+
+- Visual cards with icon, category and description.
+- Browser-local list of 8 recently used elements.
+- Visible category grouping.
+- Native drag-preview/ghost without replacing drag/drop.
+
+### UX-4 — Generic box/container composition (complete in v0.8.7 candidate)
+
+- A **Kasse** is a real Container and can contain multiple normal elements via the existing `LayoutParentKey` tree.
+- Drag Text/Image/Button/etc. directly onto a Kasse, or select a Kasse and click an element in the library to insert it inside.
+- A Kasse shows an editor-only summary of its direct child elements with shortcuts to edit them.
+- Each Kasse controls its own internal child layout: horizontal/vertical direction, justify, align, wrap, desktop/mobile gap and mobile stacking.
+- New Kasser default to a vertical content flow with mobile stacking; users can switch to horizontal where appropriate.
+- This is the preferred page-layout model. Table is reserved for actual tabular data.
+- Table border width can be set to `0 px`, which makes cell/table borders invisible while preserving table semantics and content.
+- No new schema or frontend renderer is introduced; the existing recursive Container/Flex/Grid renderer remains authoritative.
+
 ## I5 — Asset Manager UI
 
 - Collections/folders/tags over native WordPress Media IDs.
