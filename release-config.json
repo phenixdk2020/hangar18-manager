@@ -1,13 +1,14 @@
 {
-  "version": "0.8.8",
-  "title": "Designer UX — scrollbar, rigtig Kasse-nesting og Header/Footer baseline",
+  "version": "0.8.9",
+  "title": "Designer — visuel Kasse-komposition og Auto-kasser",
   "changelog": [
-    "Elementer/Funktioner-panelet har nu sin egen lodrette scrollbar, uafhængigt af canvas og Inspector.",
-    "Kasser har en tydelig indvendig drop-zone, så elementer kan trækkes IND I en Kasse i stedet for kun før eller efter den.",
-    "Både nye elementer fra elementbiblioteket og allerede oprettede elementer kan nestes i Kasser via den eksisterende LayoutParentKey-model.",
-    "Eksisterende elementer kan flyttes ind i Kasser via den eksisterende jQuery UI-sortering, og rækkefølgen synkroniseres efter drop.",
-    "Header/Footer-migrationen har fået en read-only legacy baseline med marker-kontrol og deterministisk source hash som fundament for senere shadow-import.",
-    "Den nuværende offentlige Header/Footer-rendering ændres ikke, og Vehicle/Event/Gallery forbliver på den beskyttede runtime.",
-    "Public Header/Footer/I10 cutover er fortsat låst; v0.8.8 er beregnet til manuel test af Designer-funktionerne."
+    "Elementer med LayoutParentKey til en Kasse vises nu visuelt inde i Kassen i editoren i stedet for som en separat række over eller under den.",
+    "De oprindelige child-rækker bevares skjult i DOM'en, så eksisterende gemning, versionshistorik og schema fortsat er autoritative uden datamigrering.",
+    "Indhold i en Kasse vises som rigtige canvas-previews med en Rediger-handling, og elementer kan flyttes mellem Kasser fra den visuelle komposition.",
+    "Auto-kasser viser nu de faktiske Kasser side om side i editoren i stedet for at lade deres source-rækker stå lodret under hinanden.",
+    "Antallet af desktop-kolonner i Auto-kasser synkroniseres med antallet af Kasser; på smallere editorbredder stables den visuelle komposition i én kolonne.",
+    "Når en ny Kasse trækkes fra Layout+-biblioteket, vises tydelige venstre/højre drop-zoner på en eksisterende Kasse til placering ved siden af.",
+    "Kasser i en eksisterende Auto-kasser-række kan omarrangeres via deres visuelle proxy uden et nyt storage-format.",
+    "Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URLs og I10 public cutover er fortsat uændrede og beskyttede."
   ]
 }
