@@ -146,7 +146,7 @@ test('Auto-kasser keeps two Kasser visible after base preview rebuild', async ({
   await expect(page.locator('.h18-page-section-row[data-section-index="3"]')).toHaveAttribute('data-h18-v0811-child-source', '1');
   await expect(autoRow.locator('.h18-v0811-runtime-badge').first()).toHaveText('v0.8.15');
 
-  await autoRow.locator('.h18-canvas-preview').evaluate((preview) => {
+  await autoRow.locator(':scope > .h18-canvas-preview').evaluate((preview) => {
     preview.innerHTML = '<div class="base-preview">Base editor rebuilt this preview</div>';
   });
 
