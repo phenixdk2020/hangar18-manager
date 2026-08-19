@@ -1,17 +1,19 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.6",
+  "version": "0.8.7",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-18T21:07:45Z",
+  "published_utc": "2026-08-19T06:05:16Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "efbba85372410d0818bcd7d4aea7decdb329f75b0c63290a28600c3eb2e1ec29",
+  "package_sha256": "701777fd681f295d33f9a15484292872849d244f0b9ab7646797956f0e1a74ec",
   "changelog": [
-    "I10 source-drift detection compares current legacy state with accepted shadow SourceHash.",
-    "Signed cutover preflight requires manual QA, correct sequence, valid acceptance and WordPress identity/permalink.",
-    "HMAC token is bound to the exact immutable preflight snapshot and expires automatically.",
-    "Executable=false and PublicMutationAvailable=false; preflight grants no activation capability.",
-    "No activate/cutover/publish handler is added; Vehicle/Event/Gallery remain protected on legacy runtime."
+    "Nyt visuelt elementbibliotek med søgning, kategorier, favoritter, Seneste, beskrivelser og drag-preview.",
+    "Auto-kasser vises tydeligt side om side i editoren med separat desktop- og mobil-spacing.",
+    "En Kasse kan indeholde flere almindelige elementer som Billede, Tekst, Overskrift og Knap via den eksisterende LayoutParentKey-model.",
+    "Hver Kasse kan styre sit interne child-layout: lodret/vandret retning, justify, align, wrap, desktop/mobile gap og mobil-stacking.",
+    "Hver Kasse kan have egne farver, skrifter, fontstørrelser, padding, kantbredde og hjørneradius; 0 px giver firkantede hjørner.",
+    "Tabel forbliver et semantisk tabelværktøj og kan sættes til 0 px kantbredde for helt usynlige cellekanter.",
+    "Vehicle/Event/Gallery forbliver på den beskyttede legacy runtime, og I10 public cutover er fortsat låst."
   ]
 }

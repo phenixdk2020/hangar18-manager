@@ -1,7 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.6
-
+Version: 0.8.7
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.7 – Ultimate Designer UX — visuelle elementer, kasser og nesting ==
+
+Nyt:
+- Nyt visuelt elementbibliotek med søgning, kategorier, favoritter, Seneste, beskrivelser og drag-preview.
+- Auto-kasser vises tydeligt side om side i editoren med separat desktop- og mobil-spacing.
+- En Kasse kan indeholde flere almindelige elementer som Billede, Tekst, Overskrift og Knap via den eksisterende LayoutParentKey-model.
+- Hver Kasse kan styre sit interne child-layout: lodret/vandret retning, justify, align, wrap, desktop/mobile gap og mobil-stacking.
+- Hver Kasse kan have egne farver, skrifter, fontstørrelser, padding, kantbredde og hjørneradius; 0 px giver firkantede hjørner.
+- Tabel forbliver et semantisk tabelværktøj og kan sættes til 0 px kantbredde for helt usynlige cellekanter.
+- Vehicle/Event/Gallery forbliver på den beskyttede legacy runtime, og I10 public cutover er fortsat låst.
 
 
 == Version 0.8.6 – I10 Signed Cutover Preflight ==
