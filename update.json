@@ -1,19 +1,19 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-19T06:05:16Z",
+  "published_utc": "2026-08-19T06:37:59Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "701777fd681f295d33f9a15484292872849d244f0b9ab7646797956f0e1a74ec",
+  "package_sha256": "30572701f2be2a78eae5c37aa4299b3606d3c6a767deaf6093b1c50729cf6316",
   "changelog": [
-    "Nyt visuelt elementbibliotek med søgning, kategorier, favoritter, Seneste, beskrivelser og drag-preview.",
-    "Auto-kasser vises tydeligt side om side i editoren med separat desktop- og mobil-spacing.",
-    "En Kasse kan indeholde flere almindelige elementer som Billede, Tekst, Overskrift og Knap via den eksisterende LayoutParentKey-model.",
-    "Hver Kasse kan styre sit interne child-layout: lodret/vandret retning, justify, align, wrap, desktop/mobile gap og mobil-stacking.",
-    "Hver Kasse kan have egne farver, skrifter, fontstørrelser, padding, kantbredde og hjørneradius; 0 px giver firkantede hjørner.",
-    "Tabel forbliver et semantisk tabelværktøj og kan sættes til 0 px kantbredde for helt usynlige cellekanter.",
-    "Vehicle/Event/Gallery forbliver på den beskyttede legacy runtime, og I10 public cutover er fortsat låst."
+    "Elementer/Funktioner-panelet har nu sin egen lodrette scrollbar, uafhængigt af canvas og Inspector.",
+    "Kasser har en tydelig indvendig drop-zone, så elementer kan trækkes IND I en Kasse i stedet for kun før eller efter den.",
+    "Både nye elementer fra elementbiblioteket og allerede oprettede elementer kan nestes i Kasser via den eksisterende LayoutParentKey-model.",
+    "Eksisterende elementer kan flyttes ind i Kasser via den eksisterende jQuery UI-sortering, og rækkefølgen synkroniseres efter drop.",
+    "Header/Footer-migrationen har fået en read-only legacy baseline med marker-kontrol og deterministisk source hash som fundament for senere shadow-import.",
+    "Den nuværende offentlige Header/Footer-rendering ændres ikke, og Vehicle/Event/Gallery forbliver på den beskyttede runtime.",
+    "Public Header/Footer/I10 cutover er fortsat låst; v0.8.8 er beregnet til manuel test af Designer-funktionerne."
   ]
 }

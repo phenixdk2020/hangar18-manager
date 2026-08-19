@@ -1,6 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.7
+Version: 0.8.8
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.8 – Designer UX — scrollbar, rigtig Kasse-nesting og Header/Footer baseline ==
+
+Nyt:
+- Elementer/Funktioner-panelet har nu sin egen lodrette scrollbar, uafhængigt af canvas og Inspector.
+- Kasser har en tydelig indvendig drop-zone, så elementer kan trækkes IND I en Kasse i stedet for kun før eller efter den.
+- Både nye elementer fra elementbiblioteket og allerede oprettede elementer kan nestes i Kasser via den eksisterende LayoutParentKey-model.
+- Eksisterende elementer kan flyttes ind i Kasser via den eksisterende jQuery UI-sortering, og rækkefølgen synkroniseres efter drop.
+- Header/Footer-migrationen har fået en read-only legacy baseline med marker-kontrol og deterministisk source hash som fundament for senere shadow-import.
+- Den nuværende offentlige Header/Footer-rendering ændres ikke, og Vehicle/Event/Gallery forbliver på den beskyttede runtime.
+- Public Header/Footer/I10 cutover er fortsat låst; v0.8.8 er beregnet til manuel test af Designer-funktionerne.
 
 
 == Version 0.8.7 – Ultimate Designer UX — visuelle elementer, kasser og nesting ==
