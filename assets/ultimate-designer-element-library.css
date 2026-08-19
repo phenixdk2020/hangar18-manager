@@ -4,6 +4,10 @@
 .h18-library-count{min-width:78px;color:#646970;font-size:12px;text-align:right;white-space:nowrap}
 .h18-library-filters{display:flex;gap:6px;flex-wrap:wrap}
 .h18-library-filter.is-active{border-color:#2271b1;color:#135e96;box-shadow:0 0 0 1px #2271b1}
+.h18-builder-palette-list>.h18-ud-layout-palette-heading{display:none}
+.h18-library-group-heading{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:10px 0 1px;padding:8px 2px 5px;border-bottom:1px solid #dcdcde;color:#1d2327}
+.h18-library-group-heading strong{font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.h18-library-group-heading span{color:#8c8f94;font-size:10px}
 .h18-library-item-shell{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:7px;align-items:stretch;margin:0 0 8px}
 .h18-library-item-shell[hidden]{display:none!important}
 .h18-library-item-shell .h18-builder-palette-item{width:100%;margin:0;min-width:0}
