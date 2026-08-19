@@ -34,3 +34,4 @@ jobs:
       - run: php tests/Architecture/b1-page-backup-restore-smoke.php
       - run: php tests/Architecture/b1-page-backup-preflight-smoke.php
       - run: bash tests/Architecture/b1-page-backup-restore-contract.sh
+      - run: bash tests/Architecture/b1-page-backup-preflight-contract.sh
