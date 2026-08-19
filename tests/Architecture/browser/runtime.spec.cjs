@@ -6,7 +6,7 @@ const siteBuilder = path.resolve(__dirname, '../../../assets/site-builder-runtim
 const interaction = path.resolve(__dirname, '../../../assets/interaction-runtime.js');
 const nestingRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-nesting-tools.js');
 const editorLayoutController = path.resolve(__dirname, '../../../src/Admin/EditorLayoutToolsAdminController.php');
-const jqueryRuntime = require.resolve('jquery/dist/jquery.min.js');
+const jqueryRuntime = require.resolve('jquery');
 
 function historyGuardScript() {
   const source = fs.readFileSync(editorLayoutController, 'utf8');
