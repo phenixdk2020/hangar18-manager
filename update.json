@@ -1,20 +1,21 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.12",
+  "version": "0.8.13",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-19T13:22:43Z",
+  "published_utc": "2026-08-19T14:06:05Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "95a57bc4f4d24e9045061053be892d74db297d66e23de555d0792f45a2612ff7",
+  "package_sha256": "1b8b12f32669fc945e3f723b35891cfb745bcdf713f5c7ead3201c7f3d85491d",
   "changelog": [
-    "Kasser, der ligger side om side i Grid/Auto-kasser, viser nu deres rigtige Indhold i kassen-preview og indvendige dropzone i den synlige Kasse-flise.",
-    "Et element, der trækkes fra Elementer-panelet ned i en synlig Kasse under Auto-kasser, mappes nu tilbage til den korrekte skjulte source-Kasse via LayoutParentKey.",
-    "Eksisterende elementer, der flyttes med sortable-håndtaget, hit-testes nu mod den synlige Kasse i Auto-kasser og kan derfor også flyttes ind i den.",
-    "Drop-target markering vises på den synlige Kasse-flise, så det er tydeligt hvilken Kasse modtager elementet.",
-    "Kasse-source-rækker forbliver skjult i Auto-kasser, mens deres child-elementer gengives synligt inde i Kassen i stedet for at se ud til at forsvinde.",
-    "Den eksisterende LayoutParentKey/Order-model er fortsat eneste lagringsmodel; der er ikke indført parallel persistence.",
-    "Architecture QA #344 passerede PHP 8.0, 8.2 og 8.3, v0.8.11-regressionskontrakten, den nye v0.8.12 Auto-kasse drop-kontrakt, samlet Node-syntaxcheck samt Chromium, Firefox og WebKit.",
+    "En enkelt Kasse opretter nu kun én Container. Grid/Auto-kasser oprettes kun, når en Kasse eksplicit slippes i venstre/højre side-dropzonen ved en anden topniveau-Kasse.",
+    "Kasser kan nu trækkes IND I andre Kasser inden for den eksisterende cycle-guard og maksimale nesting-dybde på 2.",
+    "Den direkte nesting-runtime er nu eneste aktive Kasse-placeringsautoritet; den gamle v0.8.10 inline Kasse-composer er pensioneret, så flere runtimes ikke længere behandler samme drop.",
+    "Et palette-drag/drop kan kun fuldføres én gang via dropHandled, og et efterfølgende browser-click efter drag undertrykkes, så ét Tekst-drop ikke kan oprette flere Tekst-elementer.",
+    "En nested Kasse beholder sit eget synlige Indhold i kassen-preview og sin indvendige dropzone, så målområdet kan aktiveres og bruges direkte.",
+    "Fortryd/Gendan bruger fortsat den eksisterende 50-trins editorhistorik, men restore-mutationen undertrykkes kortvarigt fra historikkens MutationObserver, så en gendannet tilstand ikke registrerer sig selv som et nyt trin og skaber A/B-oscillation.",
+    "LayoutParentKey/Order er fortsat eneste lagringsmodel; der er ikke indført parallel persistence eller offentlig runtime-cutover.",
+    "Architecture QA #352 passerede PHP 8.0, 8.2 og 8.3, protected Vehicle/Event/Gallery, alle Kasse-kontrakter inkl. v0.8.13, samlet Node-syntaxcheck samt Chromium, Firefox og WebKit.",
     "Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede."
   ]
 }

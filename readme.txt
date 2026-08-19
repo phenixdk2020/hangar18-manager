@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.12
+Version: 0.8.13
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.13 – Designer — én Kasse-runtime, Kasse i Kasse og lineær Fortryd/Gendan ==
+
+Nyt:
+- En enkelt Kasse opretter nu kun én Container. Grid/Auto-kasser oprettes kun, når en Kasse eksplicit slippes i venstre/højre side-dropzonen ved en anden topniveau-Kasse.
+- Kasser kan nu trækkes IND I andre Kasser inden for den eksisterende cycle-guard og maksimale nesting-dybde på 2.
+- Den direkte nesting-runtime er nu eneste aktive Kasse-placeringsautoritet; den gamle v0.8.10 inline Kasse-composer er pensioneret, så flere runtimes ikke længere behandler samme drop.
+- Et palette-drag/drop kan kun fuldføres én gang via dropHandled, og et efterfølgende browser-click efter drag undertrykkes, så ét Tekst-drop ikke kan oprette flere Tekst-elementer.
+- En nested Kasse beholder sit eget synlige Indhold i kassen-preview og sin indvendige dropzone, så målområdet kan aktiveres og bruges direkte.
+- Fortryd/Gendan bruger fortsat den eksisterende 50-trins editorhistorik, men restore-mutationen undertrykkes kortvarigt fra historikkens MutationObserver, så en gendannet tilstand ikke registrerer sig selv som et nyt trin og skaber A/B-oscillation.
+- LayoutParentKey/Order er fortsat eneste lagringsmodel; der er ikke indført parallel persistence eller offentlig runtime-cutover.
+- Architecture QA #352 passerede PHP 8.0, 8.2 og 8.3, protected Vehicle/Event/Gallery, alle Kasse-kontrakter inkl. v0.8.13, samlet Node-syntaxcheck samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.
 
 
 == Version 0.8.12 – Designer — drop ind i Kasser under Auto-kasser ==
