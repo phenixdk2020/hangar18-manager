@@ -95,6 +95,7 @@ jobs:
       - run: bash tests/Architecture/v087-nesting-contract.sh
       - run: bash tests/Architecture/v087-box-content-table-contract.sh
       - run: bash tests/Architecture/v088-sidebar-scroll-header-footer-contract.sh
+      - run: bash tests/Architecture/v088-box-drop-contract.sh
       - run: php tests/Architecture/v088-legacy-shell-shadow-smoke.php
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: php tests/Architecture/i3-menu-admin-smoke.php
