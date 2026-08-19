@@ -67,4 +67,6 @@ if git diff --name-only origin/main...HEAD | grep -E '(^|/)(Vehicle|Event|Galler
   exit 1
 fi
 
+bash tests/Architecture/v0814-workspace-widgets-contract.sh
+
 echo 'v0.8.7 visual element library + grouping + recent items + drag preview contract: PASS'
