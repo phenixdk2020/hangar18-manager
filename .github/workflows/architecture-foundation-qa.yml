@@ -10,6 +10,7 @@ on:
       - agent/editor-scroll-panels-v088
       - agent/visual-box-composition-v089
       - agent/v0810-inline-kasse-runtime
+      - agent/i2a-legacy-shell-shadow-import
   pull_request:
     paths:
       - 'src/**'
@@ -80,6 +81,7 @@ jobs:
       - run: php tests/Architecture/e11-quality-smoke.php
       - run: php tests/Architecture/e12-ai-smoke.php
       - run: php tests/Architecture/e13-portability-smoke.php
+      - run: php tests/Architecture/i2a-legacy-shell-shadow-import-smoke.php
       - run: php tests/Architecture/i6-portability-workspace-smoke.php
       - run: php tests/Architecture/i7-permissions-ui-smoke.php
       - run: php tests/Architecture/i8-ai-ui-smoke.php
