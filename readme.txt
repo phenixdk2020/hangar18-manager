@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.14
+Version: 0.8.15
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.15 – Designer — én Auto-kasser runtime og deterministisk Fortryd/Gendan ==
+
+Nyt:
+- Auto-kasser oprettes fortsat som én tom Grid-container uden automatisk ekstra Kasse.
+- Den direkte nesting-runtime er nu eneste aktive Kasse/Auto-kasser placeringsautoritet; den tidligere v0.8.14 Auto-kasser-adapter er pensioneret fra aktiv enqueue.
+- Nye og eksisterende Kasser kan parent'es direkte til Auto-kasser via den eksisterende LayoutParentKey-model; den målrettede Chrome-reproducer flytter to eksisterende topniveau-Kasser ind i en tom Auto-kasser og verificerer, at begge forbliver synlige.
+- Kasse/Auto-kasser-kompositionen overvåger nu base-editorens preview-rebuilds og genrenderer den synlige komposition, hvis de skjulte source rows stadig er parentede men Grid/Kasse-previewet er blevet fjernet.
+- Kasse-preview viser v0.8.15-badge, så den aktive runtime kan verificeres direkte ved manuel test.
+- Fortryd/Gendan kasserer nu restore-afledte editorHistoryRecordNow-captures i stedet for at afvikle dem efter settle-perioden; den kasserede capture returnerer 0, så editorHistoryTimer ikke efterlades som et falsk pending trin.
+- Den målrettede system-Chrome QA verificerer, at Undo-capture fortsat er 0 efter restore-spærringen, så 4→3→4-oscillation og stale snapshot-genindlæsning ikke genopstår via denne kodevej.
+- Produktionskoden passerede Architecture QA på PHP 8.0, 8.2 og 8.3 inklusive protected Vehicle/Event/Gallery og alle v0.8.15 Kasse/Undo-kontrakter; den endelige PR-head passerede desuden den målrettede system-Chrome Kasse/Undo-regression.
+- Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.
 
 
 == Version 0.8.14 – Designer — stabil Auto-kasser, Kasse-drop og Fortryd/Gendan ==
