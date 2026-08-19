@@ -1,0 +1,16 @@
+.h18-page-section-row[data-h18-box="1"]{transition:outline-color .14s ease,box-shadow .14s ease}
+.h18-page-section-row.h18-ud-nesting-drop-target{outline:3px solid #2271b1;outline-offset:3px;box-shadow:0 0 0 5px rgba(34,113,177,.12)}
+.h18-page-section-row.h18-ud-nesting-drop-target>.h18-canvas-preview::before{content:"Slip her for at lægge elementet i kassen";display:block;margin:0 0 9px;padding:7px 10px;border:1px dashed #2271b1;border-radius:6px;background:#f0f6fc;color:#135e96;font-size:12px;font-weight:600;text-align:center}
+.h18-ud-box-contents-preview{margin-top:10px;padding:10px;border:1px solid #dcdcde;border-radius:7px;background:#f6f7f7}
+.h18-ud-box-contents-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.h18-ud-box-contents-head strong{font-size:12px}
+.h18-ud-box-contents-head span{color:#646970;font-size:11px}
+.h18-ud-box-contents-items{display:flex;flex-direction:column;gap:6px}
+.h18-ud-box-empty-drop{padding:10px;border:1px dashed #c3c4c7;border-radius:6px;background:#fff;color:#646970;font-size:12px;text-align:center}
+.h18-ud-box-child-chip{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:6px;align-items:center;width:100%;padding:7px 8px;border:1px solid #c3c4c7;border-radius:6px;background:#fff;color:#1d2327;cursor:pointer;text-align:left}
+.h18-ud-box-child-chip:hover,.h18-ud-box-child-chip:focus-visible{border-color:#2271b1;color:#135e96}
+.h18-ud-box-child-chip:focus-visible{outline:2px solid #2271b1;outline-offset:1px}
+.h18-ud-box-child-chip .dashicons{width:18px;height:18px;font-size:16px;line-height:18px}
+.h18-ud-box-child-chip small{color:#646970;font-size:10px}
+.h18-page-section-row.h18-ud-just-nested{animation:h18UdNestedFlash .9s ease}
+@keyframes h18UdNestedFlash{0%,100%{box-shadow:none}35%{box-shadow:0 0 0 4px rgba(34,113,177,.22)}}
