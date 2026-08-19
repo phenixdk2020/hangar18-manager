@@ -165,7 +165,7 @@ final class SiteBackupManifestService
         if (!is_array($value)) {
             return $value;
         }
-        if (array_is_list($value)) {
+        if ($this->isList($value)) {
             return array_map(fn($item) => $this->canonicalize($item), $value);
         }
         ksort($value, SORT_STRING);
@@ -173,6 +173,19 @@ final class SiteBackupManifestService
             $value[$key] = $this->canonicalize($item);
         }
         return $value;
+    }
+
+    /** PHP 8.0-compatible equivalent of array_is_list(). */
+    private function isList(array $value): bool
+    {
+        $expected = 0;
+        foreach ($value as $key => $_item) {
+            if ($key !== $expected) {
+                return false;
+            }
+            $expected++;
+        }
+        return true;
     }
 
     /** @param mixed $payload */
