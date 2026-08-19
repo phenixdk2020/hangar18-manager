@@ -6,13 +6,28 @@ Gøre den eksisterende element-/funktionspalette hurtigere at bruge uden at ænd
 
 ## Leverance
 
-- Fritekstsøgning på elementnavn og type.
-- Kategorifiltre: Alle, Favoritter, Indhold, Layout, Interaktiv, Dynamisk og Avanceret.
+- Fritekstsøgning på elementnavn, type og beskrivelse.
+- Kategorifiltre: Alle, Seneste, Favoritter, Indhold, Layout, Interaktiv, Dynamisk og Avanceret.
 - Browser-lokale favoritter via `localStorage`.
+- Browser-lokal liste over de 8 senest brugte elementer via `localStorage`.
+- Visuelle elementkort med ikon, forklaring og kategori, mens den eksisterende `.h18-builder-palette-item` fortsat er den faktiske klik/drag-knap.
+- Tydeligt drag-preview/ghost med elementnavn og forklaring via native `dataTransfer.setDragImage()` uden at erstatte den eksisterende drag/drop-motor.
 - Synlig tæller for aktuelle søgeresultater.
 - Accessible filterknapper med `aria-pressed` og favoritknapper med `aria-pressed`.
 - `/` fokuserer søgefeltet, når Elementer-panelet er aktivt og brugeren ikke skriver i et felt.
-- Eksisterende `.h18-builder-palette-item`-knapper genbruges uændret til klik og drag/drop.
+- Eksisterende `.h18-builder-palette-item`-knapper genbruges til klik og drag/drop.
+
+## UX-3 — visuelt elementbibliotek
+
+Elementbiblioteket er videreført som en rent additiv editor-UX:
+
+- hvert element får en kortforklaring, så funktionen kan forstås uden at prøve elementet først,
+- eksisterende Dashicons genbruges; manglende ikoner suppleres kun i admin-UI'et,
+- filteret **Seneste** viser elementtyper, der er brugt for nylig,
+- klik eller afsluttet drag registrerer elementet i den browser-lokale seneste-liste,
+- layoutværktøjerne Auto-kasser, Kasse og Tabel får egne nøgler, så de kan skelnes fra standard Grid/Container/HTML i Seneste og Favoritter,
+- ældre v0.8.7-favoritter på rå elementtype tolereres, så den eksisterende browser-lokale tilstand ikke kræver migration,
+- drag-previewet er kun et visuelt ghost og udfører ingen side-write eller renderer-ændring.
 
 ## Auto-kasser og individuelt kassedesign
 
@@ -57,10 +72,13 @@ Vehicle, Event og Gallery forbliver på deres eksisterende legacy runtime. Denne
 `tests/Architecture/v087-element-library-contract.sh` verificerer:
 
 1. søgning, kategorier og favoritter,
-2. admin-only enqueue,
-3. fravær af persistence/cutover primitives,
-4. bevarelse af Ctrl/Cmd+K command palette,
-5. at ingen protected-domain-fil er ændret i branchen.
+2. Seneste-liste og browser-lokal lagring,
+3. visuelle kort med beskrivelser/kategorier,
+4. native drag-preview uden udskiftning af drag/drop-motoren,
+5. admin-only enqueue,
+6. fravær af persistence/cutover primitives,
+7. bevarelse af Ctrl/Cmd+K command palette,
+8. at ingen protected-domain-fil er ændret i branchen.
 
 `tests/Architecture/v087-box-tools-contract.sh` verificerer:
 
