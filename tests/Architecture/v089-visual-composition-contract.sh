@@ -18,12 +18,16 @@ grep -F 'function setParent($row, key)' "$JS" >/dev/null
 grep -F '.h18-layout-parent-key' "$JS" >/dev/null
 grep -F '.h18-layout-parent-select' "$JS" >/dev/null
 
-# Nested source rows are hidden only in the desktop editor; their real form
-# controls stay in the DOM so normal save/serialization remains authoritative.
+# Nested source rows stay in the DOM for normal save/serialization, but remain
+# hidden from the visual canvas at all editor widths so they are never duplicated.
 grep -F 'h18-ud-vc-source-hidden' "$JS" >/dev/null
 grep -F '.h18-page-section-row.h18-ud-vc-source-hidden{display:none!important}' "$CSS" >/dev/null
 grep -F '@media(max-width:1180px)' "$CSS" >/dev/null
-grep -F 'display:block!important' "$CSS" >/dev/null
+grep -F '.h18-ud-vc-auto-grid{grid-template-columns:1fr!important}' "$CSS" >/dev/null
+if grep -F '.h18-page-section-row.h18-ud-vc-source-hidden{display:block!important}' "$CSS" >/dev/null; then
+  echo 'FAIL: responsive CSS exposes duplicate flat child rows'
+  exit 1
+fi
 
 # A Kasse renders real child previews inside the existing Kasse contents area.
 grep -F 'function renderBoxComposition($box)' "$JS" >/dev/null
