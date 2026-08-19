@@ -113,6 +113,7 @@ jobs:
       - run: bash tests/Architecture/v0813-kasse-authority-history-contract.sh
       - run: bash tests/Architecture/v0815-kasse-undo-single-runtime-contract.sh
       - run: php tests/Architecture/b1-page-backup-restore-smoke.php
+      - run: bash tests/Architecture/b1-page-backup-restore-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: php tests/Architecture/i3-menu-admin-smoke.php
       - run: bash tests/Architecture/i3-menu-page-chooser-contract.sh
