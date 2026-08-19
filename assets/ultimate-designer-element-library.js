@@ -250,6 +250,25 @@ jQuery(function ($) {
         });
     }
 
+    function refreshGroupHeadings() {
+        $panel.find('.h18-library-group-heading').remove();
+        const seen = new Set();
+        $panel.find('.h18-library-item-shell').each(function () {
+            if (this.hidden) { return; }
+            const $shell = $(this);
+            const category = String($shell.attr('data-library-category') || 'other');
+            if (seen.has(category)) { return; }
+            seen.add(category);
+            $shell.prepend($('<div>', {
+                class: 'h18-library-group-heading',
+                'data-library-group': category
+            }).append(
+                $('<strong>', { text: categoryLabels[category] || 'Andet' }),
+                $('<span>', { text: 'Elementer' })
+            ));
+        });
+    }
+
     function applyFilter() {
         ensureItems();
         const query = normalize($('#h18-element-library-search').val());
@@ -271,6 +290,7 @@ jQuery(function ($) {
         });
         $('#h18-element-library-count').text(visible + ' element' + (visible === 1 ? '' : 'er'));
         $('#h18-element-library-empty').prop('hidden', visible > 0);
+        refreshGroupHeadings();
     }
 
     function setCategory(category) {
