@@ -12,16 +12,18 @@ grep -F 'const $clone = clonePreview($box, true);' "$JS" >/dev/null
 grep -F "'data-h18-v0812-auto-kasse-drop': '1'" "$JS" >/dev/null
 
 # A drop on a visible Auto-kasse or nested-Kasse proxy maps back to its hidden source Kasse.
-grep -F ".h18-v0811-auto-box[data-h18-v0811-box],.h18-v0813-nested-box[data-h18-v0811-box]" "$JS" >/dev/null
+grep -F '.h18-v0811-auto-box[data-h18-v0811-box],.h18-v0813-nested-box[data-h18-v0811-box]' "$JS" >/dev/null
 grep -F "rowByKey(String(proxy.getAttribute('data-h18-v0811-box') || ''))" "$JS" >/dev/null
 
 # Existing-row sortable hit-testing uses visible proxy/drop-zones because nested source rows stay hidden.
-grep -F "$('.h18-v0811-auto-box[data-h18-v0811-box],.h18-v0813-nested-box[data-h18-v0811-box]').each(function ()" "$JS" >/dev/null
-grep -F "const zone = $proxy.find('.h18-ud-box-drop-zone[data-h18-v0813-box-drop]').get(0) || this;" "$JS" >/dev/null
+grep -F 'const $proxy = $(this);' "$JS" >/dev/null
+grep -F 'const zone = $proxy.find' "$JS" >/dev/null
+grep -F 'h18-ud-box-drop-zone[data-h18-v0813-box-drop]' "$JS" >/dev/null
 
 # Visual target feedback is applied to visible proxies.
-grep -F "$('.h18-v0811-auto-box,.h18-v0813-nested-box').removeClass('h18-ud-nesting-drop-target')" "$JS" >/dev/null
-grep -F ".h18-v0813-nested-box[data-h18-v0811-box=\"' + key + '\"]" "$JS" >/dev/null
+grep -F '.h18-v0811-auto-box,.h18-v0813-nested-box' "$JS" >/dev/null
+grep -F "removeClass('h18-ud-nesting-drop-target')" "$JS" >/dev/null
+grep -F 'h18-v0813-nested-box[data-h18-v0811-box=' "$JS" >/dev/null
 
 # Existing hierarchy/persistence model remains unchanged.
 grep -F '.h18-layout-parent-key' "$JS" >/dev/null
