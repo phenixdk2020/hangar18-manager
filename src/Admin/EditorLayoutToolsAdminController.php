@@ -35,19 +35,35 @@ final class EditorLayoutToolsAdminController
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-layout-tools.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-layout-tools.css';
+        $boxJsPath = $pluginDir . '/assets/ultimate-designer-box-tools.js';
+        $boxCssPath = $pluginDir . '/assets/ultimate-designer-box-tools.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-layout-tools',
             $pluginUrl . 'assets/ultimate-designer-layout-tools.js',
             ['jquery', 'jquery-ui-sortable', 'hangar18-manager-admin'],
-            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.5',
+            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.7',
             true
         );
         wp_enqueue_style(
             'hangar18-ultimate-designer-layout-tools',
             $pluginUrl . 'assets/ultimate-designer-layout-tools.css',
             [],
-            is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.5'
+            is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.7'
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-box-tools',
+            $pluginUrl . 'assets/ultimate-designer-box-tools.js',
+            ['jquery', 'hangar18-manager-admin', 'hangar18-ultimate-designer-layout-tools'],
+            is_file($boxJsPath) ? (string) filemtime($boxJsPath) : '0.8.7',
+            true
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-box-tools',
+            $pluginUrl . 'assets/ultimate-designer-box-tools.css',
+            ['hangar18-ultimate-designer-layout-tools'],
+            is_file($boxCssPath) ? (string) filemtime($boxCssPath) : '0.8.7'
         );
     }
 }
