@@ -14,6 +14,7 @@ on:
       - agent/v0812-auto-kasse-child-preview
       - agent/v0813-kasse-authority-history-fix
       - agent/v0815-kasse-undo-single-runtime-fix
+      - agent/ux4-unsaved-preview-v0817
   pull_request:
     paths:
       - 'src/**'
@@ -48,6 +49,8 @@ on:
       - 'assets/ultimate-designer-table-appearance.css'
       - 'assets/ultimate-designer-element-library.js'
       - 'assets/ultimate-designer-element-library.css'
+      - 'assets/ultimate-designer-unsaved-preview.js'
+      - 'assets/ultimate-designer-unsaved-preview.css'
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/ultimate-designer-onboarding.md'
@@ -111,6 +114,7 @@ jobs:
       - run: bash tests/Architecture/v0812-auto-kasse-drop-contract.sh
       - run: bash tests/Architecture/v0813-kasse-authority-history-contract.sh
       - run: bash tests/Architecture/v0815-kasse-undo-single-runtime-contract.sh
+      - run: bash tests/Architecture/v0817-unsaved-preview-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
       - run: php tests/Architecture/i3-menu-admin-smoke.php
       - run: bash tests/Architecture/i3-menu-page-chooser-contract.sh
@@ -124,7 +128,7 @@ jobs:
       - run: bash tests/Architecture/i10-conversion-admin-contract.sh
       - run: bash tests/Architecture/i10-cutover-preflight-admin-contract.sh
       - run: bash tests/Architecture/integration-admin-contract.sh
-      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js && node --check assets/ultimate-designer-portability.js && node --check assets/ultimate-designer-layout-tools.js && node --check assets/ultimate-designer-box-tools.js && node --check assets/ultimate-designer-nesting-tools.js && node --check assets/ultimate-designer-box-content-layout.js && node --check assets/ultimate-designer-visual-composition.js && node --check assets/ultimate-designer-table-appearance.js && node --check assets/ultimate-designer-element-library.js
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js && node --check assets/ultimate-designer-portability.js && node --check assets/ultimate-designer-layout-tools.js && node --check assets/ultimate-designer-box-tools.js && node --check assets/ultimate-designer-nesting-tools.js && node --check assets/ultimate-designer-box-content-layout.js && node --check assets/ultimate-designer-visual-composition.js && node --check assets/ultimate-designer-table-appearance.js && node --check assets/ultimate-designer-element-library.js && node --check assets/ultimate-designer-unsaved-preview.js
 
   browser-engine-qa:
     name: E14 browser engines (Chromium/Firefox/WebKit)
