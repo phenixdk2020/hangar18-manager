@@ -1,14 +1,14 @@
 {
-  "version": "0.8.24",
-  "title": "Designer — foldbare Elementer/Funktioner og Inspector",
+  "version": "0.8.25",
+  "title": "Designer — forhåndsvis ugemte ændringer",
   "changelog": [
-    "Tilføjer UX-3: venstre Elementer/Funktioner-panel og højre Inspector kan foldes ind uafhængigt på desktop.",
-    "Begge paneler kan være foldet ind samtidig til 44 px rails, så Sideopbygning får næsten hele arbejdsbredden.",
-    "Foldetilstanden gemmes kun i browserens localStorage og ændrer ikke sideindhold, schema eller public rendering.",
-    "Tablet og mobil beholder det eksisterende stacked editor-layout uden tvungne rails.",
-    "Collapse/expand-knapper har ARIA-state, keyboard-adgang og reduced-motion-understøttelse.",
-    "v0.8.21/v0.8.22/v0.8.23 Undo/Redo-stakken er uændret og fortsat autoritativ.",
-    "Fast QA og Architecture QA er bestået inklusive protected-domain samt Chromium/Firefox/WebKit.",
+    "Tilføjer UX-4: Forhåndsvis side viser den aktuelle levende editor-state uden at gemme eller versionere siden.",
+    "Preview bygges browser-lokalt fra Sideopbygning og ændrer ikke den offentlige side, menu eller WordPress post-data.",
+    "Desktop, Tablet og Mobil kan skiftes direkte i preview-dialogen.",
+    "Editor-knapper, drag/drop-zoner, formularfelter og runtime-badges fjernes fra preview-klonen.",
+    "Dialogen understøtter Escape, focus restore og keyboard focus trap.",
+    "UX-3 foldbare paneler og v0.8.21-v0.8.23 Undo/Redo-runtime er bevaret.",
+    "Fast QA og Architecture QA er bestået inklusive Chromium/Firefox/WebKit.",
     "Vehicle/Event/Gallery og public cutover er uændrede."
   ]
 }
