@@ -80,10 +80,18 @@ jQuery(function ($) {
     }
 
     function sanitizeClone($clone) {
-        $clone.removeAttr('id');
+        $clone.removeAttr('id tabindex role title');
         $clone.find('[id]').removeAttr('id');
         $clone.find('[contenteditable]').removeAttr('contenteditable');
         $clone.find('.ui-sortable-handle').removeClass('ui-sortable-handle');
+
+        /*
+         * Preview is cloned from the live editor canvas. The selected element can
+         * therefore contain transient editor chrome at the exact moment the user
+         * opens preview. Strip the chrome wrappers themselves before removing form
+         * controls; otherwise labels such as "Billede", "Fokus X" and
+         * "DIREKTE DESIGN" remain as empty floating panels in the preview.
+         */
         $clone.find([
             '.h18-v0811-runtime-badge',
             '.h18-v0811-side-drop-zone',
@@ -93,9 +101,25 @@ jQuery(function ($) {
             '.h18-page-section-actions',
             '.h18-section-toolbar',
             '.h18-builder-drop-hint',
+            '.h18-canvas-direct-controls',
+            '.h18-canvas-padding-handle',
+            '.h18-canvas-margin-handle',
+            '.h18-canvas-image-tools',
+            '.h18-canvas-focal-dot',
+            '.h18-canvas-box-model-overlay',
+            '.h18-canvas-card-drag-handle',
+            '.h18-condition-preview-badge',
             '[data-h18-v0811-edit-child]',
             '[data-h18-v0814-auto-drop]'
         ].join(',')).remove();
+
+        /* Remove editor-only interaction/selection state from the cloned canvas. */
+        $clone.removeClass('is-direct-dragging is-margin-dragging is-device-hidden');
+        $clone.find('.is-card-selected').removeClass('is-card-selected');
+        $clone.find('.is-editing').removeClass('is-editing');
+        $clone.find('.h18-canvas-editable-media')
+            .removeAttr('tabindex role title')
+            .removeClass('is-focal-dragging');
 
         /* Canvas buttons are editor controls; page CTA previews are anchors. */
         $clone.find('button').remove();
