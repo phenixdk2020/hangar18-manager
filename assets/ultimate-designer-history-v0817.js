@@ -23,6 +23,9 @@
         if (typeof guard.isSuppressed !== 'function') { return guard; }
 
         const baseIsSuppressed = guard.isSuppressed.bind(guard);
+        const baseHasTrustedEdit = typeof guard.hasTrustedEdit === 'function'
+            ? guard.hasTrustedEdit.bind(guard)
+            : null;
         const baseMarkTrustedEdit = typeof guard.markTrustedEdit === 'function'
             ? guard.markTrustedEdit.bind(guard)
             : null;
@@ -40,6 +43,13 @@
 
         guard.isRestoreLatchedV0817 = function () {
             return state.restoreLatched === true;
+        };
+
+        guard.hasTrustedEdit = function () {
+            // A trusted window belonging to the action BEFORE Undo must never
+            // punch through the new restore transaction.
+            if (state.restoreLatched) { return false; }
+            return baseHasTrustedEdit ? baseHasTrustedEdit() : false;
         };
 
         guard.markTrustedEdit = function (milliseconds) {
