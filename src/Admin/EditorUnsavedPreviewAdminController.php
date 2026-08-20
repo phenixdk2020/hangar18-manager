@@ -39,14 +39,14 @@ final class EditorUnsavedPreviewAdminController
             'hangar18-ultimate-designer-unsaved-preview',
             $pluginUrl . 'assets/ultimate-designer-unsaved-preview.js',
             ['jquery', 'hangar18-manager-admin'],
-            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.17',
+            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.25',
             true
         );
         wp_enqueue_style(
             'hangar18-ultimate-designer-unsaved-preview',
             $pluginUrl . 'assets/ultimate-designer-unsaved-preview.css',
             [],
-            is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.17'
+            is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.25'
         );
     }
 }
