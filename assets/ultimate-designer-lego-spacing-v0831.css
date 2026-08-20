@@ -1,0 +1,120 @@
+.h18-ud-lego-spacing-panel{
+    margin-top:16px;
+    padding:16px;
+    background:#fff;
+    border:1px solid #dcdcde;
+    border-left:4px solid #c3ae83;
+    border-radius:8px;
+}
+.h18-ud-lego-heading{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:14px;
+}
+.h18-ud-lego-heading h4{margin:0 0 4px;color:#30382a;font-size:15px}
+.h18-ud-lego-heading p{margin:0}
+.h18-ud-lego-badge{
+    flex:0 0 auto;
+    padding:4px 7px;
+    border-radius:999px;
+    background:#f2f0e8;
+    color:#525a5f;
+    font-size:10px;
+    font-weight:700;
+}
+.h18-ud-lego-device{
+    margin:0 0 12px;
+    padding:12px;
+    border:1px solid #e1e1e1;
+    border-radius:7px;
+    background:#fbfbfb;
+}
+.h18-ud-lego-device.is-inherited{
+    background:#f7f8f5;
+}
+.h18-ud-lego-device legend{
+    padding:0 6px;
+    color:#30382a;
+    font-weight:700;
+}
+.h18-ud-lego-inherit{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    margin:0 0 4px;
+    font-weight:600;
+    color:#30382a;
+}
+.h18-ud-lego-inherit input{margin:0}
+.h18-ud-lego-inherit-status{margin:0 0 10px!important;font-size:11px}
+.h18-ud-lego-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px 12px;
+}
+.h18-ud-lego-control{display:flex;flex-direction:column;gap:5px;min-width:0}
+.h18-ud-lego-control strong{font-size:12px;color:#30382a}
+.h18-ud-lego-control small{color:#646970;font-size:10px}
+.h18-ud-lego-number{display:flex;align-items:center;gap:6px}
+.h18-ud-lego-number input{width:100%;min-width:0}
+.h18-ud-lego-number input:disabled{background:#f0f0f1;color:#646970;cursor:not-allowed}
+.h18-ud-lego-number em{font-style:normal;color:#646970;font-size:11px}
+.h18-ud-lego-note{margin:4px 0 0}
+
+/*
+ * Editor-only proof. The variables stay on the existing section row so history
+ * restores one canonical DOM state. Public rendering remains legacy-owned.
+ */
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview{
+    box-sizing:border-box;
+    margin-left:var(--h18-lego-margin-x,0px)!important;
+    margin-right:var(--h18-lego-margin-x,0px)!important;
+    margin-top:var(--h18-lego-margin-y,0px)!important;
+    margin-bottom:var(--h18-lego-margin-y,0px)!important;
+    width:calc(100% - (var(--h18-lego-margin-x,0px) * 2));
+}
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="tablet"]{
+    margin-left:var(--h18-lego-tablet-margin-x,var(--h18-lego-margin-x,0px))!important;
+    margin-right:var(--h18-lego-tablet-margin-x,var(--h18-lego-margin-x,0px))!important;
+    margin-top:var(--h18-lego-tablet-margin-y,var(--h18-lego-margin-y,0px))!important;
+    margin-bottom:var(--h18-lego-tablet-margin-y,var(--h18-lego-margin-y,0px))!important;
+    width:calc(100% - (var(--h18-lego-tablet-margin-x,var(--h18-lego-margin-x,0px)) * 2));
+}
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="mobile"]{
+    margin-left:var(--h18-lego-mobile-margin-x,0px)!important;
+    margin-right:var(--h18-lego-mobile-margin-x,0px)!important;
+    margin-top:var(--h18-lego-mobile-margin-y,0px)!important;
+    margin-bottom:var(--h18-lego-mobile-margin-y,0px)!important;
+    width:calc(100% - (var(--h18-lego-mobile-margin-x,0px) * 2));
+}
+
+.h18-page-section-row[data-h18-lego-spacing="1"] .h18-ud-auto-box-grid,
+.h18-page-section-row[data-h18-lego-spacing="1"] .h18-v0811-auto-grid,
+.h18-page-section-row[data-h18-lego-spacing="1"] .h18-ud-box-contents-items,
+.h18-page-section-row[data-h18-lego-spacing="1"] .h18-v0811-child-list{
+    column-gap:var(--h18-lego-gap-x,16px)!important;
+    row-gap:var(--h18-lego-gap-y,16px)!important;
+    gap:var(--h18-lego-gap-y,16px) var(--h18-lego-gap-x,16px)!important;
+}
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="tablet"] .h18-ud-auto-box-grid,
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="tablet"] .h18-v0811-auto-grid,
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="tablet"] .h18-ud-box-contents-items,
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="tablet"] .h18-v0811-child-list{
+    column-gap:var(--h18-lego-tablet-gap-x,var(--h18-lego-gap-x,16px))!important;
+    row-gap:var(--h18-lego-tablet-gap-y,var(--h18-lego-gap-y,16px))!important;
+    gap:var(--h18-lego-tablet-gap-y,var(--h18-lego-gap-y,16px)) var(--h18-lego-tablet-gap-x,var(--h18-lego-gap-x,16px))!important;
+}
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="mobile"] .h18-ud-auto-box-grid,
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="mobile"] .h18-v0811-auto-grid,
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="mobile"] .h18-ud-box-contents-items,
+.h18-page-section-row[data-h18-lego-spacing="1"] > .h18-canvas-preview[data-canvas-device="mobile"] .h18-v0811-child-list{
+    column-gap:var(--h18-lego-mobile-gap-x,12px)!important;
+    row-gap:var(--h18-lego-mobile-gap-y,12px)!important;
+    gap:var(--h18-lego-mobile-gap-y,12px) var(--h18-lego-mobile-gap-x,12px)!important;
+}
+
+@media(max-width:782px){
+    .h18-ud-lego-grid{grid-template-columns:1fr}
+}
