@@ -33,10 +33,8 @@ async function boot(page) {
       pages: {}, limits: { desktop: 160, mobile: 120 }
     };
     window.__legoHiddenInputEvents = 0;
-    document.getElementById('h18-page-editor-form').addEventListener('input', (event) => {
-      if (event.target.classList && event.target.classList.contains('h18-lego-spacing-state-json')) {
-        window.__legoHiddenInputEvents += 1;
-      }
+    window.jQuery('#h18-page-editor-form').on('input', '.h18-lego-spacing-state-json', () => {
+      window.__legoHiddenInputEvents += 1;
     });
   });
   await page.addStyleTag({ path: legoCss });
@@ -83,16 +81,18 @@ test('element margin X/Y stays independent and mobile preview uses mobile variab
   await expect(page.locator('.h18-canvas-preview')).toHaveCSS('margin-top', '13px');
 });
 
-test('history-style DOM restore rehydrates visual state from the canonical hidden field', async ({ page }) => {
+test('history-style full section restore rehydrates visual state from canonical hidden field', async ({ page }) => {
   await boot(page);
 
-  const initialBodyHtml = await page.locator('.h18-page-section-body').evaluate((node) => node.outerHTML);
+  // admin.js editorHistoryRestore() restores the complete sections container,
+  // not only the Inspector/body fragment.
+  const initialSectionsHtml = await page.locator('#h18-page-sections-sortable').innerHTML();
   await page.locator('#h18-ud-lego-spacing-panel [data-h18-lego-path="Desktop.Gap.X"]').fill('44');
   await expect(page.locator('.h18-ud-auto-box-grid')).toHaveCSS('column-gap', '44px');
 
-  await page.locator('.h18-page-section-body').evaluate((node, html) => {
-    node.outerHTML = html;
-  }, initialBodyHtml);
+  await page.locator('#h18-page-sections-sortable').evaluate((node, html) => {
+    node.innerHTML = html;
+  }, initialSectionsHtml);
 
   await expect.poll(async () => {
     return page.locator('.h18-page-section-row').evaluate((row) => row.style.getPropertyValue('--h18-lego-gap-x'));
