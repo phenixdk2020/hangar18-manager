@@ -1,21 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.26",
+  "version": "0.8.27",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-20T16:58:48Z",
+  "published_utc": "2026-08-20T17:43:05Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "e6da517ded843949afa3c251ace2d5b47bca6bf959fcb2f1a6e957d21c191ed9",
+  "package_sha256": "7e328bb52cb64af6774092a375d6c3bd8e5ddd295836047b37eb88129a1a044c",
   "changelog": [
-    "Tilføjer EVENT-001: Events-overblikket klassificeres dynamisk ved visning efter WordPress' lokale dato og tid, så manuel Gem eller Genbyg eventregister ikke længere er nødvendig for arkivering.",
-    "Events med en dato før dags dato vises automatisk under Tidligere arrangementer.",
-    "På selve eventdatoen forbliver eventet under Kommende arrangementer indtil en angivet sluttid er passeret; derefter flyttes det automatisk til arkivet.",
-    "Hvis et event ikke har en sluttid, forbliver det kommende resten af eventdagen og flyttes automatisk til Tidligere arrangementer efter midnat.",
-    "Kommende arrangementer sorteres kronologisk, mens Tidligere arrangementer viser de nyeste afsluttede events først.",
-    "Den eksisterende Event-side, eventkort, HANGAR18-EVENT-DATA og eventskabelon genbruges; runtime udfører ingen frontend save, post-write eller option-write.",
-    "Eventklassificeringen kører før WordPress do_blocks, så det eksisterende wp:html-eventregister kan omfordeles sikkert og derefter rendres normalt.",
-    "Dedikeret Event Auto Archive QA er bestået på PHP 8.0/8.2/8.3, og Architecture QA er bestået inklusive protected-domain samt Chromium/Firefox/WebKit.",
-    "UX-3, UX-4 og den manuelt godkendte v0.8.23 Undo/Redo-historik er bevaret uændret."
+    "Retter UX-4 ugemt forhåndsvisning, så transient editor-chrome ikke klones med ind i previewet.",
+    "Fjerner Billede-kontrolpanelet, DIREKTE DESIGN, box-model P/M badges, padding/margin-handles og focal-point fra preview-klonen.",
+    "Bevarer selve live canvas-indholdet, herunder ugemt tekst, billeder og layout, uden at gemme eller publicere siden.",
+    "Playwright-regression dækker valgt billede med image-tools, direct-controls, box-model overlay og editor-handles.",
+    "Fast QA og Architecture QA er bestået inklusive Chromium/Firefox/WebKit.",
+    "EVENT-001 fra v0.8.26 og Undo/Redo v0.8.23 er bevaret."
   ]
 }
