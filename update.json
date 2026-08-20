@@ -1,21 +1,21 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.16",
+  "version": "0.8.17",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-20T10:02:07Z",
+  "published_utc": "2026-08-20T10:23:12Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "49aff2b1906ed1f0c6e9139860cb0b20f08c5db1c3b2e158da9bea5cb0a4d068",
+  "package_sha256": "94885b25c53fa64f3d29b0c3e666bb69c97ae00a2692a34d775a8414a8022212",
   "changelog": [
-    "Fortryd/Gendan bruger nu samme restore-transaction fra toolbar, tastatur, kommandopalet og lokal kladde-gendannelse.",
-    "Syntetiske input/change-events fra restore og preview-rebuild undertrykkes fortsat, så de ikke opretter falske historiktrin.",
-    "Ægte brugerinput og kendte strukturhandlinger umiddelbart efter Undo er igen history-eligible og må derfor oprette et nyt historiktrin.",
-    "Redo-kæden afbrydes fortsat korrekt, når brugeren laver en ny ændring efter Undo, fordi den eksisterende history stack genbruges uændret.",
-    "Direkte Kasse-drop på selve Auto-kasser/Grid-canvaset bruger nu hele den synlige Grid-flade som hitområde under drag i stedet for kun det lille footer-dropfelt.",
-    "Nested source rows skjules kun, når den autoritative Kasse-runtime har markeret dem som child-source; LayoutParentKey/data-h18-nested-in-box alene må ikke få en Kasse til at forsvinde.",
-    "Den målrettede browser-QA dækker toolbar/kommandopalet/keyboard/lokal kladde, syntetisk kontra ægte input, hurtig strukturændring efter Undo samt to eksisterende Kasser droppet direkte på Auto-kasser-canvaset.",
-    "Editor Runtime Fast QA og Architecture QA er bestået på hotfix-PR'en; Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.",
-    "Denne release indeholder ingen LEGO-layout-, X/Y-spacing- eller øvrige nye designerfunktioner; de afventer manuel accept af Undo/Redo-stabiliteten."
+    "Fortryd/Gendan bruger nu en eksplicit restore-latch, som har højere prioritet end trusted-state fra den brugerhandling, der netop bliver fortrudt.",
+    "Fejlen hvor historikken kort gik 4 → 3 og straks tilbage til 4 er dækket af en målrettet regressionstest og må ikke længere kunne skabes af syntetiske restore/preview-events.",
+    "Ctrl/Cmd+Z og Ctrl/Cmd+Shift+Z går gennem samme restore-latch; browser-events fra selve Undo/Redo-tastaturgestussen kan ikke frigive latchen som en falsk ny brugerændring.",
+    "Restore-latchen frigives først af en efterfølgende, ægte brugerændring eller kendt strukturhandling, så en rigtig ændring umiddelbart efter Undo stadig kan oprette et nyt historiktrin.",
+    "Det element, der er valgt når Undo/Redo startes, bevares som UI-selection efter restore, hvis elementet stadig findes; historisk selectedKey må derfor ikke åbne Direkte design/Inspector på et uvedkommende element.",
+    "Lokal kladde-gendannelse er fortsat beskyttet mod syntetiske history-captures, men beholder sin egen draft-selection-adfærd.",
+    "Editor Runtime Fast QA og Architecture QA er bestået, inklusive PHP 8.0/8.2/8.3, isolation/protected-domain checks samt Chromium, Firefox og WebKit.",
+    "Kasse/Auto-kasser-runtime, Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er uændrede og beskyttede.",
+    "Denne release indeholder fortsat ingen LEGO-layout- eller X/Y-spacing-funktioner; de afventer manuel accept af Undo/Redo-stabiliteten."
   ]
 }
