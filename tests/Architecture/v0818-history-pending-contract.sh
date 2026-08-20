@@ -19,28 +19,44 @@ require_contains() {
   fi
 }
 
-require_contains "$RUNTIME" 'data-h18-v0818-history-runtime' 'v0.8.18 runtime marker is missing'
-require_contains "$RUNTIME" "callback.name === 'editorHistoryRecordNow'" 'core history callback ownership is missing'
-require_contains "$RUNTIME" 'state.pending = null;' 'owned pending history timer is not cleared after execution'
-require_contains "$RUNTIME" 'return 0;' 'core editorHistoryTimer is not forced to a non-stale handle'
-require_contains "$RUNTIME" 'runPendingHistory();' 'real pending edit is not flushed before Undo/Redo'
-require_contains "$RUNTIME" 'if (state.restoreLatched)' 'restore-derived history capture is not suppressed'
-require_contains "$RUNTIME" 'clearEditorSelection();' 'selection is not cleared when the selected element disappears'
-require_contains "$RUNTIME" 'Selection is UI' 'selection/history separation is not documented in runtime'
-require_contains "$CTRL" 'ultimate-designer-history-v0818.js' 'v0.8.18 history runtime is not enqueued'
-require_contains "$CTRL" "'0.8.18'" 'v0.8.18 fallback asset version is missing'
+# v0.8.18 stays available for rollback archaeology, but it is no longer active.
+require_contains "$RUNTIME" 'data-h18-v0818-history-runtime' 'v0.8.18 rollback runtime marker is missing'
+require_contains "$RUNTIME" "callback.name === 'editorHistoryRecordNow'" 'v0.8.18 rollback scheduler is incomplete'
+require_contains "$RUNTIME" 'runPendingHistory();' 'v0.8.18 rollback pending flush is missing'
+require_contains "$CTRL" 'v0.8.18 remains in the package solely as rollback archaeology' 'v0.8.18 retirement is not documented'
 
-if grep -F "assets/ultimate-designer-history-v0817.js'" "$CTRL" >/dev/null; then
-  echo 'FAIL: v0.8.17 history runtime is still enqueued alongside v0.8.18'
+if grep -F "hangar18-ultimate-designer-history-v0818" "$CTRL" >/dev/null; then
+  echo 'FAIL: v0.8.18 is still enqueued beside the v0.8.19 preloaded owner'
   exit 1
 fi
 
-if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option' "$RUNTIME" >/dev/null; then
-  echo 'FAIL: history hotfix introduced persistence primitives'
+# v0.8.19 is injected before the legacy admin runtime and owns all later core
+# editorHistoryRecordNow scheduling.
+require_contains "$CTRL" 'enqueueEditorHistoryCoreBridgeV0819' 'v0.8.19 preloaded history bridge is missing'
+require_contains "$CTRL" "wp_add_inline_script('hangar18-manager-admin', \$js, 'before');" 'v0.8.19 does not execute before assets/admin.js'
+require_contains "$CTRL" 'data-h18-v0819-history-runtime' 'v0.8.19 runtime marker is missing'
+require_contains "$CTRL" "callback.name === 'editorHistoryRecordNow'" 'v0.8.19 does not own core history scheduling'
+require_contains "$CTRL" 'milliseconds <= 120' 'structural history checkpoints are still left in the input debounce queue'
+require_contains "$CTRL" 'runPendingHistory();' 'pending input edit is not flushed before structural/Undo checkpoints'
+require_contains "$CTRL" 'callback.apply(window, args);' 'structural checkpoint is not committed immediately'
+require_contains "$CTRL" 'return 0;' 'legacy editorHistoryTimer can still receive a stale native timer id'
+require_contains "$CTRL" 'scheduleSelectionClear' 'Undo/Redo does not clear historical Inspector selection'
+require_contains "$CTRL" "data-h18-history-runtime', '0.8.19'" 'runtime identity marker is missing'
+
+if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option' "$CTRL" >/dev/null; then
+  echo 'FAIL: history bridge introduced persistence primitives'
   exit 1
 fi
 
-node --check "$RUNTIME"
+node --check <(python3 - <<'PY'
+from pathlib import Path
+import re
+s=Path('src/Admin/EditorElementLibraryAdminController.php').read_text()
+m=re.search(r"private static function enqueueEditorHistoryCoreBridgeV0819\(\): void[\s\S]*?\$js = <<<'JS'\n([\s\S]*?)\nJS;", s)
+if not m: raise SystemExit(1)
+print(m.group(1))
+PY
+)
 php -l "$CTRL" >/dev/null
 
-echo 'v0.8.18 pending-history/selection contract: PASS'
+echo 'v0.8.18 rollback / v0.8.19 preloaded-history successor contract: PASS'
