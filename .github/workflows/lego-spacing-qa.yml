@@ -1,24 +1,32 @@
-name: LEGO Spacing QA
+name: LEGO Editor QA
 
 on:
   push:
     branches:
       - agent/lego-spacing-foundation-v0830
       - agent/lego-responsive-spacing-v0831
+      - agent/lego-common-design-v0832
   pull_request:
     paths:
       - 'src/Editor/LegoSpacingModel.php'
+      - 'src/Editor/LegoDesignModel.php'
       - 'src/Admin/EditorLegoSpacingAdminController.php'
+      - 'src/Admin/EditorLegoDesignAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
       - 'src/Backup/SiteBackupRestoreCoordinator.php'
       - 'assets/ultimate-designer-lego-spacing-v0830.js'
       - 'assets/ultimate-designer-lego-spacing-v0830.css'
       - 'assets/ultimate-designer-lego-spacing-v0831.js'
       - 'assets/ultimate-designer-lego-spacing-v0831.css'
+      - 'assets/ultimate-designer-lego-design-v0832.js'
+      - 'assets/ultimate-designer-lego-design-event-guard-v0832.js'
+      - 'assets/ultimate-designer-lego-design-v0832.css'
       - 'tests/Architecture/v0830-lego-spacing-*'
       - 'tests/Architecture/v0831-lego-responsive-spacing-*'
+      - 'tests/Architecture/v0832-lego-common-design-*'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
       - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
+      - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
       - '.github/workflows/lego-spacing-qa.yml'
 
@@ -27,7 +35,7 @@ permissions:
 
 jobs:
   contract:
-    name: Responsive X/Y model and single-history contract
+    name: Responsive spacing + common design contract
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -42,9 +50,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
       - run: bash tests/Architecture/v0831-lego-responsive-spacing-contract.sh
+      - run: bash tests/Architecture/v0832-lego-common-design-contract.sh
 
   browser:
-    name: Responsive LEGO spacing system Chrome
+    name: LEGO spacing + design system Chrome
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,3 +66,4 @@ jobs:
           -c tests/Architecture/browser/playwright.system-chrome.config.cjs
           tests/Architecture/browser/lego-spacing-v0830.spec.cjs
           tests/Architecture/browser/lego-spacing-v0831.spec.cjs
+          tests/Architecture/browser/lego-design-v0832.spec.cjs
