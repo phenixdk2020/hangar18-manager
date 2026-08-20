@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   testDir: __dirname,
-  testMatch: /(?:runtime|kasse-runtime|history-restore-latch-v0817)\.spec\.cjs/,
+  testMatch: /(?:runtime|kasse-runtime|history-restore-latch-v0817|history-pending-v0818)\.spec\.cjs/,
   timeout: 15000,
   fullyParallel: false,
   workers: 1,

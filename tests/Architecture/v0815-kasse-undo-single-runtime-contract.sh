@@ -8,8 +8,9 @@ NEST='assets/ultimate-designer-nesting-tools.js'
 NEST_CSS='assets/ultimate-designer-nesting-tools.css'
 BOX_CONTENT='assets/ultimate-designer-box-content-layout.js'
 HISTORY_V0817='assets/ultimate-designer-history-v0817.js'
+HISTORY_V0818='assets/ultimate-designer-history-v0818.js'
 
-for file in "$CTRL" "$ELEMENT_CTRL" "$LAYOUT" "$NEST" "$NEST_CSS" "$BOX_CONTENT" "$HISTORY_V0817"; do
+for file in "$CTRL" "$ELEMENT_CTRL" "$LAYOUT" "$NEST" "$NEST_CSS" "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -50,8 +51,6 @@ require_contains "$NEST" "text: 'v0.8.15'" 'v0.8.15 runtime badge is missing'
 require_contains "$NEST" 'data-h18-v0815-kasse-runtime' 'v0.8.15 runtime marker is missing'
 
 # v0.8.16 direct Auto-kasser drop safety.
-# Storage metadata alone may never hide a source row; only the runtime's child-source
-# marker may do so after the visible composition has been rendered/refreshed.
 if grep -F '#h18-page-sections-sortable>.h18-page-section-row[data-h18-nested-in-box]:not([data-h18-nested-in-box=""]){display:none!important}' "$NEST_CSS" >/dev/null; then
   echo 'FAIL: Kasse can still disappear solely because parent metadata was written'
   exit 1
@@ -95,24 +94,30 @@ require_contains "$BOX_CONTENT" "document.addEventListener('pointerdown', markTr
 require_contains "$BOX_CONTENT" '.h18-page-section-drag,' 'section drag is not treated as a genuine post-Undo edit'
 require_contains "$BOX_CONTENT" '.h18-builder-palette-item,' 'palette add/drag is not treated as a genuine post-Undo edit'
 
-# v0.8.17 fixes the v0.8.16 trusted-window race and keeps Inspector selection UI-stable.
-require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-history-v0817' 'v0.8.17 history runtime is not enqueued'
-require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-box-content-layout' 'v0.8.17 history runtime does not load after the v0.8.16 bridge'
-require_contains "$HISTORY_V0817" 'data-h18-v0817-history-latch' 'v0.8.17 history latch runtime marker is missing'
-require_contains "$HISTORY_V0817" 'state.restoreLatched = true;' 'restore latch is never activated'
-require_contains "$HISTORY_V0817" 'if (state.restoreLatched) { return true; }' 'restore latch does not override old trusted state'
-require_contains "$HISTORY_V0817" 'if (state.restoreLatched) { return false; }' 'stale trusted window is still exposed while restoring'
-require_contains "$HISTORY_V0817" 'state.restoreLatched = false;' 'new trusted edit cannot release restore latch'
-require_contains "$HISTORY_V0817" "lower === 'z'" 'Ctrl/Cmd+Z does not use the v0.8.17 restore latch'
-require_contains "$HISTORY_V0817" 'state.selectionKey = state.preserveSelection ? currentSelectionKey()' 'current selection is not captured before Undo/Redo'
-require_contains "$HISTORY_V0817" 'restorePreservedSelection(token)' 'current Inspector selection is not restored after history restore'
+# v0.8.17 remains available as rollback archaeology and its historical latch contract must stay valid.
+require_contains "$HISTORY_V0817" 'data-h18-v0817-history-latch' 'v0.8.17 history latch rollback asset is missing'
+require_contains "$HISTORY_V0817" 'state.restoreLatched = true;' 'v0.8.17 rollback latch is incomplete'
+require_contains "$HISTORY_V0817" 'if (state.restoreLatched) { return true; }' 'v0.8.17 rollback latch does not override old trusted state'
+require_contains "$HISTORY_V0817" "lower === 'z'" 'v0.8.17 rollback asset lost Ctrl/Cmd+Z handling'
+
+# v0.8.18 is now the single active successor. v0.8.17 must NOT be enqueued in parallel.
+require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-history-v0818' 'v0.8.18 history runtime is not enqueued'
+require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-box-content-layout' 'active history runtime does not load after the v0.8.16 bridge'
+if grep -F 'hangar18-ultimate-designer-history-v0817' "$ELEMENT_CTRL" >/dev/null; then
+  echo 'FAIL: v0.8.17 and v0.8.18 history runtimes would be enqueued together'
+  exit 1
+fi
+require_contains "$HISTORY_V0818" 'data-h18-v0818-history-runtime' 'v0.8.18 history runtime marker is missing'
+require_contains "$HISTORY_V0818" "callback.name === 'editorHistoryRecordNow'" 'v0.8.18 does not own pending history scheduling'
+require_contains "$HISTORY_V0818" 'runPendingHistory();' 'v0.8.18 does not flush a real pending edit once before Undo/Redo'
+require_contains "$HISTORY_V0818" 'clearEditorSelection();' 'v0.8.18 does not clear stale historical selection'
 
 # No second history stack or persistence/cutover path is introduced by the extensions.
-if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" "$HISTORY_V0817" >/dev/null; then
+if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" >/dev/null; then
   echo 'FAIL: Undo extensions introduced a second editor history stack'
   exit 1
 fi
-if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" "$BOX_CONTENT" "$HISTORY_V0817" "$ELEMENT_CTRL" >/dev/null; then
+if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" "$ELEMENT_CTRL" >/dev/null; then
   echo 'FAIL: Undo/Kasse hotfix introduced a public persistence/cutover primitive'
   exit 1
 fi
@@ -121,7 +126,8 @@ node --check "$LAYOUT"
 node --check "$NEST"
 node --check "$BOX_CONTENT"
 node --check "$HISTORY_V0817"
+node --check "$HISTORY_V0818"
 php -l "$CTRL" >/dev/null
 php -l "$ELEMENT_CTRL" >/dev/null
 
-echo 'v0.8.15/v0.8.16/v0.8.17 Kasse/Undo restore-latch contract: PASS'
+echo 'v0.8.15-v0.8.18 Kasse/Undo single-active-history-runtime contract: PASS'
