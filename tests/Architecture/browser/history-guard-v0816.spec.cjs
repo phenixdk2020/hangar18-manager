@@ -4,7 +4,7 @@ const path = require('path');
 
 const boxContentRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-box-content-layout.js');
 const editorLayoutController = path.resolve(__dirname, '../../../src/Admin/EditorLayoutToolsAdminController.php');
-const jqueryRuntime = require.resolve('jquery/dist/jquery.min.js');
+const jqueryRuntime = require.resolve('jquery');
 
 function historyGuardScript() {
   const source = fs.readFileSync(editorLayoutController, 'utf8');
