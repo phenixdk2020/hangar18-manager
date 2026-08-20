@@ -22,6 +22,10 @@ final class EditorElementLibraryAdminController
         }
         self::$registered = true;
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
+
+        // UX-4 remains an independent browser-local editor feature even when
+        // later integration slices add their own controllers to the bootstrap.
+        EditorUnsavedPreviewAdminController::register();
     }
 
     public static function enqueue(): void
