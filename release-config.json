@@ -1,16 +1,16 @@
 {
-  "version": "0.8.20",
-  "title": "Designer — sikker history-runtime load-order",
+  "version": "0.8.21",
+  "title": "Designer — bevar elementtype gennem Undo/Redo",
   "changelog": [
-    "Retter en reel load-order-fejl i v0.8.19: history-runtime blev forsøgt tilføjet inline til hangar18-manager-admin før dette script-handle nødvendigvis var lagt i WordPress-køen, så pluginet kunne vise v0.8.19 uden at den nye historikmotor faktisk nåede browseren.",
-    "Historik-ejeren leveres nu som den dedikerede asset assets/ultimate-designer-history-preload-v0820.js og indlæses i wp-admin-headeren med jQuery som dependency; legacy assets/admin.js forbliver footer-script og kan derfor ikke initialisere historikken først.",
-    "Strukturelle editorændringer på 0–120 ms capture-path registreres fortsat som separate checkpoints, mens almindelige tekst-/feltændringer beholder debounce og flushes præcis én gang før Undo/Redo eller næste strukturelle checkpoint.",
-    "Den konkrete regression Tekst → Billede 1 → Billede 2 → Fortryd kører nu direkte mod den faktiske v0.8.20 assetfil og verificerer at ét Undo kun fjerner Billede 2 og ikke efterfølgende hopper tilbage til trin 2.",
-    "Undo/Redo rydder fortsat historisk Inspector-selection og Direkte design efter restore, så et gammelt Tekst-element ikke vælges som bivirkning når et Billede-element fjernes.",
-    "Et lille admin-only badge H0.8.20 vises ved historikstatus. Badget er en manuel QA-markør, der beviser at den aktive v0.8.20 history-runtime faktisk er leveret og eksekveret i browseren.",
-    "v0.8.17–v0.8.19 history-implementationer er rollback-reference og enqueues ikke parallelt med v0.8.20.",
+    "Retter den resterende Undo/Redo-fejl fra v0.8.20, hvor historiktrinene nu bevægede sig korrekt, men et Billede-element kunne blive gendannet som Tekst efter Undo og Redo.",
+    "Rodårsagen var snapshot-cloning af formular-state: nye elementer oprettes fra en fælles template med text som markup-standard, mens den aktuelle elementtype som image ligger i SELECT-feltets live browser-state. jQuery cloning kunne falde tilbage til markup-standarden.",
+    "Den aktive history-runtime er nu assets/ultimate-designer-history-preload-v0821.js og indlæses fortsat som header-asset før legacy assets/admin.js initialiserer editorhistorikken.",
+    "v0.8.21 kopierer live state for SELECT, INPUT og TEXTAREA fra original DOM til history-klonen før core editorHistoryNormalizeClone serialiserer snapshot'et.",
+    "Clone-broen er snævert afgrænset til de to kilder som editorHistorySnapshot bruger: #h18-page-sections-sortable og den midlertidigt inspicerede section body i Inspector.",
+    "Den konkrete regression bruger nu samme jQuery clone-path som den rigtige editor og verificerer Billede 1 + Billede 2 → Undo = Billede 1 samt Redo = begge elementer fortsat af typen Billede.",
+    "De tidligere v0.8.20-rettelser til 2→1→0 / 0→1→2, pending history-timer, restore-latch og rydning af historisk Direkte design-selection bevares.",
+    "Et lille admin-only badge H0.8.21 vises ved historikstatus, så manuel QA kan verificere at den korrekte runtime faktisk kører i browseren.",
     "Editor Runtime Fast QA og Architecture QA er bestået, inklusive isolation/protected-domain, PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.",
-    "Kasse/Auto-kasser, Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er samt persistence/cutover er uændrede og beskyttede.",
-    "LEGO-layout og X/Y-spacing afventer fortsat manuel accept af Undo/Redo-stabiliteten i den installerede editor."
+    "Event/Vehicle/Gallery, offentlig rendering, URL'er, persistence/cutover samt LEGO-layout er uændrede; LEGO/X-Y arbejdet afventer fortsat manuel accept af Undo/Redo."
   ]
 }
