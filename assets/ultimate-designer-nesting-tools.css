@@ -2,9 +2,14 @@
 .h18-page-section-row.h18-ud-nesting-drop-target{outline:3px solid #2271b1;outline-offset:3px;box-shadow:0 0 0 5px rgba(34,113,177,.12)}
 .h18-page-section-row.h18-ud-nesting-drop-target>.h18-canvas-preview::before{content:"Slip her for at lægge elementet i kassen";display:block;margin:0 0 9px;padding:7px 10px;border:1px dashed #2271b1;border-radius:6px;background:#f0f6fc;color:#135e96;font-size:12px;font-weight:600;text-align:center}
 
-/* v0.8.11+: nested source rows stay in DOM/storage but never occupy canvas space. */
+/*
+ * v0.8.16: a nested source row is hidden only after the authoritative Kasse
+ * runtime has rendered a corresponding visible composition and explicitly
+ * marked the row as child-source. `data-h18-nested-in-box` alone is storage /
+ * hierarchy metadata and must never make a Kasse disappear before its proxy is
+ * present in Auto-kasser or its parent Kasse.
+ */
 #h18-page-sections-sortable[data-h18-v0811-kasse-runtime="1"]>.h18-page-section-row[data-h18-v0811-child-source="1"]{display:none!important}
-#h18-page-sections-sortable>.h18-page-section-row[data-h18-nested-in-box]:not([data-h18-nested-in-box=""]){display:none!important}
 
 .h18-ud-box-contents-preview{margin-top:10px;padding:10px;border:1px solid #dcdcde;border-radius:7px;background:#f6f7f7}
 .h18-ud-box-contents-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
@@ -36,11 +41,24 @@
 .h18-v0811-auto-box-preview{padding:8px}
 .h18-v0811-auto-box-preview>.h18-canvas-preview{margin:0!important;pointer-events:none!important;box-shadow:none!important}
 
-/* v0.8.14: Auto-kasser itself is a first-class Kasse drop target. */
+/* v0.8.14+: Auto-kasser itself is a first-class Kasse drop target. */
 .h18-v0814-auto-drop-zone{display:flex;align-items:center;justify-content:center;min-height:58px;margin-top:10px;padding:10px 12px;border:2px dashed #8c8f94;border-radius:7px;background:#fbfbfc;color:#50575e;font-size:12px;font-weight:700;text-align:center;transition:border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease}
 #h18-page-sections-sortable.h18-v0811-box-drag .h18-v0814-auto-drop-zone{border-color:#72aee6;background:#f0f6fc;color:#135e96}
 .h18-v0814-auto-drop-zone.is-active,.h18-page-section-row.h18-v0814-auto-drop-target .h18-v0814-auto-drop-zone{border-color:#2271b1!important;background:#dceeff!important;color:#0a4b78!important;box-shadow:0 0 0 3px rgba(34,113,177,.14)}
 .h18-ud-auto-box-grid.h18-v0814-auto-drop-active{outline:3px solid #2271b1;outline-offset:3px;background:#f0f6fc!important;box-shadow:0 0 0 5px rgba(34,113,177,.10)}
+
+/*
+ * v0.8.16: while an existing/new Kasse is dragged, stretch the Auto-kasser
+ * drop-zone over the complete Grid canvas preview. `autoAtPoint()` reads the
+ * zone rectangle, so a direct drop anywhere on the visible Auto-kasser area
+ * resolves to the Grid instead of requiring the small footer drop-zone.
+ * This selector intentionally relies on the persisted section type + generated
+ * drop-zone, not the ephemeral `data-h18-auto-box-row` attribute.
+ * pointer-events stays disabled so an explicit Kasse-in-Kasse drop-zone below
+ * can still win the more specific hit-test.
+ */
+#h18-page-sections-sortable.h18-v0811-box-drag>.h18-page-section-row[data-section-type="grid"]>.h18-canvas-preview{position:relative}
+#h18-page-sections-sortable.h18-v0811-box-drag>.h18-page-section-row[data-section-type="grid"]>.h18-canvas-preview>.h18-v0814-auto-drop-zone{position:absolute;inset:0;z-index:4;box-sizing:border-box;margin:0;min-height:100%;background:rgba(240,246,252,.18);pointer-events:none}
 
 /* v0.8.10 is no longer the visible composer when v0.8.11+ is active. */
 #h18-page-sections-sortable[data-h18-v0811-kasse-runtime="1"] .h18-v0810-side-zones{display:none!important}
