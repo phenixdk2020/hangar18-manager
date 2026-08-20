@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.21
+Version: 0.8.22
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.22 – Designer — registrér nye ændringer efter fuld Undo/Redo ==
+
+Nyt:
+- Retter den resterende Undo/Redo-fejl fra v0.8.21, hvor tre eksisterende elementer kunne fortrydes og gendannes korrekt, men den første nye indsættelse efter en komplet Redo-kæde ikke blev registreret som et nyt historiktrin.
+- Rodårsagen var restore-latchens korte trusted-release guard: en ny palette-/drag/drop-gestus kunne starte mens historikken stadig betragtede editoren som værende i restore-mode, så DOM-ændringen blev udført men dens strukturelle 0–120 ms checkpoint blev suppressed.
+- v0.8.21 forbliver den autoritative history-owner og bevarer snapshot/clone-fixet, så Billede-elementer fortsat forbliver Billede gennem Undo og Redo.
+- v0.8.22 tilføjer en snæver post-restore intent bridge, som genkender nye strukturelle brugerhandlinger som paletteindsættelse, drag/drop, duplicate, delete og reorder og sikrer, at den første nye handling efter Undo/Redo bliver sit eget checkpoint.
+- Den konkrete regression er nu: 3 elementer → Undo ×3 → Redo ×3 → indsæt element 4 → historiktrin 4 → Undo fjerner kun element 4.
+- Runtime-markøren ved historikstatus viser H0.8.22, så manuel QA kan verificere at den nye post-restore bridge faktisk kører.
+- Editor Runtime Fast QA og Architecture QA er bestået, inklusive isolation/protected-domain, PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery, offentlig rendering, URL'er og persistence/cutover er uændrede; LEGO/X-Y-layout afventer fortsat manuel accept af Undo/Redo.
 
 
 == Version 0.8.21 – Designer — bevar elementtype gennem Undo/Redo ==
