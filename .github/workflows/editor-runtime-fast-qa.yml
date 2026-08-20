@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - agent/v0815-kasse-undo-single-runtime-fix
+      - agent/v0817-undo-restore-latch-selection
   pull_request:
     paths:
       - 'assets/ultimate-designer-nesting-tools.js'
+      - 'assets/ultimate-designer-history-v0817.js'
       - 'src/Admin/EditorLayoutToolsAdminController.php'
+      - 'src/Admin/EditorElementLibraryAdminController.php'
       - 'tests/Architecture/browser/**'
       - '.github/workflows/editor-runtime-fast-qa.yml'
 
@@ -27,4 +30,4 @@ jobs:
       - run: >-
           npx playwright test
           -c tests/Architecture/browser/playwright.system-chrome.config.cjs
-          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible"
+          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible|trusted edit immediately before Undo|Ctrl\+Z starts the same restore latch|Undo preserves the currently selected element"
