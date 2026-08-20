@@ -3,6 +3,7 @@ const path = require('path');
 
 const jqueryRuntime = require.resolve('jquery');
 const designRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-design-v0832.js');
+const designGuard = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-design-event-guard-v0832.js');
 const designCss = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-design-v0832.css');
 
 const fieldMap = {
@@ -100,7 +101,9 @@ async function boot(page) {
   }, fieldMap);
   await page.addStyleTag({ path: designCss });
   await page.addScriptTag({ path: designRuntime });
+  await page.addScriptTag({ path: designGuard });
   await expect(page.locator('#h18-ud-lego-design-panel')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-h18-lego-design-select-guard', '0.8.32');
 }
 
 async function eventCount(page) {
