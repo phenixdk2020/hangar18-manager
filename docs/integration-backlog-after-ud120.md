@@ -1,296 +1,217 @@
 # Ultimate Designer — integration backlog after UD-120
 
-**Statusdato:** 19. august 2026  
-**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.13**
+**Statusdato:** 20. august 2026  
+**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.30**
 
-The UD-001..120 design backlog now has architecture/core coverage and the wp-admin integration backlog is largely implemented. The remaining work is deliberately concentrated in manual QA evidence, editor stabilization and the final controlled conversion. **Existing Hangar18 pages are still not converted.**
+UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. Den aktive udvikling er nu koncentreret om LEGO-editorens fælles objekt-/designmodel, responsive overrides, manuel I9-QA og den senere kontrollerede sidekonvertering. **Eksisterende Hangar18-sider er fortsat ikke public-cutover til en ny renderer.**
 
-## Non-negotiable migration rule
+## Ikke-forhandlingsbar migrationsregel
 
-Existing page conversion is the last phase. Vehicle/Event/Gallery remain protected legacy domains until side-by-side visual/function regression, compatibility proof and rollback rehearsal have passed.
+Eksisterende sidekonvertering er sidste fase. Vehicle/Event/Gallery forbliver beskyttede legacy-domæner, bortset fra eksplicit godkendte, snævre fejlrettelser som EVENT-001. Public cutover kræver fortsat side-by-side regression, kompatibilitetsbevis, backup og rollback-rehearsal.
 
-No automated QA result may replace a required manual/live acceptance gate.
+Automatisk QA kan ikke erstatte en krævet manuel/live acceptance-gate.
 
-## Status overview
+## Statusoversigt
 
-| Phase | Status | Delivered |
+| Fase | Status | Leveret |
 |---|---|---|
-| I1 — Admin integration / shadow dashboard | ✅ Complete | Admin-only Ultimate Designer dashboard; no frontend hooks or renderer replacement. |
-| I2 — Visual Header/Footer Builder | ✅ Complete in shadow/admin | Shared Sections tree, visual editing, typography/design controls and admin preview. Public assignment remains inactive. |
-| I3 — Menu Builder v2 | ✅ Complete in shadow/admin | Nested drag/drop, presets, keyboard preview, mega component binding and explicit page include/exclude. |
-| I4 — Side Health editor panel | ✅ Complete | Live/read-only Design/Mobile/Accessibility/Performance/SEO analysis with element links; collapsed by default. |
-| I5 — Asset Manager UI | ✅ Complete | Collections/tags/usage/focal point/derivatives/duplicate reporting over native WordPress Media IDs. |
-| I6 — Portability UI | ✅ Complete | Dry-run-first import, signed plans, conflict/remap report, isolated workspace, backup/restore. |
-| I7 — Permissions / Design Lock UI | ✅ Complete | Additive capabilities/roles and design-lock policy; legacy `edit_pages` preserved. |
-| I8 — AI UI/provider configuration | ✅ Complete | Provider-neutral registry/settings, no credentials in options, pending suggestions and reversible Apply/Undo plans. |
-| I9 — Manual QA evidence dashboard | 🟡 Framework complete | Evidence ledger and copy-only rollback preflight exist; required live/manual evidence is still pending. |
-| I10 — Final controlled conversion | 🟡 Preflight complete / cutover locked | Planner, shadow workspace, acceptance ledger, source-drift checks and signed non-executable preflight are implemented. |
-| UX-3 — Workspace rails | 🟡 Implemented / deferred merge | Elementer/Funktioner and Inspector can collapse independently to narrow rails so Sideopbygning receives more width. |
-| UX-4 — Unsaved page preview | ⬜ Backlog | Preview current unsaved editor state without saving or changing the public page. |
-| B1 — Backup page restore | ⬜ Backlog | Restore a page backup either over the original or as a new `-kopi` draft, with automatic safety backup before replacement. |
-| B2 — Versioned full-site backup/export | ⬜ Backlog | Versioned, exportable site package with site data, configuration and used media plus restore/import workflow. |
-| DOC-1 — Ultimate Designer visual manual | ⬜ Backlog | Versioned user manual with screenshot + name + purpose + usage examples for every element/function, plus layout concepts, responsive behavior and troubleshooting. |
+| I1 — Admin integration / shadow dashboard | ✅ Færdig | Admin-only Ultimate Designer dashboard; ingen renderer replacement. |
+| I2 — Visual Header/Footer Builder | ✅ Færdig i shadow/admin | Shared Sections tree, visuel editing, designkontroller og preview. Public assignment er fortsat låst. |
+| I3 — Menu Builder v2 | ✅ Færdig i shadow/admin | Nested drag/drop, presets, keyboard-preview og eksplicit side include/exclude. |
+| I4 — Side Health | ✅ Færdig | Live/read-only Design/Mobile/Accessibility/Performance/SEO-analyse med elementlinks. |
+| I5 — Asset Manager | ✅ Færdig | Collections/tags/usage/focal point/derivatives/duplicate reporting over WordPress Media IDs. |
+| I6 — Portability | ✅ Færdig | Dry-run, signeret plan, conflict/remap, isoleret workspace og restore-point. |
+| I7 — Permissions / Design Lock | ✅ Færdig | Additive capabilities/roles og design-lock policy. |
+| I8 — AI | ✅ Færdig | Provider-neutral settings og reversible forslag uden direkte page-write. |
+| I9 — Manual QA evidence | 🟡 Framework færdigt | Evidence ledger findes; alle krævede live/manuelle gates er ikke registreret endnu. |
+| I10 — Final controlled conversion | 🟡 Preflight færdigt / cutover låst | Planner, shadow, acceptance ledger og source-drift preflight findes. |
+| UX-3 — Foldbare workspace rails | ✅ Færdig v0.8.24 | Elementer/Funktioner og Inspector kan foldes ind uafhængigt til 44 px rails. |
+| UX-4 — Ugemt forhåndsvisning | ✅ Færdig v0.8.25 + hotfix v0.8.27 | Preview af levende editor-state uden save/public mutation; editor overlays renses. |
+| EVENT-001 — Automatisk eventarkiv | ✅ Færdig v0.8.26 | Events flyttes dynamisk mellem Kommende/Tidligere efter WP-lokal dato/sluttid. |
+| B1 — Sidebackup restore | ✅ Færdig v0.8.28 | Replace original + copy draft, safety backup, nonce/capability og audit. |
+| B2 — Versioneret site-backup | ✅ Færdig v0.8.29 | H18-BACKUP-ID, SHA-256, media, ZIP import/export, dry-run og full/selective restore. |
+| LEGO foundation | 🟢 Aktiv | v0.8.30 har canonical X/Y spacing-model; næste slice er responsive arv/overrides. |
+| DOC-1 — Visuel brugermanual | ⬜ Backlog | Udarbejdes når editorens interaktionsmodel er stabil og releasebar. |
 
-## I1 — Admin integration / shadow dashboard — COMPLETE
+## I1–I8 — IMPLEMENTERET
 
-Delivered in v0.7.4:
+I1–I8 er implementeret i v0.7.4–v0.8.1 og forbliver shadow/admin-orienteret, hvor det er relevant. De centrale regler er fortsat:
 
-- namespaced architecture autoloader wired safely into wp-admin;
-- Ultimate Designer submenu;
-- status cards for Site Builder, menus, assets, portability, permissions, AI, QA and conversion;
-- manual release gates shown separately from automated QA;
-- no frontend hooks, renderer replacement or page writes from the integration dashboard.
+- ingen skjult public cutover;
+- ingen automatisk destruktiv rolle-/dataændring;
+- importer starter som dry-run;
+- AI-forslag skriver ikke direkte til public side;
+- legacy `edit_pages`-adgang bevares under migrationen.
 
-## I2 — Visual Header/Footer Builder — COMPLETE IN SHADOW/ADMIN
+## I9 — MANUAL QA EVIDENCE — FRAMEWORK FÆRDIGT / EVIDENCE PENDING
 
-Delivered in v0.7.5:
+Framework leveret i v0.8.2.
 
-- shared `Sections` tree and Inspector conventions;
-- Header/Footer template list and visual editor;
-- drag/reorder and keyboard movement;
-- typography/design/layout fields with server-side roundtrip validation;
-- live admin preview;
-- global assignment remains shadow-only.
+Krævet manuel evidence:
 
-Public Header/Footer replacement is not enabled.
-
-## I3 — Menu Builder v2 — COMPLETE IN SHADOW/ADMIN
-
-Delivered in v0.7.6 and extended in v0.7.8:
-
-- one generic menu data source;
-- nested drag/drop with validation;
-- desktop/mobile presentation presets;
-- keyboard preview;
-- optional icon/badge/mega-panel `ComponentId`;
-- **available pages are explicitly selected into the menu**; pages may exist without being menu items;
-- removing a menu item does not delete or change the WordPress page.
-
-Public menu replacement is not enabled.
-
-## I4 — Side Health editor panel — COMPLETE
-
-Delivered in v0.7.7 and UX-adjusted in v0.8.5:
-
-- deterministic Design/Mobile/Accessibility/Performance/SEO analysis on the currently edited state;
-- issue links to concrete editor elements;
-- hard failures kept separate from the numeric score;
-- read-only analysis — never auto-rewrites content;
-- Side Health starts **collapsed** in Inspector so normal element settings remain visible.
-
-## I5 — Asset Manager UI — COMPLETE
-
-Delivered in v0.7.8:
-
-- collections/folders/tags over native WordPress Media IDs;
-- usage inspector;
-- WordPress post-meta aware MediaId detection;
-- focal point UI;
-- WebP/AVIF derivatives named `*.h18.webp` / `*.h18.avif`;
-- existing originals and existing derivatives are never overwritten;
-- SHA-256 duplicate reporting;
-- no automatic deletion.
-
-## I6 — Portability UI — COMPLETE
-
-Delivered in v0.7.9:
-
-- page/global-style export and validation;
-- artifact export/import for components/templates/menus/forms;
-- import always begins as dry-run;
-- conflict/remap/broken-asset report;
-- signed plan token bound to exact package/strategy/plan;
-- explicit confirmation before mutation;
-- automatic pre-import backup;
-- imports write only to an isolated Portability Workspace in this phase;
-- page cutover remains reserved for I10.
-
-## I7 — Permissions / Design Lock UI — COMPLETE
-
-Delivered in v0.8.0:
-
-- preview capability/role changes before installation;
-- named role/capability recipes;
-- design/structure lock controls;
-- component editable inputs;
-- additive-only installation — no automatic `remove_role`, `remove_cap` or user-role reassignment;
-- current legacy `edit_pages` access remains available during migration.
-
-## I8 — AI UI/provider configuration — COMPLETE
-
-Delivered in v0.8.1:
-
-- provider-neutral registry;
-- settings store enabled/provider-id only — not provider credentials;
-- text/layout/design/accessibility suggestion sandbox;
-- suggestions remain pending until explicit acceptance;
-- signed acceptance is bound to exact proposal state;
-- accepted proposal yields reversible Apply/Undo data;
-- no direct page-write path.
-
-## I9 — Manual QA evidence dashboard — FRAMEWORK COMPLETE / EVIDENCE PENDING
-
-Delivered in v0.8.2.
-
-Required manual evidence:
-
-1. latest Chrome brand test;
-2. latest Edge brand test;
-3. latest Firefox brand test;
-4. latest Safari brand test;
+1. seneste Chrome brand test;
+2. seneste Edge brand test;
+3. seneste Firefox brand test;
+4. seneste Safari brand test;
 5. screen-reader core flow;
 6. `test2` live-site E2E;
 7. Vehicle/Event/Gallery visual/function regression;
-8. migration/rollback on a live copy.
+8. migration/rollback på en live kopi.
 
-The automated rollback simulation/preflight does **not** satisfy the live-copy gate.
+Automatisk Chromium/Firefox/WebKit, security-audit og rollback-simulation er regressionsgates, men opfylder ikke de manuelle live-gates ovenfor.
 
-Release readiness remains false while any required manual evidence is missing.
+## I10 — FINAL CONTROLLED CONVERSION — PUBLIC CUTOVER FORTSAT LÅST
 
-## I10 — Final controlled conversion — ACTIVE, PUBLIC CUTOVER STILL LOCKED
-
-Fixed conversion order:
+Fast rækkefølge:
 
 1. comparison page;
 2. Hjem;
 3. Om foreningen;
 4. Kontakt;
 5. Bliv medlem;
-6. Vehicle/Event/Gallery only after protected compatibility gates;
-7. legacy removal last.
+6. Vehicle/Event/Gallery først efter særskilte protected-domain gates;
+7. legacy removal til sidst.
 
-### I10 implementation slices
+### I10 slices
 
-- **I10-A — Planner/shadow workspace (v0.8.3, complete):**
-  - fixed conversion order;
-  - global I9 gate evaluation;
-  - copy-only shadow records;
-  - no activate/cutover/publish handler.
+- **I10-A — Planner/shadow workspace (v0.8.3):** ✅ complete.
+- **I10-B — Shadow acceptance ledger (v0.8.4):** ✅ complete.
+- **UX-1 — Auto-kasser + Tabel + Side Health collapse (v0.8.5):** ✅ complete.
+- **I10-C — Signed cutover preflight (v0.8.6):** ✅ complete, men `Executable=false` og `PublicMutationAvailable=false`.
+- **I10-D — Public comparison-page cutover:** ⛔ blocked af I9 live/manual gates.
+- **I10-E — Core page cutover:** ⛔ blocked; Hjem → Om → Kontakt → Bliv medlem én ad gangen.
+- **I10-F — Protected domain cutover:** ⛔ blocked; særskilt compatibility proof kræves.
+- **I10-G — Legacy removal:** ⛔ blocked indtil alle konverterede domæner er accepteret og rollback-retention kan ophøre.
 
-- **I10-B — Shadow acceptance ledger (v0.8.4, complete):**
-  - manual page-specific evidence for desktop/tablet/mobile plus save/preview/revision/rollback;
-  - acceptance derived server-side;
-  - acceptance bound to exact shadow `SourceHash`;
-  - rebuilding a shadow invalidates stale acceptance.
+## Stabiliseret editorhistorik — v0.8.20–v0.8.23
 
-- **UX-1 — Auto-kasser + Table + Side Health collapse (v0.8.5, complete):**
-  - Auto-kasser reuse Grid/Container schema and distribute children evenly;
-  - 1 child = 100%, 2 = 50/50, 3 ≈ 33.3% each, up to 6 columns;
-  - each box retains individual typography/design/spacing/border/shadow/responsive settings;
-  - visual Table tool over sanitized HTML;
-  - Side Health collapsed by default.
+Undo/Redo er manuelt accepteret og fortsat én autoritativ history-stack:
 
-- **I10-C — Signed cutover preflight (v0.8.6, complete):**
-  - compares current legacy-state hash with accepted shadow `SourceHash`;
-  - checks current WordPress Page ID and permalink;
-  - checks I9 manual QA, conversion sequence and shadow acceptance;
-  - HMAC-signs the immutable preflight snapshot;
-  - token expires and becomes invalid if state drifts;
-  - `Executable=false`;
-  - `PublicMutationAvailable=false`;
-  - still no activate/cutover/publish handler.
+- v0.8.20 rettede load-order og strukturelle checkpoints;
+- v0.8.21 bevarer live SELECT/INPUT/TEXTAREA-state og elementtype gennem restore;
+- v0.8.22 registrerer første nye strukturelle handling efter fuld Undo/Redo;
+- v0.8.23 registrerer tekst, farver og billeder som logiske content-history checkpoints;
+- LEGO må ikke introducere en anden drag/drop-motor, parent/child-model eller Undo/Redo-stack.
 
-- **I10-D — Public comparison-page cutover (BLOCKED):**
-  - may only be designed/exposed after all eight I9 manual gates are actually PASS;
-  - must retain explicit backup and rollback;
-  - starts with a non-critical comparison page only.
+## UX / Event / Backup — LEVERET
 
-- **I10-E — Core page cutover (BLOCKED):**
-  - Hjem → Om → Kontakt → Bliv medlem;
-  - one at a time;
-  - previous stage must remain accepted and non-stale.
+### UX-3 — Workspace rails — ✅ v0.8.24
 
-- **I10-F — Protected domain cutover (BLOCKED):**
-  - Vehicle/Event/Gallery remain on protected legacy runtime;
-  - separate compatibility proof and policy change are required.
+- Elementer/Funktioner og Inspector foldes uafhængigt;
+- begge kan være 44 px rails samtidig;
+- state gemmes kun browser-lokalt;
+- tablet/mobile beholder stacked layout.
 
-- **I10-G — Legacy removal (BLOCKED):**
-  - remove legacy code only after final acceptance of every converted page/domain and after rollback retention is no longer required.
+### UX-4 — Ugemt preview — ✅ v0.8.25 + v0.8.27
 
-## Deferred editor / backup backlog
+- preview bruger aktuel levende editor-state uden save/version/public mutation;
+- Desktop / Tablet / Mobil understøttes;
+- v0.8.27 fjerner transient editor-chrome, Direkte Design, image-tools, box-model handles og focal-point fra preview-klonen;
+- `Åbn offentlig side` er fortsat separat og viser gemt/public state.
 
-These items are intentionally deferred while Kasse/Auto-kasser, nested drops and Undo/Redo are stabilized. They must not be mixed into the active Kasse hotfix.
+### EVENT-001 — Automatisk arkiv — ✅ v0.8.26
 
-### UX-3 — Foldable Elementer/Funktioner + Inspector
+- dato før i dag → Tidligere arrangementer;
+- event i dag med sluttid → Kommende indtil sluttid, derefter Tidligere;
+- event i dag uden sluttid → Kommende resten af dagen, Tidligere efter midnat;
+- Kommende sorteres stigende, Tidligere nyeste først;
+- runtime udfører ingen frontend save/post-write/option-write.
 
-- independent collapse controls for the left `Elementer / funktioner` panel and the right `Inspector`;
-- collapsed state becomes a narrow side rail (target 44 px);
-- both panels may be collapsed simultaneously so `Sideopbygning` receives almost the full available width;
-- state is browser-local and must not write page content or schema;
-- existing tablet/mobile stacked behavior remains authoritative below the desktop breakpoint.
+### B1 — Sidebackup restore — ✅ v0.8.28
 
-### UX-4 — Preview current unsaved page
+- **Erstat original:** safety backup før write, samme Page ID/slug/URL og audit;
+- **Opret som kopi:** separat draft med collision-safe `-kopi[-N]` slug;
+- path-containment, capability + nonce og fejlbevarende rollback-data.
 
-- add `Forhåndsvis side` beside normal editor actions;
-- preview must render the **current unsaved editor state**, not only the last saved WordPress page;
-- no page save, version increment, public mutation or menu change is allowed;
-- preview should support Desktop / Tablet / Mobil and visually omit editor chrome, drag handles and Inspector controls;
-- `Åbn offentlig side` remains a separate action showing the last saved/public state.
+### B2 — Versioneret site-backup — ✅ v0.8.29
 
-### B1 — Restore page backups
+- immutable `H18-BACKUP-xxxxxx` ID;
+- canonical manifest/payloads og SHA-256;
+- Hangar18-managed pages, page versions, Site Builder, forms/polls/data og Hangar18-options;
+- referenced original media + nødvendige derivatives;
+- ZIP export/import med security preflight;
+- full restore og selective page restore med signeret/state-bound dry-run;
+- ny B2 safety backup før første mutation;
+- stale restore-lock recovery og audit;
+- standard-B2 indeholder ikke raw database/plugin/theme disaster recovery.
 
-For every readable page contained in a managed backup, expose two explicit restore modes:
+## LEGO-editor backlog
 
-1. **Erstat original**
-   - create a new safety backup of the current original before any write;
-   - restore the selected backup state to the original Page ID/slug;
-   - preserve a clear audit/log entry with source backup/version;
-   - failure must leave the pre-restore safety backup available for rollback.
+Arkitekturregel: **én drag/drop-motor, én parent/child-model, én history-transaction pr. brugerhandling og ét fælles design-/spacing-sprog på tværs af elementtyper.**
 
-2. **Opret som kopi**
-   - create a new WordPress draft;
-   - default title `<originalt navn> - kopi` and collision-safe slug `<original-slug>-kopi[-N]`;
-   - original page, menu assignment and public URL remain untouched;
-   - copied Page Editor data must be rebound to the copy rather than accidentally referencing the original slug/store entry.
+| ID | Status | Leverance |
+|---|---|---|
+| LEGO-001 — Shared object/state model | 🟢 Delvist færdig v0.8.30 | Canonical spacing-state findes; udvides senere til fælles designmodel. |
+| LEGO-002 — Backward-compatible X/Y gap | ✅ v0.8.30 | `LayoutGapPx`/`MobileLayoutGapPx` seedes til X=Y uden migration. |
+| LEGO-003 — Inspector separat X/Y spacing | ✅ v0.8.30 | Separate X/Y controls i Inspector. |
+| LEGO-004 — Per-element margin | ✅ v0.8.30 | Desktop/Mobile Margin X/Y for almindelige elementer. |
+| LEGO-006 — Common element design model | ⬜ Næste efter responsive slice | Fælles typography/color/background/border/radius/spacing/state-kontrakt. |
+| LEGO-009 — Consolidate Kasse design | ⬜ Backlog | Kasse skal bruge samme designmodel som andre elementer, ikke særregler. |
+| LEGO-010 — Kasse internal X/Y gap | ✅ Foundation v0.8.30 | Separate X/Y gaps på Container/Kasse/Grid/Flex i editor-state. |
+| LEGO-011 — Responsive spacing | 🟡 Aktiv v0.8.31 | Tablet + eksplicit arv fra Desktop; Mobile override beholdes. |
+| LEGO-021 — Undo/Redo one step per action | ✅ Stabiliseret / manuelt accepteret | v0.8.20–v0.8.23 er eneste history-owner; LEGO kobles på samme DOM-state. |
+| LEGO-025 — QA suite | 🟡 Aktiv | v0.8.30 har PHP 8.0/8.2/8.3, system Chrome og fuld Chromium/Firefox/WebKit regression; udbygges pr. slice. |
 
-### B2 — Versioned full-site backup / restore / export
+### v0.8.30 — LEGO X/Y spacing foundation — ✅ LEVERET
 
-Extend `Opret samlet backup nu` from a loose JSON snapshot into a versioned, exportable site package.
+- én canonical renderer-neutral spacing-model;
+- Desktop/Mobile `Margin.X/Y` for alle elementer;
+- Desktop/Mobile `Gap.X/Y` for Container/Kasse/Grid/Flex;
+- legacy gap fallback X=Y;
+- canonical hidden row-state gør eksisterende `admin.js`/v0.8.23-history til eneste Undo/Redo-ejer;
+- editor-preview bruger separate `column-gap`/`row-gap`;
+- state gemmes admin-only i `hangar18_ultimate_designer_lego_spacing_v2` og indgår i B2 full backup;
+- ingen public renderer/cutover eller Vehicle/Event/Gallery-ændringer.
 
-Required capabilities:
+### v0.8.31 — Responsive LEGO spacing + selective restore — 🟡 AKTIV NÆSTE SLICE
 
-- assign every completed backup an immutable human-readable backup version/ID, for example `H18-BACKUP-000123`, plus creation UTC and plugin version;
-- package manifest with schema version, SHA-256 checksums and source site identity;
-- include all Hangar18-managed pages and page versions, Header/Footer settings/templates, menu configuration, design/global settings, forms/polls/data, plugin-managed metadata and other required Hangar18 configuration;
-- include a media manifest for every image/file actually referenced by the backed-up site content;
-- export the referenced original media files and required generated derivatives in the package so the backup can be restored on another installation without broken image references;
-- support ZIP export/download of a selected backup version;
-- support validation/dry-run before restore/import: package/schema/checksum, missing/colliding pages, media mapping, URLs and required plugin/runtime version;
-- support **full restore** from a selected backup version, always creating a fresh safety backup first;
-- support selective restore where practical (for example one page) without changing unrelated content;
-- keep restore/import auditable and reversible;
-- never silently replace existing media/pages on import: collisions must be reported and resolved explicitly;
-- investigate whether the package should also contain a database snapshot and/or plugin/theme code for a true whole-WordPress disaster-recovery package; if included, this must be a separate high-risk restore mode with explicit confirmation and hosting compatibility checks.
+Mål:
 
-### DOC-1 — Ultimate Designer visual user manual
+- tilføj **Tablet** til samme canonical spacing-model;
+- Tablet skal kunne stå som **Arv fra Desktop** eller have egne X/Y-overrides;
+- Mobile beholder egne overrides og skal have tydelig arv/override-semantik;
+- Inspector skal vise hvilken device-værdi der er inherited versus eksplicit;
+- editor-preview skal bruge samme device-model uden ny runtime-stack;
+- gamle v0.8.30 states skal normaliseres uden datatab;
+- selective B2 page restore skal gendanne LEGO-spacing for den valgte sides slug uden at ændre andre siders spacing;
+- full B2 restore skal fortsat gendanne hele LEGO-optionen gennem plugin-metadata;
+- Undo/Redo skal fortsat registrere én history-transaction pr. Inspector-handling;
+- PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit regression skal være PASS før merge.
 
-Create a versioned visual user manual after the editor interaction model is stable, so screenshots and instructions correspond to the released runtime rather than an intermediate build.
+## Efter v0.8.31 — næste LEGO-slices
 
-Required manual structure:
+1. **LEGO-006 / LEGO-009:** fælles element- og Kasse-designmodel (typography, foreground/background, border, radius, opacity, shadow, states).
+2. Konsolider eksisterende Direkte Design/Inspector-felter som views over samme canonical design-state frem for parallelle stores.
+3. Responsive design overrides med samme inheritance-kontrakt som spacing.
+4. Udvid QA med Kasse-i-Kasse, Kasse-i-Auto-kasser, element-i-Kasse og Undo/Redo af design+spacing i kombination.
+5. Først derefter større LEGO drag/drop-UX-udvidelser; parent/child- og placement-motoren genbruges.
 
-- **Quick start:** create a page, add an element, edit it in Inspector, preview, save/version and undo/redo;
-- **Element catalogue:** every element/function gets its own entry with screenshot/icon, exact UI name, purpose, when to use it and a short practical example;
-- **Layout catalogue:** explain Section, Container/Kasse, Auto-kasser/Grid, Flex and true Table separately, including which objects may contain which children;
-- **Auto-kasser example:** show 1, 2, 3 and more Kasser in a Grid and explain automatic column distribution, `LayoutGapPx`/Mellemrum between Kasser, mobile stacking and per-Kasse padding/design;
-- **Kasse example:** show Text, Image, Button and nested Kasse as children and explain internal `LayoutGapPx`, padding, alignment and nesting-depth rules;
-- **Inspector reference:** explain content, typography, colors, borders, radius, opacity, spacing, responsive overrides, hover/state controls and dynamic bindings;
-- **Drag/drop map:** screenshots showing exactly where an element may be dropped, including visual active-target states for Kasse-in-Kasse and Kasse-in-Auto-kasser;
-- **Responsive guide:** Desktop/Tablet/Mobile controls and which values inherit versus override;
-- **Version/backup guide:** save history, Undo/Redo, page versions, backup/restore, copy restore and full-site backup/export once those functions are released;
-- **Troubleshooting:** common mistakes such as confusing Grid container with Kasse, dropping beside versus inside, hidden/nested source rows, stale browser cache and how to verify the active runtime badge;
-- **Worked recipes:** examples such as two-column Image + Text, three feature cards, hero + CTA, event/contact layout and reusable content blocks;
-- **Accessibility notes:** heading hierarchy, alt text, keyboard operation, contrast and focus states;
-- manual must be tied to a plugin/manual version and show `Gælder for Hangar18 Manager vX.Y.Z`;
-- screenshots must be captured from the same released version the manual describes;
-- provide the manual both as a normal repository/documentation source and as contextual help from wp-admin, for example a `? Hjælp` button linking to the relevant chapter for the currently selected element;
-- later optionally generate a printable/exportable PDF from the same canonical manual source rather than maintaining separate text manually.
+## DOC-1 — Ultimate Designer visuel brugermanual — ⬜ BACKLOG
 
-## Current next actions
+Manualen laves efter editor-interaktionsmodellen er stabil, så screenshots matcher en released runtime.
 
-1. **Stabilize Kasse/Auto-kasser first:** one authoritative placement runtime, correct Kasse→Kasse/Auto-kasser and element→Kasse drop behavior, and deterministic Undo/Redo one history step per user action.
-2. Run and record all I9 manual QA evidence on `test2` after the editor regression is stable.
-3. Fix any remaining live QA / Side Health issues without converting existing pages.
-4. Create or refresh the comparison-page shadow copy.
-5. Record page-specific acceptance against the current `SourceHash`.
-6. Run and persist the signed preflight.
-7. Only then design/approve a separate public activation + rollback mechanism for the comparison page.
+Skal mindst indeholde:
+
+- Quick start;
+- elementkatalog med screenshot/icon, UI-navn, formål og eksempel;
+- Section / Kasse / Auto-kasser / Flex / Tabel;
+- Kasse-i-Kasse og element-i-Kasse drag/drop map;
+- Inspector-reference for content, typography, colors, borders, radius, spacing, responsive og states;
+- Responsive guide med Desktop/Tablet/Mobile og inheritance/override;
+- Undo/Redo, page versions, B1 og B2 backup/restore;
+- troubleshooting og runtime-badges;
+- worked recipes;
+- accessibility-noter;
+- versionsbinding: `Gælder for Hangar18 Manager vX.Y.Z`;
+- samme canonical kilde skal senere kunne generere print/PDF.
+
+## Aktuelle næste handlinger
+
+1. **Implementér og QA v0.8.31:** Tablet + inheritance i canonical LEGO spacing samt selective B2-side-restore af spacing.
+2. Implementér LEGO-006/009 common design model oven på samme object/state-kontrakt.
+3. Udbyg LEGO-025 QA for kombineret spacing/design/nesting/history.
+4. Kør og registrér alle I9 live/manual evidence-gates på `test2` efter editorregressionen er stabil.
+5. Ret eventuelle live QA / Side Health issues uden public konvertering.
+6. Refresh comparison-page shadow copy og registrér page-specific acceptance mod aktuel `SourceHash`.
+7. Kør signed preflight igen.
+8. Public comparison-page activation designes først, når alle I9 gates faktisk er PASS.
