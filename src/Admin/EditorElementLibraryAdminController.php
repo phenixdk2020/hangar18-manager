@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Hangar18\UltimateDesigner\Admin;
 
 /**
- * Admin-only UX enhancer for the existing Sider element palette.
+ * Admin-only UX enhancers for the existing Sider element palette/workspace.
  *
- * Search, categories and favorites operate entirely on the rendered palette.
- * Favorites are browser-local and this controller introduces no page storage,
- * public renderer, schema migration or cutover path.
+ * Search, categories, favorites and collapsible workspace widgets operate
+ * entirely on the rendered editor. Browser-local state introduces no page
+ * storage, public renderer, schema migration or cutover path.
  */
 final class EditorElementLibraryAdminController
 {
@@ -38,6 +38,8 @@ final class EditorElementLibraryAdminController
         $historyPath = $pluginDir . '/assets/ultimate-designer-history-preload-v0821.js';
         $postRestorePath = $pluginDir . '/assets/ultimate-designer-history-post-restore-v0822.js';
         $contentHistoryPath = $pluginDir . '/assets/ultimate-designer-history-content-v0823.js';
+        $workspaceJsPath = $pluginDir . '/assets/ultimate-designer-workspace-widgets.js';
+        $workspaceCssPath = $pluginDir . '/assets/ultimate-designer-workspace-widgets.css';
 
         /*
          * v0.8.21 remains the header-level history owner: it fixes snapshot
@@ -51,9 +53,7 @@ final class EditorElementLibraryAdminController
             false
         );
 
-        /*
-         * v0.8.22 closes the post-Redo race for structural editor gestures.
-         */
+        /* v0.8.22 closes the post-Redo race for structural editor gestures. */
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-post-restore-v0822',
             $pluginUrl . 'assets/ultimate-designer-history-post-restore-v0822.js',
@@ -64,9 +64,7 @@ final class EditorElementLibraryAdminController
 
         /*
          * v0.8.23 applies the same post-restore guarantee to edits inside an
-         * element: text/field input, direct design colors/ranges and image media
-         * controls. It preserves the first new content checkpoint after Undo/Redo
-         * without introducing a second history stack or persistence path.
+         * element without introducing a second history stack.
          */
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-content-v0823',
@@ -98,6 +96,29 @@ final class EditorElementLibraryAdminController
             $pluginUrl . 'assets/ultimate-designer-element-library.css',
             [],
             is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.7'
+        );
+
+        /*
+         * UX-3/v0.8.24 is browser-local workspace chrome only. It is loaded
+         * after the stable history stack and cannot mutate page/schema state.
+         */
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-workspace-widgets',
+            $pluginUrl . 'assets/ultimate-designer-workspace-widgets.js',
+            [
+                'jquery',
+                'hangar18-manager-admin',
+                'hangar18-ultimate-designer-element-library',
+                'hangar18-ultimate-designer-history-content-v0823',
+            ],
+            is_file($workspaceJsPath) ? (string) filemtime($workspaceJsPath) : '0.8.24',
+            true
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-workspace-widgets',
+            $pluginUrl . 'assets/ultimate-designer-workspace-widgets.css',
+            ['hangar18-ultimate-designer-element-library'],
+            is_file($workspaceCssPath) ? (string) filemtime($workspaceCssPath) : '0.8.24'
         );
 
         // v0.8.17-v0.8.20 history implementations remain rollback archaeology.
