@@ -8,6 +8,7 @@ on:
       - agent/v0818-history-pending-timer-selection
       - agent/v0819-history-preload-structural-checkpoints
       - agent/v0821-history-form-state-clone
+      - agent/v0822-post-redo-structural-history
   pull_request:
     paths:
       - 'assets/ultimate-designer-nesting-tools.js'
@@ -15,6 +16,7 @@ on:
       - 'assets/ultimate-designer-history-v0818.js'
       - 'assets/ultimate-designer-history-preload-v0820.js'
       - 'assets/ultimate-designer-history-preload-v0821.js'
+      - 'assets/ultimate-designer-history-post-restore-v0822.js'
       - 'src/Admin/EditorLayoutToolsAdminController.php'
       - 'src/Admin/EditorElementLibraryAdminController.php'
       - 'tests/Architecture/browser/**'
@@ -36,4 +38,4 @@ jobs:
       - run: >-
           npx playwright test
           -c tests/Architecture/browser/playwright.system-chrome.config.cjs
-          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible|trusted edit immediately before Undo|Ctrl\+Z starts the same restore latch|Undo preserves the currently selected element|two image edits Undo once|Undo removing selected image|genuinely pending edit is flushed once|two structural image additions are two checkpoints|image element type survives Undo and Redo|Undo clears historical text selection|pending text edit is flushed exactly once"
+          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible|trusted edit immediately before Undo|Ctrl\+Z starts the same restore latch|Undo preserves the currently selected element|two image edits Undo once|Undo removing selected image|genuinely pending edit is flushed once|two structural image additions are two checkpoints|image element type survives Undo and Redo|new structural edit after full Undo and Redo cycle becomes a new checkpoint|Undo clears historical text selection|pending text edit is flushed exactly once"
