@@ -46,7 +46,7 @@ grep -F "restoreSelectivePageVersions" "$RESTORE" >/dev/null
 grep -F "SiteBackupSecurityPolicy::assertManifestSafe" "$COORD" >/dev/null
 grep -F "STALE_LOCK_SECONDS" "$COORD" >/dev/null
 grep -F "SafetyBackupId" "$COORD" >/dev/null
-grep -F "-failed" "$COORD" >/dev/null
+grep -F -- "-failed" "$COORD" >/dev/null
 
 # Imported packages are bounded before extraction/restore.
 grep -F "MAX_ZIP_BYTES" "$SECURITY" >/dev/null
