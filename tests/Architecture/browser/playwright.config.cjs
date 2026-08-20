@@ -2,7 +2,7 @@ const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: __dirname,
-  testMatch: /(runtime|history-guard-v0816|history-restore-latch-v0817|history-pending-v0818|history-preload-v0819|lego-spacing-v0830)\.spec\.cjs/,
+  testMatch: /(runtime|history-guard-v0816|history-restore-latch-v0817|history-pending-v0818|history-preload-v0819|lego-spacing-v0830|lego-spacing-v0831)\.spec\.cjs/,
   timeout: 30000,
   fullyParallel: false,
   retries: 0,

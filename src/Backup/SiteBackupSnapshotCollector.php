@@ -150,7 +150,10 @@ final class SiteBackupSnapshotCollector
         if (!(str_starts_with($name, 'hangar18_') || str_starts_with($name, 'h18_'))) {
             return false;
         }
-        return !preg_match('/(_transient|update_lock|update_state|notice_|backup_restore_audit|site_backup_catalog|site_backup_restore_plan)/', $name);
+        // Restore coordination/audit/catalog state is operational, not portable
+        // application state. In particular, including a stale restore lock in
+        // currentStateHash() would make its own recovery invalidate the dry-run.
+        return !preg_match('/(_transient|update_lock|update_state|notice_|backup_restore_audit|site_backup_catalog|site_backup_restore)/', $name);
     }
 
     /** @param array<string,mixed> $options @return array<string,mixed> */

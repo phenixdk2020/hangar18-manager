@@ -7,7 +7,7 @@ namespace Hangar18\UltimateDesigner\Admin;
 use Hangar18\UltimateDesigner\Editor\LegoSpacingModel;
 
 /**
- * Admin-only persistence bridge for the LEGO X/Y spacing foundation.
+ * Admin-only persistence bridge for the canonical responsive LEGO spacing state.
  *
  * Inspector controls edit one canonical hidden state field inside the existing
  * section row. The existing page-history engine therefore remains the only
@@ -39,8 +39,8 @@ final class EditorLegoSpacingAdminController
 
         $pluginDir = dirname(__DIR__, 2);
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
-        $jsPath = $pluginDir . '/assets/ultimate-designer-lego-spacing-v0830.js';
-        $cssPath = $pluginDir . '/assets/ultimate-designer-lego-spacing-v0830.css';
+        $jsPath = $pluginDir . '/assets/ultimate-designer-lego-spacing-v0831.js';
+        $cssPath = $pluginDir . '/assets/ultimate-designer-lego-spacing-v0831.css';
 
         /*
          * Header load is intentional. Its jQuery-ready callback is registered
@@ -48,29 +48,30 @@ final class EditorLegoSpacingAdminController
          * canonical hidden state field is part of that single history model.
          */
         wp_enqueue_script(
-            'hangar18-ultimate-designer-lego-spacing-v0830',
-            $pluginUrl . 'assets/ultimate-designer-lego-spacing-v0830.js',
+            'hangar18-ultimate-designer-lego-spacing-v0831',
+            $pluginUrl . 'assets/ultimate-designer-lego-spacing-v0831.js',
             ['jquery', 'hangar18-ultimate-designer-history-content-v0823'],
-            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.30',
+            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.31',
             false
         );
         wp_enqueue_style(
-            'hangar18-ultimate-designer-lego-spacing-v0830',
-            $pluginUrl . 'assets/ultimate-designer-lego-spacing-v0830.css',
+            'hangar18-ultimate-designer-lego-spacing-v0831',
+            $pluginUrl . 'assets/ultimate-designer-lego-spacing-v0831.css',
             [],
-            is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.30'
+            is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.31'
         );
 
         $store = get_option(self::OPTION, []);
         wp_localize_script(
-            'hangar18-ultimate-designer-lego-spacing-v0830',
-            'H18LegoSpacingV0830',
+            'hangar18-ultimate-designer-lego-spacing-v0831',
+            'H18LegoSpacingV0831',
             [
-                'version' => '0.8.30',
+                'version' => '0.8.31',
                 'schemaVersion' => LegoSpacingModel::SCHEMA_VERSION,
                 'pages' => is_array($store) ? $store : [],
                 'limits' => [
                     'desktop' => LegoSpacingModel::DESKTOP_MAX,
+                    'tablet' => LegoSpacingModel::TABLET_MAX,
                     'mobile' => LegoSpacingModel::MOBILE_MAX,
                 ],
             ]
