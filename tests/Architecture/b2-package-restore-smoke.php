@@ -26,7 +26,19 @@ final class WP_Error
     public function __construct(private string $message){}
     public function get_error_message(): string { return $this->message; }
 }
-final class Hangar18_Manager { public const VERSION='0.8.29'; }
+final class Hangar18_Manager { public const VERSION='0.8.31'; }
+final class B2Wpdb
+{
+    public string $options='wp_options';
+    public function esc_like(string $value): string { return $value; }
+    public function prepare(string $query, ...$args): string { return $query; }
+    public function get_col(string $query): array
+    {
+        return array_values(array_filter(array_keys($GLOBALS['b2_options']), static function(string $name): bool {
+            return str_starts_with($name,'hangar18_') || str_starts_with($name,'h18_');
+        }));
+    }
+}
 
 $GLOBALS['b2_tmp']=sys_get_temp_dir().'/h18-b2-'.bin2hex(random_bytes(4));
 $GLOBALS['b2_options']=[];
@@ -34,6 +46,7 @@ $GLOBALS['b2_posts']=[];
 $GLOBALS['b2_meta']=[];
 $GLOBALS['b2_thumbs']=[];
 $GLOBALS['b2_next_id']=100;
+$GLOBALS['wpdb']=new B2Wpdb();
 
 function b2Assert(bool $ok,string $message): void { if(!$ok){throw new RuntimeException($message);} }
 function sanitize_title(string $v): string { $v=strtolower(trim($v));$v=preg_replace('/[^a-z0-9-]+/','-',$v)??'';return trim($v,'-'); }
@@ -81,6 +94,11 @@ $GLOBALS['b2_options']['hangar18_manager_pages_v1']=['hjem'=>['ContentVersion'=>
 $GLOBALS['b2_options']['hangar18_manager_page_versions_v1']=['hjem'=>[['Version'=>1]],'kontakt'=>[['Version'=>1]]];
 $GLOBALS['b2_options']['hangar18_manager_active_menu']='main-original';
 $GLOBALS['b2_options']['hangar18_manager_site_menus_v1']=['main'=>['Items'=>[['slug'=>'hjem'],['slug'=>'kontakt']]]];
+$GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']=[
+    'hjem'=>['SchemaVersion'=>2,'Sections'=>['grid-1'=>['SchemaVersion'=>2,'Desktop'=>['Margin'=>['X'=>4,'Y'=>6],'Gap'=>['X'=>18,'Y'=>20]],'Tablet'=>['InheritDesktop'=>true,'Margin'=>['X'=>4,'Y'=>6],'Gap'=>['X'=>18,'Y'=>20]],'Mobile'=>['InheritDesktop'=>false,'Margin'=>['X'=>2,'Y'=>3],'Gap'=>['X'=>10,'Y'=>11]]]]],
+    'kontakt'=>['SchemaVersion'=>2,'Sections'=>['contact-1'=>['SchemaVersion'=>2,'Desktop'=>['Margin'=>['X'=>1,'Y'=>1],'Gap'=>['X'=>12,'Y'=>12]],'Tablet'=>['InheritDesktop'=>true,'Margin'=>['X'=>1,'Y'=>1],'Gap'=>['X'=>12,'Y'=>12]],'Mobile'=>['InheritDesktop'=>false,'Margin'=>['X'=>0,'Y'=>0],'Gap'=>['X'=>8,'Y'=>8]]]]],
+];
+$baselineLego=$GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2'];
 
 SiteBackupSecurityPolicy::hardenStorage();
 $packages=new SiteBackupPackageService();
@@ -96,10 +114,12 @@ if(class_exists(ZipArchive::class)){
     b2Assert(($zipReport['Entries']??0)>0,'Exported ZIP must pass security inspection.');
 }
 
-// Full restore roundtrip.
+// Full restore roundtrip, including the complete LEGO option.
 $GLOBALS['b2_posts'][9]->post_content='<!-- CHANGED -->';
 $GLOBALS['b2_options']['hangar18_manager_pages_v1']['hjem']=['ContentVersion'=>99,'Sections'=>[['Key'=>'changed']]];
 $GLOBALS['b2_options']['hangar18_manager_active_menu']='main-changed';
+$GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['hjem']['Sections']['grid-1']['Desktop']['Gap']['X']=99;
+$GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['kontakt']['Sections']['contact-1']['Desktop']['Gap']['X']=77;
 $coordinator=new SiteBackupRestoreCoordinator($packages);
 $plan=$coordinator->plan('H18-BACKUP-000001','full');
 b2Assert(($plan['Executable']??false)===true,'Full restore dry-run must be executable.');
@@ -108,22 +128,29 @@ b2Assert(($result['SafetyBackupId']??'')==='H18-BACKUP-000002','Full restore mus
 b2Assert(str_contains($GLOBALS['b2_posts'][9]->post_content,'ORIGINAL'),'Full restore must restore page content.');
 b2Assert(($GLOBALS['b2_options']['hangar18_manager_pages_v1']['hjem']['ContentVersion']??0)===1,'Full restore must restore page editor state.');
 b2Assert($GLOBALS['b2_options']['hangar18_manager_active_menu']==='main-original','Full restore must restore Hangar18 owned options.');
+b2Assert($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']===$baselineLego,'Full restore must restore the complete LEGO spacing option.');
 
-// Selective restore only touches selected page/editor ledger, not another page/menu.
+// Selective restore only touches selected page/editor/version/LEGO ledger, not another page/menu.
 $GLOBALS['b2_posts'][9]->post_content='<!-- HOME NEW -->';
 $GLOBALS['b2_posts'][10]->post_content='<p>CONTACT MUST STAY NEW</p>';
 $GLOBALS['b2_options']['hangar18_manager_pages_v1']['hjem']=['ContentVersion'=>55,'Sections'=>[['Key'=>'home-new']]];
 $GLOBALS['b2_options']['hangar18_manager_pages_v1']['kontakt']=['ContentVersion'=>77,'Sections'=>[['Key'=>'contact-new']]];
 $GLOBALS['b2_options']['hangar18_manager_active_menu']='menu-must-stay';
+$GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['hjem']['Sections']['grid-1']['Desktop']['Gap']['X']=55;
+$GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['kontakt']['Sections']['contact-1']['Desktop']['Gap']['X']=88;
+$contactLegoMustStay=$GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['kontakt'];
 $planPage=$coordinator->plan('H18-BACKUP-000001','page','hjem');
 b2Assert(($planPage['Executable']??false)===true,'Selective page dry-run must be executable.');
 $pageResult=$coordinator->restorePage((string)$planPage['Token']);
 b2Assert(($pageResult['SafetyBackupId']??'')==='H18-BACKUP-000003','Selective restore must create its own safety backup.');
+b2Assert(($pageResult['LegoSpacingRestored']??false)===true,'Selective restore must report selected-page LEGO spacing restore.');
 b2Assert(str_contains($GLOBALS['b2_posts'][9]->post_content,'ORIGINAL'),'Selective restore must restore selected page.');
 b2Assert(str_contains($GLOBALS['b2_posts'][10]->post_content,'CONTACT MUST STAY NEW'),'Selective restore must not overwrite another page.');
 b2Assert(($GLOBALS['b2_options']['hangar18_manager_pages_v1']['hjem']['ContentVersion']??0)===1,'Selective restore must restore selected page editor state.');
 b2Assert(($GLOBALS['b2_options']['hangar18_manager_pages_v1']['kontakt']['ContentVersion']??0)===77,'Selective restore must preserve another page editor state.');
 b2Assert($GLOBALS['b2_options']['hangar18_manager_active_menu']==='menu-must-stay','Selective restore must preserve menu option state.');
+b2Assert($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['hjem']===$baselineLego['hjem'],'Selective restore must restore only selected page LEGO state from package.');
+b2Assert($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['kontakt']===$contactLegoMustStay,'Selective restore must preserve another page LEGO state.');
 
 // Signed dry-run is state-bound; drift blocks execution before a new safety package/write.
 $driftPlan=$coordinator->plan('H18-BACKUP-000001','page','hjem');
@@ -151,7 +178,7 @@ if(class_exists(ZipArchive::class)){
     b2Assert($zipBlocked,'Executable ZIP entry must be rejected before extraction.');
 }
 
-fwrite(STDOUT,"B2 package/export/full+selective restore roundtrip: PASS\n");
+fwrite(STDOUT,"B2 package/export/full+selective restore roundtrip incl LEGO spacing: PASS\n");
 
 function b2Cleanup(string $path): void {if(!is_dir($path))return;foreach(array_diff(scandir($path)?:[],['.','..']) as $item){$child=$path.DIRECTORY_SEPARATOR.$item;if(is_dir($child)){b2Cleanup($child);}else{@unlink($child);}}@rmdir($path);}
 b2Cleanup($GLOBALS['b2_tmp']);
