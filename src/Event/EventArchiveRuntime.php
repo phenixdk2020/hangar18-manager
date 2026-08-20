@@ -93,18 +93,18 @@ final class EventArchiveRuntime
             : '<p>Der er ingen tidligere arrangementer registreret.</p>';
 
         $registerPattern = '#'
-            . '(<div\s+class=(["\'])h18-event-section-heading\2[^>]*>\s*<h2>\s*Kommende arrangementer\s*</h2>\s*</div>\s*'
-            . '<div\s+class=(["\'])h18-event-register\3[^>]*>)'
+            . '(<div\s+class=["\']h18-event-section-heading["\'][^>]*>\s*<h2>\s*Kommende arrangementer\s*</h2>\s*</div>\s*'
+            . '<div\s+class=["\']h18-event-register["\'][^>]*>)'
             . '(.*?)'
-            . '(</div>\s*<div\s+class=(["\'])h18-event-section-heading\5[^>]*>\s*<h2>\s*Tidligere arrangementer\s*</h2>\s*</div>\s*'
-            . '<div\s+class=(["\'])h18-event-register\6[^>]*>)'
+            . '(</div>\s*<div\s+class=["\']h18-event-section-heading["\'][^>]*>\s*<h2>\s*Tidligere arrangementer\s*</h2>\s*</div>\s*'
+            . '<div\s+class=["\']h18-event-register["\'][^>]*>)'
             . '(.*?)'
             . '(</div>\s*<!--\s*/wp:html\s*-->)#si';
 
         $updated = preg_replace_callback(
             $registerPattern,
             static function (array $match) use ($upcoming, $past): string {
-                return $match[1] . $upcoming . $match[4] . $past . $match[8];
+                return $match[1] . $upcoming . $match[3] . $past . $match[5];
             },
             $content,
             1,
