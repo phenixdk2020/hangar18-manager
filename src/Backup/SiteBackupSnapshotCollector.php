@@ -207,7 +207,8 @@ final class SiteBackupSnapshotCollector
             }
             $decoded = [];
             foreach ((array)$values as $value) {
-                $decoded[] = function_exists('maybe_unserialize') ? maybe_unserialize($value) : $value;
+                // get_post_meta() already returns WordPress-decoded values.
+                $decoded[] = $value;
             }
             $result[$key] = count($decoded) === 1 ? $decoded[0] : $decoded;
         }
