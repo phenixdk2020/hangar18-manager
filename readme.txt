@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.22
+Version: 0.8.23
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.23 – Designer — Undo/Redo for tekst, farver og billeder ==
+
+Nyt:
+- Udvider den stabiliserede Undo/Redo-historik, så ændringer inde i eksisterende elementer behandles som rigtige historiktrin — ikke kun indsættelse, flytning og fjernelse af selve elementerne.
+- Tekst- og formularfelter gemmes med normal debounce, så en sammenhængende skrivehandling bliver et logisk Undo-trin frem for ét trin pr. tastetryk.
+- Farver og øvrige Direkte design-felter registreres i historikken og kan fortrydes/gendannes sammen med deres gemte feltværdi.
+- Billedevalg registrerer MediaId og MediaUrl som samme logiske ændring, så Undo kan gendanne det tidligere billede og Redo kan sætte det valgte billede tilbage.
+- Den første tekst-, farve- eller billedeændring umiddelbart efter en Undo/Redo-kæde bliver nu bevaret som et nyt checkpoint i stedet for at blive undertrykt af restore-latchen.
+- v0.8.21 forbliver den autoritative history-owner, v0.8.22 håndterer strukturelle post-restore-handlinger, og v0.8.23 tilføjer en snæver content-history bridge uden en ekstra history-stack eller nye persistence-veje.
+- Nye regressioner verificerer tekst → farve → billede som tre separate Undo/Redo-trin samt første tekst-, farve- og billedeændring direkte efter Redo.
+- Runtime-markøren ved historikstatus viser H0.8.23, så manuel QA kan verificere at den aktive content-history bridge er leveret til browseren.
+- Editor Runtime Fast QA og Architecture QA er bestået, inklusive isolation/protected-domain, PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery, offentlig rendering, URL'er og persistence/cutover er uændrede; LEGO/X-Y-layout afventer fortsat manuel accept af Undo/Redo.
 
 
 == Version 0.8.22 – Designer — registrér nye ændringer efter fuld Undo/Redo ==
