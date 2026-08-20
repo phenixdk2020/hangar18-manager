@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 
-const runtimePath = path.resolve(__dirname, '../../../assets/ultimate-designer-history-preload-v0820.js');
+const runtimePath = path.resolve(__dirname, '../../../assets/ultimate-designer-history-preload-v0821.js');
 const jqueryRuntime = require.resolve('jquery');
 
 function historyRuntimeScript() {
@@ -18,6 +18,7 @@ async function boot(page) {
       <div id="h18-page-sections-sortable">
         <section class="h18-page-section-row is-selected" data-section-type="text" data-key="text-1">
           <input class="h18-page-section-key" value="text-1">
+          <select class="h18-page-section-type"><option value="text" selected>Tekst</option><option value="image">Billede</option></select>
           <div class="h18-page-section-header">Tekst</div>
           <div class="h18-page-section-body"><input class="payload" value="Overskrift"></div>
         </section>
@@ -42,11 +43,10 @@ async function boot(page) {
     let editorHistoryTimer = null;
 
     function canonicalHtml() {
-      const clone = sections.cloneNode(true);
+      // Mirror editorHistorySnapshot(): the production editor uses jQuery.clone().
+      // v0.8.21 must preserve live SELECT/INPUT/TEXTAREA properties in that clone.
+      const clone = window.jQuery(sections).clone(false, false).get(0);
       clone.querySelectorAll('.is-selected').forEach((node) => node.classList.remove('is-selected'));
-      // Mirror editorHistoryNormalizeClone() from assets/admin.js: live form
-      // properties must be materialized into serialized attributes/text before
-      // the HTML signature is compared.
       clone.querySelectorAll('input').forEach((input) => {
         if (input.type === 'checkbox' || input.type === 'radio') {
           if (input.checked) { input.setAttribute('checked', 'checked'); }
@@ -89,10 +89,21 @@ async function boot(page) {
       editorHistoryRecordNow();
     }
 
+    function refreshTypesAfterRestore() {
+      Array.from(sections.querySelectorAll(':scope > .h18-page-section-row')).forEach((row) => {
+        const select = row.querySelector('.h18-page-section-type');
+        const type = String(select && select.value ? select.value : 'text');
+        row.dataset.sectionType = type;
+        const header = row.querySelector('.h18-page-section-header');
+        if (header) { header.textContent = type === 'image' ? 'Billede' : 'Tekst'; }
+      });
+    }
+
     function restore(html) {
       sections.innerHTML = html;
-      // Mimic the legacy restore selecting a historical text element and opening
-      // Direct Design. v0.8.20 must clear this transient UI state after Undo.
+      // Mirror production editorHistoryRestore(): refreshPageSectionType() trusts
+      // the restored type SELECT and writes data-section-type from its live value.
+      refreshTypesAfterRestore();
       const text = sections.querySelector('[data-key="text-1"]');
       if (text) { text.classList.add('is-selected'); }
       const inspector = document.getElementById('h18-page-inspector-target');
@@ -124,7 +135,10 @@ async function boot(page) {
         row.className = 'h18-page-section-row is-selected';
         row.dataset.sectionType = 'image';
         row.dataset.key = key;
-        row.innerHTML = '<input class="h18-page-section-key" value="' + key + '"><div class="h18-page-section-header">Billede</div><div class="h18-page-section-body"></div>';
+        // Deliberately keep TEXT as the markup default, exactly like the shared
+        // production template. The live select property is then changed to image.
+        row.innerHTML = '<input class="h18-page-section-key" value="' + key + '"><select class="h18-page-section-type"><option value="text" selected>Tekst</option><option value="image">Billede</option></select><div class="h18-page-section-header">Billede</div><div class="h18-page-section-body"></div>';
+        row.querySelector('.h18-page-section-type').value = 'image';
         sections.querySelectorAll('.is-selected').forEach((node) => node.classList.remove('is-selected'));
         row.classList.add('is-selected');
         sections.appendChild(row);
@@ -139,6 +153,7 @@ async function boot(page) {
           index,
           entries: entries.length,
           keys: Array.from(sections.querySelectorAll(':scope > .h18-page-section-row')).map((row) => row.dataset.key),
+          types: Array.from(sections.querySelectorAll(':scope > .h18-page-section-row')).map((row) => row.dataset.sectionType),
           timer: editorHistoryTimer,
           selected: Array.from(sections.querySelectorAll(':scope > .h18-page-section-row.is-selected')).map((row) => row.dataset.key)
         };
@@ -146,8 +161,9 @@ async function boot(page) {
     };
   });
 
-  await page.waitForFunction(() => Boolean(window.__h18HistoryCoreBridgeV0820));
-  await expect(page.locator('#h18-history-runtime-badge')).toHaveText('H0.8.20');
+  await page.waitForFunction(() => Boolean(window.__h18HistoryCoreBridgeV0821));
+  await expect(page.locator('#h18-history-runtime-badge')).toHaveText('H0.8.21');
+  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0821.cloneBridgeInstalled())).toBe(true);
 }
 
 test('two structural image additions are two checkpoints and Undo stays on one', async ({ page }) => {
@@ -158,6 +174,7 @@ test('two structural image additions are two checkpoints and Undo stays on one',
   expect(current.index).toBe(1);
   expect(current.entries).toBe(2);
   expect(current.keys).toEqual(['text-1', 'image-1']);
+  expect(current.types).toEqual(['text', 'image']);
   expect(current.timer).toBe(0);
 
   await page.evaluate(() => window.__historyHarness.addImage('image-2'));
@@ -165,6 +182,7 @@ test('two structural image additions are two checkpoints and Undo stays on one',
   expect(current.index).toBe(2);
   expect(current.entries).toBe(3);
   expect(current.keys).toEqual(['text-1', 'image-1', 'image-2']);
+  expect(current.types).toEqual(['text', 'image', 'image']);
   expect(current.timer).toBe(0);
 
   await page.locator('#h18-editor-undo').click();
@@ -174,12 +192,35 @@ test('two structural image additions are two checkpoints and Undo stays on one',
   expect(current.index).toBe(1);
   expect(current.entries).toBe(3);
   expect(current.keys).toEqual(['text-1', 'image-1']);
+  expect(current.types).toEqual(['text', 'image']);
 
-  // Regression: legacy failure returned to step 2 after restore fallout.
   await page.waitForTimeout(900);
   current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(1);
   expect(current.keys).toEqual(['text-1', 'image-1']);
+  expect(current.types).toEqual(['text', 'image']);
+});
+
+test('image element type survives Undo and Redo instead of reverting to text', async ({ page }) => {
+  await boot(page);
+
+  await page.evaluate(() => window.__historyHarness.addImage('image-1'));
+  await page.evaluate(() => window.__historyHarness.addImage('image-2'));
+
+  await page.locator('#h18-editor-undo').click();
+  await page.waitForTimeout(550);
+  let current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.keys).toEqual(['text-1', 'image-1']);
+  expect(current.types).toEqual(['text', 'image']);
+  await expect(page.locator('[data-key="image-1"] .h18-page-section-header')).toHaveText('Billede');
+
+  await page.locator('#h18-editor-redo').click();
+  await page.waitForTimeout(550);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.keys).toEqual(['text-1', 'image-1', 'image-2']);
+  expect(current.types).toEqual(['text', 'image', 'image']);
+  await expect(page.locator('[data-key="image-1"] .h18-page-section-header')).toHaveText('Billede');
+  await expect(page.locator('[data-key="image-2"] .h18-page-section-header')).toHaveText('Billede');
 });
 
 test('Undo clears historical text selection and Direct Design after structural restore', async ({ page }) => {
@@ -192,6 +233,7 @@ test('Undo clears historical text selection and Direct Design after structural r
 
   const current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.keys).toEqual(['text-1', 'image-1']);
+  expect(current.types).toEqual(['text', 'image']);
   expect(current.selected).toEqual([]);
   await expect(page.locator('#h18-page-inspector-target')).not.toContainText('DIREKTE DESIGN');
   await expect(page.locator('#h18-page-inspector-target')).toContainText('Klik på');
@@ -205,7 +247,7 @@ test('pending text edit is flushed exactly once before Undo', async ({ page }) =
   expect(current.index).toBe(0);
   expect(current.entries).toBe(1);
   expect(current.timer).toBe(0);
-  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0820.hasPending())).toBe(true);
+  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0821.hasPending())).toBe(true);
 
   await page.locator('#h18-editor-undo').click();
   await page.waitForTimeout(550);
@@ -213,6 +255,6 @@ test('pending text edit is flushed exactly once before Undo', async ({ page }) =
   current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(0);
   expect(current.entries).toBe(2);
-  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0820.hasPending())).toBe(false);
+  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0821.hasPending())).toBe(false);
   await expect(page.locator('[data-key="text-1"] .payload')).toHaveValue('Overskrift');
 });
