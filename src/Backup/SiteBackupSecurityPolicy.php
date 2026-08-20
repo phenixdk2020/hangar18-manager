@@ -74,12 +74,13 @@ final class SiteBackupSecurityPolicy
         if ($zip->open($path) !== true) {
             throw new RuntimeException('B2 ZIP-filen kunne ikke åbnes.');
         }
+        $entryCount = (int) $zip->numFiles;
+        $unpacked = 0;
         try {
-            if ($zip->numFiles < 1 || $zip->numFiles > self::MAX_ZIP_ENTRIES) {
+            if ($entryCount < 1 || $entryCount > self::MAX_ZIP_ENTRIES) {
                 throw new RuntimeException('B2 ZIP-filen har et ugyldigt antal entries.');
             }
-            $unpacked = 0;
-            for ($i = 0; $i < $zip->numFiles; $i++) {
+            for ($i = 0; $i < $entryCount; $i++) {
                 $name = str_replace('\\', '/', (string) $zip->getNameIndex($i));
                 if ($name === '' || str_contains($name, "\0") || str_starts_with($name, '/') || preg_match('/^[A-Za-z]:\//', $name) || preg_match('#(^|/)\.\.(/|$)#', $name)) {
                     throw new RuntimeException('ZIP indeholder en usikker sti: ' . $name);
@@ -115,7 +116,7 @@ final class SiteBackupSecurityPolicy
         } finally {
             $zip->close();
         }
-        return ['Entries'=>$zip->numFiles ?? 0, 'CompressedBytes'=>$compressedBytes, 'UnpackedBytes'=>$unpacked];
+        return ['Entries'=>$entryCount, 'CompressedBytes'=>$compressedBytes, 'UnpackedBytes'=>$unpacked];
     }
 
     /** Best-effort web-server guards around the immutable package catalog. */
