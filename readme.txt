@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.17
+Version: 0.8.18
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.18 – Designer — stabil pending-historik og neutral Inspector-selection ==
+
+Nyt:
+- Fortryd/Gendan bruger nu én autoritativ pending history-timer omkring den eksisterende editorHistoryRecordNow-callback, så et allerede afsluttet timer-id ikke kan blive genafspillet under næste Undo/Redo.
+- Den konkrete manuelle fejl 2 → 1 → 2 efter indsættelse af Billede-elementer er reproduceret i en målrettet browser-regression og er rettet ved at returnere et ikke-stale core timer-handle og nulstille den faktiske pending callback efter execution.
+- Hvis Undo/Redo startes mens en ægte brugerændring stadig venter på history-capture, flushes den præcis én gang før restore; core kan derefter ikke flush'e den samme ændring igen.
+- Syntetiske history-captures fra restore, preview-rebuild og hjælpe-runtimes kasseres fortsat mens restore-latchen er aktiv.
+- Inspector-selection behandles nu som transient UI-state: hvis det valgte element stadig findes efter Undo/Redo, bevares det; hvis elementet blev fjernet af Undo, ryddes selection i stedet for at falde tilbage til et historisk selectedKey.
+- Fejlen hvor et gammelt Tekst-element blev valgt og viste Direkte design efter Undo af Billede-elementer er dækket af den nye regressionstest.
+- v0.8.17 history-runtime beholdes kun som rollback-reference og enqueues ikke parallelt med v0.8.18.
+- Editor Runtime Fast QA og Architecture QA er bestået, inklusive PHP 8.0/8.2/8.3, protected-domain/isolation checks samt Chromium, Firefox og WebKit.
+- Kasse/Auto-kasser, Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og persistence/cutover er uændrede og beskyttede.
+- LEGO-layout og X/Y-spacing afventer fortsat manuel accept af Undo/Redo-stabiliteten.
 
 
 == Version 0.8.17 – Designer — deterministisk Undo/Redo restore-latch ==
