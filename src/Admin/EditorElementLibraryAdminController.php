@@ -37,6 +37,7 @@ final class EditorElementLibraryAdminController
         $cssPath = $pluginDir . '/assets/ultimate-designer-element-library.css';
         $historyPath = $pluginDir . '/assets/ultimate-designer-history-preload-v0821.js';
         $postRestorePath = $pluginDir . '/assets/ultimate-designer-history-post-restore-v0822.js';
+        $contentHistoryPath = $pluginDir . '/assets/ultimate-designer-history-content-v0823.js';
 
         /*
          * v0.8.21 remains the header-level history owner: it fixes snapshot
@@ -51,18 +52,31 @@ final class EditorElementLibraryAdminController
         );
 
         /*
-         * v0.8.22 closes the remaining post-Redo race. A known structural user
-         * gesture (palette insert/drag, duplicate/delete, reorder, etc.) is new
-         * user intent even if it begins inside v0.8.21's short restore-release
-         * guard window. The bridge guarantees that this first structure change
-         * becomes its own checkpoint instead of being merged with the prior one.
-         * It owns no separate history stack and writes no persisted data.
+         * v0.8.22 closes the post-Redo race for structural editor gestures.
          */
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-post-restore-v0822',
             $pluginUrl . 'assets/ultimate-designer-history-post-restore-v0822.js',
             ['jquery', 'hangar18-ultimate-designer-history-preload-v0821'],
             is_file($postRestorePath) ? (string) filemtime($postRestorePath) : '0.8.22',
+            false
+        );
+
+        /*
+         * v0.8.23 applies the same post-restore guarantee to edits inside an
+         * element: text/field input, direct design colors/ranges and image media
+         * controls. It preserves the first new content checkpoint after Undo/Redo
+         * without introducing a second history stack or persistence path.
+         */
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-history-content-v0823',
+            $pluginUrl . 'assets/ultimate-designer-history-content-v0823.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-history-preload-v0821',
+                'hangar18-ultimate-designer-history-post-restore-v0822',
+            ],
+            is_file($contentHistoryPath) ? (string) filemtime($contentHistoryPath) : '0.8.23',
             false
         );
 
@@ -74,6 +88,7 @@ final class EditorElementLibraryAdminController
                 'hangar18-manager-admin',
                 'hangar18-ultimate-designer-history-preload-v0821',
                 'hangar18-ultimate-designer-history-post-restore-v0822',
+                'hangar18-ultimate-designer-history-content-v0823',
             ],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.7',
             true
@@ -86,6 +101,6 @@ final class EditorElementLibraryAdminController
         );
 
         // v0.8.17-v0.8.20 history implementations remain rollback archaeology.
-        // v0.8.21 is the owner; v0.8.22 is only its post-restore intent bridge.
+        // v0.8.21 is the owner; v0.8.22/v0.8.23 are narrow post-restore bridges.
     }
 }
