@@ -7,7 +7,8 @@
         restoreLatched: false,
         selectionKey: '',
         preserveSelection: false,
-        selectionToken: 0
+        selectionToken: 0,
+        trustedReleaseBlockedUntil: 0
     };
 
     document.documentElement.setAttribute('data-h18-v0817-history-latch', '1');
@@ -32,6 +33,11 @@
 
         guard.beginRestoreLatchV0817 = function (milliseconds) {
             state.restoreLatched = true;
+            // Browser Ctrl/Cmd+Z may emit trusted beforeinput/historyUndo as part
+            // of the SAME keyboard gesture. That event is not a new edit and may
+            // not release the restore latch. 80 ms covers the originating event
+            // sequence without delaying a subsequent human action in practice.
+            state.trustedReleaseBlockedUntil = Date.now() + 80;
             if (typeof guard.suppress === 'function') {
                 guard.suppress(Math.max(1200, Number(milliseconds) || 0));
             }
@@ -39,6 +45,7 @@
 
         guard.releaseRestoreLatchV0817 = function () {
             state.restoreLatched = false;
+            state.trustedReleaseBlockedUntil = 0;
         };
 
         guard.isRestoreLatchedV0817 = function () {
@@ -53,10 +60,13 @@
         };
 
         guard.markTrustedEdit = function (milliseconds) {
-            // A NEW trusted edit after Undo/Redo is the only thing that may
-            // release the restore latch. Synthetic restore events never call
-            // markTrustedEdit because the v0.8.16 bridge requires isTrusted.
+            // Ignore trusted events that belong to the Undo/Redo gesture itself.
+            // Only a subsequent genuine action may open history capture again.
+            if (state.restoreLatched && Date.now() < state.trustedReleaseBlockedUntil) {
+                return;
+            }
             state.restoreLatched = false;
+            state.trustedReleaseBlockedUntil = 0;
             if (baseMarkTrustedEdit) {
                 baseMarkTrustedEdit(milliseconds);
             }
@@ -228,6 +238,7 @@
                 guard.releaseRestoreLatchV0817();
             } else {
                 state.restoreLatched = false;
+                state.trustedReleaseBlockedUntil = 0;
             }
         }
     };
