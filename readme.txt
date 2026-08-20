@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.24
+Version: 0.8.25
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.25 – Designer — forhåndsvis ugemte ændringer ==
+
+Nyt:
+- Tilføjer UX-4: Forhåndsvis side viser den aktuelle levende editor-state uden at gemme eller versionere siden.
+- Preview bygges browser-lokalt fra Sideopbygning og ændrer ikke den offentlige side, menu eller WordPress post-data.
+- Desktop, Tablet og Mobil kan skiftes direkte i preview-dialogen.
+- Editor-knapper, drag/drop-zoner, formularfelter og runtime-badges fjernes fra preview-klonen.
+- Dialogen understøtter Escape, focus restore og keyboard focus trap.
+- UX-3 foldbare paneler og v0.8.21-v0.8.23 Undo/Redo-runtime er bevaret.
+- Fast QA og Architecture QA er bestået inklusive Chromium/Firefox/WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.24 – Designer — foldbare Elementer/Funktioner og Inspector ==
