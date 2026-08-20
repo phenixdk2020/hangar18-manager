@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.18
+Version: 0.8.19
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.19 – Designer — preloaded historikejer og strukturelle checkpoints ==
+
+Nyt:
+- Historik-ejeren indlæses nu inline før assets/admin.js initialiserer sideeditorens historik, så alle efterfølgende editorHistoryRecordNow-planlægninger går gennem én autoritativ runtime fra første editor-tick.
+- Strukturændringer og eksplicitte checkpoints fra legacy-editorens 0–120 ms capture-path registreres nu straks i stedet for at dele debounce-kø med almindelig tekst- og feltredigering.
+- Den konkrete manuelle sekvens Tekst → Billede 1 → Billede 2 → Fortryd er dækket direkte: Billede 1 og Billede 2 bliver separate historiktrin, ét Undo fjerner kun Billede 2, og historikken må ikke hoppe 2 → 1 → 2 efterfølgende.
+- Almindelig tekst- og feltredigering beholder debounce, men en pending ændring flushes præcis én gang før et strukturelt checkpoint eller Undo/Redo.
+- Legacy editorHistoryTimer får altid et ikke-pending handle på 0 for historik-callbacks, så editorHistoryFlushPending ikke kan genafspille et allerede udført timer-id.
+- Undo/Redo rydder transient Inspector-selection og Direkte design efter restore, så et historisk Tekst-element ikke vælges som bivirkning når et Billede-element fjernes.
+- v0.8.17 og v0.8.18 beholdes kun som rollback-assets og enqueues ikke parallelt med v0.8.19.
+- Editor Runtime Fast QA er bestået 12/12, og Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Kasse/Auto-kasser, Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er samt persistence/cutover er uændrede og beskyttede.
+- LEGO-layout og X/Y-spacing afventer fortsat manuel accept af Undo/Redo-stabiliteten i den installerede editor.
 
 
 == Version 0.8.18 – Designer — stabil pending-historik og neutral Inspector-selection ==

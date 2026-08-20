@@ -1,22 +1,22 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.18",
+  "version": "0.8.19",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-20T10:39:23Z",
+  "published_utc": "2026-08-20T11:35:56Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "3e023a29d4c339fdab83e82c3e3eabf8fda7a298c89a92b547e27a024280a0a1",
+  "package_sha256": "0a9d7c5a939fe5265db72f99cb4818d1752f9692854d2e9a00d7387cf0d85505",
   "changelog": [
-    "Fortryd/Gendan bruger nu én autoritativ pending history-timer omkring den eksisterende editorHistoryRecordNow-callback, så et allerede afsluttet timer-id ikke kan blive genafspillet under næste Undo/Redo.",
-    "Den konkrete manuelle fejl 2 → 1 → 2 efter indsættelse af Billede-elementer er reproduceret i en målrettet browser-regression og er rettet ved at returnere et ikke-stale core timer-handle og nulstille den faktiske pending callback efter execution.",
-    "Hvis Undo/Redo startes mens en ægte brugerændring stadig venter på history-capture, flushes den præcis én gang før restore; core kan derefter ikke flush'e den samme ændring igen.",
-    "Syntetiske history-captures fra restore, preview-rebuild og hjælpe-runtimes kasseres fortsat mens restore-latchen er aktiv.",
-    "Inspector-selection behandles nu som transient UI-state: hvis det valgte element stadig findes efter Undo/Redo, bevares det; hvis elementet blev fjernet af Undo, ryddes selection i stedet for at falde tilbage til et historisk selectedKey.",
-    "Fejlen hvor et gammelt Tekst-element blev valgt og viste Direkte design efter Undo af Billede-elementer er dækket af den nye regressionstest.",
-    "v0.8.17 history-runtime beholdes kun som rollback-reference og enqueues ikke parallelt med v0.8.18.",
-    "Editor Runtime Fast QA og Architecture QA er bestået, inklusive PHP 8.0/8.2/8.3, protected-domain/isolation checks samt Chromium, Firefox og WebKit.",
-    "Kasse/Auto-kasser, Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og persistence/cutover er uændrede og beskyttede.",
-    "LEGO-layout og X/Y-spacing afventer fortsat manuel accept af Undo/Redo-stabiliteten."
+    "Historik-ejeren indlæses nu inline før assets/admin.js initialiserer sideeditorens historik, så alle efterfølgende editorHistoryRecordNow-planlægninger går gennem én autoritativ runtime fra første editor-tick.",
+    "Strukturændringer og eksplicitte checkpoints fra legacy-editorens 0–120 ms capture-path registreres nu straks i stedet for at dele debounce-kø med almindelig tekst- og feltredigering.",
+    "Den konkrete manuelle sekvens Tekst → Billede 1 → Billede 2 → Fortryd er dækket direkte: Billede 1 og Billede 2 bliver separate historiktrin, ét Undo fjerner kun Billede 2, og historikken må ikke hoppe 2 → 1 → 2 efterfølgende.",
+    "Almindelig tekst- og feltredigering beholder debounce, men en pending ændring flushes præcis én gang før et strukturelt checkpoint eller Undo/Redo.",
+    "Legacy editorHistoryTimer får altid et ikke-pending handle på 0 for historik-callbacks, så editorHistoryFlushPending ikke kan genafspille et allerede udført timer-id.",
+    "Undo/Redo rydder transient Inspector-selection og Direkte design efter restore, så et historisk Tekst-element ikke vælges som bivirkning når et Billede-element fjernes.",
+    "v0.8.17 og v0.8.18 beholdes kun som rollback-assets og enqueues ikke parallelt med v0.8.19.",
+    "Editor Runtime Fast QA er bestået 12/12, og Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.",
+    "Kasse/Auto-kasser, Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er samt persistence/cutover er uændrede og beskyttede.",
+    "LEGO-layout og X/Y-spacing afventer fortsat manuel accept af Undo/Redo-stabiliteten i den installerede editor."
   ]
 }
