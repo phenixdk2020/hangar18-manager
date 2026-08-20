@@ -25,7 +25,11 @@ final class EventArchiveRuntime
             return;
         }
         self::$registered = true;
-        add_filter('the_content', [self::class, 'filterContent'], 35);
+
+        // WordPress attaches do_blocks() to the_content at priority 9.
+        // EVENT-001 must classify the raw managed wp:html register first so
+        // its reliable closing block boundary is still present.
+        add_filter('the_content', [self::class, 'filterContent'], 8);
     }
 
     /** @param mixed $content @return mixed */
