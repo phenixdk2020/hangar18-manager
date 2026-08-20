@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.19
+Version: 0.8.20
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.20 – Designer — sikker history-runtime load-order ==
+
+Nyt:
+- Retter en reel load-order-fejl i v0.8.19: history-runtime blev forsøgt tilføjet inline til hangar18-manager-admin før dette script-handle nødvendigvis var lagt i WordPress-køen, så pluginet kunne vise v0.8.19 uden at den nye historikmotor faktisk nåede browseren.
+- Historik-ejeren leveres nu som den dedikerede asset assets/ultimate-designer-history-preload-v0820.js og indlæses i wp-admin-headeren med jQuery som dependency; legacy assets/admin.js forbliver footer-script og kan derfor ikke initialisere historikken først.
+- Strukturelle editorændringer på 0–120 ms capture-path registreres fortsat som separate checkpoints, mens almindelige tekst-/feltændringer beholder debounce og flushes præcis én gang før Undo/Redo eller næste strukturelle checkpoint.
+- Den konkrete regression Tekst → Billede 1 → Billede 2 → Fortryd kører nu direkte mod den faktiske v0.8.20 assetfil og verificerer at ét Undo kun fjerner Billede 2 og ikke efterfølgende hopper tilbage til trin 2.
+- Undo/Redo rydder fortsat historisk Inspector-selection og Direkte design efter restore, så et gammelt Tekst-element ikke vælges som bivirkning når et Billede-element fjernes.
+- Et lille admin-only badge H0.8.20 vises ved historikstatus. Badget er en manuel QA-markør, der beviser at den aktive v0.8.20 history-runtime faktisk er leveret og eksekveret i browseren.
+- v0.8.17–v0.8.19 history-implementationer er rollback-reference og enqueues ikke parallelt med v0.8.20.
+- Editor Runtime Fast QA og Architecture QA er bestået, inklusive isolation/protected-domain, PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Kasse/Auto-kasser, Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er samt persistence/cutover er uændrede og beskyttede.
+- LEGO-layout og X/Y-spacing afventer fortsat manuel accept af Undo/Redo-stabiliteten i den installerede editor.
 
 
 == Version 0.8.19 – Designer — preloaded historikejer og strukturelle checkpoints ==
