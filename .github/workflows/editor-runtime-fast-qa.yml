@@ -11,6 +11,7 @@ on:
       - agent/v0822-post-redo-structural-history
       - agent/v0823-history-element-content
       - agent/lego-responsive-spacing-v0831
+      - agent/lego-common-design-v0832
   pull_request:
     paths:
       - 'assets/ultimate-designer-nesting-tools.js'
@@ -21,10 +22,14 @@ on:
       - 'assets/ultimate-designer-history-post-restore-v0822.js'
       - 'assets/ultimate-designer-history-content-v0823.js'
       - 'assets/ultimate-designer-lego-spacing-v0831.js'
+      - 'assets/ultimate-designer-lego-design-v0832.js'
+      - 'assets/ultimate-designer-lego-design-event-guard-v0832.js'
       - 'src/Admin/EditorLayoutToolsAdminController.php'
       - 'src/Admin/EditorElementLibraryAdminController.php'
       - 'src/Admin/EditorLegoSpacingAdminController.php'
+      - 'src/Admin/EditorLegoDesignAdminController.php'
       - 'src/Editor/LegoSpacingModel.php'
+      - 'src/Editor/LegoDesignModel.php'
       - 'tests/Architecture/browser/**'
       - '.github/workflows/editor-runtime-fast-qa.yml'
 
@@ -44,4 +49,4 @@ jobs:
       - run: >-
           npx playwright test
           -c tests/Architecture/browser/playwright.system-chrome.config.cjs
-          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible|trusted edit immediately before Undo|Ctrl\+Z starts the same restore latch|Undo preserves the currently selected element|two image edits Undo once|Undo removing selected image|genuinely pending edit is flushed once|two structural image additions are two checkpoints|image element type survives Undo and Redo|new structural edit after full Undo and Redo cycle becomes a new checkpoint|text color and selected image are independent Undo Redo checkpoints|first text edit immediately after Redo is recorded as a new checkpoint|first color and image changes after Redo are not lost|Undo clears historical text selection|pending text edit is flushed exactly once|Tablet override survives inherit on/off"
+          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible|trusted edit immediately before Undo|Ctrl\+Z starts the same restore latch|Undo preserves the currently selected element|two image edits Undo once|Undo removing selected image|genuinely pending edit is flushed once|two structural image additions are two checkpoints|image element type survives Undo and Redo|new structural edit after full Undo and Redo cycle becomes a new checkpoint|text color and selected image are independent Undo Redo checkpoints|first text edit immediately after Redo is recorded as a new checkpoint|first color and image changes after Redo are not lost|Undo clears historical text selection|pending text edit is flushed exactly once|Tablet override survives inherit on/off|one color action switches Custom|select controls emit one history event|Kasse uses the exact same canonical controls"
