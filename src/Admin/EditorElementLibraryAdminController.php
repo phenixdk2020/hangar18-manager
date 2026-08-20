@@ -21,6 +21,11 @@ final class EditorElementLibraryAdminController
             return;
         }
         self::$registered = true;
+
+        // v0.8.24 LEGO spacing is registered here so its persisted X/Y state is
+        // hydrated before legacy admin.js records the initial history snapshot.
+        EditorLegoSpacingAdminController::register();
+
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
     }
 
