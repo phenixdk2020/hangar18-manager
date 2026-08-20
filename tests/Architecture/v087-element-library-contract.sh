@@ -61,9 +61,19 @@ grep -F "key === 'k'" "$ADMIN_JS" >/dev/null
 grep -F 'h18-command-palette-open' "$MAIN" >/dev/null
 grep -F '.h18-command-palette-dialog' "$ADMIN_CSS" >/dev/null
 
-# Vehicle/Event/Gallery public code is deliberately untouched by this slice.
-if git diff --name-only origin/main...HEAD | grep -E '(^|/)(Vehicle|Event|Gallery)|vehicle|event|gallery' >/dev/null; then
-  echo 'FAIL: v0.8.7 editor-library slice changed a protected domain path'
+# Historical v0.8.7 rule: the element-library slice itself must not modify the
+# protected Vehicle/Event/Gallery implementations. Later explicitly scoped
+# feature work is validated by its own contract plus protected-domain-contract.
+# EVENT-001 is such an explicit slice and may add only the named runtime/test
+# files below; arbitrary Vehicle/Event/Gallery paths remain rejected here.
+protected_changes="$(
+  git diff --name-only origin/main...HEAD |
+    grep -Ei '(^|/)(Vehicle|Event|Gallery)|vehicle|event|gallery' |
+    grep -Ev '^src/Event/EventArchiveRuntime\.php$|^tests/Architecture/event-auto-archive-(smoke\.php|contract\.sh)$|^\.github/workflows/event-auto-archive-qa\.yml$' || true
+)"
+if [[ -n "$protected_changes" ]]; then
+  echo 'FAIL: v0.8.7 editor-library slice changed an unapproved protected domain path'
+  printf '%s\n' "$protected_changes"
   exit 1
 fi
 
