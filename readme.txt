@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.30
+Version: 0.8.31
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.31 – Designer — responsive LEGO spacing og selektiv backup-restore ==
+
+Nyt:
+- Udvider den canonical LEGO spacing-model til schema 2 med Desktop som basis og Tablet som eksplicit responsive device.
+- Tablet starter med Arv fra Desktop; Tablet og Mobil kan slå inheritance til/fra uden at de gemte X/Y override-værdier slettes.
+- Eksisterende v0.8.30 Mobile Margin/Gap-værdier migreres som eksplicitte overrides, så opgraderingen ikke ændrer eksisterende mobil-layout.
+- Inspector viser Desktop/Tablet/Mobil med tydelig inheritance-status, og editor-preview anvender effektive device-værdier gennem den samme canonical section-row state.
+- Den eksisterende admin.js/history-v0.8.23-motor er fortsat eneste Undo/Redo-ejer; responsive LEGO introducerer ingen parallel history-, drag/drop- eller parent/child-motor.
+- Selective B2 page restore gendanner nu kun den valgte sides LEGO-spacing og bevarer andre siders spacing; ældre backups uden LEGO-state sletter ikke nyere spacing.
+- Retter en B2 stale-lock edge case: restore-koordinationsstate ekskluderes nu fra portable snapshot/current-state hash, så stale-lock recovery ikke kan invalidere sit eget dry-run.
+- B2 QA og LEGO QA er bestået på PHP 8.0/8.2/8.3; system Chrome, Editor Runtime Fast QA samt fuld Architecture QA inklusive Chromium, Firefox og WebKit er bestået.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.30 – Designer — LEGO X/Y spacing foundation ==
