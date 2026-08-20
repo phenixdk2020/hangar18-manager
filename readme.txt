@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.25
+Version: 0.8.26
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.26 – Events — automatisk arkiv efter dato og sluttid ==
+
+Nyt:
+- Tilføjer EVENT-001: Events-overblikket klassificeres dynamisk ved visning efter WordPress' lokale dato og tid, så manuel Gem eller Genbyg eventregister ikke længere er nødvendig for arkivering.
+- Events med en dato før dags dato vises automatisk under Tidligere arrangementer.
+- På selve eventdatoen forbliver eventet under Kommende arrangementer indtil en angivet sluttid er passeret; derefter flyttes det automatisk til arkivet.
+- Hvis et event ikke har en sluttid, forbliver det kommende resten af eventdagen og flyttes automatisk til Tidligere arrangementer efter midnat.
+- Kommende arrangementer sorteres kronologisk, mens Tidligere arrangementer viser de nyeste afsluttede events først.
+- Den eksisterende Event-side, eventkort, HANGAR18-EVENT-DATA og eventskabelon genbruges; runtime udfører ingen frontend save, post-write eller option-write.
+- Eventklassificeringen kører før WordPress do_blocks, så det eksisterende wp:html-eventregister kan omfordeles sikkert og derefter rendres normalt.
+- Dedikeret Event Auto Archive QA er bestået på PHP 8.0/8.2/8.3, og Architecture QA er bestået inklusive protected-domain samt Chromium/Firefox/WebKit.
+- UX-3, UX-4 og den manuelt godkendte v0.8.23 Undo/Redo-historik er bevaret uændret.
 
 
 == Version 0.8.25 – Designer — forhåndsvis ugemte ændringer ==
