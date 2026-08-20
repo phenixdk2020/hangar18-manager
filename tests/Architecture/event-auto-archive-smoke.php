@@ -85,7 +85,7 @@ EventArchiveRuntime::register();
 EventArchiveRuntime::register();
 eventAssert(count($GLOBALS['event_test_filters']) === 1, 'Runtime registration must be idempotent.');
 eventAssert($GLOBALS['event_test_filters'][0][0] === 'the_content', 'Runtime must register only on the_content.');
-eventAssert($GLOBALS['event_test_filters'][0][2] === 35, 'Runtime filter priority changed unexpectedly.');
+eventAssert($GLOBALS['event_test_filters'][0][2] === 8, 'Runtime must execute before WordPress do_blocks priority 9.');
 
 $result = EventArchiveRuntime::filterContent($source);
 eventAssert($result !== $source, 'Events overview should be reclassified at render time.');
