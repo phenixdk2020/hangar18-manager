@@ -10,8 +10,9 @@ BOX_CONTENT='assets/ultimate-designer-box-content-layout.js'
 HISTORY_V0817='assets/ultimate-designer-history-v0817.js'
 HISTORY_V0818='assets/ultimate-designer-history-v0818.js'
 HISTORY_V0820='assets/ultimate-designer-history-preload-v0820.js'
+HISTORY_V0821='assets/ultimate-designer-history-preload-v0821.js'
 
-for file in "$CTRL" "$ELEMENT_CTRL" "$LAYOUT" "$NEST" "$NEST_CSS" "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" "$HISTORY_V0820"; do
+for file in "$CTRL" "$ELEMENT_CTRL" "$LAYOUT" "$NEST" "$NEST_CSS" "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" "$HISTORY_V0820" "$HISTORY_V0821"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -95,9 +96,10 @@ require_contains "$BOX_CONTENT" "document.addEventListener('pointerdown', markTr
 require_contains "$BOX_CONTENT" '.h18-page-section-drag,' 'section drag is not treated as a genuine post-Undo edit'
 require_contains "$BOX_CONTENT" '.h18-builder-palette-item,' 'palette add/drag is not treated as a genuine post-Undo edit'
 
-# v0.8.17/v0.8.18 remain rollback assets only.
+# Older history assets remain rollback references only.
 require_contains "$HISTORY_V0817" 'data-h18-v0817-history-latch' 'v0.8.17 rollback asset is missing'
 require_contains "$HISTORY_V0818" 'data-h18-v0818-history-runtime' 'v0.8.18 rollback asset is missing'
+require_contains "$HISTORY_V0820" 'data-h18-v0820-history-runtime' 'v0.8.20 rollback asset is missing'
 if grep -F 'hangar18-ultimate-designer-history-v0817' "$ELEMENT_CTRL" >/dev/null; then
   echo 'FAIL: v0.8.17 is still enqueued'
   exit 1
@@ -106,30 +108,36 @@ if grep -F 'hangar18-ultimate-designer-history-v0818' "$ELEMENT_CTRL" >/dev/null
   echo 'FAIL: v0.8.18 is still enqueued'
   exit 1
 fi
+if grep -F 'hangar18-ultimate-designer-history-preload-v0820' "$ELEMENT_CTRL" >/dev/null; then
+  echo 'FAIL: v0.8.20 is still enqueued beside v0.8.21'
+  exit 1
+fi
 
-# v0.8.20 is the single active history owner. It is a real header asset, while
-# assets/admin.js remains a footer asset. This avoids the v0.8.19 inline-handle
-# ordering bug where WordPress could discard the bridge before it reached Chrome.
-require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-history-preload-v0820' 'v0.8.20 active history owner is missing'
-require_contains "$ELEMENT_CTRL" 'ultimate-designer-history-preload-v0820.js' 'v0.8.20 history asset path is missing'
+# v0.8.21 is the single active history owner. It remains a real header asset and
+# additionally preserves live form state across the exact clones made by the
+# legacy history snapshot before refreshPageSectionType rehydrates each row.
+require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-history-preload-v0821' 'v0.8.21 active history owner is missing'
+require_contains "$ELEMENT_CTRL" 'ultimate-designer-history-preload-v0821.js' 'v0.8.21 history asset path is missing'
 if grep -F "wp_add_inline_script('hangar18-manager-admin'" "$ELEMENT_CTRL" >/dev/null; then
   echo 'FAIL: active history owner is still coupled to the legacy admin handle'
   exit 1
 fi
-require_contains "$HISTORY_V0820" 'data-h18-v0820-history-runtime' 'v0.8.20 runtime marker is missing'
-require_contains "$HISTORY_V0820" "callback.name === 'editorHistoryRecordNow'" 'v0.8.20 does not own core history scheduling'
-require_contains "$HISTORY_V0820" 'milliseconds <= 120' 'v0.8.20 does not split structural checkpoints from input debounce'
-require_contains "$HISTORY_V0820" 'runPendingHistory();' 'v0.8.20 does not flush pending input once before checkpoints/Undo'
-require_contains "$HISTORY_V0820" 'scheduleSelectionClear' 'v0.8.20 does not clear stale historical Inspector selection'
-require_contains "$HISTORY_V0820" "version: '0.8.20'" 'v0.8.20 runtime identity is missing'
-require_contains "$HISTORY_V0820" "badge.textContent = 'H0.8.20'" 'v0.8.20 live runtime badge is missing'
+require_contains "$HISTORY_V0821" 'data-h18-v0821-history-runtime' 'v0.8.21 runtime marker is missing'
+require_contains "$HISTORY_V0821" "callback.name === 'editorHistoryRecordNow'" 'v0.8.21 does not own core history scheduling'
+require_contains "$HISTORY_V0821" 'milliseconds <= 120' 'v0.8.21 does not split structural checkpoints from input debounce'
+require_contains "$HISTORY_V0821" 'runPendingHistory();' 'v0.8.21 does not flush pending input once before checkpoints/Undo'
+require_contains "$HISTORY_V0821" 'scheduleSelectionClear' 'v0.8.21 does not clear stale historical Inspector selection'
+require_contains "$HISTORY_V0821" 'copyFormControlState' 'v0.8.21 does not preserve live form values in snapshot clones'
+require_contains "$HISTORY_V0821" 'jq.fn.clone = bridgedClone;' 'v0.8.21 clone bridge is not active'
+require_contains "$HISTORY_V0821" "version: '0.8.21'" 'v0.8.21 runtime identity is missing'
+require_contains "$HISTORY_V0821" "badge.textContent = 'H0.8.21'" 'v0.8.21 live runtime badge is missing'
 
 # No second history stack or persistence/cutover path is introduced by extensions.
-if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" "$HISTORY_V0820" "$ELEMENT_CTRL" >/dev/null; then
+if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" "$HISTORY_V0820" "$HISTORY_V0821" "$ELEMENT_CTRL" >/dev/null; then
   echo 'FAIL: Undo extensions introduced a second editor history stack'
   exit 1
 fi
-if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" "$HISTORY_V0820" "$ELEMENT_CTRL" >/dev/null; then
+if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" "$HISTORY_V0820" "$HISTORY_V0821" "$ELEMENT_CTRL" >/dev/null; then
   echo 'FAIL: Undo/Kasse hotfix introduced a public persistence/cutover primitive'
   exit 1
 fi
@@ -140,7 +148,8 @@ node --check "$BOX_CONTENT"
 node --check "$HISTORY_V0817"
 node --check "$HISTORY_V0818"
 node --check "$HISTORY_V0820"
+node --check "$HISTORY_V0821"
 php -l "$CTRL" >/dev/null
 php -l "$ELEMENT_CTRL" >/dev/null
 
-echo 'v0.8.15-v0.8.20 Kasse/Undo single-active-history-owner contract: PASS'
+echo 'v0.8.15-v0.8.21 Kasse/Undo single-active-history-owner contract: PASS'
