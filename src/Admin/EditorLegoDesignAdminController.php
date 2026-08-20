@@ -36,6 +36,7 @@ final class EditorLegoDesignAdminController
         $pluginDir = dirname(__DIR__, 2);
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-lego-design-v0832.js';
+        $guardPath = $pluginDir . '/assets/ultimate-designer-lego-design-event-guard-v0832.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-lego-design-v0832.css';
 
         wp_enqueue_script(
@@ -47,6 +48,13 @@ final class EditorLegoDesignAdminController
                 'hangar18-ultimate-designer-lego-spacing-v0831',
             ],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.32',
+            false
+        );
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-design-event-guard-v0832',
+            $pluginUrl . 'assets/ultimate-designer-lego-design-event-guard-v0832.js',
+            ['hangar18-ultimate-designer-lego-design-v0832'],
+            is_file($guardPath) ? (string) filemtime($guardPath) : '0.8.32',
             false
         );
         wp_enqueue_style(
