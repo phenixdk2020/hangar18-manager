@@ -57,6 +57,8 @@ function eventCard(string $slug, string $title): string
     return '<article class="h18-event-card"><a href="https://example.test/events/' . $slug . '/"><div class="h18-event-card-body"><h3>' . $title . '</h3></div></a></article>';
 }
 
+require_once dirname(__DIR__, 2) . '/src/Event/EventArchiveRuntime.php';
+
 $GLOBALS['event_test_pages'] = [
     new WP_Post(20, 'gammel', 'Gammel', eventMarker(['EventDate'=>'2026-08-15','StartTime'=>'10:00','EndTime'=>'12:00'])),
     new WP_Post(21, 'sluttet-i-dag', 'Sluttet i dag', eventMarker(['EventDate'=>'2026-08-20','StartTime'=>'16:00','EndTime'=>'18:00'])),
