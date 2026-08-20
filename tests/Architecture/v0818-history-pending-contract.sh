@@ -48,7 +48,7 @@ if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|upd
   exit 1
 fi
 
-node --check <(python3 - <<'PY'
+python3 - <<'PY' > /tmp/h18-v0819-history.js
 from pathlib import Path
 import re
 s=Path('src/Admin/EditorElementLibraryAdminController.php').read_text()
@@ -56,7 +56,7 @@ m=re.search(r"private static function enqueueEditorHistoryCoreBridgeV0819\(\): v
 if not m: raise SystemExit(1)
 print(m.group(1))
 PY
-)
+node --check /tmp/h18-v0819-history.js
 php -l "$CTRL" >/dev/null
 
 echo 'v0.8.18 rollback / v0.8.19 preloaded-history successor contract: PASS'
