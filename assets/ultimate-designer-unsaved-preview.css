@@ -1,0 +1,35 @@
+.h18-unsaved-preview-open{margin-left:auto;margin-right:10px;white-space:nowrap}
+.h18-unsaved-preview-modal[hidden]{display:none!important}
+.h18-unsaved-preview-modal{position:fixed;inset:0;z-index:100000;display:flex;align-items:stretch;justify-content:center;padding:24px}
+.h18-unsaved-preview-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.68)}
+.h18-unsaved-preview-dialog{position:relative;z-index:1;display:flex;flex-direction:column;width:min(1600px,calc(100vw - 48px));height:calc(100vh - 48px);background:#f0f0f1;border-radius:10px;box-shadow:0 20px 70px rgba(0,0,0,.35);overflow:hidden}
+.h18-unsaved-preview-toolbar{display:flex;align-items:center;gap:14px;padding:12px 14px;background:#fff;border-bottom:1px solid #dcdcde}
+.h18-unsaved-preview-heading{display:flex;flex-direction:column;gap:2px;min-width:220px;margin-right:auto}
+.h18-unsaved-preview-heading strong{font-size:14px;color:#1d2327}
+.h18-unsaved-preview-heading span{font-size:12px;color:#646970}
+.h18-unsaved-preview-devices{display:flex;align-items:center;gap:6px}
+.h18-unsaved-preview-devices .button.is-active{background:#2271b1;border-color:#2271b1;color:#fff}
+.h18-unsaved-preview-shell{flex:1;min-height:0;overflow:auto;padding:24px;background:#dcdcde}
+.h18-unsaved-preview-viewport{min-height:100%;margin:0 auto;background:#fff;box-shadow:0 3px 16px rgba(0,0,0,.16);transition:width .16s ease,max-width .16s ease}
+.h18-unsaved-preview-viewport.is-desktop{width:100%;max-width:100%}
+.h18-unsaved-preview-viewport.is-tablet{width:768px;max-width:100%}
+.h18-unsaved-preview-viewport.is-mobile{width:390px;max-width:100%}
+.h18-unsaved-preview-stage{min-height:100%;padding:0;background:#fff;overflow:hidden}
+.h18-unsaved-preview-section{margin:0!important;border:0!important;box-shadow:none!important;border-radius:0!important;cursor:default!important}
+.h18-unsaved-preview-section+.h18-unsaved-preview-section{margin-top:0!important}
+.h18-unsaved-preview-empty{padding:50px 24px;text-align:center;color:#646970}
+.h18-unsaved-preview-open-body{overflow:hidden!important}
+
+@media(max-width:782px){
+    .h18-unsaved-preview-open{margin:10px 0 0;width:100%}
+    .h18-unsaved-preview-modal{padding:0}
+    .h18-unsaved-preview-dialog{width:100vw;height:100vh;border-radius:0}
+    .h18-unsaved-preview-toolbar{align-items:stretch;flex-wrap:wrap}
+    .h18-unsaved-preview-heading{flex:1 1 100%}
+    .h18-unsaved-preview-devices{flex:1 1 auto}
+    .h18-unsaved-preview-shell{padding:12px}
+}
+
+@media(prefers-reduced-motion:reduce){
+    .h18-unsaved-preview-viewport{transition:none}
+}
