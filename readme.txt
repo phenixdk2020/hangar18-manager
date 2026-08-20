@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.31
+Version: 0.8.32
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.32 – Designer — fælles LEGO-designmodel ==
+
+Nyt:
+- Introducerer én canonical, renderer-neutral LEGO-designmodel som view over de eksisterende page-section designfelter; der oprettes ingen ny design-option eller parallel persistence-store.
+- Almindelige elementer og Kasse/Grid/Flex bruger nu samme design-sprog for baggrund, tekst, overskrift, kant, border width, radius, typografi, opacity, shadow og hover-state.
+- Samlet radius og alle fire individuelle hjørner er samlet i samme model; -1 på et individuelt hjørne bevarer den eksisterende arv fra samlet radius.
+- Normal-state understøtter Global/Tilpasset, og hover understøtter Arv Normal/Tilpasset uden at overskrive normal-state.
+- LEGO-designpanelet skriver direkte til de eksisterende gemte section-felter, så legacy save/public renderer fortsat er autoritativ og eksisterende sider kræver ingen datamigration.
+- admin.js/history-v0.8.23 er fortsat eneste Undo/Redo-ejer; companion-mode ændringer udføres i samme DOM-transaction, og hvert LEGO-designgreb udsender kun ét eksisterende input/change-checkpoint.
+- En snæver select-event guard forhindrer native input+change-dobling i LEGO-designpanelets dropdowns, så ét dropdown-valg svarer til én logisk history-handling.
+- Responsive LEGO spacing fra v0.8.31 er uændret og fortsat samme separate canonical spacing-model; ingen ny drag/drop- eller parent/child-motor introduceres.
+- LEGO Editor QA og Editor Runtime Fast QA er bestået; fuld Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.31 – Designer — responsive LEGO spacing og selektiv backup-restore ==
