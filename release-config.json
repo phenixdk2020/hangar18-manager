@@ -1,12 +1,13 @@
 {
-  "version": "0.8.27",
-  "title": "Designer — rent ugemt preview uden editor-overlays",
+  "version": "0.8.28",
+  "title": "Backup — sikker gendannelse af enkelte sider",
   "changelog": [
-    "Retter UX-4 ugemt forhåndsvisning, så transient editor-chrome ikke klones med ind i previewet.",
-    "Fjerner Billede-kontrolpanelet, DIREKTE DESIGN, box-model P/M badges, padding/margin-handles og focal-point fra preview-klonen.",
-    "Bevarer selve live canvas-indholdet, herunder ugemt tekst, billeder og layout, uden at gemme eller publicere siden.",
-    "Playwright-regression dækker valgt billede med image-tools, direct-controls, box-model overlay og editor-handles.",
-    "Fast QA og Architecture QA er bestået inklusive Chromium/Firefox/WebKit.",
-    "EVENT-001 fra v0.8.26 og Undo/Redo v0.8.23 er bevaret."
+    "Tilføjer B1: eksisterende Hangar18 JSON-sidebackups kan gendannes fra Ultimate Designer-administrationen.",
+    "Erstat original opretter altid en ny sikkerhedsbackup af den aktuelle side før første write og bevarer originalt WordPress-ID og slug/URL.",
+    "Opret som kopi laver en separat draft med collision-safe slug og ændrer ikke originalside eller menu.",
+    "Page Editor-backups uden den centrale page_editor-state låses for replace-original og kan fortsat åbnes sikkert som kopi.",
+    "Restore er capability- og nonce-gated, anvender path-containment og skriver audit for restore/copy-handlinger.",
+    "B1 Backup Restore QA er bestået på PHP 8.0/8.2/8.3 og Architecture QA er bestået.",
+    "UX-4 preview-hotfix v0.8.27, EVENT-001 og den manuelt godkendte Undo/Redo-motor er bevaret."
   ]
 }
