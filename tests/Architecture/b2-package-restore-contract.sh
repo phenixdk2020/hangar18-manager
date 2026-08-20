@@ -42,11 +42,16 @@ test -n "$safety_line" && test -n "$media_line" && test "$safety_line" -lt "$med
 grep -F "restoreSelectivePageEditor" "$RESTORE" >/dev/null
 grep -F "restoreSelectivePageVersions" "$RESTORE" >/dev/null
 
-# Coordinator adds security preflight, stale lock recovery and failure audit.
+# Coordinator adds security preflight, stale lock recovery, failure audit and
+# v0.8.31 selected-page LEGO spacing without replacing the core restore motor.
 grep -F "SiteBackupSecurityPolicy::assertManifestSafe" "$COORD" >/dev/null
 grep -F "STALE_LOCK_SECONDS" "$COORD" >/dev/null
 grep -F "SafetyBackupId" "$COORD" >/dev/null
 grep -F -- "-failed" "$COORD" >/dev/null
+grep -F "LEGO_SPACING_OPTION = 'hangar18_ultimate_designer_lego_spacing_v2'" "$COORD" >/dev/null
+grep -F "restoreSelectiveLegoSpacing" "$COORD" >/dev/null
+grep -F "\$current[\$pageSlug] = \$source[\$pageSlug];" "$COORD" >/dev/null
+grep -F "\$result['LegoSpacingRestored']" "$COORD" >/dev/null
 
 # Imported packages are bounded before extraction/restore.
 grep -F "MAX_ZIP_BYTES" "$SECURITY" >/dev/null
@@ -79,4 +84,4 @@ if grep -Ei 'wp_ajax_nopriv_|template_redirect|wp_head|wp_footer|wp_nav_menu|wp_
   exit 1
 fi
 
-echo 'B2 versioned package/full+selective restore security contract: PASS'
+echo 'B2 versioned package/full+selective restore incl LEGO spacing security contract: PASS'
