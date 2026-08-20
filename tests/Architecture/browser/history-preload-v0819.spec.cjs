@@ -49,6 +49,27 @@ async function boot(page) {
     function canonicalHtml() {
       const clone = sections.cloneNode(true);
       clone.querySelectorAll('.is-selected').forEach((node) => node.classList.remove('is-selected'));
+      // Mirror editorHistoryNormalizeClone() from assets/admin.js: live form
+      // properties must be materialized into serialized attributes/text before
+      // the HTML signature is compared.
+      clone.querySelectorAll('input').forEach((input) => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+          if (input.checked) { input.setAttribute('checked', 'checked'); }
+          else { input.removeAttribute('checked'); }
+        } else {
+          input.setAttribute('value', String(input.value == null ? '' : input.value));
+        }
+      });
+      clone.querySelectorAll('textarea').forEach((textarea) => {
+        textarea.textContent = String(textarea.value == null ? '' : textarea.value);
+      });
+      clone.querySelectorAll('select').forEach((select) => {
+        const values = Array.from(select.selectedOptions).map((option) => String(option.value));
+        Array.from(select.options).forEach((option) => {
+          if (values.includes(String(option.value))) { option.setAttribute('selected', 'selected'); }
+          else { option.removeAttribute('selected'); }
+        });
+      });
       return clone.innerHTML;
     }
 
@@ -197,5 +218,5 @@ test('pending text edit is flushed exactly once before Undo', async ({ page }) =
   expect(current.index).toBe(0);
   expect(current.entries).toBe(2);
   expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0819.hasPending())).toBe(false);
-  expect(page.locator('[data-key="text-1"] .payload')).toHaveValue('Overskrift');
+  await expect(page.locator('[data-key="text-1"] .payload')).toHaveValue('Overskrift');
 });
