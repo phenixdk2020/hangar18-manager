@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.23
+Version: 0.8.24
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.24 – Designer — foldbare Elementer/Funktioner og Inspector ==
+
+Nyt:
+- Tilføjer UX-3: venstre Elementer/Funktioner-panel og højre Inspector kan foldes ind uafhængigt på desktop.
+- Begge paneler kan være foldet ind samtidig til 44 px rails, så Sideopbygning får næsten hele arbejdsbredden.
+- Foldetilstanden gemmes kun i browserens localStorage og ændrer ikke sideindhold, schema eller public rendering.
+- Tablet og mobil beholder det eksisterende stacked editor-layout uden tvungne rails.
+- Collapse/expand-knapper har ARIA-state, keyboard-adgang og reduced-motion-understøttelse.
+- v0.8.21/v0.8.22/v0.8.23 Undo/Redo-stakken er uændret og fortsat autoritativ.
+- Fast QA og Architecture QA er bestået inklusive protected-domain samt Chromium/Firefox/WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.23 – Designer — Undo/Redo for tekst, farver og billeder ==
