@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.28
+Version: 0.8.29
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.29 – Backup — versioneret site-backup, ZIP og sikker restore ==
+
+Nyt:
+- Tilføjer B2 med immutable H18-BACKUP-xxxxxx ID'er, canonical JSON og SHA-256 checksums for manifest, payloads og refererede mediefiler.
+- Den portable Hangar18-backup omfatter administrerede sider, sideversioner, Site Builder-data, formularer/polls/data, relevante Hangar18-options samt refererede originalbilleder og nødvendige derivatives.
+- Tilføjer ZIP export/import med preflight mod path traversal, ZIP-bombs, aktive serverkonfigurationsfiler og eksekverbare filtyper før pakken installeres.
+- Restore bruger en signeret og state-bundet dry-run-plan; både fuld og selektiv side-restore opretter automatisk en ny B2 safety backup før første mutation.
+- Tilføjer collision-safe media/ID/URL mapping, stale restore-lock recovery samt audit af både gennemførte restores og fejl med reference til safety-backuppen.
+- B2 create/import/restore kræver manage_options og nonce; fuld restore kræver den eksplicitte bekræftelsesfrase GENDAN HANGAR18.
+- B2 Site Backup QA er bestået på PHP 8.0/8.2/8.3, og Architecture QA inklusive Chromium, Firefox, WebKit og security audit er bestået.
+- Standard-B2 er application-aware og indeholder ikke rå database-, plugin- eller theme-disaster-recovery; Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.28 – Backup — sikker gendannelse af enkelte sider ==
