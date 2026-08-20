@@ -35,29 +35,28 @@ final class EditorElementLibraryAdminController
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-element-library.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-element-library.css';
-        $historyPath = $pluginDir . '/assets/ultimate-designer-history-preload-v0820.js';
+        $historyPath = $pluginDir . '/assets/ultimate-designer-history-preload-v0821.js';
 
         /*
-         * v0.8.20: the history owner is a real header asset instead of inline
-         * code attached to hangar18-manager-admin. The integration controller is
-         * registered before Hangar18_Manager::instance(), so v0.8.19 could call
-         * wp_add_inline_script() before that target handle was queued; WordPress
-         * then discarded the inline runtime. A dedicated in-header asset has no
-         * dependency on that registration order and necessarily executes before
-         * the legacy assets/admin.js footer runtime initializes editor history.
+         * v0.8.21 keeps the v0.8.20 header-level history owner and adds a
+         * narrowly scoped jQuery clone bridge for editorHistorySnapshot().
+         * Programmatic section types such as image live in select properties;
+         * jQuery/browser cloning can otherwise fall back to the option's original
+         * selected attribute (text). The bridge mirrors live input/select/textarea
+         * state into the two snapshot clone sources before legacy normalization.
          */
         wp_enqueue_script(
-            'hangar18-ultimate-designer-history-preload-v0820',
-            $pluginUrl . 'assets/ultimate-designer-history-preload-v0820.js',
+            'hangar18-ultimate-designer-history-preload-v0821',
+            $pluginUrl . 'assets/ultimate-designer-history-preload-v0821.js',
             ['jquery'],
-            is_file($historyPath) ? (string) filemtime($historyPath) : '0.8.20',
+            is_file($historyPath) ? (string) filemtime($historyPath) : '0.8.21',
             false
         );
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-element-library',
             $pluginUrl . 'assets/ultimate-designer-element-library.js',
-            ['jquery', 'hangar18-manager-admin', 'hangar18-ultimate-designer-history-preload-v0820'],
+            ['jquery', 'hangar18-manager-admin', 'hangar18-ultimate-designer-history-preload-v0821'],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.7',
             true
         );
@@ -68,7 +67,7 @@ final class EditorElementLibraryAdminController
             is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.7'
         );
 
-        // v0.8.17-v0.8.19 history implementations remain rollback archaeology
-        // only and are deliberately not enqueued beside the v0.8.20 preloader.
+        // v0.8.17-v0.8.20 history implementations remain rollback archaeology
+        // only and are deliberately not enqueued beside the v0.8.21 preloader.
     }
 }
