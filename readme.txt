@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.29
+Version: 0.8.30
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.30 – Designer — LEGO X/Y spacing foundation ==
+
+Nyt:
+- Tilføjer én canonical Desktop/Mobile spacing-model, som deles af almindelige elementer og Kasse/Grid/Flex-layout.
+- Eksisterende LayoutGapPx og MobileLayoutGapPx bruges som backward-compatible startværdi for både X og Y, så eksisterende sider kræver ingen migration.
+- Inspector får separate Element X/Y-marginer på alle elementer samt separate Indhold X/Y-gap på Kasse, Grid og Flex.
+- LEGO-state ligger som ét canonical felt i den eksisterende section-row og bruger fortsat admin.js/history-v0.8.23 som eneste Undo/Redo-ejer; der oprettes ingen parallel historikmotor.
+- Editor-preview anvender separate column-gap/row-gap samt Desktop/Mobile spacing uden at aktivere en ny offentlig renderer.
+- Spacing-state gemmes admin-only i en versioneret Hangar18-option og indgår automatisk i B2 fuld site-backup.
+- LEGO Spacing QA er bestået på PHP 8.0/8.2/8.3 og system Chrome; Editor Runtime Fast QA samt fuld Architecture QA inklusive Chromium, Firefox og WebKit er bestået.
+- Vehicle/Event/Gallery, public cutover og den eksisterende drag/drop-, parent/child- og history-arkitektur er uændret.
 
 
 == Version 0.8.29 – Backup — versioneret site-backup, ZIP og sikker restore ==
