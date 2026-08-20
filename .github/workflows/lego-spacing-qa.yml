@@ -4,15 +4,21 @@ on:
   push:
     branches:
       - agent/lego-spacing-foundation-v0830
+      - agent/lego-responsive-spacing-v0831
   pull_request:
     paths:
       - 'src/Editor/LegoSpacingModel.php'
       - 'src/Admin/EditorLegoSpacingAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
+      - 'src/Backup/SiteBackupRestoreCoordinator.php'
       - 'assets/ultimate-designer-lego-spacing-v0830.js'
       - 'assets/ultimate-designer-lego-spacing-v0830.css'
+      - 'assets/ultimate-designer-lego-spacing-v0831.js'
+      - 'assets/ultimate-designer-lego-spacing-v0831.css'
       - 'tests/Architecture/v0830-lego-spacing-*'
+      - 'tests/Architecture/v0831-lego-responsive-spacing-*'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
+      - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
       - '.github/workflows/lego-spacing-qa.yml'
 
@@ -21,7 +27,7 @@ permissions:
 
 jobs:
   contract:
-    name: X/Y model and single-history contract
+    name: Responsive X/Y model and single-history contract
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,10 +41,10 @@ jobs:
         with: {php-version: '${{ matrix.php-version }}', coverage: none}
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
-      - run: bash tests/Architecture/v0830-lego-spacing-contract.sh
+      - run: bash tests/Architecture/v0831-lego-responsive-spacing-contract.sh
 
   browser:
-    name: LEGO spacing system Chrome
+    name: Responsive LEGO spacing system Chrome
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,3 +56,4 @@ jobs:
           npx playwright test
           -c tests/Architecture/browser/playwright.system-chrome.config.cjs
           tests/Architecture/browser/lego-spacing-v0830.spec.cjs
+          tests/Architecture/browser/lego-spacing-v0831.spec.cjs
