@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.20
+Version: 0.8.21
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.21 – Designer — bevar elementtype gennem Undo/Redo ==
+
+Nyt:
+- Retter den resterende Undo/Redo-fejl fra v0.8.20, hvor historiktrinene nu bevægede sig korrekt, men et Billede-element kunne blive gendannet som Tekst efter Undo og Redo.
+- Rodårsagen var snapshot-cloning af formular-state: nye elementer oprettes fra en fælles template med text som markup-standard, mens den aktuelle elementtype som image ligger i SELECT-feltets live browser-state. jQuery cloning kunne falde tilbage til markup-standarden.
+- Den aktive history-runtime er nu assets/ultimate-designer-history-preload-v0821.js og indlæses fortsat som header-asset før legacy assets/admin.js initialiserer editorhistorikken.
+- v0.8.21 kopierer live state for SELECT, INPUT og TEXTAREA fra original DOM til history-klonen før core editorHistoryNormalizeClone serialiserer snapshot'et.
+- Clone-broen er snævert afgrænset til de to kilder som editorHistorySnapshot bruger: #h18-page-sections-sortable og den midlertidigt inspicerede section body i Inspector.
+- Den konkrete regression bruger nu samme jQuery clone-path som den rigtige editor og verificerer Billede 1 + Billede 2 → Undo = Billede 1 samt Redo = begge elementer fortsat af typen Billede.
+- De tidligere v0.8.20-rettelser til 2→1→0 / 0→1→2, pending history-timer, restore-latch og rydning af historisk Direkte design-selection bevares.
+- Et lille admin-only badge H0.8.21 vises ved historikstatus, så manuel QA kan verificere at den korrekte runtime faktisk kører i browseren.
+- Editor Runtime Fast QA og Architecture QA er bestået, inklusive isolation/protected-domain, PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Event/Vehicle/Gallery, offentlig rendering, URL'er, persistence/cutover samt LEGO-layout er uændrede; LEGO/X-Y arbejdet afventer fortsat manuel accept af Undo/Redo.
 
 
 == Version 0.8.20 – Designer — sikker history-runtime load-order ==
