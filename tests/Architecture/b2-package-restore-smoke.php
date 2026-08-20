@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Hangar18\UltimateDesigner\Backup\SiteBackupManifestService;
 use Hangar18\UltimateDesigner\Backup\SiteBackupPackageService;
 use Hangar18\UltimateDesigner\Backup\SiteBackupRestoreCoordinator;
 use Hangar18\UltimateDesigner\Backup\SiteBackupSecurityPolicy;
@@ -49,6 +50,11 @@ $GLOBALS['b2_next_id']=100;
 $GLOBALS['wpdb']=new B2Wpdb();
 
 function b2Assert(bool $ok,string $message): void { if(!$ok){throw new RuntimeException($message);} }
+function b2CanonicalEqual($left,$right): bool
+{
+    $canonical=new SiteBackupManifestService();
+    return hash_equals($canonical->canonicalJson($left),$canonical->canonicalJson($right));
+}
 function sanitize_title(string $v): string { $v=strtolower(trim($v));$v=preg_replace('/[^a-z0-9-]+/','-',$v)??'';return trim($v,'-'); }
 function sanitize_text_field(string $v): string { return trim(strip_tags($v)); }
 function wp_upload_dir(): array { return ['basedir'=>$GLOBALS['b2_tmp'].'/uploads','baseurl'=>'https://example.test/wp-content/uploads','error'=>'']; }
@@ -128,7 +134,7 @@ b2Assert(($result['SafetyBackupId']??'')==='H18-BACKUP-000002','Full restore mus
 b2Assert(str_contains($GLOBALS['b2_posts'][9]->post_content,'ORIGINAL'),'Full restore must restore page content.');
 b2Assert(($GLOBALS['b2_options']['hangar18_manager_pages_v1']['hjem']['ContentVersion']??0)===1,'Full restore must restore page editor state.');
 b2Assert($GLOBALS['b2_options']['hangar18_manager_active_menu']==='main-original','Full restore must restore Hangar18 owned options.');
-b2Assert($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']===$baselineLego,'Full restore must restore the complete LEGO spacing option.');
+b2Assert(b2CanonicalEqual($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2'],$baselineLego),'Full restore must restore the complete LEGO spacing option.');
 
 // Selective restore only touches selected page/editor/version/LEGO ledger, not another page/menu.
 $GLOBALS['b2_posts'][9]->post_content='<!-- HOME NEW -->';
@@ -149,8 +155,8 @@ b2Assert(str_contains($GLOBALS['b2_posts'][10]->post_content,'CONTACT MUST STAY 
 b2Assert(($GLOBALS['b2_options']['hangar18_manager_pages_v1']['hjem']['ContentVersion']??0)===1,'Selective restore must restore selected page editor state.');
 b2Assert(($GLOBALS['b2_options']['hangar18_manager_pages_v1']['kontakt']['ContentVersion']??0)===77,'Selective restore must preserve another page editor state.');
 b2Assert($GLOBALS['b2_options']['hangar18_manager_active_menu']==='menu-must-stay','Selective restore must preserve menu option state.');
-b2Assert($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['hjem']===$baselineLego['hjem'],'Selective restore must restore only selected page LEGO state from package.');
-b2Assert($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['kontakt']===$contactLegoMustStay,'Selective restore must preserve another page LEGO state.');
+b2Assert(b2CanonicalEqual($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['hjem'],$baselineLego['hjem']),'Selective restore must restore only selected page LEGO state from package.');
+b2Assert(b2CanonicalEqual($GLOBALS['b2_options']['hangar18_ultimate_designer_lego_spacing_v2']['kontakt'],$contactLegoMustStay),'Selective restore must preserve another page LEGO state.');
 
 // Signed dry-run is state-bound; drift blocks execution before a new safety package/write.
 $driftPlan=$coordinator->plan('H18-BACKUP-000001','page','hjem');
@@ -173,12 +179,25 @@ try{SiteBackupSecurityPolicy::assertManifestSafe(['Media'=>[['RelativePath'=>'20
 b2Assert($unsafe,'Executable media path must be rejected.');
 
 if(class_exists(ZipArchive::class)){
-    $bad=$GLOBALS['b2_tmp'].'/bad.zip';$z=new ZipArchive();$z->open($bad,ZipArchive::CREATE|ZipArchive::OVERWRITE);$z->addFromString('media/2026/shell.php','<?php echo 1;');$z->close();
-    $zipBlocked=false;try{SiteBackupSecurityPolicy::inspectZip($bad);}catch(RuntimeException $error){$zipBlocked=true;}
+    $bad=$GLOBALS['b2_tmp'].'/bad.zip';
+    $z=new ZipArchive();
+    $z->open($bad,ZipArchive::CREATE|ZipArchive::OVERWRITE);
+    $z->addFromString('media/2026/shell.php','<?php echo 1;');
+    $z->close();
+    $zipBlocked=false;
+    try{SiteBackupSecurityPolicy::inspectZip($bad);}catch(RuntimeException $error){$zipBlocked=true;}
     b2Assert($zipBlocked,'Executable ZIP entry must be rejected before extraction.');
 }
 
 fwrite(STDOUT,"B2 package/export/full+selective restore roundtrip incl LEGO spacing: PASS\n");
 
-function b2Cleanup(string $path): void {if(!is_dir($path))return;foreach(array_diff(scandir($path)?:[],['.','..']) as $item){$child=$path.DIRECTORY_SEPARATOR.$item;if(is_dir($child)){b2Cleanup($child);}else{@unlink($child);}}@rmdir($path);}
+function b2Cleanup(string $path): void
+{
+    if(!is_dir($path))return;
+    foreach(array_diff(scandir($path)?:[],['.','..']) as $item){
+        $child=$path.DIRECTORY_SEPARATOR.$item;
+        if(is_dir($child)){b2Cleanup($child);}else{@unlink($child);}
+    }
+    @rmdir($path);
+}
 b2Cleanup($GLOBALS['b2_tmp']);
