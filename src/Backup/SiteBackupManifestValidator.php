@@ -45,7 +45,7 @@ final class SiteBackupManifestValidator
         unset($manifestForHash['ManifestSha256']);
         try {
             $calculatedManifestSha = hash('sha256', (new SiteBackupManifestService())->canonicalJson($manifestForHash));
-            if (!hash_equals($calculatedManifestSha, $expectedManifestSha)) {
+            if (!preg_match('/^[a-f0-9]{64}$/', $expectedManifestSha) || !hash_equals($calculatedManifestSha, $expectedManifestSha)) {
                 $errors[] = 'ManifestSha256 matcher ikke manifestets indhold.';
             }
         } catch (\Throwable $error) {
@@ -77,7 +77,8 @@ final class SiteBackupManifestValidator
             try {
                 $canonical = $service->canonicalJson($payloads[$name]);
                 $sha = hash('sha256', $canonical);
-                if (!hash_equals($sha, strtolower((string) ($entry['Sha256'] ?? '')))) {
+                $expectedSha = strtolower((string) ($entry['Sha256'] ?? ''));
+                if (!preg_match('/^[a-f0-9]{64}$/', $expectedSha) || !hash_equals($sha, $expectedSha)) {
                     $errors[] = 'SHA-256 mismatch for payload: ' . $name;
                 }
                 if (strlen($canonical) !== (int) ($entry['Bytes'] ?? -1)) {
@@ -90,7 +91,7 @@ final class SiteBackupManifestValidator
 
         foreach (self::REQUIRED_PAYLOADS as $required) {
             if (!isset($seenPayloadNames[$required])) {
-                $warnings[] = 'B2 full-site scope mangler endnu payload: ' . $required;
+                $warnings[] = 'B2 full-site scope mangler payload: ' . $required;
             }
         }
 
@@ -105,17 +106,22 @@ final class SiteBackupManifestValidator
                 $errors[] = 'Media-entry er ugyldig.';
                 continue;
             }
-            $paths = [(string) ($entry['RelativePath'] ?? '')];
+            $checks = [$entry];
             foreach ((array) ($entry['Derivatives'] ?? []) as $derivative) {
                 if (is_array($derivative)) {
-                    $paths[] = (string) ($derivative['RelativePath'] ?? '');
+                    $checks[] = $derivative;
                 }
             }
-            foreach ($paths as $path) {
+            foreach ($checks as $fileEntry) {
+                $path = str_replace('\\', '/', (string) ($fileEntry['RelativePath'] ?? ''));
                 $normalized = strtolower($path);
-                if ($path === '' || str_contains($path, '..') || str_starts_with($path, '/') || str_starts_with($path, '\\')) {
+                $sha = strtolower((string) ($fileEntry['Sha256'] ?? ''));
+                if ($path === '' || str_contains($path, "\0") || str_contains($path, '..') || str_starts_with($path, '/') || preg_match('/^[A-Za-z]:\//', $path)) {
                     $errors[] = 'Usikker eller tom media-sti: ' . $path;
                     continue;
+                }
+                if (!preg_match('/^[a-f0-9]{64}$/', $sha)) {
+                    $errors[] = 'Media-entry mangler gyldig SHA-256: ' . $path;
                 }
                 if (isset($seenPaths[$normalized])) {
                     $errors[] = 'Dublet media-sti: ' . $path;
@@ -124,9 +130,21 @@ final class SiteBackupManifestValidator
             }
         }
 
-        $capabilities = $manifest['Capabilities'] ?? [];
-        if (!is_array($capabilities) || !empty($capabilities['FullRestore']) || !empty($capabilities['SelectiveRestore']) || !empty($capabilities['ZipExport'])) {
-            $warnings[] = 'B2-A må ikke annoncere restore/ZIP som aktivt endnu.';
+        $capabilities = $manifest['Capabilities'] ?? null;
+        if (!is_array($capabilities)) {
+            $errors[] = 'Capabilities mangler eller er ugyldig.';
+        } else {
+            foreach (['FullRestore','SelectiveRestore','ZipExport','DryRunValidation'] as $capability) {
+                if (!array_key_exists($capability, $capabilities) || !is_bool($capabilities[$capability])) {
+                    $errors[] = 'Capability skal være eksplicit boolean: ' . $capability;
+                }
+            }
+            if (empty($capabilities['DryRunValidation'])) {
+                $errors[] = 'B2-package skal understøtte dry-run validation.';
+            }
+            if (array_key_exists('Import', $capabilities) && !is_bool($capabilities['Import'])) {
+                $errors[] = 'Capability skal være eksplicit boolean: Import';
+            }
         }
 
         return [
