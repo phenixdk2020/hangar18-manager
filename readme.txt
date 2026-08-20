@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.15
+Version: 0.8.16
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.16 – Designer — stabil Undo/Redo og direkte Auto-kasser drop ==
+
+Nyt:
+- Fortryd/Gendan bruger nu samme restore-transaction fra toolbar, tastatur, kommandopalet og lokal kladde-gendannelse.
+- Syntetiske input/change-events fra restore og preview-rebuild undertrykkes fortsat, så de ikke opretter falske historiktrin.
+- Ægte brugerinput og kendte strukturhandlinger umiddelbart efter Undo er igen history-eligible og må derfor oprette et nyt historiktrin.
+- Redo-kæden afbrydes fortsat korrekt, når brugeren laver en ny ændring efter Undo, fordi den eksisterende history stack genbruges uændret.
+- Direkte Kasse-drop på selve Auto-kasser/Grid-canvaset bruger nu hele den synlige Grid-flade som hitområde under drag i stedet for kun det lille footer-dropfelt.
+- Nested source rows skjules kun, når den autoritative Kasse-runtime har markeret dem som child-source; LayoutParentKey/data-h18-nested-in-box alene må ikke få en Kasse til at forsvinde.
+- Den målrettede browser-QA dækker toolbar/kommandopalet/keyboard/lokal kladde, syntetisk kontra ægte input, hurtig strukturændring efter Undo samt to eksisterende Kasser droppet direkte på Auto-kasser-canvaset.
+- Editor Runtime Fast QA og Architecture QA er bestået på hotfix-PR'en; Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.
+- Denne release indeholder ingen LEGO-layout-, X/Y-spacing- eller øvrige nye designerfunktioner; de afventer manuel accept af Undo/Redo-stabiliteten.
 
 
 == Version 0.8.15 – Designer — én Auto-kasser runtime og deterministisk Fortryd/Gendan ==

@@ -1,21 +1,21 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.15",
+  "version": "0.8.16",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-19T17:10:31Z",
+  "published_utc": "2026-08-20T10:02:07Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "51b992384ecef8b8c4fc1969971e40a99830f523fa4b70dbc62e82023ee749b3",
+  "package_sha256": "49aff2b1906ed1f0c6e9139860cb0b20f08c5db1c3b2e158da9bea5cb0a4d068",
   "changelog": [
-    "Auto-kasser oprettes fortsat som én tom Grid-container uden automatisk ekstra Kasse.",
-    "Den direkte nesting-runtime er nu eneste aktive Kasse/Auto-kasser placeringsautoritet; den tidligere v0.8.14 Auto-kasser-adapter er pensioneret fra aktiv enqueue.",
-    "Nye og eksisterende Kasser kan parent'es direkte til Auto-kasser via den eksisterende LayoutParentKey-model; den målrettede Chrome-reproducer flytter to eksisterende topniveau-Kasser ind i en tom Auto-kasser og verificerer, at begge forbliver synlige.",
-    "Kasse/Auto-kasser-kompositionen overvåger nu base-editorens preview-rebuilds og genrenderer den synlige komposition, hvis de skjulte source rows stadig er parentede men Grid/Kasse-previewet er blevet fjernet.",
-    "Kasse-preview viser v0.8.15-badge, så den aktive runtime kan verificeres direkte ved manuel test.",
-    "Fortryd/Gendan kasserer nu restore-afledte editorHistoryRecordNow-captures i stedet for at afvikle dem efter settle-perioden; den kasserede capture returnerer 0, så editorHistoryTimer ikke efterlades som et falsk pending trin.",
-    "Den målrettede system-Chrome QA verificerer, at Undo-capture fortsat er 0 efter restore-spærringen, så 4→3→4-oscillation og stale snapshot-genindlæsning ikke genopstår via denne kodevej.",
-    "Produktionskoden passerede Architecture QA på PHP 8.0, 8.2 og 8.3 inklusive protected Vehicle/Event/Gallery og alle v0.8.15 Kasse/Undo-kontrakter; den endelige PR-head passerede desuden den målrettede system-Chrome Kasse/Undo-regression.",
-    "Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede."
+    "Fortryd/Gendan bruger nu samme restore-transaction fra toolbar, tastatur, kommandopalet og lokal kladde-gendannelse.",
+    "Syntetiske input/change-events fra restore og preview-rebuild undertrykkes fortsat, så de ikke opretter falske historiktrin.",
+    "Ægte brugerinput og kendte strukturhandlinger umiddelbart efter Undo er igen history-eligible og må derfor oprette et nyt historiktrin.",
+    "Redo-kæden afbrydes fortsat korrekt, når brugeren laver en ny ændring efter Undo, fordi den eksisterende history stack genbruges uændret.",
+    "Direkte Kasse-drop på selve Auto-kasser/Grid-canvaset bruger nu hele den synlige Grid-flade som hitområde under drag i stedet for kun det lille footer-dropfelt.",
+    "Nested source rows skjules kun, når den autoritative Kasse-runtime har markeret dem som child-source; LayoutParentKey/data-h18-nested-in-box alene må ikke få en Kasse til at forsvinde.",
+    "Den målrettede browser-QA dækker toolbar/kommandopalet/keyboard/lokal kladde, syntetisk kontra ægte input, hurtig strukturændring efter Undo samt to eksisterende Kasser droppet direkte på Auto-kasser-canvaset.",
+    "Editor Runtime Fast QA og Architecture QA er bestået på hotfix-PR'en; Vehicle/Event/Gallery, offentlig Header/Footer-rendering, URL'er og I10 public cutover er fortsat uændrede og beskyttede.",
+    "Denne release indeholder ingen LEGO-layout-, X/Y-spacing- eller øvrige nye designerfunktioner; de afventer manuel accept af Undo/Redo-stabiliteten."
   ]
 }
