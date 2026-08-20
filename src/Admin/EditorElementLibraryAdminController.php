@@ -35,7 +35,7 @@ final class EditorElementLibraryAdminController
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-element-library.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-element-library.css';
-        $historyJsPath = $pluginDir . '/assets/ultimate-designer-history-v0817.js';
+        $historyJsPath = $pluginDir . '/assets/ultimate-designer-history-v0818.js';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-element-library',
@@ -51,14 +51,15 @@ final class EditorElementLibraryAdminController
             is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.7'
         );
 
-        // v0.8.17: deterministic Undo/Redo restore latch. It deliberately runs
-        // after the existing Kasse history bridge and reuses the same history
-        // transaction instead of introducing another stack.
+        // v0.8.18: owns the pending editor-history timer so admin.js can no
+        // longer replay a stale timer during Undo/Redo. Selection is reconciled
+        // as transient UI state and is not allowed to fall back to a historical
+        // selectedKey when the selected element is removed by Undo.
         wp_enqueue_script(
-            'hangar18-ultimate-designer-history-v0817',
-            $pluginUrl . 'assets/ultimate-designer-history-v0817.js',
+            'hangar18-ultimate-designer-history-v0818',
+            $pluginUrl . 'assets/ultimate-designer-history-v0818.js',
             ['jquery', 'hangar18-manager-admin', 'hangar18-ultimate-designer-box-content-layout'],
-            is_file($historyJsPath) ? (string) filemtime($historyJsPath) : '0.8.17',
+            is_file($historyJsPath) ? (string) filemtime($historyJsPath) : '0.8.18',
             true
         );
     }
