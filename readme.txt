@@ -1,6 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.27
+Version: 0.8.28
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.28 – Backup — sikker gendannelse af enkelte sider ==
+
+Nyt:
+- Tilføjer B1: eksisterende Hangar18 JSON-sidebackups kan gendannes fra Ultimate Designer-administrationen.
+- Erstat original opretter altid en ny sikkerhedsbackup af den aktuelle side før første write og bevarer originalt WordPress-ID og slug/URL.
+- Opret som kopi laver en separat draft med collision-safe slug og ændrer ikke originalside eller menu.
+- Page Editor-backups uden den centrale page_editor-state låses for replace-original og kan fortsat åbnes sikkert som kopi.
+- Restore er capability- og nonce-gated, anvender path-containment og skriver audit for restore/copy-handlinger.
+- B1 Backup Restore QA er bestået på PHP 8.0/8.2/8.3 og Architecture QA er bestået.
+- UX-4 preview-hotfix v0.8.27, EVENT-001 og den manuelt godkendte Undo/Redo-motor er bevaret.
 
 
 == Version 0.8.27 – Designer — rent ugemt preview uden editor-overlays ==

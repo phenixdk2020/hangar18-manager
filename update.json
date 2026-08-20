@@ -1,18 +1,19 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.27",
+  "version": "0.8.28",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-20T17:43:05Z",
+  "published_utc": "2026-08-20T17:50:54Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "7e328bb52cb64af6774092a375d6c3bd8e5ddd295836047b37eb88129a1a044c",
+  "package_sha256": "07fc4a4061e8aaff7ef76f4cf61606212b6a22f4cbd306e73d5f8f2c634a2dcb",
   "changelog": [
-    "Retter UX-4 ugemt forhåndsvisning, så transient editor-chrome ikke klones med ind i previewet.",
-    "Fjerner Billede-kontrolpanelet, DIREKTE DESIGN, box-model P/M badges, padding/margin-handles og focal-point fra preview-klonen.",
-    "Bevarer selve live canvas-indholdet, herunder ugemt tekst, billeder og layout, uden at gemme eller publicere siden.",
-    "Playwright-regression dækker valgt billede med image-tools, direct-controls, box-model overlay og editor-handles.",
-    "Fast QA og Architecture QA er bestået inklusive Chromium/Firefox/WebKit.",
-    "EVENT-001 fra v0.8.26 og Undo/Redo v0.8.23 er bevaret."
+    "Tilføjer B1: eksisterende Hangar18 JSON-sidebackups kan gendannes fra Ultimate Designer-administrationen.",
+    "Erstat original opretter altid en ny sikkerhedsbackup af den aktuelle side før første write og bevarer originalt WordPress-ID og slug/URL.",
+    "Opret som kopi laver en separat draft med collision-safe slug og ændrer ikke originalside eller menu.",
+    "Page Editor-backups uden den centrale page_editor-state låses for replace-original og kan fortsat åbnes sikkert som kopi.",
+    "Restore er capability- og nonce-gated, anvender path-containment og skriver audit for restore/copy-handlinger.",
+    "B1 Backup Restore QA er bestået på PHP 8.0/8.2/8.3 og Architecture QA er bestået.",
+    "UX-4 preview-hotfix v0.8.27, EVENT-001 og den manuelt godkendte Undo/Redo-motor er bevaret."
   ]
 }
