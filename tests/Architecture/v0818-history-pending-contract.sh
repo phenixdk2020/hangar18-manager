@@ -71,7 +71,7 @@ require_contains "$RUNTIME_0823" 'data-h18-v0823-content-history' 'v0.8.23 runti
 require_contains "$RUNTIME_0823" 'function armContentCapture(event)' 'content intent arm is missing'
 require_contains "$RUNTIME_0823" 'bridge.isLatched() !== true' 'content bridge does not scope itself to post-restore state'
 require_contains "$RUNTIME_0823" 'input,textarea,select,[contenteditable="true"]' 'text and form fields are not recognized as content intent'
-require_contains "$RUNTIME_0823" '.h18-canvas-quick-color' 'direct color controls are not recognized'
+require_contains "$RUNTIME_0823" '.h18-canvas-direct-controls' 'generic Direct design controls are not recognized'
 require_contains "$RUNTIME_0823" '.h18-canvas-image-change' 'image media changes are not recognized'
 require_contains "$RUNTIME_0823" '.h18-canvas-focal-dot' 'image focal edits are not recognized'
 require_contains "$RUNTIME_0823" "callback.name === 'editorHistoryRecordNow'" 'content bridge does not identify core history callback'
