@@ -1,9 +1,9 @@
 # Ultimate Designer — integration backlog after UD-120
 
 **Statusdato:** 20. august 2026  
-**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.30**
+**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.31**
 
-UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. Den aktive udvikling er nu koncentreret om LEGO-editorens fælles objekt-/designmodel, responsive overrides, manuel I9-QA og den senere kontrollerede sidekonvertering. **Eksisterende Hangar18-sider er fortsat ikke public-cutover til en ny renderer.**
+UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. Den aktive udvikling er nu koncentreret om LEGO-editorens fælles objekt-/designmodel, manuel I9-QA og den senere kontrollerede sidekonvertering. **Eksisterende Hangar18-sider er fortsat ikke public-cutover til en ny renderer.**
 
 ## Ikke-forhandlingsbar migrationsregel
 
@@ -29,8 +29,9 @@ Automatisk QA kan ikke erstatte en krævet manuel/live acceptance-gate.
 | UX-4 — Ugemt forhåndsvisning | ✅ Færdig v0.8.25 + hotfix v0.8.27 | Preview af levende editor-state uden save/public mutation; editor overlays renses. |
 | EVENT-001 — Automatisk eventarkiv | ✅ Færdig v0.8.26 | Events flyttes dynamisk mellem Kommende/Tidligere efter WP-lokal dato/sluttid. |
 | B1 — Sidebackup restore | ✅ Færdig v0.8.28 | Replace original + copy draft, safety backup, nonce/capability og audit. |
-| B2 — Versioneret site-backup | ✅ Færdig v0.8.29 | H18-BACKUP-ID, SHA-256, media, ZIP import/export, dry-run og full/selective restore. |
-| LEGO foundation | 🟢 Aktiv | v0.8.30 har canonical X/Y spacing-model; næste slice er responsive arv/overrides. |
+| B2 — Versioneret site-backup | ✅ Færdig v0.8.29, udvidet v0.8.31 | H18-BACKUP-ID, SHA-256, media, ZIP, full/selective restore; selective LEGO-state og stale-lock hash-fix i v0.8.31. |
+| LEGO spacing/responsive foundation | ✅ Færdig v0.8.30–v0.8.31 | Canonical X/Y spacing, Tablet/Mobile inheritance og single-history integration. |
+| LEGO common design model | 🟢 Aktiv v0.8.32 | LEGO-006/009: ét fælles design-state for almindelige elementer og Kasse. |
 | DOC-1 — Visuel brugermanual | ⬜ Backlog | Udarbejdes når editorens interaktionsmodel er stabil og releasebar. |
 
 ## I1–I8 — IMPLEMENTERET
@@ -123,7 +124,7 @@ Undo/Redo er manuelt accepteret og fortsat én autoritativ history-stack:
 - **Opret som kopi:** separat draft med collision-safe `-kopi[-N]` slug;
 - path-containment, capability + nonce og fejlbevarende rollback-data.
 
-### B2 — Versioneret site-backup — ✅ v0.8.29
+### B2 — Versioneret site-backup — ✅ v0.8.29 + integration v0.8.31
 
 - immutable `H18-BACKUP-xxxxxx` ID;
 - canonical manifest/payloads og SHA-256;
@@ -133,6 +134,9 @@ Undo/Redo er manuelt accepteret og fortsat én autoritativ history-stack:
 - full restore og selective page restore med signeret/state-bound dry-run;
 - ny B2 safety backup før første mutation;
 - stale restore-lock recovery og audit;
+- v0.8.31 selective page restore gendanner kun den valgte sides LEGO-spacing;
+- ældre backups uden LEGO-state sletter ikke nyere spacing;
+- restore-koordinationsstate (`site_backup_restore*`) er ekskluderet fra portable snapshot/current-state hash, så stale-lock recovery ikke invaliderer sit eget dry-run;
 - standard-B2 indeholder ikke raw database/plugin/theme disaster recovery.
 
 ## LEGO-editor backlog
@@ -141,16 +145,16 @@ Arkitekturregel: **én drag/drop-motor, én parent/child-model, én history-tran
 
 | ID | Status | Leverance |
 |---|---|---|
-| LEGO-001 — Shared object/state model | 🟢 Delvist færdig v0.8.30 | Canonical spacing-state findes; udvides senere til fælles designmodel. |
+| LEGO-001 — Shared object/state model | 🟢 Delvist færdig v0.8.30–v0.8.31 | Canonical responsive spacing-state findes; udvides nu med fælles design-state. |
 | LEGO-002 — Backward-compatible X/Y gap | ✅ v0.8.30 | `LayoutGapPx`/`MobileLayoutGapPx` seedes til X=Y uden migration. |
 | LEGO-003 — Inspector separat X/Y spacing | ✅ v0.8.30 | Separate X/Y controls i Inspector. |
-| LEGO-004 — Per-element margin | ✅ v0.8.30 | Desktop/Mobile Margin X/Y for almindelige elementer. |
-| LEGO-006 — Common element design model | ⬜ Næste efter responsive slice | Fælles typography/color/background/border/radius/spacing/state-kontrakt. |
-| LEGO-009 — Consolidate Kasse design | ⬜ Backlog | Kasse skal bruge samme designmodel som andre elementer, ikke særregler. |
-| LEGO-010 — Kasse internal X/Y gap | ✅ Foundation v0.8.30 | Separate X/Y gaps på Container/Kasse/Grid/Flex i editor-state. |
-| LEGO-011 — Responsive spacing | 🟡 Aktiv v0.8.31 | Tablet + eksplicit arv fra Desktop; Mobile override beholdes. |
+| LEGO-004 — Per-element margin | ✅ v0.8.30 | Responsive Margin X/Y for almindelige elementer. |
+| LEGO-006 — Common element design model | 🟡 Aktiv v0.8.32 | Fælles typography/color/background/border/radius/opacity/shadow/state-kontrakt. |
+| LEGO-009 — Consolidate Kasse design | 🟡 Aktiv v0.8.32 | Kasse skal bruge samme designmodel som andre elementer, ikke særregler. |
+| LEGO-010 — Kasse internal X/Y gap | ✅ v0.8.30 | Separate X/Y gaps på Container/Kasse/Grid/Flex i editor-state. |
+| LEGO-011 — Responsive spacing | ✅ v0.8.31 | Tablet + arv fra Desktop; Mobile kan arve eller bruge bevaret override. |
 | LEGO-021 — Undo/Redo one step per action | ✅ Stabiliseret / manuelt accepteret | v0.8.20–v0.8.23 er eneste history-owner; LEGO kobles på samme DOM-state. |
-| LEGO-025 — QA suite | 🟡 Aktiv | v0.8.30 har PHP 8.0/8.2/8.3, system Chrome og fuld Chromium/Firefox/WebKit regression; udbygges pr. slice. |
+| LEGO-025 — QA suite | 🟡 Aktiv | PHP 8.0/8.2/8.3, system Chrome, B2, Editor Fast og Chromium/Firefox/WebKit udbygges pr. slice. |
 
 ### v0.8.30 — LEGO X/Y spacing foundation — ✅ LEVERET
 
@@ -163,28 +167,41 @@ Arkitekturregel: **én drag/drop-motor, én parent/child-model, én history-tran
 - state gemmes admin-only i `hangar18_ultimate_designer_lego_spacing_v2` og indgår i B2 full backup;
 - ingen public renderer/cutover eller Vehicle/Event/Gallery-ændringer.
 
-### v0.8.31 — Responsive LEGO spacing + selective restore — 🟡 AKTIV NÆSTE SLICE
+### v0.8.31 — Responsive LEGO spacing + selective restore — ✅ LEVERET
+
+- canonical spacing schema 2;
+- Desktop er basis;
+- Tablet starter som **Arv fra Desktop**;
+- Tablet og Mobil kan skifte mellem inheritance og egne overrides uden at override-data slettes;
+- eksisterende v0.8.30 Mobile-værdier forbliver eksplicitte overrides ved migration, så eksisterende layout ikke ændres;
+- Inspector viser inheritance og effektive værdier;
+- editor-preview bruger separate Desktop/Tablet/Mobile variables;
+- selective B2 page restore gendanner kun valgte sides LEGO-spacing;
+- B2 stale-lock/current-state hash edge case fundet af QA og rettet;
+- samme admin.js/history-v0.8.23 er fortsat eneste Undo/Redo-ejer;
+- B2 QA + LEGO QA PASS på PHP 8.0/8.2/8.3, system Chrome, Editor Runtime Fast og fuld Chromium/Firefox/WebKit Architecture QA.
+
+### v0.8.32 — LEGO common element/Kasse design model — 🟡 AKTIV NÆSTE SLICE
 
 Mål:
 
-- tilføj **Tablet** til samme canonical spacing-model;
-- Tablet skal kunne stå som **Arv fra Desktop** eller have egne X/Y-overrides;
-- Mobile beholder egne overrides og skal have tydelig arv/override-semantik;
-- Inspector skal vise hvilken device-værdi der er inherited versus eksplicit;
-- editor-preview skal bruge samme device-model uden ny runtime-stack;
-- gamle v0.8.30 states skal normaliseres uden datatab;
-- selective B2 page restore skal gendanne LEGO-spacing for den valgte sides slug uden at ændre andre siders spacing;
-- full B2 restore skal fortsat gendanne hele LEGO-optionen gennem plugin-metadata;
-- Undo/Redo skal fortsat registrere én history-transaction pr. Inspector-handling;
-- PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit regression skal være PASS før merge.
+- introducér ét canonical design-state for både almindelige elementer og Container/Kasse/Grid/Flex;
+- map eksisterende legacy Inspector/Direkte Design-felter ind i samme state uden at ændre public output;
+- første kontrakt skal mindst dække typography, text/heading colors, background, border width/color, radius, opacity og shadow;
+- Kasse må ikke få en separat design-store eller særskilt Undo/Redo-historik;
+- eksisterende per-corner radius skal bevares og normaliseres i samme designmodel;
+- eksisterende legacy-felter forbliver source-compatible, så save/public renderer fortsætter uændret i denne shadow/admin fase;
+- canonical design-field skal ligge i eksisterende section-row, så history snapshot/restore tager design-state med i samme transaction;
+- Inspector/Direct Design skal være views over samme state og kunne synkronisere begge veje uden dobbelt history-step;
+- QA skal dække almindeligt element + Kasse, legacy→canonical hydration, ændring fra Inspector/Direkte Design, Undo/Redo-style DOM restore og kombineret design+spacing;
+- PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit + Editor Fast skal være PASS før merge.
 
-## Efter v0.8.31 — næste LEGO-slices
+## Efter v0.8.32 — næste LEGO-slices
 
-1. **LEGO-006 / LEGO-009:** fælles element- og Kasse-designmodel (typography, foreground/background, border, radius, opacity, shadow, states).
-2. Konsolider eksisterende Direkte Design/Inspector-felter som views over samme canonical design-state frem for parallelle stores.
-3. Responsive design overrides med samme inheritance-kontrakt som spacing.
-4. Udvid QA med Kasse-i-Kasse, Kasse-i-Auto-kasser, element-i-Kasse og Undo/Redo af design+spacing i kombination.
-5. Først derefter større LEGO drag/drop-UX-udvidelser; parent/child- og placement-motoren genbruges.
+1. Responsive design overrides med samme inheritance-kontrakt som spacing.
+2. Udvid fælles designmodel med hover/focus/active/disabled state-design og transitions.
+3. Udbyg QA med Kasse-i-Kasse, Kasse-i-Auto-kasser, element-i-Kasse og Undo/Redo af design+spacing i kombination.
+4. Først derefter større LEGO drag/drop-UX-udvidelser; parent/child- og placement-motoren genbruges.
 
 ## DOC-1 — Ultimate Designer visuel brugermanual — ⬜ BACKLOG
 
@@ -207,11 +224,10 @@ Skal mindst indeholde:
 
 ## Aktuelle næste handlinger
 
-1. **Implementér og QA v0.8.31:** Tablet + inheritance i canonical LEGO spacing samt selective B2-side-restore af spacing.
-2. Implementér LEGO-006/009 common design model oven på samme object/state-kontrakt.
-3. Udbyg LEGO-025 QA for kombineret spacing/design/nesting/history.
-4. Kør og registrér alle I9 live/manual evidence-gates på `test2` efter editorregressionen er stabil.
-5. Ret eventuelle live QA / Side Health issues uden public konvertering.
-6. Refresh comparison-page shadow copy og registrér page-specific acceptance mod aktuel `SourceHash`.
-7. Kør signed preflight igen.
-8. Public comparison-page activation designes først, når alle I9 gates faktisk er PASS.
+1. **Implementér og QA v0.8.32:** LEGO-006/009 common element/Kasse design model.
+2. Udbyg LEGO-025 QA for kombineret spacing/design/nesting/history.
+3. Kør og registrér alle I9 live/manual evidence-gates på `test2` efter editorregressionen er stabil.
+4. Ret eventuelle live QA / Side Health issues uden public konvertering.
+5. Refresh comparison-page shadow copy og registrér page-specific acceptance mod aktuel `SourceHash`.
+6. Kør signed preflight igen.
+7. Public comparison-page activation designes først, når alle I9 gates faktisk er PASS.
