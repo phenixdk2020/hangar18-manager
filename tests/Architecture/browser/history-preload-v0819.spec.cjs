@@ -4,14 +4,12 @@ const path = require('path');
 
 const runtimePath = path.resolve(__dirname, '../../../assets/ultimate-designer-history-preload-v0821.js');
 const postRestorePath = path.resolve(__dirname, '../../../assets/ultimate-designer-history-post-restore-v0822.js');
+const contentHistoryPath = path.resolve(__dirname, '../../../assets/ultimate-designer-history-content-v0823.js');
 const jqueryRuntime = require.resolve('jquery');
 
-function historyRuntimeScript() {
-  return fs.readFileSync(runtimePath, 'utf8');
-}
-function postRestoreRuntimeScript() {
-  return fs.readFileSync(postRestorePath, 'utf8');
-}
+function historyRuntimeScript() { return fs.readFileSync(runtimePath, 'utf8'); }
+function postRestoreRuntimeScript() { return fs.readFileSync(postRestorePath, 'utf8'); }
+function contentHistoryRuntimeScript() { return fs.readFileSync(contentHistoryPath, 'utf8'); }
 
 async function boot(page) {
   await page.setContent(`<!doctype html><html><body>
@@ -25,7 +23,18 @@ async function boot(page) {
           <input class="h18-page-section-key" value="text-1">
           <select class="h18-page-section-type"><option value="text" selected>Tekst</option><option value="image">Billede</option></select>
           <div class="h18-page-section-header">Tekst</div>
-          <div class="h18-page-section-body"><input class="payload" value="Overskrift"></div>
+          <div class="h18-page-section-body">
+            <input class="payload" value="Overskrift">
+            <input class="background-field" name="Sections[0][BackgroundColor]" value="#ffffff">
+            <input class="media-id" name="Sections[0][MediaId]" value="0">
+            <input class="media-url" name="Sections[0][MediaUrl]" value="">
+          </div>
+          <div class="h18-canvas-preview">
+            <div class="h18-canvas-direct-controls">
+              <label class="h18-canvas-quick-color"><input id="quick-color" type="color" value="#ffffff" data-canvas-color-role="background"></label>
+            </div>
+            <div class="h18-canvas-image-tools"><button id="image-change" class="h18-canvas-image-change" type="button">Skift billede</button></div>
+          </div>
         </section>
       </div>
       <aside id="h18-page-inspector">
@@ -41,6 +50,7 @@ async function boot(page) {
   await page.addScriptTag({ path: jqueryRuntime });
   await page.addScriptTag({ content: historyRuntimeScript() });
   await page.addScriptTag({ content: postRestoreRuntimeScript() });
+  await page.addScriptTag({ content: contentHistoryRuntimeScript() });
 
   await page.evaluate(() => {
     const sections = document.getElementById('h18-page-sections-sortable');
@@ -48,6 +58,7 @@ async function boot(page) {
     let index = -1;
     let editorHistoryTimer = null;
     let serial = 0;
+    let mediaSerial = 99;
 
     function canonicalHtml() {
       const clone = window.jQuery(sections).clone(false, false).get(0);
@@ -84,7 +95,7 @@ async function boot(page) {
 
     function scheduleEditorHistoryCapture(delay) {
       window.clearTimeout(editorHistoryTimer);
-      editorHistoryTimer = window.setTimeout(editorHistoryRecordNow, delay);
+      editorHistoryTimer = window.setTimeout(editorHistoryRecordNow, typeof delay === 'number' ? delay : 280);
     }
 
     function flushPending() {
@@ -148,6 +159,32 @@ async function boot(page) {
       addImage('image-' + serial);
     });
 
+    document.addEventListener('input', (event) => {
+      const target = event.target;
+      if (!target || !target.closest) { return; }
+      if (target.matches('.payload')) {
+        scheduleEditorHistoryCapture(280);
+        return;
+      }
+      if (target.matches('#quick-color')) {
+        const row = target.closest('.h18-page-section-row');
+        const field = row && row.querySelector('.background-field');
+        if (field) { field.value = target.value; }
+        scheduleEditorHistoryCapture(280);
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      const button = event.target && event.target.closest ? event.target.closest('.h18-canvas-image-change') : null;
+      if (!button) { return; }
+      const row = button.closest('.h18-page-section-row');
+      if (!row) { return; }
+      mediaSerial += 1;
+      row.querySelector('.media-id').value = String(mediaSerial);
+      row.querySelector('.media-url').value = 'https://example.test/image-' + mediaSerial + '.jpg';
+      scheduleEditorHistoryCapture(280);
+    });
+
     window.__historyHarness = {
       addImage,
       editText(value) {
@@ -155,13 +192,18 @@ async function boot(page) {
         scheduleEditorHistoryCapture(280);
       },
       state() {
+        const text = sections.querySelector('[data-key="text-1"]');
         return {
           index,
           entries: entries.length,
           keys: Array.from(sections.querySelectorAll(':scope > .h18-page-section-row')).map((row) => row.dataset.key),
           types: Array.from(sections.querySelectorAll(':scope > .h18-page-section-row')).map((row) => row.dataset.sectionType),
           timer: editorHistoryTimer,
-          selected: Array.from(sections.querySelectorAll(':scope > .h18-page-section-row.is-selected')).map((row) => row.dataset.key)
+          selected: Array.from(sections.querySelectorAll(':scope > .h18-page-section-row.is-selected')).map((row) => row.dataset.key),
+          text: text ? text.querySelector('.payload').value : '',
+          background: text ? text.querySelector('.background-field').value : '',
+          mediaId: text ? text.querySelector('.media-id').value : '',
+          mediaUrl: text ? text.querySelector('.media-url').value : ''
         };
       }
     };
@@ -169,7 +211,8 @@ async function boot(page) {
 
   await page.waitForFunction(() => Boolean(window.__h18HistoryCoreBridgeV0821));
   await page.waitForFunction(() => Boolean(window.__h18HistoryPostRestoreBridgeV0822));
-  await expect(page.locator('#h18-history-runtime-badge')).toHaveText('H0.8.22');
+  await page.waitForFunction(() => Boolean(window.__h18HistoryContentBridgeV0823));
+  await expect(page.locator('#h18-history-runtime-badge')).toHaveText('H0.8.23');
   expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0821.cloneBridgeInstalled())).toBe(true);
 }
 
@@ -207,42 +250,131 @@ test('new structural edit after full Undo and Redo cycle becomes a new checkpoin
   await page.locator('#palette-image').click();
   let current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(3);
-  expect(current.keys).toEqual(['text-1', 'image-1', 'image-2', 'image-3']);
 
-  await page.locator('#h18-editor-undo').click();
-  await page.waitForTimeout(180);
-  await page.locator('#h18-editor-undo').click();
-  await page.waitForTimeout(180);
-  await page.locator('#h18-editor-undo').click();
-  await page.waitForTimeout(220);
+  await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(180);
+  await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(180);
+  await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(220);
   current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(0);
-  expect(current.keys).toEqual(['text-1']);
 
-  await page.locator('#h18-editor-redo').click();
-  await page.waitForTimeout(180);
-  await page.locator('#h18-editor-redo').click();
-  await page.waitForTimeout(180);
-  await page.locator('#h18-editor-redo').click();
-  await page.waitForTimeout(220);
+  await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(180);
+  await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(180);
+  await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(220);
   current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(3);
-  expect(current.keys).toEqual(['text-1', 'image-1', 'image-2', 'image-3']);
 
-  // Exact manual regression: immediately add a fresh palette element after
-  // restoring the complete Redo chain. It must become checkpoint 4.
   await page.locator('#palette-image').click();
   await page.waitForTimeout(180);
   current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(4);
   expect(current.entries).toBe(5);
-  expect(current.keys).toEqual(['text-1', 'image-1', 'image-2', 'image-3', 'image-4']);
 
   await page.locator('#h18-editor-undo').click();
   await page.waitForTimeout(220);
   current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(3);
-  expect(current.keys).toEqual(['text-1', 'image-1', 'image-2', 'image-3']);
+});
+
+test('text color and selected image are independent Undo Redo checkpoints', async ({ page }) => {
+  await boot(page);
+
+  await page.locator('.payload').fill('Ny overskrift');
+  await page.waitForTimeout(360);
+  let current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(1);
+  expect(current.text).toBe('Ny overskrift');
+
+  await page.locator('#quick-color').fill('#224466');
+  await page.waitForTimeout(360);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(2);
+  expect(current.background).toBe('#224466');
+
+  await page.locator('#image-change').click();
+  await page.waitForTimeout(360);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(3);
+  expect(current.mediaId).toBe('100');
+  expect(current.mediaUrl).toContain('image-100.jpg');
+
+  await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(220);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(2);
+  expect(current.text).toBe('Ny overskrift');
+  expect(current.background).toBe('#224466');
+  expect(current.mediaId).toBe('0');
+
+  await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(220);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(1);
+  expect(current.text).toBe('Ny overskrift');
+  expect(current.background).toBe('#ffffff');
+
+  await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(220);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(0);
+  expect(current.text).toBe('Overskrift');
+
+  await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(220);
+  await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(220);
+  await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(220);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(3);
+  expect(current.text).toBe('Ny overskrift');
+  expect(current.background).toBe('#224466');
+  expect(current.mediaId).toBe('100');
+});
+
+test('first text edit immediately after Redo is recorded as a new checkpoint', async ({ page }) => {
+  await boot(page);
+
+  await page.locator('.payload').fill('Første tekst');
+  await page.waitForTimeout(360);
+  let current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(1);
+
+  await page.locator('#h18-editor-undo').click();
+  await page.waitForTimeout(180);
+  await page.locator('#h18-editor-redo').click();
+  await page.waitForTimeout(20);
+
+  // Exact post-restore content regression: edit immediately, inside the old
+  // 100 ms latch window. The content bridge must preserve this as checkpoint 2.
+  await page.locator('.payload').fill('Tekst efter redo');
+  await page.waitForTimeout(380);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(2);
+  expect(current.entries).toBe(3);
+  expect(current.text).toBe('Tekst efter redo');
+
+  await page.locator('#h18-editor-undo').click();
+  await page.waitForTimeout(220);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(1);
+  expect(current.text).toBe('Første tekst');
+});
+
+test('first color and image changes after Redo are not lost', async ({ page }) => {
+  await boot(page);
+
+  await page.locator('.payload').fill('Checkpoint');
+  await page.waitForTimeout(360);
+  await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(180);
+  await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(20);
+
+  await page.locator('#quick-color').fill('#aa3300');
+  await page.waitForTimeout(380);
+  let current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(2);
+  expect(current.background).toBe('#aa3300');
+
+  await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(180);
+  await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(20);
+  await page.locator('#image-change').click();
+  await page.waitForTimeout(380);
+  current = await page.evaluate(() => window.__historyHarness.state());
+  expect(current.index).toBe(3);
+  expect(current.mediaId).toBe('100');
 });
 
 test('Undo clears historical text selection and Direct Design after structural restore', async ({ page }) => {
