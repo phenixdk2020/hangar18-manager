@@ -2,16 +2,11 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 
-const controllerPath = path.resolve(__dirname, '../../../src/Admin/EditorElementLibraryAdminController.php');
+const runtimePath = path.resolve(__dirname, '../../../assets/ultimate-designer-history-preload-v0820.js');
 const jqueryRuntime = require.resolve('jquery');
 
 function historyRuntimeScript() {
-  const source = fs.readFileSync(controllerPath, 'utf8');
-  const match = source.match(/private static function enqueueEditorHistoryCoreBridgeV0819\(\): void[\s\S]*?\$js = <<<'JS'\n([\s\S]*?)\nJS;\n/);
-  if (!match) {
-    throw new Error('Could not extract v0.8.19 history runtime from EditorElementLibraryAdminController.php');
-  }
-  return match[1];
+  return fs.readFileSync(runtimePath, 'utf8');
 }
 
 async function boot(page) {
@@ -97,7 +92,7 @@ async function boot(page) {
     function restore(html) {
       sections.innerHTML = html;
       // Mimic the legacy restore selecting a historical text element and opening
-      // Direct Design. v0.8.19 must clear this transient UI state after Undo.
+      // Direct Design. v0.8.20 must clear this transient UI state after Undo.
       const text = sections.querySelector('[data-key="text-1"]');
       if (text) { text.classList.add('is-selected'); }
       const inspector = document.getElementById('h18-page-inspector-target');
@@ -151,7 +146,8 @@ async function boot(page) {
     };
   });
 
-  await page.waitForFunction(() => Boolean(window.__h18HistoryCoreBridgeV0819));
+  await page.waitForFunction(() => Boolean(window.__h18HistoryCoreBridgeV0820));
+  await expect(page.locator('#h18-history-runtime-badge')).toHaveText('H0.8.20');
 }
 
 test('two structural image additions are two checkpoints and Undo stays on one', async ({ page }) => {
@@ -209,7 +205,7 @@ test('pending text edit is flushed exactly once before Undo', async ({ page }) =
   expect(current.index).toBe(0);
   expect(current.entries).toBe(1);
   expect(current.timer).toBe(0);
-  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0819.hasPending())).toBe(true);
+  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0820.hasPending())).toBe(true);
 
   await page.locator('#h18-editor-undo').click();
   await page.waitForTimeout(550);
@@ -217,6 +213,6 @@ test('pending text edit is flushed exactly once before Undo', async ({ page }) =
   current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(0);
   expect(current.entries).toBe(2);
-  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0819.hasPending())).toBe(false);
+  expect(await page.evaluate(() => window.__h18HistoryCoreBridgeV0820.hasPending())).toBe(false);
   await expect(page.locator('[data-key="text-1"] .payload')).toHaveValue('Overskrift');
 });
