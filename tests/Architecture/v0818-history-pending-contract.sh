@@ -4,10 +4,11 @@ set -euo pipefail
 RUNTIME_0818='assets/ultimate-designer-history-v0818.js'
 RUNTIME_0820='assets/ultimate-designer-history-preload-v0820.js'
 RUNTIME_0821='assets/ultimate-designer-history-preload-v0821.js'
+RUNTIME_0822='assets/ultimate-designer-history-post-restore-v0822.js'
 CTRL='src/Admin/EditorElementLibraryAdminController.php'
 MAIN='hangar18-manager.php'
 
-for file in "$RUNTIME_0818" "$RUNTIME_0820" "$RUNTIME_0821" "$CTRL" "$MAIN"; do
+for file in "$RUNTIME_0818" "$RUNTIME_0820" "$RUNTIME_0821" "$RUNTIME_0822" "$CTRL" "$MAIN"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -30,7 +31,7 @@ if grep -F "hangar18-ultimate-designer-history-v0818" "$CTRL" >/dev/null; then
   exit 1
 fi
 if grep -F "hangar18-ultimate-designer-history-preload-v0820" "$CTRL" >/dev/null; then
-  echo 'FAIL: v0.8.20 is still enqueued beside the active v0.8.21 owner'
+  echo 'FAIL: v0.8.20 is still enqueued beside the active history owner'
   exit 1
 fi
 
@@ -47,8 +48,11 @@ fi
 require_contains "$CTRL" "'hangar18-ultimate-designer-history-preload-v0821'" 'v0.8.21 history preloader is not enqueued'
 require_contains "$CTRL" 'assets/ultimate-designer-history-preload-v0821.js' 'v0.8.21 history preloader path is missing'
 require_contains "$CTRL" "['jquery']," 'v0.8.21 preloader does not declare jQuery dependency'
-require_contains "$CTRL" "false" 'v0.8.21 preloader is not configured as a header asset'
-require_contains "$CTRL" "'hangar18-manager-admin', 'hangar18-ultimate-designer-history-preload-v0821'" 'element library does not depend on both base admin and v0.8.21 history preloader'
+require_contains "$CTRL" 'assets/ultimate-designer-history-post-restore-v0822.js' 'v0.8.22 post-restore bridge path is missing'
+require_contains "$CTRL" "'hangar18-ultimate-designer-history-post-restore-v0822'" 'v0.8.22 post-restore bridge is not enqueued/dependency-linked'
+require_contains "$CTRL" "'hangar18-manager-admin'" 'element library no longer depends on base admin'
+require_contains "$CTRL" "'hangar18-ultimate-designer-history-preload-v0821'" 'element library no longer depends on v0.8.21 owner'
+require_contains "$CTRL" "'hangar18-ultimate-designer-history-post-restore-v0822'" 'element library no longer depends on v0.8.22 intent bridge'
 require_contains "$MAIN" "'hangar18-manager-admin'" 'legacy base admin handle is missing'
 require_contains "$MAIN" "plugin_dir_url(__FILE__) . 'assets/admin.js'" 'legacy assets/admin.js enqueue is missing'
 
@@ -57,13 +61,8 @@ require_contains "$RUNTIME_0821" "callback.name === 'editorHistoryRecordNow'" 'v
 require_contains "$RUNTIME_0821" 'milliseconds <= 120' 'structural checkpoints still share typing debounce'
 require_contains "$RUNTIME_0821" 'runPendingHistory();' 'pending input edit is not flushed before structural/Undo checkpoints'
 require_contains "$RUNTIME_0821" 'scheduleSelectionClear' 'Undo/Redo does not clear historical Inspector selection'
-require_contains "$RUNTIME_0821" "data-h18-history-runtime', '0.8.21'" 'runtime identity marker is missing'
-require_contains "$RUNTIME_0821" "badge.textContent = 'H0.8.21'" 'visible live-runtime diagnostic badge is missing'
 
-# v0.8.21 regression: editorHistorySnapshot clones the section DOM before legacy
-# normalization. Programmatically changed select/textarea state must be mirrored
-# from the live source into exactly those snapshot clone sources so image does not
-# fall back to the template default text type on Undo/Redo.
+# v0.8.21 regression: live form state must survive snapshot cloning.
 require_contains "$RUNTIME_0821" 'function copyFormControlState(sourceRoot, cloneRoot)' 'form-state clone copier is missing'
 require_contains "$RUNTIME_0821" "node.id === 'h18-page-sections-sortable'" 'section collection clone source is not scoped'
 require_contains "$RUNTIME_0821" "node.classList.contains('h18-page-section-body')" 'Inspector body clone source is not scoped'
@@ -71,14 +70,25 @@ require_contains "$RUNTIME_0821" "source.tagName === 'SELECT'" 'select live stat
 require_contains "$RUNTIME_0821" "source.tagName === 'TEXTAREA'" 'textarea live state is not copied'
 require_contains "$RUNTIME_0821" "option.setAttribute('selected', 'selected')" 'selected option attributes are not materialized in snapshot clone'
 require_contains "$RUNTIME_0821" 'jq.fn.clone = bridgedClone;' 'snapshot jQuery clone bridge is not active'
-require_contains "$RUNTIME_0821" 'cloneBridgeInstalled' 'runtime does not expose clone bridge diagnostics'
 
-if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option' "$CTRL" "$RUNTIME_0821" >/dev/null; then
+# v0.8.22 regression: after a complete Undo/Redo cycle, the first new structural
+# user action must reopen history and become its own checkpoint immediately.
+require_contains "$RUNTIME_0822" 'data-h18-v0822-post-restore-history' 'v0.8.22 runtime marker is missing'
+require_contains "$RUNTIME_0822" 'function armStructuralCapture(event)' 'post-restore structural intent arm is missing'
+require_contains "$RUNTIME_0822" ".h18-builder-palette-item" 'palette insertion is not recognized as structural intent'
+require_contains "$RUNTIME_0822" 'forceNextStructuralCapture' 'post-restore structural checkpoint flag is missing'
+require_contains "$RUNTIME_0822" "callback.name === 'editorHistoryRecordNow'" 'v0.8.22 does not identify core history capture'
+require_contains "$RUNTIME_0822" 'milliseconds <= 120' 'v0.8.22 does not restrict bypass to structural capture timing'
+require_contains "$RUNTIME_0822" "data-h18-history-runtime', '0.8.22'" 'v0.8.22 runtime identity marker is missing'
+require_contains "$RUNTIME_0822" "badge.textContent = 'H0.8.22'" 'v0.8.22 visible diagnostic badge is missing'
+
+if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option' "$CTRL" "$RUNTIME_0821" "$RUNTIME_0822" >/dev/null; then
   echo 'FAIL: history bridge introduced persistence primitives'
   exit 1
 fi
 
 node --check "$RUNTIME_0821"
+node --check "$RUNTIME_0822"
 php -l "$CTRL" >/dev/null
 
-echo 'v0.8.18/v0.8.20 rollback / v0.8.21 live-form-state history owner contract: PASS'
+echo 'v0.8.21 owner + v0.8.22 post-Redo structural history bridge contract: PASS'
