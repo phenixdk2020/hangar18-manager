@@ -33,6 +33,7 @@ async function boot(page) {
             <div class="h18-canvas-direct-controls">
               <label class="h18-canvas-quick-color"><input id="quick-color" type="color" value="#ffffff" data-canvas-color-role="background"></label>
             </div>
+            <div id="image-media" class="h18-canvas-editable-media">Billedområde</div>
             <div class="h18-canvas-image-tools"><button id="image-change" class="h18-canvas-image-change" type="button">Skift billede</button></div>
           </div>
         </section>
@@ -151,6 +152,16 @@ async function boot(page) {
       scheduleEditorHistoryCapture(120);
     }
 
+    function ensureImageTools(row) {
+      if (!row || row.querySelector('.h18-canvas-image-change')) { return; }
+      const preview = row.querySelector('.h18-canvas-preview');
+      if (!preview) { return; }
+      const tools = document.createElement('div');
+      tools.className = 'h18-canvas-image-tools';
+      tools.innerHTML = '<button id="image-change" class="h18-canvas-image-change" type="button">Skift billede</button>';
+      preview.appendChild(tools);
+    }
+
     editorHistoryRecordNow();
     document.getElementById('h18-editor-undo').addEventListener('click', undo);
     document.getElementById('h18-editor-redo').addEventListener('click', redo);
@@ -162,7 +173,7 @@ async function boot(page) {
     document.addEventListener('input', (event) => {
       const target = event.target;
       if (!target || !target.closest) { return; }
-      if (target.matches('.payload')) {
+      if (target.matches('.payload,.background-field')) {
         scheduleEditorHistoryCapture(280);
         return;
       }
@@ -175,6 +186,11 @@ async function boot(page) {
     });
 
     document.addEventListener('click', (event) => {
+      const media = event.target && event.target.closest ? event.target.closest('.h18-canvas-editable-media') : null;
+      if (media) {
+        ensureImageTools(media.closest('.h18-page-section-row'));
+        return;
+      }
       const button = event.target && event.target.closest ? event.target.closest('.h18-canvas-image-change') : null;
       if (!button) { return; }
       const row = button.closest('.h18-page-section-row');
@@ -244,7 +260,6 @@ test('image element type survives Undo and Redo instead of reverting to text', a
 
 test('new structural edit after full Undo and Redo cycle becomes a new checkpoint', async ({ page }) => {
   await boot(page);
-
   await page.locator('#palette-image').click();
   await page.locator('#palette-image').click();
   await page.locator('#palette-image').click();
@@ -338,8 +353,6 @@ test('first text edit immediately after Redo is recorded as a new checkpoint', a
   await page.locator('#h18-editor-redo').click();
   await page.waitForTimeout(20);
 
-  // Exact post-restore content regression: edit immediately, inside the old
-  // 100 ms latch window. The content bridge must preserve this as checkpoint 2.
   await page.locator('.payload').fill('Tekst efter redo');
   await page.waitForTimeout(380);
   current = await page.evaluate(() => window.__historyHarness.state());
@@ -362,7 +375,9 @@ test('first color and image changes after Redo are not lost', async ({ page }) =
   await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(180);
   await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(20);
 
-  await page.locator('#quick-color').fill('#aa3300');
+  // Persistent Inspector/body field: unlike the temporary Direct design bar it
+  // remains available after Undo/Redo selection cleanup.
+  await page.locator('.background-field').fill('#aa3300');
   await page.waitForTimeout(380);
   let current = await page.evaluate(() => window.__historyHarness.state());
   expect(current.index).toBe(2);
@@ -370,6 +385,10 @@ test('first color and image changes after Redo are not lost', async ({ page }) =
 
   await page.locator('#h18-editor-undo').click(); await page.waitForTimeout(180);
   await page.locator('#h18-editor-redo').click(); await page.waitForTimeout(20);
+
+  // Real editor behavior: Undo/Redo clears image tools. Clicking the persistent
+  // media area reopens them, after which choosing a new image must be checkpointed.
+  await page.locator('#image-media').click();
   await page.locator('#image-change').click();
   await page.waitForTimeout(380);
   current = await page.evaluate(() => window.__historyHarness.state());
