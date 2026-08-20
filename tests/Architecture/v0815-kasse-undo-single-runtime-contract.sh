@@ -66,7 +66,7 @@ require_contains "$NEST" 'observer.observe($sections.get(0), { childList: true, 
 require_contains "$NEST" '!$preview.children('"'"'.h18-ud-auto-box-grid'"'"').length' 'Auto-kasser missing-composition detection is absent'
 require_contains "$NEST" '!$preview.children('"'"'.h18-ud-box-contents-preview'"'"').length' 'Kasse missing-composition detection is absent'
 
-# Restore-derived history callbacks are discarded and must leave no pending timer id.
+# The original restore observer guard remains scoped to the page editor.
 require_contains "$CTRL" "callback.name === 'editorHistoryRecordNow'" 'history capture callback guard is missing'
 require_contains "$CTRL" 'return 0;' 'suppressed history capture does not report that no timer exists'
 if grep -F 'guard.remaining() + 30' "$CTRL" >/dev/null; then
@@ -94,26 +94,30 @@ require_contains "$BOX_CONTENT" "document.addEventListener('pointerdown', markTr
 require_contains "$BOX_CONTENT" '.h18-page-section-drag,' 'section drag is not treated as a genuine post-Undo edit'
 require_contains "$BOX_CONTENT" '.h18-builder-palette-item,' 'palette add/drag is not treated as a genuine post-Undo edit'
 
-# v0.8.17 remains available as rollback archaeology and its historical latch contract must stay valid.
-require_contains "$HISTORY_V0817" 'data-h18-v0817-history-latch' 'v0.8.17 history latch rollback asset is missing'
-require_contains "$HISTORY_V0817" 'state.restoreLatched = true;' 'v0.8.17 rollback latch is incomplete'
-require_contains "$HISTORY_V0817" 'if (state.restoreLatched) { return true; }' 'v0.8.17 rollback latch does not override old trusted state'
-require_contains "$HISTORY_V0817" "lower === 'z'" 'v0.8.17 rollback asset lost Ctrl/Cmd+Z handling'
-
-# v0.8.18 is now the single active successor. v0.8.17 must NOT be enqueued in parallel.
-require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-history-v0818' 'v0.8.18 history runtime is not enqueued'
-require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-box-content-layout' 'active history runtime does not load after the v0.8.16 bridge'
+# v0.8.17/v0.8.18 remain rollback assets only.
+require_contains "$HISTORY_V0817" 'data-h18-v0817-history-latch' 'v0.8.17 rollback asset is missing'
+require_contains "$HISTORY_V0818" 'data-h18-v0818-history-runtime' 'v0.8.18 rollback asset is missing'
 if grep -F 'hangar18-ultimate-designer-history-v0817' "$ELEMENT_CTRL" >/dev/null; then
-  echo 'FAIL: v0.8.17 and v0.8.18 history runtimes would be enqueued together'
+  echo 'FAIL: v0.8.17 is still enqueued'
   exit 1
 fi
-require_contains "$HISTORY_V0818" 'data-h18-v0818-history-runtime' 'v0.8.18 history runtime marker is missing'
-require_contains "$HISTORY_V0818" "callback.name === 'editorHistoryRecordNow'" 'v0.8.18 does not own pending history scheduling'
-require_contains "$HISTORY_V0818" 'runPendingHistory();' 'v0.8.18 does not flush a real pending edit once before Undo/Redo'
-require_contains "$HISTORY_V0818" 'clearEditorSelection();' 'v0.8.18 does not clear stale historical selection'
+if grep -F 'hangar18-ultimate-designer-history-v0818' "$ELEMENT_CTRL" >/dev/null; then
+  echo 'FAIL: v0.8.18 is still enqueued'
+  exit 1
+fi
 
-# No second history stack or persistence/cutover path is introduced by the extensions.
-if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" >/dev/null; then
+# v0.8.19 is the single active history owner and executes before assets/admin.js.
+require_contains "$ELEMENT_CTRL" 'enqueueEditorHistoryCoreBridgeV0819' 'v0.8.19 active history owner is missing'
+require_contains "$ELEMENT_CTRL" "wp_add_inline_script('hangar18-manager-admin', \$js, 'before');" 'v0.8.19 does not preload before admin.js'
+require_contains "$ELEMENT_CTRL" 'data-h18-v0819-history-runtime' 'v0.8.19 runtime marker is missing'
+require_contains "$ELEMENT_CTRL" "callback.name === 'editorHistoryRecordNow'" 'v0.8.19 does not own core history scheduling'
+require_contains "$ELEMENT_CTRL" 'milliseconds <= 120' 'v0.8.19 does not split structural checkpoints from input debounce'
+require_contains "$ELEMENT_CTRL" 'runPendingHistory();' 'v0.8.19 does not flush pending input once before checkpoints/Undo'
+require_contains "$ELEMENT_CTRL" 'scheduleSelectionClear' 'v0.8.19 does not clear stale historical Inspector selection'
+require_contains "$ELEMENT_CTRL" "version: '0.8.19'" 'v0.8.19 runtime identity is missing'
+
+# No second history stack or persistence/cutover path is introduced by extensions.
+if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" "$HISTORY_V0817" "$HISTORY_V0818" "$ELEMENT_CTRL" >/dev/null; then
   echo 'FAIL: Undo extensions introduced a second editor history stack'
   exit 1
 fi
@@ -130,4 +134,4 @@ node --check "$HISTORY_V0818"
 php -l "$CTRL" >/dev/null
 php -l "$ELEMENT_CTRL" >/dev/null
 
-echo 'v0.8.15-v0.8.18 Kasse/Undo single-active-history-runtime contract: PASS'
+echo 'v0.8.15-v0.8.19 Kasse/Undo single-active-history-owner contract: PASS'
