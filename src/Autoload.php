@@ -25,5 +25,15 @@ final class Autoload
                 require_once $path;
             }
         });
+
+        // Public EVENT-001 runtime: render-time archive classification only.
+        // Admin/CLI tests keep the historical autoload-only behavior.
+        if (
+            function_exists('is_admin') &&
+            function_exists('add_filter') &&
+            !is_admin()
+        ) {
+            \Hangar18\UltimateDesigner\Event\EventArchiveRuntime::register();
+        }
     }
 }
