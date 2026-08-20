@@ -28,6 +28,11 @@ final class EditorLegoSpacingAdminController
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
         // Persist the additive overlay before the legacy page-save handler redirects.
         add_action('admin_post_h18_save_page_editor', [self::class, 'captureSave'], 5);
+
+        // v0.8.32 is a view over the existing section design fields, not another
+        // persistence/history layer. Register it after spacing so its asset
+        // dependencies have a deterministic admin-only load order.
+        EditorLegoDesignAdminController::register();
     }
 
     public static function enqueue(): void
