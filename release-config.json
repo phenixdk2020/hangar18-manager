@@ -1,14 +1,14 @@
 {
-  "version": "0.8.29",
-  "title": "Backup — versioneret site-backup, ZIP og sikker restore",
+  "version": "0.8.30",
+  "title": "Designer — LEGO X/Y spacing foundation",
   "changelog": [
-    "Tilføjer B2 med immutable H18-BACKUP-xxxxxx ID'er, canonical JSON og SHA-256 checksums for manifest, payloads og refererede mediefiler.",
-    "Den portable Hangar18-backup omfatter administrerede sider, sideversioner, Site Builder-data, formularer/polls/data, relevante Hangar18-options samt refererede originalbilleder og nødvendige derivatives.",
-    "Tilføjer ZIP export/import med preflight mod path traversal, ZIP-bombs, aktive serverkonfigurationsfiler og eksekverbare filtyper før pakken installeres.",
-    "Restore bruger en signeret og state-bundet dry-run-plan; både fuld og selektiv side-restore opretter automatisk en ny B2 safety backup før første mutation.",
-    "Tilføjer collision-safe media/ID/URL mapping, stale restore-lock recovery samt audit af både gennemførte restores og fejl med reference til safety-backuppen.",
-    "B2 create/import/restore kræver manage_options og nonce; fuld restore kræver den eksplicitte bekræftelsesfrase GENDAN HANGAR18.",
-    "B2 Site Backup QA er bestået på PHP 8.0/8.2/8.3, og Architecture QA inklusive Chromium, Firefox, WebKit og security audit er bestået.",
-    "Standard-B2 er application-aware og indeholder ikke rå database-, plugin- eller theme-disaster-recovery; Vehicle/Event/Gallery og public cutover er uændrede."
+    "Tilføjer én canonical Desktop/Mobile spacing-model, som deles af almindelige elementer og Kasse/Grid/Flex-layout.",
+    "Eksisterende LayoutGapPx og MobileLayoutGapPx bruges som backward-compatible startværdi for både X og Y, så eksisterende sider kræver ingen migration.",
+    "Inspector får separate Element X/Y-marginer på alle elementer samt separate Indhold X/Y-gap på Kasse, Grid og Flex.",
+    "LEGO-state ligger som ét canonical felt i den eksisterende section-row og bruger fortsat admin.js/history-v0.8.23 som eneste Undo/Redo-ejer; der oprettes ingen parallel historikmotor.",
+    "Editor-preview anvender separate column-gap/row-gap samt Desktop/Mobile spacing uden at aktivere en ny offentlig renderer.",
+    "Spacing-state gemmes admin-only i en versioneret Hangar18-option og indgår automatisk i B2 fuld site-backup.",
+    "LEGO Spacing QA er bestået på PHP 8.0/8.2/8.3 og system Chrome; Editor Runtime Fast QA samt fuld Architecture QA inklusive Chromium, Firefox og WebKit er bestået.",
+    "Vehicle/Event/Gallery, public cutover og den eksisterende drag/drop-, parent/child- og history-arkitektur er uændret."
   ]
 }
