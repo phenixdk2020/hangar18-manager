@@ -1,0 +1,35 @@
+name: B2-A Backup Manifest QA
+
+on:
+  push:
+    branches:
+      - agent/b2a-versioned-backup-manifest-v0819
+  pull_request:
+    paths:
+      - 'src/Backup/SiteBackupManifestService.php'
+      - 'src/Backup/SiteBackupManifestValidator.php'
+      - 'tests/Architecture/b2a-versioned-backup-manifest-*'
+      - '.github/workflows/b2a-backup-manifest-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  manifest-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.0','8.2','8.3']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+      - run: bash tests/Architecture/protected-domain-contract.sh
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php-version }}'
+          coverage: none
+      - run: php -l src/Backup/SiteBackupManifestService.php && php -l src/Backup/SiteBackupManifestValidator.php && php -l tests/Architecture/b2a-versioned-backup-manifest-smoke.php
+      - run: php tests/Architecture/b2a-versioned-backup-manifest-smoke.php
+      - run: bash tests/Architecture/b2a-versioned-backup-manifest-contract.sh
