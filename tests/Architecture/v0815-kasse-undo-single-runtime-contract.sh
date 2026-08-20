@@ -2,12 +2,14 @@
 set -euo pipefail
 
 CTRL='src/Admin/EditorLayoutToolsAdminController.php'
+ELEMENT_CTRL='src/Admin/EditorElementLibraryAdminController.php'
 LAYOUT='assets/ultimate-designer-layout-tools.js'
 NEST='assets/ultimate-designer-nesting-tools.js'
 NEST_CSS='assets/ultimate-designer-nesting-tools.css'
 BOX_CONTENT='assets/ultimate-designer-box-content-layout.js'
+HISTORY_V0817='assets/ultimate-designer-history-v0817.js'
 
-for file in "$CTRL" "$LAYOUT" "$NEST" "$NEST_CSS" "$BOX_CONTENT"; do
+for file in "$CTRL" "$ELEMENT_CTRL" "$LAYOUT" "$NEST" "$NEST_CSS" "$BOX_CONTENT" "$HISTORY_V0817"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -93,12 +95,24 @@ require_contains "$BOX_CONTENT" "document.addEventListener('pointerdown', markTr
 require_contains "$BOX_CONTENT" '.h18-page-section-drag,' 'section drag is not treated as a genuine post-Undo edit'
 require_contains "$BOX_CONTENT" '.h18-builder-palette-item,' 'palette add/drag is not treated as a genuine post-Undo edit'
 
-# No second history stack or persistence/cutover path is introduced by the extension.
-if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" >/dev/null; then
-  echo 'FAIL: v0.8.16 introduced a second editor history stack'
+# v0.8.17 fixes the v0.8.16 trusted-window race and keeps Inspector selection UI-stable.
+require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-history-v0817' 'v0.8.17 history runtime is not enqueued'
+require_contains "$ELEMENT_CTRL" 'hangar18-ultimate-designer-box-content-layout' 'v0.8.17 history runtime does not load after the v0.8.16 bridge'
+require_contains "$HISTORY_V0817" 'data-h18-v0817-history-latch' 'v0.8.17 history latch runtime marker is missing'
+require_contains "$HISTORY_V0817" 'state.restoreLatched = true;' 'restore latch is never activated'
+require_contains "$HISTORY_V0817" 'if (state.restoreLatched) { return true; }' 'restore latch does not override old trusted state'
+require_contains "$HISTORY_V0817" 'if (state.restoreLatched) { return false; }' 'stale trusted window is still exposed while restoring'
+require_contains "$HISTORY_V0817" 'state.restoreLatched = false;' 'new trusted edit cannot release restore latch'
+require_contains "$HISTORY_V0817" "lower === 'z'" 'Ctrl/Cmd+Z does not use the v0.8.17 restore latch'
+require_contains "$HISTORY_V0817" 'state.selectionKey = state.preserveSelection ? currentSelectionKey()' 'current selection is not captured before Undo/Redo'
+require_contains "$HISTORY_V0817" 'restorePreservedSelection(token)' 'current Inspector selection is not restored after history restore'
+
+# No second history stack or persistence/cutover path is introduced by the extensions.
+if grep -E 'editorHistoryEntries|editorHistoryIndex|const[[:space:]]+.*History.*\[|let[[:space:]]+.*History.*\[' "$BOX_CONTENT" "$HISTORY_V0817" >/dev/null; then
+  echo 'FAIL: Undo extensions introduced a second editor history stack'
   exit 1
 fi
-if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" "$BOX_CONTENT" >/dev/null; then
+if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|update_option|delete_option|admin_post_.*(activate|cutover|publish)' "$NEST" "$CTRL" "$BOX_CONTENT" "$HISTORY_V0817" "$ELEMENT_CTRL" >/dev/null; then
   echo 'FAIL: Undo/Kasse hotfix introduced a public persistence/cutover primitive'
   exit 1
 fi
@@ -106,6 +120,8 @@ fi
 node --check "$LAYOUT"
 node --check "$NEST"
 node --check "$BOX_CONTENT"
+node --check "$HISTORY_V0817"
 php -l "$CTRL" >/dev/null
+php -l "$ELEMENT_CTRL" >/dev/null
 
-echo 'v0.8.15/v0.8.16 Kasse/Undo all-paths contract: PASS'
+echo 'v0.8.15/v0.8.16/v0.8.17 Kasse/Undo restore-latch contract: PASS'
