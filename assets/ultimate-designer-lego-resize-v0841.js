@@ -245,7 +245,11 @@ jQuery(function ($) {
         span = Math.max(1, Math.min(COLUMN_COUNT, parseInt(span, 10) || 1));
         $tile.attr('data-h18-v0841-effective-span', String(span));
         $tile.get(0).style.setProperty('--h18-v0841-span', String(span));
-        $tile.children('.h18-v0841-span-badge').text(span + '/' + COLUMN_COUNT);
+        const $badge = $tile.children('.h18-v0841-span-badge').first();
+        const badgeText = span + '/' + COLUMN_COUNT;
+        if ($badge.length && String($badge.text() || '') !== badgeText) {
+            $badge.text(badgeText);
+        }
     }
 
     function ensureHandle($tile, $rightTile, index) {
