@@ -28,9 +28,11 @@ require_contains "$SPEC" "'/billedgalleri/'" 'Gallery route missing'
 require_contains "$SPEC" 'horizontal page overflow' 'responsive overflow assertion missing'
 require_contains "$SPEC" 'page.screenshot' 'screenshot evidence missing'
 require_contains "$SPEC" 'critical error on this website' 'WordPress critical-error guard missing'
+require_contains "$SPEC" 'unexpectedly redirected to login' 'login-redirect rejection guard missing'
 
-# The public smoke must not submit forms, authenticate or mutate WordPress.
-if grep -Ei '\b(POST|PUT|PATCH|DELETE)\b|wp-admin|wp-login|\.fill\(|\.type\(|\.check\(|\.uncheck\(|\.selectOption\(|\.setInputFiles\(|\.click\(' "$SPEC" >/dev/null; then
+# The public smoke may inspect URLs containing wp-login/wp-admin as negative assertions,
+# but it must not interact with controls, authenticate, submit, upload or call write methods.
+if grep -Ei '\b(POST|PUT|PATCH|DELETE)\b|request\.(post|put|patch|delete)\s*\(|\.fill\s*\(|\.type\s*\(|\.pressSequentially\s*\(|\.check\s*\(|\.uncheck\s*\(|\.selectOption\s*\(|\.setInputFiles\s*\(|\.click\s*\(|\.dblclick\s*\(|\.tap\s*\(' "$SPEC" >/dev/null; then
   echo 'FAIL: I9 public smoke contains an interactive/mutating primitive'
   exit 1
 fi
