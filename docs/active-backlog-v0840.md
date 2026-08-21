@@ -14,7 +14,7 @@ Denne fil er den korte aktive styringsbacklog efter den historiske `integration-
 |---|---|---|
 | LEGO-editor runtime | ✅ Implementeret og automatisk QA PASS | Manuel A–L test på `test2`. |
 | Officiel v0.8.40 release | ✅ Bygget og checksum-verificeret | Installer samme ZIP på `test2`. |
-| LEGO manual acceptance | 🟡 PENDING | Gennemfør A–L i issue #131 og canonical record. |
+| LEGO manual acceptance | 🟡 PRE-FLIGHT PENDING | Bekræft v0.8.40 + rollback-point og gennemfør A–L i issue #131. |
 | I9 manual/live evidence | 🟡 PENDING | LEGO-test + brand browsers + screen reader + protected domains + rollback. |
 | I10 controlled conversion | 🔒 LÅST | Må først fortsætte efter fuldt I9 PASS. |
 | Public page conversion | 🔒 LÅST | Ingen public mutation/cutover endnu. |
@@ -35,11 +35,23 @@ Denne fil er den korte aktive styringsbacklog efter den historiske `integration-
 | LEGO-040 | ✅ Implementeret / QA PASS | Read-only scenario/critical-flag recorder. |
 | LEGO-041 | ✅ Implementeret / QA PASS | Official-release acceptance bootstrap fra `update.json` + ZIP. |
 | LEGO-042 | ✅ Implementeret / QA PASS | Canonical v0.8.40 PENDING acceptance record. |
-| LEGO-043 | 🟡 AKTIV | Human-readable/machine-readable acceptance report og sikker I9 evidence-handoff readiness. |
+| LEGO-043 | ✅ QA PASS | JSON/Markdown acceptance report + sikker I9 `test2LiveE2E` evidence-handoff readiness; autoriserer aldrig I9 PASS/cutover. |
+| LEGO-044 | 🟡 MANUAL PENDING | Installer/bekræft officiel v0.8.40 på `test2`, etabler rollback-point og gennemfør A–L med evidence. |
 
-## Manual LEGO acceptance — A–L
+## LEGO-044 — manual v0.8.40 acceptance
 
 Canonical record: `docs/lego-v0840-manual-acceptance.json`.
+Aktiv tracking: GitHub issue #131.
+
+### Preflight
+
+- [ ] Bekræft at **Hangar18 Manager 0.8.40** er installeret og aktiv på `test2`.
+- [ ] Bekræft at kandidaten er den officielle v0.8.40-pakke med SHA-256 ovenfor.
+- [ ] Tag/identificér rollback-point før første gem/write-test.
+- [ ] Registrér browser, OS samt Desktop/Tablet/Mobil viewports.
+- [ ] Bekræft at testen foregår på `test2` og ikke er public cutover.
+
+### A–L
 
 - [ ] A — Elementbibliotek og drop
 - [ ] B — Kasse og nesting
@@ -55,6 +67,8 @@ Canonical record: `docs/lego-v0840-manual-acceptance.json`.
 - [ ] L — Vehicle/Event/Gallery regression
 
 Et scenarie må kun blive PASS med konkret evidence. Kritisk console/PHP-fejl, datatab/dubletter eller regression i protected domains tvinger FAIL.
+
+Efter testen bruges `tools/lego-acceptance-report.cjs`. `readyForI9Test2EvidenceHandoff=true` betyder kun, at A–L-resultatet kan vedlægges I9 `test2LiveE2E`; det betyder ikke samlet I9 PASS.
 
 ## I9 — stadig krævet efter LEGO A–L
 
