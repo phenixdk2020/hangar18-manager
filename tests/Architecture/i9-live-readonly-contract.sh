@@ -20,8 +20,12 @@ require_contains() {
   grep -F -- "$needle" "$file" >/dev/null || { echo "FAIL: $label"; echo "  missing: $needle"; exit 1; }
 }
 
-# Read-only public smoke scope and evidence.
+# Read-only public smoke scope and evidence. It must be explicit-dispatch only.
 require_contains "$WORKFLOW" 'workflow_dispatch:' 'live smoke must remain explicitly dispatched'
+if grep -Eq '^  (push|pull_request):' "$WORKFLOW"; then
+  echo 'FAIL: I9 live smoke must not run automatically on push/pull_request'
+  exit 1
+fi
 require_contains "$WORKFLOW" "default: 'https://test2.hangar18.dk'" 'test2 default target missing'
 require_contains "$WORKFLOW" 'actions/upload-artifact@v4' 'live evidence artifact upload missing'
 require_contains "$SPEC" "'/koeretoejer-og-materiel/'" 'Vehicle route missing'
@@ -50,6 +54,7 @@ node -e "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'))" "$MANI
 node -e "const m=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')); const required=['chrome','edge','firefox','safari','screenReader','test2LiveE2E','protectedDomains','rollback']; if(m.schemaVersion!==1||m.overallStatus!=='PENDING'||required.some(k=>!m.gates||!m.gates[k])) process.exit(1);" "$MANIFEST_EXAMPLE"
 require_contains "$MANIFEST_SCHEMA" '"overallStatus"' 'manifest overall status missing'
 require_contains "$MANIFEST_SCHEMA" '"rollback"' 'manifest rollback gate missing'
+require_contains "$MANIFEST_SCHEMA" '"minItems": 1' 'PASS gate must require evidence'
 
 node --check "$SPEC"
 node --check "$CONFIG"
