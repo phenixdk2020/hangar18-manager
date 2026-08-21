@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.34
+Version: 0.8.35
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.35 – Designer — LEGO consolidation og primary-editor readiness ==
+
+Nyt:
+- Konsoliderer LEGO-editorens eksisterende spacing-, responsive design-, interaction-state- og nesting-lag uden at introducere en ny renderer, persistence-store, drag/drop-motor eller Undo/Redo-stack.
+- Verificerer den eksisterende LayoutParentKey-model i kombinationen Auto-kasser → Kasse → Kasse + element inden for den eksisterende maksimale nesting-dybde på 2.
+- Kasse-i-Auto-kasser, Kasse-i-Kasse og element-i-Kasse fungerer samtidigt med responsive X/Y-spacing, farver/radius og Focus/Active/Disabled på den samme valgte Kasse.
+- Spacing, responsive design og interaction states forbliver uafhængige canonical state-lag, men bruger den samme eksisterende section-row og history-motor.
+- En ny sekventiel Undo/Redo-gate beviser baseline + præcis ét checkpoint for spacing, design og interaction state: Undo fjerner state, derefter design, derefter spacing, og Redo gendanner dem i korrekt rækkefølge.
+- LayoutParentKey og nested composition bevares gennem kombineret Undo/Redo og full-DOM history restore.
+- v0.8.35 er en readiness- og regressionsrelease; den ændrer ikke public renderer eller aktiverer public sidekonvertering.
+- LEGO Editor QA er bestået på PHP 8.0/8.2/8.3 og system Chrome; Editor Runtime Fast QA er bestået.
+- Fuld Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.34 – Designer — responsive LEGO interaction states ==
