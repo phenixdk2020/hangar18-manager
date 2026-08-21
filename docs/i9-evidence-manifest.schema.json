@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hangar18.dk/schemas/i9-evidence-manifest.schema.json",
+  "title": "Hangar18 Ultimate Designer I9 Evidence Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "build",
+    "environment",
+    "gates",
+    "overallStatus"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commitSha", "pluginVersion", "testedAt"],
+      "properties": {
+        "commitSha": { "type": "string", "pattern": "^[0-9a-fA-F]{40}$" },
+        "pluginVersion": { "type": "string", "minLength": 1 },
+        "testedAt": { "type": "string", "format": "date-time" },
+        "tester": { "type": "string" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "wordpressVersion", "phpVersion"],
+      "properties": {
+        "target": { "type": "string", "format": "uri" },
+        "wordpressVersion": { "type": "string", "minLength": 1 },
+        "phpVersion": { "type": "string", "minLength": 1 },
+        "backupRestorePointId": { "type": ["string", "null"] }
+      }
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chrome",
+        "edge",
+        "firefox",
+        "safari",
+        "screenReader",
+        "test2LiveE2E",
+        "protectedDomains",
+        "rollback"
+      ],
+      "properties": {
+        "chrome": { "$ref": "#/$defs/gateResult" },
+        "edge": { "$ref": "#/$defs/gateResult" },
+        "firefox": { "$ref": "#/$defs/gateResult" },
+        "safari": { "$ref": "#/$defs/gateResult" },
+        "screenReader": { "$ref": "#/$defs/gateResult" },
+        "test2LiveE2E": { "$ref": "#/$defs/gateResult" },
+        "protectedDomains": { "$ref": "#/$defs/gateResult" },
+        "rollback": { "$ref": "#/$defs/gateResult" }
+      }
+    },
+    "overallStatus": {
+      "enum": ["PASS", "FAIL", "BLOCKED", "PENDING"]
+    },
+    "notes": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "overallStatus": { "const": "PASS" } },
+        "required": ["overallStatus"]
+      },
+      "then": {
+        "properties": {
+          "gates": {
+            "properties": {
+              "chrome": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "edge": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "firefox": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "safari": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "screenReader": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "test2LiveE2E": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "protectedDomains": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "rollback": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": { "enum": ["PASS", "FAIL", "BLOCKED", "PENDING"] },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "browserOrTool": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "PASS" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": { "evidence": { "minItems": 1 } }
+          }
+        }
+      ]
+    }
+  }
+}

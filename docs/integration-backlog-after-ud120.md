@@ -3,11 +3,11 @@
 **Statusdato:** 21. august 2026  
 **Aktuel pluginbaseline:** Hangar18 Manager **v0.8.39**
 
-UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner, foldbare canvas-værktøjer, automatic side-by-side layout, 12-kolonne resize og responsive Tablet/Mobil spans er nu samlet på den eksisterende parent/history/persistence-arkitektur gennem LEGO-033.
+UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner, foldbare canvas-værktøjer, automatic side-by-side layout, 12-kolonne resize og responsive Tablet/Mobil spans er samlet på den eksisterende parent/history/persistence-arkitektur gennem LEGO-033.
 
-**Aktiv næste slice: DOC-1 — visuel brugermanual for den nu stabiliserede placement/resize/responsive arbejdsgang.**
+**Aktiv næste fase: I9-EVIDENCE — faktisk manuel/live acceptance.** DOC-1/DOC-2, I9-runbooks, evidence-manifest, read-only public smoke samt I10 operator-/blocker-/acceptance-/stage-dokumentation er nu forberedt. Automatisk QA må ikke erstatte de krævede I9 live/manuelle beviser.
 
-Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny renderer. Automatisk QA erstatter ikke de krævede I9 live/manuelle acceptance-gates.
+Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny renderer.
 
 ## Ikke-forhandlingsbare arkitekturregler
 
@@ -17,6 +17,7 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 - Eksisterende page-section felter forbliver persistence/public-renderer-kilden under migrationen.
 - Ingen public sidekonvertering før I9 er manuelt accepteret.
 - Vehicle/Event/Gallery forbliver beskyttede legacy-domæner, bortset fra eksplicit godkendte snævre fixes som EVENT-001.
+- I10 plan/readiness/preflight forbliver decision-only og må ikke eksponere public mutation, før en særskilt kontrolleret cutover-mekanisme senere godkendes.
 
 ## Statusoversigt
 
@@ -30,8 +31,8 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | I6 — Portability | ✅ Færdig | Dry-run, signeret plan, conflict/remap, workspace og restore-point. |
 | I7 — Permissions / Design Lock | ✅ Færdig | Additive capabilities/roles og design-lock policy. |
 | I8 — AI | ✅ Færdig | Provider-neutral forslag uden direkte public page-write. |
-| I9 — Manual QA evidence | 🟡 Framework færdigt / evidence pending | Live/browser/screen-reader/test2/rollback evidence mangler. |
-| I10 — Final controlled conversion | 🟡 Preflight færdigt / cutover låst | Comparison page → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
+| I9 — Manual QA evidence | 🟡 Evidence pending | Prep/tooling er klar; faktiske brand-browser-, screen-reader-, test2-editor-, protected-domain- og rollback-beviser mangler. |
+| I10 — Final controlled conversion | 🟡 Prep/preflight færdigt / cutover låst | Operatorflow dokumenteret; comparison → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
 | UX-3 — Foldbare workspace rails | ✅ v0.8.24 | Elementer/Funktioner og Inspector foldes uafhængigt. |
 | UX-4 — Ugemt forhåndsvisning | ✅ v0.8.25 + v0.8.27 | Preview uden save; editor chrome renses fra klonen. |
 | UX-5 — Foldbare canvas-værktøjspaneler | ✅ v0.8.39 + LEGO-031 UX | Direkte Design · LEGO og Billede starter minimeret, foldes uafhængigt og husker browser-lokal state; ingen history/save-event. |
@@ -46,14 +47,28 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | LEGO primary design view | ✅ v0.8.36 | Direkte Design bruger samme canonical design/state som Inspector. |
 | LEGO primary layout view | ✅ v0.8.37 | Direkte Design/Inspector spejler layout i samme canonical row-state. |
 | LEGO-030 — Visual four-way drop zones | ✅ v0.8.38 | Over/Under/Venstre/Højre oven på eksisterende placement-motor. |
-| LEGO-031 — Automatic side-by-side layout | ✅ QA PASS | Almindelige elementer placeres ved siden af hinanden via samme Auto-kasser/layoutmotor; single history checkpoint; Chrome/Chromium/Firefox/WebKit + PHP 8.0/8.2/8.3 PASS. |
+| LEGO-031 — Automatic side-by-side layout | ✅ QA PASS | Almindelige elementer placeres side-by-side via samme Auto-kasser/layoutmotor; single history checkpoint. |
 | LEGO-032 — Visual resize / column span | ✅ QA PASS | Usynlig 12-kolonne grid, visuel nabo-resize, min. span 1 og ét Undo/Redo-checkpoint. |
 | LEGO-033 — Tablet/Mobile layout overrides | ✅ QA PASS | Reversible Tablet/Mobil span-overrides med Desktop-arv, snapshots og samme history-owner. |
-| DOC-1 — Visuel brugermanual | 🟢 Aktiv næste | Dokumentér placement, resize, responsive overrides, arv og Undo/Redo. |
+| DOC-1 — Visuel brugermanual | ✅ Færdig | `docs/ultimate-designer-user-manual.md`. |
+| DOC-2 — Hurtig reference | ✅ Færdig | `docs/ultimate-designer-quick-reference.md`. |
+| DOC-3 — Migration operations index | ✅ Færdig | Samlet indgang til I9/I10 operatorfiler. |
+| I9-PREP-1 — Evidence runbook | ✅ Færdig | Ensartet browser/screen-reader/protected-domain evidenceflow. |
+| I9-PREP-2 — test2 live checklist | ✅ Færdig | Preflight, comparison-side, responsive, interactions og protected domains. |
+| I9-PREP-3 — Rollback rehearsal | ✅ Færdig | Baseline → kandidat → restore → verifikation. |
+| I9-PREP-4 — Public live read-only smoke | ✅ Implementeret | Playwright på public test2-ruter med screenshot, fatal-error og overflow guards; faktisk live evidence er stadig pending. |
+| I9-PREP-5 — Evidence result template | ✅ Færdig | Standard PASS/FAIL/BLOCKED registrering. |
+| I9-PREP-6 — Evidence manifest | ✅ Færdig | JSON Schema + eksempel; overall PASS kræver alle obligatoriske gates PASS, og en PASS-gate kræver evidence. |
+| I9-PREP-7 — QA contracts | ✅ PASS | Isolation/read-only/evidence-kontrakter integreret i Architecture QA og særskilt I9 Prep QA. |
+| I10-PREP-1 — Operator runbook | ✅ Færdig | Fast rækkefølge, gates, stopregler og non-executable policy. |
+| I10-PREP-2 — Blocker reference | ✅ Færdig | Blocker → betydning → korrigerende handling. |
+| I10-PREP-3 — Acceptance template | ✅ Færdig | Spejler de syv required human checks + source hash/evidence/manual confirmation. |
+| I10-PREP-4 — Stage ledger | ✅ Færdig | Hash/evidence/acceptance/preflight pr. conversion-stage. |
+| I10-PREP-5 — Documentation contract | ✅ PASS | Runbooks bindes til `ConversionTargetCatalog`, checklist og non-executable preflight i CI. |
 
 ## Stabiliseret editorhistorik
 
-Undo/Redo er manuelt accepteret og fortsat eneste history-owner:
+Undo/Redo er fortsat eneste history-owner:
 
 - v0.8.20: load-order/preloader og strukturelle checkpoints;
 - v0.8.21: live SELECT/INPUT/TEXTAREA-state gennem clone/restore;
@@ -61,7 +76,7 @@ Undo/Redo er manuelt accepteret og fortsat eneste history-owner:
 - v0.8.23: tekst, farver og billeder som content-history checkpoints;
 - v0.8.35: kombineret spacing/design/state på nested Kasse blev verificeret som sekventielle Undo/Redo-trin;
 - v0.8.39: fold/udfold af canvas-værktøjspaneler sender ingen form-events og opretter derfor ingen history-checkpoints;
-- LEGO-031: atomic transaction adapter samler ét side-drop til ét logisk checkpoint uden separat Undo/Redo-stack;
+- LEGO-031: atomic transaction adapter samler ét side-drop til ét logisk checkpoint;
 - LEGO-032: pointerdown→pointerup på Desktop-resize samler begge nabo-spans i ét checkpoint;
 - LEGO-033: Tablet/Mobil-resize bruger samme atomic bridge, og responsive snapshots overlever Undo/Redo og arv til/fra Desktop.
 
@@ -110,112 +125,99 @@ Undo/Redo er manuelt accepteret og fortsat eneste history-owner:
 | LEGO-031 — Automatic side-by-side | ✅ QA PASS | Side-drop for almindelige elementer adapteres til Auto-kasser/layout på samme placement motor. |
 | LEGO-032 — Visual resize/span | ✅ QA PASS | 12-column Desktop span resize med single history checkpoint. |
 | LEGO-033 — Responsive layout/span | ✅ QA PASS | Tablet/Mobil reversible span-overrides uden separat motor. |
-| DOC-1 — Visuel brugermanual | 🟢 Aktiv næste | Visuelle flows og forklaring af den færdige LEGO-editorinteraktion. |
-
-## v0.8.35 — consolidation/readiness — ✅
-
-Verificeret kombinationsgate:
-
-- Auto-kasser → Kasse A → Kasse B + element på samme `LayoutParentKey`-model;
-- spacing + responsive design + interaction state i samme editor-DOM;
-- Kasse/Grid/Flex/common element compatibility;
-- sekventiel Undo/Redo af spacing → design → state og Redo tilbage;
-- parent relationer overlever history restore;
-- PHP 8.0/8.2/8.3 + system Chrome + fuld Chromium/Firefox/WebKit Architecture QA PASS.
-
-## v0.8.36 — primary LEGO design view — ✅
-
-- Direkte Design er en tynd proxy over samme responsive LEGO-design/state som Inspector;
-- farver, radius, normal/hover opacity og Disabled opacity bruger canonical controls;
-- responsive override seedes lydløst, canonical ændring ejer ét checkpoint;
-- ingen ny persistence/history/placement/public renderer.
-
-## v0.8.37 — primary LEGO layout view — ✅
-
-- resterende layout-only controls spejles i hidden canonical row-state;
-- eksisterende `PaddingPx`, `HorizontalPaddingPx`, `TopSpacingPx`, `BottomSpacingPx`, `WidthPercent`, `MinHeightPx` og Tablet/Mobile-varianter bevares som persistence/public source;
-- `Columns`, `MobileColumns`, `ColumnGapPx`, `MobileColumnGapPx` bevarer eksisterende semantik;
-- mirror sker native capture før delegated history, men udsender ikke et ekstra event;
-- Direkte Design og Inspector bruger dermed samme history/view-state for layout;
-- history-style DOM restore rehydrerer legacy + canonical layout sammen;
-- QA PASS på PHP 8.0/8.2/8.3, system Chrome samt Chromium/Firefox/WebKit.
-
-## v0.8.38 — LEGO visual four-way drop zones — ✅
-
-- tydelige Over / Under / Venstre / Højre zoner under drag;
-- Over/Under er passive overlays og lader eksisterende sortable eje lodret orden;
-- Venstre/Højre genbruger eksisterende Kasse-sidezoner og Auto-kasser-motor;
-- `LayoutParentKey` forbliver eneste hierarchy-state;
-- unsupported side-by-side for almindelige elementer vises disabled indtil LEGO-031;
-- QA PASS i LEGO/Fast/Architecture inklusive Chromium/Firefox/WebKit.
-
-## v0.8.39 — foldbare canvas-værktøjspaneler — ✅
-
-- `Direkte Design · LEGO` og `Billede` foldes uafhængigt;
-- foldet state efterlader kun en smal titelbjælke og toggle;
-- browser-lokal state huskes pr. paneltype og genbruges efter dynamisk rerender;
-- ARIA/keyboard-fokus på toggle;
-- LEGO-031 UX-opdatering: begge paneler starter minimeret som standard; gammel v0.8.39 browser-state migreres én gang;
-- ingen form-input/change events, save-state eller Undo/Redo-checkpoint;
-- ingen ny persistence/history/placement/public renderer;
-- Fast QA, LEGO QA og Architecture QA inklusive Chromium/Firefox/WebKit PASS.
 
 ## LEGO-031 — automatic side-by-side — ✅ QA PASS
 
-Mål: gøre Venstre/Højre-drop brugbart for almindelige elementer uden en ny placement-motor.
+Verificeret:
 
-Verificeret acceptance:
-
-1. Et almindeligt element kan slippes Venstre/Højre ved siden af et kompatibelt almindeligt element eller en Kasse.
-2. Operationen adapteres til den eksisterende Auto-kasser/layoutmodel; der oprettes ingen ny parent/child-store.
-3. `LayoutParentKey` forbliver autoritativ.
-4. Eksisterende depth/cycle-regler for Kasse-nesting ændres ikke.
-5. Ét side-drop = ét history-checkpoint via atomic adapter foran eksisterende history-owner.
-6. Undo/Redo gendanner wrapper/layout, order og parent relationer.
-7. Existing v0.8.38 Kasse side-drop-regression er PASS.
-8. Desktop/Tablet/Mobil preview ændrer ikke placement-data.
-9. Vehicle/Event/Gallery protected-domain contract er PASS.
+1. almindelige elementer kan slippes Venstre/Højre ved kompatible mål;
+2. eksisterende Auto-kasser/layoutmodel genbruges;
+3. `LayoutParentKey` forbliver autoritativ;
+4. depth/cycle-regler ændres ikke;
+5. ét side-drop = ét history-checkpoint;
+6. Undo/Redo gendanner wrapper/layout/order/parent relationer;
+7. v0.8.38 Kasse-side-drop regression er PASS;
+8. Desktop/Tablet/Mobil preview ændrer ikke placement-data;
+9. Vehicle/Event/Gallery protected-domain contract er PASS;
 10. PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit er grønne.
 
 ## LEGO-032 — visual resize / column span — ✅ QA PASS
 
-Mål: give LEGO-rækker visuel breddejustering uden at introducere en ny layoutmotor.
+Verificeret:
 
-Verificeret acceptance:
-
-1. Side-by-side børn bruger canonical Desktop span på en usynlig 12-kolonne grid.
-2. Untouched 2-element rækker løses til 6/6; 3-element rækker til 4/4/4 uden skjult persistence-mutation.
-3. Brugeren kan trække grænsen mellem to nabo-elementer og ændre deres spans visuelt.
-4. Nabo-parrets samlede span bevares under resize; row-budgettet overskrider ikke 12.
-5. Min. span = 1 kolonne; ingen negativ eller overlappende bredde.
-6. `LayoutParentKey` og den eksisterende Auto-kasser-række forbliver hierarchy/placement authority.
-7. Resize ændrer kun canonical span/layout-state; ingen ny parent-store eller public renderer.
-8. Ét pointer-resize-forløb fra pointerdown til pointerup = ét history-checkpoint.
-9. Undo/Redo gendanner begge berørte spans i samme trin.
-10. LEGO-031 side-drop, Kasse nesting, foldbare canvas-paneler og Vehicle/Event/Gallery protected-domain regression er PASS.
-11. Tablet/Mobile arver Desktop span i LEGO-032; egne responsive spans leveres af LEGO-033.
-12. PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit er grønne.
+1. side-by-side børn bruger canonical Desktop span på usynlig 12-kolonne grid;
+2. untouched 2-element rækker løses 6/6 og 3-element rækker 4/4/4;
+3. visuel grænseresize mellem naboer fungerer;
+4. nabo-parrets samlede span bevares og row-budget ≤ 12;
+5. min. span = 1;
+6. `LayoutParentKey`/Auto-kasser forbliver placement authority;
+7. ingen ny parent-store/public renderer;
+8. pointerdown→pointerup = ét history-checkpoint;
+9. Undo/Redo gendanner begge spans samlet;
+10. LEGO-031/Kasse/panels/protected-domains regression er PASS;
+11. Tablet/Mobile arver Desktop i LEGO-032;
+12. PHP/browser matrix er PASS.
 
 ## LEGO-033 — responsive Tablet/Mobile layout span — ✅ QA PASS
 
-Mål: give Tablet og Mobil egne reversible spans uden separat layout-, parent- eller historymotor.
+Verificeret:
 
-Verificeret acceptance:
+1. Desktop er canonical baseline; Tablet/Mobil arver som standard;
+2. første responsive resize opretter device-specifikke snapshots;
+3. device-layouts er indbyrdes isolerede;
+4. `Arv Desktop` kan aktiveres uden at slette snapshot;
+5. arv fra igen gendanner eksisterende snapshot;
+6. samme 12-kolonne budget/min. span gælder;
+7. v0.8.42 ejer responsive tile-bredde, så Desktop-runtime ikke kan overskrive den;
+8. ét responsive resizeforløb = ét atomic history-checkpoint;
+9. Undo/Redo gendanner begge responsive nabo-spans;
+10. faktisk canvas-CSS-span er regressionsverificeret efter settling;
+11. placement/public renderer er uændret;
+12. Fast QA, Architecture QA, protected domains, PHP 8.0/8.2/8.3, system Chrome og Chrome/Chromium/Firefox/WebKit er PASS.
 
-1. Desktop forbliver canonical baseline; Tablet og Mobil arver Desktop som standard.
-2. Første responsive resize bryder kun arv for de to berørte naboer og opretter device-specifikke override-snapshots.
-3. Tablet-resize ændrer ikke Desktop eller Mobile; Mobile-resize ændrer ikke Desktop eller Tablet.
-4. `Arv Desktop` kan slås til igen uden at slette det gemte responsive snapshot.
-5. Når arv slås fra igen, gendannes det eksisterende Tablet/Mobil-snapshot i stedet for at opfinde en ny værdi.
-6. Samme 12-kolonne budget og min. span 1 gælder på alle tre devices.
-7. v0.8.41-base-runtime bygger fortsat grid/handles, men v0.8.42 ejer eksklusivt tile-bredden på Tablet/Mobil, så Desktop ikke kan overskrive responsive spans under async refresh.
-8. Ét responsive pointer-resize-forløb = ét atomic history-checkpoint for begge naboer.
-9. Undo/Redo gendanner begge responsive spans i samme trin.
-10. Faktisk canvas-CSS-span verificeres stabilt efter refresh/settling, ikke kun den gemte state.
-11. `LayoutParentKey`, Auto-kasser, placement-motoren og public renderer er uændrede.
-12. Fast QA, protected-domain contract, Architecture QA, PHP 8.0/8.2/8.3, system Chrome samt Chrome/Chromium/Firefox/WebKit LEGO-regression er alle PASS.
+## Dokumentation og I9-forberedelse — ✅
 
-## I9 — MANUAL QA EVIDENCE — PENDING
+Forberedt og kontraktbeskyttet:
+
+- `docs/ultimate-designer-user-manual.md`;
+- `docs/ultimate-designer-quick-reference.md`;
+- `docs/migration-operations-index.md`;
+- `docs/i9-manual-qa-evidence-runbook.md`;
+- `docs/i9-test2-live-e2e-checklist.md`;
+- `docs/i9-rollback-rehearsal.md`;
+- `docs/i9-evidence-result-template.md`;
+- `docs/i9-evidence-manifest.schema.json`;
+- `docs/i9-evidence-manifest.example.json`;
+- `tests/Live/i9-public-readonly.spec.cjs`;
+- `tests/Live/playwright.i9-public.config.cjs`;
+- `.github/workflows/i9-test2-live-readonly.yml`;
+- `.github/workflows/i9-prep-qa.yml`;
+- `tests/Architecture/i9-live-readonly-contract.sh`.
+
+Public-smoken er read-only og må ikke logge ind, submitte formularer eller mutere WordPress. Den kontrollerer centrale public-ruter, kritiske PHP/WordPress-fejl og horisontal overflow og kan gemme screenshot-evidence.
+
+Evidence-manifestet har otte obligatoriske gates: Chrome, Edge, Firefox, Safari, screen reader, test2 live E2E, protected domains og rollback. `overallStatus=PASS` er kun gyldig, når alle otte er PASS; en PASS-gate skal have mindst én evidence-reference.
+
+## I10-forberedelse — ✅ / CUTOVER FORTSAT LÅST
+
+Forberedt:
+
+- `docs/i10-operator-runbook.md`;
+- `docs/i10-blocker-reference.md`;
+- `docs/i10-acceptance-record-template.md`;
+- `docs/i10-stage-ledger-template.md`;
+- `tests/Architecture/i10-operator-runbook-contract.sh`.
+
+Dokumentationen spejler den eksisterende runtime:
+
+- `ConversionPlanService`: `Mode=plan-only`, `PublicMutationAvailable=false`;
+- `ConversionReadinessGate`: decision-only blockers/eligibility;
+- `ConversionAcceptanceValidator`: syv required human checks, manual confirmation, environment/evidence reference og source hash;
+- `ConversionCutoverPreflightService`: `Mode=cutover-preflight-only`, `Executable=false`, `PublicMutationAvailable=false`;
+- `ConversionTargetCatalog`: Hjem → Om → Kontakt → Bliv medlem efter accepteret comparison-side;
+- protected domains forbliver yderligere låst af legacy-runtime policy.
+
+## I9 — MANUAL QA EVIDENCE — 🟡 PENDING
 
 Krævet før nogen public cutover:
 
@@ -224,9 +226,11 @@ Krævet før nogen public cutover:
 3. Firefox brand test;
 4. Safari brand test;
 5. screen-reader core flow;
-6. `test2` live-site E2E;
+6. `test2` live-site E2E med rigtig editor/session;
 7. Vehicle/Event/Gallery visual/function regression;
 8. migration/rollback på live kopi.
+
+Den public read-only smoke er ekstra støttebevis og reducerer gentagen kontrol, men kan ikke alene sætte I9 til PASS.
 
 ## I10 — FINAL CONTROLLED CONVERSION — LÅST
 
@@ -240,4 +244,4 @@ Fast rækkefølge efter I9 PASS:
 6. Vehicle/Event/Gallery kun efter særskilt compatibility proof;
 7. legacy removal til sidst.
 
-Ingen LEGO-release gennem LEGO-033 ændrer denne public-cutover-lås.
+Ingen LEGO-, dokumentations-, I9-prep- eller I10-prep-opgave ændrer denne public-cutover-lås.

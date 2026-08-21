@@ -19,6 +19,7 @@ on:
     paths:
       - 'src/**'
       - 'tests/Architecture/**'
+      - 'tests/Live/**'
       - 'assets/ultimate-designer-admin.js'
       - 'assets/ultimate-designer-admin.css'
       - 'assets/ultimate-designer-menu-admin.js'
@@ -53,9 +54,15 @@ on:
       - 'assets/ultimate-designer-history-v0818.js'
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
+      - 'docs/i9-*'
+      - 'docs/i10-*.md'
       - 'docs/ultimate-designer-onboarding.md'
+      - 'docs/ultimate-designer-user-manual.md'
+      - 'docs/ultimate-designer-quick-reference.md'
       - 'docs/integration-backlog-after-ud120.md'
       - '.github/workflows/architecture-foundation-qa.yml'
+      - '.github/workflows/i9-prep-qa.yml'
+      - '.github/workflows/i9-test2-live-readonly.yml'
 
 permissions:
   contents: read
@@ -94,6 +101,8 @@ jobs:
       - run: php tests/Architecture/i10-conversion-planner-smoke.php
       - run: php tests/Architecture/i10-conversion-acceptance-smoke.php
       - run: php tests/Architecture/i10-cutover-preflight-smoke.php
+      - run: bash tests/Architecture/i9-live-readonly-contract.sh
+      - run: bash tests/Architecture/i10-operator-runbook-contract.sh
       - run: bash tests/Architecture/e14-security-audit.sh
       - run: php tests/Architecture/e14-performance-budget.php
       - run: php tests/Architecture/e14-migration-rollback-smoke.php
