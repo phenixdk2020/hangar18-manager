@@ -54,6 +54,10 @@
     touch-action:none;
     user-select:none;
 }
+.h18-builder-canvas[data-canvas-device="tablet"] .h18-v0841-resize-handle,
+.h18-builder-canvas[data-canvas-device="mobile"] .h18-v0841-resize-handle{
+    display:none!important;
+}
 .h18-v0841-resize-handle span{
     display:block;
     font-size:15px;
