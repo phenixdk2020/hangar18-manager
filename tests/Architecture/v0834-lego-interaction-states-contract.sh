@@ -8,9 +8,10 @@ CTRL='src/Admin/EditorLegoInteractionStatesAdminController.php'
 RESP_CTRL='src/Admin/EditorLegoResponsiveDesignAdminController.php'
 JS='assets/ultimate-designer-lego-interaction-states-v0834.js'
 GUARD='assets/ultimate-designer-lego-interaction-states-event-guard-v0834.js'
+SNAPSHOT='assets/ultimate-designer-lego-interaction-snapshot-v0834.js'
 CSS='assets/ultimate-designer-lego-interaction-states-v0834.css'
 
-for file in "$MODEL" "$STATE_MODEL" "$RESP_MODEL" "$CTRL" "$RESP_CTRL" "$JS" "$GUARD" "$CSS"; do
+for file in "$MODEL" "$STATE_MODEL" "$RESP_MODEL" "$CTRL" "$RESP_CTRL" "$JS" "$GUARD" "$SNAPSHOT" "$CSS"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -42,10 +43,12 @@ require_contains "$CTRL" 'EditorLegoResponsiveDesignAdminController::OPTION' 'in
 require_contains "$CTRL" "add_action('admin_post_h18_save_page_editor', [self::class, 'preserveBeforeSave'], 4);" 'pre-save snapshot hook missing'
 require_contains "$CTRL" "add_action('admin_post_h18_save_page_editor', [self::class, 'captureSave'], 6);" 'post-responsive merge hook missing'
 require_contains "$CTRL" "'InteractionHasOverride'" 'interaction override marker missing'
+require_contains "$CTRL" "'InteractionHasSnapshot'" 'interaction snapshot marker missing'
 require_contains "$CTRL" 'Preserve the snapshot even while inheritance is active' 'inactive override preservation is not explicit'
 require_contains "$CTRL" 'LegoInteractionStateModel::mergeIntoDesign' 'interaction state is not merged into existing device Design'
 require_contains "$CTRL" 'assets/ultimate-designer-lego-interaction-states-v0834.js' 'interaction runtime is not enqueued'
 require_contains "$CTRL" 'assets/ultimate-designer-lego-interaction-states-event-guard-v0834.js' 'interaction select guard is not enqueued'
+require_contains "$CTRL" 'assets/ultimate-designer-lego-interaction-snapshot-v0834.js' 'interaction snapshot runtime is not enqueued'
 require_contains "$CTRL" 'assets/ultimate-designer-lego-interaction-states-v0834.css' 'interaction CSS is not enqueued'
 require_contains "$CTRL" "'hangar18-ultimate-designer-history-content-v0823'" 'existing history owner is not explicit dependency'
 require_contains "$CTRL" "'hangar18-ultimate-designer-lego-design-responsive-v0833'" 'interaction layer does not load after responsive design'
@@ -64,21 +67,24 @@ require_contains "$JS" "Disabled.Opacity" 'Disabled controls missing'
 require_contains "$JS" "h18_lego_interaction_states[" 'interaction save payload missing'
 require_contains "$GUARD" 'select[data-h18-i-path]' 'interaction select duplicate-event guard missing'
 require_contains "$GUARD" 'event.stopPropagation();' 'interaction select duplicate-event guard inactive'
+require_contains "$SNAPSHOT" 'HasSnapshot' 'reversible snapshot metadata is not submitted'
+require_contains "$SNAPSHOT" 'InteractionHasSnapshot' 'stored snapshot ownership is not rehydrated'
+require_contains "$SNAPSHOT" "data-h18-lego-interaction-snapshot-runtime', '0.8.34'" 'snapshot runtime marker missing'
 require_contains "$CSS" '.h18-i-panel' 'interaction Inspector CSS missing'
 require_contains "$CSS" 'data-h18-interaction-states="1"' 'interaction preview CSS marker missing'
 
 # This slice may persist only through the already existing responsive option and
 # existing legacy page-section save. It must not add frontend hooks, post writes,
 # another drag/drop engine or another history stack.
-if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|template_redirect|wp_head|wp_footer|wp_nav_menu' "$STATE_MODEL" "$CTRL" "$JS" "$GUARD" >/dev/null; then
+if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|template_redirect|wp_head|wp_footer|wp_nav_menu' "$STATE_MODEL" "$CTRL" "$JS" "$GUARD" "$SNAPSHOT" >/dev/null; then
   echo 'FAIL: interaction states introduced public/post mutation primitives'
   exit 1
 fi
-if grep -Ei 'editorHistoryEntries|historyEntries|undoStack|redoStack|sortable\(|draggable\(|droppable\(' "$JS" "$GUARD" >/dev/null; then
+if grep -Ei 'editorHistoryEntries|historyEntries|undoStack|redoStack|sortable\(|draggable\(|droppable\(' "$JS" "$GUARD" "$SNAPSHOT" >/dev/null; then
   echo 'FAIL: interaction states introduced parallel history or drag/drop state'
   exit 1
 fi
-if grep -Ei 'localStorage|sessionStorage' "$JS" "$GUARD" >/dev/null; then
+if grep -Ei 'localStorage|sessionStorage' "$JS" "$GUARD" "$SNAPSHOT" >/dev/null; then
   echo 'FAIL: interaction states introduced browser-only persistence'
   exit 1
 fi
@@ -90,5 +96,6 @@ php -l "$RESP_MODEL" >/dev/null
 php -l "$CTRL" >/dev/null
 node --check "$JS"
 node --check "$GUARD"
+node --check "$SNAPSHOT"
 
 echo 'v0.8.34 LEGO interaction states contract: PASS'
