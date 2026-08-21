@@ -1,6 +1,9 @@
 name: I9 test2 live read-only smoke
 
 on:
+  push:
+    branches:
+      - agent/doc1-visual-user-manual
   workflow_dispatch:
     inputs:
       base_url:
@@ -18,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      H18_TEST2_BASE_URL: ${{ inputs.base_url }}
+      H18_TEST2_BASE_URL: ${{ inputs.base_url || 'https://test2.hangar18.dk' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
