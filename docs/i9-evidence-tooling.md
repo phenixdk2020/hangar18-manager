@@ -13,12 +13,12 @@ I9 består fortsat af faktiske browser-, screen-reader-, `test2`-, protected-dom
 
 ## 1. Opret et nyt manifest
 
-Eksempel:
+Eksempel med den aktuelle pluginbaseline 0.8.39:
 
 ```bash
 node tools/i9-evidence-init.cjs \
   --sha 0123456789abcdef0123456789abcdef01234567 \
-  --version 0.8.42 \
+  --version 0.8.39 \
   --wordpress-version 6.8.2 \
   --php-version 8.2 \
   --tester "Allan" \
@@ -71,7 +71,7 @@ Et manifest kan derfor ikke manuelt erklære en anden samlet status end den, evi
 ```bash
 node tools/i9-evidence-validator.cjs evidence/i9/manifest.json \
   --expected-sha 0123456789abcdef0123456789abcdef01234567 \
-  --expected-version 0.8.42 \
+  --expected-version 0.8.39 \
   --expected-target https://test2.hangar18.dk/
 ```
 
@@ -84,7 +84,7 @@ Build- og target-binding bør bruges, når evidence vurderes som release-bevis, 
 ```bash
 node tools/i9-evidence-validator.cjs evidence/i9/manifest.json \
   --expected-sha 0123456789abcdef0123456789abcdef01234567 \
-  --expected-version 0.8.42 \
+  --expected-version 0.8.39 \
   --expected-target https://test2.hangar18.dk/ \
   --require-pass
 ```
@@ -117,7 +117,7 @@ Inputs:
 
 - `manifest_path` — repository-relativ sti til manifestet;
 - `expected_sha` — build-SHA; blank bruger workflow-commit SHA;
-- `expected_version` — forventet pluginversion;
+- `expected_version` — forventet pluginversion; blank læser `Hangar18_Manager::VERSION` direkte fra `hangar18-manager.php`;
 - `expected_target` — forventet staging-URL, standard `https://test2.hangar18.dk/`;
 - `require_pass` — når `true`, skal hele I9 være evidenced PASS.
 
@@ -125,6 +125,7 @@ Workflowet:
 
 - har kun `contents: read`;
 - afviser absolutte/path-traversal manifeststier;
+- binder manifestet til build-SHA, source-version og staging-target;
 - bruger den samme canonical validator som lokalt;
 - gemmer JSON-resultatet som Actions-artifact;
 - laver ingen WordPress-, login- eller public-write-kald.
