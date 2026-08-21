@@ -30,9 +30,9 @@ require_contains "$NESTING" 'function moveBoxIntoAuto($row, $auto)' 'existing Ka
 require_contains "$ADMIN" 'layoutParentCapableV0519' 'legacy/canonical parent capability bridge is missing'
 
 # Existing three LEGO state layers must remain independent views over the same row/history owner.
-require_contains "$SPACING" '.h18-lego-spacing-state-json' 'spacing canonical row state is missing'
-require_contains "$RESPONSIVE" '.h18-lego-responsive-design-state-json' 'responsive design canonical row state is missing'
-require_contains "$INTERACTION" '.h18-lego-interaction-states-state-json' 'interaction canonical row state is missing'
+require_contains "$SPACING" "const STATE_CLASS = 'h18-lego-spacing-state-json';" 'spacing canonical row state is missing'
+require_contains "$RESPONSIVE" "h18-lego-responsive-design-state-json" 'responsive design canonical row state is missing'
+require_contains "$INTERACTION" "h18-lego-interaction-states-state-json" 'interaction canonical row state is missing'
 
 # v0.8.35 consolidation must exercise all critical combinations in one browser DOM.
 require_contains "$SPEC" "Auto-kasser -> Kasse -> Kasse + element" 'nested consolidation case is missing'
