@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hangar18.local/schemas/lego-manual-acceptance.schema.json",
+  "title": "Hangar18 LEGO manual acceptance record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "build", "environment", "scenarios", "overallStatus", "criticalFlags"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commitSha", "pluginVersion", "packageSha256"],
+      "properties": {
+        "commitSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "pluginVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "packageSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stagingUrl", "browser", "os"],
+      "properties": {
+        "stagingUrl": {"type": "string", "minLength": 1},
+        "browser": {"type": "string", "minLength": 1},
+        "os": {"type": "string", "minLength": 1},
+        "desktopViewport": {"type": "string"},
+        "tabletViewport": {"type": "string"},
+        "mobileViewport": {"type": "string"}
+      }
+    },
+    "scenarios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["A","B","C","D","E","F","G","H","I","J","K","L"],
+      "properties": {
+        "A": {"$ref": "#/$defs/scenario"}, "B": {"$ref": "#/$defs/scenario"},
+        "C": {"$ref": "#/$defs/scenario"}, "D": {"$ref": "#/$defs/scenario"},
+        "E": {"$ref": "#/$defs/scenario"}, "F": {"$ref": "#/$defs/scenario"},
+        "G": {"$ref": "#/$defs/scenario"}, "H": {"$ref": "#/$defs/scenario"},
+        "I": {"$ref": "#/$defs/scenario"}, "J": {"$ref": "#/$defs/scenario"},
+        "K": {"$ref": "#/$defs/scenario"}, "L": {"$ref": "#/$defs/scenario"}
+      }
+    },
+    "criticalFlags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consoleError", "dataLossOrDuplicate", "protectedDomainRegression"],
+      "properties": {
+        "consoleError": {"type": "boolean"},
+        "dataLossOrDuplicate": {"type": "boolean"},
+        "protectedDomainRegression": {"type": "boolean"}
+      }
+    },
+    "overallStatus": {"enum": ["PASS", "FAIL", "BLOCKED", "PENDING"]},
+    "notes": {"type": "string"}
+  },
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL", "BLOCKED", "PENDING"]},
+        "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "note": {"type": "string"}
+      }
+    }
+  }
+}
