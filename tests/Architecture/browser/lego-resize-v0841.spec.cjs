@@ -197,7 +197,9 @@ test('LEGO-032 visual resize changes 6/6 to 8/4 as one Undo Redo checkpoint', as
 
 test('LEGO-032 resize clamps each neighbor to at least one of twelve columns', async ({ page }) => {
   await boot(page);
-  await resizeFirstBoundaryByColumns(page, 20);
+  // From 6/6, +6 requests 12/0. The runtime must clamp that one-column
+  // overshoot to 11/1 without sending the pointer outside the viewport.
+  await resizeFirstBoundaryByColumns(page, 6);
   await page.waitForTimeout(350);
   expect(await page.evaluate(() => window.__v0841HistoryHarness.spans())).toEqual([11, 1]);
   expect(await page.evaluate(() => window.__v0841HistoryHarness.stored())).toEqual([11, 1]);
