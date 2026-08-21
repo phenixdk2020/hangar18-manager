@@ -7,15 +7,15 @@ namespace Hangar18\UltimateDesigner\Editor;
 /**
  * Canonical renderer-neutral LEGO column-span state.
  *
- * Span 0 means Auto and is resolved by the editor from the sibling count.
- * Explicit spans are 1..12. Tablet/Mobile inherit Desktop in LEGO-032;
- * explicit responsive overrides are reserved for LEGO-033.
+ * Span 0 means Auto and is resolved by the editor from sibling count.
+ * Explicit spans are 1..12. Tablet/Mobile keep reversible override snapshots:
+ * inheritance may be enabled without deleting the stored device span.
  *
  * This model owns no drag/drop, parent relation, history stack or public render.
  */
 final class LegoLayoutSpanModel
 {
-    public const SCHEMA_VERSION = 1;
+    public const SCHEMA_VERSION = 2;
     public const COLUMN_COUNT = 12;
 
     /**
@@ -28,21 +28,13 @@ final class LegoLayoutSpanModel
         $tabletRaw = isset($raw['Tablet']) && is_array($raw['Tablet']) ? $raw['Tablet'] : [];
         $mobileRaw = isset($raw['Mobile']) && is_array($raw['Mobile']) ? $raw['Mobile'] : [];
 
-        $desktopSpan = self::span($desktopRaw['Span'] ?? 0);
-
         return [
             'SchemaVersion' => self::SCHEMA_VERSION,
             'Desktop' => [
-                'Span' => $desktopSpan,
+                'Span' => self::span($desktopRaw['Span'] ?? 0),
             ],
-            'Tablet' => [
-                'InheritDesktop' => true,
-                'Span' => self::span($tabletRaw['Span'] ?? 0),
-            ],
-            'Mobile' => [
-                'InheritDesktop' => true,
-                'Span' => self::span($mobileRaw['Span'] ?? 0),
-            ],
+            'Tablet' => self::normalizeDevice($tabletRaw),
+            'Mobile' => self::normalizeDevice($mobileRaw),
         ];
     }
 
@@ -62,10 +54,82 @@ final class LegoLayoutSpanModel
     {
         $state = self::normalize($raw);
         $device = ucfirst(strtolower($device));
-        if ($device === 'Tablet' || $device === 'Mobile') {
+        if (!in_array($device, ['Desktop', 'Tablet', 'Mobile'], true)) {
+            $device = 'Desktop';
+        }
+        if ($device === 'Desktop') {
             return (int) $state['Desktop']['Span'];
         }
-        return (int) $state['Desktop']['Span'];
+        if (!empty($state[$device]['InheritDesktop'])) {
+            return (int) $state['Desktop']['Span'];
+        }
+        return (int) $state[$device]['Span'];
+    }
+
+    /**
+     * Toggle responsive inheritance without deleting an existing override.
+     * First transition away from Desktop may be seeded from the currently
+     * resolved Desktop span supplied by the editor runtime.
+     *
+     * @param array<string,mixed> $raw
+     * @return array<string,mixed>
+     */
+    public static function setInheritance(array $raw, string $device, bool $inherit, int $seedSpan = 0): array
+    {
+        $state = self::normalize($raw);
+        $device = ucfirst(strtolower($device));
+        if (!in_array($device, ['Tablet', 'Mobile'], true)) {
+            return $state;
+        }
+
+        if (!$inherit && empty($state[$device]['HasOverride'])) {
+            $state[$device]['Span'] = self::span($seedSpan);
+            $state[$device]['HasOverride'] = true;
+        }
+        $state[$device]['InheritDesktop'] = $inherit;
+        return self::normalize($state);
+    }
+
+    /**
+     * Set one explicit span. Responsive writes automatically create/activate
+     * an override while Desktop remains the canonical default.
+     *
+     * @param array<string,mixed> $raw
+     * @return array<string,mixed>
+     */
+    public static function setSpan(array $raw, string $device, int $span): array
+    {
+        $state = self::normalize($raw);
+        $device = ucfirst(strtolower($device));
+        if ($device === 'Desktop') {
+            $state['Desktop']['Span'] = self::span($span);
+            return self::normalize($state);
+        }
+        if (!in_array($device, ['Tablet', 'Mobile'], true)) {
+            return $state;
+        }
+        $state[$device]['Span'] = self::span($span);
+        $state[$device]['InheritDesktop'] = false;
+        $state[$device]['HasOverride'] = true;
+        return self::normalize($state);
+    }
+
+    /** @param array<string,mixed> $raw @return array<string,mixed> */
+    private static function normalizeDevice(array $raw): array
+    {
+        $inherit = array_key_exists('InheritDesktop', $raw)
+            ? self::boolValue($raw['InheritDesktop'], true)
+            : true;
+        $span = self::span($raw['Span'] ?? 0);
+        $hasOverride = array_key_exists('HasOverride', $raw)
+            ? self::boolValue($raw['HasOverride'], !$inherit)
+            : (!$inherit || $span > 0);
+
+        return [
+            'InheritDesktop' => $inherit,
+            'HasOverride' => $hasOverride,
+            'Span' => $span,
+        ];
     }
 
     /** @param mixed $value */
@@ -79,5 +143,20 @@ final class LegoLayoutSpanModel
             return 0;
         }
         return max(1, min(self::COLUMN_COUNT, $span));
+    }
+
+    /** @param mixed $value */
+    private static function boolValue($value, bool $fallback): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        if ($value === null || $value === '') {
+            return $fallback;
+        }
+        if (is_numeric($value)) {
+            return ((int) $value) !== 0;
+        }
+        return in_array(strtolower(trim((string) $value)), ['1', 'true', 'yes', 'on'], true);
     }
 }

@@ -3,9 +3,9 @@
 **Statusdato:** 21. august 2026  
 **Aktuel pluginbaseline:** Hangar18 Manager **v0.8.39**
 
-UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner, foldbare canvas-værktøjer og automatic side-by-side layout er nu samlet på den eksisterende parent/history/persistence-arkitektur gennem LEGO-031.
+UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner, foldbare canvas-værktøjer, automatic side-by-side layout, 12-kolonne resize og responsive Tablet/Mobil spans er nu samlet på den eksisterende parent/history/persistence-arkitektur gennem LEGO-033.
 
-**Aktiv næste slice: LEGO-032 — visual resize / column span oven på den eksisterende Auto-kasser/layoutmotor.**
+**Aktiv næste slice: DOC-1 — visuel brugermanual for den nu stabiliserede placement/resize/responsive arbejdsgang.**
 
 Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny renderer. Automatisk QA erstatter ikke de krævede I9 live/manuelle acceptance-gates.
 
@@ -47,9 +47,9 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | LEGO primary layout view | ✅ v0.8.37 | Direkte Design/Inspector spejler layout i samme canonical row-state. |
 | LEGO-030 — Visual four-way drop zones | ✅ v0.8.38 | Over/Under/Venstre/Højre oven på eksisterende placement-motor. |
 | LEGO-031 — Automatic side-by-side layout | ✅ QA PASS | Almindelige elementer placeres ved siden af hinanden via samme Auto-kasser/layoutmotor; single history checkpoint; Chrome/Chromium/Firefox/WebKit + PHP 8.0/8.2/8.3 PASS. |
-| LEGO-032 — Visual resize / column span | 🟢 Aktiv næste | Resize oven på usynlig 12-kolonne layoutmotor. |
-| LEGO-033 — Tablet/Mobile layout overrides | ⬜ Senere | Responsive span/layout uden separat motor. |
-| DOC-1 — Visuel brugermanual | ⬜ Backlog | Udarbejdes når placement/resize-interaktionen er stabil. |
+| LEGO-032 — Visual resize / column span | ✅ QA PASS | Usynlig 12-kolonne grid, visuel nabo-resize, min. span 1 og ét Undo/Redo-checkpoint. |
+| LEGO-033 — Tablet/Mobile layout overrides | ✅ QA PASS | Reversible Tablet/Mobil span-overrides med Desktop-arv, snapshots og samme history-owner. |
+| DOC-1 — Visuel brugermanual | 🟢 Aktiv næste | Dokumentér placement, resize, responsive overrides, arv og Undo/Redo. |
 
 ## Stabiliseret editorhistorik
 
@@ -61,7 +61,9 @@ Undo/Redo er manuelt accepteret og fortsat eneste history-owner:
 - v0.8.23: tekst, farver og billeder som content-history checkpoints;
 - v0.8.35: kombineret spacing/design/state på nested Kasse blev verificeret som sekventielle Undo/Redo-trin;
 - v0.8.39: fold/udfold af canvas-værktøjspaneler sender ingen form-events og opretter derfor ingen history-checkpoints;
-- LEGO-031: atomic transaction adapter samler ét side-drop til ét logisk checkpoint uden separat Undo/Redo-stack.
+- LEGO-031: atomic transaction adapter samler ét side-drop til ét logisk checkpoint uden separat Undo/Redo-stack;
+- LEGO-032: pointerdown→pointerup på Desktop-resize samler begge nabo-spans i ét checkpoint;
+- LEGO-033: Tablet/Mobil-resize bruger samme atomic bridge, og responsive snapshots overlever Undo/Redo og arv til/fra Desktop.
 
 ## Backup / restore
 
@@ -106,8 +108,9 @@ Undo/Redo er manuelt accepteret og fortsat eneste history-owner:
 | LEGO-028 — Primary layout view | ✅ v0.8.37 | Remaining legacy layout controls mirrored canonical before history capture. |
 | LEGO-030 — Visual four-way drop zones | ✅ v0.8.38 | Over/Under/Venstre/Højre visual targeting på eksisterende motor. |
 | LEGO-031 — Automatic side-by-side | ✅ QA PASS | Side-drop for almindelige elementer adapteres til Auto-kasser/layout på samme placement motor. |
-| LEGO-032 — Visual resize/span | 🟢 Aktiv næste | 12-column span resize. |
-| LEGO-033 — Responsive layout/span | ⬜ | Tablet/Mobile layout overrides. |
+| LEGO-032 — Visual resize/span | ✅ QA PASS | 12-column Desktop span resize med single history checkpoint. |
+| LEGO-033 — Responsive layout/span | ✅ QA PASS | Tablet/Mobil reversible span-overrides uden separat motor. |
+| DOC-1 — Visuel brugermanual | 🟢 Aktiv næste | Visuelle flows og forklaring af den færdige LEGO-editorinteraktion. |
 
 ## v0.8.35 — consolidation/readiness — ✅
 
@@ -174,24 +177,43 @@ Verificeret acceptance:
 9. Vehicle/Event/Gallery protected-domain contract er PASS.
 10. PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit er grønne.
 
-## LEGO-032 — visual resize / column span — 🟢 AKTIV NÆSTE
+## LEGO-032 — visual resize / column span — ✅ QA PASS
 
 Mål: give LEGO-rækker visuel breddejustering uden at introducere en ny layoutmotor.
 
-Planlagt acceptance:
+Verificeret acceptance:
 
-1. Side-by-side børn får et canonical Desktop span på en usynlig 12-kolonne grid.
-2. Nyoprettede 2-element rækker starter 6/6; 3-element rækker starter 4/4/4, med kompatibel afrunding for øvrige antal.
+1. Side-by-side børn bruger canonical Desktop span på en usynlig 12-kolonne grid.
+2. Untouched 2-element rækker løses til 6/6; 3-element rækker til 4/4/4 uden skjult persistence-mutation.
 3. Brugeren kan trække grænsen mellem to nabo-elementer og ændre deres spans visuelt.
-4. Summen for direkte børn i samme Auto-kasser-række må ikke overstige 12; naboen kompenserer under resize.
+4. Nabo-parrets samlede span bevares under resize; row-budgettet overskrider ikke 12.
 5. Min. span = 1 kolonne; ingen negativ eller overlappende bredde.
 6. `LayoutParentKey` og den eksisterende Auto-kasser-række forbliver hierarchy/placement authority.
 7. Resize ændrer kun canonical span/layout-state; ingen ny parent-store eller public renderer.
 8. Ét pointer-resize-forløb fra pointerdown til pointerup = ét history-checkpoint.
 9. Undo/Redo gendanner begge berørte spans i samme trin.
-10. LEGO-031 side-drop, Kasse nesting, foldbare canvas-paneler og Vehicle/Event/Gallery protected-domain regression forbliver PASS.
-11. Tablet/Mobile arver Desktop span i LEGO-032; eksplicit responsive span kommer først i LEGO-033.
-12. PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit skal være grøn før release.
+10. LEGO-031 side-drop, Kasse nesting, foldbare canvas-paneler og Vehicle/Event/Gallery protected-domain regression er PASS.
+11. Tablet/Mobile arver Desktop span i LEGO-032; egne responsive spans leveres af LEGO-033.
+12. PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit er grønne.
+
+## LEGO-033 — responsive Tablet/Mobile layout span — ✅ QA PASS
+
+Mål: give Tablet og Mobil egne reversible spans uden separat layout-, parent- eller historymotor.
+
+Verificeret acceptance:
+
+1. Desktop forbliver canonical baseline; Tablet og Mobil arver Desktop som standard.
+2. Første responsive resize bryder kun arv for de to berørte naboer og opretter device-specifikke override-snapshots.
+3. Tablet-resize ændrer ikke Desktop eller Mobile; Mobile-resize ændrer ikke Desktop eller Tablet.
+4. `Arv Desktop` kan slås til igen uden at slette det gemte responsive snapshot.
+5. Når arv slås fra igen, gendannes det eksisterende Tablet/Mobil-snapshot i stedet for at opfinde en ny værdi.
+6. Samme 12-kolonne budget og min. span 1 gælder på alle tre devices.
+7. v0.8.41-base-runtime bygger fortsat grid/handles, men v0.8.42 ejer eksklusivt tile-bredden på Tablet/Mobil, så Desktop ikke kan overskrive responsive spans under async refresh.
+8. Ét responsive pointer-resize-forløb = ét atomic history-checkpoint for begge naboer.
+9. Undo/Redo gendanner begge responsive spans i samme trin.
+10. Faktisk canvas-CSS-span verificeres stabilt efter refresh/settling, ikke kun den gemte state.
+11. `LayoutParentKey`, Auto-kasser, placement-motoren og public renderer er uændrede.
+12. Fast QA, protected-domain contract, Architecture QA, PHP 8.0/8.2/8.3, system Chrome samt Chrome/Chromium/Firefox/WebKit LEGO-regression er alle PASS.
 
 ## I9 — MANUAL QA EVIDENCE — PENDING
 
@@ -218,4 +240,4 @@ Fast rækkefølge efter I9 PASS:
 6. Vehicle/Event/Gallery kun efter særskilt compatibility proof;
 7. legacy removal til sidst.
 
-Ingen LEGO-release gennem LEGO-031 ændrer denne public-cutover-lås.
+Ingen LEGO-release gennem LEGO-033 ændrer denne public-cutover-lås.

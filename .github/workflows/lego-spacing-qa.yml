@@ -14,6 +14,7 @@ on:
       - agent/lego-visual-drop-zones-v0838
       - agent/lego-side-by-side-v0840
       - agent/lego-visual-resize-v0841
+      - agent/lego-responsive-layout-v0842
   pull_request:
     paths:
       - 'src/Editor/LegoSpacingModel.php'
@@ -56,6 +57,8 @@ on:
       - 'assets/ultimate-designer-lego-drop-zones-v0838.css'
       - 'assets/ultimate-designer-lego-resize-v0841.js'
       - 'assets/ultimate-designer-lego-resize-v0841.css'
+      - 'assets/ultimate-designer-lego-responsive-layout-v0842.js'
+      - 'assets/ultimate-designer-lego-responsive-layout-v0842.css'
       - 'tests/Architecture/v0830-lego-spacing-*'
       - 'tests/Architecture/v0831-lego-responsive-spacing-*'
       - 'tests/Architecture/v0832-lego-common-design-*'
@@ -67,6 +70,7 @@ on:
       - 'tests/Architecture/v0838-lego-drop-zones-*'
       - 'tests/Architecture/v0840-lego-side-by-side-*'
       - 'tests/Architecture/v0841-lego-resize-*'
+      - 'tests/Architecture/v0842-lego-responsive-layout-*'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
       - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
       - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
@@ -79,6 +83,7 @@ on:
       - 'tests/Architecture/browser/lego-drop-zones-v0838.spec.cjs'
       - 'tests/Architecture/browser/lego-side-by-side-history-v0840.spec.cjs'
       - 'tests/Architecture/browser/lego-resize-v0841.spec.cjs'
+      - 'tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
       - '.github/workflows/lego-spacing-qa.yml'
 
@@ -87,7 +92,7 @@ permissions:
 
 jobs:
   contract:
-    name: LEGO primary editor + side-by-side + resize contract
+    name: LEGO primary editor + side-by-side + resize + responsive layout contract
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -111,6 +116,7 @@ jobs:
       - run: bash tests/Architecture/v0838-lego-drop-zones-contract.sh
       - run: bash tests/Architecture/v0840-lego-side-by-side-contract.sh
       - run: bash tests/Architecture/v0841-lego-resize-contract.sh
+      - run: bash tests/Architecture/v0842-lego-responsive-layout-contract.sh
 
   browser:
     name: LEGO primary editor regression system Chrome
@@ -135,9 +141,10 @@ jobs:
           tests/Architecture/browser/lego-layout-primary-v0837.spec.cjs
           tests/Architecture/browser/lego-drop-zones-v0838.spec.cjs
           tests/Architecture/browser/lego-resize-v0841.spec.cjs
+          tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs
 
   lego-browsers:
-    name: LEGO-031/032 system Chrome + Chromium Firefox WebKit
+    name: LEGO-031/032/033 system Chrome + Chromium Firefox WebKit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -148,4 +155,4 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: >-
           npx playwright test
-          -c tests/Architecture/browser/playwright.lego-v0841.config.cjs
+          -c tests/Architecture/browser/playwright.lego-v0842.config.cjs

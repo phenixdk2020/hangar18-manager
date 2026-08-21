@@ -80,16 +80,39 @@ jQuery(function ($) {
         return Math.max(1, Math.min(COLUMN_COUNT, parsed));
     }
 
+    function boolValue(value, fallback) {
+        if (typeof value === 'boolean') { return value; }
+        if (value === null || typeof value === 'undefined' || value === '') { return fallback; }
+        if (typeof value === 'number') { return value !== 0; }
+        return ['1', 'true', 'yes', 'on'].indexOf(String(value).toLowerCase().trim()) !== -1;
+    }
+
+    function normalizeDevice(raw) {
+        raw = raw && typeof raw === 'object' ? raw : {};
+        const inherit = Object.prototype.hasOwnProperty.call(raw, 'InheritDesktop')
+            ? boolValue(raw.InheritDesktop, true)
+            : true;
+        const span = clampSpan(raw.Span);
+        const hasOverride = Object.prototype.hasOwnProperty.call(raw, 'HasOverride')
+            ? boolValue(raw.HasOverride, !inherit)
+            : (!inherit || span > 0);
+        return {
+            InheritDesktop: inherit,
+            HasOverride: hasOverride,
+            Span: span
+        };
+    }
+
     function normalizeState(raw) {
         raw = raw && typeof raw === 'object' ? raw : {};
         const desktop = raw.Desktop && typeof raw.Desktop === 'object' ? raw.Desktop : {};
         const tablet = raw.Tablet && typeof raw.Tablet === 'object' ? raw.Tablet : {};
         const mobile = raw.Mobile && typeof raw.Mobile === 'object' ? raw.Mobile : {};
         return {
-            SchemaVersion: 1,
+            SchemaVersion: 2,
             Desktop: { Span: clampSpan(desktop.Span) },
-            Tablet: { InheritDesktop: true, Span: clampSpan(tablet.Span) },
-            Mobile: { InheritDesktop: true, Span: clampSpan(mobile.Span) }
+            Tablet: normalizeDevice(tablet),
+            Mobile: normalizeDevice(mobile)
         };
     }
 
@@ -123,23 +146,26 @@ jQuery(function ($) {
         return normalizeState(key && stored[key] && typeof stored[key] === 'object' ? stored[key] : {});
     }
 
+    function writeState($row, state, captureHistory) {
+        if (!$row || !$row.length) { return null; }
+        state = normalizeState(state);
+        const $field = ensureCanonicalField($row, state);
+        $field.val(JSON.stringify(state));
+        $row.attr('data-h18-v0841-explicit-span', state.Desktop.Span > 0 ? String(state.Desktop.Span) : 'auto');
+        if (captureHistory) { $field.trigger('input'); }
+        return state;
+    }
+
     function hydrateRow($row) {
         if (!$row || !$row.length) { return; }
-        const state = stateForRow($row);
-        ensureCanonicalField($row, state).val(JSON.stringify(state));
-        $row.attr('data-h18-v0841-explicit-span', state.Desktop.Span > 0 ? String(state.Desktop.Span) : 'auto');
+        writeState($row, stateForRow($row), false);
     }
 
     function writeDesktopSpan($row, span, captureHistory) {
         if (!$row || !$row.length) { return; }
         const state = stateForRow($row);
         state.Desktop.Span = Math.max(1, Math.min(COLUMN_COUNT, parseInt(span, 10) || 1));
-        state.Tablet.InheritDesktop = true;
-        state.Mobile.InheritDesktop = true;
-        const $field = ensureCanonicalField($row, state);
-        $field.val(JSON.stringify(normalizeState(state)));
-        $row.attr('data-h18-v0841-explicit-span', String(state.Desktop.Span));
-        if (captureHistory) { $field.trigger('input'); }
+        writeState($row, state, captureHistory);
     }
 
     function equalSpans(count) {
@@ -275,6 +301,10 @@ jQuery(function ($) {
             .attr('data-h18-v0841-right', rightKey);
     }
 
+    function responsiveOwnsTileWidths() {
+        return canvasDevice() !== 'desktop' && Boolean(window.__h18LegoResponsiveLayoutV0842);
+    }
+
     function decorateGrid(grid) {
         const $grid = $(grid);
         const autoKey = String($grid.attr('data-h18-v0814-auto-key') || '');
@@ -285,6 +315,7 @@ jQuery(function ($) {
         const $children = childRowsForGrid($grid);
         if (!$tiles.length || $tiles.length !== $children.length) { return; }
         const spans = effectiveSpans($children);
+        const responsiveWidths = responsiveOwnsTileWidths();
 
         $grid.addClass('h18-v0841-resize-grid')
             .attr('data-h18-v0841-resize-grid', '1')
@@ -296,7 +327,9 @@ jQuery(function ($) {
             if (!$tile.children('.h18-v0841-span-badge').length) {
                 $tile.append($('<span>', { class: 'h18-v0841-span-badge', 'aria-hidden': 'true' }));
             }
-            updateTile($tile, spans[index]);
+            if (!responsiveWidths) {
+                updateTile($tile, spans[index]);
+            }
             ensureHandle($tile, index < $tiles.length - 1 ? $tiles.eq(index + 1) : $(), index);
         });
     }
@@ -453,11 +486,22 @@ jQuery(function ($) {
     decorate();
     window.__h18LegoResizeV0841 = {
         version: '0.8.41',
+        schemaVersion: 2,
         columns: COLUMN_COUNT,
         refresh: decorate,
+        normalizeState: normalizeState,
         stateForKey: function (key) {
             const $row = rowByKey(key);
             return $row.length ? stateForRow($row) : null;
+        },
+        writeStateForKey: function (key, state, captureHistory) {
+            const $row = rowByKey(key);
+            return $row.length ? writeState($row, state, captureHistory === true) : null;
+        },
+        rowKeysForAuto: function (key) {
+            const $auto = rowByKey(key);
+            if (!$auto.length || !isAuto($auto)) { return []; }
+            return directChildren($auto).toArray().map(function (node) { return rowKey($(node)); });
         },
         effectiveForAuto: function (key) {
             const $auto = rowByKey(key);
