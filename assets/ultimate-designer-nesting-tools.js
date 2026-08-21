@@ -24,6 +24,7 @@ jQuery(function ($) {
     let refreshTimer = null;
     let existingDragRow = $();
     let existingDropBoxKey = '';
+    let existingRowDrag = null;
     let paletteBoxDrag = null;
     let existingBoxDrag = null;
     let renderGuard = false;
@@ -170,7 +171,7 @@ jQuery(function ($) {
 
     function childDisplayName($row) {
         const nav = rowLabel($row);
-        if (nav && nav !== BOX_LABEL) { return nav; }
+        if (nav && nav !== BOX_LABEL && nav !== AUTO_LABEL) { return nav; }
         const title = String($row.find('.h18-page-section-title-summary').first().text() || '').trim();
         return title || typeLabels[rowType($row)] || rowType($row) || 'Element';
     }
@@ -251,36 +252,59 @@ jQuery(function ($) {
     function renderAuto($auto) {
         if (!isAuto($auto)) { return; }
         const autoKey = rowKey($auto);
-        const $boxes = directChildren($auto).filter(function () { return isBox($(this)); });
-        const count = $boxes.length;
+        const $children = directChildren($auto);
+        const count = $children.length;
         const cols = Math.max(1, Math.min(6, count || 1));
         setField($auto, 'LayoutColumns', cols);
         const gap = parseInt(String(controls($auto, '[name$="[LayoutGapPx]"]').first().val() || 16), 10) || 16;
         const $preview = $auto.children('.h18-canvas-preview').first();
         if (!$preview.length) { return; }
         $preview.find('.h18-ud-auto-box-grid,.h18-v0814-auto-drop-zone,.h18-v0814-auto-kasse-drop').remove();
+
         const $grid = $('<div>', {
             class: 'h18-ud-auto-box-grid h18-v0811-auto-grid',
             'data-h18-v0812-auto-kasse-drop': '1',
-            'data-h18-v0814-auto-key': autoKey
+            'data-h18-v0814-auto-key': autoKey,
+            'data-h18-v0840-auto-row': '1'
         }).css({
             '--h18-v0811-cols': String(cols),
             '--h18-v0811-gap': gap + 'px'
         });
-        $boxes.each(function (index) {
-            const $box = $(this);
-            const boxKey = rowKey($box);
-            const $tile = $('<section>', { class: 'h18-v0811-auto-box', 'data-h18-v0811-box': boxKey });
+
+        $children.each(function (index) {
+            const $child = $(this);
+            const childKey = rowKey($child);
+            const childIsBox = isBox($child);
+            const attrs = {
+                class: 'h18-v0811-auto-box',
+                'data-h18-v0811-row': childKey,
+                'data-h18-v0840-auto-child': childKey
+            };
+            if (childIsBox) { attrs['data-h18-v0811-box'] = childKey; }
+            const $tile = $('<section>', attrs);
             const $bar = $('<div>', { class: 'h18-v0811-child-bar' }).append(
-                $('<strong>', { text: 'Kasse ' + (index + 1) }),
-                $('<button>', { type: 'button', class: 'button button-small h18-v0811-edit-child', 'data-h18-v0811-edit-child': boxKey, text: 'Rediger Kasse' })
+                $('<strong>', { text: childIsBox ? ('Kasse ' + (index + 1)) : childDisplayName($child) }),
+                $('<button>', {
+                    type: 'button',
+                    class: 'button button-small h18-v0811-edit-child',
+                    'data-h18-v0811-edit-child': childKey,
+                    text: childIsBox ? 'Rediger Kasse' : 'Rediger'
+                })
             );
             const $body = $('<div>', { class: 'h18-v0811-auto-box-preview' });
-            const $clone = clonePreview($box, true);
-            if ($clone.length) { $body.append($clone); }
+            if (childIsBox) {
+                const $box = $child;
+                const $clone = clonePreview($box, true);
+                if ($clone.length) { $body.append($clone); }
+            } else {
+                const $clone = clonePreview($child, false);
+                if ($clone.length) { $body.append($clone); }
+                else { $body.text(childDisplayName($child)); }
+            }
             $tile.append($bar, $body);
             $grid.append($tile);
         });
+
         const $dropZone = $('<div>', {
             class: 'h18-v0814-auto-drop-zone',
             'data-h18-v0814-auto-drop': autoKey,
@@ -304,7 +328,8 @@ jQuery(function ($) {
         $sections.attr('data-h18-v0811-kasse-runtime', '1')
             .attr('data-h18-v0813-kasse-runtime', '1')
             .attr('data-h18-v0814-kasse-runtime', '1')
-            .attr('data-h18-v0815-kasse-runtime', '1');
+            .attr('data-h18-v0815-kasse-runtime', '1')
+            .attr('data-h18-v0840-side-by-side-runtime', '1');
         activeRows().each(function () { if (isBox($(this))) { renderBox($(this)); } });
         activeRows().each(function () { if (isAuto($(this))) { renderAuto($(this)); } });
         syncSourceVisibility();
@@ -395,10 +420,35 @@ jQuery(function ($) {
         return !!($box && $box.length && isBox($box) && (parentDepth($box) + 1) <= MAX_NESTING_DEPTH);
     }
 
-    function canMoveBoxIntoAuto($row, $auto) {
-        if (!$row || !$row.length || !$auto || !$auto.length || !isBox($row) || !isAuto($auto)) { return false; }
+    function canMoveRowIntoAuto($row, $auto) {
+        if (!$row || !$row.length || !$auto || !$auto.length || isAuto($row) || !isAuto($auto)) { return false; }
+        if (rowKey($row) === rowKey($auto) || wouldCreateCycle($row, $auto)) { return false; }
         const deepestAfterMove = parentDepth($auto) + 1 + subtreeDepth($row);
         return deepestAfterMove <= MAX_NESTING_DEPTH;
+    }
+
+    function canMoveBoxIntoAuto($row, $auto) {
+        if (!$row || !$row.length || !$auto || !$auto.length || !isBox($row) || !isAuto($auto)) { return false; }
+        return canMoveRowIntoAuto($row, $auto);
+    }
+
+    function sideTargetCompatible($target) {
+        if (!$target || !$target.length || isAuto($target)) { return false; }
+        const targetParentKey = parentKey($target);
+        if (!targetParentKey) { return true; }
+        return isAuto(rowByKey(targetParentKey));
+    }
+
+    function canPlaceRowBeside($source, $target) {
+        if (!$source || !$source.length || !$target || !$target.length) { return false; }
+        if (rowKey($source) === rowKey($target) || isAuto($source) || isAuto($target)) { return false; }
+        if (!sideTargetCompatible($target)) { return false; }
+        const $targetParent = rowByKey(parentKey($target));
+        if (isAuto($targetParent)) {
+            return canMoveRowIntoAuto($source, $targetParent);
+        }
+        return (1 + subtreeDepth($source) <= MAX_NESTING_DEPTH)
+            && (1 + subtreeDepth($target) <= MAX_NESTING_DEPTH);
     }
 
     function moveRowIntoBox($row, $box) {
@@ -414,8 +464,8 @@ jQuery(function ($) {
         return true;
     }
 
-    function moveBoxIntoAuto($row, $auto) {
-        if (!canMoveBoxIntoAuto($row, $auto)) { return false; }
+    function moveRowIntoAuto($row, $auto) {
+        if (!canMoveRowIntoAuto($row, $auto)) { return false; }
         const autoKey = rowKey($auto);
         const $children = directChildren($auto).not($row);
         const $anchor = $children.length ? $children.last() : $auto;
@@ -425,6 +475,11 @@ jQuery(function ($) {
         $row.attr('data-h18-v0811-child-source', '1');
         scheduleRefresh(80);
         return true;
+    }
+
+    function moveBoxIntoAuto($row, $auto) {
+        if (!canMoveBoxIntoAuto($row, $auto)) { return false; }
+        return moveRowIntoAuto($row, $auto);
     }
 
     function targetBoxForElement(element) {
@@ -523,6 +578,8 @@ jQuery(function ($) {
         $('.h18-v0811-side-zone').each(function () {
             const target = String(this.getAttribute('data-box') || '');
             if (!target || target === sourceKey) { return; }
+            const $target = rowByKey(target);
+            if (!$target.length || !sideTargetCompatible($target)) { return; }
             const rect = this.getBoundingClientRect();
             if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
                 match = { target: target, side: String(this.getAttribute('data-side') || 'right'), node: this };
@@ -531,10 +588,11 @@ jQuery(function ($) {
         return match;
     }
 
-    function createAutoForBoxes($source, $target, side) {
+    function createAutoForRows($source, $target, side) {
+        if (!canPlaceRowBeside($source, $target)) { return false; }
         const before = snapshotKeys();
         const $gridButton = $('.h18-builder-palette-item[data-section-type="grid"]').not('[data-h18-layout-tool]').first();
-        if (!$gridButton.length) { return; }
+        if (!$gridButton.length) { return false; }
         $gridButton.trigger('click');
         window.setTimeout(function () {
             const $grid = findNewRow(before, 'grid');
@@ -554,10 +612,15 @@ jQuery(function ($) {
             syncFlatOrder();
             scheduleRefresh(120);
         }, 100);
+        return true;
     }
 
-    function placeBoxBeside($source, $target, side) {
-        if (!$source.length || !$target.length || !isBox($source) || !isBox($target) || rowKey($source) === rowKey($target)) { return; }
+    function createAutoForBoxes($source, $target, side) {
+        return createAutoForRows($source, $target, side);
+    }
+
+    function placeRowBeside($source, $target, side) {
+        if (!canPlaceRowBeside($source, $target)) { return false; }
         const $targetParent = rowByKey(parentKey($target));
         if (isAuto($targetParent)) {
             setParent($source, rowKey($targetParent));
@@ -565,9 +628,14 @@ jQuery(function ($) {
             else { $source.insertAfter($target); }
             syncFlatOrder();
             scheduleRefresh(100);
-            return;
+            return true;
         }
-        createAutoForBoxes($source, $target, side);
+        return createAutoForRows($source, $target, side);
+    }
+
+    function placeBoxBeside($source, $target, side) {
+        if (!$source.length || !isBox($source)) { return false; }
+        return placeRowBeside($source, $target, side);
     }
 
     function clearTargets() {
@@ -610,6 +678,19 @@ jQuery(function ($) {
             clearTargets();
             scheduleRefresh(100);
         }, 70);
+    }
+
+    function finishNewElementBeside(beforeKeys, type, targetKey, side) {
+        window.setTimeout(function () {
+            const $newRow = findNewRow(beforeKeys, type);
+            const $target = rowByKey(targetKey);
+            if ($newRow.length && $target.length) {
+                placeRowBeside($newRow, $target, side);
+            } else {
+                scheduleRefresh(100);
+            }
+            clearTargets();
+        }, 80);
     }
 
     function finishNewBoxStandalone(beforeKeys) {
@@ -663,10 +744,14 @@ jQuery(function ($) {
     function resolveNewBoxDrop(event, state) {
         const sideZone = event.target && event.target.closest ? event.target.closest('.h18-v0811-side-zone') : null;
         if (sideZone) {
-            state.mode = 'side';
-            state.target = String(sideZone.getAttribute('data-box') || '');
-            state.side = String(sideZone.getAttribute('data-side') || 'right');
-            return;
+            const targetKey = String(sideZone.getAttribute('data-box') || '');
+            const $target = rowByKey(targetKey);
+            if ($target.length && sideTargetCompatible($target)) {
+                state.mode = 'side';
+                state.target = targetKey;
+                state.side = String(sideZone.getAttribute('data-side') || 'right');
+                return;
+            }
         }
         const $box = targetBoxForElement(event.target);
         if ($box.length && canAcceptNewBox($box)) {
@@ -684,6 +769,31 @@ jQuery(function ($) {
         state.target = '';
     }
 
+    function resolvePendingDrop(event, state) {
+        const sideZone = event.target && event.target.closest ? event.target.closest('.h18-v0811-side-zone') : null;
+        if (sideZone) {
+            const targetKey = String(sideZone.getAttribute('data-box') || '');
+            const $target = rowByKey(targetKey);
+            if ($target.length && sideTargetCompatible($target)) {
+                state.mode = 'side';
+                state.target = targetKey;
+                state.side = String(sideZone.getAttribute('data-side') || 'right');
+                state.boxKey = '';
+                return;
+            }
+        }
+        const $box = targetBoxForElement(event.target);
+        if ($box.length) {
+            state.mode = 'inside';
+            state.boxKey = rowKey($box);
+            state.target = '';
+            return;
+        }
+        state.mode = '';
+        state.target = '';
+        state.boxKey = '';
+    }
+
     document.addEventListener('dragstart', function (event) {
         const item = event.target.closest && event.target.closest('.h18-builder-palette-item');
         if (!item) { return; }
@@ -697,7 +807,7 @@ jQuery(function ($) {
             return;
         }
         if (tool) { return; }
-        pendingDrag = { type: type, before: snapshotKeys(), boxKey: '', dropHandled: false };
+        pendingDrag = { type: type, before: snapshotKeys(), mode: '', target: '', side: 'right', boxKey: '', dropHandled: false };
     }, true);
 
     document.addEventListener('dragover', function (event) {
@@ -718,10 +828,16 @@ jQuery(function ($) {
             return;
         }
         if (!pendingDrag) { return; }
-        const $box = targetBoxForElement(event.target);
-        pendingDrag.boxKey = $box.length ? rowKey($box) : '';
-        if ($box.length) { event.preventDefault(); }
-        showBoxTarget($box);
+        resolvePendingDrop(event, pendingDrag);
+        if (pendingDrag.mode === 'side') {
+            const zone = event.target.closest && event.target.closest('.h18-v0811-side-zone');
+            if (zone) { event.preventDefault(); showSideTarget(zone); }
+        } else if (pendingDrag.mode === 'inside') {
+            const $box = rowByKey(pendingDrag.boxKey);
+            if ($box.length) { event.preventDefault(); showBoxTarget($box); }
+        } else {
+            clearTargets();
+        }
     }, true);
 
     document.addEventListener('drop', function (event) {
@@ -744,12 +860,14 @@ jQuery(function ($) {
         }
         if (!pendingDrag) { return; }
         const state = pendingDrag;
-        const $box = targetBoxForElement(event.target);
-        const boxKey = $box.length ? rowKey($box) : state.boxKey;
+        resolvePendingDrop(event, state);
         state.dropHandled = true;
-        if (boxKey) {
+        if (state.mode === 'side' && state.target) {
             event.preventDefault();
-            finishNewNested(state.before, state.type, boxKey);
+            finishNewElementBeside(state.before, state.type, state.target, state.side);
+        } else if (state.mode === 'inside' && state.boxKey) {
+            event.preventDefault();
+            finishNewNested(state.before, state.type, state.boxKey);
         } else {
             clearTargets();
             scheduleRefresh(100);
@@ -793,11 +911,13 @@ jQuery(function ($) {
         const $row = ui && ui.item ? ui.item : $();
         existingDragRow = $row;
         existingDropBoxKey = '';
+        existingRowDrag = null;
         if (isBox($row)) {
             existingBoxDrag = { source: rowKey($row), mode: '', target: '', side: 'right' };
             $sections.addClass('h18-v0811-box-drag');
             scheduleRefresh(0);
         } else if ($row.length) {
+            existingRowDrag = { source: rowKey($row), mode: '', target: '', side: 'right', boxKey: '' };
             $sections.addClass('h18-ud-existing-row-drag');
         }
     });
@@ -807,11 +927,14 @@ jQuery(function ($) {
             const $source = rowByKey(existingBoxDrag.source);
             const sideHit = sideZoneAtPoint(event.pageX, event.pageY, existingBoxDrag.source);
             if (sideHit) {
-                existingBoxDrag.mode = 'side';
-                existingBoxDrag.target = sideHit.target;
-                existingBoxDrag.side = sideHit.side;
-                showSideTarget(sideHit.node);
-                return;
+                const $target = rowByKey(sideHit.target);
+                if (canPlaceRowBeside($source, $target)) {
+                    existingBoxDrag.mode = 'side';
+                    existingBoxDrag.target = sideHit.target;
+                    existingBoxDrag.side = sideHit.side;
+                    showSideTarget(sideHit.node);
+                    return;
+                }
             }
             const $box = boxAtPoint(event.pageX, event.pageY, $source);
             if ($box.length) {
@@ -832,6 +955,38 @@ jQuery(function ($) {
             }
             return;
         }
+
+        if (existingRowDrag) {
+            const $source = rowByKey(existingRowDrag.source);
+            const sideHit = sideZoneAtPoint(event.pageX, event.pageY, existingRowDrag.source);
+            if (sideHit) {
+                const $target = rowByKey(sideHit.target);
+                if (canPlaceRowBeside($source, $target)) {
+                    existingRowDrag.mode = 'side';
+                    existingRowDrag.target = sideHit.target;
+                    existingRowDrag.side = sideHit.side;
+                    existingRowDrag.boxKey = '';
+                    showSideTarget(sideHit.node);
+                    return;
+                }
+            }
+            const $box = boxAtPoint(event.pageX, event.pageY, $source);
+            if ($box.length) {
+                existingRowDrag.mode = 'inside';
+                existingRowDrag.boxKey = rowKey($box);
+                existingRowDrag.target = '';
+                existingDropBoxKey = existingRowDrag.boxKey;
+                showBoxTarget($box);
+            } else {
+                existingRowDrag.mode = '';
+                existingRowDrag.target = '';
+                existingRowDrag.boxKey = '';
+                existingDropBoxKey = '';
+                clearTargets();
+            }
+            return;
+        }
+
         if (!existingDragRow.length) { return; }
         const $box = boxAtPoint(event.pageX, event.pageY, existingDragRow);
         existingDropBoxKey = $box.length ? rowKey($box) : '';
@@ -858,6 +1013,27 @@ jQuery(function ($) {
             existingDragRow = $();
             return;
         }
+
+        if (existingRowDrag) {
+            const state = existingRowDrag;
+            existingRowDrag = null;
+            const $source = rowByKey(state.source);
+            $sections.removeClass('h18-ud-existing-row-drag');
+            clearTargets();
+            if (state.mode === 'side' && state.target) {
+                const $target = rowByKey(state.target);
+                if ($target.length) { placeRowBeside($source, $target, state.side); }
+            } else if (state.mode === 'inside' && state.boxKey) {
+                const $box = rowByKey(state.boxKey);
+                if ($box.length) { moveRowIntoBox($source, $box); }
+            } else {
+                scheduleRefresh(100);
+            }
+            existingDragRow = $();
+            existingDropBoxKey = '';
+            return;
+        }
+
         const $row = existingDragRow;
         const boxKey = existingDropBoxKey;
         existingDragRow = $();
@@ -897,6 +1073,14 @@ jQuery(function ($) {
         }
     });
     observer.observe($sections.get(0), { childList: true, subtree: true });
+
+    window.__h18NestingToolsV0840 = {
+        version: '0.8.40',
+        refresh: refreshComposition,
+        sideTargetCompatible: function (key) {
+            return sideTargetCompatible(rowByKey(key));
+        }
+    };
 
     scheduleRefresh(140);
 });

@@ -39,6 +39,7 @@ async function boot(page) {
       ${row(1, 'box-a', 'container', 'Kasse')}
       ${row(2, 'box-b', 'container', 'Kasse')}
       ${row(3, 'text-1', 'text', 'Tekst')}
+      ${row(4, 'text-2', 'text', 'Tekst 2')}
     </div>
   </body></html>`);
   await page.addStyleTag({ path: nestingCss });
@@ -62,7 +63,9 @@ async function boot(page) {
   await page.addScriptTag({ path: nestingRuntime });
   await page.addScriptTag({ path: dropRuntime });
   await expect(page.locator('html')).toHaveAttribute('data-h18-lego-drop-zones-runtime', '0.8.38');
+  await expect(page.locator('html')).toHaveAttribute('data-h18-lego-side-by-side-runtime', '0.8.40');
   await expect(page.locator('#h18-page-sections-sortable')).toHaveAttribute('data-h18-v0811-kasse-runtime', '1', { timeout: 2000 });
+  await expect(page.locator('#h18-page-sections-sortable')).toHaveAttribute('data-h18-v0840-side-by-side-runtime', '1', { timeout: 2000 });
 }
 
 async function startSort(page, key) {
@@ -96,23 +99,45 @@ test('existing Kasse drag shows Over Under Venstre Højre and reuses existing si
   await expect(left).toHaveAttribute('data-box', 'box-a');
   await expect(left).toHaveAttribute('data-h18-v0838-existing-placement-contract', '1');
 
-  // Over/Under are visual only: native sortable remains the order owner.
   await expect(overlay.locator('[data-h18-v0838-position="over"]')).toHaveCSS('pointer-events', 'none');
   await expect(overlay.locator('[data-h18-v0838-position="under"]')).toHaveCSS('pointer-events', 'none');
   await stopSort(page);
 });
 
-test('generic element drag keeps Over Under but disables unsupported side-by-side targets', async ({ page }) => {
+test('LEGO-031 generic element drag activates Left Right through the same side-zone contract', async ({ page }) => {
   await boot(page);
-  await startSort(page, 'text-1');
+  await startSort(page, 'text-2');
 
-  const overlay = page.locator('#row-box-a > .h18-canvas-preview > .h18-v0838-drop-overlay');
+  const overlay = page.locator('#row-text-1 > .h18-canvas-preview > .h18-v0838-drop-overlay');
   await expect(overlay.locator('[data-h18-v0838-position="over"]')).not.toHaveClass(/is-disabled/);
   await expect(overlay.locator('[data-h18-v0838-position="under"]')).not.toHaveClass(/is-disabled/);
-  await expect(overlay.locator('[data-h18-v0838-position="left"]')).toHaveClass(/is-disabled/);
-  await expect(overlay.locator('[data-h18-v0838-position="right"]')).toHaveClass(/is-disabled/);
-  await expect(overlay.locator('[data-h18-v0838-position="left"]')).not.toHaveClass(/h18-v0811-side-zone/);
+  await expect(overlay.locator('[data-h18-v0838-position="left"]')).not.toHaveClass(/is-disabled/);
+  await expect(overlay.locator('[data-h18-v0838-position="right"]')).not.toHaveClass(/is-disabled/);
+  await expect(overlay.locator('[data-h18-v0838-position="left"]')).toHaveClass(/h18-v0811-side-zone/);
+  await expect(overlay.locator('[data-h18-v0838-position="left"]')).toHaveAttribute('data-h18-v0840-generic-side-contract', '1');
   await stopSort(page);
+});
+
+test('LEGO-031 dropping ordinary element beside ordinary element creates authoritative Auto-kasser', async ({ page }) => {
+  await boot(page);
+  await startSort(page, 'text-2');
+
+  const zone = page.locator('#row-text-1 > .h18-canvas-preview > .h18-v0838-drop-overlay [data-h18-v0838-position="right"]');
+  const rect = await zone.boundingBox();
+  if (!rect) throw new Error('Right zone has no geometry');
+
+  await page.evaluate(({ x, y }) => {
+    const $ = window.jQuery;
+    $('#h18-page-sections-sortable').trigger($.Event('sort', { pageX: x, pageY: y }));
+    $('#h18-page-sections-sortable').trigger('sortstop');
+  }, { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
+
+  await expect(page.locator('#row-text-1 .h18-layout-parent-key')).toHaveValue('auto-1', { timeout: 3000 });
+  await expect(page.locator('#row-text-2 .h18-layout-parent-key')).toHaveValue('auto-1');
+  await expect(page.locator('#row-auto-1 .h18-section-navigator-label')).toHaveValue('Auto-kasser');
+  await expect(page.locator('#row-auto-1 .h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(2, { timeout: 3000 });
+  await expect(page.locator('#row-auto-1 .h18-v0811-auto-box[data-h18-v0840-auto-child="text-1"]')).toHaveCount(1);
+  await expect(page.locator('#row-auto-1 .h18-v0811-auto-box[data-h18-v0840-auto-child="text-2"]')).toHaveCount(1);
 });
 
 test('dropping existing Kasse on v0.8.38 Left zone is executed by existing nesting motor', async ({ page }) => {
@@ -138,7 +163,6 @@ test('dropping existing Kasse on v0.8.38 Left zone is executed by existing nesti
 test('Kasse already inside Auto-kasser gets visual left/right proxy targets without new placement data', async ({ page }) => {
   await boot(page);
 
-  // Create Auto-kasser using the authoritative motor first.
   await startSort(page, 'box-b');
   const firstZone = page.locator('#row-box-a > .h18-canvas-preview > .h18-v0838-drop-overlay [data-h18-v0838-position="right"]');
   const rect = await firstZone.boundingBox();
@@ -150,7 +174,6 @@ test('Kasse already inside Auto-kasser gets visual left/right proxy targets with
   }, { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
   await expect(page.locator('#row-auto-1 .h18-ud-auto-box-grid > .h18-v0811-auto-box')).toHaveCount(2, { timeout: 3000 });
 
-  // A fresh top-level Kasse is a source; the Auto proxy boxes expose the same side contract.
   await page.evaluate(() => {
     const $ = window.jQuery;
     $('#h18-page-sections-sortable').append(`<section id="row-box-c" class="h18-page-section-row" data-section-type="container"><header class="h18-page-section-header">Kasse</header><div class="h18-canvas-preview"><div class="base-preview">box-c</div></div><div class="h18-page-section-body"><input class="h18-page-section-key" value="box-c"><input class="h18-page-section-type" value="container"><input class="h18-section-navigator-label" value="Kasse"><input class="h18-layout-parent-key" value=""><select class="h18-layout-parent-select"><option value=""></option></select><input class="h18-page-section-order" value="90"><input name="Sections[90][LayoutGapPx]" value="12"></div></section>`);
