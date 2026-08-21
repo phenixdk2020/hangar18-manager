@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "build": {
+    "commitSha": "0000000000000000000000000000000000000000",
+    "pluginVersion": "0.8.39",
+    "testedAt": "2026-08-21T15:00:00Z",
+    "tester": "replace-with-tester"
+  },
+  "environment": {
+    "target": "https://test2.hangar18.dk/",
+    "wordpressVersion": "replace-with-version",
+    "phpVersion": "replace-with-version",
+    "backupRestorePointId": null
+  },
+  "gates": {
+    "chrome": { "status": "PENDING", "evidence": [] },
+    "edge": { "status": "PENDING", "evidence": [] },
+    "firefox": { "status": "PENDING", "evidence": [] },
+    "safari": { "status": "PENDING", "evidence": [] },
+    "screenReader": { "status": "PENDING", "evidence": [] },
+    "test2LiveE2E": { "status": "PENDING", "evidence": [] },
+    "protectedDomains": { "status": "PENDING", "evidence": [] },
+    "rollback": { "status": "PENDING", "evidence": [] }
+  },
+  "overallStatus": "PENDING",
+  "notes": "Template only. I9 cannot be PASS until every mandatory gate is PASS."
+}
