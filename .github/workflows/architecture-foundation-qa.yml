@@ -108,6 +108,7 @@ jobs:
       - run: bash tests/Architecture/i9-evidence-record-contract.sh
       - run: bash tests/Architecture/i9-evidence-integrity-contract.sh
       - run: bash tests/Architecture/i9-evidence-readiness-contract.sh
+      - run: bash tests/Architecture/i9-evidence-gate-templates-contract.sh
       - run: bash tests/Architecture/i10-operator-runbook-contract.sh
       - run: bash tests/Architecture/e14-security-audit.sh
       - run: php tests/Architecture/e14-performance-budget.php
