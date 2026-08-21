@@ -9,6 +9,7 @@ use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionConversion
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionManualQaEvidenceRepository;
 use Hangar18\UltimateDesigner\Migration\ConversionAcceptanceValidator;
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketFingerprintService;
+use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketReviewChainService;
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketService;
 use Hangar18\UltimateDesigner\QA\ManualEvidenceValidator;
 
@@ -46,6 +47,7 @@ final class DecisionPacketAdminController
 
         $packet=(new ConversionDecisionPacketService())->build($pages,$manual,$accepted,$targetInputs);
         $fingerprint=(new ConversionDecisionPacketFingerprintService())->fingerprint($packet);
+        $reviewChain=(new ConversionDecisionPacketReviewChainService())->inspect($packet,$fingerprint,null);
         $reviewable=(array)($packet['ReviewableTargets']??[]);
         $blocked=(array)($packet['BlockedTargets']??[]);
 
@@ -53,6 +55,7 @@ final class DecisionPacketAdminController
         echo '<div class="h18-ud-builder-panel-head"><div><h2>I10 · Decision packet · read-only</h2><p>Samlet operatorvisning af plan, readiness, acceptance og preflight. Panelet har ingen formularer eller actions og kan ikke aktivere public cutover.</p></div><span class="h18-ud-shadow-badge">READ ONLY · CUTOVER LOCKED</span></div>';
         echo '<div class="h18-ud-conversion-summary"><strong>'.count($reviewable).' reviewable target(s)</strong><span>'.count($blocked).' blocked target(s)</span><span>Executable: NO</span><span>PublicMutationAvailable: NO</span><span>Packet SHA-256: <code>'.esc_html(substr((string)($fingerprint['Hash']??''),0,16)).'…</code></span></div>';
         echo '<div class="notice notice-info inline"><p><strong>Betydning:</strong> “Operator reviewable” betyder kun, at det aktuelle decision packet ikke har blockers for menneskelig gennemgang. Det er <em>ikke</em> tilladelse til publicering eller cutover.</p></div>';
+        echo '<div class="notice notice-warning inline"><p><strong>Review chain:</strong> Human review receipt gemmes ikke af dette read-only panel. Status er derfor <code>ReviewChainValid='.(!empty($reviewChain['ReviewChainValid'])?'true':'false').'</code> og <code>FreshHumanReviewRequired='.(!empty($reviewChain['FreshHumanReviewRequired'])?'true':'false').'</code>. Dette panel kan ikke oprette eller godkende en receipt.</p></div>';
         echo '<table class="widefat striped h18-ud-conversion-table"><thead><tr><th>Trin</th><th>Target</th><th>Plan</th><th>Preflight</th><th>Operator review</th><th>Blockers</th></tr></thead><tbody>';
         foreach((array)($packet['Stages']??[]) as $row){
             if(!is_array($row)){continue;}
