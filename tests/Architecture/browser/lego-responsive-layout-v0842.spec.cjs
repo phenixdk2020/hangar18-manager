@@ -153,18 +153,28 @@ async function resizeFirstBoundaryByColumns(page, deltaColumns) {
   await page.mouse.up();
 }
 
+async function expectRenderedSpans(page, expected) {
+  const tiles = page.locator('.h18-v0841-resize-tile');
+  for (let index = 0; index < expected.length; index += 1) {
+    await expect(tiles.nth(index)).toHaveAttribute('data-h18-v0842-effective-span', String(expected[index]));
+    await expect.poll(async () => tiles.nth(index).evaluate((node) => node.style.getPropertyValue('--h18-v0841-span'))).toBe(String(expected[index]));
+  }
+}
+
 test('LEGO-033 Tablet and Mobile initially inherit the Desktop 6/6 Auto layout', async ({ page }) => {
   await boot(page);
   expect(await page.evaluate(() => window.__v0842Harness.spans('Desktop'))).toEqual([6, 6]);
 
   await setDevice(page, 'Tablet');
   expect(await page.evaluate(() => window.__v0842Harness.spans('Tablet'))).toEqual([6, 6]);
+  await expectRenderedSpans(page, [6, 6]);
   await expect(page.locator('.h18-v0841-resize-handle').first()).toBeVisible();
   await expect(page.locator('.h18-v0842-inherit-toggle')).toHaveCount(2);
   expect(await page.evaluate(() => window.__v0842Harness.state('text-1').Tablet.InheritDesktop)).toBe(true);
 
   await setDevice(page, 'Mobile');
   expect(await page.evaluate(() => window.__v0842Harness.spans('Mobile'))).toEqual([6, 6]);
+  await expectRenderedSpans(page, [6, 6]);
   expect(await page.evaluate(() => window.__v0842Harness.state('text-1').Mobile.InheritDesktop)).toBe(true);
 });
 
@@ -175,6 +185,9 @@ test('LEGO-033 Tablet resize creates only Tablet overrides as one Undo Redo chec
   await page.waitForTimeout(420);
 
   expect(await page.evaluate(() => window.__v0842Harness.spans('Tablet'))).toEqual([8, 4]);
+  await expectRenderedSpans(page, [8, 4]);
+  await page.waitForTimeout(500);
+  await expectRenderedSpans(page, [8, 4]);
   const states = await page.evaluate(() => ['text-1','image-1'].map((key) => window.__v0842Harness.state(key)));
   expect(states.map((state) => state.Desktop.Span)).toEqual([0, 0]);
   expect(states.map((state) => state.Tablet.Span)).toEqual([8, 4]);
@@ -187,11 +200,13 @@ test('LEGO-033 Tablet resize creates only Tablet overrides as one Undo Redo chec
   await page.locator('#h18-editor-undo').click();
   await page.waitForTimeout(360);
   expect(await page.evaluate(() => window.__v0842Harness.spans('Tablet'))).toEqual([6, 6]);
+  await expectRenderedSpans(page, [6, 6]);
   expect(await page.evaluate(() => window.__v0842Harness.history())).toEqual({ index: 0, entries: 2 });
 
   await page.locator('#h18-editor-redo').click();
   await page.waitForTimeout(360);
   expect(await page.evaluate(() => window.__v0842Harness.spans('Tablet'))).toEqual([8, 4]);
+  await expectRenderedSpans(page, [8, 4]);
   expect(await page.evaluate(() => window.__v0842Harness.history())).toEqual({ index: 1, entries: 2 });
 });
 
@@ -201,15 +216,18 @@ test('LEGO-033 Desktop Tablet and Mobile layouts remain independent', async ({ p
   await resizeFirstBoundaryByColumns(page, 2);
   await page.waitForTimeout(360);
   expect(await page.evaluate(() => window.__v0842Harness.spans('Tablet'))).toEqual([8, 4]);
+  await expectRenderedSpans(page, [8, 4]);
 
   await setDevice(page, 'Desktop');
   expect(await page.evaluate(() => window.__v0842Harness.spans('Desktop'))).toEqual([6, 6]);
 
   await setDevice(page, 'Mobile');
   expect(await page.evaluate(() => window.__v0842Harness.spans('Mobile'))).toEqual([6, 6]);
+  await expectRenderedSpans(page, [6, 6]);
   await resizeFirstBoundaryByColumns(page, -1);
   await page.waitForTimeout(360);
   expect(await page.evaluate(() => window.__v0842Harness.spans('Mobile'))).toEqual([5, 7]);
+  await expectRenderedSpans(page, [5, 7]);
 
   expect(await page.evaluate(() => window.__v0842Harness.spans('Desktop'))).toEqual([6, 6]);
   expect(await page.evaluate(() => window.__v0842Harness.spans('Tablet'))).toEqual([8, 4]);
@@ -223,6 +241,7 @@ test('LEGO-033 Arv Desktop preserves and restores the responsive override snapsh
   await setDevice(page, 'Tablet');
   await resizeFirstBoundaryByColumns(page, 2);
   await page.waitForTimeout(360);
+  await expectRenderedSpans(page, [8, 4]);
 
   const firstToggle = page.locator('.h18-v0842-inherit-toggle').first();
   await expect(firstToggle).toHaveAttribute('aria-pressed', 'false');
@@ -239,4 +258,5 @@ test('LEGO-033 Arv Desktop preserves and restores the responsive override snapsh
   expect(state.Tablet.InheritDesktop).toBe(false);
   expect(state.Tablet.Span).toBe(8);
   expect(await page.evaluate(() => window.__v0842Harness.spans('Tablet'))).toEqual([8, 4]);
+  await expectRenderedSpans(page, [8, 4]);
 });
