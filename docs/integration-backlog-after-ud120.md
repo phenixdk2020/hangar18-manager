@@ -1,11 +1,11 @@
 # Ultimate Designer — integration backlog after UD-120
 
 **Statusdato:** 21. august 2026  
-**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.37**
+**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.39**
 
-UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, Direkte Design og layout-kontroller er nu samlet på den eksisterende parent/history/persistence-arkitektur gennem v0.8.37.
+UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner og foldbare canvas-værktøjer er nu samlet på den eksisterende parent/history/persistence-arkitektur gennem v0.8.39.
 
-**Aktiv næste slice: LEGO-030 — visuelle drop-zoner (Over / Under / Venstre / Højre) oven på den eksisterende placement-motor.**
+**Aktiv næste slice: LEGO-031 — automatic side-by-side layout for almindelige elementer via den eksisterende placement/Auto-kasser-motor.**
 
 Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny renderer. Automatisk QA erstatter ikke de krævede I9 live/manuelle acceptance-gates.
 
@@ -34,6 +34,7 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | I10 — Final controlled conversion | 🟡 Preflight færdigt / cutover låst | Comparison page → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
 | UX-3 — Foldbare workspace rails | ✅ v0.8.24 | Elementer/Funktioner og Inspector foldes uafhængigt. |
 | UX-4 — Ugemt forhåndsvisning | ✅ v0.8.25 + v0.8.27 | Preview uden save; editor chrome renses fra klonen. |
+| UX-5 — Foldbare canvas-værktøjspaneler | ✅ v0.8.39 | Direkte Design · LEGO og Billede minimeres uafhængigt; browser-lokal state, ingen history/save-event. |
 | EVENT-001 — Automatisk eventarkiv | ✅ v0.8.26 | Dynamisk Upcoming/Tidligere efter WP-lokal dato/sluttid. |
 | B1 — Sidebackup restore | ✅ v0.8.28 | Replace original + copy draft + safety backup + audit. |
 | B2 — Versioneret site-backup | ✅ v0.8.29 + senere LEGO-integration | ZIP/full/selective restore inkl. spacing/design/interaction snapshots. |
@@ -44,8 +45,8 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | LEGO consolidation/readiness | ✅ v0.8.35 | Nested Kasse/Auto-kasser + spacing/design/states + sekventiel Undo/Redo. |
 | LEGO primary design view | ✅ v0.8.36 | Direkte Design bruger samme canonical design/state som Inspector. |
 | LEGO primary layout view | ✅ v0.8.37 | Direkte Design/Inspector spejler layout i samme canonical row-state. |
-| LEGO-030 — Visual side-drop zones | 🟢 Aktiv | Over/Under/Venstre/Højre på eksisterende placement-motor. |
-| LEGO-031 — Automatic side-by-side layout | ⬜ Næste | Side-drop opretter/justerer layout uden ny parent/child-motor. |
+| LEGO-030 — Visual four-way drop zones | ✅ v0.8.38 | Over/Under/Venstre/Højre oven på eksisterende placement-motor. |
+| LEGO-031 — Automatic side-by-side layout | 🟢 Aktiv | Almindelige elementer kan placeres ved siden af hinanden via samme Auto-kasser/layoutmotor. |
 | LEGO-032 — Visual resize / column span | ⬜ Senere | Resize oven på usynlig 12-kolonne layoutmotor. |
 | LEGO-033 — Tablet/Mobile layout overrides | ⬜ Senere | Responsive span/layout uden separat motor. |
 | DOC-1 — Visuel brugermanual | ⬜ Backlog | Udarbejdes når placement/resize-interaktionen er stabil. |
@@ -58,7 +59,8 @@ Undo/Redo er manuelt accepteret og fortsat eneste history-owner:
 - v0.8.21: live SELECT/INPUT/TEXTAREA-state gennem clone/restore;
 - v0.8.22: første nye strukturelle handling efter fuld Undo/Redo;
 - v0.8.23: tekst, farver og billeder som content-history checkpoints;
-- v0.8.35: kombineret spacing/design/state på nested Kasse blev verificeret som sekventielle Undo/Redo-trin.
+- v0.8.35: kombineret spacing/design/state på nested Kasse blev verificeret som sekventielle Undo/Redo-trin;
+- v0.8.39: fold/udfold af canvas-værktøjspaneler sender ingen form-events og opretter derfor ingen history-checkpoints.
 
 ## Backup / restore
 
@@ -101,8 +103,8 @@ Undo/Redo er manuelt accepteret og fortsat eneste history-owner:
 | LEGO-026 — Primary editor readiness | ✅ v0.8.35 | Readiness gate PASS. |
 | LEGO-027 — Primary design view | ✅ v0.8.36 | Direkte Design canonical proxy til Inspector design/state. |
 | LEGO-028 — Primary layout view | ✅ v0.8.37 | Remaining legacy layout controls mirrored canonical before history capture. |
-| LEGO-030 — Visual side-drop zones | 🟢 Aktiv | Over/Under/Venstre/Højre visual targeting. |
-| LEGO-031 — Automatic side-by-side | ⬜ | Side-drop til Auto-kasser/layout på samme placement motor. |
+| LEGO-030 — Visual four-way drop zones | ✅ v0.8.38 | Over/Under/Venstre/Højre visual targeting på eksisterende motor. |
+| LEGO-031 — Automatic side-by-side | 🟢 Aktiv | Side-drop for almindelige elementer adapteres til Auto-kasser/layout på samme placement motor. |
 | LEGO-032 — Visual resize/span | ⬜ | 12-column span resize. |
 | LEGO-033 — Responsive layout/span | ⬜ | Tablet/Mobile layout overrides. |
 
@@ -134,20 +136,39 @@ Verificeret kombinationsgate:
 - history-style DOM restore rehydrerer legacy + canonical layout sammen;
 - QA PASS på PHP 8.0/8.2/8.3, system Chrome samt Chromium/Firefox/WebKit.
 
-## LEGO-030 — næste aktive slice
+## v0.8.38 — LEGO visual four-way drop zones — ✅
 
-Mål: gøre placement visuelt LEGO-agtigt uden ny placement-motor.
+- tydelige Over / Under / Venstre / Højre zoner under drag;
+- Over/Under er passive overlays og lader eksisterende sortable eje lodret orden;
+- Venstre/Højre genbruger eksisterende Kasse-sidezoner og Auto-kasser-motor;
+- `LayoutParentKey` forbliver eneste hierarchy-state;
+- unsupported side-by-side for almindelige elementer vises disabled indtil LEGO-031;
+- QA PASS i LEGO/Fast/Architecture inklusive Chromium/Firefox/WebKit.
+
+## v0.8.39 — foldbare canvas-værktøjspaneler — ✅
+
+- `Direkte Design · LEGO` og `Billede` foldes uafhængigt;
+- foldet state efterlader kun en smal titelbjælke og toggle;
+- browser-lokal state huskes pr. paneltype og genbruges efter dynamisk rerender;
+- ARIA/keyboard-fokus på toggle;
+- ingen form-input/change events, save-state eller Undo/Redo-checkpoint;
+- ingen ny persistence/history/placement/public renderer;
+- Fast QA, LEGO QA og Architecture QA inklusive Chromium/Firefox/WebKit PASS.
+
+## LEGO-031 — næste aktive slice
+
+Mål: gøre Venstre/Højre-drop brugbart for almindelige elementer uden en ny placement-motor.
 
 Acceptance:
 
-1. Når et element/Kasse trækkes over et kompatibelt mål, vises tydelige drop-zoner **Over / Under / Venstre / Højre**.
-2. Over/Under ændrer kun flat order/parent relation via eksisterende motor.
-3. Venstre/Højre genbruger eksisterende Auto-kasser/side-by-side-motor; ingen ny hierarchy-store.
-4. Kasse-i-Kasse og element-i-Kasse følger eksisterende nesting depth/cycle-regler.
-5. Keyboard/ARIA fallback for placement bevares eller forbedres.
-6. Ét drop = ét history-checkpoint.
-7. Undo/Redo gendanner både order, parent og visuel composition.
-8. Desktop/Tablet/Mobil preview-state må ikke ændre placement-data.
+1. Et almindeligt element kan slippes Venstre/Højre ved siden af et kompatibelt almindeligt element eller en Kasse.
+2. Operationen adapteres til den eksisterende Auto-kasser/layoutmodel; der oprettes ingen ny parent/child-store.
+3. `LayoutParentKey` forbliver autoritativ.
+4. Eksisterende depth/cycle-regler for Kasse-nesting ændres ikke.
+5. Ét side-drop = ét history-checkpoint.
+6. Undo/Redo gendanner både wrapper/layout, order og parent relationer.
+7. Existing v0.8.38 Kasse side-drop-regression forbliver PASS.
+8. Desktop/Tablet/Mobil preview ændrer ikke placement-data.
 9. Vehicle/Event/Gallery protected-domain contract forbliver PASS.
 10. PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit skal være grøn før release.
 
@@ -176,4 +197,4 @@ Fast rækkefølge efter I9 PASS:
 6. Vehicle/Event/Gallery kun efter særskilt compatibility proof;
 7. legacy removal til sidst.
 
-Ingen v0.8.35–v0.8.37 release ændrer denne public-cutover-lås.
+Ingen v0.8.35–v0.8.39 release ændrer denne public-cutover-lås.
