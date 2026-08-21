@@ -17,6 +17,11 @@ on:
         description: 'Expected plugin version'
         required: true
         type: string
+      expected_target:
+        description: 'Expected staging target URL'
+        required: true
+        default: 'https://test2.hangar18.dk/'
+        type: string
       require_pass:
         description: 'Require complete evidenced I9 PASS'
         required: true
@@ -49,12 +54,13 @@ jobs:
           MANIFEST_PATH: ${{ inputs.manifest_path }}
           EXPECTED_SHA_INPUT: ${{ inputs.expected_sha }}
           EXPECTED_VERSION: ${{ inputs.expected_version }}
+          EXPECTED_TARGET: ${{ inputs.expected_target }}
           REQUIRE_PASS: ${{ inputs.require_pass }}
         run: |
           set +e
           EXPECTED_SHA="$EXPECTED_SHA_INPUT"
           if [ -z "$EXPECTED_SHA" ]; then EXPECTED_SHA="$GITHUB_SHA"; fi
-          args=("$MANIFEST_PATH" --json --expected-sha "$EXPECTED_SHA" --expected-version "$EXPECTED_VERSION")
+          args=("$MANIFEST_PATH" --json --expected-sha "$EXPECTED_SHA" --expected-version "$EXPECTED_VERSION" --expected-target "$EXPECTED_TARGET")
           if [ "$REQUIRE_PASS" = 'true' ]; then args+=(--require-pass); fi
           node tools/i9-evidence-validator.cjs "${args[@]}" > i9-evidence-validation.json
           rc=$?
