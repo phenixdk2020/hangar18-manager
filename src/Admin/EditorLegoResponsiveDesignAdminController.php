@@ -33,8 +33,19 @@ final class EditorLegoResponsiveDesignAdminController
         $pluginDir = dirname(__DIR__, 2);
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-lego-design-responsive-v0833.js';
+        $guardPath = $pluginDir . '/assets/ultimate-designer-lego-design-responsive-event-guard-v0833.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-lego-design-responsive-v0833.css';
 
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-design-responsive-event-guard-v0833',
+            $pluginUrl . 'assets/ultimate-designer-lego-design-responsive-event-guard-v0833.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-lego-design-event-guard-v0832',
+            ],
+            is_file($guardPath) ? (string) filemtime($guardPath) : '0.8.33',
+            false
+        );
         wp_enqueue_script(
             'hangar18-ultimate-designer-lego-design-responsive-v0833',
             $pluginUrl . 'assets/ultimate-designer-lego-design-responsive-v0833.js',
@@ -43,6 +54,7 @@ final class EditorLegoResponsiveDesignAdminController
                 'hangar18-ultimate-designer-history-content-v0823',
                 'hangar18-ultimate-designer-lego-spacing-v0831',
                 'hangar18-ultimate-designer-lego-design-v0832',
+                'hangar18-ultimate-designer-lego-design-responsive-event-guard-v0833',
             ],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.33',
             false
@@ -101,10 +113,9 @@ final class EditorLegoResponsiveDesignAdminController
             if (!is_array($decoded)) {
                 continue;
             }
-            // Browser state is already normalized from the current Desktop state.
-            // Re-normalize the device design payloads independently for safety.
-            $desktopSeed = LegoDesignModel::defaults();
-            $sections[$key] = LegoResponsiveDesignModel::normalize($decoded, $desktopSeed);
+            // Device payloads are self-contained normalized override snapshots.
+            // Desktop remains legacy-backed and is therefore not duplicated here.
+            $sections[$key] = LegoResponsiveDesignModel::normalize($decoded, LegoDesignModel::defaults());
         }
 
         $store = get_option(self::OPTION, []);
