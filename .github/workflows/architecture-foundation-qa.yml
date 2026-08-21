@@ -20,6 +20,7 @@ on:
       - 'src/**'
       - 'tests/Architecture/**'
       - 'tests/Live/**'
+      - 'tools/i9-evidence-*.cjs'
       - 'assets/ultimate-designer-admin.js'
       - 'assets/ultimate-designer-admin.css'
       - 'assets/ultimate-designer-menu-admin.js'
@@ -102,6 +103,7 @@ jobs:
       - run: php tests/Architecture/i10-conversion-acceptance-smoke.php
       - run: php tests/Architecture/i10-cutover-preflight-smoke.php
       - run: bash tests/Architecture/i9-live-readonly-contract.sh
+      - run: bash tests/Architecture/i9-evidence-validator-contract.sh
       - run: bash tests/Architecture/i10-operator-runbook-contract.sh
       - run: bash tests/Architecture/e14-security-audit.sh
       - run: php tests/Architecture/e14-performance-budget.php
