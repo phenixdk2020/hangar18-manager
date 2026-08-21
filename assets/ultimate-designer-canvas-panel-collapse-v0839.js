@@ -7,6 +7,11 @@ jQuery(function ($) {
     }
 
     const STORAGE_KEY = 'hangar18CanvasPanelCollapseV0839';
+    const STORAGE_VERSION = 2;
+    const DEFAULT_STATE = {
+        direct: true,
+        image: true
+    };
     const configs = [
         {
             kind: 'direct',
@@ -25,13 +30,31 @@ jQuery(function ($) {
     let state = readState();
     let decorateFrame = 0;
 
+    function normalizedState(parsed) {
+        return {
+            __defaultsVersion: STORAGE_VERSION,
+            direct: typeof parsed.direct === 'boolean' ? parsed.direct : DEFAULT_STATE.direct,
+            image: typeof parsed.image === 'boolean' ? parsed.image : DEFAULT_STATE.image
+        };
+    }
+
     function readState() {
         try {
             const raw = window.localStorage ? window.localStorage.getItem(STORAGE_KEY) : '';
             const parsed = raw ? JSON.parse(raw) : {};
-            return parsed && typeof parsed === 'object' ? parsed : {};
+            if (!parsed || typeof parsed !== 'object') {
+                return normalizedState({});
+            }
+
+            // v0.8.40 UX migration: the two canvas configuration panels now
+            // start collapsed by default. Ignore the old v0.8.39 open/closed
+            // preference once, then persist explicit user choices normally.
+            if (parseInt(parsed.__defaultsVersion, 10) !== STORAGE_VERSION) {
+                return normalizedState({});
+            }
+            return normalizedState(parsed);
         } catch (error) {
-            return {};
+            return normalizedState({});
         }
     }
 
@@ -51,7 +74,7 @@ jQuery(function ($) {
     }
 
     function syncPanel($panel, kind) {
-        const collapsed = state[kind] === true;
+        const collapsed = state[kind] !== false;
         const label = panelLabel(kind);
         $panel.toggleClass('h18-canvas-panel-collapsed', collapsed)
             .attr('data-h18-canvas-panel-collapsed', collapsed ? '1' : '0');
@@ -104,7 +127,7 @@ jQuery(function ($) {
                 decoratePanel(this, config);
             });
         });
-        document.documentElement.setAttribute('data-h18-canvas-panel-collapse-runtime', '0.8.39');
+        document.documentElement.setAttribute('data-h18-canvas-panel-collapse-runtime', '0.8.40');
     }
 
     function scheduleDecorate() {
