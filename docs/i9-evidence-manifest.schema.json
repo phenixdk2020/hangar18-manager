@@ -64,6 +64,30 @@
     },
     "notes": { "type": "string" }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "overallStatus": { "const": "PASS" } },
+        "required": ["overallStatus"]
+      },
+      "then": {
+        "properties": {
+          "gates": {
+            "properties": {
+              "chrome": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "edge": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "firefox": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "safari": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "screenReader": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "test2LiveE2E": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "protectedDomains": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] },
+              "rollback": { "properties": { "status": { "const": "PASS" } }, "required": ["status"] }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "gateResult": {
       "type": "object",
@@ -78,7 +102,18 @@
         },
         "browserOrTool": { "type": "string" },
         "notes": { "type": "string" }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "PASS" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": { "evidence": { "minItems": 1 } }
+          }
+        }
+      ]
     }
   }
 }
