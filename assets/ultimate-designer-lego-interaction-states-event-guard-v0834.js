@@ -6,9 +6,10 @@
         if (!target || typeof target.matches !== 'function') {
             return;
         }
-        if (target.matches('#h18-ud-lego-interaction-states-panel select[data-h18-is-path]')) {
+        if (target.matches('#h18-ud-lego-interaction-states-panel select[data-h18-i-path]')) {
             // Native selects can emit both input and change. The v0.8.34
-            // interaction runtime uses change as the one logical history event.
+            // interaction runtime uses change as the one logical user event;
+            // responsive edits then emit one canonical row input checkpoint.
             event.stopPropagation();
         }
     }, true);
