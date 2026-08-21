@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'docs/i9-*.md'
+      - 'docs/i9-evidence-manifest.*.json'
       - 'docs/ultimate-designer-user-manual.md'
       - 'docs/ultimate-designer-quick-reference.md'
       - 'docs/integration-backlog-after-ud120.md'
