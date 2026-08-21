@@ -151,18 +151,23 @@ final class EditorLegoInteractionStatesAdminController
                     ? !empty($postedDevice['HasOverride'])
                     : !empty($previousDevice['InteractionHasOverride']);
 
-                if ($hasOverride) {
-                    $fallbackDesign = isset($deviceEntry['Design']) && is_array($deviceEntry['Design'])
-                        ? $deviceEntry['Design']
-                        : (isset($previousDevice['Design']) && is_array($previousDevice['Design']) ? $previousDevice['Design'] : LegoDesignModel::defaults());
-                    $interaction = $hasPostedState && isset($postedDevice['Interaction']) && is_array($postedDevice['Interaction'])
-                        ? $postedDevice['Interaction']
-                        : LegoInteractionStateModel::fromDesign(
-                            isset($previousDevice['Design']) && is_array($previousDevice['Design']) ? $previousDevice['Design'] : $fallbackDesign
-                        );
-                    $deviceEntry['Design'] = LegoInteractionStateModel::mergeIntoDesign($fallbackDesign, $interaction);
-                }
+                $fallbackDesign = isset($deviceEntry['Design']) && is_array($deviceEntry['Design'])
+                    ? $deviceEntry['Design']
+                    : (isset($previousDevice['Design']) && is_array($previousDevice['Design'])
+                        ? $previousDevice['Design']
+                        : LegoDesignModel::defaults());
 
+                // Preserve the snapshot even while inheritance is active. The
+                // flag decides whether it is effective; the values remain ready
+                // if inheritance is disabled again later.
+                $interaction = $hasPostedState && isset($postedDevice['Interaction']) && is_array($postedDevice['Interaction'])
+                    ? $postedDevice['Interaction']
+                    : LegoInteractionStateModel::fromDesign(
+                        isset($previousDevice['Design']) && is_array($previousDevice['Design'])
+                            ? $previousDevice['Design']
+                            : $fallbackDesign
+                    );
+                $deviceEntry['Design'] = LegoInteractionStateModel::mergeIntoDesign($fallbackDesign, $interaction);
                 $deviceEntry['InteractionHasOverride'] = $hasOverride;
                 $section[$device] = $deviceEntry;
             }
