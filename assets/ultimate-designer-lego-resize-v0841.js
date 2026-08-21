@@ -5,7 +5,8 @@ jQuery(function ($) {
     const $form = $('#h18-page-editor-form');
     const $sections = $('#h18-page-sections-sortable');
     const $inspector = $('#h18-page-inspector-target');
-    if (!$form.length || !$sections.length) { return; }
+    const $canvas = $('.h18-builder-canvas').first();
+    if (!$form.length || !$sections.length || !$canvas.length) { return; }
 
     const COLUMN_COUNT = Math.max(2, parseInt(config.columns, 10) || 12);
     const STATE_CLASS = 'h18-lego-layout-span-state-json';
@@ -51,6 +52,10 @@ jQuery(function ($) {
             String($row.attr('data-section-type') || '') === 'grid' &&
             rowLabel($row) === AUTO_LABEL
         );
+    }
+
+    function canvasDevice() {
+        return String($canvas.attr('data-canvas-device') || 'desktop').toLowerCase();
     }
 
     function directChildren($auto) {
@@ -243,6 +248,29 @@ jQuery(function ($) {
         $tile.children('.h18-v0841-span-badge').text(span + '/' + COLUMN_COUNT);
     }
 
+    function ensureHandle($tile, $rightTile, index) {
+        let $handle = $tile.children('.h18-v0841-resize-handle').first();
+        if (!$rightTile || !$rightTile.length) {
+            if ($handle.length) { $handle.remove(); }
+            return;
+        }
+        const leftKey = String($tile.attr('data-h18-v0840-auto-child') || $tile.attr('data-h18-v0811-row') || '');
+        const rightKey = String($rightTile.attr('data-h18-v0840-auto-child') || $rightTile.attr('data-h18-v0811-row') || '');
+        if (!$handle.length) {
+            $handle = $('<button>', {
+                type: 'button',
+                class: 'h18-v0841-resize-handle',
+                'aria-label': 'Juster kolonnebredde mellem elementerne',
+                title: 'Træk for at justere bredde'
+            }).append($('<span>', { 'aria-hidden': 'true', text: '↔' }));
+            $tile.append($handle);
+        }
+        $handle
+            .attr('data-h18-v0841-pair-index', String(index))
+            .attr('data-h18-v0841-left', leftKey)
+            .attr('data-h18-v0841-right', rightKey);
+    }
+
     function decorateGrid(grid) {
         const $grid = $(grid);
         const autoKey = String($grid.attr('data-h18-v0814-auto-key') || '');
@@ -265,20 +293,7 @@ jQuery(function ($) {
                 $tile.append($('<span>', { class: 'h18-v0841-span-badge', 'aria-hidden': 'true' }));
             }
             updateTile($tile, spans[index]);
-            $tile.children('.h18-v0841-resize-handle').remove();
-            if (index < $tiles.length - 1) {
-                const leftKey = String($tile.attr('data-h18-v0840-auto-child') || $tile.attr('data-h18-v0811-row') || '');
-                const $rightTile = $tiles.eq(index + 1);
-                const rightKey = String($rightTile.attr('data-h18-v0840-auto-child') || $rightTile.attr('data-h18-v0811-row') || '');
-                $tile.append($('<button>', {
-                    type: 'button',
-                    class: 'h18-v0841-resize-handle',
-                    'data-h18-v0841-left': leftKey,
-                    'data-h18-v0841-right': rightKey,
-                    'aria-label': 'Juster kolonnebredde mellem elementerne',
-                    title: 'Træk for at justere bredde'
-                }).append($('<span>', { 'aria-hidden': 'true', text: '↔' })));
-            }
+            ensureHandle($tile, index < $tiles.length - 1 ? $tiles.eq(index + 1) : $(), index);
         });
     }
 
@@ -288,6 +303,7 @@ jQuery(function ($) {
         activeRows().each(function () { hydrateRow($(this)); });
         $sections.find('.h18-v0811-auto-grid[data-h18-v0840-auto-row="1"]').each(function () { decorateGrid(this); });
         document.documentElement.setAttribute('data-h18-lego-resize-runtime', '0.8.41');
+        document.documentElement.setAttribute('data-h18-lego-resize-device', canvasDevice());
     }
 
     function scheduleDecorate() {
@@ -311,7 +327,7 @@ jQuery(function ($) {
     }
 
     $(document).on('pointerdown', '.h18-v0841-resize-handle', function (event) {
-        if (event.button !== 0) { return; }
+        if (canvasDevice() !== 'desktop' || event.button !== 0) { return; }
         const $handle = $(this);
         const $leftTile = $handle.closest('.h18-v0841-resize-tile');
         const $grid = $leftTile.closest('.h18-v0841-resize-grid');
@@ -426,6 +442,9 @@ jQuery(function ($) {
         }
     });
     observer.observe($sections.get(0), { childList: true, subtree: true });
+
+    const canvasObserver = new MutationObserver(scheduleDecorate);
+    canvasObserver.observe($canvas.get(0), { attributes: true, attributeFilter: ['data-canvas-device'] });
 
     decorate();
     window.__h18LegoResizeV0841 = {
