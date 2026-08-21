@@ -20,6 +20,9 @@ final class EditorLegoPrimaryViewAdminController
         }
         self::$registered = true;
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
+        // v0.8.37 mirrors the remaining layout-only quick/Inspector controls
+        // into one canonical row state while legacy fields remain persistence.
+        EditorLegoLayoutPrimaryAdminController::register();
     }
 
     public static function enqueue(): void
