@@ -1,0 +1,85 @@
+.h18-v0811-auto-grid.h18-v0841-resize-grid{
+    position:relative;
+    grid-template-columns:repeat(12,minmax(0,1fr))!important;
+}
+.h18-v0841-resize-grid>.h18-v0841-resize-tile{
+    position:relative;
+    grid-column:span var(--h18-v0841-span,12)!important;
+    width:100%;
+    min-width:0;
+    overflow:visible;
+}
+.h18-v0841-resize-grid>.h18-v0841-resize-tile>.h18-v0811-child-bar,
+.h18-v0841-resize-grid>.h18-v0841-resize-tile>.h18-v0811-auto-box-preview{
+    overflow:hidden;
+}
+.h18-v0841-span-badge{
+    position:absolute;
+    top:5px;
+    left:5px;
+    z-index:8;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:34px;
+    height:20px;
+    padding:0 5px;
+    border:1px solid rgba(34,113,177,.45);
+    border-radius:999px;
+    background:rgba(255,255,255,.92);
+    color:#135e96;
+    font-size:10px;
+    font-weight:700;
+    line-height:1;
+    pointer-events:none;
+}
+.h18-v0841-resize-handle{
+    position:absolute;
+    top:50%;
+    right:-12px;
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:24px;
+    height:42px;
+    padding:0;
+    transform:translateY(-50%);
+    border:2px solid #3157ee;
+    border-radius:7px;
+    background:#fff;
+    color:#3157ee;
+    box-shadow:0 2px 7px rgba(0,0,0,.14);
+    cursor:ew-resize;
+    touch-action:none;
+    user-select:none;
+}
+.h18-builder-canvas[data-canvas-device="tablet"] .h18-v0841-resize-handle,
+.h18-builder-canvas[data-canvas-device="mobile"] .h18-v0841-resize-handle{
+    display:none!important;
+}
+.h18-v0841-resize-handle span{
+    display:block;
+    font-size:15px;
+    font-weight:700;
+    line-height:1;
+    pointer-events:none;
+}
+.h18-v0841-resize-handle:hover,
+.h18-v0841-resize-handle:focus-visible,
+.h18-v0841-resize-handle.is-active{
+    background:#eef2ff;
+    outline:2px solid #3157ee;
+    outline-offset:2px;
+}
+.h18-v0841-resize-grid.is-h18-v0841-resizing{
+    outline:2px solid rgba(49,87,238,.35);
+    outline-offset:4px;
+}
+.h18-v0841-resize-grid.is-h18-v0841-resizing>.h18-v0841-resize-tile{
+    transition:none!important;
+}
+@media(max-width:782px){
+    .h18-v0841-resize-handle{right:-10px;width:20px;height:38px}
+    .h18-v0841-span-badge{top:4px;left:4px}
+}
