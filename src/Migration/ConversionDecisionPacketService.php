@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Hangar18\UltimateDesigner\Migration;
 
+use Hangar18\UltimateDesigner\QA\ReleaseReadiness;
+
 /**
  * Aggregates the existing plan/readiness/acceptance/preflight chain into one
  * operator-facing decision packet. This service is deliberately report-only:
@@ -13,13 +15,16 @@ final class ConversionDecisionPacketService
 {
     private ConversionPlanService $plan;
     private ConversionCutoverPreflightService $preflight;
+    private ReleaseReadiness $releaseReadiness;
 
     public function __construct(
         ?ConversionPlanService $plan = null,
-        ?ConversionCutoverPreflightService $preflight = null
+        ?ConversionCutoverPreflightService $preflight = null,
+        ?ReleaseReadiness $releaseReadiness = null
     ) {
         $this->plan = $plan ?? new ConversionPlanService();
         $this->preflight = $preflight ?? new ConversionCutoverPreflightService();
+        $this->releaseReadiness = $releaseReadiness ?? new ReleaseReadiness();
     }
 
     /**
@@ -40,6 +45,11 @@ final class ConversionDecisionPacketService
         $rows = [];
         $reviewable = [];
         $blocked = [];
+        $requiredManualEvidence = array_keys($this->releaseReadiness->requiredManualEvidence());
+        $manualEvidenceComplete = !array_filter(
+            $requiredManualEvidence,
+            static fn(string $gate): bool => empty($manualEvidence[$gate])
+        );
 
         foreach ((array) ($plan['Stages'] ?? []) as $stage) {
             if (!is_array($stage)) {
@@ -105,7 +115,7 @@ final class ConversionDecisionPacketService
             'SchemaVersion' => '1.0',
             'Mode' => 'decision-packet-only',
             'ComparisonSlug' => $comparisonSlug,
-            'ManualEvidenceComplete' => !in_array(false, array_map('boolval', $manualEvidence), true),
+            'ManualEvidenceComplete' => $manualEvidenceComplete,
             'AcceptedSlugs' => array_values(array_unique(array_map(static fn($v): string => strtolower(trim((string) $v)), $acceptedSlugs))),
             'Stages' => $rows,
             'ReviewableTargets' => $reviewable,
