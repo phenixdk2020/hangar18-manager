@@ -7,7 +7,8 @@ Dette værktøjssæt understøtter den manuelle/live I9-gate uden at ændre Word
 I9 består fortsat af faktiske browser-, screen-reader-, `test2`-, protected-domain- og rollback-beviser. Værktøjerne hjælper kun med at oprette, validere og opsummere evidence-manifestet.
 
 - `tools/i9-evidence-init.cjs` opretter et nyt manifest med alle gates som `PENDING`.
-- `tools/i9-evidence-validator.cjs` validerer struktur, buildidentitet, gate-status, evidence-referencer og den afledte samlede I9-status.
+- `tools/i9-evidence-validator.cjs` validerer struktur, build- og miljøidentitet, gate-status, evidence-referencer og den afledte samlede I9-status.
+- `.github/workflows/i9-evidence-validate.yml` giver samme validation som et eksplicit `workflow_dispatch`-job i GitHub Actions.
 - Ingen af værktøjerne logger ind i WordPress, skriver sideindhold eller aktiverer cutover.
 
 ## 1. Opret et nyt manifest
@@ -65,15 +66,18 @@ Samlet status afledes deterministisk:
 
 Et manifest kan derfor ikke manuelt erklære en anden samlet status end den, evidence-gates faktisk giver.
 
-## 3. Lås validation til en konkret build
+## 3. Lås validation til konkret build og stagingmiljø
 
 ```bash
 node tools/i9-evidence-validator.cjs evidence/i9/manifest.json \
   --expected-sha 0123456789abcdef0123456789abcdef01234567 \
-  --expected-version 0.8.42
+  --expected-version 0.8.42 \
+  --expected-target https://test2.hangar18.dk/
 ```
 
-Dette bør bruges, når evidence vurderes som release-bevis, så et gammelt manifest ikke ved en fejl kan genbruges mod en nyere build.
+URL'en normaliseres, så fx `https://test2.hangar18.dk` og `https://test2.hangar18.dk/` er samme target. Et andet host/path accepteres ikke, når `--expected-target` bruges.
+
+Build- og target-binding bør bruges, når evidence vurderes som release-bevis, så et gammelt manifest eller evidence fra et andet stagingmiljø ikke ved en fejl kan genbruges.
 
 ## 4. Kræv fuld I9 PASS
 
@@ -81,12 +85,13 @@ Dette bør bruges, når evidence vurderes som release-bevis, så et gammelt mani
 node tools/i9-evidence-validator.cjs evidence/i9/manifest.json \
   --expected-sha 0123456789abcdef0123456789abcdef01234567 \
   --expected-version 0.8.42 \
+  --expected-target https://test2.hangar18.dk/ \
   --require-pass
 ```
 
 `--require-pass` returnerer fejlstatus, medmindre alle otte gates er evidenced `PASS` og den samlede status derfor er `PASS`.
 
-Det er denne mode, der kan bruges som teknisk release-gate efter den faktiske manuelle/live test. Den skaber ikke acceptance; den kontrollerer kun, at den registrerede acceptance er konsistent.
+Det er denne mode, der kan bruges som teknisk release-gate efter den faktiske manuelle/live test. Den skaber ikke acceptance; den kontrollerer kun, at den registrerede acceptance er konsistent og hører til den forventede build og staging-target.
 
 ## 5. Maskin- og human-readable output
 
@@ -104,7 +109,27 @@ node tools/i9-evidence-validator.cjs evidence/i9/manifest.json --markdown
 
 Markdown-outputtet viser build, target, afledt I9-status, gate-tællere, fejl og advarsler og kan gemmes sammen med øvrig evidence.
 
-## 6. Hvad værktøjet ikke må gøre
+## 6. GitHub Actions release-gate
+
+Workflowet **I9 Evidence Validate** er kun `workflow_dispatch`; det kører ikke automatisk på push eller pull request.
+
+Inputs:
+
+- `manifest_path` — repository-relativ sti til manifestet;
+- `expected_sha` — build-SHA; blank bruger workflow-commit SHA;
+- `expected_version` — forventet pluginversion;
+- `expected_target` — forventet staging-URL, standard `https://test2.hangar18.dk/`;
+- `require_pass` — når `true`, skal hele I9 være evidenced PASS.
+
+Workflowet:
+
+- har kun `contents: read`;
+- afviser absolutte/path-traversal manifeststier;
+- bruger den samme canonical validator som lokalt;
+- gemmer JSON-resultatet som Actions-artifact;
+- laver ingen WordPress-, login- eller public-write-kald.
+
+## 7. Hvad værktøjet ikke må gøre
 
 Det må ikke:
 
