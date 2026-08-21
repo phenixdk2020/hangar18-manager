@@ -2,6 +2,7 @@
 set -euo pipefail
 
 INDEX='docs/i9-evidence-gate-index.md'
+SESSION='docs/i9-evidence-session-runbook.md'
 
 declare -A FILES=(
   [chrome]='docs/i9-evidence-gate-chrome.md'
@@ -16,7 +17,9 @@ declare -A FILES=(
 
 required=(chrome edge firefox safari screenReader test2LiveE2E protectedDomains rollback)
 
-test -f "$INDEX" || { echo "FAIL: missing $INDEX"; exit 1; }
+for required_file in "$INDEX" "$SESSION"; do
+  test -f "$required_file" || { echo "FAIL: missing $required_file"; exit 1; }
+done
 
 for gate in "${required[@]}"; do
   file="${FILES[$gate]}"
@@ -33,14 +36,19 @@ for gate in "${required[@]}"; do
     exit 1
   fi
   grep -F "\`$gate\`" "$INDEX" >/dev/null || { echo "FAIL: $gate missing from operator index"; exit 1; }
+  grep -F "\`$gate\`" "$SESSION" >/dev/null || { echo "FAIL: $gate missing from session runbook"; exit 1; }
 done
 
 # Index must map exactly the eight canonical gate rows, not invent a ninth gate.
 rows="$(grep -E '^\| `(chrome|edge|firefox|safari|screenReader|test2LiveE2E|protectedDomains|rollback)` \|' "$INDEX" | wc -l | tr -d ' ')"
 test "$rows" = '8' || { echo "FAIL: expected 8 canonical gate rows in index, got $rows"; exit 1; }
 
-grep -F 'Automated Playwright/PHP QA can support' "$INDEX" >/dev/null || \
-  grep -F 'Automated Playwright/PHP QA kan støtte' "$INDEX" >/dev/null || { echo 'FAIL: manual-vs-automated boundary missing'; exit 1; }
+grep -F 'Automated Playwright/PHP QA kan støtte' "$INDEX" >/dev/null || { echo 'FAIL: manual-vs-automated boundary missing'; exit 1; }
 grep -F 'I10-mutations/cutover-koden forbliver separat låst' "$INDEX" >/dev/null || { echo 'FAIL: I10 lock statement missing'; exit 1; }
 
-echo 'I9 manual evidence gate templates contract: PASS'
+grep -F 'Backup/restore-point ID:' "$SESSION" >/dev/null || { echo 'FAIL: session restore-point binding missing'; exit 1; }
+grep -F 'Start en **ny build-bound evidence session**' "$SESSION" >/dev/null || { echo 'FAIL: stale-build retest policy missing'; exit 1; }
+grep -F '`readyForI10=true` er stadig kun et dokumenteret readiness-resultat' "$SESSION" >/dev/null || { echo 'FAIL: readiness/cutover boundary missing'; exit 1; }
+grep -F 'ikke at starte page conversion' "$SESSION" >/dev/null || { echo 'FAIL: non-PASS handoff stop rule missing'; exit 1; }
+
+echo 'I9 manual evidence gate templates/session contract: PASS'
