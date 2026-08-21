@@ -14,8 +14,9 @@ on:
         default: ''
         type: string
       expected_version:
-        description: 'Expected plugin version'
-        required: true
+        description: 'Expected plugin version; blank uses Hangar18_Manager::VERSION from source'
+        required: false
+        default: ''
         type: string
       expected_target:
         description: 'Expected staging target URL'
@@ -53,13 +54,21 @@ jobs:
         env:
           MANIFEST_PATH: ${{ inputs.manifest_path }}
           EXPECTED_SHA_INPUT: ${{ inputs.expected_sha }}
-          EXPECTED_VERSION: ${{ inputs.expected_version }}
+          EXPECTED_VERSION_INPUT: ${{ inputs.expected_version }}
           EXPECTED_TARGET: ${{ inputs.expected_target }}
           REQUIRE_PASS: ${{ inputs.require_pass }}
         run: |
           set +e
           EXPECTED_SHA="$EXPECTED_SHA_INPUT"
           if [ -z "$EXPECTED_SHA" ]; then EXPECTED_SHA="$GITHUB_SHA"; fi
+          EXPECTED_VERSION="$EXPECTED_VERSION_INPUT"
+          if [ -z "$EXPECTED_VERSION" ]; then
+            EXPECTED_VERSION="$(sed -n "s/^[[:space:]]*const VERSION = '\([^']*\)';.*/\1/p" hangar18-manager.php | head -n 1)"
+          fi
+          if [ -z "$EXPECTED_VERSION" ]; then
+            echo 'Could not resolve Hangar18_Manager::VERSION from source.' >&2
+            exit 2
+          fi
           args=("$MANIFEST_PATH" --json --expected-sha "$EXPECTED_SHA" --expected-version "$EXPECTED_VERSION" --expected-target "$EXPECTED_TARGET")
           if [ "$REQUIRE_PASS" = 'true' ]; then args+=(--require-pass); fi
           node tools/i9-evidence-validator.cjs "${args[@]}" > i9-evidence-validation.json
