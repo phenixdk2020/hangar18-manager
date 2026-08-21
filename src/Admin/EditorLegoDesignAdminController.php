@@ -25,6 +25,9 @@ final class EditorLegoDesignAdminController
         self::$registered = true;
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
         EditorLegoResponsiveDesignAdminController::register();
+        // v0.8.36 is a view/proxy only. It registers after the complete
+        // responsive + interaction stack and owns no save/history domain.
+        EditorLegoPrimaryViewAdminController::register();
     }
 
     public static function enqueue(): void
