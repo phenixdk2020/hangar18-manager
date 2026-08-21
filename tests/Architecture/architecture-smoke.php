@@ -85,5 +85,6 @@ assertTrue($missingPathRejected, 'Migration registry must reject an incomplete m
 
 require __DIR__ . '/i10-decision-packet-smoke.php';
 require __DIR__ . '/i10-decision-packet-fingerprint-smoke.php';
+require __DIR__ . '/i10-decision-packet-diff-smoke.php';
 
 fwrite(STDOUT, "Architecture foundation smoke test: PASS\n");
