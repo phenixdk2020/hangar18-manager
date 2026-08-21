@@ -7,9 +7,16 @@ on:
   pull_request:
     paths:
       - 'src/Backup/ManagedPageBackupRestore*.php'
+      - 'src/Backup/ManagedPageTrashService.php'
       - 'src/Admin/BackupRestoreAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
+      - 'assets/ultimate-designer-page-delete-v0844.js'
       - 'tests/Architecture/b1-page-backup-*'
+      - 'tests/Architecture/page-delete-*'
+      - 'docs/ud-v0841-manual-retest.md'
+      - 'docs/ultimate-designer-quick-reference.md'
+      - 'docs/active-backlog-v0841.md'
+      - 'docs/lego-v0841-manual-acceptance.json'
       - '.github/workflows/b1-backup-restore-qa.yml'
 
 permissions:
@@ -31,8 +38,14 @@ jobs:
         with:
           php-version: '${{ matrix.php-version }}'
           coverage: none
-      - run: php -l src/Backup/ManagedPageBackupRestoreService.php && php -l src/Backup/ManagedPageBackupRestorePreflightService.php && php -l src/Admin/BackupRestoreAdminController.php
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: php -l src/Backup/ManagedPageBackupRestoreService.php && php -l src/Backup/ManagedPageBackupRestorePreflightService.php && php -l src/Backup/ManagedPageTrashService.php && php -l src/Admin/BackupRestoreAdminController.php
+      - run: node --check assets/ultimate-designer-page-delete-v0844.js
       - run: php tests/Architecture/b1-page-backup-restore-smoke.php
       - run: php tests/Architecture/b1-page-backup-preflight-smoke.php
+      - run: php tests/Architecture/page-delete-smoke.php
       - run: bash tests/Architecture/b1-page-backup-restore-contract.sh
       - run: bash tests/Architecture/b1-page-backup-preflight-contract.sh
+      - run: bash tests/Architecture/page-delete-contract.sh
