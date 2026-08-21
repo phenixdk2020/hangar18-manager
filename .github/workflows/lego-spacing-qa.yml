@@ -46,7 +46,7 @@ on:
       - 'assets/ultimate-designer-lego-design-responsive-event-guard-v0833.js'
       - 'assets/ultimate-designer-lego-design-responsive-v0833.css'
       - 'assets/ultimate-designer-lego-interaction-states-v0834.js'
-      - 'assets/ultimate-designer-lego-interaction-states-event-guard-v0834.js'
+      - 'assets/ultimate-designer-lego-design-responsive-event-guard-v0833.js'
       - 'assets/ultimate-designer-lego-interaction-snapshot-v0834.js'
       - 'assets/ultimate-designer-lego-interaction-states-v0834.css'
       - 'assets/ultimate-designer-lego-primary-view-v0836.js'
@@ -72,6 +72,7 @@ on:
       - 'tests/Architecture/v0841-lego-resize-*'
       - 'tests/Architecture/v0842-lego-responsive-layout-*'
       - 'tests/Architecture/lego-manual-acceptance-contract.sh'
+      - 'tests/Architecture/lego-staging-build-contract.sh'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
       - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
       - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
@@ -89,6 +90,7 @@ on:
       - 'docs/lego-manual-acceptance.md'
       - 'docs/lego-test-session-template.md'
       - '.github/workflows/lego-spacing-qa.yml'
+      - '.github/workflows/lego-staging-build.yml'
 
 permissions:
   contents: read
@@ -121,6 +123,7 @@ jobs:
       - run: bash tests/Architecture/v0841-lego-resize-contract.sh
       - run: bash tests/Architecture/v0842-lego-responsive-layout-contract.sh
       - run: bash tests/Architecture/lego-manual-acceptance-contract.sh
+      - run: bash tests/Architecture/lego-staging-build-contract.sh
 
   browser:
     name: LEGO primary editor regression system Chrome
