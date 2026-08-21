@@ -6,9 +6,12 @@ namespace Hangar18\UltimateDesigner\Admin;
 
 use Hangar18\UltimateDesigner\Backup\ManagedPageBackupRestorePreflightService;
 use Hangar18\UltimateDesigner\Backup\ManagedPageBackupRestoreService;
+use Hangar18\UltimateDesigner\Backup\ManagedPageTrashService;
 use RuntimeException;
 
-/** Admin UI for B1 managed page backup restore/copy. */
+require_once dirname(__DIR__) . '/Backup/ManagedPageTrashService.php';
+
+/** Admin UI for B1 managed page backup restore/copy and safe page Trash. */
 final class BackupRestoreAdminController
 {
     private static bool $registered = false;
@@ -21,6 +24,53 @@ final class BackupRestoreAdminController
         self::$registered = true;
         add_action('admin_post_h18_ud_restore_backup_original', [self::class, 'restoreOriginal']);
         add_action('admin_post_h18_ud_restore_backup_copy', [self::class, 'createCopy']);
+        add_action('admin_post_h18_ud_trash_page', [self::class, 'trashPage']);
+        add_action('admin_enqueue_scripts', [self::class, 'enqueuePageDelete']);
+        add_action('admin_notices', [self::class, 'renderPageDeleteNotice']);
+    }
+
+    public static function enqueuePageDelete(): void
+    {
+        $page = isset($_GET['page']) ? sanitize_key((string) wp_unslash($_GET['page'])) : '';
+        if ($page !== 'hangar18-pages' || !current_user_can('delete_pages')) {
+            return;
+        }
+
+        $pluginDir = dirname(__DIR__, 2);
+        $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
+        $jsPath = $pluginDir . '/assets/ultimate-designer-page-delete-v0844.js';
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-page-delete-v0844',
+            $pluginUrl . 'assets/ultimate-designer-page-delete-v0844.js',
+            [],
+            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.44',
+            true
+        );
+        wp_localize_script(
+            'hangar18-ultimate-designer-page-delete-v0844',
+            'H18PageDeleteV0844',
+            [
+                'actionUrl' => admin_url('admin-post.php'),
+                'nonce' => wp_create_nonce('h18_ud_trash_page'),
+                'action' => 'h18_ud_trash_page',
+                'buttonLabel' => 'Slet side',
+            ]
+        );
+    }
+
+    public static function renderPageDeleteNotice(): void
+    {
+        $page = isset($_GET['page']) ? sanitize_key((string) wp_unslash($_GET['page'])) : '';
+        if ($page !== 'hangar18-pages') {
+            return;
+        }
+        $status = isset($_GET['h18_page_delete_status']) ? sanitize_key((string) wp_unslash($_GET['h18_page_delete_status'])) : '';
+        $message = isset($_GET['h18_page_delete_message']) ? sanitize_text_field((string) wp_unslash($_GET['h18_page_delete_message'])) : '';
+        if ($status === '' || $message === '') {
+            return;
+        }
+        $class = $status === 'error' ? 'notice notice-error is-dismissible' : 'notice notice-success is-dismissible';
+        echo '<div class="' . esc_attr($class) . '"><p>' . esc_html($message) . '</p></div>';
     }
 
     public static function renderPanel(): void
@@ -137,6 +187,38 @@ final class BackupRestoreAdminController
         }
     }
 
+    public static function trashPage(): void
+    {
+        if (!current_user_can('delete_pages')) {
+            wp_die(esc_html__('Du har ikke rettigheder til at slette sider.', 'hangar18-manager'));
+        }
+        check_admin_referer('h18_ud_trash_page');
+
+        try {
+            $slug = sanitize_title((string) wp_unslash($_POST['page_slug'] ?? ''));
+            if ($slug === '') {
+                throw new RuntimeException('Der blev ikke angivet en gyldig side.');
+            }
+            $post = get_page_by_path($slug, OBJECT, 'page');
+            if (!$post instanceof \WP_Post || $post->post_type !== 'page') {
+                throw new RuntimeException('Siden kunne ikke findes.');
+            }
+            if (!current_user_can('delete_post', (int) $post->ID)) {
+                throw new RuntimeException('Du har ikke delete-rettighed til denne side.');
+            }
+
+            $confirmation = trim((string) wp_unslash($_POST['confirm_title'] ?? ''));
+            $result = (new ManagedPageTrashService())->trashBySlug($slug, $confirmation, get_current_user_id());
+            self::redirectPageEditor('success', sprintf(
+                'Siden "%s" blev flyttet til WordPress Papirkurv. Sikkerhedsbackup: %s. Den kan gendannes fra B1-backup-panelet.',
+                (string) ($result['Title'] ?? ''),
+                (string) ($result['SafetyBackup'] ?? '')
+            ));
+        } catch (\Throwable $error) {
+            self::redirectPageEditor('error', 'Slet side fejlede: ' . $error->getMessage());
+        }
+    }
+
     private static function renderActionForm(string $action, string $filename, string $sourceKey, string $label, bool $destructive): void
     {
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline-block;margin:0 8px 6px 0">';
@@ -163,6 +245,17 @@ final class BackupRestoreAdminController
             'page' => IntegrationAdminBootstrap::PAGE_SLUG,
             'ud_status' => $status === 'error' ? 'error' : 'success',
             'ud_message' => $message,
+        ], admin_url('admin.php'));
+        wp_safe_redirect($url);
+        exit;
+    }
+
+    private static function redirectPageEditor(string $status, string $message): void
+    {
+        $url = add_query_arg([
+            'page' => 'hangar18-pages',
+            'h18_page_delete_status' => $status === 'error' ? 'error' : 'success',
+            'h18_page_delete_message' => $message,
         ], admin_url('admin.php'));
         wp_safe_redirect($url);
         exit;
