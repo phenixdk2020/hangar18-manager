@@ -1,0 +1,35 @@
+name: I9 Prep QA
+
+on:
+  push:
+    branches:
+      - agent/doc1-visual-user-manual
+  pull_request:
+    paths:
+      - 'docs/i9-*.md'
+      - 'docs/ultimate-designer-user-manual.md'
+      - 'docs/ultimate-designer-quick-reference.md'
+      - 'docs/integration-backlog-after-ud120.md'
+      - 'tests/Live/**'
+      - 'tests/Architecture/i9-live-readonly-contract.sh'
+      - 'tests/Architecture/assert-foundation-isolation.sh'
+      - '.github/workflows/i9-prep-qa.yml'
+      - '.github/workflows/i9-test2-live-readonly.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: I9 documentation + read-only live tooling contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: bash tests/Architecture/assert-foundation-isolation.sh origin/main
+      - run: bash tests/Architecture/i9-live-readonly-contract.sh
