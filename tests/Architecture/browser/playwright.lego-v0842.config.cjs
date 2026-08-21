@@ -2,7 +2,7 @@ const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: __dirname,
-  testMatch: /(lego-drop-zones-v0838|lego-side-by-side-history-v0840|lego-resize-v0841|lego-responsive-layout-v0842)\.spec\.cjs/,
+  testMatch: /(lego-drop-zones-v0838|lego-side-by-side-history-v0840|lego-palette-side-drop-v0843|lego-resize-v0841|lego-responsive-layout-v0842)\.spec\.cjs/,
   timeout: 60000,
   fullyParallel: false,
   workers: 1,
