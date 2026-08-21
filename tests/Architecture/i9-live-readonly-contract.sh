@@ -8,8 +8,10 @@ RUNBOOK='docs/i9-manual-qa-evidence-runbook.md'
 TEST2='docs/i9-test2-live-e2e-checklist.md'
 ROLLBACK='docs/i9-rollback-rehearsal.md'
 MANUAL='docs/ultimate-designer-user-manual.md'
+MANIFEST_SCHEMA='docs/i9-evidence-manifest.schema.json'
+MANIFEST_EXAMPLE='docs/i9-evidence-manifest.example.json'
 
-for file in "$SPEC" "$CONFIG" "$WORKFLOW" "$RUNBOOK" "$TEST2" "$ROLLBACK" "$MANUAL"; do
+for file in "$SPEC" "$CONFIG" "$WORKFLOW" "$RUNBOOK" "$TEST2" "$ROLLBACK" "$MANUAL" "$MANIFEST_SCHEMA" "$MANIFEST_EXAMPLE"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -42,6 +44,12 @@ require_contains "$RUNBOOK" 'Automatiseret CI er støttebevis, ikke erstatning.'
 require_contains "$TEST2" 'staging/kopi og ikke produktion' 'test2 staging preflight missing'
 require_contains "$ROLLBACK" 'Et FAIL blokerer I10.' 'rollback blocking rule missing'
 require_contains "$MANUAL" 'Vehicle, Event og Gallery er fortsat beskyttede legacy-domæner' 'protected-domain warning missing from manual'
+
+# Evidence manifests must be valid JSON and preserve every mandatory I9 gate.
+node -e "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'))" "$MANIFEST_SCHEMA"
+node -e "const m=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')); const required=['chrome','edge','firefox','safari','screenReader','test2LiveE2E','protectedDomains','rollback']; if(m.schemaVersion!==1||m.overallStatus!=='PENDING'||required.some(k=>!m.gates||!m.gates[k])) process.exit(1);" "$MANIFEST_EXAMPLE"
+require_contains "$MANIFEST_SCHEMA" '"overallStatus"' 'manifest overall status missing'
+require_contains "$MANIFEST_SCHEMA" '"rollback"' 'manifest rollback gate missing'
 
 node --check "$SPEC"
 node --check "$CONFIG"
