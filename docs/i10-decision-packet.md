@@ -7,7 +7,7 @@
 3. `ConversionCutoverPreflightService` kontrollerer WordPress-identitet, shadow-copy, source drift og human acceptance.
 4. Decision packet aggregerer disse resultater uden at udføre migration, activation eller public write.
 
-`ConversionDecisionPacketFormatter` kan vise samme packet som stabil pretty JSON eller Markdown. `ConversionDecisionPacketFingerprintService` kan lave et canonical SHA-256 fingerprint af packet-snapshotet til evidence/audit.
+`ConversionDecisionPacketFormatter` kan vise samme packet som stabil pretty JSON eller Markdown. `ConversionDecisionPacketFingerprintService` kan lave et canonical SHA-256 fingerprint af packet-snapshotet til evidence/audit. `ConversionDecisionPacketDiffService` kan sammenligne to packet-snapshots og vise præcis hvilke stage-/blocker-/reviewability-data der ændrede sig siden sidste review.
 
 ## Output
 
@@ -50,6 +50,21 @@ Fingerprint-servicen returnerer:
 Fingerprintet er **ikke** et preflight-token, capability eller cutover-signal. Det bruges kun til at bevise, at et operator-reviewed packet-snapshot ikke er ændret. Ændres fx blockers, stage-data eller execution-state, fejler `verify()`.
 
 Hvis fingerprint-metadata hævder `AuthorizesCutover=true`, `Executable=true` eller `PublicMutationAvailable=true`, skal verifikation altid fejle.
+
+## Packet diff
+
+Diff-servicen er også report-only. Den viser:
+
+- om `ComparisonSlug` ændrede sig;
+- om manual evidence-completeness ændrede sig;
+- om den accepterede stage-sekvens ændrede sig;
+- stage-added / stage-removed / stage-changed;
+- før/efter for plan eligibility, preflight availability, operator reviewability og blockers;
+- `ChangedStageCount`;
+- `Executable=false`;
+- `PublicMutationAvailable=false`.
+
+Diffen er nyttig før et nyt operator-review: hvis source drift, acceptance eller manual evidence har ændret packetens blockerbillede, kan det ses eksplicit i stedet for at sammenligne to store JSON-filer manuelt.
 
 ## Vigtige stopregler
 
@@ -102,4 +117,6 @@ Derudover kan eksisterende blockers bl.a. være:
 
 `tests/Architecture/i10-decision-packet-fingerprint-smoke.php` verificerer canonical SHA-256, tamper detection og at fingerprintet aldrig kan blive cutover-autorisation.
 
-Begge smoke-tests køres transitivt gennem den eksisterende `architecture-smoke.php`, så de dækkes af Architecture QA på alle understøttede PHP-versioner.
+`tests/Architecture/i10-decision-packet-diff-smoke.php` verificerer no-change, changed/added/removed stages, blocker/reviewability transitions og non-executable diff-output.
+
+Alle tre smoke-tests køres transitivt gennem den eksisterende `architecture-smoke.php`, så de dækkes af Architecture QA på alle understøttede PHP-versioner.
