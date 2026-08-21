@@ -38,6 +38,7 @@ jobs:
           bash tests/Architecture/v0842-lego-responsive-layout-contract.sh
           bash tests/Architecture/lego-manual-acceptance-contract.sh
           bash tests/Architecture/lego-staging-build-contract.sh
+          bash tests/Architecture/lego-staging-verify-contract.sh
 
       - name: Lint plugin PHP
         shell: bash
@@ -88,6 +89,9 @@ jobs:
           }
           pathlib.Path('staging-dist/lego-staging-manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
           PY
+
+      - name: Verify staging artifact identity and integrity
+        run: node tools/lego-staging-verify.cjs staging-dist
 
       - name: Upload staging test artifact
         uses: actions/upload-artifact@v4
