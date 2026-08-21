@@ -42,11 +42,20 @@ require_contains "$CSS" '[data-canvas-device="tablet"] .h18-v0841-resize-handle'
 require_contains "$CSS" '[data-canvas-device="mobile"] .h18-v0841-resize-handle' 'Mobile resize handle enable missing'
 require_contains "$CSS" '.h18-v0842-inherit-toggle' 'inheritance control styling missing'
 
-# Browser proof must cover inheritance, atomic responsive resize, device isolation and snapshots.
+# One visual width owner per device: v0.8.41 still creates handles/chrome, but
+# must not repaint Desktop spans over the v0.8.42 responsive canvas.
+require_contains "$BASE_JS" 'function responsiveOwnsTileWidths()' 'responsive tile-width ownership gate missing'
+require_contains "$BASE_JS" "canvasDevice() !== 'desktop' && Boolean(window.__h18LegoResponsiveLayoutV0842)" 'responsive ownership condition missing'
+require_contains "$BASE_JS" 'if (!responsiveWidths) {' 'base runtime responsive write suppression missing'
+
+# Browser proof must cover inheritance, atomic responsive resize, device isolation,
+# snapshots and actual rendered span stability after asynchronous refreshes settle.
 require_contains "$SPEC" 'initially inherit the Desktop 6/6 Auto layout' 'initial inheritance regression missing'
 require_contains "$SPEC" 'Tablet resize creates only Tablet overrides as one Undo Redo checkpoint' 'Tablet atomic resize regression missing'
 require_contains "$SPEC" 'Desktop Tablet and Mobile layouts remain independent' 'device isolation regression missing'
 require_contains "$SPEC" 'Arv Desktop preserves and restores the responsive override snapshot' 'reversible snapshot regression missing'
+require_contains "$SPEC" 'expectRenderedSpans(page, [8, 4])' 'rendered responsive span stability regression missing'
+require_contains "$SPEC" "node.style.getPropertyValue('--h18-v0841-span')" 'actual CSS span assertion missing'
 
 # LEGO-033 must not create a second parent model, history stack or public renderer.
 if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|admin_post_.*(activate|cutover|publish)|sortable\(|setParent\(|LayoutParentKey.*=' "$JS" "$CTRL" "$MODEL" >/dev/null; then
