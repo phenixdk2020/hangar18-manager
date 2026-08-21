@@ -121,4 +121,8 @@ if node "$VALIDATOR" "$MANIFEST" --require-pass >/dev/null 2>&1; then
   exit 1
 fi
 
+# The read-only gate recorder is part of the same evidence contract and is executed transitively
+# from both I9 Prep QA and Architecture QA through this canonical script.
+bash tests/Architecture/i9-evidence-record-contract.sh
+
 echo "I9 evidence validator/init/workflow/target/version contract: PASS ($VERSION)"
