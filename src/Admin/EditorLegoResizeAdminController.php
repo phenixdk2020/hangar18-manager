@@ -7,7 +7,7 @@ namespace Hangar18\UltimateDesigner\Admin;
 use Hangar18\UltimateDesigner\Editor\LegoLayoutSpanModel;
 
 /**
- * LEGO-032 admin-only visual resize bridge.
+ * LEGO-032/033 admin-only visual resize bridge.
  *
  * Owns only renderer-neutral per-section span state. Existing Auto-kasser /
  * LayoutParentKey owns placement, the existing history engine owns Undo/Redo,
@@ -39,6 +39,8 @@ final class EditorLegoResizeAdminController
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-lego-resize-v0841.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-lego-resize-v0841.css';
+        $responsiveJsPath = $pluginDir . '/assets/ultimate-designer-lego-responsive-layout-v0842.js';
+        $responsiveCssPath = $pluginDir . '/assets/ultimate-designer-lego-responsive-layout-v0842.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-lego-resize-v0841',
@@ -58,12 +60,29 @@ final class EditorLegoResizeAdminController
             is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.41'
         );
 
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-responsive-layout-v0842',
+            $pluginUrl . 'assets/ultimate-designer-lego-responsive-layout-v0842.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-lego-resize-v0841',
+            ],
+            is_file($responsiveJsPath) ? (string) filemtime($responsiveJsPath) : '0.8.42',
+            false
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-lego-responsive-layout-v0842',
+            $pluginUrl . 'assets/ultimate-designer-lego-responsive-layout-v0842.css',
+            ['hangar18-ultimate-designer-lego-resize-v0841'],
+            is_file($responsiveCssPath) ? (string) filemtime($responsiveCssPath) : '0.8.42'
+        );
+
         $store = get_option(self::OPTION, []);
         wp_localize_script(
             'hangar18-ultimate-designer-lego-resize-v0841',
             'H18LegoResizeV0841',
             [
-                'version' => '0.8.41',
+                'version' => '0.8.42',
                 'schemaVersion' => LegoLayoutSpanModel::SCHEMA_VERSION,
                 'columns' => LegoLayoutSpanModel::COLUMN_COUNT,
                 'pages' => is_array($store) ? $store : [],
