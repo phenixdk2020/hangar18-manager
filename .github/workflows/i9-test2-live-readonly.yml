@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - agent/doc1-visual-user-manual
+  pull_request:
+    paths:
+      - 'tests/Live/**'
+      - 'tests/Architecture/i9-live-readonly-contract.sh'
+      - 'docs/i9-*.md'
+      - 'docs/ultimate-designer-user-manual.md'
+      - '.github/workflows/i9-test2-live-readonly.yml'
   workflow_dispatch:
     inputs:
       base_url:
