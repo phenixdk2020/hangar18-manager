@@ -43,9 +43,13 @@ final class LegoResponsiveDesignModel
     }
 
     /**
+     * Return the effective design for one device. Inherited devices are always
+     * a live view of the current Desktop state; stored override snapshots remain
+     * untouched until inheritance is disabled again.
+     *
      * @param array<string,mixed> $responsive
      * @param array<string,mixed> $desktop
-     * @return array{Design:array<string,mixed>,Inherited:bool}
+     * @return array{Design:array<string,mixed>,Inherited:bool,HasOverride:bool}
      */
     public static function effective(array $responsive, array $desktop, string $device): array
     {
@@ -54,13 +58,48 @@ final class LegoResponsiveDesignModel
         $device = in_array($device, ['Desktop', 'Tablet', 'Mobile'], true) ? $device : 'Desktop';
 
         if ($device === 'Desktop') {
-            return ['Design'=>$desktop, 'Inherited'=>false];
+            return ['Design'=>$desktop, 'Inherited'=>false, 'HasOverride'=>false];
         }
+
         $entry = $responsive[$device];
         if (!empty($entry['InheritDesktop'])) {
-            return ['Design'=>$desktop, 'Inherited'=>true];
+            return [
+                'Design'=>$desktop,
+                'Inherited'=>true,
+                'HasOverride'=>!empty($entry['HasOverride']),
+            ];
         }
-        return ['Design'=>LegoDesignModel::normalizeState((array)($entry['Design'] ?? [])), 'Inherited'=>false];
+
+        return [
+            'Design'=>LegoDesignModel::normalizeState((array)($entry['Design'] ?? [])),
+            'Inherited'=>false,
+            'HasOverride'=>!empty($entry['HasOverride']),
+        ];
+    }
+
+    /**
+     * Produce the state transition used when inheritance is toggled. If a device
+     * has never owned an override, its first transition away from Desktop is
+     * seeded from the *current* Desktop state. Existing overrides are preserved.
+     *
+     * @param array<string,mixed> $responsive
+     * @param array<string,mixed> $desktop
+     * @return array<string,mixed>
+     */
+    public static function setInheritance(array $responsive, array $desktop, string $device, bool $inherit): array
+    {
+        $desktop = LegoDesignModel::normalizeState($desktop);
+        $responsive = self::normalize($responsive, $desktop);
+        if (!in_array($device, ['Tablet', 'Mobile'], true)) {
+            return $responsive;
+        }
+
+        if (!$inherit && empty($responsive[$device]['HasOverride'])) {
+            $responsive[$device]['Design'] = $desktop;
+            $responsive[$device]['HasOverride'] = true;
+        }
+        $responsive[$device]['InheritDesktop'] = $inherit;
+        return $responsive;
     }
 
     /**
@@ -73,12 +112,17 @@ final class LegoResponsiveDesignModel
         $inherit = array_key_exists('InheritDesktop', $raw)
             ? self::boolValue($raw['InheritDesktop'], true)
             : true;
-        $design = isset($raw['Design']) && is_array($raw['Design'])
+        $hasDesign = isset($raw['Design']) && is_array($raw['Design']);
+        $hasOverride = array_key_exists('HasOverride', $raw)
+            ? self::boolValue($raw['HasOverride'], $hasDesign && !$inherit)
+            : ($hasDesign && !$inherit);
+        $design = $hasDesign
             ? LegoDesignModel::normalizeState($raw['Design'])
             : $desktop;
 
         return [
             'InheritDesktop' => $inherit,
+            'HasOverride' => $hasOverride,
             'Design' => $design,
         ];
     }
