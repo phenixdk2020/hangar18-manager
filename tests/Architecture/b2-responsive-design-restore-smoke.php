@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use Hangar18\UltimateDesigner\Backup\SiteBackupPackageService;
+use Hangar18\UltimateDesigner\Backup\SiteBackupRestoreCoordinator;
+
 // Reuse the complete B2 WordPress/package/restore harness first. It leaves the
 // mock WordPress state/functions available after cleaning its temporary files.
 require_once __DIR__ . '/b2-package-restore-smoke.php';
