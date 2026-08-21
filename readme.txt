@@ -1,6 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.8.32
+Version: 0.8.33
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.33 – Designer — responsive LEGO-design ==
+
+Nyt:
+- Udvider den fælles LEGO-designmodel med Desktop som canonical basis og responsive Tablet/Mobil design-state.
+- Tablet og Mobil starter med Arv fra Desktop; første gang arv slås fra uden et tidligere override, seedes designet fra den aktuelle Desktop-state.
+- Eksisterende Tablet/Mobil-overrides bevares gennem arv til/fra via et eksplicit HasOverride-flag, så tidligere design ikke slettes.
+- Almindelige elementer og Kasse/Grid/Flex bruger den samme responsive designmodel for farver, border, radius, typografi, opacity, shadow og hover.
+- Inspector følger aktiv Desktop/Tablet/Mobil-preview og viser inherited kontra eksplicit design uden at introducere en ny drag/drop-, parent/child- eller history-motor.
+- Hover-effekter som Lift, Scale og Shadow fungerer uafhængigt af om hover-farverne arver Normal eller er tilpassede.
+- Responsive dropdowns har en snæver DOM input/change-guard, så én brugerhandling fortsat giver ét eksisterende Undo/Redo-checkpoint.
+- Responsive design gemmes som et additivt admin-only overlay; Desktop og den eksisterende public renderer forbliver legacy-backed og autoritative.
+- B2 selective page restore gendanner nu også kun den valgte sides responsive LEGO-designstate og bevarer andre sider; ældre backups uden overlay sletter ikke nyere state.
+- LEGO Editor QA, Editor Runtime Fast QA og B2 QA er bestået; fuld Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.32 – Designer — fælles LEGO-designmodel ==
