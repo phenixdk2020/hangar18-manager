@@ -7,6 +7,8 @@
 3. `ConversionCutoverPreflightService` kontrollerer WordPress-identitet, shadow-copy, source drift og human acceptance.
 4. Decision packet aggregerer disse resultater uden at udføre migration, activation eller public write.
 
+`ConversionDecisionPacketFormatter` kan vise samme packet som stabil pretty JSON eller Markdown. `ConversionDecisionPacketFingerprintService` kan lave et canonical SHA-256 fingerprint af packet-snapshotet til evidence/audit.
+
 ## Output
 
 Pakken indeholder:
@@ -22,6 +24,32 @@ Pakken indeholder:
 - `PublicMutationAvailable=false`.
 
 Hver stage indeholder plan-status, preflight-status og den samlede blocker-liste. En stage bliver kun `EligibleForOperatorReview=true`, når både eksisterende plan/readiness og preflight er uden blockers.
+
+## Formatter
+
+Formatteren har kun præsentationsansvar:
+
+- JSON bevarer packet-state 1:1;
+- Markdown viser mode, comparison target, manual evidence-status, execution/public-mutation-lås og stage-tabellen;
+- reviewable targets vises særskilt;
+- Markdown afsluttes eksplicit med, at packet er review-only og ikke autoriserer cutover.
+
+Formatteren ændrer ikke packet og udfører ingen persistence.
+
+## Fingerprint
+
+Fingerprint-servicen returnerer:
+
+- `Algorithm=sha256`;
+- canonical 64-tegns `Hash`;
+- `Purpose=evidence-integrity-only`;
+- `AuthorizesCutover=false`;
+- `Executable=false`;
+- `PublicMutationAvailable=false`.
+
+Fingerprintet er **ikke** et preflight-token, capability eller cutover-signal. Det bruges kun til at bevise, at et operator-reviewed packet-snapshot ikke er ændret. Ændres fx blockers, stage-data eller execution-state, fejler `verify()`.
+
+Hvis fingerprint-metadata hævder `AuthorizesCutover=true`, `Executable=true` eller `PublicMutationAvailable=true`, skal verifikation altid fejle.
 
 ## Vigtige stopregler
 
@@ -69,6 +97,9 @@ Derudover kan eksisterende blockers bl.a. være:
 - source drift propagates;
 - protected domains forbliver blocked;
 - servicekilden indeholder ingen kendte WordPress mutation primitives;
-- packet og embedded preflight forbliver non-executable og non-mutating.
+- packet og embedded preflight forbliver non-executable og non-mutating;
+- JSON/Markdown formatter bevarer og viser de samme sikkerhedsinvariants.
 
-Smoken køres transitivt gennem den eksisterende `architecture-smoke.php`, så den dækkes af Architecture QA på alle understøttede PHP-versioner.
+`tests/Architecture/i10-decision-packet-fingerprint-smoke.php` verificerer canonical SHA-256, tamper detection og at fingerprintet aldrig kan blive cutover-autorisation.
+
+Begge smoke-tests køres transitivt gennem den eksisterende `architecture-smoke.php`, så de dækkes af Architecture QA på alle understøttede PHP-versioner.
