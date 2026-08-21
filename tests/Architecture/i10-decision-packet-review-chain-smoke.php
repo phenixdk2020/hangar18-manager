@@ -6,6 +6,7 @@ require_once dirname(__DIR__,2).'/src/Autoload.php';
 \Hangar18\UltimateDesigner\Autoload::register();
 
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketFingerprintService;
+use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketReviewChainFormatter;
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketReviewChainService;
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketReviewReceiptService;
 
@@ -30,6 +31,7 @@ $packet=[
 $fingerprints=new ConversionDecisionPacketFingerprintService();
 $receipts=new ConversionDecisionPacketReviewReceiptService($fingerprints);
 $chain=new ConversionDecisionPacketReviewChainService($fingerprints,$receipts);
+$formatter=new ConversionDecisionPacketReviewChainFormatter();
 $fingerprint=$fingerprints->fingerprint($packet);
 $receipt=$receipts->capture($packet,$fingerprint,'Allan','test2 · Chrome','QA-I10-CHAIN-001','Human review only.');
 
@@ -44,9 +46,23 @@ i10ReviewChainAssert(($valid['ReviewableTargets']??[])===['hjem','om-foreningen-
 i10ReviewChainAssert(($valid['AuthorizesCutover']??true)===false,'Review chain must never authorize cutover.');
 i10ReviewChainAssert(($valid['Executable']??true)===false && ($valid['PublicMutationAvailable']??true)===false,'Review chain must remain non-executable/non-mutating.');
 
+$json=$formatter->json($valid);
+$decoded=json_decode($json,true,512,JSON_THROW_ON_ERROR);
+i10ReviewChainAssert(($decoded['ReviewChainValid']??false)===true,'JSON formatter must preserve chain validity.');
+i10ReviewChainAssert(($decoded['AuthorizesCutover']??true)===false,'JSON formatter must preserve non-authorizing state.');
+$markdown=$formatter->markdown($valid);
+i10ReviewChainAssert(str_contains($markdown,'# I10 Review Chain'),'Review-chain Markdown heading missing.');
+i10ReviewChainAssert(str_contains($markdown,'Review chain valid: **YES**'),'Markdown must expose valid-chain status.');
+i10ReviewChainAssert(str_contains($markdown,'Authorizes cutover: **NO**'),'Markdown must expose non-authorizing state.');
+i10ReviewChainAssert(str_contains($markdown,'Executable: **NO**'),'Markdown must expose non-executable state.');
+i10ReviewChainAssert(str_contains($markdown,'does not authorize cutover'),'Markdown must state evidence-only semantics.');
+
 $missingFingerprint=$chain->inspect($packet,null,$receipt);
 i10ReviewChainAssert($missingFingerprint['ReviewChainValid']===false && $missingFingerprint['FreshHumanReviewRequired']===true,'Missing fingerprint must invalidate chain.');
 i10ReviewChainAssert(in_array('review-chain:fingerprint-missing',$missingFingerprint['Blockers'],true),'Missing fingerprint blocker absent.');
+$missingMarkdown=$formatter->markdown($missingFingerprint);
+i10ReviewChainAssert(str_contains($missingMarkdown,'Fresh human review required: **YES**'),'Formatter must surface fresh-review requirement.');
+i10ReviewChainAssert(str_contains($missingMarkdown,'review-chain:fingerprint-missing'),'Formatter must surface blockers.');
 
 $missingReceipt=$chain->inspect($packet,$fingerprint,null);
 i10ReviewChainAssert($missingReceipt['ReviewChainValid']===false && $missingReceipt['FreshHumanReviewRequired']===true,'Missing human receipt must invalidate chain.');
@@ -72,4 +88,4 @@ $modeResult=$chain->inspect($wrongMode,$fingerprint,$receipt);
 i10ReviewChainAssert($modeResult['PacketModeValid']===false,'Unexpected packet mode must be detected.');
 i10ReviewChainAssert(in_array('review-chain:packet-mode-invalid',$modeResult['Blockers'],true),'Packet mode blocker missing.');
 
-fwrite(STDOUT,"I10 decision packet review chain: PASS\n");
+fwrite(STDOUT,"I10 decision packet review chain + formatter: PASS\n");
