@@ -89,5 +89,6 @@ require __DIR__ . '/i10-decision-packet-diff-smoke.php';
 require __DIR__ . '/i10-decision-packet-review-receipt-smoke.php';
 require __DIR__ . '/i10-decision-packet-review-chain-smoke.php';
 require __DIR__ . '/i10-decision-evidence-bundle-smoke.php';
+require __DIR__ . '/i10-decision-admin-readonly-smoke.php';
 
 fwrite(STDOUT, "Architecture foundation smoke test: PASS\n");
