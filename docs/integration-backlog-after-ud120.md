@@ -5,7 +5,7 @@
 
 UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner, foldbare canvas-værktøjer, automatic side-by-side layout, 12-kolonne resize og responsive Tablet/Mobil spans er samlet på den eksisterende parent/history/persistence-arkitektur gennem LEGO-033.
 
-**Aktiv næste fase: I9-EVIDENCE — faktisk manuel/live acceptance.** Dokumentation, runbooks, resultatskabelon og en read-only `test2` public smoke er nu forberedt; de automatiserede checks må ikke erstatte de krævede manuelle/live beviser.
+**Aktiv næste fase: I9-EVIDENCE — faktisk manuel/live acceptance.** DOC-1/DOC-2, I9-runbooks, evidence-manifest, read-only public smoke samt I10 operator-/blocker-/acceptance-/stage-dokumentation er nu forberedt. Automatisk QA må ikke erstatte de krævede I9 live/manuelle beviser.
 
 Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny renderer.
 
@@ -17,6 +17,7 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 - Eksisterende page-section felter forbliver persistence/public-renderer-kilden under migrationen.
 - Ingen public sidekonvertering før I9 er manuelt accepteret.
 - Vehicle/Event/Gallery forbliver beskyttede legacy-domæner, bortset fra eksplicit godkendte snævre fixes som EVENT-001.
+- I10 plan/readiness/preflight forbliver decision-only og må ikke eksponere public mutation, før en særskilt kontrolleret cutover-mekanisme senere godkendes.
 
 ## Statusoversigt
 
@@ -30,8 +31,8 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | I6 — Portability | ✅ Færdig | Dry-run, signeret plan, conflict/remap, workspace og restore-point. |
 | I7 — Permissions / Design Lock | ✅ Færdig | Additive capabilities/roles og design-lock policy. |
 | I8 — AI | ✅ Færdig | Provider-neutral forslag uden direkte public page-write. |
-| I9 — Manual QA evidence | 🟡 Evidence pending | Runbooks/tooling er klar; faktiske browser-, screen-reader-, test2-, protected-domain- og rollback-beviser mangler. |
-| I10 — Final controlled conversion | 🟡 Preflight færdigt / cutover låst | Comparison page → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
+| I9 — Manual QA evidence | 🟡 Evidence pending | Prep/tooling er klar; faktiske brand-browser-, screen-reader-, test2-editor-, protected-domain- og rollback-beviser mangler. |
+| I10 — Final controlled conversion | 🟡 Prep/preflight færdigt / cutover låst | Operatorflow dokumenteret; comparison → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
 | UX-3 — Foldbare workspace rails | ✅ v0.8.24 | Elementer/Funktioner og Inspector foldes uafhængigt. |
 | UX-4 — Ugemt forhåndsvisning | ✅ v0.8.25 + v0.8.27 | Preview uden save; editor chrome renses fra klonen. |
 | UX-5 — Foldbare canvas-værktøjspaneler | ✅ v0.8.39 + LEGO-031 UX | Direkte Design · LEGO og Billede starter minimeret, foldes uafhængigt og husker browser-lokal state; ingen history/save-event. |
@@ -51,11 +52,19 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | LEGO-033 — Tablet/Mobile layout overrides | ✅ QA PASS | Reversible Tablet/Mobil span-overrides med Desktop-arv, snapshots og samme history-owner. |
 | DOC-1 — Visuel brugermanual | ✅ Færdig | `docs/ultimate-designer-user-manual.md`. |
 | DOC-2 — Hurtig reference | ✅ Færdig | `docs/ultimate-designer-quick-reference.md`. |
+| DOC-3 — Migration operations index | ✅ Færdig | Samlet indgang til I9/I10 operatorfiler. |
 | I9-PREP-1 — Evidence runbook | ✅ Færdig | Ensartet browser/screen-reader/protected-domain evidenceflow. |
 | I9-PREP-2 — test2 live checklist | ✅ Færdig | Preflight, comparison-side, responsive, interactions og protected domains. |
 | I9-PREP-3 — Rollback rehearsal | ✅ Færdig | Baseline → kandidat → restore → verifikation. |
-| I9-PREP-4 — Public live read-only smoke | ✅ Implementeret / validation kører | Playwright på public test2 routes med screenshots og overflow/fatal guards; ingen mutation. |
+| I9-PREP-4 — Public live read-only smoke | ✅ Implementeret | Playwright på public test2-ruter med screenshot, fatal-error og overflow guards; faktisk live evidence er stadig pending. |
 | I9-PREP-5 — Evidence result template | ✅ Færdig | Standard PASS/FAIL/BLOCKED registrering. |
+| I9-PREP-6 — Evidence manifest | ✅ Færdig | JSON Schema + eksempel; overall PASS kræver alle obligatoriske gates PASS, og en PASS-gate kræver evidence. |
+| I9-PREP-7 — QA contracts | ✅ PASS | Isolation/read-only/evidence-kontrakter integreret i Architecture QA og særskilt I9 Prep QA. |
+| I10-PREP-1 — Operator runbook | ✅ Færdig | Fast rækkefølge, gates, stopregler og non-executable policy. |
+| I10-PREP-2 — Blocker reference | ✅ Færdig | Blocker → betydning → korrigerende handling. |
+| I10-PREP-3 — Acceptance template | ✅ Færdig | Spejler de syv required human checks + source hash/evidence/manual confirmation. |
+| I10-PREP-4 — Stage ledger | ✅ Færdig | Hash/evidence/acceptance/preflight pr. conversion-stage. |
+| I10-PREP-5 — Documentation contract | ✅ PASS | Runbooks bindes til `ConversionTargetCatalog`, checklist og non-executable preflight i CI. |
 
 ## Stabiliseret editorhistorik
 
@@ -116,8 +125,6 @@ Undo/Redo er fortsat eneste history-owner:
 | LEGO-031 — Automatic side-by-side | ✅ QA PASS | Side-drop for almindelige elementer adapteres til Auto-kasser/layout på samme placement motor. |
 | LEGO-032 — Visual resize/span | ✅ QA PASS | 12-column Desktop span resize med single history checkpoint. |
 | LEGO-033 — Responsive layout/span | ✅ QA PASS | Tablet/Mobil reversible span-overrides uden separat motor. |
-| DOC-1 — Visuel brugermanual | ✅ | Fuld brugerflow/manual. |
-| DOC-2 — Hurtig reference | ✅ | Kort daglig cheat sheet. |
 
 ## LEGO-031 — automatic side-by-side — ✅ QA PASS
 
@@ -170,40 +177,45 @@ Verificeret:
 
 ## Dokumentation og I9-forberedelse — ✅
 
-### DOC-1 — visuel brugermanual
+Forberedt og kontraktbeskyttet:
 
-Manualen dokumenterer:
-
-- editorens LEGO-model;
-- fire drop-zoner;
-- side-by-side og Auto-kasser;
-- 12-kolonne resize;
-- Desktop/Tablet/Mobil;
-- reversible `Arv Desktop` snapshots;
-- spacing/design/interaction states;
-- Undo/Redo;
-- save/version/backup;
-- protected domains og public-cutover-lås;
-- praktisk eksempel og fejlfinding.
-
-### DOC-2 — hurtig reference
-
-Kort daglig reference til placement, resize, responsive arv, Undo/Redo og før-save-kontrol.
-
-### I9-PREP-1..5
-
-Forberedt:
-
+- `docs/ultimate-designer-user-manual.md`;
+- `docs/ultimate-designer-quick-reference.md`;
+- `docs/migration-operations-index.md`;
 - `docs/i9-manual-qa-evidence-runbook.md`;
 - `docs/i9-test2-live-e2e-checklist.md`;
 - `docs/i9-rollback-rehearsal.md`;
 - `docs/i9-evidence-result-template.md`;
+- `docs/i9-evidence-manifest.schema.json`;
+- `docs/i9-evidence-manifest.example.json`;
 - `tests/Live/i9-public-readonly.spec.cjs`;
 - `tests/Live/playwright.i9-public.config.cjs`;
 - `.github/workflows/i9-test2-live-readonly.yml`;
+- `.github/workflows/i9-prep-qa.yml`;
 - `tests/Architecture/i9-live-readonly-contract.sh`.
 
-Public-smoken er read-only og må ikke logge ind, submitte formularer eller mutere WordPress. Den kontrollerer centrale public-ruter, kritiske PHP/WordPress-fejl og horisontal overflow og gemmer screenshot-evidence.
+Public-smoken er read-only og må ikke logge ind, submitte formularer eller mutere WordPress. Den kontrollerer centrale public-ruter, kritiske PHP/WordPress-fejl og horisontal overflow og kan gemme screenshot-evidence.
+
+Evidence-manifestet har otte obligatoriske gates: Chrome, Edge, Firefox, Safari, screen reader, test2 live E2E, protected domains og rollback. `overallStatus=PASS` er kun gyldig, når alle otte er PASS; en PASS-gate skal have mindst én evidence-reference.
+
+## I10-forberedelse — ✅ / CUTOVER FORTSAT LÅST
+
+Forberedt:
+
+- `docs/i10-operator-runbook.md`;
+- `docs/i10-blocker-reference.md`;
+- `docs/i10-acceptance-record-template.md`;
+- `docs/i10-stage-ledger-template.md`;
+- `tests/Architecture/i10-operator-runbook-contract.sh`.
+
+Dokumentationen spejler den eksisterende runtime:
+
+- `ConversionPlanService`: `Mode=plan-only`, `PublicMutationAvailable=false`;
+- `ConversionReadinessGate`: decision-only blockers/eligibility;
+- `ConversionAcceptanceValidator`: syv required human checks, manual confirmation, environment/evidence reference og source hash;
+- `ConversionCutoverPreflightService`: `Mode=cutover-preflight-only`, `Executable=false`, `PublicMutationAvailable=false`;
+- `ConversionTargetCatalog`: Hjem → Om → Kontakt → Bliv medlem efter accepteret comparison-side;
+- protected domains forbliver yderligere låst af legacy-runtime policy.
 
 ## I9 — MANUAL QA EVIDENCE — 🟡 PENDING
 
@@ -218,7 +230,7 @@ Krævet før nogen public cutover:
 7. Vehicle/Event/Gallery visual/function regression;
 8. migration/rollback på live kopi.
 
-Den nye public read-only smoke er ekstra støttebevis og reducerer gentagen kontrol, men kan ikke alene sætte I9 til PASS.
+Den public read-only smoke er ekstra støttebevis og reducerer gentagen kontrol, men kan ikke alene sætte I9 til PASS.
 
 ## I10 — FINAL CONTROLLED CONVERSION — LÅST
 
@@ -232,4 +244,4 @@ Fast rækkefølge efter I9 PASS:
 6. Vehicle/Event/Gallery kun efter særskilt compatibility proof;
 7. legacy removal til sidst.
 
-Ingen LEGO-, dokumentations- eller I9-prep-opgave ændrer denne public-cutover-lås.
+Ingen LEGO-, dokumentations-, I9-prep- eller I10-prep-opgave ændrer denne public-cutover-lås.
