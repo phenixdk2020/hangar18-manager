@@ -53,7 +53,7 @@ require_contains "$CSS" '--h18-lego-tablet-gap-x' 'Tablet X gap variable is miss
 require_contains "$CSS" '--h18-lego-tablet-gap-y' 'Tablet Y gap variable is missing'
 
 require_contains "$COORD" "LEGO_SPACING_OPTION = 'hangar18_ultimate_designer_lego_spacing_v2'" 'B2 coordinator does not know canonical LEGO option'
-require_contains "$COORD" 'restoreSelectiveLegoSpacing' 'selective LEGO restore hook is missing'
+require_contains "$COORD" 'restoreSelectivePageOption' 'shared selective page option restore hook is missing'
 require_contains "$COORD" "\$current[\$pageSlug] = \$source[\$pageSlug];" 'selective restore does not scope replacement to selected page slug'
 require_contains "$COORD" "\$result['LegoSpacingRestored']" 'selective restore result does not report LEGO state handling'
 
