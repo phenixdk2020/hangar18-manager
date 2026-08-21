@@ -38,3 +38,4 @@ jobs:
       - run: bash tests/Architecture/i9-evidence-record-contract.sh
       - run: bash tests/Architecture/i9-evidence-integrity-contract.sh
       - run: bash tests/Architecture/i9-evidence-readiness-contract.sh
+      - run: bash tests/Architecture/i9-evidence-gate-templates-contract.sh
