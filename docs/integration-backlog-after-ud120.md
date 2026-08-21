@@ -3,9 +3,9 @@
 **Statusdato:** 21. august 2026  
 **Aktuel pluginbaseline:** Hangar18 Manager **v0.8.39**
 
-UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner, foldbare canvas-værktøjer, automatic side-by-side layout, 12-kolonne resize og responsive Tablet/Mobil spans er samlet på den eksisterende parent/history/persistence-arkitektur gennem LEGO-033.
+UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner, foldbare canvas-værktøjer, automatic side-by-side layout, 12-kolonne resize og responsive Tablet/Mobil spans er samlet på den eksisterende parent/history/persistence-arkitektur gennem LEGO-033. LEGO-034..037 gør den samme editor klar til kontrolleret staging/manual acceptance med fast testpakke, dispatch-only staging-ZIP, rollback-runbook og artifact-verifikation.
 
-**Aktiv næste fase: I9-EVIDENCE — faktisk manuel/live acceptance.** DOC-1/DOC-2, I9-runbooks, evidence-manifest, read-only public smoke, manifest-validator/init, read-only gate-recorder, build+target-binding, lokal evidence-integritet og dispatch-only release-gate samt I10 operator-/blocker-/acceptance-/stage-dokumentation er nu forberedt. Automatisk QA må ikke erstatte de krævede I9 live/manuelle beviser.
+**Aktiv næste fase: I9-EVIDENCE — faktisk manuel/live acceptance.** DOC-1/DOC-2, I9-runbooks, evidence-manifest, read-only public smoke, manifest-validator/init, read-only gate-recorder, build+target-binding, lokal evidence-integritet, readiness/blocker-report, dispatch-only evidence-gate samt I10 decision/review tooling er nu forberedt. Automatisk QA må ikke erstatte de krævede I9 live/manuelle beviser.
 
 Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny renderer.
 
@@ -31,8 +31,8 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | I6 — Portability | ✅ Færdig | Dry-run, signeret plan, conflict/remap, workspace og restore-point. |
 | I7 — Permissions / Design Lock | ✅ Færdig | Additive capabilities/roles og design-lock policy. |
 | I8 — AI | ✅ Færdig | Provider-neutral forslag uden direkte public page-write. |
-| I9 — Manual QA evidence | 🟡 Evidence pending | Prep/validator/recorder/integrity/release-gate er klar; faktiske brand-browser-, screen-reader-, test2-editor-, protected-domain- og rollback-beviser mangler. |
-| I10 — Final controlled conversion | 🟡 Prep/preflight færdigt / cutover låst | Operatorflow dokumenteret; comparison → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
+| I9 — Manual QA evidence | 🟡 Evidence pending | Prep/validator/recorder/integrity/readiness/release-gate er klar; faktiske brand-browser-, screen-reader-, test2-editor-, protected-domain- og rollback-beviser mangler. |
+| I10 — Final controlled conversion | 🟡 Prep/preflight færdigt / cutover låst | Decision packet, fingerprint/diff, human-review receipt/chain, evidence bundle og read-only operatorpanel er klar; comparison → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
 | UX-3 — Foldbare workspace rails | ✅ v0.8.24 | Elementer/Funktioner og Inspector foldes uafhængigt. |
 | UX-4 — Ugemt forhåndsvisning | ✅ v0.8.25 + v0.8.27 | Preview uden save; editor chrome renses fra klonen. |
 | UX-5 — Foldbare canvas-værktøjspaneler | ✅ v0.8.39 + LEGO-031 UX | Direkte Design · LEGO og Billede starter minimeret, foldes uafhængigt og husker browser-lokal state; ingen history/save-event. |
@@ -50,6 +50,10 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | LEGO-031 — Automatic side-by-side layout | ✅ QA PASS | Almindelige elementer placeres side-by-side via samme Auto-kasser/layoutmotor; single history checkpoint. |
 | LEGO-032 — Visual resize / column span | ✅ QA PASS | Usynlig 12-kolonne grid, visuel nabo-resize, min. span 1 og ét Undo/Redo-checkpoint. |
 | LEGO-033 — Tablet/Mobile layout overrides | ✅ QA PASS | Reversible Tablet/Mobil span-overrides med Desktop-arv, snapshots og samme history-owner. |
+| LEGO-034 — Manual acceptance pack | ✅ Implementeret / manuel PASS pending | A–L staging-scenarier + build/evidence-bundet session template. |
+| LEGO-035 — Staging test build | ✅ Implementeret | Dispatch-only read-only installable ZIP; commit/version/SHA-256 bundet, ikke officiel release. |
+| LEGO-036 — Staging install/rollback | ✅ Implementeret | Embedded `TEST-BUILD.txt`, install/smoke/plugin rollback + B1/B2 data rollback. |
+| LEGO-037 — Staging artifact verifier | ✅ Implementeret | Read-only verifier af manifest ↔ ZIP SHA-256 ↔ build-SHA/version før artifact upload/install. |
 | DOC-1 — Visuel brugermanual | ✅ Færdig | `docs/ultimate-designer-user-manual.md`. |
 | DOC-2 — Hurtig reference | ✅ Færdig | `docs/ultimate-designer-quick-reference.md`. |
 | DOC-3 — Migration operations index | ✅ Færdig | Samlet indgang til I9/I10 operatorfiler. |
@@ -69,11 +73,23 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | I9-EVIDENCE-7 — Read-only gate recorder | ✅ Implementeret | Én gate transformeres ad gangen; PASS kræver evidence; kildefilen ændres aldrig; overall status genberegnes. |
 | I9-EVIDENCE-8 — Evidence integrity index | ✅ Implementeret | Lokale evidence-filer bindes med SHA-256/bytes; missing/traversal fejler; eksterne refs mærkes ikke-lokalt-verificeret. |
 | I9-EVIDENCE-9 — Integrity i Actions gate | ✅ Implementeret | Dispatch-run producerer både validation- og integrity-JSON som artifact; valgfri `require_all_local`. |
+| I9-EVIDENCE-10 — Readiness/blocker report | ✅ Implementeret | Viser manglende gates, blockerårsag og næste manuelle handling; `readyForI10` kræver evidenced PASS på alle otte gates. |
 | I10-PREP-1 — Operator runbook | ✅ Færdig | Fast rækkefølge, gates, stopregler og non-executable policy. |
 | I10-PREP-2 — Blocker reference | ✅ Færdig | Blocker → betydning → korrigerende handling. |
 | I10-PREP-3 — Acceptance template | ✅ Færdig | Spejler de syv required human checks + source hash/evidence/manual confirmation. |
 | I10-PREP-4 — Stage ledger | ✅ Færdig | Hash/evidence/acceptance/preflight pr. conversion-stage. |
 | I10-PREP-5 — Documentation contract | ✅ PASS | Runbooks bindes til `ConversionTargetCatalog`, checklist og non-executable preflight i CI. |
+| I10-PREP-6 — Decision packet | ✅ PASS | Aggregerer plan/readiness/acceptance/preflight decision-only; hard non-executable/non-mutating. |
+| I10-PREP-7 — Packet formatter | ✅ PASS | Stabil JSON/Markdown operatorrapport. |
+| I10-PREP-8 — Packet fingerprint | ✅ PASS | SHA-256 evidence fingerprint; aldrig cutover-token. |
+| I10-PREP-9 — Packet diff | ✅ PASS | Deterministisk stage/blocker/acceptance/reviewability diff mellem snapshots. |
+| I10-PREP-10 — Human review receipt | ✅ PASS | Binder menneskelig review til packet-hash; `AuthorizesCutover=false`. |
+| I10-PREP-11 — Review chain | ✅ PASS | Packet → fingerprint → receipt freshness/validity; stale packet kræver nyt review. |
+| I10-PREP-12 — Review-chain formatter | ✅ PASS | JSON/Markdown blockers/freshness/safety locks. |
+| I10-PREP-13 — Evidence bundle | ✅ PASS | In-memory packet/fingerprint/receipt/chain bundle uden persistence. |
+| I10-PREP-14 — Read-only decision admin panel | ✅ PASS | Synligt operatorpanel med stages/blockers/fingerprint; ingen form/action/write API. |
+| I10-PREP-15 — Review-chain status i admin | ✅ PASS | Viser at fresh human review mangler; panelet kan ikke oprette receipt. |
+| I10-PREP-16 — Inline packet snapshot | ✅ PASS | Foldbart escaped JSON-snapshot til manuel evidence-kopiering; ingen download/write-handler. |
 
 ## Stabiliseret editorhistorik
 
@@ -134,6 +150,10 @@ Undo/Redo er fortsat eneste history-owner:
 | LEGO-031 — Automatic side-by-side | ✅ QA PASS | Side-drop for almindelige elementer adapteres til Auto-kasser/layout på samme placement motor. |
 | LEGO-032 — Visual resize/span | ✅ QA PASS | 12-column Desktop span resize med single history checkpoint. |
 | LEGO-033 — Responsive layout/span | ✅ QA PASS | Tablet/Mobil reversible span-overrides uden separat motor. |
+| LEGO-034 — Manual acceptance pack | ✅ Implementeret / manuel PASS pending | A–L scenarier + resultatskabelon; automatisk QA er kun støttebevis. |
+| LEGO-035 — Staging test build | ✅ Implementeret | Dispatch-only installable test-ZIP uden release/version mutation. |
+| LEGO-036 — Install/rollback runbook | ✅ Implementeret | Build identity, smoke, plugin rollback og B1/B2 data rollback. |
+| LEGO-037 — Artifact verifier | ✅ Implementeret | Read-only package/hash/build identity verifier før upload/install. |
 
 ## LEGO-031 — automatic side-by-side — ✅ QA PASS
 
@@ -184,6 +204,19 @@ Verificeret:
 11. placement/public renderer er uændret;
 12. Fast QA, Architecture QA, protected domains, PHP 8.0/8.2/8.3, system Chrome og Chrome/Chromium/Firefox/WebKit er PASS.
 
+## LEGO-034..037 — staging/manual acceptance readiness — ✅ IMPLEMENTERET / MANUEL ACCEPTANCE PENDING
+
+Forberedt:
+
+- `docs/lego-manual-acceptance.md` med A–L acceptance-scenarier;
+- `docs/lego-test-session-template.md` med build/evidence-binding;
+- `.github/workflows/lego-staging-build.yml` som dispatch-only, `contents: read` staging-package;
+- `docs/lego-staging-install-runbook.md` med install/smoke/rollback;
+- `tools/lego-staging-verify.cjs` til read-only SHA/build identity-verifikation;
+- LEGO Editor QA contracts beskytter testpakke, staging-workflow og artifact verifier.
+
+Staging-ZIP'en er ikke en officiel release og autoriserer ikke public cutover. LEGO-034 bliver først manuel PASS, når A–L er gennemført på den installerede test2-build.
+
 ## Dokumentation og I9-forberedelse — ✅
 
 Forberedt og kontraktbeskyttet:
@@ -203,6 +236,7 @@ Forberedt og kontraktbeskyttet:
 - `tools/i9-evidence-validator.cjs`;
 - `tools/i9-evidence-record.cjs`;
 - `tools/i9-evidence-integrity.cjs`;
+- `tools/i9-evidence-readiness.cjs`;
 - `tests/Live/i9-public-readonly.spec.cjs`;
 - `tests/Live/playwright.i9-public.config.cjs`;
 - `.github/workflows/i9-test2-live-readonly.yml`;
@@ -211,13 +245,14 @@ Forberedt og kontraktbeskyttet:
 - `tests/Architecture/i9-live-readonly-contract.sh`;
 - `tests/Architecture/i9-evidence-validator-contract.sh`;
 - `tests/Architecture/i9-evidence-record-contract.sh`;
-- `tests/Architecture/i9-evidence-integrity-contract.sh`.
+- `tests/Architecture/i9-evidence-integrity-contract.sh`;
+- `tests/Architecture/i9-evidence-readiness-contract.sh`.
 
 Public-smoken er read-only og må ikke logge ind, submitte formularer eller mutere WordPress. Den kontrollerer centrale public-ruter, kritiske PHP/WordPress-fejl og horisontal overflow og kan gemme screenshot-evidence.
 
 Evidence-manifestet har otte obligatoriske gates: Chrome, Edge, Firefox, Safari, screen reader, test2 live E2E, protected domains og rollback. `overallStatus=PASS` er kun gyldig, når alle otte er PASS; en PASS-gate skal have mindst én evidence-reference.
 
-Validatoren håndhæver derudover deterministisk samlet status (`FAIL` → `BLOCKED` → alle PASS → `PENDING`), kan bindes til commit-SHA, pluginversion og staging-target og kan med `--require-pass` bruges som teknisk release-gate efter den faktiske human/live acceptance. Recorderen transformerer kun til stdout og ejer ingen fil-write. Integrity-værktøjet hasher lokale evidence-filer og manifestet, afviser manglende/traversal paths og markerer eksterne refs som ikke lokalt verificeret. Actions-workflowet er eksplicit dispatch-only, har kun read-permission og kan gemme både validation- og integrity-rapporten.
+Validatoren håndhæver derudover deterministisk samlet status (`FAIL` → `BLOCKED` → alle PASS → `PENDING`), kan bindes til commit-SHA, pluginversion og staging-target og kan med `--require-pass` bruges som teknisk release-gate efter den faktiske human/live acceptance. Recorderen transformerer kun til stdout og ejer ingen fil-write. Integrity-værktøjet hasher lokale evidence-filer og manifestet, afviser manglende/traversal paths og markerer eksterne refs som ikke lokalt verificeret. Readiness-værktøjet viser de konkrete manglende gates og må kun sætte `readyForI10=true` ved fuldt evidenced PASS. Actions-workflowet er eksplicit dispatch-only, har kun read-permission og kan gemme validation-, integrity- og readiness-rapporter.
 
 ## I10-forberedelse — ✅ / CUTOVER FORTSAT LÅST
 
@@ -227,14 +262,20 @@ Forberedt:
 - `docs/i10-blocker-reference.md`;
 - `docs/i10-acceptance-record-template.md`;
 - `docs/i10-stage-ledger-template.md`;
-- `tests/Architecture/i10-operator-runbook-contract.sh`.
+- `docs/i10-decision-packet.md`;
+- `docs/i10-review-chain.md`;
+- `tests/Architecture/i10-operator-runbook-contract.sh`;
+- decision packet, formatter, fingerprint, diff og human-review receipt services;
+- review-chain freshness, formatter og in-memory evidence bundle;
+- read-only Decision Packet operatorpanel i Ultimate Designer-admin med inline escaped packet snapshot.
 
-Dokumentationen spejler den eksisterende runtime:
+Dokumentationen og services spejler den eksisterende runtime:
 
 - `ConversionPlanService`: `Mode=plan-only`, `PublicMutationAvailable=false`;
 - `ConversionReadinessGate`: decision-only blockers/eligibility;
 - `ConversionAcceptanceValidator`: syv required human checks, manual confirmation, environment/evidence reference og source hash;
 - `ConversionCutoverPreflightService`: `Mode=cutover-preflight-only`, `Executable=false`, `PublicMutationAvailable=false`;
+- `ConversionDecisionPacketService` og review-chain services er evidence/decision-only og holder `AuthorizesCutover=false`, `Executable=false`, `PublicMutationAvailable=false`;
 - `ConversionTargetCatalog`: Hjem → Om → Kontakt → Bliv medlem efter accepteret comparison-side;
 - protected domains forbliver yderligere låst af legacy-runtime policy.
 
@@ -251,7 +292,7 @@ Krævet før nogen public cutover:
 7. Vehicle/Event/Gallery visual/function regression;
 8. migration/rollback på live kopi.
 
-Den public read-only smoke og evidence-værktøjerne er ekstra støttebeviser og reducerer gentagen kontrol, men kan ikke alene sætte I9 til PASS.
+LEGO-034..037 gør den konkrete staging/editor-test reproducerbar og build-bundet, men de sætter ikke I9 til PASS. Den public read-only smoke og evidence-værktøjerne er ekstra støttebeviser og reducerer gentagen kontrol, men kan ikke alene sætte I9 til PASS.
 
 ## I10 — FINAL CONTROLLED CONVERSION — LÅST
 
