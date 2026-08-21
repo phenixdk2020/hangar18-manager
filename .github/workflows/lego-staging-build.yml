@@ -39,6 +39,8 @@ jobs:
           bash tests/Architecture/lego-manual-acceptance-contract.sh
           bash tests/Architecture/lego-staging-build-contract.sh
           bash tests/Architecture/lego-staging-verify-contract.sh
+          bash tests/Architecture/lego-acceptance-record-contract.sh
+          bash tests/Architecture/lego-acceptance-init-contract.sh
 
       - name: Lint plugin PHP
         shell: bash
@@ -89,6 +91,16 @@ jobs:
           }
           pathlib.Path('staging-dist/lego-staging-manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
           PY
+
+      - name: Bootstrap manual acceptance session record
+        shell: bash
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          node tools/lego-acceptance-init.cjs staging-dist/lego-staging-manifest.json > staging-dist/lego-manual-acceptance.json
+          node tools/lego-acceptance-validate.cjs staging-dist/lego-manual-acceptance.json \
+            --expected-sha "$GITHUB_SHA" \
+            --expected-version "$VERSION"
 
       - name: Verify staging artifact identity and integrity
         run: node tools/lego-staging-verify.cjs staging-dist
