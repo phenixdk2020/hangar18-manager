@@ -27,6 +27,25 @@ if(record.environment.stagingUrl!=='https://test2.hangar18.dk') throw new Error(
 if(!/public cutover is not authorized/i.test(record.notes||'')) throw new Error('cutover safety note required');
 NODE
 
+release_sha="b35b3809500f7de90ab7a3df0249fd84194edb51"
+release_version="$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["version"] ?? "";')"
+release_package_sha="$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["package_sha256"] ?? "";')"
+canonical='docs/lego-v0840-manual-acceptance.json'
+test -f "$canonical" || { echo "FAIL: missing $canonical" >&2; exit 1; }
+node tools/lego-acceptance-validate.cjs "$canonical" --expected-sha="$release_sha" --expected-version="$release_version" >/dev/null
+node - "$canonical" "$release_package_sha" <<'NODE'
+const fs=require('fs');
+const record=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+const expectedPackageSha=process.argv[3];
+if(record.build.packageSha256!==expectedPackageSha) throw new Error('canonical record package hash must match update.json');
+if(record.overallStatus!=='PENDING') throw new Error('canonical release record must remain PENDING before manual test');
+for(const [id,s] of Object.entries(record.scenarios||{})) {
+  if(s.status!=='PENDING' || (s.evidence||[]).length!==0) throw new Error(`${id} canonical state must be PENDING without evidence`);
+}
+if(record.environment.stagingUrl!=='https://test2.hangar18.dk') throw new Error('canonical staging target mismatch');
+if(!/public cutover is not authorized/i.test(record.notes||'')) throw new Error('canonical cutover safety note required');
+NODE
+
 python3 - "$tmp/update.json" <<'PY'
 import json,sys
 p=sys.argv[1]
