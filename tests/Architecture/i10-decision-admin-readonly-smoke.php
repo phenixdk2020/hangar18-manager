@@ -20,15 +20,20 @@ foreach([
     'AuthorizesCutover=false',
     'ConversionDecisionPacketService',
     'ConversionDecisionPacketFingerprintService',
+    'ConversionDecisionPacketReviewChainService',
+    'Human review receipt gemmes ikke af dette read-only panel',
+    'FreshHumanReviewRequired=',
+    'Dette panel kan ikke oprette eller godkende en receipt',
 ] as $needle){
     i10DecisionAdminAssert(str_contains($ctrl,$needle),'Decision packet read-only contract missing: '.$needle);
 }
 
 foreach([
     '<form','admin_post_','wp_nonce_field','$_POST','wp_update_post','wp_insert_post','wp_delete_post',
-    'update_post_meta','delete_post_meta','update_option','delete_option','->save(','->createShadow(','add_action(','add_filter(','function register('
+    'update_post_meta','delete_post_meta','update_option','delete_option','->save(','->createShadow(','->capture(',
+    'add_action(','add_filter(','function register('
 ] as $forbidden){
     i10DecisionAdminAssert(stripos($ctrl,$forbidden)===false,'Read-only decision packet admin introduced forbidden primitive: '.$forbidden);
 }
 
-fwrite(STDOUT,"I10 decision packet admin read-only smoke: PASS\n");
+fwrite(STDOUT,"I10 decision packet + review-chain admin read-only smoke: PASS\n");
