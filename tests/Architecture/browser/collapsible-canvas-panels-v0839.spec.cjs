@@ -5,9 +5,12 @@ const jqueryRuntime = require.resolve('jquery');
 const runtime = path.resolve(__dirname, '../../../assets/ultimate-designer-canvas-panel-collapse-v0839.js');
 const css = path.resolve(__dirname, '../../../assets/ultimate-designer-canvas-panel-collapse-v0839.css');
 
-async function boot(page) {
+async function boot(page, legacyState) {
   await page.goto('about:blank');
   await page.evaluate(() => localStorage.clear());
+  if (legacyState) {
+    await page.evaluate((value) => localStorage.setItem('hangar18CanvasPanelCollapseV0839', JSON.stringify(value)), legacyState);
+  }
   await page.setContent(`<!doctype html><html><body>
     <form id="h18-page-editor-form">
       <div id="h18-page-sections-sortable">
@@ -37,10 +40,10 @@ async function boot(page) {
   });
   await page.addStyleTag({ path: css });
   await page.addScriptTag({ path: runtime });
-  await expect(page.locator('html')).toHaveAttribute('data-h18-canvas-panel-collapse-runtime', '0.8.39');
+  await expect(page.locator('html')).toHaveAttribute('data-h18-canvas-panel-collapse-runtime', '0.8.40');
 }
 
-test('image and Direkte Design panels minimize independently without editor/history events', async ({ page }) => {
+test('image and Direkte Design panels are collapsed by default and expand independently', async ({ page }) => {
   await boot(page);
 
   const direct = page.locator('.h18-canvas-direct-controls');
@@ -48,27 +51,49 @@ test('image and Direkte Design panels minimize independently without editor/hist
   await expect(direct.locator(':scope > .h18-canvas-panel-collapse-toggle')).toHaveCount(1);
   await expect(image.locator(':scope > .h18-canvas-panel-collapse-toggle')).toHaveCount(1);
 
-  await image.locator(':scope > .h18-canvas-panel-collapse-toggle').click();
   await expect(image).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
-  await expect(image.locator(':scope > .h18-canvas-panel-collapse-toggle')).toHaveAttribute('aria-expanded', 'false');
+  await expect(direct).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
   await expect(image.locator('.h18-canvas-image-actions')).toBeHidden();
-  await expect(direct).toHaveAttribute('data-h18-canvas-panel-collapsed', '0');
+  await expect(direct.locator('.h18-canvas-quick-ranges')).toBeHidden();
+  await expect(image.locator(':scope > .h18-canvas-panel-collapse-toggle')).toHaveAttribute('aria-expanded', 'false');
+  await expect(direct.locator(':scope > .h18-canvas-panel-collapse-toggle')).toHaveAttribute('aria-expanded', 'false');
+
+  await image.locator(':scope > .h18-canvas-panel-collapse-toggle').click();
+  await expect(image).toHaveAttribute('data-h18-canvas-panel-collapsed', '0');
+  await expect(image.locator('.h18-canvas-image-actions')).toBeVisible();
+  await expect(direct).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
 
   await direct.locator(':scope > .h18-canvas-panel-collapse-toggle').click();
-  await expect(direct).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
-  await expect(direct.locator('.h18-canvas-quick-ranges')).toBeHidden();
+  await expect(direct).toHaveAttribute('data-h18-canvas-panel-collapsed', '0');
+  await expect(direct.locator('.h18-canvas-quick-ranges')).toBeVisible();
   await expect(direct.locator('.h18-canvas-direct-title')).toBeVisible();
   expect(await page.evaluate(() => window.__panelFormEvents)).toBe(0);
 
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('hangar18CanvasPanelCollapseV0839')));
-  expect(stored).toEqual({ image: true, direct: true });
+  expect(stored).toEqual({ __defaultsVersion: 2, direct: false, image: false });
 });
 
-test('collapsed state survives dynamic canvas panel rerender', async ({ page }) => {
+test('old expanded v0.8.39 preference migrates once to collapsed defaults', async ({ page }) => {
+  await boot(page, { direct: false, image: false });
+
+  const direct = page.locator('.h18-canvas-direct-controls');
+  const image = page.locator('.h18-canvas-image-tools');
+  await expect(direct).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
+  await expect(image).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
+
+  await direct.locator(':scope > .h18-canvas-panel-collapse-toggle').click();
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('hangar18CanvasPanelCollapseV0839')));
+  expect(stored).toEqual({ __defaultsVersion: 2, direct: false, image: true });
+  expect(await page.evaluate(() => window.__panelFormEvents)).toBe(0);
+});
+
+test('explicit panel state survives dynamic canvas panel rerender', async ({ page }) => {
   await boot(page);
   const image = page.locator('.h18-canvas-image-tools');
-  await image.locator(':scope > .h18-canvas-panel-collapse-toggle').click();
   await expect(image).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
+
+  await image.locator(':scope > .h18-canvas-panel-collapse-toggle').click();
+  await expect(image).toHaveAttribute('data-h18-canvas-panel-collapsed', '0');
 
   await page.locator('.h18-canvas-editable-media').evaluate((media) => {
     media.innerHTML = '<div class="h18-canvas-image-tools"><strong>Billede</strong><div class="h18-canvas-image-actions"><button type="button">Skift billede</button></div><label>Fokus Y <input type="range" value="50"></label></div>';
@@ -76,11 +101,11 @@ test('collapsed state survives dynamic canvas panel rerender', async ({ page }) 
 
   const rerendered = page.locator('.h18-canvas-image-tools');
   await expect(rerendered.locator(':scope > .h18-canvas-panel-collapse-toggle')).toHaveCount(1);
-  await expect(rerendered).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
-  await expect(rerendered.locator('.h18-canvas-image-actions')).toBeHidden();
-
-  await rerendered.locator(':scope > .h18-canvas-panel-collapse-toggle').click();
   await expect(rerendered).toHaveAttribute('data-h18-canvas-panel-collapsed', '0');
   await expect(rerendered.locator('.h18-canvas-image-actions')).toBeVisible();
+
+  await rerendered.locator(':scope > .h18-canvas-panel-collapse-toggle').click();
+  await expect(rerendered).toHaveAttribute('data-h18-canvas-panel-collapsed', '1');
+  await expect(rerendered.locator('.h18-canvas-image-actions')).toBeHidden();
   expect(await page.evaluate(() => window.__panelFormEvents)).toBe(0);
 });
