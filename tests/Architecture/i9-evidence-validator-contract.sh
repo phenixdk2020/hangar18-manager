@@ -6,6 +6,7 @@ INIT='tools/i9-evidence-init.cjs'
 SCHEMA='docs/i9-evidence-manifest.schema.json'
 EXAMPLE='docs/i9-evidence-manifest.example.json'
 WORKFLOW='.github/workflows/i9-evidence-validate.yml'
+TARGET='https://test2.hangar18.dk/'
 
 for file in "$VALIDATOR" "$INIT" "$SCHEMA" "$EXAMPLE" "$WORKFLOW"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
@@ -17,6 +18,7 @@ node --check "$INIT"
 grep -F 'workflow_dispatch:' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow must be explicitly dispatched'; exit 1; }
 grep -F 'contents: read' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow must remain read-only'; exit 1; }
 grep -F 'tools/i9-evidence-validator.cjs' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow does not invoke canonical validator'; exit 1; }
+grep -F -- '--expected-target "$EXPECTED_TARGET"' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow must bind validation to expected target'; exit 1; }
 grep -F 'actions/upload-artifact@v4' "$WORKFLOW" >/dev/null || { echo 'FAIL: validation report artifact missing'; exit 1; }
 if grep -Eq '^  (push|pull_request):' "$WORKFLOW"; then
   echo 'FAIL: I9 evidence validation workflow must not run automatically'
@@ -40,11 +42,12 @@ node "$INIT" \
   --php-version '8.2' \
   --tester 'CI contract' \
   --backup-restore-point 'H18-BACKUP-TEST' \
+  --target "$TARGET" \
   --output "$MANIFEST"
 
 # Initializer must never manufacture acceptance.
 node -e "const m=require(process.argv[1]); if(m.overallStatus!=='PENDING') process.exit(1); for(const g of Object.values(m.gates)){if(g.status!=='PENDING'||g.evidence.length!==0) process.exit(1)}" "$MANIFEST"
-node "$VALIDATOR" "$MANIFEST" --expected-sha "$SHA" --expected-version "$VERSION"
+node "$VALIDATOR" "$MANIFEST" --expected-sha "$SHA" --expected-version "$VERSION" --expected-target "$TARGET"
 if node "$VALIDATOR" "$MANIFEST" --require-pass >/dev/null 2>&1; then
   echo 'FAIL: pending manifest passed --require-pass'
   exit 1
@@ -62,18 +65,22 @@ for(const [name,gate] of Object.entries(m.gates)){
 m.overallStatus='PASS';
 fs.writeFileSync(p,JSON.stringify(m,null,2)+'\n');
 NODE
-node "$VALIDATOR" "$MANIFEST" --expected-sha "$SHA" --expected-version "$VERSION" --require-pass
-node "$VALIDATOR" "$MANIFEST" --json --require-pass > "$TMP/result.json"
+node "$VALIDATOR" "$MANIFEST" --expected-sha "$SHA" --expected-version "$VERSION" --expected-target "$TARGET" --require-pass
+node "$VALIDATOR" "$MANIFEST" --json --expected-target 'https://test2.hangar18.dk' --require-pass > "$TMP/result.json"
 node -e "const r=require(process.argv[1]); if(!r.ok||r.derivedStatus!=='PASS'||r.gateCounts.PASS!==8) process.exit(1)" "$TMP/result.json"
 node "$VALIDATOR" "$MANIFEST" --markdown --require-pass | grep -F 'Derived I9 status: **PASS**' >/dev/null
 
-# Wrong build identity must block validation.
+# Wrong build or environment identity must block validation.
 if node "$VALIDATOR" "$MANIFEST" --expected-sha '2222222222222222222222222222222222222222' >/dev/null 2>&1; then
   echo 'FAIL: wrong expected SHA was accepted'
   exit 1
 fi
 if node "$VALIDATOR" "$MANIFEST" --expected-version '9.9.9' >/dev/null 2>&1; then
   echo 'FAIL: wrong expected version was accepted'
+  exit 1
+fi
+if node "$VALIDATOR" "$MANIFEST" --expected-target 'https://example.invalid/' >/dev/null 2>&1; then
+  echo 'FAIL: wrong expected target was accepted'
   exit 1
 fi
 
@@ -111,4 +118,4 @@ if node "$VALIDATOR" "$MANIFEST" --require-pass >/dev/null 2>&1; then
   exit 1
 fi
 
-echo 'I9 evidence validator/init/workflow contract: PASS'
+echo 'I9 evidence validator/init/workflow/target contract: PASS'
