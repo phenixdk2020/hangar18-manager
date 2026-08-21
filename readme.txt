@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.40
+Version: 0.8.41
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.41 – LEGO-editor — palette side-drop rettelse ==
+
+Nyt:
+- Retter den manuelle v0.8.40-fejl hvor et nyt element fra venstre palette kunne ramme en synlig Venstre/Højre drop-zone men alligevel ende lodret over eller under målelementet.
+- HTML5 drag/drop bridge accepterer nu pointeren efter den synlige side-zones koordinater og retargeter kun selve drop-eventet til den eksisterende side-zone-kontrakt.
+- Den eksisterende nesting-tools motor er fortsat eneste ejer af Auto-kasser, LayoutParentKey, rækkefølge og placering; der er ikke tilføjet en ny placement-motor.
+- Den eksisterende Undo/Redo/history-owner og persistence-model er uændret.
+- Ny browser-regression reproducerer præcis handlingen: Tekst fra palette slippes til venstre for Tekst og billede, mens browserens native event target stadig er previewet.
+- Regressionen verificerer Auto-kasser wrapper, korrekt venstre/højre rækkefølge og canonical parent keys.
+- QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit med protected Vehicle/Event/Gallery regressioner.
+- Public renderer og I10 cutover er uændrede; v0.8.41 er klar til ny manuel LEGO acceptance på test2.
 
 
 == Version 0.8.40 – LEGO-editor — side-by-side, resize og responsive layouts ==
