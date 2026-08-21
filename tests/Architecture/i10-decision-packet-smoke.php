@@ -16,6 +16,13 @@ function i10PacketAssert(bool $condition,string $message): void
     if(!$condition){throw new RuntimeException($message);}
 }
 
+$serviceSource=(string)file_get_contents(dirname(__DIR__,2).'/src/Migration/ConversionDecisionPacketService.php');
+foreach(['wp_update_post','wp_insert_post','update_post_meta','delete_post_meta','update_option','delete_option','wp_delete_post','wp_publish_post'] as $forbidden){
+    i10PacketAssert(stripos($serviceSource,$forbidden)===false,'Decision packet service must not contain mutation primitive: '.$forbidden);
+}
+i10PacketAssert(str_contains($serviceSource,"'Executable' => false"),'Decision packet must hard-code Executable=false.');
+i10PacketAssert(str_contains($serviceSource,"'PublicMutationAvailable' => false"),'Decision packet must hard-code PublicMutationAvailable=false.');
+
 $comparison='om-foreningen-editor-test';
 $legacy=[
     'Version'=>'1.22',
@@ -63,6 +70,7 @@ i10PacketAssert(in_array($comparison,$packet['ReviewableTargets'],true),'Fully e
 $comparisonRow=array_values(array_filter($packet['Stages'],static fn(array $row): bool=>($row['Slug']??'')===$comparison))[0]??null;
 i10PacketAssert(is_array($comparisonRow)&&$comparisonRow['EligibleForOperatorReview']===true,'Comparison stage must be reviewable only when plan+preflight are both clean.');
 i10PacketAssert(($comparisonRow['Preflight']['Executable']??true)===false,'Embedded preflight must remain non-executable.');
+i10PacketAssert(($comparisonRow['Preflight']['PublicMutationAvailable']??true)===false,'Embedded preflight must remain non-mutating.');
 
 $homeRow=array_values(array_filter($packet['Stages'],static fn(array $row): bool=>($row['Slug']??'')==='hjem'))[0]??null;
 i10PacketAssert(is_array($homeRow)&&$homeRow['EligibleForOperatorReview']===false,'Missing per-target decision input must block Hjem.');
