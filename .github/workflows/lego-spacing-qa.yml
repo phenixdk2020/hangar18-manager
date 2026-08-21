@@ -76,6 +76,7 @@ on:
       - 'tests/Architecture/lego-staging-verify-contract.sh'
       - 'tests/Architecture/lego-acceptance-record-contract.sh'
       - 'tests/Architecture/lego-acceptance-init-contract.sh'
+      - 'tests/Architecture/lego-acceptance-recorder-contract.sh'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
       - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
       - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
@@ -93,6 +94,7 @@ on:
       - 'tools/lego-staging-verify.cjs'
       - 'tools/lego-acceptance-validate.cjs'
       - 'tools/lego-acceptance-init.cjs'
+      - 'tools/lego-acceptance-record.cjs'
       - 'docs/lego-manual-acceptance.md'
       - 'docs/lego-test-session-template.md'
       - 'docs/lego-staging-install-runbook.md'
@@ -136,6 +138,7 @@ jobs:
       - run: bash tests/Architecture/lego-staging-verify-contract.sh
       - run: bash tests/Architecture/lego-acceptance-record-contract.sh
       - run: bash tests/Architecture/lego-acceptance-init-contract.sh
+      - run: bash tests/Architecture/lego-acceptance-recorder-contract.sh
 
   browser:
     name: LEGO primary editor regression system Chrome
