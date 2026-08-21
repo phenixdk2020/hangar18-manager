@@ -1,9 +1,6 @@
 name: I9 Prep QA
 
 on:
-  push:
-    branches:
-      - agent/doc1-visual-user-manual
   pull_request:
     paths:
       - 'docs/i9-*.md'
