@@ -12,6 +12,11 @@ namespace Hangar18\UltimateDesigner\Admin;
  * .h18-v0811-side-zone data contract. LEGO-031 also loads a thin atomic history
  * adapter which batches one drag/drop action into the existing history owner;
  * it does not create a second Undo/Redo stack or persistence model.
+ *
+ * LEGO-041 adds a browser-event bridge for palette drops whose pointer is inside
+ * a visible side zone while the native HTML5 drop target remains the preview.
+ * The bridge only retargets that event to the existing side-zone contract;
+ * nesting-tools remains the sole placement/LayoutParentKey/Auto-kasser owner.
  */
 final class EditorLegoDropZonesAdminController
 {
@@ -38,6 +43,7 @@ final class EditorLegoDropZonesAdminController
         $historyAtomicPath = $pluginDir . '/assets/ultimate-designer-history-atomic-v0840.js';
         $jsPath = $pluginDir . '/assets/ultimate-designer-lego-drop-zones-v0838.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-lego-drop-zones-v0838.css';
+        $paletteSideDropBridgePath = $pluginDir . '/assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -60,6 +66,18 @@ final class EditorLegoDropZonesAdminController
                 'hangar18-ultimate-designer-history-atomic-v0840',
             ],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.38',
+            false
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843',
+            $pluginUrl . 'assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-nesting-tools',
+                'hangar18-ultimate-designer-lego-drop-zones-v0838',
+            ],
+            is_file($paletteSideDropBridgePath) ? (string) filemtime($paletteSideDropBridgePath) : '0.8.43',
             false
         );
 
