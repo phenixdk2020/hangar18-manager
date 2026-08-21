@@ -95,4 +95,7 @@ if grep -E 'writeFileSync|renameSync|unlinkSync|rmSync|appendFileSync|createWrit
   exit 1
 fi
 
+# Evidence integrity is the next read-only layer and is executed transitively from this contract.
+bash tests/Architecture/i9-evidence-integrity-contract.sh
+
 echo "I9 read-only gate recorder contract: PASS ($VERSION)"
