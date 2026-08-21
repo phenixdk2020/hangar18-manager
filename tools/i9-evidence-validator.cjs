@@ -15,6 +15,7 @@ function usage() {
     'Options:',
     '  --expected-sha <40-hex>       Require exact build commit SHA',
     '  --expected-version <version>   Require exact plugin version',
+    '  --expected-target <url>        Require exact normalized staging target URL',
     '  --require-pass                 Exit non-zero unless every gate is PASS',
     '  --json                         Emit machine-readable JSON result',
     '  --markdown                     Emit a compact Markdown evidence report',
@@ -29,6 +30,7 @@ function parseArgs(argv) {
     schemaPath: path.resolve(__dirname, '..', 'docs', 'i9-evidence-manifest.schema.json'),
     expectedSha: '',
     expectedVersion: '',
+    expectedTarget: '',
     requirePass: false,
     json: false,
     markdown: false,
@@ -44,6 +46,7 @@ function parseArgs(argv) {
     else if (arg === '--markdown') out.markdown = true;
     else if (arg === '--expected-sha') out.expectedSha = String(argv[++i] || '').trim().toLowerCase();
     else if (arg === '--expected-version') out.expectedVersion = String(argv[++i] || '').trim();
+    else if (arg === '--expected-target') out.expectedTarget = String(argv[++i] || '').trim();
     else if (arg === '--schema') out.schemaPath = path.resolve(String(argv[++i] || ''));
     else if (arg.startsWith('-')) throw new Error(`Unknown option: ${arg}`);
     else positional.push(arg);
@@ -80,6 +83,17 @@ function uniqueStrings(values) {
   if (!Array.isArray(values)) return false;
   if (values.some((value) => !nonEmptyString(value))) return false;
   return new Set(values).size === values.length;
+}
+
+function normalizedHttpUrl(value) {
+  try {
+    const url = new URL(String(value || '').trim());
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    url.hash = '';
+    return url.href;
+  } catch (_error) {
+    return '';
+  }
 }
 
 function addUnknownKeyErrors(errors, value, allowed, prefix) {
@@ -138,15 +152,18 @@ function validateManifest(manifest, schema, options = {}) {
   if (!isObject(environment)) errors.push('root.environment: expected object');
   else {
     addUnknownKeyErrors(errors, environment, ['target', 'wordpressVersion', 'phpVersion', 'backupRestorePointId'], 'root.environment');
+    const normalizedTarget = normalizedHttpUrl(environment.target);
     if (!nonEmptyString(environment.target)) errors.push('root.environment.target: non-empty URL required');
-    else {
-      try {
-        const target = new URL(environment.target);
-        if (!['http:', 'https:'].includes(target.protocol)) errors.push('root.environment.target: only http/https URLs are allowed');
-      } catch (_error) {
-        errors.push('root.environment.target: valid URL required');
+    else if (!normalizedTarget) errors.push('root.environment.target: valid http/https URL required');
+
+    if (options.expectedTarget) {
+      const normalizedExpectedTarget = normalizedHttpUrl(options.expectedTarget);
+      if (!normalizedExpectedTarget) errors.push('option --expected-target: valid http/https URL required');
+      else if (normalizedTarget && normalizedTarget !== normalizedExpectedTarget) {
+        errors.push(`root.environment.target: expected ${normalizedExpectedTarget}`);
       }
     }
+
     if (!nonEmptyString(environment.wordpressVersion)) errors.push('root.environment.wordpressVersion: non-empty value required');
     if (!nonEmptyString(environment.phpVersion)) errors.push('root.environment.phpVersion: non-empty value required');
     if ('backupRestorePointId' in environment && environment.backupRestorePointId !== null && typeof environment.backupRestorePointId !== 'string') {
@@ -299,6 +316,7 @@ module.exports = {
   STATUS_VALUES,
   deriveOverallStatus,
   markdownReport,
+  normalizedHttpUrl,
   parseArgs,
   validateManifest,
 };
