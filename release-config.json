@@ -1,14 +1,14 @@
 {
-  "version": "0.8.41",
-  "title": "LEGO-editor — palette side-drop rettelse",
+  "version": "0.8.42",
+  "title": "LEGO-editor retest + sikker Slet side",
   "changelog": [
-    "Retter den manuelle v0.8.40-fejl hvor et nyt element fra venstre palette kunne ramme en synlig Venstre/Højre drop-zone men alligevel ende lodret over eller under målelementet.",
-    "HTML5 drag/drop bridge accepterer nu pointeren efter den synlige side-zones koordinater og retargeter kun selve drop-eventet til den eksisterende side-zone-kontrakt.",
-    "Den eksisterende nesting-tools motor er fortsat eneste ejer af Auto-kasser, LayoutParentKey, rækkefølge og placering; der er ikke tilføjet en ny placement-motor.",
-    "Den eksisterende Undo/Redo/history-owner og persistence-model er uændret.",
-    "Ny browser-regression reproducerer præcis handlingen: Tekst fra palette slippes til venstre for Tekst og billede, mens browserens native event target stadig er previewet.",
-    "Regressionen verificerer Auto-kasser wrapper, korrekt venstre/højre rækkefølge og canonical parent keys.",
-    "QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit med protected Vehicle/Event/Gallery regressioner.",
-    "Public renderer og I10 cutover er uændrede; v0.8.41 er klar til ny manuel LEGO acceptance på test2."
+    "Indeholder v0.8.41-rettelsen for palette → Venstre/Højre, så et nyt element bruger den synlige side-zones koordinater og ikke falder tilbage til lodret placement.",
+    "Tilføjer PAGE-DELETE-001: en tydelig Slet side-funktion til almindelige sider med eksakt titelbekræftelse og ekstra afsluttende bekræftelse.",
+    "Slet side kræver delete_pages, objektspecifik delete_post og gyldig nonce server-side.",
+    "Før en side flyttes til WordPress Papirkurv oprettes en B1-kompatibel safety backup med side- og Page Editor-state; permanent/raw delete bruges ikke.",
+    "Hjem, Køretøjer og materiel, Events og Billedgalleri er eksplicit låst mod PAGE-DELETE-001.",
+    "PAGE-DELETE audit registrerer UTC-tid, side-ID/slug/titel, tidligere status, bruger-ID og safety-backup, og restore genbruger den eksisterende B1-motor.",
+    "Nye smoke/contract-tests verificerer afvist titel, protected route, WordPress Trash, fysisk safety backup, audit og fuld B1 restore på PHP 8.0/8.2/8.3.",
+    "Architecture/E14 browser QA og I9 Prep er grønne; manual/live A–L og I9 forbliver PENDING, og I10/public cutover er fortsat låst."
   ]
 }
