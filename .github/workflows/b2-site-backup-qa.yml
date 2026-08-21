@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - agent/b2-full-backup-v0829
+      - agent/lego-responsive-design-v0833
   pull_request:
     paths:
       - 'src/Backup/SiteBackup*.php'
       - 'src/Admin/SiteBackupAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
+      - 'src/Admin/EditorLegoResponsiveDesignAdminController.php'
       - 'tests/Architecture/b2*'
       - 'tests/Architecture/integration-admin-smoke.php'
       - 'docs/b2-*'
@@ -34,9 +36,10 @@ jobs:
           php-version: '${{ matrix.php-version }}'
           extensions: mbstring, zip
           coverage: none
-      - run: php -l src/Backup/SiteBackupManifestService.php && php -l src/Backup/SiteBackupManifestValidator.php && php -l src/Backup/SiteBackupSnapshotCollector.php && php -l src/Backup/SiteBackupPackageService.php && php -l src/Backup/SiteBackupRestoreService.php && php -l src/Backup/SiteBackupSecurityPolicy.php && php -l src/Backup/SiteBackupRestoreCoordinator.php && php -l src/Admin/SiteBackupAdminController.php
+      - run: php -l src/Backup/SiteBackupManifestService.php && php -l src/Backup/SiteBackupManifestValidator.php && php -l src/Backup/SiteBackupSnapshotCollector.php && php -l src/Backup/SiteBackupPackageService.php && php -l src/Backup/SiteBackupRestoreService.php && php -l src/Backup/SiteBackupSecurityPolicy.php && php -l src/Backup/SiteBackupRestoreCoordinator.php && php -l src/Admin/SiteBackupAdminController.php && php -l src/Admin/EditorLegoResponsiveDesignAdminController.php
       - run: php tests/Architecture/b2a-versioned-backup-manifest-smoke.php
       - run: php tests/Architecture/b2-package-restore-smoke.php
+      - run: php tests/Architecture/b2-responsive-design-restore-smoke.php
       - run: bash tests/Architecture/b2a-versioned-backup-manifest-contract.sh
       - run: bash tests/Architecture/b2-package-restore-contract.sh
       - run: php tests/Architecture/integration-admin-smoke.php
