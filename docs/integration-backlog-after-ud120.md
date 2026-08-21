@@ -5,7 +5,7 @@
 
 UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, primary design/layout view, visuelle drop-zoner, foldbare canvas-værktøjer, automatic side-by-side layout, 12-kolonne resize og responsive Tablet/Mobil spans er samlet på den eksisterende parent/history/persistence-arkitektur gennem LEGO-033.
 
-**Aktiv næste fase: I9-EVIDENCE — faktisk manuel/live acceptance.** DOC-1/DOC-2, I9-runbooks, evidence-manifest, read-only public smoke, manifest-validator/init, read-only gate-recorder, build+target-binding, lokal evidence-integritet, blocker/readiness-rapport, otte canonical gate-skabeloner og dispatch-only release-gate samt I10 operator-/blocker-/acceptance-/stage-dokumentation er nu forberedt. Automatisk QA må ikke erstatte de krævede I9 live/manuelle beviser.
+**Aktiv næste fase: I9-EVIDENCE — faktisk manuel/live acceptance.** DOC-1/DOC-2, I9-runbooks, evidence-manifest, read-only public smoke, manifest-validator/init, read-only gate-recorder, build+target-binding, lokal evidence-integritet, blocker/readiness-rapport, otte canonical gate-skabeloner, session-runbook og dispatch-only release-gate samt I10 operator-/blocker-/acceptance-/stage-dokumentation er nu forberedt. Automatisk QA må ikke erstatte de krævede I9 live/manuelle beviser.
 
 Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny renderer.
 
@@ -31,7 +31,7 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | I6 — Portability | ✅ Færdig | Dry-run, signeret plan, conflict/remap, workspace og restore-point. |
 | I7 — Permissions / Design Lock | ✅ Færdig | Additive capabilities/roles og design-lock policy. |
 | I8 — AI | ✅ Færdig | Provider-neutral forslag uden direkte public page-write. |
-| I9 — Manual QA evidence | 🟡 Evidence pending | Prep/validator/recorder/integrity/readiness/gate-skabeloner/release-gate er klar; faktiske brand-browser-, screen-reader-, test2-editor-, protected-domain- og rollback-beviser mangler. |
+| I9 — Manual QA evidence | 🟡 Evidence pending | Prep/validator/recorder/integrity/readiness/gate-skabeloner/session-runbook/release-gate er klar; faktiske brand-browser-, screen-reader-, test2-editor-, protected-domain- og rollback-beviser mangler. |
 | I10 — Final controlled conversion | 🟡 Prep/preflight færdigt / cutover låst | Operatorflow dokumenteret; comparison → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
 | UX-3 — Foldbare workspace rails | ✅ v0.8.24 | Elementer/Funktioner og Inspector foldes uafhængigt. |
 | UX-4 — Ugemt forhåndsvisning | ✅ v0.8.25 + v0.8.27 | Preview uden save; editor chrome renses fra klonen. |
@@ -72,6 +72,7 @@ Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny rendere
 | I9-EVIDENCE-10 — Readiness/blocker report | ✅ QA PASS | Per-gate blocker/næste handling; `readyForI10=true` kun ved valid fuld evidenced PASS; reporting-only og ændrer ikke cutover-lock. |
 | I9-EVIDENCE-11 — Gate-specifikke evidence-skabeloner | ✅ Implementeret | Otte skabeloner for Chrome/Edge/Firefox/Safari/screen-reader/test2/protected domains/rollback. |
 | I9-EVIDENCE-12 — Gate operator index + contract | ✅ Implementeret | Canonical gate keys, PENDING-default og no-preaccepted-PASS kontrolleres i CI. |
+| I9-EVIDENCE-13 — Manual session runbook/handoff | ✅ Implementeret | Build/restore-point binding, gate-rækkefølge, FAIL/BLOCKED stopregler, per-gate recording og final validation/readiness. |
 | I10-PREP-1 — Operator runbook | ✅ Færdig | Fast rækkefølge, gates, stopregler og non-executable policy. |
 | I10-PREP-2 — Blocker reference | ✅ Færdig | Blocker → betydning → korrigerende handling. |
 | I10-PREP-3 — Acceptance template | ✅ Færdig | Spejler de syv required human checks + source hash/evidence/manual confirmation. |
@@ -203,6 +204,7 @@ Forberedt og kontraktbeskyttet:
 - `docs/i9-evidence-tooling.md`;
 - `docs/i9-evidence-integrity.md`;
 - `docs/i9-evidence-gate-index.md`;
+- `docs/i9-evidence-session-runbook.md`;
 - `docs/i9-evidence-gate-{chrome,edge,firefox,safari,screen-reader,test2-live-e2e,protected-domains,rollback}.md`;
 - `tools/i9-evidence-init.cjs`;
 - `tools/i9-evidence-validator.cjs`;
@@ -227,7 +229,7 @@ Evidence-manifestet har otte obligatoriske gates: Chrome, Edge, Firefox, Safari,
 
 Validatoren håndhæver derudover deterministisk samlet status (`FAIL` → `BLOCKED` → alle PASS → `PENDING`), kan bindes til commit-SHA, pluginversion og staging-target og kan med `--require-pass` bruges som teknisk release-gate efter den faktiske human/live acceptance. Recorderen transformerer kun til stdout og ejer ingen fil-write. Integrity-værktøjet hasher lokale evidence-filer og manifestet, afviser manglende/traversal paths og markerer eksterne refs som ikke lokalt verificeret. Readiness-rapporten viser per-gate blocker/næste handling og kan kun rapportere `readyForI10=true` ved fuld valid evidenced PASS; den ændrer ikke I10-locken. Actions-workflowet er eksplicit dispatch-only, har kun read-permission og kan gemme validation-, integrity- og readiness-rapporterne.
 
-De otte gate-skabeloner matcher de canonical manifest keys og starter alle `PENDING`; CI afviser bl.a. manglende gate, manglende build/target/evidence-felter eller en forhåndsafkrydset PASS-beslutning.
+De otte gate-skabeloner matcher de canonical manifest keys og starter alle `PENDING`; CI afviser bl.a. manglende gate, manglende build/target/evidence-felter eller en forhåndsafkrydset PASS-beslutning. Session-runbooken binder gate-rækkefølge, restore point, FAIL/BLOCKED stopregler, recorder/integrity/readiness og final handoff til samme build-bound evidenceflow.
 
 ## I10-forberedelse — ✅ / CUTOVER FORTSAT LÅST
 
@@ -261,7 +263,7 @@ Krævet før nogen public cutover:
 7. Vehicle/Event/Gallery visual/function regression;
 8. migration/rollback på live kopi.
 
-Den public read-only smoke, evidence-værktøjerne og gate-skabelonerne er ekstra støttebeviser og reducerer gentagen kontrol, men kan ikke alene sætte I9 til PASS.
+Den public read-only smoke, evidence-værktøjerne, gate-skabelonerne og session-runbooken er ekstra støttebeviser og reducerer gentagen kontrol, men kan ikke alene sætte I9 til PASS.
 
 ## I10 — FINAL CONTROLLED CONVERSION — LÅST
 
