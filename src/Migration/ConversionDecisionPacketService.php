@@ -40,7 +40,26 @@ final class ConversionDecisionPacketService
         array $acceptedSlugs,
         array $targetInputs
     ): array {
-        $plan = $this->plan->plan($pages, $manualEvidence, $acceptedSlugs);
+        $normalizedAccepted = array_values(array_unique(array_filter(
+            array_map(static fn($v): string => strtolower(trim((string) $v)), $acceptedSlugs),
+            static fn(string $v): bool => $v !== ''
+        )));
+        sort($normalizedAccepted, SORT_STRING);
+
+        $normalizedInputs = [];
+        foreach ($targetInputs as $inputSlug => $input) {
+            if (!is_array($input)) {
+                continue;
+            }
+            $inputSlug = strtolower(trim((string) $inputSlug));
+            if ($inputSlug === '') {
+                continue;
+            }
+            $normalizedInputs[$inputSlug] = $input;
+        }
+        ksort($normalizedInputs, SORT_STRING);
+
+        $plan = $this->plan->plan($pages, $manualEvidence, $normalizedAccepted);
         $comparisonSlug = strtolower(trim((string) ($plan['ComparisonSlug'] ?? '')));
         $rows = [];
         $reviewable = [];
@@ -58,8 +77,8 @@ final class ConversionDecisionPacketService
             $slug = strtolower(trim((string) ($stage['Slug'] ?? '')));
             $kind = (string) ($stage['Kind'] ?? '');
             $stageBlockers = array_values(array_unique(array_map('strval', (array) ($stage['Blockers'] ?? []))));
-            $input = $slug !== '' && isset($targetInputs[$slug]) && is_array($targetInputs[$slug])
-                ? $targetInputs[$slug]
+            $input = $slug !== '' && isset($normalizedInputs[$slug])
+                ? $normalizedInputs[$slug]
                 : null;
             $preflight = null;
 
@@ -76,7 +95,7 @@ final class ConversionDecisionPacketService
                     is_array($input['Shadow'] ?? null) ? $input['Shadow'] : null,
                     is_array($input['AcceptanceRecord'] ?? null) ? $input['AcceptanceRecord'] : null,
                     $manualEvidence,
-                    $acceptedSlugs,
+                    $normalizedAccepted,
                     $comparisonSlug
                 );
                 foreach ((array) ($preflight['Blockers'] ?? []) as $blocker) {
@@ -116,7 +135,7 @@ final class ConversionDecisionPacketService
             'Mode' => 'decision-packet-only',
             'ComparisonSlug' => $comparisonSlug,
             'ManualEvidenceComplete' => $manualEvidenceComplete,
-            'AcceptedSlugs' => array_values(array_unique(array_map(static fn($v): string => strtolower(trim((string) $v)), $acceptedSlugs))),
+            'AcceptedSlugs' => $normalizedAccepted,
             'Stages' => $rows,
             'ReviewableTargets' => $reviewable,
             'BlockedTargets' => $blocked,
