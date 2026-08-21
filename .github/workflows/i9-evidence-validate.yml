@@ -1,0 +1,71 @@
+name: I9 Evidence Validate
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_path:
+        description: 'Repository-relative path to I9 evidence manifest'
+        required: true
+        default: 'evidence/i9/manifest.json'
+        type: string
+      expected_sha:
+        description: 'Expected 40-character build SHA; blank uses workflow commit SHA'
+        required: false
+        default: ''
+        type: string
+      expected_version:
+        description: 'Expected plugin version'
+        required: true
+        type: string
+      require_pass:
+        description: 'Require complete evidenced I9 PASS'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate I9 evidence manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate input path
+        env:
+          MANIFEST_PATH: ${{ inputs.manifest_path }}
+        run: |
+          case "$MANIFEST_PATH" in
+            /*|*..*) echo 'Manifest path must remain repository-relative.' >&2; exit 2 ;;
+          esac
+          test -f "$MANIFEST_PATH" || { echo "Manifest not found: $MANIFEST_PATH" >&2; exit 2; }
+      - name: Validate evidence
+        id: validate
+        env:
+          MANIFEST_PATH: ${{ inputs.manifest_path }}
+          EXPECTED_SHA_INPUT: ${{ inputs.expected_sha }}
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+          REQUIRE_PASS: ${{ inputs.require_pass }}
+        run: |
+          set +e
+          EXPECTED_SHA="$EXPECTED_SHA_INPUT"
+          if [ -z "$EXPECTED_SHA" ]; then EXPECTED_SHA="$GITHUB_SHA"; fi
+          args=("$MANIFEST_PATH" --json --expected-sha "$EXPECTED_SHA" --expected-version "$EXPECTED_VERSION")
+          if [ "$REQUIRE_PASS" = 'true' ]; then args+=(--require-pass); fi
+          node tools/i9-evidence-validator.cjs "${args[@]}" > i9-evidence-validation.json
+          rc=$?
+          cat i9-evidence-validation.json
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: i9-evidence-validation-${{ github.run_id }}
+          path: i9-evidence-validation.json
+          if-no-files-found: warn
+          retention-days: 30
