@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "1ccfa6b51a4fb1e716e565ba96e2f9d8cf0746ff",
+    "pluginVersion": "0.8.41",
+    "packageSha256": "000f01eb9c8ca25881c7b969057175882d25ef1b2eff1fcdef3fed725acae433"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "PENDING",
+    "os": "PENDING",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop; genprøv først palette → Venstre/Højre side-drop rettet i v0.8.41"},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting"},
+    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side / Auto-kasser"},
+    "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize"},
+    "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop"},
+    "F": {"status": "PENDING", "evidence": [], "note": "Design og spacing"},
+    "G": {"status": "PENDING", "evidence": [], "note": "Foldbare paneler"},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo"},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence"},
+    "J": {"status": "PENDING", "evidence": [], "note": "Preview Desktop/Tablet/Mobil"},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore"},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery regression"}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "PENDING",
+  "notes": "Official Hangar18 Manager v0.8.41 manual acceptance candidate on test2. v0.8.40 manual testing exposed a palette side-drop targeting defect; v0.8.41 contains the automated-regression-covered fix. No manual v0.8.41 PASS is claimed. Public cutover is not authorized."
+}
