@@ -64,6 +64,7 @@ on:
       - '.github/workflows/architecture-foundation-qa.yml'
       - '.github/workflows/i9-prep-qa.yml'
       - '.github/workflows/i9-test2-live-readonly.yml'
+      - '.github/workflows/i9-evidence-validate.yml'
 
 permissions:
   contents: read
