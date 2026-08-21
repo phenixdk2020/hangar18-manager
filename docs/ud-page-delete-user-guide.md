@@ -1,7 +1,7 @@
 # Ultimate Designer — Slet side sikkert
 
 **Funktion:** PAGE-DELETE-001  
-**Status:** implementeret på udviklingsgren; må først bruges efter QA-grøn merge/release.  
+**Status:** frigivet i **Hangar18 Manager v0.8.42**; automatiseret QA PASS, manuel test2 UI-sanity PENDING.  
 **Princip:** safety backup → WordPress Papirkurv → eksisterende B1 restore.
 
 ## Hvad funktionen gør
