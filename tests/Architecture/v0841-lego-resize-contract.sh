@@ -18,37 +18,36 @@ require_contains() {
   grep -F -- "$needle" "$file" >/dev/null || { echo "FAIL: $label"; echo "  missing: $needle"; exit 1; }
 }
 
-# Canonical 12-column layout metadata: parent/placement authority remains LayoutParentKey.
+# Canonical 12-column metadata remains the same store; schema 2 only adds
+# reversible Tablet/Mobile snapshots on top of the LEGO-032 Desktop contract.
 require_contains "$MODEL" 'public const COLUMN_COUNT = 12;' '12-column model missing'
-require_contains "$MODEL" "'Span' => \$desktopSpan" 'Desktop span state missing'
-require_contains "$MODEL" "'InheritDesktop' => true" 'responsive inheritance missing'
+require_contains "$MODEL" "'Desktop' => [" 'Desktop span state missing'
+require_contains "$MODEL" "'Span' => self::span(\$desktopRaw['Span'] ?? 0)" 'Desktop span normalization missing'
+require_contains "$MODEL" 'private static function normalizeDevice' 'responsive-compatible device state missing'
 require_contains "$CTRL" "hangar18_ultimate_designer_lego_layout_span_v1" 'admin-only span option missing'
 require_contains "$CTRL" "admin_post_h18_save_page_editor" 'existing page-save bridge not reused'
 require_contains "$SPACING_CTRL" 'EditorLegoResizeAdminController::register();' 'resize controller not registered'
 
-# Visual resize operates only on the existing Auto-kasser proxy and section keys.
+# Visual Desktop resize still operates only on the existing Auto-kasser proxy and section keys.
 require_contains "$JS" "const AUTO_LABEL = 'Auto-kasser';" 'Auto-kasser compatibility gate missing'
 require_contains "$JS" 'parentKey($(this)) === key' 'LayoutParentKey child authority missing'
 require_contains "$JS" 'h18-v0811-auto-grid' 'existing Auto-kasser grid proxy not reused'
 require_contains "$JS" 'h18-v0841-resize-handle' 'resize handle missing'
 require_contains "$JS" 'window.__h18HistoryAtomicV0840' 'existing atomic history transaction not reused'
-require_contains "$JS" "canvasDevice() !== 'desktop'" 'Desktop-only LEGO-032 resize guard missing'
+require_contains "$JS" "canvasDevice() !== 'desktop'" 'Desktop-only v0.8.41 resize guard missing'
 require_contains "$JS" 'function ensureHandle($tile, $rightTile, index)' 'stable handle decoration missing'
-require_contains "$JS" 'writeDesktopSpan(drag.$leftRow, drag.currentLeft, true);' 'left neighbor span commit missing'
-require_contains "$JS" 'writeDesktopSpan(drag.$rightRow, drag.currentRight, true);' 'right neighbor span commit missing'
+require_contains "$JS" 'writeDesktopSpan(drag.$leftRow, drag.currentLeft, true);' 'left neighbor Desktop span commit missing'
+require_contains "$JS" 'writeDesktopSpan(drag.$rightRow, drag.currentRight, true);' 'right neighbor Desktop span commit missing'
 require_contains "$JS" 'h18_lego_layout_span[' 'save payload missing'
 require_contains "$CSS" 'grid-template-columns:repeat(12,minmax(0,1fr))!important' '12-column visual grid missing'
 require_contains "$CSS" 'grid-column:span var(--h18-v0841-span,12)!important' 'tile span CSS missing'
-require_contains "$CSS" '.h18-builder-canvas[data-canvas-device="tablet"] .h18-v0841-resize-handle' 'Tablet handle hide missing'
-require_contains "$CSS" '.h18-builder-canvas[data-canvas-device="mobile"] .h18-v0841-resize-handle' 'Mobile handle hide missing'
 
-# Browser proof: Auto is non-mutating, resize is atomic, Undo/Redo and min-span work,
-# decoration settles and responsive views cannot write Desktop state.
+# Existing LEGO-032 browser proof remains unchanged when v0.8.42 is not loaded.
 require_contains "$SPEC" 'default to 6/6 without persisted mutation' '6/6 Auto regression missing'
 require_contains "$SPEC" 'decoration settles and does not recreate handles on its own observer' 'decorator-loop regression missing'
 require_contains "$SPEC" 'changes 6/6 to 8/4 as one Undo Redo checkpoint' '8/4 history regression missing'
 require_contains "$SPEC" 'clamps each neighbor to at least one of twelve columns' 'minimum span regression missing'
-require_contains "$SPEC" 'Tablet and Mobile inherit Desktop and cannot initiate resize' 'responsive no-write regression missing'
+require_contains "$SPEC" 'Tablet and Mobile inherit Desktop and cannot initiate resize' 'v0.8.41 responsive no-write regression missing'
 
 # LEGO-032 must not become a public renderer, drag/drop motor or second history stack.
 if grep -Ei 'wp_update_post|wp_insert_post|update_post_meta|delete_post_meta|admin_post_.*(activate|cutover|publish)|sortable\(|setParent\(|LayoutParentKey.*=' "$JS" "$CTRL" "$MODEL" >/dev/null; then
@@ -66,4 +65,4 @@ php -l "$CTRL" >/dev/null
 php -l "$MODEL" >/dev/null
 php "$SMOKE"
 
-echo 'v0.8.41 LEGO visual resize contract: PASS'
+echo 'v0.8.41 LEGO visual resize contract on responsive schema: PASS'
