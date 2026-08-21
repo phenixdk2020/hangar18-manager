@@ -8,6 +8,7 @@ I9 består fortsat af faktiske browser-, screen-reader-, `test2`-, protected-dom
 
 - `tools/i9-evidence-init.cjs` opretter et nyt manifest med alle gates som `PENDING`.
 - `tools/i9-evidence-validator.cjs` validerer struktur, build- og miljøidentitet, gate-status, evidence-referencer og den afledte samlede I9-status.
+- `tools/i9-evidence-record.cjs` transformerer én gate ad gangen og skriver kun det beregnede manifest til stdout; kildefilen ændres aldrig.
 - `.github/workflows/i9-evidence-validate.yml` giver samme validation som et eksplicit `workflow_dispatch`-job i GitHub Actions.
 - Ingen af værktøjerne logger ind i WordPress, skriver sideindhold eller aktiverer cutover.
 
@@ -130,7 +131,45 @@ Workflowet:
 - gemmer JSON-resultatet som Actions-artifact;
 - laver ingen WordPress-, login- eller public-write-kald.
 
-## 7. Hvad værktøjet ikke må gøre
+## 7. Registrer én gate sikkert
+
+Recorderen ændrer **aldrig** den fil, den læser. Den validerer først manifestet, transformerer én gate i hukommelsen, genberegner `overallStatus`, validerer resultatet og skriver derefter det nye JSON til stdout.
+
+Eksempel:
+
+```bash
+node tools/i9-evidence-record.cjs evidence/i9/manifest.json \
+  --gate chrome \
+  --status PASS \
+  --evidence evidence/chrome-desktop.md \
+  --evidence evidence/chrome-mobile.md \
+  --browser-or-tool "Google Chrome" \
+  --notes "Brand test gennemført" \
+  > evidence/i9/manifest.next.json
+```
+
+Derefter valideres den nye fil eksplicit:
+
+```bash
+node tools/i9-evidence-validator.cjs evidence/i9/manifest.next.json \
+  --expected-sha 0123456789abcdef0123456789abcdef01234567 \
+  --expected-version 0.8.39 \
+  --expected-target https://test2.hangar18.dk/
+```
+
+Recorder-regler:
+
+- kun de otte kendte gates accepteres;
+- kun `PASS`, `FAIL`, `BLOCKED` og `PENDING` accepteres;
+- `PASS` kan ikke registreres uden mindst én evidence-reference;
+- evidence deduplikeres;
+- `--clear-evidence` rydder kun i outputmodellen, ikke i kildefilen;
+- `overallStatus` kan ikke vælges manuelt, men afledes på ny efter hver transformation;
+- kildefilen forbliver byte-identisk.
+
+Denne model gør det muligt at registrere gates uden at give hjælpeværktøjet fil-write authority.
+
+## 8. Hvad værktøjet ikke må gøre
 
 Det må ikke:
 
