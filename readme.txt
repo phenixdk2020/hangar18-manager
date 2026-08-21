@@ -1,6 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.8.36
+Version: 0.8.37
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.37 – Designer — layout bruger samme LEGO-state som Inspector ==
+
+Nyt:
+- Gør de resterende layout-only Direkte Design- og Inspector-kontroller til views over én canonical LEGO-layoutstate i den eksisterende section-row.
+- Padding, vandret padding, top/bundafstand, bredde og min-højde dækkes for de eksisterende Desktop/Tablet/Mobil-felter uden migrationsændring.
+- Columns, MobileColumns, ColumnGapPx og MobileColumnGapPx bevarer deres eksisterende legacy-semantik og spejles samtidig i den canonical layoutstate.
+- De eksisterende page-section felter forbliver save- og public-renderer-kilden; v0.8.37 introducerer ingen ny WordPress-option eller save-handler.
+- Canonical layoutstate opdateres før den eksisterende delegated history-handler, mens den oprindelige input/change-hændelse fortsat ejer præcis ét Undo/Redo-checkpoint.
+- Direkte Design og Inspector deler samme layoutstate, og history-style DOM restore rehydrerer legacy layout og canonical state sammen.
+- v0.8.36 design/state-proxyen for farver, radius, opacity og interaction states forbliver separat og uændret.
+- v0.8.37 introducerer ingen ny drag/drop-, parent/child-, persistence-, public renderer- eller Undo/Redo-motor.
+- LEGO Editor QA er bestået på PHP 8.0/8.2/8.3 og system Chrome; Editor Runtime Fast QA er bestået.
+- Fuld Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.36 – Designer — Direkte Design bruger samme LEGO-state som Inspector ==
