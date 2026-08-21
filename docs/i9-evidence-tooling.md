@@ -195,7 +195,7 @@ Rapporten viser for hver gate:
 - blocker (`gate-pending`, `gate-blocked`, `gate-failed` eller manglende PASS-evidence);
 - næste konkrete manuelle handling.
 
-`readyForI10` er kun `true`, når manifestet er validt, den afledte status er `PASS`, alle otte gates er komplette, og build/miljøbindingen accepteres. Readiness-rapporten kan derfor ikke åbne I10 på basis af automatisk QA alene.
+`readyForI10` er kun `true`, når manifestet er validt, den afledte status er `PASS`, alle otte gates er komplette, og build/miljøbindingen accepteres. Feltet er kun en **readiness-indikator**; det ændrer ikke I10-preflight, aktiverer ikke en mutation og er ikke i sig selv en cutover-godkendelse.
 
 ## 9. GitHub Actions release-gate
 
@@ -233,4 +233,4 @@ Det må ikke:
 - gøre I10 executable;
 - erstatte rollback-rehearsal.
 
-I9 er først faktisk PASS, når de krævede human/live gates er udført, registreret med reel evidence og validatoren derefter accepterer manifestet i `--require-pass` mode. Readiness-rapporten må først vise `readyForI10=true` i samme situation.
+I9 er først faktisk PASS, når de krævede human/live gates er udført, registreret med reel evidence og validatoren derefter accepterer manifestet i `--require-pass` mode. Readiness-rapporten må først vise `readyForI10=true` i samme situation, og selv dér forbliver selve I10-cutover-koden separat låst/non-executable indtil den senere kontrollerede cutover-fase.
