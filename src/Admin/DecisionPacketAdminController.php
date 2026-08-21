@@ -9,6 +9,7 @@ use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionConversion
 use Hangar18\UltimateDesigner\Infrastructure\WordPress\WordPressOptionManualQaEvidenceRepository;
 use Hangar18\UltimateDesigner\Migration\ConversionAcceptanceValidator;
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketFingerprintService;
+use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketFormatter;
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketReviewChainService;
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketService;
 use Hangar18\UltimateDesigner\QA\ManualEvidenceValidator;
@@ -48,6 +49,7 @@ final class DecisionPacketAdminController
         $packet=(new ConversionDecisionPacketService())->build($pages,$manual,$accepted,$targetInputs);
         $fingerprint=(new ConversionDecisionPacketFingerprintService())->fingerprint($packet);
         $reviewChain=(new ConversionDecisionPacketReviewChainService())->inspect($packet,$fingerprint,null);
+        $packetJson=(new ConversionDecisionPacketFormatter())->json($packet);
         $reviewable=(array)($packet['ReviewableTargets']??[]);
         $blocked=(array)($packet['BlockedTargets']??[]);
 
@@ -71,6 +73,7 @@ final class DecisionPacketAdminController
             echo '</td></tr>';
         }
         echo '</tbody></table>';
+        echo '<details class="h18-ud-decision-packet-evidence"><summary><strong>Vis decision packet JSON · read-only evidence snapshot</strong></summary><p><small>Fingerprint: <code>'.esc_html((string)($fingerprint['Hash']??'')).'</code>. Snapshotet genereres ved sidevisning og gemmes ikke af panelet.</small></p><pre>'.esc_html($packetJson).'</pre></details>';
         echo '<div class="notice notice-error inline"><p><strong>Permanent lås i denne slice:</strong> <code>AuthorizesCutover=false</code>, <code>Executable=false</code> og <code>PublicMutationAvailable=false</code>. Vehicle/Event/Gallery forbliver protected legacy-domæner.</p></div>';
         echo '</section>';
     }
