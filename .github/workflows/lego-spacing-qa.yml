@@ -55,6 +55,7 @@ on:
       - 'assets/ultimate-designer-lego-layout-primary-v0837.css'
       - 'assets/ultimate-designer-lego-drop-zones-v0838.js'
       - 'assets/ultimate-designer-lego-drop-zones-v0838.css'
+      - 'assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js'
       - 'assets/ultimate-designer-lego-resize-v0841.js'
       - 'assets/ultimate-designer-lego-resize-v0841.css'
       - 'assets/ultimate-designer-lego-responsive-layout-v0842.js'
@@ -71,6 +72,7 @@ on:
       - 'tests/Architecture/v0840-lego-side-by-side-*'
       - 'tests/Architecture/v0841-lego-resize-*'
       - 'tests/Architecture/v0842-lego-responsive-layout-*'
+      - 'tests/Architecture/v0843-lego-palette-side-drop-*'
       - 'tests/Architecture/lego-manual-acceptance-contract.sh'
       - 'tests/Architecture/lego-staging-build-contract.sh'
       - 'tests/Architecture/lego-staging-verify-contract.sh'
@@ -88,6 +90,7 @@ on:
       - 'tests/Architecture/browser/lego-layout-primary-v0837.spec.cjs'
       - 'tests/Architecture/browser/lego-drop-zones-v0838.spec.cjs'
       - 'tests/Architecture/browser/lego-side-by-side-history-v0840.spec.cjs'
+      - 'tests/Architecture/browser/lego-palette-side-drop-v0843.spec.cjs'
       - 'tests/Architecture/browser/lego-resize-v0841.spec.cjs'
       - 'tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
@@ -133,6 +136,7 @@ jobs:
       - run: bash tests/Architecture/v0840-lego-side-by-side-contract.sh
       - run: bash tests/Architecture/v0841-lego-resize-contract.sh
       - run: bash tests/Architecture/v0842-lego-responsive-layout-contract.sh
+      - run: bash tests/Architecture/v0843-lego-palette-side-drop-contract.sh
       - run: bash tests/Architecture/lego-manual-acceptance-contract.sh
       - run: bash tests/Architecture/lego-staging-build-contract.sh
       - run: bash tests/Architecture/lego-staging-verify-contract.sh
@@ -162,11 +166,12 @@ jobs:
           tests/Architecture/browser/lego-primary-view-v0836.spec.cjs
           tests/Architecture/browser/lego-layout-primary-v0837.spec.cjs
           tests/Architecture/browser/lego-drop-zones-v0838.spec.cjs
+          tests/Architecture/browser/lego-palette-side-drop-v0843.spec.cjs
           tests/Architecture/browser/lego-resize-v0841.spec.cjs
           tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs
 
   lego-browsers:
-    name: LEGO-031/032/033 system Chrome + Chromium Firefox WebKit
+    name: LEGO-031/032/033/041 system Chrome + Chromium Firefox WebKit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
