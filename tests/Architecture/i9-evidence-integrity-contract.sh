@@ -5,13 +5,20 @@ INIT='tools/i9-evidence-init.cjs'
 VALIDATOR='tools/i9-evidence-validator.cjs'
 RECORD='tools/i9-evidence-record.cjs'
 INTEGRITY='tools/i9-evidence-integrity.cjs'
+WORKFLOW='.github/workflows/i9-evidence-validate.yml'
 PLUGIN='hangar18-manager.php'
 TARGET='https://test2.hangar18.dk/'
 
-for file in "$INIT" "$VALIDATOR" "$RECORD" "$INTEGRITY" "$PLUGIN"; do
+for file in "$INIT" "$VALIDATOR" "$RECORD" "$INTEGRITY" "$WORKFLOW" "$PLUGIN"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 node --check "$INTEGRITY"
+
+grep -F 'tools/i9-evidence-integrity.cjs' "$WORKFLOW" >/dev/null || { echo 'FAIL: Actions release gate does not run integrity index'; exit 1; }
+grep -F 'i9-evidence-integrity.json' "$WORKFLOW" >/dev/null || { echo 'FAIL: integrity artifact report missing from workflow'; exit 1; }
+grep -F 'evidence_root:' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence root input missing'; exit 1; }
+grep -F 'require_all_local:' "$WORKFLOW" >/dev/null || { echo 'FAIL: all-local integrity input missing'; exit 1; }
+grep -F 'contents: read' "$WORKFLOW" >/dev/null || { echo 'FAIL: integrity workflow must remain read-only'; exit 1; }
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -87,4 +94,4 @@ if grep -E 'writeFileSync|renameSync|unlinkSync|rmSync|appendFileSync|createWrit
   exit 1
 fi
 
-echo "I9 evidence integrity contract: PASS ($VERSION)"
+echo "I9 evidence integrity + workflow contract: PASS ($VERSION)"
