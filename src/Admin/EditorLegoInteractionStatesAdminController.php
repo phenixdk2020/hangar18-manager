@@ -42,6 +42,7 @@ final class EditorLegoInteractionStatesAdminController
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-lego-interaction-states-v0834.js';
         $guardPath = $pluginDir . '/assets/ultimate-designer-lego-interaction-states-event-guard-v0834.js';
+        $snapshotPath = $pluginDir . '/assets/ultimate-designer-lego-interaction-snapshot-v0834.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-lego-interaction-states-v0834.css';
 
         wp_enqueue_script(
@@ -61,6 +62,13 @@ final class EditorLegoInteractionStatesAdminController
                 'hangar18-ultimate-designer-lego-interaction-states-event-guard-v0834',
             ],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.34',
+            false
+        );
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-interaction-snapshot-v0834',
+            $pluginUrl . 'assets/ultimate-designer-lego-interaction-snapshot-v0834.js',
+            ['jquery', 'hangar18-ultimate-designer-lego-interaction-states-v0834'],
+            is_file($snapshotPath) ? (string) filemtime($snapshotPath) : '0.8.34',
             false
         );
         wp_enqueue_style(
@@ -150,6 +158,12 @@ final class EditorLegoInteractionStatesAdminController
                 $hasOverride = $hasPostedState
                     ? !empty($postedDevice['HasOverride'])
                     : !empty($previousDevice['InteractionHasOverride']);
+                $hasSnapshot = array_key_exists('HasSnapshot', $postedDevice)
+                    ? !empty($postedDevice['HasSnapshot'])
+                    : (!empty($previousDevice['InteractionHasSnapshot']) || !empty($previousDevice['InteractionHasOverride']));
+                if ($hasOverride) {
+                    $hasSnapshot = true;
+                }
 
                 $fallbackDesign = isset($deviceEntry['Design']) && is_array($deviceEntry['Design'])
                     ? $deviceEntry['Design']
@@ -158,8 +172,8 @@ final class EditorLegoInteractionStatesAdminController
                         : LegoDesignModel::defaults());
 
                 // Preserve the snapshot even while inheritance is active. The
-                // flag decides whether it is effective; the values remain ready
-                // if inheritance is disabled again later.
+                // active flag controls effectiveness; the snapshot flag records
+                // whether a reversible prior override exists.
                 $interaction = $hasPostedState && isset($postedDevice['Interaction']) && is_array($postedDevice['Interaction'])
                     ? $postedDevice['Interaction']
                     : LegoInteractionStateModel::fromDesign(
@@ -169,6 +183,7 @@ final class EditorLegoInteractionStatesAdminController
                     );
                 $deviceEntry['Design'] = LegoInteractionStateModel::mergeIntoDesign($fallbackDesign, $interaction);
                 $deviceEntry['InteractionHasOverride'] = $hasOverride;
+                $deviceEntry['InteractionHasSnapshot'] = $hasSnapshot;
                 $section[$device] = $deviceEntry;
             }
             $sections[$key] = $section;
