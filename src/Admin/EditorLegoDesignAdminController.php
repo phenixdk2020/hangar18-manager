@@ -24,6 +24,7 @@ final class EditorLegoDesignAdminController
         }
         self::$registered = true;
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
+        EditorLegoResponsiveDesignAdminController::register();
     }
 
     public static function enqueue(): void

@@ -17,6 +17,7 @@ final class SiteBackupRestoreCoordinator
 {
     private const LOCK_OPTION = 'hangar18_manager_site_backup_restore_lock_v1';
     private const LEGO_SPACING_OPTION = 'hangar18_ultimate_designer_lego_spacing_v2';
+    private const LEGO_RESPONSIVE_DESIGN_OPTION = 'hangar18_ultimate_designer_lego_design_responsive_v1';
     private const STALE_LOCK_SECONDS = 1800;
 
     private SiteBackupPackageService $packages;
@@ -47,10 +48,10 @@ final class SiteBackupRestoreCoordinator
     {
         return $this->runRestore(function (SiteBackupRestoreService $service) use ($planToken): array {
             $result = $service->restorePage($planToken);
-            // v0.8.31 extension of the same B2 operation: only the selected
-            // slug's LEGO editor-state is restored. The core restore has already
-            // verified the signed/state-bound plan and created its safety backup.
-            $result['LegoSpacingRestored'] = $this->restoreSelectiveLegoSpacing($result);
+            // Additive editor overlays are restored inside the same signed/state-bound
+            // B2 operation, after the core page restore has created its safety backup.
+            $result['LegoSpacingRestored'] = $this->restoreSelectivePageOption($result, self::LEGO_SPACING_OPTION);
+            $result['LegoResponsiveDesignRestored'] = $this->restoreSelectivePageOption($result, self::LEGO_RESPONSIVE_DESIGN_OPTION);
             return $result;
         }, 'page-restore');
     }
@@ -100,7 +101,7 @@ final class SiteBackupRestoreCoordinator
     }
 
     /** @param array<string,mixed> $restoreResult */
-    private function restoreSelectiveLegoSpacing(array $restoreResult): bool
+    private function restoreSelectivePageOption(array $restoreResult, string $optionName): bool
     {
         if (!function_exists('get_option') || !function_exists('update_option')) {
             return false;
@@ -115,18 +116,17 @@ final class SiteBackupRestoreCoordinator
 
         $package = $this->packages->read($backupId);
         $options = (array) ($package['Payloads']['plugin-metadata']['Options'] ?? []);
-        $source = $options[self::LEGO_SPACING_OPTION] ?? null;
+        $source = $options[$optionName] ?? null;
         if (!is_array($source) || !array_key_exists($pageSlug, $source)) {
-            // Older packages can legitimately predate LEGO spacing. In that
-            // case selective restore preserves the current overlay rather than
-            // silently deleting newer editor-state.
+            // Older packages may predate an additive LEGO overlay. Selective
+            // restore preserves newer local state instead of deleting it.
             return false;
         }
 
-        $current = get_option(self::LEGO_SPACING_OPTION, []);
+        $current = get_option($optionName, []);
         $current = is_array($current) ? $current : [];
         $current[$pageSlug] = $source[$pageSlug];
-        update_option(self::LEGO_SPACING_OPTION, $current, false);
+        update_option($optionName, $current, false);
         return true;
     }
 
