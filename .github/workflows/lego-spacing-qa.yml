@@ -49,6 +49,7 @@ on:
       - 'tests/Architecture/browser/lego-design-responsive-v0833.spec.cjs'
       - 'tests/Architecture/browser/lego-interaction-states-v0834.spec.cjs'
       - 'tests/Architecture/browser/lego-consolidation-v0835.spec.cjs'
+      - 'tests/Architecture/browser/lego-consolidation-history-v0835.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
       - '.github/workflows/lego-spacing-qa.yml'
 
@@ -95,3 +96,4 @@ jobs:
           tests/Architecture/browser/lego-design-responsive-v0833.spec.cjs
           tests/Architecture/browser/lego-interaction-states-v0834.spec.cjs
           tests/Architecture/browser/lego-consolidation-v0835.spec.cjs
+          tests/Architecture/browser/lego-consolidation-history-v0835.spec.cjs
