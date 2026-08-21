@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.39
+Version: 0.8.40
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.40 – LEGO-editor — side-by-side, resize og responsive layouts ==
+
+Nyt:
+- Almindelige elementer kan nu placeres direkte ved siden af hinanden med Venstre/Højre drop-zoner via den eksisterende Auto-kasser/LayoutParentKey-motor.
+- Auto-kasser har nu et visuelt 12-kolonne layout med drag-resize mellem naboer, minimum 1/12 kolonne og ét samlet Undo/Redo-checkpoint pr. resize.
+- Tablet og Mobil understøtter reversible layout-overrides med Arv Desktop, bevarede snapshots og samme canonical span-state som Desktop.
+- Direkte Design · LEGO og Billede starter minimeret som standard; åbning/lukning ændrer ikke elementdata eller history-state.
+- Side-drop og responsive resize er atomiske handlinger i den eksisterende history-motor, så Undo/Redo genskaber wrapper, rækkefølge, parent-relationer og spans korrekt.
+- LEGO-editoren har fået staging/manual acceptance-pakke med A–L testscenarier, build-SHA/version/SHA-256 binding, install/rollback-runbook og maskinlæsbare acceptance-records.
+- QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit med protected Vehicle/Event/Gallery regressioner.
+- Vehicle/Event/Gallery og eksisterende public renderer/cutover forbliver uændrede; release 0.8.40 er til editor/staging-test uden automatisk sidekonvertering.
 
 
 == Version 0.8.39 – Designer — foldbare canvas-værktøjspaneler ==
