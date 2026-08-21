@@ -8,6 +8,11 @@ on:
         required: true
         default: 'evidence/i9/manifest.json'
         type: string
+      evidence_root:
+        description: 'Repository-relative root for local evidence references'
+        required: true
+        default: '.'
+        type: string
       expected_sha:
         description: 'Expected 40-character build SHA; blank uses workflow commit SHA'
         required: false
@@ -28,35 +33,47 @@ on:
         required: true
         default: false
         type: boolean
+      require_all_local:
+        description: 'Require every evidence reference to resolve to a local file'
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 jobs:
   validate:
-    name: Validate I9 evidence manifest
+    name: Validate I9 evidence manifest + integrity
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Validate input path
+      - name: Validate input paths
         env:
           MANIFEST_PATH: ${{ inputs.manifest_path }}
+          EVIDENCE_ROOT: ${{ inputs.evidence_root }}
         run: |
           case "$MANIFEST_PATH" in
             /*|*..*) echo 'Manifest path must remain repository-relative.' >&2; exit 2 ;;
           esac
+          case "$EVIDENCE_ROOT" in
+            /*|*..*) echo 'Evidence root must remain repository-relative.' >&2; exit 2 ;;
+          esac
           test -f "$MANIFEST_PATH" || { echo "Manifest not found: $MANIFEST_PATH" >&2; exit 2; }
-      - name: Validate evidence
+          test -d "$EVIDENCE_ROOT" || { echo "Evidence root not found: $EVIDENCE_ROOT" >&2; exit 2; }
+      - name: Validate evidence and integrity
         id: validate
         env:
           MANIFEST_PATH: ${{ inputs.manifest_path }}
+          EVIDENCE_ROOT: ${{ inputs.evidence_root }}
           EXPECTED_SHA_INPUT: ${{ inputs.expected_sha }}
           EXPECTED_VERSION_INPUT: ${{ inputs.expected_version }}
           EXPECTED_TARGET: ${{ inputs.expected_target }}
           REQUIRE_PASS: ${{ inputs.require_pass }}
+          REQUIRE_ALL_LOCAL: ${{ inputs.require_all_local }}
         run: |
           set +e
           EXPECTED_SHA="$EXPECTED_SHA_INPUT"
@@ -69,18 +86,36 @@ jobs:
             echo 'Could not resolve Hangar18_Manager::VERSION from source.' >&2
             exit 2
           fi
-          args=("$MANIFEST_PATH" --json --expected-sha "$EXPECTED_SHA" --expected-version "$EXPECTED_VERSION" --expected-target "$EXPECTED_TARGET")
-          if [ "$REQUIRE_PASS" = 'true' ]; then args+=(--require-pass); fi
-          node tools/i9-evidence-validator.cjs "${args[@]}" > i9-evidence-validation.json
-          rc=$?
+
+          common=(--expected-sha "$EXPECTED_SHA" --expected-version "$EXPECTED_VERSION" --expected-target "$EXPECTED_TARGET")
+          validate_args=("$MANIFEST_PATH" --json "${common[@]}")
+          integrity_args=("$MANIFEST_PATH" --root "$EVIDENCE_ROOT" "${common[@]}")
+          if [ "$REQUIRE_PASS" = 'true' ]; then
+            validate_args+=(--require-pass)
+            integrity_args+=(--require-pass)
+          fi
+          if [ "$REQUIRE_ALL_LOCAL" = 'true' ]; then integrity_args+=(--require-all-local); fi
+
+          node tools/i9-evidence-validator.cjs "${validate_args[@]}" > i9-evidence-validation.json
+          validate_rc=$?
+          node tools/i9-evidence-integrity.cjs "${integrity_args[@]}" > i9-evidence-integrity.json
+          integrity_rc=$?
+
+          echo '--- validation ---'
           cat i9-evidence-validation.json
-          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
-          exit "$rc"
-      - name: Upload validation report
+          echo '--- integrity ---'
+          cat i9-evidence-integrity.json
+          echo "validation_exit_code=$validate_rc" >> "$GITHUB_OUTPUT"
+          echo "integrity_exit_code=$integrity_rc" >> "$GITHUB_OUTPUT"
+
+          if [ "$validate_rc" -ne 0 ] || [ "$integrity_rc" -ne 0 ]; then exit 1; fi
+      - name: Upload validation reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: i9-evidence-validation-${{ github.run_id }}
-          path: i9-evidence-validation.json
+          path: |
+            i9-evidence-validation.json
+            i9-evidence-integrity.json
           if-no-files-found: warn
           retention-days: 30
