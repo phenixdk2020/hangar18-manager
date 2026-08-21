@@ -7,14 +7,17 @@ on:
       - agent/lego-responsive-spacing-v0831
       - agent/lego-common-design-v0832
       - agent/lego-responsive-design-v0833
+      - agent/lego-interaction-states-v0834
   pull_request:
     paths:
       - 'src/Editor/LegoSpacingModel.php'
       - 'src/Editor/LegoDesignModel.php'
       - 'src/Editor/LegoResponsiveDesignModel.php'
+      - 'src/Editor/LegoInteractionStateModel.php'
       - 'src/Admin/EditorLegoSpacingAdminController.php'
       - 'src/Admin/EditorLegoDesignAdminController.php'
       - 'src/Admin/EditorLegoResponsiveDesignAdminController.php'
+      - 'src/Admin/EditorLegoInteractionStatesAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
       - 'src/Backup/SiteBackupRestoreCoordinator.php'
       - 'assets/ultimate-designer-lego-spacing-v0830.js'
@@ -27,14 +30,20 @@ on:
       - 'assets/ultimate-designer-lego-design-responsive-v0833.js'
       - 'assets/ultimate-designer-lego-design-responsive-event-guard-v0833.js'
       - 'assets/ultimate-designer-lego-design-responsive-v0833.css'
+      - 'assets/ultimate-designer-lego-interaction-states-v0834.js'
+      - 'assets/ultimate-designer-lego-interaction-states-event-guard-v0834.js'
+      - 'assets/ultimate-designer-lego-interaction-snapshot-v0834.js'
+      - 'assets/ultimate-designer-lego-interaction-states-v0834.css'
       - 'tests/Architecture/v0830-lego-spacing-*'
       - 'tests/Architecture/v0831-lego-responsive-spacing-*'
       - 'tests/Architecture/v0832-lego-common-design-*'
       - 'tests/Architecture/v0833-lego-responsive-design-*'
+      - 'tests/Architecture/v0834-lego-interaction-states-*'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
       - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
       - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
       - 'tests/Architecture/browser/lego-design-responsive-v0833.spec.cjs'
+      - 'tests/Architecture/browser/lego-interaction-states-v0834.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
       - '.github/workflows/lego-spacing-qa.yml'
 
@@ -43,7 +52,7 @@ permissions:
 
 jobs:
   contract:
-    name: Responsive spacing + common/responsive design contract
+    name: Responsive spacing + design + interaction states contract
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -60,9 +69,10 @@ jobs:
       - run: bash tests/Architecture/v0831-lego-responsive-spacing-contract.sh
       - run: bash tests/Architecture/v0832-lego-common-design-contract.sh
       - run: bash tests/Architecture/v0833-lego-responsive-design-contract.sh
+      - run: bash tests/Architecture/v0834-lego-interaction-states-contract.sh
 
   browser:
-    name: LEGO spacing + responsive design system Chrome
+    name: LEGO spacing + design + interaction states system Chrome
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,3 +87,4 @@ jobs:
           tests/Architecture/browser/lego-spacing-v0831.spec.cjs
           tests/Architecture/browser/lego-design-v0832.spec.cjs
           tests/Architecture/browser/lego-design-responsive-v0833.spec.cjs
+          tests/Architecture/browser/lego-interaction-states-v0834.spec.cjs
