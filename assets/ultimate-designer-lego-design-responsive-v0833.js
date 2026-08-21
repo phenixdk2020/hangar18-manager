@@ -16,7 +16,7 @@ jQuery(function ($) {
     const fonts = Array.isArray(config.fonts) ? config.fonts : ['Global','System','Segoe UI','Arial','Verdana','Tahoma','Trebuchet MS','Georgia','Times New Roman','Courier New'];
     const shadows = Array.isArray(config.shadows) ? config.shadows : ['None','Soft','Medium','Strong'];
     const hoverEffects = Array.isArray(config.hoverEffects) ? config.hoverEffects : ['None','Lift','Scale','Shadow'];
-    let panelDevice = 'Desktop';
+    let panelDevice = '';
     let refreshTimer = null;
 
     function activeRows() { return $sections.find('.h18-page-section-row:not(.h18-page-section-removed)'); }
@@ -160,9 +160,15 @@ jQuery(function ($) {
         raw = raw && typeof raw === 'object' ? raw : {};
         function device(name) {
             const value = raw[name] && typeof raw[name] === 'object' ? raw[name] : {};
+            const inherit = Object.prototype.hasOwnProperty.call(value, 'InheritDesktop') ? boolValue(value.InheritDesktop, true) : true;
+            const hasDesign = value.Design && typeof value.Design === 'object';
+            const hasOverride = Object.prototype.hasOwnProperty.call(value, 'HasOverride')
+                ? boolValue(value.HasOverride, Boolean(hasDesign && !inherit))
+                : Boolean(hasDesign && !inherit);
             return {
-                InheritDesktop: Object.prototype.hasOwnProperty.call(value, 'InheritDesktop') ? boolValue(value.InheritDesktop, true) : true,
-                Design: normalizeDesign(value.Design, desktop)
+                InheritDesktop: inherit,
+                HasOverride: hasOverride,
+                Design: normalizeDesign(hasDesign ? value.Design : {}, desktop)
             };
         }
         return { SchemaVersion: 1, Tablet: device('Tablet'), Mobile: device('Mobile') };
@@ -170,11 +176,11 @@ jQuery(function ($) {
 
     function effectiveFor($row, state, device) {
         const desktop = desktopState($row);
-        if (device === 'Desktop') { return { Design: desktop, Inherited: false }; }
+        if (device === 'Desktop') { return { Design: desktop, Inherited: false, HasOverride: false }; }
         const entry = state[device];
         return entry && entry.InheritDesktop
-            ? { Design: desktop, Inherited: true }
-            : { Design: normalizeDesign(entry ? entry.Design : {}, desktop), Inherited: false };
+            ? { Design: desktop, Inherited: true, HasOverride: Boolean(entry.HasOverride) }
+            : { Design: normalizeDesign(entry ? entry.Design : {}, desktop), Inherited: false, HasOverride: Boolean(entry && entry.HasOverride) };
     }
 
     function storedSections() {
@@ -186,7 +192,7 @@ jQuery(function ($) {
     function ensureCanonicalField($row, state) {
         let $field = canonicalField($row);
         if ($field.length) { return $field; }
-        $field = $('<input>', { type: 'hidden', class: STATE_CLASS, value: JSON.stringify(normalizeResponsive($row, state)), 'data-h18-lego-responsive-design-canonical': '1' });
+        $field = $('<input>', { type:'hidden', class:STATE_CLASS, value:JSON.stringify(normalizeResponsive($row, state)), 'data-h18-lego-responsive-design-canonical':'1' });
         rowBody($row).append($field);
         return $field;
     }
@@ -204,9 +210,11 @@ jQuery(function ($) {
         state = normalizeResponsive($row, state);
         const $field = ensureCanonicalField($row, state);
         $field.val(JSON.stringify(state));
-        $row.attr('data-h18-responsive-design', '1')
+        $row.attr('data-h18-responsive-design','1')
             .attr('data-h18-responsive-design-tablet-inherit', state.Tablet.InheritDesktop ? '1' : '0')
-            .attr('data-h18-responsive-design-mobile-inherit', state.Mobile.InheritDesktop ? '1' : '0');
+            .attr('data-h18-responsive-design-mobile-inherit', state.Mobile.InheritDesktop ? '1' : '0')
+            .attr('data-h18-responsive-design-tablet-override', state.Tablet.HasOverride ? '1' : '0')
+            .attr('data-h18-responsive-design-mobile-override', state.Mobile.HasOverride ? '1' : '0');
         applyPreview($row);
         if (captureHistory) { $field.trigger('input'); }
         return state;
@@ -224,15 +232,23 @@ jQuery(function ($) {
     function setAt(value, path, next) {
         const parts = String(path || '').split('.');
         let current = value;
-        parts.slice(0,-1).forEach(function (key) { if (!current[key] || typeof current[key] !== 'object') { current[key] = {}; } current = current[key]; });
+        parts.slice(0,-1).forEach(function (key) {
+            if (!current[key] || typeof current[key] !== 'object') { current[key] = {}; }
+            current = current[key];
+        });
         current[parts[parts.length - 1]] = next;
     }
 
     function setLegacySilently($row, fieldName, value) {
         const $field = rowField($row, fieldName);
         if (!$field.length) { return false; }
-        if ($field.is(':checkbox')) { $field.prop('checked', Boolean(value)); mirrorFields($row, fieldName).prop('checked', Boolean(value)); }
-        else { $field.val(String(value)); mirrorFields($row, fieldName).val(String(value)); }
+        if ($field.is(':checkbox')) {
+            $field.prop('checked', Boolean(value));
+            mirrorFields($row, fieldName).prop('checked', Boolean(value));
+        } else {
+            $field.val(String(value));
+            mirrorFields($row, fieldName).val(String(value));
+        }
         return true;
     }
     function needsCustom(path) { return /^(Colors|Border|Radius|Typography|Effects)\./.test(path); }
@@ -245,7 +261,6 @@ jQuery(function ($) {
         if (needsHoverCustom(path) && String(legacyValue($row, 'HoverStyleMode', 'Inherit')) !== 'Custom') { setLegacySilently($row, 'HoverStyleMode', 'Custom'); }
         setLegacySilently($row, fieldName, value);
         $field.trigger(eventType);
-        // Inherited devices are live views of Desktop; their stored overrides stay untouched.
         applyPreview($row);
         return true;
     }
@@ -267,20 +282,25 @@ jQuery(function ($) {
         const device = activeCanvasDevice();
         const effective = effectiveFor($row, stateForRow($row), device);
         const design = effective.Design;
-        const hover = activeCanvasState() === 'hover' && design.States.Hover.Mode === 'Custom';
-        const custom = hover || design.Mode === 'Custom';
+        const hoverActive = activeCanvasState() === 'hover';
+        const hoverCustom = hoverActive && design.States.Hover.Mode === 'Custom';
+        const custom = hoverCustom || design.Mode === 'Custom';
         const node = $row.get(0);
         if (!node) { return; }
         node.setAttribute('data-h18-responsive-design-active', device !== 'Desktop' && !effective.Inherited ? '1' : '0');
         node.setAttribute('data-h18-responsive-design-custom', custom ? '1' : '0');
-        node.setAttribute('data-h18-responsive-design-hover', hover ? '1' : '0');
+        node.setAttribute('data-h18-responsive-design-hover', hoverActive ? '1' : '0');
+        node.setAttribute('data-h18-responsive-hover-shadow', hoverActive && design.States.Hover.Effect === 'Shadow' ? '1' : '0');
         node.setAttribute('data-h18-responsive-body-font', design.Typography.BodyFont !== 'Global' ? '1' : '0');
         node.setAttribute('data-h18-responsive-heading-font', design.Typography.HeadingFont !== 'Global' ? '1' : '0');
         node.setAttribute('data-h18-responsive-body-size', design.Typography.BodySize > 0 ? '1' : '0');
         node.setAttribute('data-h18-responsive-h1-size', design.Typography.H1Size > 0 ? '1' : '0');
         node.setAttribute('data-h18-responsive-h2-size', design.Typography.H2Size > 0 ? '1' : '0');
         node.setAttribute('data-h18-responsive-h3-size', design.Typography.H3Size > 0 ? '1' : '0');
-        const colors = hover ? { Background:design.States.Hover.Background, Text:design.States.Hover.Text, Heading:design.States.Hover.Heading, Border:design.States.Hover.Border, Opacity:design.States.Hover.Opacity } : { Background:design.Colors.Background, Text:design.Colors.Text, Heading:design.Colors.Heading, Border:design.Border.Color, Opacity:design.Effects.Opacity };
+
+        const colors = hoverCustom
+            ? { Background:design.States.Hover.Background, Text:design.States.Hover.Text, Heading:design.States.Hover.Heading, Border:design.States.Hover.Border, Opacity:design.States.Hover.Opacity }
+            : { Background:design.Colors.Background, Text:design.Colors.Text, Heading:design.Colors.Heading, Border:design.Border.Color, Opacity:design.Effects.Opacity };
         node.style.setProperty('--h18-rd-background', colors.Background);
         node.style.setProperty('--h18-rd-text', colors.Text);
         node.style.setProperty('--h18-rd-heading', colors.Heading);
@@ -288,7 +308,8 @@ jQuery(function ($) {
         node.style.setProperty('--h18-rd-border-width', design.Border.Width + 'px');
         node.style.setProperty('--h18-rd-radius', radiusValue(design));
         node.style.setProperty('--h18-rd-opacity', String(colors.Opacity / 100));
-        node.style.setProperty('--h18-rd-shadow', hover && design.States.Hover.Effect === 'Shadow' ? '0 14px 38px rgba(0,0,0,.3)' : shadowCss(design.Effects.Shadow));
+        node.style.setProperty('--h18-rd-shadow', shadowCss(design.Effects.Shadow));
+        node.style.setProperty('--h18-rd-hover-shadow', '0 14px 38px rgba(0,0,0,.3)');
         node.style.setProperty('--h18-rd-transition', design.States.Hover.TransitionMs + 'ms');
         node.style.setProperty('--h18-rd-body-font', design.Typography.BodyFont === 'System' ? 'system-ui' : design.Typography.BodyFont);
         node.style.setProperty('--h18-rd-heading-font', design.Typography.HeadingFont === 'System' ? 'system-ui' : design.Typography.HeadingFont);
@@ -296,7 +317,7 @@ jQuery(function ($) {
         node.style.setProperty('--h18-rd-h1-size', design.Typography.H1Size + 'px');
         node.style.setProperty('--h18-rd-h2-size', design.Typography.H2Size + 'px');
         node.style.setProperty('--h18-rd-h3-size', design.Typography.H3Size + 'px');
-        node.style.setProperty('--h18-rd-hover-transform', hover && design.States.Hover.Effect === 'Lift' ? 'translateY(-4px)' : (hover && design.States.Hover.Effect === 'Scale' ? 'scale(1.03)' : 'none'));
+        node.style.setProperty('--h18-rd-hover-transform', hoverActive && design.States.Hover.Effect === 'Lift' ? 'translateY(-4px)' : (hoverActive && design.States.Hover.Effect === 'Scale' ? 'scale(1.03)' : 'none'));
     }
     function applyAllPreview() { activeRows().each(function () { hydrateRow($(this)); applyPreview($(this)); }); }
 
@@ -329,7 +350,11 @@ jQuery(function ($) {
         } else if (/^(Colors\.|Border\.Color|States\.Hover\.(Background|Text|Heading|Border))/.test(path)) {
             $input = $('<input>', { type:'color', value:value, disabled:Boolean(disabled), 'data-h18-rd-path':path });
         } else {
-            const bounds = { 'Border.Width':[0,12], 'Radius.All':[0,30], 'Radius.TopLeft':[-1,60], 'Radius.TopRight':[-1,60], 'Radius.BottomRight':[-1,60], 'Radius.BottomLeft':[-1,60], 'Typography.BodySize':[0,32], 'Typography.H1Size':[0,96], 'Typography.H2Size':[0,80], 'Typography.H3Size':[0,64], 'Effects.Opacity':[0,100], 'States.Hover.Opacity':[0,100], 'States.Hover.TransitionMs':[0,1000] };
+            const bounds = {
+                'Border.Width':[0,12], 'Radius.All':[0,30], 'Radius.TopLeft':[-1,60], 'Radius.TopRight':[-1,60],
+                'Radius.BottomRight':[-1,60], 'Radius.BottomLeft':[-1,60], 'Typography.BodySize':[0,32], 'Typography.H1Size':[0,96],
+                'Typography.H2Size':[0,80], 'Typography.H3Size':[0,64], 'Effects.Opacity':[0,100], 'States.Hover.Opacity':[0,100], 'States.Hover.TransitionMs':[0,1000]
+            };
             const b = bounds[path] || [0,9999];
             $input = $('<input>', { type:'number', min:b[0], max:b[1], step:1, value:value, disabled:Boolean(disabled), 'data-h18-rd-path':path });
         }
@@ -343,12 +368,18 @@ jQuery(function ($) {
         const inherited = device !== 'Desktop' && state[device].InheritDesktop;
         const $root = $('<div>', { class:'h18-rd-device-panel', 'data-h18-rd-device-panel':device, hidden:panelDevice !== device });
         if (device !== 'Desktop') {
+            const previous = Boolean(state[device].HasOverride);
             $root.append(
                 $('<label>', { class:'h18-rd-inherit' }).append(
                     $('<input>', { type:'checkbox', checked:inherited, 'data-h18-rd-inherit':device }),
                     $('<span>', { text:'Arv fra Desktop' })
                 ),
-                $('<p>', { class:'description', text: inherited ? 'Aktive værdier følger Desktop. Dine tidligere overrides gemmes og kan aktiveres igen.' : 'Egne designværdier er aktive på ' + (device === 'Mobile' ? 'mobil' : 'tablet') + '.' })
+                $('<p>', {
+                    class:'description',
+                    text: inherited
+                        ? (previous ? 'Aktive værdier følger Desktop. Dit tidligere override er bevaret.' : 'Aktive værdier følger Desktop. Første override starter fra den aktuelle Desktop-state.')
+                        : 'Egne designværdier er aktive på ' + (device === 'Mobile' ? 'mobil' : 'tablet') + '.'
+                })
             );
         }
         const disabled = inherited;
@@ -391,8 +422,7 @@ jQuery(function ($) {
         if (!$row.length) { return; }
         hydrateRow($row);
         const state = stateForRow($row);
-        const canvasDevice = activeCanvasDevice();
-        if (!$('#' + PANEL_ID).length && ['Desktop','Tablet','Mobile'].indexOf(panelDevice) === -1) { panelDevice = canvasDevice; }
+        if (['Desktop','Tablet','Mobile'].indexOf(panelDevice) === -1) { panelDevice = activeCanvasDevice(); }
         const $panel = $('<section>', { id:PANEL_ID, class:'h18-section-module-box h18-canvas-direct-controls h18-rd-panel', 'data-h18-rd-role':isKasse($row)?'kasse':'element' });
         $panel.append(
             $('<div>', { class:'h18-rd-heading' }).append(
@@ -400,10 +430,12 @@ jQuery(function ($) {
                 $('<span>', { class:'h18-rd-badge', text:'0.8.33' })
             ),
             $('<div>', { class:'h18-rd-tabs', role:'tablist' }).append(
-                ['Desktop','Tablet','Mobile'].map(function (device) { return $('<button>', { type:'button', class:'button h18-rd-tab' + (panelDevice===device?' is-active':''), text:device==='Mobile'?'Mobil':device, 'data-h18-rd-tab':device }); })
+                ['Desktop','Tablet','Mobile'].map(function (device) {
+                    return $('<button>', { type:'button', class:'button h18-rd-tab' + (panelDevice===device?' is-active':''), text:device==='Mobile'?'Mobil':device, 'data-h18-rd-tab':device });
+                })
             ),
             renderControls($row,state,'Desktop'), renderControls($row,state,'Tablet'), renderControls($row,state,'Mobile'),
-            $('<p>', { class:'description h18-rd-note', text:'Responsive design-overlayet er admin-only. Desktop/save/public renderer og v0.8.31 spacing forbliver autoritative og separate.' })
+            $('<p>', { class:'description h18-rd-note', text:'Responsive design er et additivt editor-overlay. Desktop/save/public renderer og v0.8.31 spacing forbliver autoritative og separate.' })
         );
         $inspector.append($panel);
     }
@@ -413,39 +445,76 @@ jQuery(function ($) {
         renderPanel();
     });
     $(document).on('change', '#' + PANEL_ID + ' [data-h18-rd-inherit]', function () {
-        const $row = selectedRow(); if (!$row.length) { return; }
-        const device = String($(this).attr('data-h18-rd-inherit') || ''); if (device !== 'Tablet' && device !== 'Mobile') { return; }
-        const state = stateForRow($row); state[device].InheritDesktop = $(this).is(':checked');
-        writeState($row,state,true); renderPanel();
+        const $row = selectedRow();
+        if (!$row.length) { return; }
+        const device = String($(this).attr('data-h18-rd-inherit') || '');
+        if (device !== 'Tablet' && device !== 'Mobile') { return; }
+        const state = stateForRow($row);
+        const inherit = $(this).is(':checked');
+        if (!inherit && !state[device].HasOverride) {
+            state[device].Design = desktopState($row);
+            state[device].HasOverride = true;
+        }
+        state[device].InheritDesktop = inherit;
+        writeState($row,state,true);
+        renderPanel();
     });
     $(document).on('input', '#' + PANEL_ID + ' input[data-h18-rd-path]', function () {
-        const $row = selectedRow(); if (!$row.length) { return; }
-        const path = String($(this).attr('data-h18-rd-path') || ''); const value = normalizeInput(path,$(this).val());
-        if (panelDevice === 'Desktop') { writeDesktop($row,path,value,'input'); }
-        else { const state = stateForRow($row); if (state[panelDevice].InheritDesktop) { return; } if (needsCustom(path) && getAt(state[panelDevice].Design,'Mode') !== 'Custom') { setAt(state[panelDevice].Design,'Mode','Custom'); } if (needsHoverCustom(path) && getAt(state[panelDevice].Design,'States.Hover.Mode') !== 'Custom') { setAt(state[panelDevice].Design,'States.Hover.Mode','Custom'); } setAt(state[panelDevice].Design,path,value); writeState($row,state,true); }
+        const $row = selectedRow();
+        if (!$row.length) { return; }
+        const path = String($(this).attr('data-h18-rd-path') || '');
+        const value = normalizeInput(path,$(this).val());
+        if (panelDevice === 'Desktop') {
+            writeDesktop($row,path,value,'input');
+        } else {
+            const state = stateForRow($row);
+            if (state[panelDevice].InheritDesktop) { return; }
+            state[panelDevice].HasOverride = true;
+            if (needsCustom(path) && getAt(state[panelDevice].Design,'Mode') !== 'Custom') { setAt(state[panelDevice].Design,'Mode','Custom'); }
+            if (needsHoverCustom(path) && getAt(state[panelDevice].Design,'States.Hover.Mode') !== 'Custom') { setAt(state[panelDevice].Design,'States.Hover.Mode','Custom'); }
+            setAt(state[panelDevice].Design,path,value);
+            writeState($row,state,true);
+        }
         scheduleRefresh(35);
     });
     $(document).on('change', '#' + PANEL_ID + ' select[data-h18-rd-path]', function () {
-        const $row = selectedRow(); if (!$row.length) { return; }
-        const path = String($(this).attr('data-h18-rd-path') || ''); const value = normalizeInput(path,$(this).val());
-        if (panelDevice === 'Desktop') { writeDesktop($row,path,value,'change'); }
-        else { const state = stateForRow($row); if (state[panelDevice].InheritDesktop) { return; } if (needsCustom(path) && path !== 'Mode' && getAt(state[panelDevice].Design,'Mode') !== 'Custom') { setAt(state[panelDevice].Design,'Mode','Custom'); } setAt(state[panelDevice].Design,path,value); writeState($row,state,true); }
+        const $row = selectedRow();
+        if (!$row.length) { return; }
+        const path = String($(this).attr('data-h18-rd-path') || '');
+        const value = normalizeInput(path,$(this).val());
+        if (panelDevice === 'Desktop') {
+            writeDesktop($row,path,value,'change');
+        } else {
+            const state = stateForRow($row);
+            if (state[panelDevice].InheritDesktop) { return; }
+            state[panelDevice].HasOverride = true;
+            if (needsCustom(path) && path !== 'Mode' && getAt(state[panelDevice].Design,'Mode') !== 'Custom') { setAt(state[panelDevice].Design,'Mode','Custom'); }
+            setAt(state[panelDevice].Design,path,value);
+            writeState($row,state,true);
+        }
         scheduleRefresh(35);
     });
 
     const legacySelector = Object.keys(fieldMap).map(function (path) { return '[name$="[' + fieldMap[path] + ']"]'; }).join(',');
     if (legacySelector) {
-        $form.on('input change', legacySelector, function () { window.clearTimeout(refreshTimer); refreshTimer = window.setTimeout(function () { applyAllPreview(); renderPanel(); },45); });
+        $form.on('input change', legacySelector, function () {
+            window.clearTimeout(refreshTimer);
+            refreshTimer = window.setTimeout(function () { applyAllPreview(); renderPanel(); },45);
+        });
     }
 
     function appendSavePayload() {
         $form.find('[' + SUBMIT_ATTR + '="1"]').remove();
         let index = 0;
         activeRows().each(function () {
-            const $row = $(this); const key = rowKey($row); if (!key) { return; }
+            const $row = $(this);
+            const key = rowKey($row);
+            if (!key) { return; }
             hydrateRow($row);
             const values = { SectionKey:key, StateJson:JSON.stringify(stateForRow($row)) };
-            Object.keys(values).forEach(function (name) { $('<input>', { type:'hidden', name:'h18_lego_responsive_design[' + index + '][' + name + ']', value:values[name] }).attr(SUBMIT_ATTR,'1').appendTo($form); });
+            Object.keys(values).forEach(function (name) {
+                $('<input>', { type:'hidden', name:'h18_lego_responsive_design[' + index + '][' + name + ']', value:values[name] }).attr(SUBMIT_ATTR,'1').appendTo($form);
+            });
             index += 1;
         });
     }
@@ -458,7 +527,14 @@ jQuery(function ($) {
     $(document).on('click', '.h18-page-section-header,.h18-page-section-edit,.h18-v0811-edit-child,.h18-ud-auto-box-tile,.h18-ud-box-child-chip,.h18-navigator-select', function () { scheduleRefresh(55); });
 
     const observer = new MutationObserver(function (mutations) {
-        const relevant = mutations.some(function (m) { return m.type === 'childList' || (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'data-canvas-device' || m.attributeName === 'data-canvas-state')); });
+        let deviceChanged = false;
+        const relevant = mutations.some(function (mutation) {
+            if (mutation.target === $canvas.get(0) && mutation.type === 'attributes' && mutation.attributeName === 'data-canvas-device') {
+                deviceChanged = true;
+            }
+            return mutation.type === 'childList' || (mutation.type === 'attributes' && ['class','data-canvas-device','data-canvas-state'].indexOf(mutation.attributeName) !== -1);
+        });
+        if (deviceChanged) { panelDevice = activeCanvasDevice(); }
         if (relevant) { scheduleRefresh(60); }
     });
     observer.observe($sections.get(0), { childList:true, subtree:true, attributes:true, attributeFilter:['class'] });
@@ -471,8 +547,18 @@ jQuery(function ($) {
     document.documentElement.setAttribute('data-h18-lego-responsive-design-runtime','0.8.33');
     window.__h18LegoResponsiveDesignV0833 = {
         version:'0.8.33',
-        stateForKey:function (key) { const $row=activeRows().filter(function(){return rowKey($(this))===String(key||'');}).first(); return $row.length?stateForRow($row):null; },
-        effectiveForKey:function (key,device) { const $row=activeRows().filter(function(){return rowKey($(this))===String(key||'');}).first(); if(!$row.length){return null;} return effectiveFor($row,stateForRow($row),['Desktop','Tablet','Mobile'].indexOf(String(device))!==-1?String(device):'Desktop'); },
-        hasCanonicalField:function (key) { const $row=activeRows().filter(function(){return rowKey($(this))===String(key||'');}).first(); return $row.length?canonicalField($row).length===1:false; }
+        stateForKey:function (key) {
+            const $row=activeRows().filter(function(){return rowKey($(this))===String(key||'');}).first();
+            return $row.length?stateForRow($row):null;
+        },
+        effectiveForKey:function (key,device) {
+            const $row=activeRows().filter(function(){return rowKey($(this))===String(key||'');}).first();
+            if(!$row.length){return null;}
+            return effectiveFor($row,stateForRow($row),['Desktop','Tablet','Mobile'].indexOf(String(device))!==-1?String(device):'Desktop');
+        },
+        hasCanonicalField:function (key) {
+            const $row=activeRows().filter(function(){return rowKey($(this))===String(key||'');}).first();
+            return $row.length?canonicalField($row).length===1:false;
+        }
     };
 });
