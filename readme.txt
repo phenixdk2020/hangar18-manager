@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.38
+Version: 0.8.39
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.39 – Designer — foldbare canvas-værktøjspaneler ==
+
+Nyt:
+- Direkte Design · LEGO og Billede-værktøjspanelet kan nu minimeres og udvides individuelt direkte på canvas.
+- Sammenfoldede paneler reduceres til en smal titelbjælke, så de ikke dækker unødigt meget af siden under redigering.
+- Foldestatus huskes browser-lokalt pr. paneltype og genanvendes også når editoren dynamisk genopbygger billed- eller designpanelet.
+- Toggle-knapper har aria-expanded, tooltip og keyboard-fokus.
+- Fold/udfold sender ingen side-input/change events og opretter derfor ingen Undo/Redo-checkpoint eller save-ændring.
+- Ingen ny WordPress-option, page-write, placement-, history- eller public renderer-motor er introduceret.
+- Editor Runtime Fast QA og LEGO Editor QA er bestået; fuld Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.38 – Designer — tydelige LEGO drop-zoner ==
