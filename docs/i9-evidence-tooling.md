@@ -1,0 +1,120 @@
+# I9 evidence tooling
+
+Dette værktøjssæt understøtter den manuelle/live I9-gate uden at ændre WordPress, public renderer eller cutover-state.
+
+## Formål
+
+I9 består fortsat af faktiske browser-, screen-reader-, `test2`-, protected-domain- og rollback-beviser. Værktøjerne hjælper kun med at oprette, validere og opsummere evidence-manifestet.
+
+- `tools/i9-evidence-init.cjs` opretter et nyt manifest med alle gates som `PENDING`.
+- `tools/i9-evidence-validator.cjs` validerer struktur, buildidentitet, gate-status, evidence-referencer og den afledte samlede I9-status.
+- Ingen af værktøjerne logger ind i WordPress, skriver sideindhold eller aktiverer cutover.
+
+## 1. Opret et nyt manifest
+
+Eksempel:
+
+```bash
+node tools/i9-evidence-init.cjs \
+  --sha 0123456789abcdef0123456789abcdef01234567 \
+  --version 0.8.42 \
+  --wordpress-version 6.8.2 \
+  --php-version 8.2 \
+  --tester "Allan" \
+  --backup-restore-point H18-BACKUP-123456 \
+  --output evidence/i9/manifest.json
+```
+
+Standard-target er `https://test2.hangar18.dk/`. Et andet staging-target kan sættes med `--target`.
+
+Initializeren:
+
+- kræver en reel 40-tegns commit-SHA;
+- afviser all-zero template-SHA;
+- kræver plugin-, WordPress- og PHP-version;
+- kræver tester-reference;
+- starter alle obligatoriske gates som `PENDING` med tom evidence-liste;
+- sætter altid `overallStatus=PENDING`;
+- overskriver ikke en eksisterende fil uden `--force`.
+
+## 2. Valider under evidence-arbejdet
+
+```bash
+node tools/i9-evidence-validator.cjs evidence/i9/manifest.json
+```
+
+Validatoren kontrollerer bl.a.:
+
+- schemaVersion;
+- ukendte felter;
+- commit-SHA og pluginversion;
+- testtidspunkt og target-URL;
+- WordPress/PHP-version;
+- alle otte obligatoriske gates;
+- tilladte statusværdier `PASS`, `FAIL`, `BLOCKED`, `PENDING`;
+- at `PASS` altid har mindst én evidence-reference;
+- at evidence-referencer er unikke og ikke tomme;
+- at `overallStatus` svarer til gate-statusserne.
+
+Samlet status afledes deterministisk:
+
+1. mindst én `FAIL` → `FAIL`;
+2. ellers mindst én `BLOCKED` → `BLOCKED`;
+3. alle gates `PASS` → `PASS`;
+4. ellers → `PENDING`.
+
+Et manifest kan derfor ikke manuelt erklære en anden samlet status end den, evidence-gates faktisk giver.
+
+## 3. Lås validation til en konkret build
+
+```bash
+node tools/i9-evidence-validator.cjs evidence/i9/manifest.json \
+  --expected-sha 0123456789abcdef0123456789abcdef01234567 \
+  --expected-version 0.8.42
+```
+
+Dette bør bruges, når evidence vurderes som release-bevis, så et gammelt manifest ikke ved en fejl kan genbruges mod en nyere build.
+
+## 4. Kræv fuld I9 PASS
+
+```bash
+node tools/i9-evidence-validator.cjs evidence/i9/manifest.json \
+  --expected-sha 0123456789abcdef0123456789abcdef01234567 \
+  --expected-version 0.8.42 \
+  --require-pass
+```
+
+`--require-pass` returnerer fejlstatus, medmindre alle otte gates er evidenced `PASS` og den samlede status derfor er `PASS`.
+
+Det er denne mode, der kan bruges som teknisk release-gate efter den faktiske manuelle/live test. Den skaber ikke acceptance; den kontrollerer kun, at den registrerede acceptance er konsistent.
+
+## 5. Maskin- og human-readable output
+
+JSON:
+
+```bash
+node tools/i9-evidence-validator.cjs evidence/i9/manifest.json --json
+```
+
+Markdown:
+
+```bash
+node tools/i9-evidence-validator.cjs evidence/i9/manifest.json --markdown
+```
+
+Markdown-outputtet viser build, target, afledt I9-status, gate-tællere, fejl og advarsler og kan gemmes sammen med øvrig evidence.
+
+## 6. Hvad værktøjet ikke må gøre
+
+Det må ikke:
+
+- markere en manuel browsertest som udført;
+- opfinde screenshots eller evidence-links;
+- logge ind i WordPress;
+- submitte formularer;
+- ændre Vehicle/Event/Gallery;
+- aktivere ny public renderer;
+- gøre I10 executable;
+- erstatte rollback-rehearsal.
+
+I9 er først faktisk PASS, når de krævede human/live gates er udført, registreret med reel evidence og validatoren derefter accepterer manifestet i `--require-pass` mode.
