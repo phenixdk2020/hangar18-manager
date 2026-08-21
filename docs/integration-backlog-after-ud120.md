@@ -1,269 +1,179 @@
 # Ultimate Designer — integration backlog after UD-120
 
 **Statusdato:** 21. august 2026  
-**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.34**
+**Aktuel pluginbaseline:** Hangar18 Manager **v0.8.37**
 
-UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing-, responsive-, common-design- og interaction-state fundament er nu leveret gennem v0.8.34. **Aktiv næste gate er v0.8.35: samlet LEGO consolidation / primary-editor readiness.** Eksisterende Hangar18-sider er fortsat ikke public-cutover til en ny renderer.
+UD-001..120 har architecture/core-dækning, og hovedparten af wp-admin-integrationen er implementeret. LEGO-editorens spacing, responsive design, interaction states, nested composition, Direkte Design og layout-kontroller er nu samlet på den eksisterende parent/history/persistence-arkitektur gennem v0.8.37.
 
-## Ikke-forhandlingsbar migrationsregel
+**Aktiv næste slice: LEGO-030 — visuelle drop-zoner (Over / Under / Venstre / Højre) oven på den eksisterende placement-motor.**
 
-Eksisterende sidekonvertering er sidste fase. Vehicle/Event/Gallery forbliver beskyttede legacy-domæner, bortset fra eksplicit godkendte, snævre fejlrettelser som EVENT-001. Public cutover kræver fortsat side-by-side regression, kompatibilitetsbevis, backup og rollback-rehearsal.
+Eksisterende Hangar18-sider er fortsat **ikke** public-cutover til en ny renderer. Automatisk QA erstatter ikke de krævede I9 live/manuelle acceptance-gates.
 
-Automatisk QA kan ikke erstatte en krævet manuel/live acceptance-gate.
+## Ikke-forhandlingsbare arkitekturregler
+
+- Én drag/drop-motor.
+- Én `LayoutParentKey` parent/child-model.
+- Én Undo/Redo-stack og ét logisk history-checkpoint pr. brugerhandling.
+- Eksisterende page-section felter forbliver persistence/public-renderer-kilden under migrationen.
+- Ingen public sidekonvertering før I9 er manuelt accepteret.
+- Vehicle/Event/Gallery forbliver beskyttede legacy-domæner, bortset fra eksplicit godkendte snævre fixes som EVENT-001.
 
 ## Statusoversigt
 
-| Fase | Status | Leveret |
+| Fase | Status | Leveret / næste |
 |---|---|---|
-| I1 — Admin integration / shadow dashboard | ✅ Færdig | Admin-only Ultimate Designer dashboard; ingen renderer replacement. |
-| I2 — Visual Header/Footer Builder | ✅ Færdig i shadow/admin | Shared Sections tree, visuel editing, designkontroller og preview. Public assignment er fortsat låst. |
-| I3 — Menu Builder v2 | ✅ Færdig i shadow/admin | Nested drag/drop, presets, keyboard-preview og eksplicit side include/exclude. |
-| I4 — Side Health | ✅ Færdig | Live/read-only Design/Mobile/Accessibility/Performance/SEO-analyse med elementlinks. |
-| I5 — Asset Manager | ✅ Færdig | Collections/tags/usage/focal point/derivatives/duplicate reporting over WordPress Media IDs. |
-| I6 — Portability | ✅ Færdig | Dry-run, signeret plan, conflict/remap, isoleret workspace og restore-point. |
+| I1 — Admin integration / shadow dashboard | ✅ Færdig | Admin-only Ultimate Designer dashboard. |
+| I2 — Visual Header/Footer Builder | ✅ Færdig i shadow/admin | Shared sections, visuel editing og preview; public assignment fortsat låst. |
+| I3 — Menu Builder v2 | ✅ Færdig i shadow/admin | Nested drag/drop, presets og side include/exclude. |
+| I4 — Side Health | ✅ Færdig | Live/read-only Design/Mobile/Accessibility/Performance/SEO-analyse. |
+| I5 — Asset Manager | ✅ Færdig | Collections/tags/usage/focal point/derivatives/duplicates. |
+| I6 — Portability | ✅ Færdig | Dry-run, signeret plan, conflict/remap, workspace og restore-point. |
 | I7 — Permissions / Design Lock | ✅ Færdig | Additive capabilities/roles og design-lock policy. |
-| I8 — AI | ✅ Færdig | Provider-neutral settings og reversible forslag uden direkte page-write. |
-| I9 — Manual QA evidence | 🟡 Framework færdigt | Live/manuelle evidence-gates er endnu ikke alle registreret. |
-| I10 — Final controlled conversion | 🟡 Preflight færdigt / cutover låst | Planner, shadow, acceptance ledger og source-drift preflight findes. |
-| UX-3 — Foldbare workspace rails | ✅ v0.8.24 | Elementer/Funktioner og Inspector kan foldes uafhængigt. |
-| UX-4 — Ugemt forhåndsvisning | ✅ v0.8.25 + v0.8.27 | Live editor-preview uden save/public mutation; editor overlays renses. |
-| EVENT-001 — Automatisk eventarkiv | ✅ v0.8.26 | Events klassificeres dynamisk efter WP-lokal dato/sluttid. |
-| B1 — Sidebackup restore | ✅ v0.8.28 | Replace original + copy draft, safety backup, nonce/capability og audit. |
-| B2 — Versioneret site-backup | ✅ v0.8.29, udvidet v0.8.31/v0.8.33/v0.8.34 | ZIP/full/selective restore inkl. LEGO spacing, responsive design og interaction snapshots. |
-| LEGO spacing/responsive foundation | ✅ v0.8.30–v0.8.31 | Canonical X/Y spacing, Tablet/Mobile inheritance og single-history integration. |
-| LEGO common design model | ✅ v0.8.32 | Én canonical designmodel for elementer og Kasse/Grid/Flex. |
-| LEGO responsive design | ✅ v0.8.33 | Desktop/Tablet/Mobil inheritance/overrides med reversible snapshots. |
-| LEGO interaction states | ✅ v0.8.34 | Transition + Focus + Active + Disabled på samme common/responsive contract. |
-| LEGO consolidation / primary editor readiness | 🟢 Aktiv v0.8.35 | Nested Kasse/Auto-kasser + spacing/design/states/history/backup samlet regression. |
-| DOC-1 — Visuel brugermanual | ⬜ Backlog | Udarbejdes når editorens interaktionsmodel er stabil og primary-ready. |
+| I8 — AI | ✅ Færdig | Provider-neutral forslag uden direkte public page-write. |
+| I9 — Manual QA evidence | 🟡 Framework færdigt / evidence pending | Live/browser/screen-reader/test2/rollback evidence mangler. |
+| I10 — Final controlled conversion | 🟡 Preflight færdigt / cutover låst | Comparison page → Hjem → Om → Kontakt → Bliv medlem → protected domains. |
+| UX-3 — Foldbare workspace rails | ✅ v0.8.24 | Elementer/Funktioner og Inspector foldes uafhængigt. |
+| UX-4 — Ugemt forhåndsvisning | ✅ v0.8.25 + v0.8.27 | Preview uden save; editor chrome renses fra klonen. |
+| EVENT-001 — Automatisk eventarkiv | ✅ v0.8.26 | Dynamisk Upcoming/Tidligere efter WP-lokal dato/sluttid. |
+| B1 — Sidebackup restore | ✅ v0.8.28 | Replace original + copy draft + safety backup + audit. |
+| B2 — Versioneret site-backup | ✅ v0.8.29 + senere LEGO-integration | ZIP/full/selective restore inkl. spacing/design/interaction snapshots. |
+| LEGO spacing/responsive | ✅ v0.8.30–v0.8.31 | X/Y gap/margin + Tablet/Mobile inheritance. |
+| LEGO common design | ✅ v0.8.32 | Fælles element/Kasse/Grid/Flex designmodel. |
+| LEGO responsive design | ✅ v0.8.33 | Desktop/Tablet/Mobil reversible overrides. |
+| LEGO interaction states | ✅ v0.8.34 | Transition + Hover/Focus/Active/Disabled. |
+| LEGO consolidation/readiness | ✅ v0.8.35 | Nested Kasse/Auto-kasser + spacing/design/states + sekventiel Undo/Redo. |
+| LEGO primary design view | ✅ v0.8.36 | Direkte Design bruger samme canonical design/state som Inspector. |
+| LEGO primary layout view | ✅ v0.8.37 | Direkte Design/Inspector spejler layout i samme canonical row-state. |
+| LEGO-030 — Visual side-drop zones | 🟢 Aktiv | Over/Under/Venstre/Højre på eksisterende placement-motor. |
+| LEGO-031 — Automatic side-by-side layout | ⬜ Næste | Side-drop opretter/justerer layout uden ny parent/child-motor. |
+| LEGO-032 — Visual resize / column span | ⬜ Senere | Resize oven på usynlig 12-kolonne layoutmotor. |
+| LEGO-033 — Tablet/Mobile layout overrides | ⬜ Senere | Responsive span/layout uden separat motor. |
+| DOC-1 — Visuel brugermanual | ⬜ Backlog | Udarbejdes når placement/resize-interaktionen er stabil. |
 
-## I1–I8 — IMPLEMENTERET
+## Stabiliseret editorhistorik
 
-I1–I8 er implementeret og forbliver shadow/admin-orienteret, hvor det er relevant. Centrale regler:
+Undo/Redo er manuelt accepteret og fortsat eneste history-owner:
 
-- ingen skjult public cutover;
-- ingen automatisk destruktiv rolle-/dataændring;
-- importer starter som dry-run;
-- AI-forslag skriver ikke direkte til public side;
-- legacy `edit_pages`-adgang bevares under migrationen.
+- v0.8.20: load-order/preloader og strukturelle checkpoints;
+- v0.8.21: live SELECT/INPUT/TEXTAREA-state gennem clone/restore;
+- v0.8.22: første nye strukturelle handling efter fuld Undo/Redo;
+- v0.8.23: tekst, farver og billeder som content-history checkpoints;
+- v0.8.35: kombineret spacing/design/state på nested Kasse blev verificeret som sekventielle Undo/Redo-trin.
 
-## I9 — MANUAL QA EVIDENCE — FRAMEWORK FÆRDIGT / EVIDENCE PENDING
+## Backup / restore
 
-Krævet manuel/live evidence:
+### B1 — ✅ v0.8.28
 
-1. seneste Chrome brand test;
-2. seneste Edge brand test;
-3. seneste Firefox brand test;
-4. seneste Safari brand test;
+- Erstat original med safety backup før første write.
+- Opret som separat draft-kopi med collision-safe slug.
+- Capability, nonce, path-containment og audit.
+
+### B2 — ✅ v0.8.29 + LEGO-integration
+
+- immutable `H18-BACKUP-xxxxxx` ID og SHA-256 manifest/payloads;
+- Hangar18-managed pages, page versions, Site Builder, forms/polls/data, options og referenced media;
+- ZIP export/import med security preflight;
+- signed/state-bound dry-run;
+- full restore og selective page restore;
+- safety backup før første mutation;
+- stale-lock recovery og audit;
+- v0.8.31 selective spacing restore;
+- v0.8.33 responsive design restore;
+- v0.8.34 interaction snapshots følger selected page;
+- standard-B2 er applikationsbackup, ikke raw database/plugin/theme disaster recovery.
+
+## LEGO-editor backlog
+
+| ID | Status | Leverance |
+|---|---|---|
+| LEGO-001 — Shared object/state model | ✅ | Canonical spacing/design/interaction vocabulary. |
+| LEGO-002 — Backward-compatible X/Y gap | ✅ v0.8.30 | Legacy gap seedes til X=Y. |
+| LEGO-003 — Inspector separat X/Y spacing | ✅ v0.8.30 | X/Y controls. |
+| LEGO-004 — Per-element margin | ✅ v0.8.30 | Responsive Margin X/Y. |
+| LEGO-006 — Common element design | ✅ v0.8.32 | Typography/colors/background/border/radius/opacity/shadow/hover. |
+| LEGO-009 — Consolidate Kasse design | ✅ v0.8.32 | Samme canonical design-paths for Kasse/Grid/Flex. |
+| LEGO-010 — Kasse internal X/Y gap | ✅ v0.8.30 | Separate X/Y gaps. |
+| LEGO-011 — Responsive spacing | ✅ v0.8.31 | Tablet/Mobile inheritance. |
+| LEGO-012 — Responsive common design | ✅ v0.8.33 | Reversible responsive design snapshots. |
+| LEGO-013 — Extended interaction states | ✅ v0.8.34 | Focus/Active/Disabled + transition. |
+| LEGO-021 — Undo/Redo one step per action | ✅ | v0.8.20–23 owner + LEGO single-event bridges. |
+| LEGO-025 — QA suite | ✅ v0.8.35 | Combined nested composition/state/history regressions. |
+| LEGO-026 — Primary editor readiness | ✅ v0.8.35 | Readiness gate PASS. |
+| LEGO-027 — Primary design view | ✅ v0.8.36 | Direkte Design canonical proxy til Inspector design/state. |
+| LEGO-028 — Primary layout view | ✅ v0.8.37 | Remaining legacy layout controls mirrored canonical before history capture. |
+| LEGO-030 — Visual side-drop zones | 🟢 Aktiv | Over/Under/Venstre/Højre visual targeting. |
+| LEGO-031 — Automatic side-by-side | ⬜ | Side-drop til Auto-kasser/layout på samme placement motor. |
+| LEGO-032 — Visual resize/span | ⬜ | 12-column span resize. |
+| LEGO-033 — Responsive layout/span | ⬜ | Tablet/Mobile layout overrides. |
+
+## v0.8.35 — consolidation/readiness — ✅
+
+Verificeret kombinationsgate:
+
+- Auto-kasser → Kasse A → Kasse B + element på samme `LayoutParentKey`-model;
+- spacing + responsive design + interaction state i samme editor-DOM;
+- Kasse/Grid/Flex/common element compatibility;
+- sekventiel Undo/Redo af spacing → design → state og Redo tilbage;
+- parent relationer overlever history restore;
+- PHP 8.0/8.2/8.3 + system Chrome + fuld Chromium/Firefox/WebKit Architecture QA PASS.
+
+## v0.8.36 — primary LEGO design view — ✅
+
+- Direkte Design er en tynd proxy over samme responsive LEGO-design/state som Inspector;
+- farver, radius, normal/hover opacity og Disabled opacity bruger canonical controls;
+- responsive override seedes lydløst, canonical ændring ejer ét checkpoint;
+- ingen ny persistence/history/placement/public renderer.
+
+## v0.8.37 — primary LEGO layout view — ✅
+
+- resterende layout-only controls spejles i hidden canonical row-state;
+- eksisterende `PaddingPx`, `HorizontalPaddingPx`, `TopSpacingPx`, `BottomSpacingPx`, `WidthPercent`, `MinHeightPx` og Tablet/Mobile-varianter bevares som persistence/public source;
+- `Columns`, `MobileColumns`, `ColumnGapPx`, `MobileColumnGapPx` bevarer eksisterende semantik;
+- mirror sker native capture før delegated history, men udsender ikke et ekstra event;
+- Direkte Design og Inspector bruger dermed samme history/view-state for layout;
+- history-style DOM restore rehydrerer legacy + canonical layout sammen;
+- QA PASS på PHP 8.0/8.2/8.3, system Chrome samt Chromium/Firefox/WebKit.
+
+## LEGO-030 — næste aktive slice
+
+Mål: gøre placement visuelt LEGO-agtigt uden ny placement-motor.
+
+Acceptance:
+
+1. Når et element/Kasse trækkes over et kompatibelt mål, vises tydelige drop-zoner **Over / Under / Venstre / Højre**.
+2. Over/Under ændrer kun flat order/parent relation via eksisterende motor.
+3. Venstre/Højre genbruger eksisterende Auto-kasser/side-by-side-motor; ingen ny hierarchy-store.
+4. Kasse-i-Kasse og element-i-Kasse følger eksisterende nesting depth/cycle-regler.
+5. Keyboard/ARIA fallback for placement bevares eller forbedres.
+6. Ét drop = ét history-checkpoint.
+7. Undo/Redo gendanner både order, parent og visuel composition.
+8. Desktop/Tablet/Mobil preview-state må ikke ændre placement-data.
+9. Vehicle/Event/Gallery protected-domain contract forbliver PASS.
+10. PHP 8.0/8.2/8.3 + system Chrome + Chromium/Firefox/WebKit skal være grøn før release.
+
+## I9 — MANUAL QA EVIDENCE — PENDING
+
+Krævet før nogen public cutover:
+
+1. Chrome brand test;
+2. Edge brand test;
+3. Firefox brand test;
+4. Safari brand test;
 5. screen-reader core flow;
 6. `test2` live-site E2E;
 7. Vehicle/Event/Gallery visual/function regression;
-8. migration/rollback på en live kopi.
+8. migration/rollback på live kopi.
 
-Automatisk Chromium/Firefox/WebKit, security-audit og rollback-simulation er regressionsgates, men opfylder ikke de manuelle live-gates ovenfor.
+## I10 — FINAL CONTROLLED CONVERSION — LÅST
 
-## I10 — FINAL CONTROLLED CONVERSION — PUBLIC CUTOVER FORTSAT LÅST
-
-Fast rækkefølge:
+Fast rækkefølge efter I9 PASS:
 
 1. comparison page;
 2. Hjem;
 3. Om foreningen;
 4. Kontakt;
 5. Bliv medlem;
-6. Vehicle/Event/Gallery først efter særskilte protected-domain gates;
+6. Vehicle/Event/Gallery kun efter særskilt compatibility proof;
 7. legacy removal til sidst.
 
-### I10 slices
-
-- **I10-A — Planner/shadow workspace:** ✅ complete.
-- **I10-B — Shadow acceptance ledger:** ✅ complete.
-- **I10-C — Signed cutover preflight:** ✅ complete, men public mutation forbliver låst.
-- **I10-D — Public comparison-page cutover:** ⛔ blocked af I9 live/manual gates.
-- **I10-E — Core page cutover:** ⛔ blocked; Hjem → Om → Kontakt → Bliv medlem én ad gangen.
-- **I10-F — Protected domain cutover:** ⛔ blocked; særskilt compatibility proof kræves.
-- **I10-G — Legacy removal:** ⛔ blocked indtil alle konverterede domæner er accepteret og rollback-retention kan ophøre.
-
-## Stabiliseret editorhistorik — v0.8.20–v0.8.23
-
-Undo/Redo er manuelt accepteret og fortsat én autoritativ history-stack:
-
-- v0.8.20 rettede load-order og strukturelle checkpoints;
-- v0.8.21 bevarer live SELECT/INPUT/TEXTAREA-state og elementtype gennem restore;
-- v0.8.22 registrerer første nye strukturelle handling efter fuld Undo/Redo;
-- v0.8.23 registrerer tekst, farver og billeder som logiske content-history checkpoints;
-- LEGO må ikke introducere en anden drag/drop-motor, parent/child-model eller Undo/Redo-stack.
-
-## UX / Event / Backup — LEVERET
-
-### UX-3 — Workspace rails — ✅ v0.8.24
-
-- Elementer/Funktioner og Inspector foldes uafhængigt;
-- begge kan være smalle rails samtidig;
-- state gemmes browser-lokalt;
-- tablet/mobile beholder stacked layout.
-
-### UX-4 — Ugemt preview — ✅ v0.8.25 + v0.8.27
-
-- preview bruger aktuel levende editor-state uden save/version/public mutation;
-- Desktop / Tablet / Mobil understøttes;
-- v0.8.27 fjerner transient editor-chrome, Direkte Design, image-tools, box-model handles og focal-point fra preview-klonen.
-
-### EVENT-001 — Automatisk arkiv — ✅ v0.8.26
-
-- dato før i dag → Tidligere arrangementer;
-- event i dag med sluttid → Kommende indtil sluttid, derefter Tidligere;
-- event i dag uden sluttid → Kommende resten af dagen, Tidligere efter midnat;
-- Kommende sorteres stigende, Tidligere nyeste først;
-- runtime udfører ingen frontend save/post-write/option-write.
-
-### B1 — Sidebackup restore — ✅ v0.8.28
-
-- **Erstat original:** safety backup før write, samme Page ID/slug/URL og audit;
-- **Opret som kopi:** separat draft med collision-safe slug;
-- path-containment, capability + nonce og rollback-data.
-
-### B2 — Versioneret site-backup — ✅ v0.8.29 + LEGO-integration
-
-- immutable `H18-BACKUP-xxxxxx` ID;
-- canonical manifest/payloads og SHA-256;
-- Hangar18-managed pages, page versions, Site Builder, forms/polls/data og Hangar18-options;
-- referenced media;
-- ZIP export/import med security preflight;
-- full restore og selective page restore med signeret/state-bound dry-run;
-- safety backup før første mutation;
-- stale restore-lock recovery og audit;
-- v0.8.31 selective restore: valgte sides LEGO-spacing;
-- v0.8.33 selective restore: valgte sides responsive LEGO-design;
-- v0.8.34 selective restore: interaction snapshots følger responsive designstate, inklusive inaktive reversible snapshots;
-- andre siders spacing/design/state bevares ved selective restore;
-- ældre backups uden additive LEGO-state sletter ikke nyere lokal state;
-- standard-B2 indeholder ikke raw database/plugin/theme disaster recovery.
-
-## LEGO-editor backlog
-
-Arkitekturregel: **én drag/drop-motor, én parent/child-model, én history-transaction pr. brugerhandling og ét fælles design-/spacing/state-sprog på tværs af elementtyper.**
-
-| ID | Status | Leverance |
-|---|---|---|
-| LEGO-001 — Shared object/state model | ✅ Foundation v0.8.30–v0.8.34 | Canonical spacing + common/responsive design + interaction state vocabulary. |
-| LEGO-002 — Backward-compatible X/Y gap | ✅ v0.8.30 | Legacy gap seedes til X=Y uden migration. |
-| LEGO-003 — Inspector separat X/Y spacing | ✅ v0.8.30 | Separate X/Y controls. |
-| LEGO-004 — Per-element margin | ✅ v0.8.30 | Responsive Margin X/Y. |
-| LEGO-006 — Common element design model | ✅ v0.8.32 | Typography/color/background/border/radius/opacity/shadow/hover. |
-| LEGO-009 — Consolidate Kasse design | ✅ Foundation v0.8.32 | Kasse/Grid/Flex bruger samme canonical design-paths. |
-| LEGO-010 — Kasse internal X/Y gap | ✅ v0.8.30 | Separate X/Y gaps. |
-| LEGO-011 — Responsive spacing | ✅ v0.8.31 | Tablet/Mobile inheritance og overrides. |
-| LEGO-012 — Responsive common design | ✅ v0.8.33 | Desktop basis + reversible Tablet/Mobile design snapshots. |
-| LEGO-013 — Extended interaction states | ✅ v0.8.34 | Transition, Focus, Active og Disabled på samme responsive state-contract. |
-| LEGO-021 — Undo/Redo one step per action | ✅ Stabiliseret | v0.8.20–v0.8.23 er eneste history-owner; LEGO-lag sender ét canonical checkpoint. |
-| LEGO-025 — QA suite | 🟡 Aktiv v0.8.35 | Udvides til kombineret nested Kasse/Auto-kasser + spacing/design/states/history/B2. |
-| LEGO-026 — Primary editor readiness | 🟢 Aktiv v0.8.35 | Gate for at gøre LEGO til den primære editor-designmotor uden public renderer-cutover. |
-| LEGO-030 — Visual side-drop zones | ⬜ Efter primary-ready | Over/Under/Venstre/Højre på eksisterende placement-motor. |
-| LEGO-031 — Automatic side-by-side layout | ⬜ Efter LEGO-030 | Side-drop opretter/justerer layout uden ny parent/child-motor. |
-| LEGO-032 — Visual resize / column span | ⬜ Senere | Resize oven på usynlig 12-kolonne layoutmotor. |
-| LEGO-033 — Tablet/Mobile layout overrides | ⬜ Senere | Responsive layout/span uden separat layoutmotor. |
-
-### v0.8.30 — LEGO X/Y spacing foundation — ✅
-
-Canonical X/Y spacing, per-element margin og Kasse/Grid/Flex gaps. Legacy gap falder tilbage til X=Y. Existing history owner bruges uændret.
-
-### v0.8.31 — Responsive LEGO spacing — ✅
-
-Desktop basis, Tablet/Mobile inheritance, reversible overrides og selective B2 restore af spacing.
-
-### v0.8.32 — Common element/Kasse design — ✅
-
-Én renderer-neutral designmodel over eksisterende page-section felter. Almindelige elementer og Kasse/Grid/Flex deler farver, typografi, border, radius, opacity, shadow og Hover. Ingen ny design-option eller parallel persistence.
-
-### v0.8.33 — Responsive common design — ✅
-
-Desktop forbliver legacy-backed basis. Tablet/Mobil kan arve eller bruge reversible design-overrides. Inspector følger aktiv device. B2 selective restore gendanner kun valgte sides responsive design.
-
-### v0.8.34 — Extended interaction states — ✅ LEVERET
-
-- fælles `LegoDesignModel` løftet additivt til schema 2;
-- `Motion.Transition` bruger eksisterende `TransitionPreset`;
-- Focus: Global/Tilpasset/Ingen + farve/bredde/offset;
-- Active: Ingen / Press / ScaleDown;
-- Disabled: opacity;
-- samme model og Inspector for elementer og Kasse/Grid/Flex;
-- Desktop er fortsat legacy-backed;
-- Tablet/Mobil bruger den eksisterende responsive design-option;
-- `InteractionHasOverride` og `InteractionHasSnapshot` adskiller aktivt override fra bevaret reversibelt snapshot;
-- Arv fra Desktop kan slås til/fra uden at tidligere state-værdier går tabt;
-- Normal/Hover/Focus/Active/Disabled preview virker på Desktop/Tablet/Mobil;
-- select-event guard sikrer ét logisk event;
-- responsive state-edit sender ét canonical row input til eksisterende Undo/Redo-owner;
-- B2 selective page restore verificerer aktive og inaktive interaction snapshots;
-- LEGO Editor QA PASS på PHP 8.0/8.2/8.3 + system Chrome;
-- Editor Runtime Fast QA PASS;
-- B2 QA PASS på PHP 8.0/8.2/8.3;
-- fuld Architecture QA PASS på PHP 8.0/8.2/8.3 + Chromium/Firefox/WebKit;
-- Vehicle/Event/Gallery og public cutover er uændrede.
-
-## v0.8.35 — LEGO consolidation / primary-editor readiness — 🟢 AKTIV
-
-Dette er **gaten før LEGO kan gøres til den primære designmotor i editoren**. Den introducerer som udgangspunkt ikke nye designfeatures; den skal bevise, at de eksisterende LEGO-lag fungerer sammen under realistiske kombinationer.
-
-### Obligatorisk kombinationsmatrix
-
-1. almindeligt element alene;
-2. element i Kasse;
-3. flere elementer i samme Kasse;
-4. Kasse i Kasse inden for den nuværende tilladte nesting-dybde;
-5. Kasse i Auto-kasser;
-6. elementer i begge/alle Auto-kasse-kolonner;
-7. Grid/Flex/Kasse med X/Y-gap;
-8. Desktop + Tablet + Mobil inheritance/override;
-9. Normal + Hover + Focus + Active + Disabled;
-10. spacing + design + states ændret i samme session;
-11. Undo/Redo gennem hele kombinationen;
-12. fuld Undo → Redo → ny ændring;
-13. save/reload;
-14. B1 page restore;
-15. B2 full restore;
-16. B2 selective page restore;
-17. ugemt preview uden editor-chrome;
-18. existing drag/drop/placement regression;
-19. Vehicle/Event/Gallery protected-domain regression.
-
-### Primary-editor PASS-kriterier
-
-- ingen parallel history-, parent/child-, drag/drop- eller persistence-motor;
-- ét bruger-greb = ét history-checkpoint;
-- elementtype og nesting overlever Undo/Redo/save/reload;
-- inheritance on/off er reversibel uden datatab;
-- Kasse og almindelige elementer viser samme canonical design/state-semantik;
-- legacy/public output ændres ikke af selve editor-switch-gaten;
-- PHP 8.0/8.2/8.3 PASS;
-- system Chrome PASS;
-- Editor Runtime Fast PASS;
-- B1/B2 regression PASS;
-- Chromium/Firefox/WebKit Architecture QA PASS.
-
-Når denne gate er PASS, kan næste release gøre **LEGO til primær editor-UI/designmotor** ved at skjule/deprioritere duplikerede legacy designkontroller. Det er stadig **ikke** det samme som public renderer cutover.
-
-## Efter v0.8.35
-
-1. Gør LEGO til primær editor-UI/designmotor og konsolider Direkte Design/Inspector som views over samme canonical state.
-2. Kør og registrér I9 live/manual evidence på `test2`.
-3. Refresh comparison-page shadow copy og registrér acceptance mod aktuel `SourceHash`.
-4. Kør signed preflight igen.
-5. Første public LEGO-renderer cutover må kun ske på comparison-siden, når I9 faktisk er PASS.
-6. Derefter Hjem → Om → Kontakt → Bliv medlem én side ad gangen.
-7. Vehicle/Event/Gallery forbliver sidste protected-domain cutover.
-8. Visuelle side-dropzoner, automatisk side-by-side layout og resize/column-span fortsætter som LEGO-UX-slices uden at oprette nye motorer.
-
-## DOC-1 — Ultimate Designer visuel brugermanual — ⬜ BACKLOG
-
-Manualen laves efter editor-interaktionsmodellen er primary-ready, så screenshots matcher released runtime. Den skal mindst indeholde Quick start, elementkatalog, Section/Kasse/Auto-kasser/Flex/Tabel, nesting-map, Inspector-reference, responsive inheritance, interaction states, Undo/Redo, B1/B2, troubleshooting, accessibility og versionsbinding.
-
-## Aktuelle næste handlinger
-
-1. **Implementér v0.8.35 consolidation / primary-editor readiness QA.**
-2. Ret reelle kombinationsfejl fundet af QA uden at introducere parallelle motorer.
-3. Når v0.8.35 er PASS: gør LEGO til primær editor-UI/designmotor i næste slice.
-4. Kør I9 live/manual evidence på `test2`.
-5. Refresh comparison-page shadow copy og signed preflight.
-6. Public comparison-page activation designes først, når alle I9 gates faktisk er PASS.
+Ingen v0.8.35–v0.8.37 release ændrer denne public-cutover-lås.
