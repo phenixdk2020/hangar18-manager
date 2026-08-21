@@ -66,12 +66,14 @@ jQuery(function ($) {
             'aria-label': 'Placér ' + labelFor(position).toLowerCase() + ' for målet'
         };
         if ((position === 'left' || position === 'right') && sideCompatible) {
-            // Existing authoritative nesting motor reads this exact class/data contract.
+            // LEGO-031 still delegates placement to the existing authoritative
+            // nesting/Auto-kasser motor through this exact v0.8.11 contract.
             classes.push('h18-v0811-side-zone');
             attrs.class = classes.join(' ');
             attrs['data-side'] = position;
             attrs['data-box'] = targetKey;
             attrs['data-h18-v0838-existing-placement-contract'] = '1';
+            attrs['data-h18-v0840-generic-side-contract'] = '1';
         } else if (position === 'left' || position === 'right') {
             classes.push('is-disabled');
             attrs.class = classes.join(' ');
@@ -83,12 +85,10 @@ jQuery(function ($) {
     }
 
     function canSideTarget($target) {
-        if (dragSourceType !== 'container' || !isBox($target)) { return false; }
-        const targetParent = rowByKey(parentKey($target));
-        // Existing motor supports top-level box side placement and reordering
-        // within an existing Auto-kasser. It intentionally does not expose
-        // side placement for a Kasse nested directly in another Kasse.
-        return !parentKey($target) || isAuto(targetParent);
+        if (!$target || !$target.length || isAuto($target) || dragSourceType === 'grid') { return false; }
+        const targetParentKey = parentKey($target);
+        if (!targetParentKey) { return true; }
+        return isAuto(rowByKey(targetParentKey));
     }
 
     function addRowOverlay($row) {
@@ -115,10 +115,10 @@ jQuery(function ($) {
     }
 
     function addAutoProxySideOverlays() {
-        if (dragSourceType !== 'container') { return; }
-        $('.h18-v0811-auto-box[data-h18-v0811-box]').each(function () {
+        if (dragSourceType === 'grid') { return; }
+        $('.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-auto-box[data-h18-v0811-box]').each(function () {
             const $proxy = $(this);
-            const key = String($proxy.attr('data-h18-v0811-box') || '');
+            const key = String($proxy.attr('data-h18-v0811-row') || $proxy.attr('data-h18-v0811-box') || '');
             if (!key || key === dragSourceKey || $proxy.children('.' + OVERLAY_CLASS).length) { return; }
             const $target = rowByKey(key);
             if (!$target.length || !canSideTarget($target)) { return; }
@@ -187,40 +187,49 @@ jQuery(function ($) {
         window.setTimeout(clearOverlays, 0);
     });
 
-    // New Kasse palette drags can already use the existing side-zone contract.
-    // We add the same visual overlays, but generic palette elements are left to
-    // the existing palette/inside-Kasse behavior until LEGO-031 adds automatic
-    // side-by-side creation for arbitrary elements.
+    // LEGO-031 extends the existing v0.8.38 visual target layer to ordinary
+    // palette elements. Placement remains entirely owned by nesting-tools.
     document.addEventListener('dragstart', function (event) {
         const item = event.target && event.target.closest ? event.target.closest('.h18-builder-palette-item') : null;
         if (!item) { return; }
         const type = String(item.getAttribute('data-section-type') || '');
         const tool = String(item.getAttribute('data-h18-layout-tool') || item.getAttribute('data-h18-v0813-drag-tool') || '');
-        if (type !== 'container' && tool !== 'box') { return; }
-        dragSourceKey = '__new_box__';
-        dragSourceType = 'container';
-        dragMode = 'palette-box';
+        const boxSource = type === 'container' && (!tool || tool === 'box');
+        if (tool && tool !== 'box') { return; }
+        if (type === 'grid') { return; }
+        dragSourceKey = boxSource ? '__new_box__' : '__new_element__';
+        dragSourceType = boxSource ? 'container' : (type || 'text');
+        dragMode = boxSource ? 'palette-box' : 'palette-element';
         scheduleRender(0);
     }, true);
 
     document.addEventListener('dragover', function (event) {
-        if (dragMode !== 'palette-box') { return; }
+        if (dragMode !== 'palette-box' && dragMode !== 'palette-element') { return; }
         const x = typeof event.pageX === 'number' ? event.pageX : event.clientX + window.pageXOffset;
         const y = typeof event.pageY === 'number' ? event.pageY : event.clientY + window.pageYOffset;
         highlightAt(x, y);
     }, true);
 
     document.addEventListener('dragend', function () {
-        if (dragMode !== 'palette-box') { return; }
+        if (dragMode !== 'palette-box' && dragMode !== 'palette-element') { return; }
         dragSourceKey = '';
         dragSourceType = '';
         dragMode = '';
         window.setTimeout(clearOverlays, 0);
     }, true);
 
+    // Preserve the v0.8.38 marker/API for historical regression tests while
+    // exposing a dedicated LEGO-031 capability marker.
     document.documentElement.setAttribute('data-h18-lego-drop-zones-runtime', '0.8.38');
+    document.documentElement.setAttribute('data-h18-lego-side-by-side-runtime', '0.8.40');
     window.__h18LegoDropZonesV0838 = {
         version: '0.8.38',
+        refresh: renderOverlays,
+        clear: clearOverlays,
+        activeSource: function () { return { Key: dragSourceKey, Type: dragSourceType, Mode: dragMode }; }
+    };
+    window.__h18LegoSideBySideV0840 = {
+        version: '0.8.40',
         refresh: renderOverlays,
         clear: clearOverlays,
         activeSource: function () { return { Key: dragSourceKey, Type: dragSourceType, Mode: dragMode }; }
