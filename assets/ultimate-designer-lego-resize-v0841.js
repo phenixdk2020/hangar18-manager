@@ -301,6 +301,10 @@ jQuery(function ($) {
             .attr('data-h18-v0841-right', rightKey);
     }
 
+    function responsiveOwnsTileWidths() {
+        return canvasDevice() !== 'desktop' && Boolean(window.__h18LegoResponsiveLayoutV0842);
+    }
+
     function decorateGrid(grid) {
         const $grid = $(grid);
         const autoKey = String($grid.attr('data-h18-v0814-auto-key') || '');
@@ -311,6 +315,7 @@ jQuery(function ($) {
         const $children = childRowsForGrid($grid);
         if (!$tiles.length || $tiles.length !== $children.length) { return; }
         const spans = effectiveSpans($children);
+        const responsiveWidths = responsiveOwnsTileWidths();
 
         $grid.addClass('h18-v0841-resize-grid')
             .attr('data-h18-v0841-resize-grid', '1')
@@ -322,7 +327,9 @@ jQuery(function ($) {
             if (!$tile.children('.h18-v0841-span-badge').length) {
                 $tile.append($('<span>', { class: 'h18-v0841-span-badge', 'aria-hidden': 'true' }));
             }
-            updateTile($tile, spans[index]);
+            if (!responsiveWidths) {
+                updateTile($tile, spans[index]);
+            }
             ensureHandle($tile, index < $tiles.length - 1 ? $tiles.eq(index + 1) : $(), index);
         });
     }
