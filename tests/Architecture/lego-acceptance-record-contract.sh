@@ -60,5 +60,6 @@ if grep -Ei 'writeFile|appendFile|unlink|rmSync|renameSync|copyFile|child_proces
 fi
 
 bash tests/Architecture/lego-release-acceptance-init-contract.sh
+bash tests/Architecture/lego-acceptance-report-contract.sh
 
-echo 'LEGO-038/041 manual acceptance record contract: PASS'
+echo 'LEGO-038/041/043 manual acceptance contract chain: PASS'
