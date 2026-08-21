@@ -37,6 +37,7 @@ jobs:
           bash tests/Architecture/v0841-lego-resize-contract.sh
           bash tests/Architecture/v0842-lego-responsive-layout-contract.sh
           bash tests/Architecture/lego-manual-acceptance-contract.sh
+          bash tests/Architecture/lego-staging-build-contract.sh
 
       - name: Lint plugin PHP
         shell: bash
@@ -50,19 +51,20 @@ jobs:
           SHORT_SHA="$(git rev-parse --short=12 HEAD)"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
-          printf 'Build commit: %s\nPlugin version: %s\nPurpose: LEGO staging/manual acceptance only\n' "$GITHUB_SHA" "$VERSION" > TEST-BUILD.txt
+          printf 'Build commit: %s\nPlugin version: %s\nPurpose: LEGO staging/manual acceptance only\nOfficial release: NO\nPublic cutover authorized: NO\n' "$GITHUB_SHA" "$VERSION" > TEST-BUILD.txt
 
       - name: Build installable staging ZIP
         shell: bash
         run: |
           rm -rf build staging-dist
           mkdir -p build/hangar18-manager staging-dist
-          cp hangar18-manager.php readme.txt build/hangar18-manager/
+          cp hangar18-manager.php readme.txt TEST-BUILD.txt build/hangar18-manager/
           cp -R assets src build/hangar18-manager/
           (cd build && zip -qr ../staging-dist/hangar18-manager-lego-staging.zip hangar18-manager)
           sha256sum staging-dist/hangar18-manager-lego-staging.zip > staging-dist/SHA256SUMS.txt
           cp TEST-BUILD.txt staging-dist/TEST-BUILD.txt
           unzip -tq staging-dist/hangar18-manager-lego-staging.zip
+          unzip -p staging-dist/hangar18-manager-lego-staging.zip hangar18-manager/TEST-BUILD.txt | grep -F "Build commit: $GITHUB_SHA"
 
       - name: Write staging manifest
         shell: bash
