@@ -1,13 +1,101 @@
 name: LEGO Editor QA
 
 on:
+  push:
+    branches:
+      - agent/lego-spacing-foundation-v0830
+      - agent/lego-responsive-spacing-v0831
+      - agent/lego-common-design-v0832
+      - agent/lego-responsive-design-v0833
+      - agent/lego-interaction-states-v0834
+      - agent/lego-consolidation-v0835
+      - agent/lego-primary-editor-view-v0836
+      - agent/lego-layout-primary-v0837
+      - agent/lego-visual-drop-zones-v0838
+      - agent/lego-side-by-side-v0840
+      - agent/lego-visual-resize-v0841
+      - agent/lego-responsive-layout-v0842
   pull_request:
     paths:
-      - 'src/**'
-      - 'assets/ultimate-designer-*'
-      - 'tests/Architecture/**'
-      - 'tools/lego-*.cjs'
-      - 'docs/lego-*'
+      - 'src/Editor/LegoSpacingModel.php'
+      - 'src/Editor/LegoDesignModel.php'
+      - 'src/Editor/LegoResponsiveDesignModel.php'
+      - 'src/Editor/LegoInteractionStateModel.php'
+      - 'src/Editor/LegoLayoutSpanModel.php'
+      - 'src/Admin/EditorLegoSpacingAdminController.php'
+      - 'src/Admin/EditorLegoDesignAdminController.php'
+      - 'src/Admin/EditorLegoResponsiveDesignAdminController.php'
+      - 'src/Admin/EditorLegoInteractionStatesAdminController.php'
+      - 'src/Admin/EditorLegoPrimaryViewAdminController.php'
+      - 'src/Admin/EditorLegoLayoutPrimaryAdminController.php'
+      - 'src/Admin/EditorLegoDropZonesAdminController.php'
+      - 'src/Admin/EditorLegoResizeAdminController.php'
+      - 'src/Admin/IntegrationAdminBootstrap.php'
+      - 'src/Backup/SiteBackupRestoreCoordinator.php'
+      - 'assets/ultimate-designer-nesting-tools.js'
+      - 'assets/ultimate-designer-nesting-tools.css'
+      - 'assets/ultimate-designer-history-atomic-v0840.js'
+      - 'assets/ultimate-designer-lego-spacing-v0830.js'
+      - 'assets/ultimate-designer-lego-spacing-v0830.css'
+      - 'assets/ultimate-designer-lego-spacing-v0831.js'
+      - 'assets/ultimate-designer-lego-spacing-v0831.css'
+      - 'assets/ultimate-designer-lego-design-v0832.js'
+      - 'assets/ultimate-designer-lego-design-event-guard-v0832.js'
+      - 'assets/ultimate-designer-lego-design-v0832.css'
+      - 'assets/ultimate-designer-lego-design-responsive-v0833.js'
+      - 'assets/ultimate-designer-lego-design-responsive-event-guard-v0833.js'
+      - 'assets/ultimate-designer-lego-design-responsive-v0833.css'
+      - 'assets/ultimate-designer-lego-interaction-states-v0834.js'
+      - 'assets/ultimate-designer-lego-interaction-states-event-guard-v0834.js'
+      - 'assets/ultimate-designer-lego-interaction-snapshot-v0834.js'
+      - 'assets/ultimate-designer-lego-interaction-states-v0834.css'
+      - 'assets/ultimate-designer-lego-primary-view-v0836.js'
+      - 'assets/ultimate-designer-lego-primary-view-v0836.css'
+      - 'assets/ultimate-designer-lego-layout-primary-v0837.js'
+      - 'assets/ultimate-designer-lego-layout-primary-v0837.css'
+      - 'assets/ultimate-designer-lego-drop-zones-v0838.js'
+      - 'assets/ultimate-designer-lego-drop-zones-v0838.css'
+      - 'assets/ultimate-designer-lego-resize-v0841.js'
+      - 'assets/ultimate-designer-lego-resize-v0841.css'
+      - 'assets/ultimate-designer-lego-responsive-layout-v0842.js'
+      - 'assets/ultimate-designer-lego-responsive-layout-v0842.css'
+      - 'tests/Architecture/v0830-lego-spacing-*'
+      - 'tests/Architecture/v0831-lego-responsive-spacing-*'
+      - 'tests/Architecture/v0832-lego-common-design-*'
+      - 'tests/Architecture/v0833-lego-responsive-design-*'
+      - 'tests/Architecture/v0834-lego-interaction-states-*'
+      - 'tests/Architecture/v0835-lego-consolidation-*'
+      - 'tests/Architecture/v0836-lego-primary-view-*'
+      - 'tests/Architecture/v0837-lego-layout-primary-*'
+      - 'tests/Architecture/v0838-lego-drop-zones-*'
+      - 'tests/Architecture/v0840-lego-side-by-side-*'
+      - 'tests/Architecture/v0841-lego-resize-*'
+      - 'tests/Architecture/v0842-lego-responsive-layout-*'
+      - 'tests/Architecture/lego-manual-acceptance-contract.sh'
+      - 'tests/Architecture/lego-staging-build-contract.sh'
+      - 'tests/Architecture/lego-staging-verify-contract.sh'
+      - 'tests/Architecture/lego-acceptance-record-contract.sh'
+      - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
+      - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
+      - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
+      - 'tests/Architecture/browser/lego-design-responsive-v0833.spec.cjs'
+      - 'tests/Architecture/browser/lego-interaction-states-v0834.spec.cjs'
+      - 'tests/Architecture/browser/lego-consolidation-v0835.spec.cjs'
+      - 'tests/Architecture/browser/lego-consolidation-history-v0835.spec.cjs'
+      - 'tests/Architecture/browser/lego-primary-view-v0836.spec.cjs'
+      - 'tests/Architecture/browser/lego-layout-primary-v0837.spec.cjs'
+      - 'tests/Architecture/browser/lego-drop-zones-v0838.spec.cjs'
+      - 'tests/Architecture/browser/lego-side-by-side-history-v0840.spec.cjs'
+      - 'tests/Architecture/browser/lego-resize-v0841.spec.cjs'
+      - 'tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs'
+      - 'tests/Architecture/browser/playwright*.config.cjs'
+      - 'tools/lego-staging-verify.cjs'
+      - 'tools/lego-acceptance-validate.cjs'
+      - 'docs/lego-manual-acceptance.md'
+      - 'docs/lego-test-session-template.md'
+      - 'docs/lego-staging-install-runbook.md'
+      - 'docs/lego-manual-acceptance.schema.json'
+      - 'docs/lego-manual-acceptance.example.json'
       - '.github/workflows/lego-spacing-qa.yml'
       - '.github/workflows/lego-staging-build.yml'
 
@@ -16,7 +104,7 @@ permissions:
 
 jobs:
   contract:
-    name: LEGO primary editor + staging acceptance contract
+    name: LEGO primary editor + side-by-side + resize + responsive layout contract
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -81,4 +169,6 @@ jobs:
       - run: google-chrome --version
       - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test jquery
       - run: npx playwright install --with-deps chromium firefox webkit
-      - run: npx playwright test -c tests/Architecture/browser/playwright.lego-v0842.config.cjs
+      - run: >-
+          npx playwright test
+          -c tests/Architecture/browser/playwright.lego-v0842.config.cjs
