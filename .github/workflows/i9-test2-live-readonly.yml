@@ -1,0 +1,44 @@
+name: I9 test2 live read-only smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Read-only staging base URL'
+        required: true
+        default: 'https://test2.hangar18.dk'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  public-readonly:
+    name: test2 public read-only Chrome + Chromium Firefox WebKit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      H18_TEST2_BASE_URL: ${{ inputs.base_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Show target without credentials
+        run: printf 'I9 public read-only target: %s\n' "$H18_TEST2_BASE_URL"
+      - name: Install Playwright test runtime
+        run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test
+      - name: Verify system Chrome
+        run: google-chrome --version
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run public read-only smoke
+        run: npx playwright test -c tests/Live/playwright.i9-public.config.cjs
+      - name: Upload I9 public evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: i9-test2-public-readonly-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 30
