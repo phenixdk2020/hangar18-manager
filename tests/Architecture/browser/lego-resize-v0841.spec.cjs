@@ -43,7 +43,7 @@ async function boot(page) {
       <button id="h18-editor-undo" type="button">Fortryd</button>
       <button id="h18-editor-redo" type="button">Gendan</button>
       <span id="h18-editor-history-status">Ingen ugemte ændringer</span>
-      <div class="h18-builder-canvas">
+      <div class="h18-builder-canvas" data-canvas-device="desktop">
         <div id="h18-page-sections-sortable">
           ${row(1, 'auto-1', 'grid', 'Auto-kasser')}
           ${row(2, 'text-1', 'text', 'Tekst', 'auto-1')}
@@ -156,6 +156,22 @@ test('LEGO-032 two Auto-kasser children default to 6/6 without persisted mutatio
   await expect(page.locator('.h18-v0841-resize-tile').nth(1)).toHaveAttribute('data-h18-v0841-effective-span', '6');
 });
 
+test('LEGO-032 decoration settles and does not recreate handles on its own observer', async ({ page }) => {
+  await boot(page);
+  await page.evaluate(() => {
+    const grid = document.querySelector('.h18-v0841-resize-grid');
+    window.__v0841DecorationMutations = 0;
+    const observer = new MutationObserver((mutations) => {
+      window.__v0841DecorationMutations += mutations.filter((m) => m.type === 'childList').length;
+    });
+    observer.observe(grid, { childList: true, subtree: true });
+    window.__h18LegoResizeV0841.refresh();
+  });
+  await page.waitForTimeout(250);
+  expect(await page.evaluate(() => window.__v0841DecorationMutations)).toBe(0);
+  await expect(page.locator('.h18-v0841-resize-handle')).toHaveCount(1);
+});
+
 test('LEGO-032 visual resize changes 6/6 to 8/4 as one Undo Redo checkpoint', async ({ page }) => {
   await boot(page);
   await resizeFirstBoundaryByColumns(page, 2);
@@ -185,4 +201,28 @@ test('LEGO-032 resize clamps each neighbor to at least one of twelve columns', a
   await page.waitForTimeout(350);
   expect(await page.evaluate(() => window.__v0841HistoryHarness.spans())).toEqual([11, 1]);
   expect(await page.evaluate(() => window.__v0841HistoryHarness.stored())).toEqual([11, 1]);
+});
+
+test('LEGO-032 Tablet and Mobile inherit Desktop and cannot initiate resize', async ({ page }) => {
+  await boot(page);
+  const canvas = page.locator('.h18-builder-canvas');
+  const handle = page.locator('.h18-v0841-resize-handle').first();
+
+  await canvas.evaluate((node) => node.setAttribute('data-canvas-device', 'tablet'));
+  await page.waitForTimeout(80);
+  await expect(handle).toBeHidden();
+  await handle.dispatchEvent('pointerdown', { button: 0, pointerId: 71, clientX: 400, clientY: 180 });
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 71, clientX: 700, clientY: 180 })));
+  await page.evaluate(() => document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 71, clientX: 700, clientY: 180 })));
+  await page.waitForTimeout(80);
+
+  expect(await page.evaluate(() => window.__v0841HistoryHarness.stored())).toEqual([0, 0]);
+  expect(await page.evaluate(() => window.__v0841HistoryHarness.state())).toEqual({ index: 0, entries: 1 });
+  const state = await page.evaluate(() => window.__h18LegoResizeV0841.stateForKey('text-1'));
+  expect(state.Tablet.InheritDesktop).toBe(true);
+  expect(state.Mobile.InheritDesktop).toBe(true);
+
+  await canvas.evaluate((node) => node.setAttribute('data-canvas-device', 'mobile'));
+  await page.waitForTimeout(50);
+  await expect(handle).toBeHidden();
 });
