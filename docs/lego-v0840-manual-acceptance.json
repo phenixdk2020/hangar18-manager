@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "b35b3809500f7de90ab7a3df0249fd84194edb51",
+    "pluginVersion": "0.8.40",
+    "packageSha256": "1497d3f0bd784aa10dcb8b14ee91a74b21fda99c78071ddedb2dcf0f2b988a66"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "PENDING",
+    "os": "PENDING",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop"},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting"},
+    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side"},
+    "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize"},
+    "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides"},
+    "F": {"status": "PENDING", "evidence": [], "note": "Design og spacing"},
+    "G": {"status": "PENDING", "evidence": [], "note": "Foldbare paneler"},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo"},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence"},
+    "J": {"status": "PENDING", "evidence": [], "note": "Preview"},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore"},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery regression"}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "PENDING",
+  "notes": "Official Hangar18 Manager v0.8.40 release acceptance on test2. Public cutover is not authorized."
+}
