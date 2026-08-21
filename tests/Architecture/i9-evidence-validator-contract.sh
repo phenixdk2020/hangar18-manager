@@ -5,13 +5,27 @@ VALIDATOR='tools/i9-evidence-validator.cjs'
 INIT='tools/i9-evidence-init.cjs'
 SCHEMA='docs/i9-evidence-manifest.schema.json'
 EXAMPLE='docs/i9-evidence-manifest.example.json'
+WORKFLOW='.github/workflows/i9-evidence-validate.yml'
 
-for file in "$VALIDATOR" "$INIT" "$SCHEMA" "$EXAMPLE"; do
+for file in "$VALIDATOR" "$INIT" "$SCHEMA" "$EXAMPLE" "$WORKFLOW"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
 node --check "$VALIDATOR"
 node --check "$INIT"
+
+grep -F 'workflow_dispatch:' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow must be explicitly dispatched'; exit 1; }
+grep -F 'contents: read' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow must remain read-only'; exit 1; }
+grep -F 'tools/i9-evidence-validator.cjs' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow does not invoke canonical validator'; exit 1; }
+grep -F 'actions/upload-artifact@v4' "$WORKFLOW" >/dev/null || { echo 'FAIL: validation report artifact missing'; exit 1; }
+if grep -Eq '^  (push|pull_request):' "$WORKFLOW"; then
+  echo 'FAIL: I9 evidence validation workflow must not run automatically'
+  exit 1
+fi
+if grep -Ei '\b(POST|PUT|PATCH|DELETE)\b|wp-admin|wp-login|curl[[:space:]]+-X|wget[[:space:]]+--post' "$WORKFLOW" >/dev/null; then
+  echo 'FAIL: evidence workflow contains a write/authentication primitive'
+  exit 1
+fi
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -97,4 +111,4 @@ if node "$VALIDATOR" "$MANIFEST" --require-pass >/dev/null 2>&1; then
   exit 1
 fi
 
-echo 'I9 evidence validator/init contract: PASS'
+echo 'I9 evidence validator/init/workflow contract: PASS'
