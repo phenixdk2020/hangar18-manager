@@ -1,16 +1,16 @@
 {
-  "version": "0.8.33",
-  "title": "Designer — responsive LEGO-design",
+  "version": "0.8.34",
+  "title": "Designer — responsive LEGO interaction states",
   "changelog": [
-    "Udvider den fælles LEGO-designmodel med Desktop som canonical basis og responsive Tablet/Mobil design-state.",
-    "Tablet og Mobil starter med Arv fra Desktop; første gang arv slås fra uden et tidligere override, seedes designet fra den aktuelle Desktop-state.",
-    "Eksisterende Tablet/Mobil-overrides bevares gennem arv til/fra via et eksplicit HasOverride-flag, så tidligere design ikke slettes.",
-    "Almindelige elementer og Kasse/Grid/Flex bruger den samme responsive designmodel for farver, border, radius, typografi, opacity, shadow og hover.",
-    "Inspector følger aktiv Desktop/Tablet/Mobil-preview og viser inherited kontra eksplicit design uden at introducere en ny drag/drop-, parent/child- eller history-motor.",
-    "Hover-effekter som Lift, Scale og Shadow fungerer uafhængigt af om hover-farverne arver Normal eller er tilpassede.",
-    "Responsive dropdowns har en snæver DOM input/change-guard, så én brugerhandling fortsat giver ét eksisterende Undo/Redo-checkpoint.",
-    "Responsive design gemmes som et additivt admin-only overlay; Desktop og den eksisterende public renderer forbliver legacy-backed og autoritative.",
-    "B2 selective page restore gendanner nu også kun den valgte sides responsive LEGO-designstate og bevarer andre sider; ældre backups uden overlay sletter ikke nyere state.",
+    "Udvider den fælles LEGO-designmodel til schema 2 med Transition, Focus, Active og Disabled oven på de eksisterende legacy-backed designfelter.",
+    "Focus understøtter Global, Tilpasset eller Ingen ring samt farve, bredde og offset; Active understøtter Tryk 1 px og Scale 97%, og Disabled har egen opacity.",
+    "Almindelige elementer og Kasse/Grid/Flex bruger præcis samme interaction-state model og Inspector-kontroller.",
+    "Desktop forbliver gemt i de eksisterende page-section felter; Tablet/Mobil interaction overrides ligger i den eksisterende responsive LEGO-designstate og kræver ingen ny WordPress-option.",
+    "Aktiv override og bevaret snapshot er separate, så Arv fra Desktop kan slås til/fra uden at tidligere Tablet/Mobil Focus/Active/Disabled-værdier går tabt.",
+    "Canvas preview følger Normal, Hover, Focus, Aktiv og Disabled på den valgte Desktop/Tablet/Mobil device.",
+    "Responsive state-ændringer sender ét canonical row input-checkpoint; admin.js/history-v0.8.23 er fortsat eneste Undo/Redo-ejer, og select-event guard forhindrer dobbelt input/change.",
+    "B2 selective page restore gendanner interaction snapshots som del af den valgte sides responsive LEGO-designstate og bevarer andre sider.",
+    "Historiske v0.8.32 design-tests er gjort additive-schema kompatible uden at svække mapping-, persistence-, history- eller protected-domain-kontrakterne.",
     "LEGO Editor QA, Editor Runtime Fast QA og B2 QA er bestået; fuld Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.",
     "Vehicle/Event/Gallery og public cutover er uændrede."
   ]
