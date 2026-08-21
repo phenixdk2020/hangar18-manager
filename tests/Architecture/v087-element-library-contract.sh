@@ -64,14 +64,14 @@ grep -F '.h18-command-palette-dialog' "$ADMIN_CSS" >/dev/null
 # Historical v0.8.7 rule: the element-library slice itself must not modify the
 # protected Vehicle/Event/Gallery implementations. Later explicitly scoped
 # feature work is validated by its own contract plus protected-domain-contract.
-# EVENT-001 is such an explicit slice. v0.8.32 also contains a narrowly scoped
-# admin-only "event guard" whose name refers to DOM events, not the Events domain.
-# Only these exact named paths are excluded; arbitrary Vehicle/Event/Gallery
-# paths remain rejected here.
+# EVENT-001 is such an explicit slice. v0.8.32/v0.8.33 also contain narrowly
+# scoped admin-only "event guard" assets whose names refer to DOM events, not the
+# Events domain. Only these exact named paths are excluded; arbitrary protected
+# Vehicle/Event/Gallery paths remain rejected here.
 protected_changes="$(
   git diff --name-only origin/main...HEAD |
     grep -Ei '(^|/)(Vehicle|Event|Gallery)|vehicle|event|gallery' |
-    grep -Ev '^src/Event/EventArchiveRuntime\.php$|^tests/Architecture/event-auto-archive-(smoke\.php|contract\.sh)$|^\.github/workflows/event-auto-archive-qa\.yml$|^assets/ultimate-designer-lego-design-event-guard-v0832\.js$' || true
+    grep -Ev '^src/Event/EventArchiveRuntime\.php$|^tests/Architecture/event-auto-archive-(smoke\.php|contract\.sh)$|^\.github/workflows/event-auto-archive-qa\.yml$|^assets/ultimate-designer-lego-design-event-guard-v0832\.js$|^assets/ultimate-designer-lego-design-responsive-event-guard-v0833\.js$' || true
 )"
 if [[ -n "$protected_changes" ]]; then
   echo 'FAIL: v0.8.7 editor-library slice changed an unapproved protected domain path'
