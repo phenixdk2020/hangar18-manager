@@ -1,6 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.8.33
+Version: 0.8.34
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.34 – Designer — responsive LEGO interaction states ==
+
+Nyt:
+- Udvider den fælles LEGO-designmodel til schema 2 med Transition, Focus, Active og Disabled oven på de eksisterende legacy-backed designfelter.
+- Focus understøtter Global, Tilpasset eller Ingen ring samt farve, bredde og offset; Active understøtter Tryk 1 px og Scale 97%, og Disabled har egen opacity.
+- Almindelige elementer og Kasse/Grid/Flex bruger præcis samme interaction-state model og Inspector-kontroller.
+- Desktop forbliver gemt i de eksisterende page-section felter; Tablet/Mobil interaction overrides ligger i den eksisterende responsive LEGO-designstate og kræver ingen ny WordPress-option.
+- Aktiv override og bevaret snapshot er separate, så Arv fra Desktop kan slås til/fra uden at tidligere Tablet/Mobil Focus/Active/Disabled-værdier går tabt.
+- Canvas preview følger Normal, Hover, Focus, Aktiv og Disabled på den valgte Desktop/Tablet/Mobil device.
+- Responsive state-ændringer sender ét canonical row input-checkpoint; admin.js/history-v0.8.23 er fortsat eneste Undo/Redo-ejer, og select-event guard forhindrer dobbelt input/change.
+- B2 selective page restore gendanner interaction snapshots som del af den valgte sides responsive LEGO-designstate og bevarer andre sider.
+- Historiske v0.8.32 design-tests er gjort additive-schema kompatible uden at svække mapping-, persistence-, history- eller protected-domain-kontrakterne.
+- LEGO Editor QA, Editor Runtime Fast QA og B2 QA er bestået; fuld Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.33 – Designer — responsive LEGO-design ==
