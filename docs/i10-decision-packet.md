@@ -7,7 +7,7 @@
 3. `ConversionCutoverPreflightService` kontrollerer WordPress-identitet, shadow-copy, source drift og human acceptance.
 4. Decision packet aggregerer disse resultater uden at udføre migration, activation eller public write.
 
-`ConversionDecisionPacketFormatter` kan vise samme packet som stabil pretty JSON eller Markdown. `ConversionDecisionPacketFingerprintService` kan lave et canonical SHA-256 fingerprint af packet-snapshotet til evidence/audit. `ConversionDecisionPacketDiffService` kan sammenligne to packet-snapshots og vise præcis hvilke stage-/blocker-/reviewability-data der ændrede sig siden sidste review.
+`ConversionDecisionPacketFormatter` kan vise samme packet som stabil pretty JSON eller Markdown. `ConversionDecisionPacketFingerprintService` kan lave et canonical SHA-256 fingerprint af packet-snapshotet til evidence/audit. `ConversionDecisionPacketDiffService` kan sammenligne to packet-snapshots og vise præcis hvilke stage-/blocker-/reviewability-data der ændrede sig siden sidste review. `ConversionDecisionPacketReviewReceiptService` kan dokumentere, at et menneske har gennemgået et bestemt fingerprintet packet-snapshot — uden at receipt'en bliver cutover-autorisation.
 
 ## Output
 
@@ -66,6 +66,30 @@ Diff-servicen er også report-only. Den viser:
 
 Diffen er nyttig før et nyt operator-review: hvis source drift, acceptance eller manual evidence har ændret packetens blockerbillede, kan det ses eksplicit i stedet for at sammenligne to store JSON-filer manuelt.
 
+## Operator review receipt
+
+Review receipt-servicen kræver:
+
+- et decision packet;
+- et gyldigt fingerprint for netop det packet;
+- reviewer-identitet;
+- environment-reference;
+- evidence-reference;
+- valgfri noter.
+
+Receipt-output indeholder bl.a.:
+
+- `Mode=decision-packet-review-receipt-only`;
+- `PacketHash`;
+- reviewer/environment/evidence;
+- `ReviewedUtc`;
+- `HumanReviewRecorded=true`;
+- `AuthorizesCutover=false`;
+- `Executable=false`;
+- `PublicMutationAvailable=false`.
+
+Receipt'en er kun et auditbevis. Hvis packet ændrer sig efter review, passer `PacketHash` ikke længere, og `verify()` skal fejle. En receipt, der manipuleres til at hævde cutover-autorisation, execution eller public mutation, skal ligeledes altid fejle verifikation.
+
 ## Vigtige stopregler
 
 Decision packet er **ikke cutover** og er ikke et signal om, at en side automatisk må aktiveres. Selv en stage med `EligibleForOperatorReview=true` er kun klar til menneskelig gennemgang.
@@ -119,4 +143,6 @@ Derudover kan eksisterende blockers bl.a. være:
 
 `tests/Architecture/i10-decision-packet-diff-smoke.php` verificerer no-change, changed/added/removed stages, blocker/reviewability transitions og non-executable diff-output.
 
-Alle tre smoke-tests køres transitivt gennem den eksisterende `architecture-smoke.php`, så de dækkes af Architecture QA på alle understøttede PHP-versioner.
+`tests/Architecture/i10-decision-packet-review-receipt-smoke.php` verificerer packet-hash-binding, obligatorisk reviewer/environment/evidence, stale packet detection og at receipt'en aldrig kan autorisere cutover.
+
+Alle smoke-tests køres transitivt gennem den eksisterende `architecture-smoke.php`, så de dækkes af Architecture QA på alle understøttede PHP-versioner.
