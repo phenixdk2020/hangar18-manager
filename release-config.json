@@ -1,14 +1,14 @@
 {
-  "version": "0.8.40",
-  "title": "LEGO-editor — side-by-side, resize og responsive layouts",
+  "version": "0.8.41",
+  "title": "LEGO-editor — palette side-drop rettelse",
   "changelog": [
-    "Almindelige elementer kan nu placeres direkte ved siden af hinanden med Venstre/Højre drop-zoner via den eksisterende Auto-kasser/LayoutParentKey-motor.",
-    "Auto-kasser har nu et visuelt 12-kolonne layout med drag-resize mellem naboer, minimum 1/12 kolonne og ét samlet Undo/Redo-checkpoint pr. resize.",
-    "Tablet og Mobil understøtter reversible layout-overrides med Arv Desktop, bevarede snapshots og samme canonical span-state som Desktop.",
-    "Direkte Design · LEGO og Billede starter minimeret som standard; åbning/lukning ændrer ikke elementdata eller history-state.",
-    "Side-drop og responsive resize er atomiske handlinger i den eksisterende history-motor, så Undo/Redo genskaber wrapper, rækkefølge, parent-relationer og spans korrekt.",
-    "LEGO-editoren har fået staging/manual acceptance-pakke med A–L testscenarier, build-SHA/version/SHA-256 binding, install/rollback-runbook og maskinlæsbare acceptance-records.",
+    "Retter den manuelle v0.8.40-fejl hvor et nyt element fra venstre palette kunne ramme en synlig Venstre/Højre drop-zone men alligevel ende lodret over eller under målelementet.",
+    "HTML5 drag/drop bridge accepterer nu pointeren efter den synlige side-zones koordinater og retargeter kun selve drop-eventet til den eksisterende side-zone-kontrakt.",
+    "Den eksisterende nesting-tools motor er fortsat eneste ejer af Auto-kasser, LayoutParentKey, rækkefølge og placering; der er ikke tilføjet en ny placement-motor.",
+    "Den eksisterende Undo/Redo/history-owner og persistence-model er uændret.",
+    "Ny browser-regression reproducerer præcis handlingen: Tekst fra palette slippes til venstre for Tekst og billede, mens browserens native event target stadig er previewet.",
+    "Regressionen verificerer Auto-kasser wrapper, korrekt venstre/højre rækkefølge og canonical parent keys.",
     "QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit med protected Vehicle/Event/Gallery regressioner.",
-    "Vehicle/Event/Gallery og eksisterende public renderer/cutover forbliver uændrede; release 0.8.40 er til editor/staging-test uden automatisk sidekonvertering."
+    "Public renderer og I10 cutover er uændrede; v0.8.41 er klar til ny manuel LEGO acceptance på test2."
   ]
 }
