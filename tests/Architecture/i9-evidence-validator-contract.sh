@@ -6,9 +6,10 @@ INIT='tools/i9-evidence-init.cjs'
 SCHEMA='docs/i9-evidence-manifest.schema.json'
 EXAMPLE='docs/i9-evidence-manifest.example.json'
 WORKFLOW='.github/workflows/i9-evidence-validate.yml'
+PLUGIN='hangar18-manager.php'
 TARGET='https://test2.hangar18.dk/'
 
-for file in "$VALIDATOR" "$INIT" "$SCHEMA" "$EXAMPLE" "$WORKFLOW"; do
+for file in "$VALIDATOR" "$INIT" "$SCHEMA" "$EXAMPLE" "$WORKFLOW" "$PLUGIN"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 
@@ -19,6 +20,7 @@ grep -F 'workflow_dispatch:' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence wo
 grep -F 'contents: read' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow must remain read-only'; exit 1; }
 grep -F 'tools/i9-evidence-validator.cjs' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow does not invoke canonical validator'; exit 1; }
 grep -F -- '--expected-target "$EXPECTED_TARGET"' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow must bind validation to expected target'; exit 1; }
+grep -F 'hangar18-manager.php' "$WORKFLOW" >/dev/null || { echo 'FAIL: evidence workflow must resolve blank version from plugin source'; exit 1; }
 grep -F 'actions/upload-artifact@v4' "$WORKFLOW" >/dev/null || { echo 'FAIL: validation report artifact missing'; exit 1; }
 if grep -Eq '^  (push|pull_request):' "$WORKFLOW"; then
   echo 'FAIL: I9 evidence validation workflow must not run automatically'
@@ -32,7 +34,8 @@ fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 SHA='1111111111111111111111111111111111111111'
-VERSION='0.8.42'
+VERSION="$(sed -n "s/^[[:space:]]*const VERSION = '\([^']*\)';.*/\1/p" "$PLUGIN" | head -n 1)"
+test -n "$VERSION" || { echo 'FAIL: could not resolve current plugin version'; exit 1; }
 MANIFEST="$TMP/i9.json"
 
 node "$INIT" \
@@ -118,4 +121,4 @@ if node "$VALIDATOR" "$MANIFEST" --require-pass >/dev/null 2>&1; then
   exit 1
 fi
 
-echo 'I9 evidence validator/init/workflow/target contract: PASS'
+echo "I9 evidence validator/init/workflow/target/version contract: PASS ($VERSION)"
