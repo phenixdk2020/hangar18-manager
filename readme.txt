@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.41
+Version: 0.8.42
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.42 – LEGO-editor retest + sikker Slet side ==
+
+Nyt:
+- Indeholder v0.8.41-rettelsen for palette → Venstre/Højre, så et nyt element bruger den synlige side-zones koordinater og ikke falder tilbage til lodret placement.
+- Tilføjer PAGE-DELETE-001: en tydelig Slet side-funktion til almindelige sider med eksakt titelbekræftelse og ekstra afsluttende bekræftelse.
+- Slet side kræver delete_pages, objektspecifik delete_post og gyldig nonce server-side.
+- Før en side flyttes til WordPress Papirkurv oprettes en B1-kompatibel safety backup med side- og Page Editor-state; permanent/raw delete bruges ikke.
+- Hjem, Køretøjer og materiel, Events og Billedgalleri er eksplicit låst mod PAGE-DELETE-001.
+- PAGE-DELETE audit registrerer UTC-tid, side-ID/slug/titel, tidligere status, bruger-ID og safety-backup, og restore genbruger den eksisterende B1-motor.
+- Nye smoke/contract-tests verificerer afvist titel, protected route, WordPress Trash, fysisk safety backup, audit og fuld B1 restore på PHP 8.0/8.2/8.3.
+- Architecture/E14 browser QA og I9 Prep er grønne; manual/live A–L og I9 forbliver PENDING, og I10/public cutover er fortsat låst.
 
 
 == Version 0.8.41 – LEGO-editor — palette side-drop rettelse ==
