@@ -1,8 +1,8 @@
 # Ultimate Designer — hurtig reference
 
-**DOC-2** · editorarkitektur gennem LEGO-033
+**DOC-2** · aktuel editorbaseline **Hangar18 Manager v0.8.41** · 21. august 2026
 
-Denne side er den korte daglige huskeseddel. Se `ultimate-designer-user-manual.md` for den fulde forklaring og `DESIGN-MANUAL.md` for de godkendte visuelle værdier.
+Denne side er den korte daglige huskeseddel. Se `ultimate-designer-user-manual.md` for den fulde forklaring, `ud-v0841-manual-retest.md` for den aktuelle testprocedure og `DESIGN-MANUAL.md` for de godkendte visuelle værdier.
 
 ## Byg
 
@@ -28,6 +28,9 @@ Elementer/Funktioner → Canvas → vælg element → Direkte Design / Inspector
 - Over/Under = lodret rækkefølge.
 - Venstre/Højre = side-by-side via eksisterende Auto-kasser.
 - Ét side-drop = ét Undo-trin.
+- **v0.8.41:** palette → Venstre/Højre bruger nu den synlige side-zones koordinater, så native HTML5 drop-target ikke må falde tilbage til lodret placement.
+
+Ved manuel test: prøv først **Tekst og billede → nyt Tekst fra palette → Venstre**. Resultatet skal være side-by-side, ikke lodret.
 
 ## Resize
 
@@ -98,6 +101,33 @@ Forvent ét logisk trin pr. brugerhandling:
 | designændring | tidligere designstate |
 | indholdsændring | tidligere indhold |
 
+## Slet side — PAGE-DELETE-001
+
+**Gælder først i en QA-grøn release, der eksplicit indeholder PAGE-DELETE-001; funktionen er ikke del af den allerede frigivne v0.8.41-pakke.**
+
+Sikker flow:
+
+```text
+Slet side
+   ↓
+skriv aktuel sidetitel præcist
+   ↓
+ekstra bekræftelse
+   ↓
+B1-kompatibel safety backup
+   ↓
+WordPress Papirkurv
+```
+
+Regler:
+
+- kræver `delete_pages` + objektspecifik `delete_post` + nonce;
+- forkert titel eller Cancel = ingen mutation;
+- bruger WordPress Trash, aldrig permanent delete;
+- audit binder side-ID, titel, bruger, tid og safety-backup;
+- restore genbruger eksisterende B1-motor;
+- `Hjem`, `Køretøjer og materiel`, `Events` og `Billedgalleri` er låst mod funktionen.
+
 ## Før Gem
 
 - [ ] Desktop kontrolleret
@@ -110,6 +140,14 @@ Forvent ét logisk trin pr. brugerhandling:
 - [ ] Undo/Redo sanity
 - [ ] Vehicle/Event/Gallery upåvirket
 - [ ] ændringsnote skrevet
+
+## Aktuel acceptance
+
+Canonical PENDING-record for v0.8.41:
+
+`docs/lego-v0841-manual-acceptance.json`
+
+Ingen scenario-PASS uden konkret evidence. Et samlet LEGO A–L PASS er stadig kun input til I9 og autoriserer ikke I10.
 
 ## Public cutover
 
