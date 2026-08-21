@@ -1,14 +1,14 @@
 {
-  "version": "0.8.39",
-  "title": "Designer — foldbare canvas-værktøjspaneler",
+  "version": "0.8.40",
+  "title": "LEGO-editor — side-by-side, resize og responsive layouts",
   "changelog": [
-    "Direkte Design · LEGO og Billede-værktøjspanelet kan nu minimeres og udvides individuelt direkte på canvas.",
-    "Sammenfoldede paneler reduceres til en smal titelbjælke, så de ikke dækker unødigt meget af siden under redigering.",
-    "Foldestatus huskes browser-lokalt pr. paneltype og genanvendes også når editoren dynamisk genopbygger billed- eller designpanelet.",
-    "Toggle-knapper har aria-expanded, tooltip og keyboard-fokus.",
-    "Fold/udfold sender ingen side-input/change events og opretter derfor ingen Undo/Redo-checkpoint eller save-ændring.",
-    "Ingen ny WordPress-option, page-write, placement-, history- eller public renderer-motor er introduceret.",
-    "Editor Runtime Fast QA og LEGO Editor QA er bestået; fuld Architecture QA er bestået på PHP 8.0/8.2/8.3 samt Chromium, Firefox og WebKit.",
-    "Vehicle/Event/Gallery og public cutover er uændrede."
+    "Almindelige elementer kan nu placeres direkte ved siden af hinanden med Venstre/Højre drop-zoner via den eksisterende Auto-kasser/LayoutParentKey-motor.",
+    "Auto-kasser har nu et visuelt 12-kolonne layout med drag-resize mellem naboer, minimum 1/12 kolonne og ét samlet Undo/Redo-checkpoint pr. resize.",
+    "Tablet og Mobil understøtter reversible layout-overrides med Arv Desktop, bevarede snapshots og samme canonical span-state som Desktop.",
+    "Direkte Design · LEGO og Billede starter minimeret som standard; åbning/lukning ændrer ikke elementdata eller history-state.",
+    "Side-drop og responsive resize er atomiske handlinger i den eksisterende history-motor, så Undo/Redo genskaber wrapper, rækkefølge, parent-relationer og spans korrekt.",
+    "LEGO-editoren har fået staging/manual acceptance-pakke med A–L testscenarier, build-SHA/version/SHA-256 binding, install/rollback-runbook og maskinlæsbare acceptance-records.",
+    "QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit med protected Vehicle/Event/Gallery regressioner.",
+    "Vehicle/Event/Gallery og eksisterende public renderer/cutover forbliver uændrede; release 0.8.40 er til editor/staging-test uden automatisk sidekonvertering."
   ]
 }
