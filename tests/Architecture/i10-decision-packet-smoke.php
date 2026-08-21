@@ -7,6 +7,7 @@ require_once dirname(__DIR__,2).'/src/Autoload.php';
 
 use Hangar18\UltimateDesigner\Migration\ConversionAcceptanceChecklist;
 use Hangar18\UltimateDesigner\Migration\ConversionAcceptanceValidator;
+use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketFormatter;
 use Hangar18\UltimateDesigner\Migration\ConversionDecisionPacketService;
 use Hangar18\UltimateDesigner\Portability\CanonicalJson;
 use Hangar18\UltimateDesigner\QA\ReleaseReadiness;
@@ -72,6 +73,18 @@ i10PacketAssert(is_array($comparisonRow)&&$comparisonRow['EligibleForOperatorRev
 i10PacketAssert(($comparisonRow['Preflight']['Executable']??true)===false,'Embedded preflight must remain non-executable.');
 i10PacketAssert(($comparisonRow['Preflight']['PublicMutationAvailable']??true)===false,'Embedded preflight must remain non-mutating.');
 
+$formatter=new ConversionDecisionPacketFormatter();
+$json=$formatter->json($packet);
+$decoded=json_decode($json,true,512,JSON_THROW_ON_ERROR);
+i10PacketAssert(($decoded['Mode']??'')==='decision-packet-only','JSON formatter must preserve packet semantics.');
+i10PacketAssert(($decoded['Executable']??true)===false && ($decoded['PublicMutationAvailable']??true)===false,'JSON formatter must preserve non-executable invariants.');
+$markdown=$formatter->markdown($packet);
+i10PacketAssert(str_contains($markdown,'# I10 Conversion Decision Packet'),'Markdown formatter heading missing.');
+i10PacketAssert(str_contains($markdown,'Executable: **NO**'),'Markdown must surface non-executable state.');
+i10PacketAssert(str_contains($markdown,'Public mutation available: **NO**'),'Markdown must surface public-mutation lock.');
+i10PacketAssert(str_contains($markdown,'`'.$comparison.'`'),'Markdown must include comparison target.');
+i10PacketAssert(str_contains($markdown,'review-only'),'Markdown must explicitly state operator-review-only semantics.');
+
 $homeRow=array_values(array_filter($packet['Stages'],static fn(array $row): bool=>($row['Slug']??'')==='hjem'))[0]??null;
 i10PacketAssert(is_array($homeRow)&&$homeRow['EligibleForOperatorReview']===false,'Missing per-target decision input must block Hjem.');
 i10PacketAssert(in_array('decision-input-missing',$homeRow['Blockers'],true),'Decision packet must expose missing target input explicitly.');
@@ -97,4 +110,4 @@ $driftRow=array_values(array_filter($driftPacket['Stages'],static fn(array $row)
 i10PacketAssert(is_array($driftRow)&&in_array('legacy-source-drift',$driftRow['Blockers'],true),'Source drift must propagate into decision packet blockers.');
 i10PacketAssert($driftRow['EligibleForOperatorReview']===false,'Source drift must block operator reviewability.');
 
-fwrite(STDOUT,"I10 decision packet: PASS\n");
+fwrite(STDOUT,"I10 decision packet + formatter: PASS\n");
