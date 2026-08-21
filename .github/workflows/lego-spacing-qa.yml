@@ -71,6 +71,7 @@ on:
       - 'tests/Architecture/v0840-lego-side-by-side-*'
       - 'tests/Architecture/v0841-lego-resize-*'
       - 'tests/Architecture/v0842-lego-responsive-layout-*'
+      - 'tests/Architecture/lego-manual-acceptance-contract.sh'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
       - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
       - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
@@ -85,6 +86,8 @@ on:
       - 'tests/Architecture/browser/lego-resize-v0841.spec.cjs'
       - 'tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
+      - 'docs/lego-manual-acceptance.md'
+      - 'docs/lego-test-session-template.md'
       - '.github/workflows/lego-spacing-qa.yml'
 
 permissions:
@@ -117,6 +120,7 @@ jobs:
       - run: bash tests/Architecture/v0840-lego-side-by-side-contract.sh
       - run: bash tests/Architecture/v0841-lego-resize-contract.sh
       - run: bash tests/Architecture/v0842-lego-responsive-layout-contract.sh
+      - run: bash tests/Architecture/lego-manual-acceptance-contract.sh
 
   browser:
     name: LEGO primary editor regression system Chrome
