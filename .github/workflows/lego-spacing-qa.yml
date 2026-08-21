@@ -8,6 +8,7 @@ on:
       - agent/lego-common-design-v0832
       - agent/lego-responsive-design-v0833
       - agent/lego-interaction-states-v0834
+      - agent/lego-consolidation-v0835
   pull_request:
     paths:
       - 'src/Editor/LegoSpacingModel.php'
@@ -20,6 +21,8 @@ on:
       - 'src/Admin/EditorLegoInteractionStatesAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
       - 'src/Backup/SiteBackupRestoreCoordinator.php'
+      - 'assets/ultimate-designer-nesting-tools.js'
+      - 'assets/ultimate-designer-nesting-tools.css'
       - 'assets/ultimate-designer-lego-spacing-v0830.js'
       - 'assets/ultimate-designer-lego-spacing-v0830.css'
       - 'assets/ultimate-designer-lego-spacing-v0831.js'
@@ -39,11 +42,14 @@ on:
       - 'tests/Architecture/v0832-lego-common-design-*'
       - 'tests/Architecture/v0833-lego-responsive-design-*'
       - 'tests/Architecture/v0834-lego-interaction-states-*'
+      - 'tests/Architecture/v0835-lego-consolidation-*'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
       - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
       - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
       - 'tests/Architecture/browser/lego-design-responsive-v0833.spec.cjs'
       - 'tests/Architecture/browser/lego-interaction-states-v0834.spec.cjs'
+      - 'tests/Architecture/browser/lego-consolidation-v0835.spec.cjs'
+      - 'tests/Architecture/browser/lego-consolidation-history-v0835.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
       - '.github/workflows/lego-spacing-qa.yml'
 
@@ -52,7 +58,7 @@ permissions:
 
 jobs:
   contract:
-    name: Responsive spacing + design + interaction states contract
+    name: Responsive spacing + design + interaction states + consolidation contract
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,9 +76,10 @@ jobs:
       - run: bash tests/Architecture/v0832-lego-common-design-contract.sh
       - run: bash tests/Architecture/v0833-lego-responsive-design-contract.sh
       - run: bash tests/Architecture/v0834-lego-interaction-states-contract.sh
+      - run: bash tests/Architecture/v0835-lego-consolidation-contract.sh
 
   browser:
-    name: LEGO spacing + design + interaction states system Chrome
+    name: LEGO spacing + design + states + nesting consolidation system Chrome
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,3 +95,5 @@ jobs:
           tests/Architecture/browser/lego-design-v0832.spec.cjs
           tests/Architecture/browser/lego-design-responsive-v0833.spec.cjs
           tests/Architecture/browser/lego-interaction-states-v0834.spec.cjs
+          tests/Architecture/browser/lego-consolidation-v0835.spec.cjs
+          tests/Architecture/browser/lego-consolidation-history-v0835.spec.cjs
