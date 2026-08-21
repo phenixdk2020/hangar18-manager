@@ -7,14 +7,14 @@ namespace Hangar18\UltimateDesigner\Editor;
 /**
  * Canonical, renderer-neutral design view over the existing page section schema.
  *
- * v0.8.32 deliberately does not introduce another persistence store. The legacy
- * section fields remain the save/public-renderer source, while this model gives
- * ordinary elements and Kasse/Grid/Flex one shared editor contract for colors,
- * typography, border, radius, effects and hover state.
+ * The legacy section fields remain the save/public-renderer source. v0.8.34
+ * extends the same model with transition/focus/active/disabled interaction state
+ * values already present in that schema; no new base-design persistence store is
+ * introduced.
  */
 final class LegoDesignModel
 {
-    public const SCHEMA_VERSION = 1;
+    public const SCHEMA_VERSION = 2;
 
     /** @return array<int,string> */
     public static function fonts(): array
@@ -32,6 +32,24 @@ final class LegoDesignModel
     public static function hoverEffects(): array
     {
         return ['None', 'Lift', 'Scale', 'Shadow'];
+    }
+
+    /** @return array<int,string> */
+    public static function transitionPresets(): array
+    {
+        return ['Inherit', 'Fast', 'Normal', 'Slow', 'Custom'];
+    }
+
+    /** @return array<int,string> */
+    public static function focusStyles(): array
+    {
+        return ['Global', 'Custom', 'None'];
+    }
+
+    /** @return array<int,string> */
+    public static function activeEffects(): array
+    {
+        return ['None', 'Press', 'ScaleDown'];
     }
 
     /**
@@ -61,6 +79,7 @@ final class LegoDesignModel
             'Typography.H3Size' => 'H3FontSizePx',
             'Effects.Opacity' => 'SectionOpacityPercent',
             'Effects.Shadow' => 'ShadowStyle',
+            'Motion.Transition' => 'TransitionPreset',
             'States.Hover.Mode' => 'HoverStyleMode',
             'States.Hover.Background' => 'HoverBackgroundColor',
             'States.Hover.Text' => 'HoverTextColor',
@@ -69,6 +88,12 @@ final class LegoDesignModel
             'States.Hover.Opacity' => 'HoverOpacityPercent',
             'States.Hover.Effect' => 'HoverEffect',
             'States.Hover.TransitionMs' => 'HoverTransitionMs',
+            'States.Focus.Style' => 'FocusRingStyle',
+            'States.Focus.Color' => 'FocusRingColor',
+            'States.Focus.Width' => 'FocusRingWidthPx',
+            'States.Focus.Offset' => 'FocusRingOffsetPx',
+            'States.Active.Effect' => 'ActiveEffect',
+            'States.Disabled.Opacity' => 'DisabledOpacityPercent',
         ];
     }
 
@@ -114,6 +139,9 @@ final class LegoDesignModel
                 'Opacity' => self::clamp($legacy['SectionOpacityPercent'] ?? 100, 0, 100, 100),
                 'Shadow' => self::enum($legacy['ShadowStyle'] ?? 'None', self::shadows(), 'None'),
             ],
+            'Motion' => [
+                'Transition' => self::enum($legacy['TransitionPreset'] ?? 'Inherit', self::transitionPresets(), 'Inherit'),
+            ],
             'States' => [
                 'Hover' => [
                     'Mode' => $hoverMode,
@@ -124,6 +152,18 @@ final class LegoDesignModel
                     'Opacity' => self::clamp($legacy['HoverOpacityPercent'] ?? 100, 0, 100, 100),
                     'Effect' => self::enum($legacy['HoverEffect'] ?? 'None', self::hoverEffects(), 'None'),
                     'TransitionMs' => self::clamp($legacy['HoverTransitionMs'] ?? 220, 0, 1000, 220),
+                ],
+                'Focus' => [
+                    'Style' => self::enum($legacy['FocusRingStyle'] ?? 'Global', self::focusStyles(), 'Global'),
+                    'Color' => self::color($legacy['FocusRingColor'] ?? '#8b4a2b', '#8b4a2b'),
+                    'Width' => self::clamp($legacy['FocusRingWidthPx'] ?? 3, 1, 8, 3),
+                    'Offset' => self::clamp($legacy['FocusRingOffsetPx'] ?? 2, 0, 12, 2),
+                ],
+                'Active' => [
+                    'Effect' => self::enum($legacy['ActiveEffect'] ?? 'None', self::activeEffects(), 'None'),
+                ],
+                'Disabled' => [
+                    'Opacity' => self::clamp($legacy['DisabledOpacityPercent'] ?? 55, 10, 100, 55),
                 ],
             ],
         ];
@@ -137,7 +177,6 @@ final class LegoDesignModel
 
     /**
      * Flatten canonical model values back to the existing page section field names.
-     * This is useful for migration/QA and keeps the mapping explicit in one place.
      *
      * @param array<string,mixed> $state
      * @return array<string,mixed>
@@ -153,8 +192,7 @@ final class LegoDesignModel
     }
 
     /**
-     * Normalize a canonical/partial state through the legacy contract so PHP and
-     * browser implementations share the exact same defaults and bounds.
+     * Normalize a canonical/partial state through the legacy contract.
      *
      * @param array<string,mixed> $state
      * @return array<string,mixed>
