@@ -1,6 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.37
+Version: 0.8.38
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.38 – Designer — tydelige LEGO drop-zoner ==
+
+Nyt:
+- Tilføjer tydelige Over / Under / Venstre / Højre drop-zoner oven på den eksisterende LEGO placement-motor.
+- Over/Under er passive visuelle zoner og lader fortsat den eksisterende jQuery sortable-motor eje lodret rækkefølge.
+- Venstre/Højre genbruger eksisterende Kasse-sidezoner og Auto-kasser-motoren, så LayoutParentKey fortsat er den autoritative parent/child-model.
+- Eksisterende Kasser kan placeres venstre/højre via samme placeBoxBeside/Auto-kasser-kontrakt; generiske elementers unsupported side-by-side er tydeligt disabled.
+- Ingen ny drag/drop-, parent/child-, save-, public renderer- eller Undo/Redo-motor er introduceret.
+- LEGO Editor QA, Editor Runtime Fast QA og fuld Architecture QA er bestået inklusive Chromium, Firefox og WebKit.
+- Vehicle/Event/Gallery og public cutover er uændrede.
 
 
 == Version 0.8.37 – Designer — layout bruger samme LEGO-state som Inspector ==
