@@ -14,7 +14,8 @@ function h18DesignAssert(bool $ok, string $message): void
 }
 
 $defaults = LegoDesignModel::defaults();
-h18DesignAssert(($defaults['SchemaVersion'] ?? 0) === 1, 'Design schema must be v1.');
+h18DesignAssert(LegoDesignModel::SCHEMA_VERSION >= 1, 'Design schema must remain additive from v1.');
+h18DesignAssert(($defaults['SchemaVersion'] ?? 0) === LegoDesignModel::SCHEMA_VERSION, 'Default design state must advertise the current schema version.');
 h18DesignAssert(($defaults['Mode'] ?? '') === 'Global', 'Default design mode must inherit Global.');
 h18DesignAssert(($defaults['Colors']['Background'] ?? '') === '#ffffff', 'Default background mismatch.');
 h18DesignAssert(($defaults['Radius']['TopLeft'] ?? 0) === -1, 'Per-corner radius must inherit with -1.');

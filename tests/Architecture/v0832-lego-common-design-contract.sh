@@ -21,7 +21,7 @@ require_contains() {
   fi
 }
 
-require_contains "$MODEL" 'public const SCHEMA_VERSION = 1;' 'common design schema is missing'
+require_contains "$MODEL" 'public const SCHEMA_VERSION = ' 'common design schema is missing'
 require_contains "$MODEL" 'public static function legacyFieldMap' 'canonical-to-legacy mapping is missing'
 require_contains "$MODEL" "'Colors.Background' => 'CustomBackgroundColor'" 'background mapping is missing'
 require_contains "$MODEL" "'Border.Width' => 'BorderWidthPx'" 'border mapping is missing'

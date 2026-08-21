@@ -21,6 +21,7 @@ final class EditorLegoResponsiveDesignAdminController
         self::$registered = true;
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
         add_action('admin_post_h18_save_page_editor', [self::class, 'captureSave'], 5);
+        EditorLegoInteractionStatesAdminController::register();
     }
 
     public static function enqueue(): void
