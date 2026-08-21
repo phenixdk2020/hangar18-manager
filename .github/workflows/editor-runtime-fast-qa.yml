@@ -14,6 +14,7 @@ on:
       - agent/lego-common-design-v0832
       - agent/lego-responsive-design-v0833
       - agent/lego-interaction-states-v0834
+      - agent/collapsible-canvas-panels-v0839
   pull_request:
     paths:
       - 'assets/ultimate-designer-nesting-tools.js'
@@ -31,16 +32,20 @@ on:
       - 'assets/ultimate-designer-lego-interaction-states-v0834.js'
       - 'assets/ultimate-designer-lego-interaction-states-event-guard-v0834.js'
       - 'assets/ultimate-designer-lego-interaction-snapshot-v0834.js'
+      - 'assets/ultimate-designer-canvas-panel-collapse-v0839.js'
+      - 'assets/ultimate-designer-canvas-panel-collapse-v0839.css'
       - 'src/Admin/EditorLayoutToolsAdminController.php'
       - 'src/Admin/EditorElementLibraryAdminController.php'
       - 'src/Admin/EditorLegoSpacingAdminController.php'
       - 'src/Admin/EditorLegoDesignAdminController.php'
       - 'src/Admin/EditorLegoResponsiveDesignAdminController.php'
       - 'src/Admin/EditorLegoInteractionStatesAdminController.php'
+      - 'src/Admin/EditorCanvasPanelCollapseAdminController.php'
       - 'src/Editor/LegoSpacingModel.php'
       - 'src/Editor/LegoDesignModel.php'
       - 'src/Editor/LegoResponsiveDesignModel.php'
       - 'src/Editor/LegoInteractionStateModel.php'
+      - 'tests/Architecture/v0839-collapsible-canvas-panels-contract.sh'
       - 'tests/Architecture/browser/**'
       - '.github/workflows/editor-runtime-fast-qa.yml'
 
@@ -56,8 +61,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
       - run: google-chrome --version
+      - run: bash tests/Architecture/v0839-collapsible-canvas-panels-contract.sh
       - run: npm init -y >/dev/null 2>&1 && npm install --no-save @playwright/test jquery
       - run: >-
           npx playwright test
           -c tests/Architecture/browser/playwright.system-chrome.config.cjs
-          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible|trusted edit immediately before Undo|Ctrl\+Z starts the same restore latch|Undo preserves the currently selected element|two image edits Undo once|Undo removing selected image|genuinely pending edit is flushed once|two structural image additions are two checkpoints|image element type survives Undo and Redo|new structural edit after full Undo and Redo cycle becomes a new checkpoint|text color and selected image are independent Undo Redo checkpoints|first text edit immediately after Redo is recorded as a new checkpoint|first color and image changes after Redo are not lost|Undo clears historical text selection|pending text edit is flushed exactly once|Tablet override survives inherit on/off|one color action switches Custom|select controls emit one history event|Kasse uses the exact same canonical controls|first Tablet override seeds current Desktop|responsive select produces one history checkpoint|Kasse uses the same responsive design state|spacing and responsive design remain independent single-history states|history-style full DOM restore rehydrates previous responsive state|Desktop interaction controls write existing legacy fields as one logical event|Tablet first override seeds Desktop and one responsive edit is one history checkpoint|Tablet interaction snapshot survives inherit on then off in the same editing session|Kasse uses the exact same interaction-state panel and model|history-style full DOM restore rehydrates prior interaction state"
+          --grep "Auto-kasser keeps two Kasser visible|Undo restore guard discards|two existing Kasser stay visible|trusted edit immediately before Undo|Ctrl\+Z starts the same restore latch|Undo preserves the currently selected element|two image edits Undo once|Undo removing selected image|genuinely pending edit is flushed once|two structural image additions are two checkpoints|image element type survives Undo and Redo|new structural edit after full Undo and Redo cycle becomes a new checkpoint|text color and selected image are independent Undo Redo checkpoints|first text edit immediately after Redo is recorded as a new checkpoint|first color and image changes after Redo are not lost|Undo clears historical text selection|pending text edit is flushed exactly once|Tablet override survives inherit on/off|one color action switches Custom|select controls emit one history event|Kasse uses the exact same canonical controls|first Tablet override seeds current Desktop|responsive select produces one history checkpoint|Kasse uses the same responsive design state|spacing and responsive design remain independent single-history states|history-style full DOM restore rehydrates previous responsive state|Desktop interaction controls write existing legacy fields as one logical event|Tablet first override seeds Desktop and one responsive edit is one history checkpoint|Tablet interaction snapshot survives inherit on then off in the same editing session|Kasse uses the exact same interaction-state panel and model|history-style full DOM restore rehydrates prior interaction state|image and Direkte Design panels minimize independently|collapsed state survives dynamic canvas panel rerender"

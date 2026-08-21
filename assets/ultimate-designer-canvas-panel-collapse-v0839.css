@@ -1,0 +1,72 @@
+.h18-canvas-panel-collapsible {
+    position: absolute;
+}
+
+.h18-canvas-panel-collapse-title {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding-right: 36px;
+}
+
+.h18-canvas-panel-collapse-toggle {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    z-index: 6;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid #3157ee;
+    border-radius: 6px;
+    background: #fff;
+    color: #3157ee;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.h18-canvas-panel-collapse-toggle:hover,
+.h18-canvas-panel-collapse-toggle:focus-visible {
+    background: #f3f6ff;
+    outline: 2px solid #3157ee;
+    outline-offset: 1px;
+}
+
+.h18-canvas-panel-collapsed {
+    width: auto !important;
+    min-width: 170px !important;
+    max-width: 250px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 7px 42px 7px 10px !important;
+    overflow: visible !important;
+}
+
+.h18-canvas-panel-collapsed > *:not(.h18-canvas-panel-collapse-title):not(.h18-canvas-panel-collapse-toggle) {
+    display: none !important;
+}
+
+.h18-canvas-panel-collapsed > .h18-canvas-panel-collapse-title {
+    min-height: 28px;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap;
+}
+
+.h18-canvas-image-tools.h18-canvas-panel-collapsed {
+    min-width: 150px !important;
+}
+
+.h18-canvas-direct-controls.h18-canvas-panel-collapsed {
+    min-width: 190px !important;
+}
+
+@media (max-width: 782px) {
+    .h18-canvas-panel-collapsed {
+        min-width: 145px !important;
+        max-width: min(220px, calc(100vw - 48px)) !important;
+    }
+}

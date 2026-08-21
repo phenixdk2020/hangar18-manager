@@ -33,6 +33,10 @@ final class EditorLegoSpacingAdminController
         // persistence/history layer. Register it after spacing so its asset
         // dependencies have a deterministic admin-only load order.
         EditorLegoDesignAdminController::register();
+
+        // v0.8.39 only decorates the floating canvas controls with browser-local
+        // collapse buttons. It owns no page/history state and is safe to load last.
+        EditorCanvasPanelCollapseAdminController::register();
     }
 
     public static function enqueue(): void
