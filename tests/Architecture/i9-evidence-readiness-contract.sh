@@ -5,13 +5,17 @@ INIT='tools/i9-evidence-init.cjs'
 VALIDATOR='tools/i9-evidence-validator.cjs'
 RECORD='tools/i9-evidence-record.cjs'
 READINESS='tools/i9-evidence-readiness.cjs'
+WORKFLOW='.github/workflows/i9-evidence-validate.yml'
 PLUGIN='hangar18-manager.php'
 TARGET='https://test2.hangar18.dk/'
 
-for file in "$INIT" "$VALIDATOR" "$RECORD" "$READINESS" "$PLUGIN"; do
+for file in "$INIT" "$VALIDATOR" "$RECORD" "$READINESS" "$WORKFLOW" "$PLUGIN"; do
   test -f "$file" || { echo "FAIL: missing $file"; exit 1; }
 done
 node --check "$READINESS"
+
+grep -F 'tools/i9-evidence-readiness.cjs' "$WORKFLOW" >/dev/null || { echo 'FAIL: Actions evidence gate must run readiness reporter'; exit 1; }
+grep -F 'i9-evidence-readiness.json' "$WORKFLOW" >/dev/null || { echo 'FAIL: readiness report must be included in Actions artifact'; exit 1; }
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
