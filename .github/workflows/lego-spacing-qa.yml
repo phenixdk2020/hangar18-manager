@@ -10,6 +10,7 @@ on:
       - agent/lego-interaction-states-v0834
       - agent/lego-consolidation-v0835
       - agent/lego-primary-editor-view-v0836
+      - agent/lego-layout-primary-v0837
   pull_request:
     paths:
       - 'src/Editor/LegoSpacingModel.php'
@@ -21,6 +22,7 @@ on:
       - 'src/Admin/EditorLegoResponsiveDesignAdminController.php'
       - 'src/Admin/EditorLegoInteractionStatesAdminController.php'
       - 'src/Admin/EditorLegoPrimaryViewAdminController.php'
+      - 'src/Admin/EditorLegoLayoutPrimaryAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
       - 'src/Backup/SiteBackupRestoreCoordinator.php'
       - 'assets/ultimate-designer-nesting-tools.js'
@@ -41,6 +43,8 @@ on:
       - 'assets/ultimate-designer-lego-interaction-states-v0834.css'
       - 'assets/ultimate-designer-lego-primary-view-v0836.js'
       - 'assets/ultimate-designer-lego-primary-view-v0836.css'
+      - 'assets/ultimate-designer-lego-layout-primary-v0837.js'
+      - 'assets/ultimate-designer-lego-layout-primary-v0837.css'
       - 'tests/Architecture/v0830-lego-spacing-*'
       - 'tests/Architecture/v0831-lego-responsive-spacing-*'
       - 'tests/Architecture/v0832-lego-common-design-*'
@@ -48,6 +52,7 @@ on:
       - 'tests/Architecture/v0834-lego-interaction-states-*'
       - 'tests/Architecture/v0835-lego-consolidation-*'
       - 'tests/Architecture/v0836-lego-primary-view-*'
+      - 'tests/Architecture/v0837-lego-layout-primary-*'
       - 'tests/Architecture/browser/lego-spacing-v0830.spec.cjs'
       - 'tests/Architecture/browser/lego-spacing-v0831.spec.cjs'
       - 'tests/Architecture/browser/lego-design-v0832.spec.cjs'
@@ -56,6 +61,7 @@ on:
       - 'tests/Architecture/browser/lego-consolidation-v0835.spec.cjs'
       - 'tests/Architecture/browser/lego-consolidation-history-v0835.spec.cjs'
       - 'tests/Architecture/browser/lego-primary-view-v0836.spec.cjs'
+      - 'tests/Architecture/browser/lego-layout-primary-v0837.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
       - '.github/workflows/lego-spacing-qa.yml'
 
@@ -64,7 +70,7 @@ permissions:
 
 jobs:
   contract:
-    name: LEGO responsive + states + consolidation + primary view contract
+    name: LEGO responsive + states + primary design + primary layout contract
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -84,9 +90,10 @@ jobs:
       - run: bash tests/Architecture/v0834-lego-interaction-states-contract.sh
       - run: bash tests/Architecture/v0835-lego-consolidation-contract.sh
       - run: bash tests/Architecture/v0836-lego-primary-view-contract.sh
+      - run: bash tests/Architecture/v0837-lego-layout-primary-contract.sh
 
   browser:
-    name: LEGO primary editor view system Chrome
+    name: LEGO primary editor design + layout system Chrome
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -105,3 +112,4 @@ jobs:
           tests/Architecture/browser/lego-consolidation-v0835.spec.cjs
           tests/Architecture/browser/lego-consolidation-history-v0835.spec.cjs
           tests/Architecture/browser/lego-primary-view-v0836.spec.cjs
+          tests/Architecture/browser/lego-layout-primary-v0837.spec.cjs
