@@ -22,6 +22,9 @@ final class EditorLegoLayoutPrimaryAdminController
         }
         self::$registered = true;
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
+        // v0.8.38 is visual targeting only and deliberately registers after
+        // the canonical layout/design stack. Placement remains nesting-tools.
+        EditorLegoDropZonesAdminController::register();
     }
 
     public static function enqueue(): void
