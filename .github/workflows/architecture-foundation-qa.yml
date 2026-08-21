@@ -20,6 +20,7 @@ on:
       - 'src/**'
       - 'tests/Architecture/**'
       - 'tests/Live/**'
+      - 'tools/i9-evidence-*.cjs'
       - 'assets/ultimate-designer-admin.js'
       - 'assets/ultimate-designer-admin.css'
       - 'assets/ultimate-designer-menu-admin.js'
@@ -63,6 +64,7 @@ on:
       - '.github/workflows/architecture-foundation-qa.yml'
       - '.github/workflows/i9-prep-qa.yml'
       - '.github/workflows/i9-test2-live-readonly.yml'
+      - '.github/workflows/i9-evidence-validate.yml'
 
 permissions:
   contents: read
@@ -102,6 +104,10 @@ jobs:
       - run: php tests/Architecture/i10-conversion-acceptance-smoke.php
       - run: php tests/Architecture/i10-cutover-preflight-smoke.php
       - run: bash tests/Architecture/i9-live-readonly-contract.sh
+      - run: bash tests/Architecture/i9-evidence-validator-contract.sh
+      - run: bash tests/Architecture/i9-evidence-record-contract.sh
+      - run: bash tests/Architecture/i9-evidence-integrity-contract.sh
+      - run: bash tests/Architecture/i9-evidence-readiness-contract.sh
       - run: bash tests/Architecture/i10-operator-runbook-contract.sh
       - run: bash tests/Architecture/e14-security-audit.sh
       - run: php tests/Architecture/e14-performance-budget.php
