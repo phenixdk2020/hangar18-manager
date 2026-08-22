@@ -44,7 +44,7 @@ jQuery(function ($) {
     }
 
     function rowKey($row) {
-        return String($row.find('.h18-page-section-key').first().val() || '');
+        return String(controls($row, '.h18-page-section-key').first().val() || '');
     }
 
     function rowType($row) {
@@ -164,7 +164,7 @@ jQuery(function ($) {
             const $row = $(this);
             if ($row.hasClass('h18-page-section-removed')) { return; }
             index += 1;
-            $row.find('.h18-page-section-order').val(index * 10);
+            controls($row, '.h18-page-section-order').val(index * 10);
         });
         if ($sections.hasClass('ui-sortable')) { $sections.sortable('refresh'); }
     }
