@@ -27,11 +27,12 @@ if(record.environment.stagingUrl!=='https://test2.hangar18.dk') throw new Error(
 if(!/public cutover is not authorized/i.test(record.notes||'')) throw new Error('cutover safety note required');
 NODE
 
-release_sha="b35b3809500f7de90ab7a3df0249fd84194edb51"
 release_version="$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["version"] ?? "";')"
 release_package_sha="$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["package_sha256"] ?? "";')"
-canonical='docs/lego-v0840-manual-acceptance.json'
-test -f "$canonical" || { echo "FAIL: missing $canonical" >&2; exit 1; }
+version_slug="$(printf '%s' "$release_version" | tr -d '.')"
+canonical="docs/lego-v${version_slug}-manual-acceptance.json"
+test -f "$canonical" || { echo "FAIL: missing canonical release acceptance $canonical" >&2; exit 1; }
+release_sha="$(php -r '$j=json_decode(file_get_contents($argv[1]),true); echo $j["build"]["commitSha"] ?? "";' "$canonical")"
 node tools/lego-acceptance-validate.cjs "$canonical" --expected-sha="$release_sha" --expected-version="$release_version" >/dev/null
 node - "$canonical" "$release_package_sha" <<'NODE'
 const fs=require('fs');

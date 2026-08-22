@@ -6,6 +6,7 @@ const nestingRuntime = path.resolve(__dirname, '../../../assets/ultimate-designe
 const nestingCss = path.resolve(__dirname, '../../../assets/ultimate-designer-nesting-tools.css');
 const dropRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-drop-zones-v0838.js');
 const dropCss = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-drop-zones-v0838.css');
+const parentGuardRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-parent-key-guard-v0845.js');
 const bridgeRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js');
 
 function row(index, key, type, label, parent = '') {
@@ -17,7 +18,7 @@ function row(index, key, type, label, parent = '') {
       <input class="h18-page-section-type" name="Sections[${index}][Type]" value="${type}">
       <input class="h18-section-navigator-label" name="Sections[${index}][NavigatorLabel]" value="${label}">
       <input class="h18-layout-parent-key" name="Sections[${index}][LayoutParentKey]" value="${parent}">
-      <select class="h18-layout-parent-select"><option value=""></option></select>
+      <select class="h18-layout-parent-select"><option value="">Topniveau på siden</option></select>
       <input class="h18-page-section-order" name="Sections[${index}][Order]" value="${index * 10}">
       <input name="Sections[${index}][Title]" value="">
       <input name="Sections[${index}][Content]" value="">
@@ -40,7 +41,7 @@ async function boot(page) {
     .base-preview{height:145px;background:#fff}
   </style></head><body>
     <button id="text-palette" type="button" draggable="true" class="h18-builder-palette-item" data-section-type="text">Tekst</button>
-    <button id="grid-palette" type="button" class="h18-builder-palette-item" data-section-type="grid">Grid</button>
+    <button id="grid-palette" type="button" class="h18-builder-palette-item" data-section-type="grid">Grid container</button>
     <div class="h18-builder-canvas">
       <div id="h18-page-sections-sortable">
         ${row(1, 'target-1', 'text_image', 'Tekst og billede')}
@@ -67,7 +68,7 @@ async function boot(page) {
           <input class="h18-page-section-type" name="Sections[${index}][Type]" value="${type}">
           <input class="h18-section-navigator-label" name="Sections[${index}][NavigatorLabel]" value="${label}">
           <input class="h18-layout-parent-key" name="Sections[${index}][LayoutParentKey]" value="">
-          <select class="h18-layout-parent-select"><option value=""></option></select>
+          <select class="h18-layout-parent-select"><option value="">Topniveau på siden</option></select>
           <input class="h18-page-section-order" name="Sections[${index}][Order]" value="${index * 10}">
           <input name="Sections[${index}][Title]" value=""><input name="Sections[${index}][Content]" value="">
           <input name="Sections[${index}][LayoutColumns]" value="1"><input name="Sections[${index}][MobileLayoutColumns]" value="1">
@@ -78,7 +79,19 @@ async function boot(page) {
 
     $('#grid-palette').on('click', function () {
       gridSerial += 1;
-      appendRow(20 + gridSerial, `auto-${gridSerial}`, 'grid', 'Grid');
+      appendRow(20 + gridSerial, `auto-${gridSerial}`, 'grid', 'Grid container');
+    });
+
+    // Mirror the real WordPress editor contract that exposed the manual bug:
+    // the human-facing select writes its current value back to LayoutParentKey.
+    // A select without the just-created parent option therefore used to erase
+    // the canonical hidden key when nesting-tools called .val(newKey).change().
+    $(document).on('change', '.h18-layout-parent-select', function () {
+      const $row = $(this).closest('.h18-page-section-row');
+      if (!$row.length) return;
+      $row.find('.h18-layout-parent-key').first()
+        .val(String($(this).val() || ''))
+        .trigger('change');
     });
 
     // This represents the existing palette creator: the new section is created
@@ -93,13 +106,15 @@ async function boot(page) {
   });
 
   await page.addScriptTag({ path: nestingRuntime });
+  await page.addScriptTag({ path: parentGuardRuntime });
   await page.addScriptTag({ path: dropRuntime });
   await page.addScriptTag({ path: bridgeRuntime });
 
   await expect(page.locator('html')).toHaveAttribute('data-h18-lego-palette-side-drop-bridge', '0.8.43');
+  await expect(page.locator('html')).toHaveAttribute('data-h18-lego-parent-key-guard', '0.8.45');
 }
 
-test('palette Tekst dropped at visual left zone becomes left sibling in Auto-kasser even when native event target is preview', async ({ page }) => {
+test('palette Tekst dropped at visual left zone survives WordPress select-to-hidden parent synchronization', async ({ page }) => {
   await boot(page);
 
   await page.evaluate(() => {
@@ -112,9 +127,9 @@ test('palette Tekst dropped at visual left zone becomes left sibling in Auto-kas
   const rect = await zone.boundingBox();
   if (!rect) throw new Error('Left side zone has no geometry');
 
-  // Reproduce the manual failure: pointer coordinates are inside the visible
-  // left zone, but the browser delivers dragover/drop with the preview itself
-  // as target. The bridge must retarget before nesting-tools sees the event.
+  // Reproduce both real-world layers: coordinates hit the visible left zone,
+  // while native HTML5 target remains the preview; after bridge retargeting the
+  // real WordPress parent select writes back to the hidden LayoutParentKey.
   await page.evaluate(({ x, y }) => {
     const preview = document.querySelector('#row-target-1 > .h18-canvas-preview');
     preview.dispatchEvent(new DragEvent('dragover', {
@@ -132,22 +147,39 @@ test('palette Tekst dropped at visual left zone becomes left sibling in Auto-kas
     document.getElementById('text-palette').dispatchEvent(new DragEvent('dragend', { bubbles: true }));
   }, { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
 
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(650);
 
   const state = await page.evaluate(() => {
     const rows = Array.from(document.querySelectorAll('#h18-page-sections-sortable > .h18-page-section-row'));
+    const byKey = Object.fromEntries(rows.map((row) => [
+      row.querySelector('.h18-page-section-key')?.value || '',
+      {
+        parent: row.querySelector('.h18-layout-parent-key')?.value || '',
+        selectedParent: row.querySelector('.h18-layout-parent-select')?.value || '',
+        label: row.querySelector('.h18-section-navigator-label')?.value || '',
+        type: row.getAttribute('data-section-type') || ''
+      }
+    ]));
     return {
       keys: rows.map((row) => row.querySelector('.h18-page-section-key')?.value || ''),
-      parents: Object.fromEntries(rows.map((row) => [
-        row.querySelector('.h18-page-section-key')?.value || '',
-        row.querySelector('.h18-layout-parent-key')?.value || ''
-      ])),
-      tiles: document.querySelectorAll('.h18-ud-auto-box-grid .h18-v0811-auto-box').length
+      byKey,
+      tiles: document.querySelectorAll('.h18-ud-auto-box-grid .h18-v0811-auto-box').length,
+      orphanGridContainers: rows.filter((row) => {
+        const type = row.getAttribute('data-section-type') || '';
+        if (type !== 'grid') return false;
+        const key = row.querySelector('.h18-page-section-key')?.value || '';
+        const children = rows.filter((candidate) => (candidate.querySelector('.h18-layout-parent-key')?.value || '') === key);
+        return children.length === 0;
+      }).length
     };
   });
 
   expect(state.keys).toEqual(['auto-1', 'text-new', 'target-1']);
-  expect(state.parents['text-new']).toBe('auto-1');
-  expect(state.parents['target-1']).toBe('auto-1');
+  expect(state.byKey['auto-1'].label).toBe('Auto-kasser');
+  expect(state.byKey['text-new'].parent).toBe('auto-1');
+  expect(state.byKey['target-1'].parent).toBe('auto-1');
+  expect(state.byKey['text-new'].selectedParent).toBe('auto-1');
+  expect(state.byKey['target-1'].selectedParent).toBe('auto-1');
   expect(state.tiles).toBe(2);
+  expect(state.orphanGridContainers).toBe(0);
 });

@@ -17,6 +17,11 @@ namespace Hangar18\UltimateDesigner\Admin;
  * a visible side zone while the native HTML5 drop target remains the preview.
  * The bridge only retargets that event to the existing side-zone contract;
  * nesting-tools remains the sole placement/LayoutParentKey/Auto-kasser owner.
+ *
+ * LEGO-042 guards only the LayoutParentKey hidden/select handoff. It ensures a
+ * freshly created canonical parent already exists as a select option before the
+ * normal WordPress select change handler can mirror an empty value back into the
+ * hidden key. It does not choose placement or create a second parent model.
  */
 final class EditorLegoDropZonesAdminController
 {
@@ -44,6 +49,7 @@ final class EditorLegoDropZonesAdminController
         $jsPath = $pluginDir . '/assets/ultimate-designer-lego-drop-zones-v0838.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-lego-drop-zones-v0838.css';
         $paletteSideDropBridgePath = $pluginDir . '/assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js';
+        $parentKeyGuardPath = $pluginDir . '/assets/ultimate-designer-lego-parent-key-guard-v0845.js';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -70,12 +76,24 @@ final class EditorLegoDropZonesAdminController
         );
 
         wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-parent-key-guard-v0845',
+            $pluginUrl . 'assets/ultimate-designer-lego-parent-key-guard-v0845.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-nesting-tools',
+            ],
+            is_file($parentKeyGuardPath) ? (string) filemtime($parentKeyGuardPath) : '0.8.45',
+            false
+        );
+
+        wp_enqueue_script(
             'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843',
             $pluginUrl . 'assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js',
             [
                 'jquery',
                 'hangar18-ultimate-designer-nesting-tools',
                 'hangar18-ultimate-designer-lego-drop-zones-v0838',
+                'hangar18-ultimate-designer-lego-parent-key-guard-v0845',
             ],
             is_file($paletteSideDropBridgePath) ? (string) filemtime($paletteSideDropBridgePath) : '0.8.43',
             false
