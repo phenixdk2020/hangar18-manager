@@ -1,1 +1,0 @@
-LEGO-042 regression intent: the full WordPress editor mirrors .h18-layout-parent-select back to hidden LayoutParentKey. The palette side-drop browser test must include that behavior and reject an orphan grid/Auto-kasser row with zero children.
