@@ -28,6 +28,7 @@ async function boot(page) {
           </div>
         </section>
       </div>
+      <aside id="h18-page-inspector"><div id="h18-page-inspector-target"></div></aside>
     </form>
   </body></html>`);
   await page.addScriptTag({ path: jqueryRuntime });
@@ -65,6 +66,48 @@ test('selected image editor chrome is stripped from unsaved preview', async ({ p
   await expect(media).not.toHaveAttribute('role');
   await expect(media).not.toHaveAttribute('title');
   await expect(media).not.toHaveClass(/is-focal-dragging/);
+});
+
+test('LEGO-048 selected nested row is not duplicated as a top-level preview section', async ({ page }) => {
+  await page.setContent(`<!doctype html><html><body>
+    <form id="h18-page-editor-form">
+      <div class="h18-form-header"><span class="h18-safe-switch">Safe</span></div>
+      <div id="h18-page-sections-sortable">
+        <section id="row-auto" class="h18-page-section-row">
+          <div class="h18-page-section-body"><input class="h18-layout-parent-key" value=""></div>
+          <div class="h18-canvas-preview">
+            <div class="h18-canvas-preview-inner h18-canvas-type-grid"><h2>Grid container</h2></div>
+            <div class="h18-ud-auto-box-grid h18-v0811-auto-grid">
+              <section class="h18-v0811-auto-box">
+                <div class="h18-v0811-child-bar"><strong>Billede</strong><button>Rediger</button></div>
+                <span class="h18-v0841-span-badge">4/12</span>
+                <div class="h18-v0811-auto-box-preview"><div class="nested-test">test</div></div>
+              </section>
+            </div>
+          </div>
+        </section>
+        <section id="row-image" class="h18-page-section-row is-selected">
+          <div class="h18-canvas-preview"><div class="duplicate-test">test</div></div>
+          <div class="h18-page-section-body"><input class="h18-layout-parent-key" value="auto-1"></div>
+        </section>
+      </div>
+      <aside id="h18-page-inspector"><div id="h18-page-inspector-target"></div></aside>
+    </form>
+  </body></html>`);
+  await page.addScriptTag({ path: jqueryRuntime });
+  await page.evaluate(() => {
+    const body = document.querySelector('#row-image > .h18-page-section-body');
+    document.getElementById('h18-page-inspector-target').appendChild(body);
+  });
+  await page.addScriptTag({ content: fs.readFileSync(runtimePath, 'utf8') });
+  await page.locator('#h18-unsaved-preview-open').click();
+
+  const stage = page.locator('[data-h18-unsaved-preview-stage]');
+  await expect(stage.locator('.nested-test')).toHaveCount(1);
+  await expect(stage.locator('.duplicate-test')).toHaveCount(0);
+  await expect(stage).not.toContainText('Grid container');
+  await expect(stage.locator('.h18-v0811-child-bar')).toHaveCount(0);
+  await expect(stage.locator('.h18-v0841-span-badge')).toHaveCount(0);
 });
 
 test('preview switches desktop tablet mobile and closes with Escape', async ({ page }) => {
