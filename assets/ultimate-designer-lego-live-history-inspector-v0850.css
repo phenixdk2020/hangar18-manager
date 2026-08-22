@@ -1,0 +1,69 @@
+/* LEGO-050: give Inspector real working width and keep normal controls readable. */
+@media (min-width: 1501px) {
+    .h18-pages-admin .h18-visual-builder {
+        grid-template-columns: minmax(220px,250px) minmax(620px,1fr) minmax(450px,520px);
+    }
+}
+
+@media (min-width: 1281px) and (max-width: 1500px) {
+    .h18-pages-admin .h18-visual-builder {
+        grid-template-columns: 210px minmax(500px,1fr) minmax(380px,430px);
+    }
+}
+
+.h18-pages-admin .h18-builder-inspector {
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.h18-pages-admin .h18-builder-inspector .h18-field,
+.h18-pages-admin .h18-builder-inspector .h18-module-fields-grid > *,
+.h18-pages-admin .h18-builder-inspector .h18-module-fields-grid--four > * {
+    min-width: 0;
+}
+
+.h18-pages-admin .h18-builder-inspector input[type="text"],
+.h18-pages-admin .h18-builder-inspector input[type="url"],
+.h18-pages-admin .h18-builder-inspector input[type="number"],
+.h18-pages-admin .h18-builder-inspector input[type="search"],
+.h18-pages-admin .h18-builder-inspector select,
+.h18-pages-admin .h18-builder-inspector textarea {
+    width: 100%;
+    max-width: none;
+}
+
+#h18-page-inspector-target .h18-field > label,
+#h18-page-inspector-target .h18-field > strong {
+    line-height: 1.35;
+}
+
+/* Legacy pre-LEGO Grid status chrome. The actual child previews remain visible. */
+.h18-ud-auto-box-canvas-head {
+    display: none !important;
+}
+
+/* The old dedicated "Slip endnu en Kasse..." footer remains as an invisible
+ * hit target only while a Kasse is being dragged. The Grid itself is the visual
+ * target; nesting-tools remains the placement authority. */
+.h18-v0814-auto-drop-zone {
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border-width: 0 !important;
+    background: transparent !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    box-shadow: none !important;
+}
+
+#h18-page-sections-sortable.h18-v0811-box-drag > .h18-page-section-row[data-section-type="grid"] > .h18-canvas-preview > .h18-v0814-auto-drop-zone {
+    position: absolute !important;
+    inset: 0 !important;
+    height: auto !important;
+    min-height: 100% !important;
+    pointer-events: none !important;
+    border: 2px dashed #72aee6 !important;
+    background: rgba(240,246,252,.12) !important;
+}
