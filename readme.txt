@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.49
+Version: 0.8.50
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.50 – LEGO-editor — live Inspector, Kasse-model og responsivt arbejdsområde ==
+
+Nyt:
+- Inspector-ændringer til tekst, overskrift og billede synkroniseres nu direkte til canvas, også når elementet ligger inde i Auto-kasser eller en Række- og kolonne-kasse; genvalg af elementet skal ikke længere være nødvendigt.
+- Valg og fjernelse af billede får et selvstændigt historik-checkpoint, så en efterfølgende tekstindsættelse kan fortrydes uden samtidig at fjerne det tidligere valgte billede.
+- Den røde markering af det valgte element tegnes som et separat overlay over brugerens egen kant og bevares gennem design- og Grid-rerenderinger.
+- Baggrund, kant, kanttykkelse og hjørner/radius behandles visuelt som design af elementets ydre Kasse, mens tekst, billede og øvrigt elementindhold forbliver indholdslaget inde i Kassen.
+- Den gamle pre-LEGO editor-chrome 'Kasser i rækken' og 'Slip endnu en Kasse her' skjules; eksisterende dropfunktionalitet bevares som usynlig hit target under drag.
+- Brugerfladen anvender nu de danske layoutnavne Kasse, Række-/kolonne-kasse, Række- og kolonne-kasse og Auto-kasser. De interne typer container, flex og grid samt eksisterende persistence ændres ikke.
+- Inspector får bedre arbejdsbredde og mere læsbare felter, mens Dynamic data binding og Conditions / synlighed fortsat ligger nederst under Avanceret.
+- Editorens egen brugerflade skalerer responsivt med clamp-baserede kolonner, skrift-, kontrol-, padding- og afstandsstørrelser: mere kompakt på laptop og bedre udnyttelse af store skærme uden browser-zoom.
+- Responsiv editor-skalering ændrer ikke de gemte mål eller typografiværdier for selve hjemmesidens design; canvas skal fortsat repræsentere frontend-data og LEGO-layout korrekt.
+- Architecture QA, LEGO Editor QA og I9 Prep QA er bestået på den endelige LEGO-050-kandidat efter genkørsel af en timingfølsom legacy media-test. Manuel v0.8.50-test på test2 er stadig nødvendig før fuld accept og public cutover.
 
 
 == Version 0.8.49 – LEGO-editor — persistent valg og avancerede Inspector-funktioner ==

@@ -1,21 +1,22 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.49",
+  "version": "0.8.50",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-22T11:26:39Z",
+  "published_utc": "2026-08-22T12:35:20Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "e9cf73774717cb62e5e47da139e575473e49b6833c9e8c95cb860c08fc0735ca",
+  "package_sha256": "adff47f95ccf509d415ba8216fbbd2361f6814040345b56545770f2247ac54a4",
   "changelog": [
-    "Retter den manuelle v0.8.48-fejl hvor den røde markering af et valgt element inde i Grid/Auto-kasser kun kunne ses et splitsekund og derefter forsvandt ved næste canvas-repaint.",
-    "Det valgte nested elements key bevares nu uafhængigt af den midlertidige Grid-DOM og den eksisterende røde outline genanvendes efter Inspector-, Grid- og Auto-kasse-rerenderinger.",
-    "Inspector-key prioriteres som selection-authority, så en midlertidigt valgt parent/Grid-række ikke kan overskrive markeringen af det barn der faktisk redigeres i Inspector.",
-    "Dynamic data binding og Conditions / synlighed bevares som funktioner, men flyttes nederst i den eksisterende Inspector under Avanceret, så almindeligt indhold, design og spacing står først.",
-    "Flytningen rammer de eksisterende canonical moduler h18-dynamic-binding-box og h18-condition-editor direkte og ændrer ikke deres værdier, event handlers eller datamodel.",
-    "Dynamic data binding kan fortsat forbinde elementfelter med current data context, mens Conditions / synlighed fortsat kan styre præsentationssynlighed ud fra data, bruger eller dato/tid; conditions er ikke en sikkerhedsgrænse.",
-    "Tilføjer browser-regression for persistent nested selection gennem et forsinket Grid-repaint og for at de to avancerede Inspector-moduler flyttes uden datatab.",
-    "Den manglende canonical v0.8.48 manual-acceptance baseline er samtidig oprettet korrekt som PENDING; der er ikke registreret falske manuelle PASS-resultater.",
-    "Architecture QA, LEGO Editor QA, Editor Runtime Fast QA og I9 Prep QA er bestået på PR #149. Manuel v0.8.49 retest på test2 er stadig nødvendig; public cutover forbliver låst indtil manuel accept."
+    "Inspector-ændringer til tekst, overskrift og billede synkroniseres nu direkte til canvas, også når elementet ligger inde i Auto-kasser eller en Række- og kolonne-kasse; genvalg af elementet skal ikke længere være nødvendigt.",
+    "Valg og fjernelse af billede får et selvstændigt historik-checkpoint, så en efterfølgende tekstindsættelse kan fortrydes uden samtidig at fjerne det tidligere valgte billede.",
+    "Den røde markering af det valgte element tegnes som et separat overlay over brugerens egen kant og bevares gennem design- og Grid-rerenderinger.",
+    "Baggrund, kant, kanttykkelse og hjørner/radius behandles visuelt som design af elementets ydre Kasse, mens tekst, billede og øvrigt elementindhold forbliver indholdslaget inde i Kassen.",
+    "Den gamle pre-LEGO editor-chrome 'Kasser i rækken' og 'Slip endnu en Kasse her' skjules; eksisterende dropfunktionalitet bevares som usynlig hit target under drag.",
+    "Brugerfladen anvender nu de danske layoutnavne Kasse, Række-/kolonne-kasse, Række- og kolonne-kasse og Auto-kasser. De interne typer container, flex og grid samt eksisterende persistence ændres ikke.",
+    "Inspector får bedre arbejdsbredde og mere læsbare felter, mens Dynamic data binding og Conditions / synlighed fortsat ligger nederst under Avanceret.",
+    "Editorens egen brugerflade skalerer responsivt med clamp-baserede kolonner, skrift-, kontrol-, padding- og afstandsstørrelser: mere kompakt på laptop og bedre udnyttelse af store skærme uden browser-zoom.",
+    "Responsiv editor-skalering ændrer ikke de gemte mål eller typografiværdier for selve hjemmesidens design; canvas skal fortsat repræsentere frontend-data og LEGO-layout korrekt.",
+    "Architecture QA, LEGO Editor QA og I9 Prep QA er bestået på den endelige LEGO-050-kandidat efter genkørsel af en timingfølsom legacy media-test. Manuel v0.8.50-test på test2 er stadig nødvendig før fuld accept og public cutover."
   ]
 }
