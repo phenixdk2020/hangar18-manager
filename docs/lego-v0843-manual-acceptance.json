@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "d4fe048b49e8c5632beaba46479f0d0b347634cd",
+    "pluginVersion": "0.8.43",
+    "packageSha256": "57ad3bcb33677118e2fcf27cca20a86740e242ffd9286b7aa47b68d7d3fd12c1"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "Firefox 153",
+    "os": "Windows 10",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop"},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting"},
+    "C": {"status": "FAIL", "evidence": ["manual/test2-v0843-scenario-c-empty-grid"], "note": "Palette-side-drop opretter Grid/Auto-kasse med 0 børn; de to indholdselementer bliver stående som lodrette topniveau-søskende. Reproduceret igen efter installation af officiel v0.8.43."},
+    "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize"},
+    "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop"},
+    "F": {"status": "PENDING", "evidence": [], "note": "Design og spacing"},
+    "G": {"status": "PENDING", "evidence": [], "note": "Foldbare paneler"},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo"},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence"},
+    "J": {"status": "PENDING", "evidence": [], "note": "Preview Desktop/Tablet/Mobil"},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore, inkl. PAGE-DELETE safety-backup restore sanity"},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery regression"}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "FAIL",
+  "notes": "Official Hangar18 Manager v0.8.43 manual acceptance on test2. Scenario C is confirmed FAIL. LEGO-044 addresses the newly identified Inspector-hosted Grid structural-field blind spot. No manual PASS is claimed and I9/I10/public cutover remain locked."
+}
