@@ -129,11 +129,10 @@ async function boot(page) {
 
   await expect(page.locator('html')).toHaveAttribute('data-h18-lego-palette-side-drop-bridge', '0.8.43');
   await expect(page.locator('html')).toHaveAttribute('data-h18-lego-parent-key-guard', '0.8.45');
+  await expect(page.locator('html')).toHaveAttribute('data-h18-lego-live-reconcile', '0.8.45');
 }
 
-test('palette Tekst side-drop survives real Inspector-hosted Grid and WordPress parent synchronization', async ({ page }) => {
-  await boot(page);
-
+async function dropTextLeft(page) {
   await page.evaluate(() => {
     const palette = document.getElementById('text-palette');
     palette.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true }));
@@ -144,9 +143,6 @@ test('palette Tekst side-drop survives real Inspector-hosted Grid and WordPress 
   const rect = await zone.boundingBox();
   if (!rect) throw new Error('Left side zone has no geometry');
 
-  // Reproduce both real-world layers: coordinates hit the visible left zone,
-  // while native HTML5 target remains the preview; after bridge retargeting the
-  // real WordPress parent select writes back to the hidden LayoutParentKey.
   await page.evaluate(({ x, y }) => {
     const preview = document.querySelector('#row-target-1 > .h18-canvas-preview');
     preview.dispatchEvent(new DragEvent('dragover', {
@@ -163,7 +159,11 @@ test('palette Tekst side-drop survives real Inspector-hosted Grid and WordPress 
     }));
     document.getElementById('text-palette').dispatchEvent(new DragEvent('dragend', { bubbles: true }));
   }, { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
+}
 
+test('palette Tekst side-drop survives real Inspector-hosted Grid and WordPress parent synchronization', async ({ page }) => {
+  await boot(page);
+  await dropTextLeft(page);
   await page.waitForTimeout(650);
 
   const state = await page.evaluate(() => {
@@ -217,4 +217,44 @@ test('palette Tekst side-drop survives real Inspector-hosted Grid and WordPress 
   expect(state.inspectorGridOrder).toBe('10');
   expect(state.tiles).toBe(2);
   expect(state.orphanGridContainers).toBe(0);
+});
+
+test('live side-drop repairs a late stale Auto-kasse preview without Undo Redo', async ({ page }) => {
+  await boot(page);
+  await dropTextLeft(page);
+
+  await expect(page.locator('.h18-ud-auto-box-grid .h18-v0811-auto-box')).toHaveCount(2, { timeout: 2500 });
+
+  const modelBeforeClobber = await page.evaluate(() => ({
+    textParent: document.querySelector('#row-text-new .h18-layout-parent-key')?.value || '',
+    targetParent: document.querySelector('#row-target-1 .h18-layout-parent-key')?.value || '',
+    gridKey: document.querySelector('#h18-page-inspector-target .h18-page-section-key')?.value || ''
+  }));
+  expect(modelBeforeClobber.gridKey).toBe('auto-1');
+  expect(modelBeforeClobber.textParent).toBe('auto-1');
+  expect(modelBeforeClobber.targetParent).toBe('auto-1');
+
+  // Reproduce the manual symptom: a late canvas repaint leaves the existing
+  // Auto-kasse wrapper present but visually empty. This intentionally does not
+  // change LayoutParentKey or history. The old compositionMissing() detector
+  // cannot see this because the grid wrapper itself still exists.
+  await page.evaluate(() => {
+    const grid = document.querySelector('.h18-ud-auto-box-grid');
+    if (!grid) throw new Error('Auto-kasse grid missing before stale repaint simulation');
+    grid.replaceChildren();
+  });
+  await expect(page.locator('.h18-ud-auto-box-grid .h18-v0811-auto-box')).toHaveCount(0);
+
+  // The bounded post-drop reconciliation must rebuild the live view from the
+  // already-correct canonical model, without an Undo/Redo gesture.
+  await expect(page.locator('.h18-ud-auto-box-grid .h18-v0811-auto-box')).toHaveCount(2, { timeout: 2200 });
+
+  const modelAfterRepair = await page.evaluate(() => ({
+    textParent: document.querySelector('#row-text-new .h18-layout-parent-key')?.value || '',
+    targetParent: document.querySelector('#row-target-1 .h18-layout-parent-key')?.value || '',
+    needsReconcile: window.__h18LegoParentKeyGuardV0845?.needsVisualReconcile?.() || false
+  }));
+  expect(modelAfterRepair.textParent).toBe('auto-1');
+  expect(modelAfterRepair.targetParent).toBe('auto-1');
+  expect(modelAfterRepair.needsReconcile).toBe(false);
 });
