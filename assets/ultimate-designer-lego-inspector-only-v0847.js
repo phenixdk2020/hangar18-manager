@@ -27,17 +27,12 @@
         '.h18-v0811-edit-child'
     ].join(',');
 
-    // A normal click anywhere in a visible element should select that element
-    // for Inspector editing. Nested Auto-kasse/Kasse tiles win over their cloned
-    // source preview; a normal top-level preview resolves to its source row.
     const CANVAS_ELEMENT_SELECTOR = [
         '.h18-v0811-auto-box[data-h18-v0811-row]',
         '.h18-v0811-child-card[data-h18-v0811-child]',
         '.h18-page-section-row > .h18-canvas-preview'
     ].join(',');
 
-    // These controls remain direct canvas/layout manipulation and must never be
-    // converted into Inspector-selection clicks.
     const CANVAS_SELECTION_EXCLUDE_SELECTOR = [
         '.h18-v0841-resize-handle',
         '.h18-v0841-resize-rail',
@@ -49,6 +44,8 @@
         '.h18-ud-box-drop-zone'
     ].join(',');
 
+    const SELECTED_CANVAS_CLASS = 'is-h18-v0848-selected-element';
+
     function armCompositionReconcile() {
         window.setTimeout(function () {
             const guard = window.__h18LegoParentKeyGuardV0845;
@@ -56,6 +53,27 @@
             if (typeof guard.reconcileNow === 'function') { guard.reconcileNow(); }
             if (typeof guard.armVisualReconcile === 'function') { guard.armVisualReconcile(); }
         }, 0);
+    }
+
+    function selectedRowKey() {
+        const row = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
+        if (!row) { return ''; }
+        const direct = row.querySelector('.h18-page-section-key');
+        if (direct && direct.value) { return String(direct.value); }
+        const inspector = document.querySelector('#h18-page-inspector-target .h18-page-section-key');
+        return inspector && inspector.value ? String(inspector.value) : '';
+    }
+
+    function refreshSelectedCanvasMarker() {
+        document.querySelectorAll('.' + SELECTED_CANVAS_CLASS).forEach(function (node) {
+            node.classList.remove(SELECTED_CANVAS_CLASS);
+        });
+        const key = selectedRowKey();
+        if (!key) { return; }
+        document.querySelectorAll('.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]').forEach(function (node) {
+            const nodeKey = String(node.getAttribute('data-h18-v0811-row') || node.getAttribute('data-h18-v0811-child') || '');
+            if (nodeKey === key) { node.classList.add(SELECTED_CANVAS_CLASS); }
+        });
     }
 
     function selectInspectorForNode(node) {
@@ -67,6 +85,7 @@
             if (edit) {
                 edit.click();
                 armCompositionReconcile();
+                window.setTimeout(refreshSelectedCanvasMarker, 0);
                 return true;
             }
         }
@@ -79,6 +98,7 @@
         else if (header) { header.click(); }
         else { return false; }
         armCompositionReconcile();
+        window.setTimeout(refreshSelectedCanvasMarker, 0);
         return true;
     }
 
@@ -95,9 +115,7 @@
     function setTextIfChanged(node, value) {
         if (!node) { return; }
         const next = String(value || '');
-        if (String(node.textContent || '') !== next) {
-            node.textContent = next;
-        }
+        if (String(node.textContent || '') !== next) { node.textContent = next; }
     }
 
     function setControlLabel(input, label, help) {
@@ -137,24 +155,13 @@
 
         const design = document.querySelector('#h18-ud-lego-design-panel');
         if (design) {
-            const background = design.querySelector('[data-h18-lego-design-path="Colors.Background"]');
-            setControlLabel(background, 'Elementfarve / baggrund', 'Farven på selve elementets flade.');
-
-            const borderColor = design.querySelector('[data-h18-lego-design-path="Border.Color"]');
-            setControlLabel(borderColor, 'Kantfarve', 'Bruges når kanttykkelsen er større end 0 px.');
-
-            const borderWidth = design.querySelector('[data-h18-lego-design-path="Border.Width"]');
-            setControlLabel(borderWidth, 'Kanttykkelse', '0 px = ingen synlig kant. 1-12 px = synlig kant.');
-
-            const radius = design.querySelector('[data-h18-lego-design-path="Radius.All"]');
-            setControlLabel(radius, 'Hjørner / runding', '0 px = helt lige hjørner. Højere værdi = mere buede hjørner.');
+            setControlLabel(design.querySelector('[data-h18-lego-design-path="Colors.Background"]'), 'Elementfarve / baggrund', 'Farven på selve elementets flade.');
+            setControlLabel(design.querySelector('[data-h18-lego-design-path="Border.Color"]'), 'Kantfarve', 'Bruges når kanttykkelsen er større end 0 px.');
+            setControlLabel(design.querySelector('[data-h18-lego-design-path="Border.Width"]'), 'Kanttykkelse', '0 px = ingen synlig kant. 1-12 px = synlig kant.');
+            setControlLabel(design.querySelector('[data-h18-lego-design-path="Radius.All"]'), 'Hjørner / runding', '0 px = helt lige hjørner. Højere værdi = mere buede hjørner.');
         }
     }
 
-    // Single-click is the primary LEGO selection gesture: click the element,
-    // then edit all content/design settings in Inspector. Embedded preview
-    // actions are deliberately suppressed; drag/drop and resize controls above
-    // are excluded and keep their direct-manipulation behavior.
     document.addEventListener('click', function (event) {
         const target = event.target && event.target.closest ? event.target : null;
         if (!target || !target.closest('.h18-builder-canvas')) { return; }
@@ -166,19 +173,16 @@
         event.stopPropagation();
         if (typeof event.stopImmediatePropagation === 'function') { event.stopImmediatePropagation(); }
         selectInspectorForNode(element);
-        window.setTimeout(clarifyInspectorControls, 0);
+        window.setTimeout(function () {
+            clarifyInspectorControls();
+            refreshSelectedCanvasMarker();
+        }, 0);
     }, true);
 
-    // Content, typography, media and image settings are Inspector-owned.
-    // Double-click on canvas content therefore selects the element instead of
-    // activating the legacy inline editor/media picker.
     document.addEventListener('dblclick', function (event) {
         suppressDirectSetting(event, INLINE_EDIT_SELECTOR);
     }, true);
 
-    // Old image controls can still exist in a cached preview. Block them at the
-    // event boundary and route the user to Inspector. Resize handles are not part
-    // of this selector and remain direct-manipulation controls on the canvas.
     document.addEventListener('click', function (event) {
         suppressDirectSetting(event, DIRECT_SETTING_SELECTOR);
     }, true);
@@ -186,31 +190,35 @@
         suppressDirectSetting(event, '.h18-canvas-focal-dot');
     }, true);
 
-    // Selecting through explicit Rediger/header controls also keeps the same
-    // reconciliation contract. The base editor can repaint the parent Grid during
-    // Inspector handoff; re-arm the existing read-only visual reconciliation.
     document.addEventListener('click', function (event) {
         const trigger = event.target && event.target.closest ? event.target.closest(INSPECTOR_SELECTION_SELECTOR) : null;
         if (!trigger) { return; }
         armCompositionReconcile();
-        window.setTimeout(clarifyInspectorControls, 0);
+        window.setTimeout(function () {
+            clarifyInspectorControls();
+            refreshSelectedCanvasMarker();
+        }, 0);
     }, false);
 
-    // Spacing/design panels are rendered dynamically when selection changes.
-    // Keep the canonical fields unchanged and only give the existing controls the
-    // user-facing names that match the LEGO editing model. Relabeling is strictly
-    // idempotent so this observer never feeds itself with redundant text writes.
     if (window.MutationObserver) {
-        const observer = new MutationObserver(function () { clarifyInspectorControls(); });
+        const observer = new MutationObserver(function () {
+            clarifyInspectorControls();
+            refreshSelectedCanvasMarker();
+        });
         observer.observe(document.body, { childList: true, subtree: true });
     }
-    window.setTimeout(clarifyInspectorControls, 0);
+    window.setTimeout(function () {
+        clarifyInspectorControls();
+        refreshSelectedCanvasMarker();
+    }, 0);
 
     document.documentElement.setAttribute('data-h18-lego-inspector-only', '0.8.47');
+    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.48');
     window.__h18LegoInspectorOnlyV0847 = {
-        version: '0.8.47',
+        version: '0.8.48',
         selectInspectorForNode: selectInspectorForNode,
         armCompositionReconcile: armCompositionReconcile,
-        clarifyInspectorControls: clarifyInspectorControls
+        clarifyInspectorControls: clarifyInspectorControls,
+        refreshSelectedCanvasMarker: refreshSelectedCanvasMarker
     };
 }(jQuery));
