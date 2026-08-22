@@ -28,6 +28,10 @@ namespace Hangar18\UltimateDesigner\Admin;
  * inline edit/media controls are redirected to Inspector. Selecting a nested
  * child also re-arms the existing visual reconciliation so Auto-kasse/Grid stays
  * visually stable while the authoritative settings body lives in Inspector.
+ *
+ * LEGO-049 keeps the selected element marker stable across transient Grid/Auto-
+ * kasse rerenders and moves Dynamic data binding + Conditions/synlighed to the
+ * bottom of Inspector as advanced controls without changing their data model.
  */
 final class EditorLegoDropZonesAdminController
 {
@@ -58,6 +62,8 @@ final class EditorLegoDropZonesAdminController
         $parentKeyGuardPath = $pluginDir . '/assets/ultimate-designer-lego-parent-key-guard-v0845.js';
         $inspectorOnlyJsPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.js';
         $inspectorOnlyCssPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.css';
+        $selectionInspectorJsPath = $pluginDir . '/assets/ultimate-designer-lego-selection-inspector-v0849.js';
+        $selectionInspectorCssPath = $pluginDir . '/assets/ultimate-designer-lego-selection-inspector-v0849.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -119,6 +125,17 @@ final class EditorLegoDropZonesAdminController
             false
         );
 
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-selection-inspector-v0849',
+            $pluginUrl . 'assets/ultimate-designer-lego-selection-inspector-v0849.js',
+            [
+                'hangar18-ultimate-designer-lego-inspector-only-v0847',
+                'hangar18-ultimate-designer-nesting-tools',
+            ],
+            is_file($selectionInspectorJsPath) ? (string) filemtime($selectionInspectorJsPath) : '0.8.49',
+            false
+        );
+
         wp_enqueue_style(
             'hangar18-ultimate-designer-lego-drop-zones-v0838',
             $pluginUrl . 'assets/ultimate-designer-lego-drop-zones-v0838.css',
@@ -131,6 +148,13 @@ final class EditorLegoDropZonesAdminController
             $pluginUrl . 'assets/ultimate-designer-lego-inspector-only-v0847.css',
             ['hangar18-ultimate-designer-lego-drop-zones-v0838'],
             is_file($inspectorOnlyCssPath) ? (string) filemtime($inspectorOnlyCssPath) : '0.8.47'
+        );
+
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-lego-selection-inspector-v0849',
+            $pluginUrl . 'assets/ultimate-designer-lego-selection-inspector-v0849.css',
+            ['hangar18-ultimate-designer-lego-inspector-only-v0847'],
+            is_file($selectionInspectorCssPath) ? (string) filemtime($selectionInspectorCssPath) : '0.8.49'
         );
     }
 }
