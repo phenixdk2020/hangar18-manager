@@ -77,9 +77,23 @@ async function boot(page) {
         </div></section>`);
     }
 
+    function inspectRow($row) {
+      const $current = $('#h18-page-sections-sortable > .h18-page-section-row.is-selected').first();
+      const $currentBody = $('#h18-page-inspector-target > .h18-page-section-body').first();
+      if ($current.length && $currentBody.length) {
+        $current.append($currentBody).removeClass('is-selected');
+      }
+      $row.addClass('is-selected');
+      $('#h18-page-inspector-target').empty().append($row.children('.h18-page-section-body'));
+    }
+
     $('#grid-palette').on('click', function () {
       gridSerial += 1;
       appendRow(20 + gridSerial, `auto-${gridSerial}`, 'grid', 'Grid container');
+      // Mirror the real Ultimate Designer Inspector: selecting a newly created
+      // section physically moves its complete section body (including Key,
+      // LayoutParentKey and Order) out of the row and into Inspector.
+      inspectRow($(`#row-auto-${gridSerial}`));
     });
 
     // Mirror the real WordPress editor contract that exposed the manual bug:
@@ -88,10 +102,13 @@ async function boot(page) {
     // the canonical hidden key when nesting-tools called .val(newKey).change().
     $(document).on('change', '.h18-layout-parent-select', function () {
       const $row = $(this).closest('.h18-page-section-row');
-      if (!$row.length) return;
-      $row.find('.h18-layout-parent-key').first()
-        .val(String($(this).val() || ''))
-        .trigger('change');
+      const $selected = $('#h18-page-sections-sortable > .h18-page-section-row.is-selected').first();
+      const $owner = $row.length ? $row : $selected;
+      if (!$owner.length) return;
+      const $hidden = $owner.hasClass('is-selected')
+        ? $('#h18-page-inspector-target .h18-layout-parent-key').first()
+        : $owner.find('.h18-layout-parent-key').first();
+      $hidden.val(String($(this).val() || '')).trigger('change');
     });
 
     // This represents the existing palette creator: the new section is created
@@ -114,7 +131,7 @@ async function boot(page) {
   await expect(page.locator('html')).toHaveAttribute('data-h18-lego-parent-key-guard', '0.8.45');
 }
 
-test('palette Tekst dropped at visual left zone survives WordPress select-to-hidden parent synchronization', async ({ page }) => {
+test('palette Tekst side-drop survives real Inspector-hosted Grid and WordPress parent synchronization', async ({ page }) => {
   await boot(page);
 
   await page.evaluate(() => {
@@ -150,6 +167,18 @@ test('palette Tekst dropped at visual left zone survives WordPress select-to-hid
   await page.waitForTimeout(650);
 
   const state = await page.evaluate(() => {
+    const selectedGrid = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected[data-section-type="grid"]');
+    const inspectorBody = document.querySelector('#h18-page-inspector-target > .h18-page-section-body');
+    const inspectorOwnedGridBody = Boolean(selectedGrid && inspectorBody && !selectedGrid.querySelector('.h18-page-section-body'));
+    const inspectorGridOrder = inspectorBody?.querySelector('.h18-page-section-order')?.value || '';
+
+    // Restore only for deterministic state inspection after the behavior under
+    // test has completed; the full placement flow above ran with Grid body in Inspector.
+    if (selectedGrid && inspectorBody) {
+      selectedGrid.appendChild(inspectorBody);
+      selectedGrid.classList.remove('is-selected');
+    }
+
     const rows = Array.from(document.querySelectorAll('#h18-page-sections-sortable > .h18-page-section-row'));
     const byKey = Object.fromEntries(rows.map((row) => [
       row.querySelector('.h18-page-section-key')?.value || '',
@@ -157,12 +186,15 @@ test('palette Tekst dropped at visual left zone survives WordPress select-to-hid
         parent: row.querySelector('.h18-layout-parent-key')?.value || '',
         selectedParent: row.querySelector('.h18-layout-parent-select')?.value || '',
         label: row.querySelector('.h18-section-navigator-label')?.value || '',
-        type: row.getAttribute('data-section-type') || ''
+        type: row.getAttribute('data-section-type') || '',
+        order: row.querySelector('.h18-page-section-order')?.value || ''
       }
     ]));
     return {
       keys: rows.map((row) => row.querySelector('.h18-page-section-key')?.value || ''),
       byKey,
+      inspectorOwnedGridBody,
+      inspectorGridOrder,
       tiles: document.querySelectorAll('.h18-ud-auto-box-grid .h18-v0811-auto-box').length,
       orphanGridContainers: rows.filter((row) => {
         const type = row.getAttribute('data-section-type') || '';
@@ -174,12 +206,15 @@ test('palette Tekst dropped at visual left zone survives WordPress select-to-hid
     };
   });
 
+  expect(state.inspectorOwnedGridBody).toBe(true);
   expect(state.keys).toEqual(['auto-1', 'text-new', 'target-1']);
   expect(state.byKey['auto-1'].label).toBe('Auto-kasser');
   expect(state.byKey['text-new'].parent).toBe('auto-1');
   expect(state.byKey['target-1'].parent).toBe('auto-1');
   expect(state.byKey['text-new'].selectedParent).toBe('auto-1');
   expect(state.byKey['target-1'].selectedParent).toBe('auto-1');
+  expect(state.byKey['auto-1'].order).toBe('10');
+  expect(state.inspectorGridOrder).toBe('10');
   expect(state.tiles).toBe(2);
   expect(state.orphanGridContainers).toBe(0);
 });
