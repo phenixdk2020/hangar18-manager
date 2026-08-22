@@ -37,6 +37,42 @@
     line-height: 1.35;
 }
 
+/* LEGO-050: selected nested element marker is a dedicated overlay above the
+ * element container. It cannot be covered by a user border/background or the
+ * resize rail and it consumes no layout space. */
+.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element,
+.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element {
+    position: relative !important;
+    outline: none !important;
+}
+
+.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element::after,
+.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    border: 2px solid #d63638;
+    border-radius: inherit;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+/* The nested wrapper is the visual element container. Its user-configured
+ * background/border/radius are mirrored onto this wrapper by the v0.8.50 JS.
+ * The cloned preview remains the content layer inside the container. */
+.h18-builder-canvas .h18-v0811-auto-box[data-h18-v0850-container-design="1"],
+.h18-builder-canvas .h18-v0811-child-card[data-h18-v0850-container-design="1"] {
+    background-clip: padding-box;
+}
+
+.h18-builder-canvas .h18-v0811-auto-box[data-h18-v0850-container-design="1"] > .h18-v0811-auto-box-preview > .h18-canvas-preview,
+.h18-builder-canvas .h18-v0811-child-card[data-h18-v0850-container-design="1"] > .h18-v0811-child-preview > .h18-canvas-preview {
+    background-color: transparent !important;
+    border-width: 0 !important;
+    border-radius: 0 !important;
+}
+
 /* Legacy pre-LEGO Grid status chrome. The actual child previews remain visible. */
 .h18-ud-auto-box-canvas-head {
     display: none !important;
