@@ -8,6 +8,7 @@
     let refreshTimer = 0;
     let removingMedia = false;
     let labelFrame = 0;
+    let terminologyFrame = 0;
 
     function jq() {
         return window.jQuery || null;
@@ -159,10 +160,6 @@
             let transactionStarted = false;
             let selectionAccepted = false;
             frame.on('select', function () {
-                // Register before the editor's frame.on('select') callback. The
-                // base callback then mutates MediaId/MediaUrl inside this atomic
-                // history transaction instead of merging the image with a later
-                // text/drop action.
                 selectionAccepted = true;
                 transactionStarted = beginHistory('media-selection');
                 window.setTimeout(function () {
@@ -175,10 +172,6 @@
                 }, 0);
             });
             frame.on('close', function () {
-                // A normal WordPress media selection closes the modal immediately
-                // after `select`. Keep that transaction alive until the zero-delay
-                // commit above has captured MediaId/MediaUrl. Only a genuine close
-                // without a selection is a cancelled media action.
                 if (selectionAccepted || !transactionStarted) { return; }
                 endHistory(false);
                 transactionStarted = false;
@@ -207,20 +200,20 @@
         Array.from(panel.querySelectorAll('.h18-ud-lego-design-group')).forEach(function (group) {
             const legend = group.querySelector('legend');
             const title = String(legend ? legend.textContent : '').trim();
-            if (title === 'Farver og kant' || title === 'Container · farve og kant') {
-                setTextIfDifferent(legend, 'Container · farve og kant');
+            if (title === 'Farver og kant' || title === 'Container · farve og kant' || title === 'Kasse · farve og kant') {
+                setTextIfDifferent(legend, 'Kasse · farve og kant');
                 const description = group.querySelector(':scope > .description');
-                setTextIfDifferent(description, 'Baggrund, kant og farve gælder elementets ydre container. Tekst og billede forbliver indholdet inde i containeren.');
+                setTextIfDifferent(description, 'Baggrund, kant og farve gælder elementets ydre kasse. Tekst og billede forbliver indholdet inde i kassen.');
                 group.querySelectorAll('.h18-ud-lego-design-control').forEach(function (control) {
                     const strong = control.querySelector('strong');
                     const label = String(strong ? strong.textContent : '').trim();
-                    if (label === 'Baggrund') { setTextIfDifferent(strong, 'Containerbaggrund'); }
-                    else if (label === 'Kantfarve') { setTextIfDifferent(strong, 'Containerkant'); }
+                    if (label === 'Baggrund' || label === 'Containerbaggrund') { setTextIfDifferent(strong, 'Kassebaggrund'); }
+                    else if (label === 'Kantfarve' || label === 'Containerkant') { setTextIfDifferent(strong, 'Kassekant'); }
                     else if (label === 'Kantbredde') { setTextIfDifferent(strong, 'Kanttykkelse'); }
                 });
             }
-            if (title === 'Form og effekter') {
-                setTextIfDifferent(legend, 'Container · form og effekter');
+            if (title === 'Form og effekter' || title === 'Container · form og effekter') {
+                setTextIfDifferent(legend, 'Kasse · form og effekter');
             }
         });
     }
@@ -230,27 +223,78 @@
         labelFrame = window.requestAnimationFrame(polishContainerDesignLabels);
     }
 
+    function exactTextReplacement(value) {
+        const labels = {
+            'Container': 'Kasse',
+            'Flex container': 'Række-/kolonne-kasse',
+            'Grid container': 'Række- og kolonne-kasse',
+            'blok-container': 'Kasse'
+        };
+        return labels[String(value || '').trim()] || '';
+    }
+
+    function replaceExactTextIn(root) {
+        if (!root || !document.createTreeWalker) { return; }
+        const walker = document.createTreeWalker(root, window.NodeFilter ? NodeFilter.SHOW_TEXT : 4);
+        const nodes = [];
+        let current;
+        while ((current = walker.nextNode())) { nodes.push(current); }
+        nodes.forEach(function (node) {
+            const replacement = exactTextReplacement(node.nodeValue);
+            if (replacement) { node.nodeValue = node.nodeValue.replace(node.nodeValue.trim(), replacement); }
+        });
+        root.querySelectorAll('option').forEach(function (option) {
+            const replacement = exactTextReplacement(option.textContent);
+            if (replacement) { option.textContent = replacement; }
+        });
+    }
+
+    function polishKasseTerminology() {
+        terminologyFrame = 0;
+        document.querySelectorAll('.h18-builder-palette,.h18-builder-canvas,.h18-builder-inspector').forEach(replaceExactTextIn);
+
+        const hasKasseTool = Boolean(document.querySelector('.h18-builder-palette-item[data-h18-layout-tool="box"]'));
+        if (hasKasseTool) {
+            document.querySelectorAll('.h18-builder-palette-item[data-section-type="container"]:not([data-h18-layout-tool])').forEach(function (item) {
+                item.setAttribute('data-h18-v0850-duplicate-container', '1');
+                const shell = item.closest('.h18-library-item-shell');
+                if (shell) { shell.setAttribute('data-h18-v0850-duplicate-container', '1'); }
+            });
+        }
+
+        document.querySelectorAll('.h18-library-item-shell').forEach(function (shell) {
+            const type = String(shell.getAttribute('data-library-type') || '');
+            const tool = String(shell.getAttribute('data-library-tool') || '');
+            let label = '';
+            if (type === 'container' && tool === 'box') { label = 'kasse'; }
+            else if (type === 'flex') { label = 'række-/kolonne-kasse'; }
+            else if (type === 'grid' && tool !== 'auto-row') { label = 'række- og kolonne-kasse'; }
+            else if (tool === 'auto-row') { label = 'auto-kasser'; }
+            if (label) { shell.setAttribute('data-library-label', label); }
+        });
+    }
+
+    function queueKasseTerminology() {
+        if (terminologyFrame) { return; }
+        terminologyFrame = window.requestAnimationFrame(polishKasseTerminology);
+    }
+
     function installDomHandlers() {
         const $ = jq();
         if (!$) { return; }
 
-        // Canonical Inspector fields are the source of truth. admin.js renders
-        // the selected source row immediately; nested Grid/Auto-kasse proxies
-        // need one extra reconciliation pass to clone that new preview at once.
         $(document).on('input change', '#h18-page-inspector-target :input,#h18-ud-lego-design-panel :input', function () {
             const $row = selectedRow();
             window.requestAnimationFrame(function () {
                 window.requestAnimationFrame(function () {
                     scheduleNestedPreview($row, 0);
                     queueContainerLabels();
+                    queueKasseTerminology();
                     reassertSelection();
                 });
             });
         });
 
-        // Programmatic media changes do not necessarily emit input/change.
-        // The media wrapper covers selection; removal gets its own explicit
-        // history boundary and nested-preview reconciliation here.
         document.addEventListener('click', function (event) {
             const target = event.target && event.target.closest
                 ? event.target.closest('.h18-page-remove-media')
@@ -282,6 +326,7 @@
                     applyAllNestedContainerDesign();
                     reassertSelection();
                 }
+                queueKasseTerminology();
             }).observe(document.body, { childList: true, subtree: true });
         }
     }
@@ -289,7 +334,6 @@
     function install() {
         wrapWpMedia();
         installDomHandlers();
-        // wp.media can be attached late by WordPress media bootstrap.
         [0, 80, 300, 900].forEach(function (delay) {
             window.setTimeout(wrapWpMedia, delay);
         });
@@ -297,6 +341,7 @@
             window.setTimeout(function () {
                 applyAllNestedContainerDesign();
                 queueContainerLabels();
+                queueKasseTerminology();
                 reassertSelection();
             }, delay);
         });
@@ -314,6 +359,7 @@
         reconcileNestedPreview: reconcileNestedPreview,
         applyAllNestedContainerDesign: applyAllNestedContainerDesign,
         polishContainerDesignLabels: polishContainerDesignLabels,
+        polishKasseTerminology: polishKasseTerminology,
         reassertSelection: reassertSelection,
         wrapWpMedia: wrapWpMedia
     };
