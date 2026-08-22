@@ -32,6 +32,12 @@ namespace Hangar18\UltimateDesigner\Admin;
  * LEGO-049 keeps the selected element marker stable across transient Grid/Auto-
  * kasse rerenders and moves Dynamic data binding + Conditions/synlighed to the
  * bottom of Inspector as advanced controls without changing their data model.
+ *
+ * LEGO-050 closes the remaining Inspector workflow gaps: nested content/media
+ * changes reconcile into Grid immediately, media selection/removal gets its own
+ * atomic Undo checkpoint, Inspector gets usable working width, pre-LEGO Grid
+ * status/drop chrome is visually retired, and the user-facing container concept
+ * is consolidated under the Danish LEGO term "Kasse" without changing schema.
  */
 final class EditorLegoDropZonesAdminController
 {
@@ -64,6 +70,9 @@ final class EditorLegoDropZonesAdminController
         $inspectorOnlyCssPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.css';
         $selectionInspectorJsPath = $pluginDir . '/assets/ultimate-designer-lego-selection-inspector-v0849.js';
         $selectionInspectorCssPath = $pluginDir . '/assets/ultimate-designer-lego-selection-inspector-v0849.css';
+        $liveHistoryInspectorJsPath = $pluginDir . '/assets/ultimate-designer-lego-live-history-inspector-v0850.js';
+        $liveHistoryInspectorCssPath = $pluginDir . '/assets/ultimate-designer-lego-live-history-inspector-v0850.css';
+        $kasseTerminologyJsPath = $pluginDir . '/assets/ultimate-designer-lego-kasse-terminology-v0850.js';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -136,6 +145,27 @@ final class EditorLegoDropZonesAdminController
             false
         );
 
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-live-history-inspector-v0850',
+            $pluginUrl . 'assets/ultimate-designer-lego-live-history-inspector-v0850.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-history-atomic-v0840',
+                'hangar18-ultimate-designer-nesting-tools',
+                'hangar18-ultimate-designer-lego-selection-inspector-v0849',
+            ],
+            is_file($liveHistoryInspectorJsPath) ? (string) filemtime($liveHistoryInspectorJsPath) : '0.8.50',
+            false
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-kasse-terminology-v0850',
+            $pluginUrl . 'assets/ultimate-designer-lego-kasse-terminology-v0850.js',
+            ['hangar18-ultimate-designer-lego-live-history-inspector-v0850'],
+            is_file($kasseTerminologyJsPath) ? (string) filemtime($kasseTerminologyJsPath) : '0.8.50',
+            false
+        );
+
         wp_enqueue_style(
             'hangar18-ultimate-designer-lego-drop-zones-v0838',
             $pluginUrl . 'assets/ultimate-designer-lego-drop-zones-v0838.css',
@@ -155,6 +185,13 @@ final class EditorLegoDropZonesAdminController
             $pluginUrl . 'assets/ultimate-designer-lego-selection-inspector-v0849.css',
             ['hangar18-ultimate-designer-lego-inspector-only-v0847'],
             is_file($selectionInspectorCssPath) ? (string) filemtime($selectionInspectorCssPath) : '0.8.49'
+        );
+
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-lego-live-history-inspector-v0850',
+            $pluginUrl . 'assets/ultimate-designer-lego-live-history-inspector-v0850.css',
+            ['hangar18-ultimate-designer-lego-selection-inspector-v0849'],
+            is_file($liveHistoryInspectorCssPath) ? (string) filemtime($liveHistoryInspectorCssPath) : '0.8.50'
         );
     }
 }
