@@ -3,6 +3,7 @@ jQuery(function ($) {
 
     const $form = $('#h18-page-editor-form').first();
     const $sections = $('#h18-page-sections-sortable').first();
+    const $inspectorTarget = $('#h18-page-inspector-target').first();
     if (!$form.length || !$sections.length) {
         return;
     }
@@ -43,7 +44,7 @@ jQuery(function ($) {
             $('<header>', { class: 'h18-unsaved-preview-toolbar' }).append(
                 $('<div>', { class: 'h18-unsaved-preview-heading' }).append(
                     $('<strong>', { id: 'h18-unsaved-preview-title', text: 'Ugemt forhåndsvisning' }),
-                    $('<span>', { text: 'Viser den aktuelle editor-state uden at gemme siden.' })
+                    $('<span>', { text: 'Viser den aktuelle side uden editor-kontroller og uden at gemme.' })
                 ),
                 $('<div>', { class: 'h18-unsaved-preview-devices', role: 'group', 'aria-label': 'Preview-størrelse' }).append(
                     $('<button>', { type: 'button', class: 'button is-active', text: 'Desktop', 'data-h18-preview-device': 'desktop', 'aria-pressed': 'true' }),
@@ -72,10 +73,22 @@ jQuery(function ($) {
     const $stage = $modal.find('[data-h18-unsaved-preview-stage]');
     let opener = null;
 
+    function rowControl($row, selector) {
+        let $control = $row.find(selector).first();
+        if ((!$control.length || String($control.val() || '') === '') && $row.hasClass('is-selected') && $inspectorTarget.length) {
+            const $inspectorControl = $inspectorTarget.find(selector).first();
+            if ($inspectorControl.length) { $control = $inspectorControl; }
+        }
+        return $control;
+    }
+
+    function parentKey($row) {
+        return String(rowControl($row, '.h18-layout-parent-key').val() || '').trim();
+    }
+
     function topLevelRows() {
         return $sections.children('.h18-page-section-row').filter(function () {
-            const parent = String($(this).find('.h18-layout-parent-key').first().val() || '').trim();
-            return parent === '';
+            return parentKey($(this)) === '';
         });
     }
 
@@ -84,19 +97,20 @@ jQuery(function ($) {
         $clone.find('[id]').removeAttr('id');
         $clone.find('[contenteditable]').removeAttr('contenteditable');
         $clone.find('.ui-sortable-handle').removeClass('ui-sortable-handle');
+        $clone.find('.is-h18-v0848-selected-element').removeClass('is-h18-v0848-selected-element');
 
-        /*
-         * Preview is cloned from the live editor canvas. The selected element can
-         * therefore contain transient editor chrome at the exact moment the user
-         * opens preview. Strip the chrome wrappers themselves before removing form
-         * controls; otherwise labels such as "Billede", "Fokus X" and
-         * "DIREKTE DESIGN" remain as empty floating panels in the preview.
-         */
+        /* Layout rows have a generic editor preview (for example "Grid container")
+         * plus the composed children. The generic layout preview is editor chrome,
+         * not frontend content, so keep only the composed children. */
+        $clone.children('.h18-canvas-preview-inner.h18-canvas-type-grid,.h18-canvas-preview-inner.h18-canvas-type-container,.h18-canvas-preview-inner.h18-canvas-type-flex').remove();
+
         $clone.find([
             '.h18-v0811-runtime-badge',
             '.h18-v0811-side-drop-zone',
             '.h18-v0811-kasse-drop-zone',
+            '.h18-v0811-side-zones',
             '.h18-v0814-auto-drop-zone',
+            '.h18-v0814-auto-kasse-drop',
             '.h18-ud-box-child-actions',
             '.h18-page-section-actions',
             '.h18-section-toolbar',
@@ -109,11 +123,14 @@ jQuery(function ($) {
             '.h18-canvas-box-model-overlay',
             '.h18-canvas-card-drag-handle',
             '.h18-condition-preview-badge',
+            '.h18-v0811-child-bar',
+            '.h18-v0841-span-badge',
+            '.h18-v0841-resize-handle',
+            '.h18-v0841-resize-rail',
             '[data-h18-v0811-edit-child]',
             '[data-h18-v0814-auto-drop]'
         ].join(',')).remove();
 
-        /* Remove editor-only interaction/selection state from the cloned canvas. */
         $clone.removeClass('is-direct-dragging is-margin-dragging is-device-hidden');
         $clone.find('.is-card-selected').removeClass('is-card-selected');
         $clone.find('.is-editing').removeClass('is-editing');
@@ -121,7 +138,6 @@ jQuery(function ($) {
             .removeAttr('tabindex role title')
             .removeClass('is-focal-dragging');
 
-        /* Canvas buttons are editor controls; page CTA previews are anchors. */
         $clone.find('button').remove();
         $clone.find('input,select,textarea').remove();
         return $clone;
@@ -134,9 +150,7 @@ jQuery(function ($) {
         $rows.each(function () {
             const $row = $(this);
             const $preview = $row.children('.h18-canvas-preview').first();
-            if (!$preview.length) {
-                return;
-            }
+            if (!$preview.length) { return; }
             const $clone = sanitizeClone($preview.clone(false, false));
             $clone.addClass('h18-unsaved-preview-section');
             $stage.append($clone);
@@ -159,6 +173,8 @@ jQuery(function ($) {
 
     function openPreview() {
         opener = document.activeElement;
+        const guard = window.__h18LegoParentKeyGuardV0845;
+        if (guard && typeof guard.reconcileNow === 'function') { guard.reconcileNow(); }
         rebuildPreview();
         setDevice('desktop');
         $modal.prop('hidden', false).addClass('is-open');
@@ -169,9 +185,7 @@ jQuery(function ($) {
     function closePreview() {
         $modal.removeClass('is-open').prop('hidden', true);
         $('body').removeClass('h18-unsaved-preview-open-body');
-        if (opener && typeof opener.focus === 'function') {
-            opener.focus();
-        }
+        if (opener && typeof opener.focus === 'function') { opener.focus(); }
         opener = null;
     }
 
@@ -190,17 +204,13 @@ jQuery(function ($) {
     });
 
     $(document).on('keydown.h18UnsavedPreview', function (event) {
-        if (!$modal.hasClass('is-open')) {
-            return;
-        }
+        if (!$modal.hasClass('is-open')) { return; }
         if (event.key === 'Escape') {
             event.preventDefault();
             closePreview();
             return;
         }
-        if (event.key !== 'Tab') {
-            return;
-        }
+        if (event.key !== 'Tab') { return; }
         const $focusable = $modal.find('button:visible,[href]:visible,[tabindex]:visible').filter('[tabindex!="-1"]');
         if (!$focusable.length) {
             event.preventDefault();
