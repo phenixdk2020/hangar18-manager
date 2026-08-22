@@ -1,0 +1,60 @@
+/* LEGO-051: follow-up fixes from manual v0.8.50 acceptance. */
+.h18-builder-canvas .h18-v0851-hidden-legacy-drop,
+.h18-builder-canvas .h18-v0814-auto-drop-zone,
+.h18-builder-canvas .h18-v0814-auto-kasse-drop {
+    width:0!important;height:0!important;min-width:0!important;min-height:0!important;
+    margin:0!important;padding:0!important;overflow:hidden!important;border:0!important;
+    background:transparent!important;color:transparent!important;font-size:0!important;line-height:0!important;box-shadow:none!important;
+}
+
+.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element::after,
+.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element::after {display:none!important}
+.h18-v0851-selection-target{position:relative!important}
+.h18-v0851-selection-overlay{
+    position:absolute;inset:1px;z-index:80;display:block;box-sizing:border-box;
+    border:2px solid #d63638;border-radius:inherit;pointer-events:none;
+}
+
+.h18-builder-canvas .h18-v0811-auto-grid{align-items:stretch!important}
+.h18-builder-canvas .h18-v0811-auto-box{
+    display:flex;flex-direction:column;align-self:stretch;min-height:0;
+}
+.h18-builder-canvas .h18-v0811-auto-box>.h18-v0811-auto-box-preview,
+.h18-builder-canvas .h18-v0851-stack-segment>.h18-v0811-auto-box-preview,
+.h18-builder-canvas .h18-v0851-stack-segment>.h18-v0811-child-preview{
+    flex:1 1 auto;min-height:0;box-sizing:border-box;
+}
+.h18-builder-canvas [data-h18-v0851-kasse-design="1"]{box-sizing:border-box;background-clip:padding-box}
+.h18-builder-canvas .h18-v0811-auto-box[data-h18-v0850-container-design="1"],
+.h18-builder-canvas .h18-v0811-child-card[data-h18-v0850-container-design="1"]{
+    background:transparent!important;border-width:0!important;border-radius:0!important;
+}
+
+.h18-v0851-stack-column-tile{min-height:180px}
+.h18-v0851-stack-column{display:flex;flex:1 1 auto;flex-direction:column;min-height:0;width:100%}
+.h18-v0851-stack-segment{position:relative;display:flex;flex-direction:column;min-height:48px;overflow:visible}
+.h18-v0851-stack-resize-handle{
+    position:absolute;left:50%;bottom:-12px;z-index:70;display:flex;align-items:center;justify-content:center;
+    width:42px;height:24px;padding:0;transform:translateX(-50%);border:2px solid #3157ee;border-radius:7px;
+    background:#fff;color:#3157ee;box-shadow:0 2px 7px rgba(0,0,0,.14);cursor:ns-resize;touch-action:none;user-select:none;
+}
+.h18-v0851-stack-resize-handle:hover,.h18-v0851-stack-resize-handle:focus-visible,.h18-v0851-stack-resize-handle.is-active{
+    background:#eef2ff;outline:2px solid #3157ee;outline-offset:2px;
+}
+.h18-v0851-stack-resize-handle span{pointer-events:none;font-size:15px;font-weight:700;line-height:1}
+
+#h18-page-inspector-target [data-h18-v0851-tabs="1"] .h18-v0851-device-tabs{display:flex;gap:6px;margin:10px 0 14px}
+#h18-page-inspector-target .h18-v0851-device-tab{flex:1 1 0;min-height:36px;font-weight:700}
+#h18-page-inspector-target .h18-v0851-device-tab.is-active{border-color:#2271b1;background:#eaf4fb;color:#135e96}
+#h18-page-inspector-target [data-h18-v0851-device-panel]{display:none!important;width:100%;min-width:0;box-sizing:border-box}
+#h18-page-inspector-target [data-h18-v0851-device-panel].is-active{display:block!important}
+#h18-page-inspector-target [data-h18-v0851-tabs="1"] label,
+#h18-page-inspector-target [data-h18-v0851-tabs="1"] .h18-field{width:100%;min-width:0;box-sizing:border-box}
+#h18-page-inspector-target [data-h18-v0851-tabs="1"] input[type="number"],
+#h18-page-inspector-target [data-h18-v0851-tabs="1"] input[type="text"],
+#h18-page-inspector-target [data-h18-v0851-tabs="1"] select{width:100%;max-width:none}
+
+.h18-v0851-custom-background{display:grid;gap:6px;margin:8px 0 14px;padding:10px;border:1px solid #dcdcde;border-radius:6px;background:#fff}
+.h18-v0851-custom-color-row{display:grid;grid-template-columns:46px minmax(0,1fr);gap:8px;align-items:center;margin-top:6px}
+.h18-v0851-custom-bg-color{width:46px!important;height:36px;padding:2px}
+.h18-v0851-custom-bg-hex{width:100%!important}
