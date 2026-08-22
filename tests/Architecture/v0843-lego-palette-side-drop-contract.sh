@@ -10,6 +10,7 @@ inspector_css="$root/assets/ultimate-designer-lego-inspector-only-v0847.css"
 fixes="$root/assets/ultimate-designer-lego-fixes-v0851.js"
 fixes_css="$root/assets/ultimate-designer-lego-fixes-v0851.css"
 controller="$root/src/Admin/EditorLegoDropZonesAdminController.php"
+stack_controller="$root/src/Admin/EditorLegoStackAdminController.php"
 
 node --check "$bridge"
 node --check "$guard"
@@ -17,6 +18,7 @@ node --check "$history"
 node --check "$inspector"
 node --check "$fixes"
 php -l "$controller" >/dev/null
+php -l "$stack_controller" >/dev/null
 
 # LEGO-041 side-drop targeting contract remains intact.
 grep -Fq "window.addEventListener('dragover'" "$bridge"
@@ -28,8 +30,7 @@ grep -Fq "data-h18-lego-palette-side-drop-bridge" "$bridge"
 grep -Fq "__h18LegoPaletteSideDropBridgeV0843" "$bridge"
 
 # LEGO-046/051 use the same event-target bridge for vertical semantics. The
-# bridge may resolve a nested target but delegates parent/stack ownership to the
-# dedicated LEGO-051 runtime; it still does not persist data itself.
+# bridge resolves a nested target but delegates hierarchy/stack state to LEGO-051.
 grep -Fq 'data-h18-v0838-position="under"' "$bridge"
 grep -Fq 'data-h18-v0838-position="over"' "$bridge"
 grep -Fq "canonicalUnderTarget" "$bridge"
@@ -75,7 +76,8 @@ grep -Fq "0 px = ingen synlig kant" "$inspector"
 grep -Fq "Hjørner / runding" "$inspector"
 grep -Fq "0 px = helt lige hjørner" "$inspector"
 
-# LEGO-051 manual acceptance follow-up: state is additive and editor-only.
+# LEGO-051 manual acceptance follow-up: stack state is additive and its
+# persistence owner is separate from the v0.8.38 visual target controller.
 grep -Fq "STACK_FIELD_CLASS" "$fixes"
 grep -Fq "StackRootKey" "$fixes"
 grep -Fq "stackUnder" "$fixes"
@@ -87,8 +89,12 @@ grep -Fq "Custom…" "$fixes"
 grep -Fq "luft, baggrund og placering" "$fixes"
 grep -Fq "h18-v0851-selection-overlay" "$fixes_css"
 grep -Fq "h18-v0851-device-tabs" "$fixes_css"
-grep -Fq "STACK_OPTION_V0851" "$controller"
-grep -Fq "h18_lego_stack_v0851" "$controller"
+grep -Fq "EditorLegoStackAdminController::register();" "$controller"
+grep -Fq "EditorLegoStackAdminController::store()" "$controller"
+grep -Fq "public const OPTION = 'hangar18_ultimate_designer_lego_stack_v0851'" "$stack_controller"
+grep -Fq "admin_post_h18_save_page_editor" "$stack_controller"
+grep -Fq "h18_lego_stack_v0851" "$stack_controller"
+grep -Fq "update_option(self::OPTION" "$stack_controller"
 grep -Fq "ultimate-designer-lego-fixes-v0851.js" "$controller"
 grep -Fq "ultimate-designer-lego-fixes-v0851.css" "$controller"
 
@@ -101,7 +107,7 @@ grep -Fq "hangar18-ultimate-designer-lego-parent-key-guard-v0845" "$controller"
 grep -Fq "hangar18-ultimate-designer-lego-drop-zones-v0838" "$controller"
 
 # The bridge remains an event-target adapter; actual hierarchy/stack writes live
-# in the dedicated LEGO-051 runtime and server-side additive option bridge.
+# in the dedicated LEGO-051 runtime and isolated stack controller.
 if grep -Eq 'setParent\s*\(|createAutoFor|placeRowBeside|LayoutParentKey\s*=|insertBefore\s*\(|insertAfter\s*\(|appendTo\s*\(|\.before\s*\(|\.after\s*\(|wp_update_post|update_option|localStorage|sessionStorage|undo\s*\(|redo\s*\(' "$bridge"; then
   echo 'LEGO-041/046/051 bridge contract FAILED: palette bridge contains forbidden direct placement/persistence/history ownership.' >&2
   exit 1
