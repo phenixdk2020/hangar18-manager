@@ -56,6 +56,7 @@ on:
       - 'assets/ultimate-designer-lego-drop-zones-v0838.js'
       - 'assets/ultimate-designer-lego-drop-zones-v0838.css'
       - 'assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js'
+      - 'assets/ultimate-designer-lego-parent-key-guard-v0845.js'
       - 'assets/ultimate-designer-lego-resize-v0841.js'
       - 'assets/ultimate-designer-lego-resize-v0841.css'
       - 'assets/ultimate-designer-lego-responsive-layout-v0842.js'
@@ -171,7 +172,7 @@ jobs:
           tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs
 
   lego-browsers:
-    name: LEGO-031/032/033/041 system Chrome + Chromium Firefox WebKit
+    name: LEGO-031/032/033/041/042 system Chrome + Chromium Firefox WebKit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
