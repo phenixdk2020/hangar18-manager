@@ -1,20 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.45",
+  "version": "0.8.46",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-22T06:52:11Z",
+  "published_utc": "2026-08-22T07:13:08Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "706a28c295276795f268a28bcafd5b4f3a41afaf5f0592c6dfda180f2e4744e0",
+  "package_sha256": "4ad1db45ee236edf338e9b49c33f510f92607e11dbef8df890bc7601e329d8a6",
   "changelog": [
-    "Retter den resterende manuelle Scenario C-fejl i v0.8.44, hvor Auto-kassen kunne se tom ud umiddelbart efter palette → Venstre/Højre, selv om Fortryd → Gendan viste hierarkiet korrekt.",
-    "Observationen dokumenterer at LayoutParentKey-hierarkiet allerede var korrekt, mens den levende canvas-komposition kunne blive overskrevet af en sen WordPress/Inspector repaint.",
-    "Tilføjer en afgrænset post-drop reconciliation, som sammenligner det autoritative antal direkte børn fra LayoutParentKey med det faktisk renderede antal Auto-kasse tiles.",
-    "Hvis live-visningen afviger, genbruges den eksisterende nesting-tools refresh til at genopbygge canvas fra den allerede korrekte model; der oprettes eller flyttes ingen rækker, og parent-, history- og persistence-data ændres ikke.",
-    "Regressionstesten simulerer nu direkte den manuelle fejl ved at efterlade en eksisterende Auto-kasse wrapper med 0 synlige tiles efter korrekt placement og kræver automatisk recovery til 2 tiles uden Fortryd/Gendan.",
-    "Den manglende canonical v0.8.44 acceptance-ledger er samtidig genetableret som PENDING, og architecture isolation tillader v0.8.44/v0.8.45 acceptance-ledgers.",
-    "QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit, sammen med Architecture, Fast og I9 Prep.",
-    "Manuel v0.8.45 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
+    "Retter den manuelle v0.8.45-fejl, hvor et nyt palette-element droppet på Under blev indsat over mål-elementet i stedet for under det.",
+    "Årsagen var den ældre WordPress palette-handler, som kun understøtter indsæt-før semantics; LEGO-laget oversætter nu Under til næste topniveau-række eller til slutningen af canvas, så Under faktisk betyder efter hele målgruppen.",
+    "Når målet er en Auto-kasse/Grid, springer Under-oversættelsen de flade skjulte child source-rækker over, så det nye topniveau-element placeres efter hele Auto-kassen og ikke midt i dens interne børn.",
+    "Retter samtidig historikfejlen hvor to hurtige palette-drops inden for den tidligere 520 ms settle-periode kunne blive slået sammen, så ét Fortryd fjernede både den nyeste handling og den tidligere side-by-side-opbygning.",
+    "En ny ægte palette-gesture lukker nu den foregående pending atomiske historiktransaktion før den nye DOM-ændring; syntetiske redispatch-events fra samme drag/drop forbliver fortsat én atomisk handling.",
+    "Nye browserregressioner kræver både korrekt Under-placering efter en komplet Auto-kasse-gruppe og tre separate historikstates for start + første drop + andet hurtigt drop.",
+    "LEGO Editor QA er bestået på PHP 8.0/8.2/8.3 samt system Chrome, Chromium, Firefox og WebKit; Architecture QA og Editor Runtime Fast QA er også bestået.",
+    "Manuel v0.8.46 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
   ]
 }

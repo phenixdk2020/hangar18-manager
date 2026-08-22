@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.45
+Version: 0.8.46
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.46 – LEGO-editor — korrekt Under og separate Undo-trin ==
+
+Nyt:
+- Retter den manuelle v0.8.45-fejl, hvor et nyt palette-element droppet på Under blev indsat over mål-elementet i stedet for under det.
+- Årsagen var den ældre WordPress palette-handler, som kun understøtter indsæt-før semantics; LEGO-laget oversætter nu Under til næste topniveau-række eller til slutningen af canvas, så Under faktisk betyder efter hele målgruppen.
+- Når målet er en Auto-kasse/Grid, springer Under-oversættelsen de flade skjulte child source-rækker over, så det nye topniveau-element placeres efter hele Auto-kassen og ikke midt i dens interne børn.
+- Retter samtidig historikfejlen hvor to hurtige palette-drops inden for den tidligere 520 ms settle-periode kunne blive slået sammen, så ét Fortryd fjernede både den nyeste handling og den tidligere side-by-side-opbygning.
+- En ny ægte palette-gesture lukker nu den foregående pending atomiske historiktransaktion før den nye DOM-ændring; syntetiske redispatch-events fra samme drag/drop forbliver fortsat én atomisk handling.
+- Nye browserregressioner kræver både korrekt Under-placering efter en komplet Auto-kasse-gruppe og tre separate historikstates for start + første drop + andet hurtigt drop.
+- LEGO Editor QA er bestået på PHP 8.0/8.2/8.3 samt system Chrome, Chromium, Firefox og WebKit; Architecture QA og Editor Runtime Fast QA er også bestået.
+- Manuel v0.8.46 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst.
 
 
 == Version 0.8.45 – LEGO-editor — live Auto-kasse reconciliation ==
