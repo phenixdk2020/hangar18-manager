@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.48
+Version: 0.8.49
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.49 – LEGO-editor — persistent valg og avancerede Inspector-funktioner ==
+
+Nyt:
+- Retter den manuelle v0.8.48-fejl hvor den røde markering af et valgt element inde i Grid/Auto-kasser kun kunne ses et splitsekund og derefter forsvandt ved næste canvas-repaint.
+- Det valgte nested elements key bevares nu uafhængigt af den midlertidige Grid-DOM og den eksisterende røde outline genanvendes efter Inspector-, Grid- og Auto-kasse-rerenderinger.
+- Inspector-key prioriteres som selection-authority, så en midlertidigt valgt parent/Grid-række ikke kan overskrive markeringen af det barn der faktisk redigeres i Inspector.
+- Dynamic data binding og Conditions / synlighed bevares som funktioner, men flyttes nederst i den eksisterende Inspector under Avanceret, så almindeligt indhold, design og spacing står først.
+- Flytningen rammer de eksisterende canonical moduler h18-dynamic-binding-box og h18-condition-editor direkte og ændrer ikke deres værdier, event handlers eller datamodel.
+- Dynamic data binding kan fortsat forbinde elementfelter med current data context, mens Conditions / synlighed fortsat kan styre præsentationssynlighed ud fra data, bruger eller dato/tid; conditions er ikke en sikkerhedsgrænse.
+- Tilføjer browser-regression for persistent nested selection gennem et forsinket Grid-repaint og for at de to avancerede Inspector-moduler flyttes uden datatab.
+- Den manglende canonical v0.8.48 manual-acceptance baseline er samtidig oprettet korrekt som PENDING; der er ikke registreret falske manuelle PASS-resultater.
+- Architecture QA, LEGO Editor QA, Editor Runtime Fast QA og I9 Prep QA er bestået på PR #149. Manuel v0.8.49 retest på test2 er stadig nødvendig; public cutover forbliver låst indtil manuel accept.
 
 
 == Version 0.8.48 – LEGO-editor — stabil Inspector, resize og frontend-preview ==
