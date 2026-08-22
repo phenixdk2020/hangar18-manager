@@ -1,15 +1,15 @@
 {
-  "version": "0.8.48",
-  "title": "LEGO-editor — stabil Inspector, resize og frontend-preview",
+  "version": "0.8.49",
+  "title": "LEGO-editor — persistent valg og avancerede Inspector-funktioner",
   "changelog": [
-    "Markerer det aktuelt valgte element tydeligt på canvas med en rød outline, også når elementet ligger inde i Grid/Auto-kasser, uden at ændre elementets layoutmål.",
-    "Fjerner den gamle Direkte design-overlay samt gamle focal-point-, billed- og box-model-kontroller fra canvas; indhold og design styres nu konsekvent i Inspector, mens drag/drop og kolonne-resize fortsat er direkte canvas-manipulation.",
-    "Gør resize Inspector-aware, så et valgt nested element kan ændre kolonnebredde uden at Grid/Auto-kassens børn forsvinder efter resize-handoffet.",
-    "Genaktiverer den eksisterende read-only Grid-reconciliation efter resize i stedet for at indføre en parallel placement- eller resize-motor.",
-    "Gør ugemt Forhåndsvisning Inspector-aware, så et valgt nested element ikke fejlagtigt behandles som topniveau og derfor ikke vises både inde i Grid'et og igen nederst på siden.",
-    "Fjerner editor-only Grid/container-chrome fra Forhåndsvisning, herunder Rediger-toolbar, span-badges, resize-greb, drop-zoner og interne Grid-labels, så preview ligger tættere på den faktiske frontend-rendering.",
-    "Tilføjer browser-regressioner for selected-element-markering, fjernelse af Direkte design, Inspector-hosted resize-stabilitet og preview-de-duplikering.",
-    "Architecture QA og Editor Runtime Fast QA er bestået på PR #148, og PR'en er merged til main.",
-    "Manuel v0.8.48 retest på test2 er stadig nødvendig; public cutover forbliver låst indtil manuel accept."
+    "Retter den manuelle v0.8.48-fejl hvor den røde markering af et valgt element inde i Grid/Auto-kasser kun kunne ses et splitsekund og derefter forsvandt ved næste canvas-repaint.",
+    "Det valgte nested elements key bevares nu uafhængigt af den midlertidige Grid-DOM og den eksisterende røde outline genanvendes efter Inspector-, Grid- og Auto-kasse-rerenderinger.",
+    "Inspector-key prioriteres som selection-authority, så en midlertidigt valgt parent/Grid-række ikke kan overskrive markeringen af det barn der faktisk redigeres i Inspector.",
+    "Dynamic data binding og Conditions / synlighed bevares som funktioner, men flyttes nederst i den eksisterende Inspector under Avanceret, så almindeligt indhold, design og spacing står først.",
+    "Flytningen rammer de eksisterende canonical moduler h18-dynamic-binding-box og h18-condition-editor direkte og ændrer ikke deres værdier, event handlers eller datamodel.",
+    "Dynamic data binding kan fortsat forbinde elementfelter med current data context, mens Conditions / synlighed fortsat kan styre præsentationssynlighed ud fra data, bruger eller dato/tid; conditions er ikke en sikkerhedsgrænse.",
+    "Tilføjer browser-regression for persistent nested selection gennem et forsinket Grid-repaint og for at de to avancerede Inspector-moduler flyttes uden datatab.",
+    "Den manglende canonical v0.8.48 manual-acceptance baseline er samtidig oprettet korrekt som PENDING; der er ikke registreret falske manuelle PASS-resultater.",
+    "Architecture QA, LEGO Editor QA, Editor Runtime Fast QA og I9 Prep QA er bestået på PR #149. Manuel v0.8.49 retest på test2 er stadig nødvendig; public cutover forbliver låst indtil manuel accept."
   ]
 }
