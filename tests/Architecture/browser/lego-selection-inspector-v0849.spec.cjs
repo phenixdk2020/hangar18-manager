@@ -34,9 +34,9 @@ async function boot(page) {
       <div id="h18-page-inspector-target">
         <div class="h18-page-section-body">
           <div id="normal-a"><strong>Indhold</strong><input value="a"></div>
-          <div id="dynamic"><strong>Dynamic data binding</strong><input id="dynamic-value" value="vehicle.title"></div>
+          <div id="dynamic" class="h18-section-module-box h18-dynamic-binding-box"><h4>Dynamic data binding</h4><input id="dynamic-value" value="vehicle.title"></div>
           <div id="normal-b"><strong>Design</strong><input value="b"></div>
-          <div id="conditions"><strong>Conditions / synlighed</strong><input id="condition-value" value="logged_in"></div>
+          <div id="conditions" class="h18-section-module-box h18-condition-editor"><h4>Conditions / synlighed</h4><input id="condition-value" value="logged_in"></div>
         </div>
       </div>
     </aside>
