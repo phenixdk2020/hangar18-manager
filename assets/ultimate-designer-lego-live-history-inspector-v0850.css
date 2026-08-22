@@ -1,19 +1,154 @@
-/* LEGO-050: give Inspector real working width and keep normal controls readable. */
-@media (min-width: 1501px) {
-    .h18-pages-admin .h18-visual-builder {
-        grid-template-columns: minmax(220px,250px) minmax(620px,1fr) minmax(450px,520px);
-    }
+/* LEGO-050: responsive editor shell. Scale the application chrome, not the
+ * authored page content, so drag/drop coordinates and WYSIWYG values stay
+ * authoritative while laptops and large monitors get a usable workspace. */
+.h18-pages-admin {
+    --h18-editor-ui-font: clamp(12px, calc(8.6px + .25vw), 14.5px);
+    --h18-editor-ui-small: clamp(10.5px, calc(7.6px + .2vw), 12.5px);
+    --h18-editor-panel-pad: clamp(10px, .8vw, 20px);
+    --h18-editor-gap: clamp(10px, .8vw, 18px);
+    max-width: min(2100px, calc(100vw - 32px));
 }
 
-@media (min-width: 1281px) and (max-width: 1500px) {
-    .h18-pages-admin .h18-visual-builder {
-        grid-template-columns: 210px minmax(500px,1fr) minmax(380px,430px);
-    }
+.h18-pages-admin .h18-visual-builder {
+    grid-template-columns:
+        clamp(175px, 14vw, 260px)
+        minmax(420px, 1fr)
+        clamp(300px, 26vw, 520px);
+    gap: var(--h18-editor-gap);
 }
 
+.h18-pages-admin .h18-builder-palette,
 .h18-pages-admin .h18-builder-inspector {
-    padding-left: 18px;
-    padding-right: 18px;
+    padding: var(--h18-editor-panel-pad);
+    font-size: var(--h18-editor-ui-font);
+}
+
+.h18-pages-admin .h18-builder-canvas {
+    padding: clamp(10px, .7vw, 16px);
+}
+
+.h18-pages-admin .h18-builder-palette h3,
+.h18-pages-admin .h18-builder-inspector h3,
+.h18-pages-admin .h18-builder-canvas-heading h3 {
+    font-size: clamp(15px, calc(10px + .35vw), 19px);
+    line-height: 1.25;
+}
+
+.h18-pages-admin .h18-builder-palette > p,
+.h18-pages-admin .h18-builder-palette details,
+.h18-pages-admin .h18-builder-canvas-heading,
+.h18-pages-admin .h18-builder-inspector-heading,
+.h18-pages-admin .h18-builder-drop-hint,
+.h18-pages-admin .h18-page-section-header,
+.h18-pages-admin .h18-page-section-header-actions {
+    font-size: var(--h18-editor-ui-font);
+}
+
+.h18-pages-admin .h18-builder-canvas-heading span,
+.h18-pages-admin .h18-builder-inspector-heading span,
+.h18-pages-admin .h18-builder-palette small,
+.h18-pages-admin .h18-builder-inspector small,
+.h18-pages-admin .h18-builder-inspector .description {
+    font-size: var(--h18-editor-ui-small);
+}
+
+.h18-pages-admin .h18-builder-palette-list {
+    gap: clamp(5px, .45vw, 9px);
+}
+
+.h18-pages-admin .h18-builder-palette-item {
+    gap: clamp(5px, .45vw, 9px);
+    padding: clamp(7px, .55vw, 11px) clamp(8px, .6vw, 12px);
+    font-size: var(--h18-editor-ui-font);
+    line-height: 1.25;
+}
+
+.h18-pages-admin .h18-builder-inspector .h18-field {
+    margin-bottom: clamp(9px, .7vw, 15px);
+}
+
+.h18-pages-admin .h18-builder-inspector .h18-module-fields-grid,
+.h18-pages-admin .h18-builder-inspector .h18-module-fields-grid--four {
+    gap: clamp(8px, .65vw, 14px) clamp(9px, .8vw, 18px);
+}
+
+.h18-pages-admin .h18-builder-inspector input[type="text"],
+.h18-pages-admin .h18-builder-inspector input[type="url"],
+.h18-pages-admin .h18-builder-inspector input[type="email"],
+.h18-pages-admin .h18-builder-inspector input[type="number"],
+.h18-pages-admin .h18-builder-inspector input[type="search"],
+.h18-pages-admin .h18-builder-inspector input[type="date"],
+.h18-pages-admin .h18-builder-inspector input[type="time"],
+.h18-pages-admin .h18-builder-inspector input[type="datetime-local"],
+.h18-pages-admin .h18-builder-inspector select,
+.h18-pages-admin .h18-builder-inspector textarea,
+.h18-pages-admin .h18-builder-inspector .button {
+    font-size: var(--h18-editor-ui-font);
+}
+
+.h18-pages-admin .h18-builder-inspector input[type="text"],
+.h18-pages-admin .h18-builder-inspector input[type="url"],
+.h18-pages-admin .h18-builder-inspector input[type="email"],
+.h18-pages-admin .h18-builder-inspector input[type="number"],
+.h18-pages-admin .h18-builder-inspector input[type="search"],
+.h18-pages-admin .h18-builder-inspector input[type="date"],
+.h18-pages-admin .h18-builder-inspector input[type="time"],
+.h18-pages-admin .h18-builder-inspector input[type="datetime-local"],
+.h18-pages-admin .h18-builder-inspector select {
+    min-height: clamp(30px, calc(24px + .5vw), 38px);
+}
+
+/* Keep all three editing rails on normal laptops. The values shrink only the
+ * editor chrome; authored element widths remain driven by the page model. */
+@media (max-width: 1100px) {
+    .h18-pages-admin {
+        --h18-editor-ui-font: 12px;
+        --h18-editor-ui-small: 10.5px;
+        --h18-editor-panel-pad: 9px;
+        --h18-editor-gap: 8px;
+        max-width: calc(100vw - 20px);
+    }
+
+    .h18-pages-admin .h18-visual-builder {
+        grid-template-columns:
+            clamp(150px, 17vw, 180px)
+            minmax(340px, 1fr)
+            minmax(260px, 30vw);
+    }
+}
+
+/* Very narrow admin view: keep palette + canvas together and move Inspector
+ * below them. This avoids horizontal overflow while preserving drag/drop. */
+@media (max-width: 960px) {
+    .h18-pages-admin .h18-visual-builder {
+        grid-template-columns: minmax(150px, 180px) minmax(0, 1fr);
+    }
+
+    .h18-pages-admin .h18-builder-inspector {
+        grid-column: 1 / -1;
+        position: static;
+        max-height: none;
+    }
+}
+
+@media (max-width: 782px) {
+    .h18-pages-admin {
+        max-width: calc(100vw - 16px);
+    }
+
+    .h18-pages-admin .h18-visual-builder {
+        grid-template-columns: 1fr;
+    }
+
+    .h18-pages-admin .h18-builder-palette,
+    .h18-pages-admin .h18-builder-inspector {
+        position: static;
+        max-height: none;
+    }
+
+    .h18-pages-admin .h18-builder-inspector {
+        grid-column: auto;
+    }
 }
 
 .h18-pages-admin .h18-builder-inspector .h18-field,
