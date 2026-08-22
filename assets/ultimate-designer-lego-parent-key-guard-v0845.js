@@ -2,10 +2,20 @@
     'use strict';
 
     const ROW_SELECTOR = '#h18-page-sections-sortable > .h18-page-section-row:not(.h18-page-section-removed)';
+    const INSPECTOR_SELECTOR = '#h18-page-inspector-target';
     const PARENT_TYPES = ['container', 'flex', 'grid'];
 
+    function controls($row, selector) {
+        if (!$row || !$row.length) { return $(); }
+        let $result = $row.find(selector);
+        if ($row.hasClass('is-selected')) {
+            $result = $result.add($(INSPECTOR_SELECTOR).find(selector));
+        }
+        return $result;
+    }
+
     function rowKey($row) {
-        return String($row.find('.h18-page-section-key').first().val() || '');
+        return String(controls($row, '.h18-page-section-key').first().val() || '');
     }
 
     function rowByKey(key) {
@@ -24,7 +34,7 @@
 
     function parentLabel($parent) {
         if (!$parent || !$parent.length) { return 'Layout-parent'; }
-        const navigator = String($parent.find('.h18-section-navigator-label').first().val() || '').trim();
+        const navigator = String(controls($parent, '.h18-section-navigator-label').first().val() || '').trim();
         if (navigator) { return navigator; }
         const summary = String($parent.find('.h18-page-section-title-summary').first().text() || '').trim();
         if (summary) { return summary; }
@@ -61,15 +71,9 @@
         }
 
         const label = parentLabel($parent);
-        $row.find('.h18-layout-parent-select').each(function () {
+        controls($row, '.h18-layout-parent-select').each(function () {
             ensureOption($(this), parentKey, label);
         });
-
-        if ($row.hasClass('is-selected')) {
-            $('#h18-page-inspector-target .h18-layout-parent-select').each(function () {
-                ensureOption($(this), parentKey, label);
-            });
-        }
         return true;
     }
 
@@ -79,6 +83,8 @@
     // newly created Auto-kasser row has not yet been added to that select, a
     // .val(newKey) becomes null and the normal handler erases the valid parent.
     // Guard only the control handoff: it never chooses a parent or moves a row.
+    // Selected rows keep their structural fields in Inspector, so parent lookup
+    // and label/select synchronization must use the same Inspector-aware view.
     $(document).on('change.h18V0845ParentKeyGuard', '.h18-layout-parent-key', function () {
         const value = String($(this).val() || '');
         if (!value) { return; }
