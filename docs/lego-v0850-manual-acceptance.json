@@ -16,12 +16,12 @@
   "scenarios": {
     "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop; Kasse, Række-/kolonne-kasse, Række- og kolonne-kasse og Auto-kasser skal vises med dansk terminologi, og Over/Under skal lande korrekt."},
     "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting; den gamle separate Container må ikke fremstå som dublet, mens eksisterende container-data fortsat skal virke."},
-    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side / Auto-kasser; børn skal forblive synlige og intakte, og Inspector-ændringer til nested tekst/billede skal ses på canvas med det samme uden genvalg."},
+    "C": {"status": "PASS", "evidence": ["Manual test2 approval 2026-08-22: Test 1 image selection/live Inspector→canvas sync passed; Test 2 text/live Inspector→canvas sync passed without reselecting the element."], "note": "Side-by-side / Auto-kasser; nested text/image Inspector changes were manually confirmed to update canvas immediately without reselecting the element."},
     "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize; resize-håndtag skal fortsat manipulere layout direkte uden at Kassen mister børn eller selection."},
     "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop; editorens egen responsive UI må ikke ændre de gemte frontend-layoutværdier."},
-    "F": {"status": "PENDING", "evidence": [], "note": "Inspector-only redigering; valgt element skal beholde rød overlay-markering under designændringer. Baggrund, kant, kanttykkelse og radius skal fremstå på elementets ydre Kasse. Dynamic data binding og Conditions / synlighed skal fortsat ligge nederst under Avanceret."},
+    "F": {"status": "FAIL", "evidence": ["Manual test2 screenshot 2026-08-22: selected Billede element shows red selection overlay on top/left/bottom, but the right side is not visible before any design change."], "note": "Inspector-only selection overlay is not fully visible: right edge is clipped/missing already before changing border/background. Selection must remain a complete visual frame on all four sides."},
     "G": {"status": "PENDING", "evidence": [], "note": "Editor-workspace og foldbare paneler; UI skal være mere kompakt på laptop og udnytte store skærme via responsive kolonner, skrift, controls og spacing uden browser-zoom."},
-    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo; billedvalg/-fjernelse skal være et selvstændigt historiktrin. Efter billedvalg og derefter indsættelse af tekst skal første Undo kun fjerne teksten, ikke billedet."},
+    "H": {"status": "PASS", "evidence": ["Manual test2 approval 2026-08-22: Test 3 passed; after image selection and subsequent text insertion, first Undo removed only the text and retained the image."], "note": "Undo/Redo media history checkpoint manually confirmed: image selection is isolated from a later text insertion."},
     "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence; interne container/flex/grid-typer og eksisterende gemte sider skal bevare struktur og design."},
     "J": {"status": "PENDING", "evidence": [], "note": "Preview Desktop/Tablet/Mobil; nested element må ikke duplikeres som topniveau, og gammel editor-chrome som 'Kasser i rækken' / 'Slip endnu en Kasse her' må ikke vises."},
     "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore, inkl. PAGE-DELETE safety-backup restore sanity."},
@@ -32,6 +32,6 @@
     "dataLossOrDuplicate": false,
     "protectedDomainRegression": false
   },
-  "overallStatus": "PENDING",
-  "notes": "Canonical pre-manual acceptance record for official Hangar18 Manager v0.8.50. LEGO-050 adds live Inspector-to-canvas sync, isolated media history checkpoints, outer-Kasse design semantics, persistent selection overlay, removal of legacy Grid chrome, Danish layout terminology and responsive editor workspace scaling. Internal container/flex/grid types and persistence remain unchanged. No manual PASS is claimed. Manual testing on test2 is required, and public cutover is not authorized."
+  "overallStatus": "FAIL",
+  "notes": "Manual v0.8.50 testing has started on test2. Tests 1 and 2 (live image/text Inspector-to-canvas sync) and Test 3 (isolated image Undo history) are approved. Test 4 fails because the selected element's red overlay is missing/clipped on the right edge before any design change. A separate editor defect is also recorded in the working fix list: the old visible 'Træk en Kasse ind i Auto-kasser.' chrome can reappear when selecting a nested element; its drop hit target may remain functional but the legacy visible prompt must stay hidden. Public cutover remains unauthorized."
 }
