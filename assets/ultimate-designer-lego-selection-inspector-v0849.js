@@ -13,15 +13,10 @@
         '.h18-v0814-auto-kasse-drop',
         '.h18-ud-box-drop-zone'
     ].join(',');
-    const ADVANCED_LABELS = ['dynamic data binding', 'conditions / synlighed'];
 
     let activeKey = '';
     let markerFrame = 0;
     let advancedFrame = 0;
-
-    function normalizedText(value) {
-        return String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
-    }
 
     function keyFromNested(node) {
         if (!node) { return ''; }
@@ -34,19 +29,16 @@
         if (direct && direct.value) { return String(direct.value).trim(); }
         const dataKey = String(row.getAttribute('data-key') || '').trim();
         if (dataKey) { return dataKey; }
-        if (row.classList.contains('is-selected')) {
-            const inspector = document.querySelector('#h18-page-inspector-target .h18-page-section-key');
-            if (inspector && inspector.value) { return String(inspector.value).trim(); }
-        }
         return '';
     }
 
     function selectedDomKey() {
-        const row = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
-        const rowKey = keyFromRow(row);
-        if (rowKey) { return rowKey; }
+        // Inspector owns the active element settings. Prefer its key over a
+        // transient/stale .is-selected class on the visual parent Grid row.
         const inspector = document.querySelector('#h18-page-inspector-target .h18-page-section-key');
-        return inspector && inspector.value ? String(inspector.value).trim() : '';
+        if (inspector && inspector.value) { return String(inspector.value).trim(); }
+        const row = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
+        return keyFromRow(row);
     }
 
     function rememberKey(key) {
@@ -59,8 +51,7 @@
         if (!node || !node.closest) { return ''; }
         const nested = node.closest(NESTED_SELECTOR);
         if (nested) { return keyFromNested(nested); }
-        const row = node.closest('.h18-page-section-row');
-        return keyFromRow(row);
+        return keyFromRow(node.closest('.h18-page-section-row'));
     }
 
     function applyMarker() {
@@ -71,11 +62,10 @@
 
         const domKey = selectedDomKey();
         if (domKey) { activeKey = domKey; }
-        const key = activeKey;
-        if (!key) { return; }
+        if (!activeKey) { return; }
 
         document.querySelectorAll(NESTED_SELECTOR).forEach(function (node) {
-            if (keyFromNested(node) === key) {
+            if (keyFromNested(node) === activeKey) {
                 node.classList.add(SELECTED_CLASS);
             }
         });
@@ -93,28 +83,8 @@
         });
     }
 
-    function directChildUnder(root, node) {
-        if (!root || !node || !root.contains(node)) { return null; }
-        let cursor = node;
-        while (cursor && cursor.parentElement && cursor.parentElement !== root) {
-            cursor = cursor.parentElement;
-        }
-        return cursor && cursor.parentElement === root ? cursor : null;
-    }
-
-    function findAdvancedBlocks(root) {
-        const found = [];
-        root.querySelectorAll('legend,h2,h3,h4,h5,strong,label,summary').forEach(function (heading) {
-            const text = normalizedText(heading.textContent);
-            if (!ADVANCED_LABELS.some(function (label) { return text === label || text.indexOf(label) === 0; })) { return; }
-            const block = directChildUnder(root, heading);
-            if (block && found.indexOf(block) === -1) { found.push(block); }
-        });
-        return found;
-    }
-
     function advancedLayoutIsStable(root, heading, blocks) {
-        if (!heading || !blocks.length) { return false; }
+        if (!heading || !root || !blocks.length) { return false; }
         if (heading.nextElementSibling !== blocks[0]) { return false; }
         for (let index = 1; index < blocks.length; index += 1) {
             if (blocks[index - 1].nextElementSibling !== blocks[index]) { return false; }
@@ -126,14 +96,30 @@
         advancedFrame = 0;
         const target = document.querySelector('#h18-page-inspector-target');
         if (!target) { return; }
-        const root = target.querySelector('.h18-page-section-body') || target;
-        const blocks = findAdvancedBlocks(root);
+
+        // These are canonical existing Inspector modules. Keep their fields and
+        // event handlers intact; only demote their visual position.
+        const dynamic = target.querySelector('.h18-dynamic-binding-box');
+        const conditions = target.querySelector('.h18-condition-editor');
+        const blocks = [dynamic, conditions].filter(Boolean);
         if (!blocks.length) { return; }
 
-        let heading = root.querySelector(':scope > .h18-v0849-advanced-heading');
-        blocks.forEach(function (block) { block.classList.add('h18-v0849-advanced-block'); });
+        const body = target.querySelector('.h18-page-section-body') || target;
+        const commonParent = dynamic && conditions && dynamic.parentElement === conditions.parentElement
+            ? dynamic.parentElement
+            : null;
+        const root = commonParent || body;
+        if (!root) { return; }
 
-        if (advancedLayoutIsStable(root, heading, blocks)) { return; }
+        // Only move blocks that actually belong to this Inspector group. If a
+        // future markup revision separates them into different panels, leave that
+        // panel structure intact rather than pulling controls across boundaries.
+        const movable = blocks.filter(function (block) { return block.parentElement === root; });
+        if (!movable.length) { return; }
+
+        let heading = root.querySelector(':scope > .h18-v0849-advanced-heading');
+        movable.forEach(function (block) { block.classList.add('h18-v0849-advanced-block'); });
+        if (advancedLayoutIsStable(root, heading, movable)) { return; }
 
         if (!heading) {
             heading = document.createElement('div');
@@ -143,8 +129,8 @@
             root.removeChild(heading);
         }
 
-        blocks.forEach(function (block) { root.appendChild(block); });
-        root.insertBefore(heading, blocks[0]);
+        movable.forEach(function (block) { root.appendChild(block); });
+        root.insertBefore(heading, movable[0]);
     }
 
     function queueAdvancedLayout() {
@@ -176,24 +162,25 @@
     }, true);
 
     if (window.MutationObserver) {
-        const canvas = document.querySelector('#h18-page-sections-sortable');
-        if (canvas) {
-            new MutationObserver(function () { queueMarker(); }).observe(canvas, { childList: true, subtree: true });
-        }
+        // v0.8.48 has a document-wide childList observer that may briefly remove
+        // the tile marker while Inspector/Grid is repainting. Register after it
+        // on the same mutation scope so the cached active key wins last.
+        new MutationObserver(function () {
+            const key = selectedDomKey();
+            if (key) { rememberKey(key); }
+            queueMarker();
+        }).observe(document.body, { childList: true, subtree: true });
+
         const inspector = document.querySelector('#h18-page-inspector-target');
         if (inspector) {
             new MutationObserver(function () {
                 const key = selectedDomKey();
                 if (key) { rememberKey(key); }
-                queueMarker();
                 queueAdvancedLayout();
             }).observe(inspector, { childList: true, subtree: true });
         }
     }
 
-    // Nesting/runtime reconciliation can replace the visual tile after selection.
-    // Keep the selected key outside that transient DOM and reapply the outline
-    // after every explicit nesting refresh when the public refresh hook exists.
     const nesting = window.__h18NestingToolsV0840;
     if (nesting && typeof nesting.refresh === 'function' && !nesting.__h18V0849Wrapped) {
         const nativeRefresh = nesting.refresh.bind(nesting);
