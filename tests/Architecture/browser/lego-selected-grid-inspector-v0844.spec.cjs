@@ -11,7 +11,6 @@ const bridgeRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer
 
 function row(index, key, type, label) {
   return `<section id="row-${key}" class="h18-page-section-row" data-section-type="${type}" data-section-index="${index}">
-    <!-- These controls are outside .h18-page-section-body in the real PHP template. -->
     <input class="h18-page-section-order" name="Sections[${index}][Order]" value="${Number(index) * 10 || 0}">
     <input class="h18-page-section-key" name="Sections[${index}][Key]" value="${key}">
     <input class="h18-section-navigator-label" name="Sections[${index}][NavigatorLabel]" value="${label}">
@@ -35,6 +34,9 @@ function row(index, key, type, label) {
 
 async function boot(page) {
   await page.setContent(`<!doctype html><html><head><style>
+    body{margin:20px}
+    .h18-builder-palette-item{display:block;width:180px;height:42px;margin-bottom:10px}
+    #h18-page-inspector{width:260px;min-height:120px;margin-bottom:10px}
     .h18-builder-canvas{display:block;width:900px;min-height:600px}
     #h18-page-sections-sortable{width:820px;position:relative}
     .h18-page-section-row{display:block;width:760px;margin:12px 0;padding:8px;border:1px solid #ccc}
@@ -44,7 +46,6 @@ async function boot(page) {
     <button id="text-palette" type="button" draggable="true" class="h18-builder-palette-item" data-section-type="text">Tekst</button>
     <button id="grid-palette" type="button" class="h18-builder-palette-item" data-section-type="grid">Grid container</button>
 
-    <!-- Real editor order: Inspector is before the canvas. -->
     <aside id="h18-page-inspector"><div id="h18-page-inspector-target"></div></aside>
 
     <div class="h18-builder-canvas">
@@ -57,6 +58,16 @@ async function boot(page) {
   await page.addStyleTag({ path: nestingCss });
   await page.addStyleTag({ path: dropCss });
   await page.addScriptTag({ path: jqueryRuntime });
+
+  await page.evaluate((markup) => {
+    window.__rowMarkup = function (index, key, type, label) {
+      return markup
+        .replaceAll('__INDEX__', String(index))
+        .replaceAll('__KEY__', String(key))
+        .replaceAll('__TYPE__', String(type))
+        .replaceAll('__LABEL__', String(label));
+    };
+  }, row('__INDEX__', '__KEY__', '__TYPE__', '__LABEL__'));
 
   await page.evaluate(() => {
     const $ = window.jQuery;
@@ -96,16 +107,14 @@ async function boot(page) {
     function appendRow(index, key, type, label) {
       $('#h18-page-sections-sortable').append(window.__rowMarkup(index, key, type, label));
       const $row = $('#row-' + key);
-      // Real addPageSection() selects every newly created section and physically
-      // moves only .h18-page-section-body into the Inspector. Key/order/nav label
-      // remain on the row itself.
       inspect($row);
       return $row;
     }
 
     window.__h18InspectorHarness = {
       controls,
-      inspectedKey: () => inspected.length ? String(inspected.find('.h18-page-section-key').first().val() || '') : ''
+      inspectedKey: () => inspected.length ? String(inspected.find('.h18-page-section-key').first().val() || '') : '',
+      inspectByKey: (key) => inspect($('#row-' + key))
     };
 
     $('#grid-palette').on('click', function () {
@@ -113,8 +122,6 @@ async function boot(page) {
       appendRow(20 + gridSerial, `auto-${gridSerial}`, 'grid', 'Grid container');
     });
 
-    // Model the real pageSectionForElement()/pageSectionControls() path. When a
-    // selected row's parent select lives in Inspector, closest(row) is empty.
     $(document).on('change', '.h18-layout-parent-select', function () {
       const $row = rowForElement(this);
       controls($row, '.h18-layout-parent-key').first()
@@ -122,25 +129,27 @@ async function boot(page) {
         .trigger('change');
     });
 
-    // The canvas drop creates the requested palette element before the document
-    // level nesting drop handler completes, matching the real bubble order.
+    // Model the real generic palette drop. The source is created by the normal
+    // editor path and becomes selected before nesting-tools finishes the side drop.
+    let draggedType = '';
+    document.addEventListener('dragstart', function (event) {
+      const palette = event.target && event.target.closest ? event.target.closest('.h18-builder-palette-item') : null;
+      if (palette) draggedType = String(palette.getAttribute('data-section-type') || 'text');
+    }, true);
     document.addEventListener('drop', function (event) {
+      if (!draggedType || draggedType === 'grid' || document.getElementById('row-text-new')) return;
       const zone = event.target && event.target.closest ? event.target.closest('.h18-v0811-side-zone') : null;
-      if (!zone || document.getElementById('row-text-new')) return;
+      if (!zone) return;
       elementSerial += 1;
-      appendRow(10 + elementSerial, 'text-new', 'text', 'Tekst');
+      appendRow(10 + elementSerial, 'text-new', draggedType, 'Tekst');
+      draggedType = '';
     }, false);
-  });
+    document.addEventListener('dragend', function () { draggedType = ''; }, false);
 
-  await page.evaluate((markup) => {
-    window.__rowMarkup = function (index, key, type, label) {
-      return markup
-        .replaceAll('__INDEX__', String(index))
-        .replaceAll('__KEY__', String(key))
-        .replaceAll('__TYPE__', String(type))
-        .replaceAll('__LABEL__', String(label));
-    };
-  }, row('__INDEX__', '__KEY__', '__TYPE__', '__LABEL__'));
+    // Match the common manual state: the existing target is the currently
+    // selected section before the user starts dragging a new palette element.
+    inspect($('#row-target-1'));
+  });
 
   await page.addScriptTag({ path: nestingRuntime });
   await page.addScriptTag({ path: parentGuardRuntime });
@@ -148,41 +157,14 @@ async function boot(page) {
   await page.addScriptTag({ path: bridgeRuntime });
 }
 
-test('palette side-drop follows the real Inspector body-move lifecycle', async ({ page }) => {
-  await boot(page);
-
-  await page.evaluate(() => {
-    document.getElementById('text-palette').dispatchEvent(new DragEvent('dragstart', {
-      bubbles: true,
-      cancelable: true
-    }));
-  });
-
-  const zone = page.locator('#row-target-1 > .h18-canvas-preview > .h18-v0838-drop-overlay [data-h18-v0838-position="left"]');
-  await expect(zone).toBeVisible({ timeout: 2500 });
-  const rect = await zone.boundingBox();
-  if (!rect) throw new Error('Left side zone has no geometry');
-
-  await page.evaluate(({ x, y }) => {
-    const preview = document.querySelector('#row-target-1 > .h18-canvas-preview');
-    preview.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, clientX: x, clientY: y }));
-    preview.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, clientX: x, clientY: y }));
-    document.getElementById('text-palette').dispatchEvent(new DragEvent('dragend', { bubbles: true }));
-  }, { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
-
-  await page.waitForTimeout(700);
-
-  const state = await page.evaluate(() => {
+async function readState(page) {
+  return page.evaluate(() => {
     const rows = Array.from(document.querySelectorAll('#h18-page-sections-sortable > .h18-page-section-row'));
     const inspector = document.getElementById('h18-page-inspector-target');
-
     function control(row, selector) {
       return row.querySelector(selector) || (row.classList.contains('is-selected') ? inspector.querySelector(selector) : null);
     }
-    function value(row, selector) {
-      return control(row, selector)?.value || '';
-    }
-
+    function value(row, selector) { return control(row, selector)?.value || ''; }
     const byKey = {};
     rows.forEach((row) => {
       const key = value(row, '.h18-page-section-key');
@@ -194,13 +176,11 @@ test('palette side-drop follows the real Inspector body-move lifecycle', async (
         selected: row.classList.contains('is-selected')
       };
     });
-
     const orphanGridContainers = rows.filter((row) => {
       if ((row.getAttribute('data-section-type') || '') !== 'grid') return false;
       const key = value(row, '.h18-page-section-key');
       return rows.filter((candidate) => value(candidate, '.h18-layout-parent-key') === key).length === 0;
     }).length;
-
     return {
       keys: rows.map((row) => value(row, '.h18-page-section-key')),
       byKey,
@@ -209,7 +189,35 @@ test('palette side-drop follows the real Inspector body-move lifecycle', async (
       orphanGridContainers
     };
   });
+}
 
+test('real mouse drag from palette to visible Venstre zone creates one Auto-kasse with two children', async ({ page }) => {
+  await boot(page);
+
+  const palette = page.locator('#text-palette');
+  const preview = page.locator('#row-target-1 > .h18-canvas-preview');
+  const paletteRect = await palette.boundingBox();
+  const previewRect = await preview.boundingBox();
+  if (!paletteRect || !previewRect) throw new Error('Palette/preview geometry unavailable');
+
+  await page.mouse.move(paletteRect.x + paletteRect.width / 2, paletteRect.y + paletteRect.height / 2);
+  await page.mouse.down();
+  // Two moves are intentional: Playwright/browser HTML5 DnD starts after a real
+  // movement threshold and then emits native dragover events on later moves.
+  await page.mouse.move(paletteRect.x + paletteRect.width / 2 + 12, paletteRect.y + paletteRect.height / 2 + 8, { steps: 3 });
+  await page.mouse.move(paletteRect.x + paletteRect.width / 2 + 24, paletteRect.y + paletteRect.height / 2 + 16, { steps: 3 });
+
+  const zone = page.locator('#row-target-1 > .h18-canvas-preview > .h18-v0838-drop-overlay [data-h18-v0838-position="left"]');
+  await expect(zone).toBeVisible({ timeout: 2500 });
+  const zoneRect = await zone.boundingBox();
+  if (!zoneRect) throw new Error('Visible left zone has no geometry');
+
+  await page.mouse.move(zoneRect.x + zoneRect.width / 2, zoneRect.y + zoneRect.height / 2, { steps: 12 });
+  await page.waitForTimeout(80);
+  await page.mouse.up();
+  await page.waitForTimeout(850);
+
+  const state = await readState(page);
   expect(state.inspectedKey).toBe('auto-1');
   expect(state.keys).toEqual(['auto-1', 'text-new', 'target-1']);
   expect(state.byKey['auto-1'].label).toBe('Auto-kasser');
