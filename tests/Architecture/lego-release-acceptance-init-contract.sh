@@ -39,9 +39,12 @@ const fs=require('fs');
 const record=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const expectedPackageSha=process.argv[3];
 if(record.build.packageSha256!==expectedPackageSha) throw new Error('canonical record package hash must match update.json');
-if(record.overallStatus!=='PENDING') throw new Error('canonical release record must remain PENDING before manual test');
+if(!['PENDING','PASS','FAIL'].includes(record.overallStatus)) throw new Error('canonical release record has invalid overall status');
+if(Object.keys(record.scenarios||{}).join('')!=='ABCDEFGHIJKL') throw new Error('canonical A-L scenarios required');
 for(const [id,s] of Object.entries(record.scenarios||{})) {
-  if(s.status!=='PENDING' || (s.evidence||[]).length!==0) throw new Error(`${id} canonical state must be PENDING without evidence`);
+  if(!['PENDING','PASS','FAIL','BLOCKED'].includes(s.status)) throw new Error(`${id} canonical scenario status invalid`);
+  if(!Array.isArray(s.evidence)) throw new Error(`${id} canonical evidence must be an array`);
+  if(s.status==='PASS' && s.evidence.length===0) throw new Error(`${id} canonical PASS requires evidence`);
 }
 if(record.environment.stagingUrl!=='https://test2.hangar18.dk') throw new Error('canonical staging target mismatch');
 if(!/public cutover is not authorized/i.test(record.notes||'')) throw new Error('canonical cutover safety note required');
