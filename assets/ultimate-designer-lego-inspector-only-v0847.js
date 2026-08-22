@@ -27,6 +27,28 @@
         '.h18-v0811-edit-child'
     ].join(',');
 
+    // A normal click anywhere in a visible element should select that element
+    // for Inspector editing. Nested Auto-kasse/Kasse tiles win over their cloned
+    // source preview; a normal top-level preview resolves to its source row.
+    const CANVAS_ELEMENT_SELECTOR = [
+        '.h18-v0811-auto-box[data-h18-v0811-row]',
+        '.h18-v0811-child-card[data-h18-v0811-child]',
+        '.h18-page-section-row > .h18-canvas-preview'
+    ].join(',');
+
+    // These controls remain direct canvas/layout manipulation and must never be
+    // converted into Inspector-selection clicks.
+    const CANVAS_SELECTION_EXCLUDE_SELECTOR = [
+        '.h18-v0841-resize-handle',
+        '.h18-v0841-resize-rail',
+        '.h18-v0811-edit-child',
+        '.h18-page-section-edit',
+        '.h18-v0811-side-zone',
+        '.h18-v0814-auto-drop-zone',
+        '.h18-v0814-auto-kasse-drop',
+        '.h18-ud-box-drop-zone'
+    ].join(',');
+
     function armCompositionReconcile() {
         window.setTimeout(function () {
             const guard = window.__h18LegoParentKeyGuardV0845;
@@ -129,6 +151,24 @@
         }
     }
 
+    // Single-click is the primary LEGO selection gesture: click the element,
+    // then edit all content/design settings in Inspector. Embedded preview
+    // actions are deliberately suppressed; drag/drop and resize controls above
+    // are excluded and keep their direct-manipulation behavior.
+    document.addEventListener('click', function (event) {
+        const target = event.target && event.target.closest ? event.target : null;
+        if (!target || !target.closest('.h18-builder-canvas')) { return; }
+        if (target.closest(CANVAS_SELECTION_EXCLUDE_SELECTOR)) { return; }
+        const element = target.closest(CANVAS_ELEMENT_SELECTOR);
+        if (!element) { return; }
+
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') { event.stopImmediatePropagation(); }
+        selectInspectorForNode(element);
+        window.setTimeout(clarifyInspectorControls, 0);
+    }, true);
+
     // Content, typography, media and image settings are Inspector-owned.
     // Double-click on canvas content therefore selects the element instead of
     // activating the legacy inline editor/media picker.
@@ -146,10 +186,9 @@
         suppressDirectSetting(event, '.h18-canvas-focal-dot');
     }, true);
 
-    // Selecting a nested child moves its authoritative settings body into the
-    // existing Inspector. The base editor can repaint the parent Grid during that
-    // handoff. Re-arm the existing read-only visual reconciliation so the canvas
-    // continues to show the same children while settings are edited in Inspector.
+    // Selecting through explicit Rediger/header controls also keeps the same
+    // reconciliation contract. The base editor can repaint the parent Grid during
+    // Inspector handoff; re-arm the existing read-only visual reconciliation.
     document.addEventListener('click', function (event) {
         const trigger = event.target && event.target.closest ? event.target.closest(INSPECTOR_SELECTION_SELECTOR) : null;
         if (!trigger) { return; }
