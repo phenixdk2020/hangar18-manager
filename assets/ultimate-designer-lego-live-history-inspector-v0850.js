@@ -89,9 +89,10 @@
     }
 
     function applyAllNestedContainerDesign() {
+        const $ = jq();
         const $rows = activeRows();
-        if (!$rows || !$rows.length) { return; }
-        $rows.each(function () { applyContainerDesignForRow(jq()(this)); });
+        if (!$ || !$rows || !$rows.length) { return; }
+        $rows.each(function () { applyContainerDesignForRow($(this)); });
     }
 
     function reassertSelection() {
@@ -156,11 +157,13 @@
             if (!frame || typeof frame.on !== 'function') { return frame; }
 
             let transactionStarted = false;
+            let selectionAccepted = false;
             frame.on('select', function () {
                 // Register before the editor's frame.on('select') callback. The
                 // base callback then mutates MediaId/MediaUrl inside this atomic
                 // history transaction instead of merging the image with a later
                 // text/drop action.
+                selectionAccepted = true;
                 transactionStarted = beginHistory('media-selection');
                 window.setTimeout(function () {
                     const $row = selectedRow();
@@ -172,7 +175,11 @@
                 }, 0);
             });
             frame.on('close', function () {
-                if (!transactionStarted) { return; }
+                // A normal WordPress media selection closes the modal immediately
+                // after `select`. Keep that transaction alive until the zero-delay
+                // commit above has captured MediaId/MediaUrl. Only a genuine close
+                // without a selection is a cancelled media action.
+                if (selectionAccepted || !transactionStarted) { return; }
                 endHistory(false);
                 transactionStarted = false;
             });
