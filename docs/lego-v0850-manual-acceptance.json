@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "937f0816065f0638ca5a43b55966f6fa75bd48a1",
+    "pluginVersion": "0.8.50",
+    "packageSha256": "adff47f95ccf509d415ba8216fbbd2361f6814040345b56545770f2247ac54a4"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "PENDING",
+    "os": "PENDING",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop; Kasse, Række-/kolonne-kasse, Række- og kolonne-kasse og Auto-kasser skal vises med dansk terminologi, og Over/Under skal lande korrekt."},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting; den gamle separate Container må ikke fremstå som dublet, mens eksisterende container-data fortsat skal virke."},
+    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side / Auto-kasser; børn skal forblive synlige og intakte, og Inspector-ændringer til nested tekst/billede skal ses på canvas med det samme uden genvalg."},
+    "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize; resize-håndtag skal fortsat manipulere layout direkte uden at Kassen mister børn eller selection."},
+    "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop; editorens egen responsive UI må ikke ændre de gemte frontend-layoutværdier."},
+    "F": {"status": "PENDING", "evidence": [], "note": "Inspector-only redigering; valgt element skal beholde rød overlay-markering under designændringer. Baggrund, kant, kanttykkelse og radius skal fremstå på elementets ydre Kasse. Dynamic data binding og Conditions / synlighed skal fortsat ligge nederst under Avanceret."},
+    "G": {"status": "PENDING", "evidence": [], "note": "Editor-workspace og foldbare paneler; UI skal være mere kompakt på laptop og udnytte store skærme via responsive kolonner, skrift, controls og spacing uden browser-zoom."},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo; billedvalg/-fjernelse skal være et selvstændigt historiktrin. Efter billedvalg og derefter indsættelse af tekst skal første Undo kun fjerne teksten, ikke billedet."},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence; interne container/flex/grid-typer og eksisterende gemte sider skal bevare struktur og design."},
+    "J": {"status": "PENDING", "evidence": [], "note": "Preview Desktop/Tablet/Mobil; nested element må ikke duplikeres som topniveau, og gammel editor-chrome som 'Kasser i rækken' / 'Slip endnu en Kasse her' må ikke vises."},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore, inkl. PAGE-DELETE safety-backup restore sanity."},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery samt allerede designede sider skal være visuelt og funktionelt uændrede af LEGO-050 og den responsive editor-UI."}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "PENDING",
+  "notes": "Canonical pre-manual acceptance record for official Hangar18 Manager v0.8.50. LEGO-050 adds live Inspector-to-canvas sync, isolated media history checkpoints, outer-Kasse design semantics, persistent selection overlay, removal of legacy Grid chrome, Danish layout terminology and responsive editor workspace scaling. Internal container/flex/grid types and persistence remain unchanged. No manual PASS is claimed. Manual testing on test2 is required, and public cutover is not authorized."
+}
