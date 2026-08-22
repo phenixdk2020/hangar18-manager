@@ -1,0 +1,15 @@
+/* LEGO-047: Inspector is the sole owner of element/content/design settings.
+ * Canvas keeps direct layout manipulation (drag/drop + resize), but not inline
+ * text/media/image-setting controls. */
+.h18-builder-canvas .h18-canvas-image-tools,
+.h18-builder-canvas .h18-canvas-focal-dot {
+    display: none !important;
+}
+
+.h18-builder-canvas .h18-canvas-inline-edit,
+.h18-builder-canvas .h18-canvas-rich-edit,
+.h18-builder-canvas .h18-canvas-card-inline-edit,
+.h18-builder-canvas .h18-canvas-card-rich-edit,
+.h18-builder-canvas .h18-canvas-editable-media {
+    cursor: default;
+}
