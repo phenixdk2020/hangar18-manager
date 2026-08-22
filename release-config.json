@@ -1,14 +1,15 @@
 {
-  "version": "0.8.46",
-  "title": "LEGO-editor — korrekt Under og separate Undo-trin",
+  "version": "0.8.47",
+  "title": "LEGO-editor — Inspector som fælles elementeditor",
   "changelog": [
-    "Retter den manuelle v0.8.45-fejl, hvor et nyt palette-element droppet på Under blev indsat over mål-elementet i stedet for under det.",
-    "Årsagen var den ældre WordPress palette-handler, som kun understøtter indsæt-før semantics; LEGO-laget oversætter nu Under til næste topniveau-række eller til slutningen af canvas, så Under faktisk betyder efter hele målgruppen.",
-    "Når målet er en Auto-kasse/Grid, springer Under-oversættelsen de flade skjulte child source-rækker over, så det nye topniveau-element placeres efter hele Auto-kassen og ikke midt i dens interne børn.",
-    "Retter samtidig historikfejlen hvor to hurtige palette-drops inden for den tidligere 520 ms settle-periode kunne blive slået sammen, så ét Fortryd fjernede både den nyeste handling og den tidligere side-by-side-opbygning.",
-    "En ny ægte palette-gesture lukker nu den foregående pending atomiske historiktransaktion før den nye DOM-ændring; syntetiske redispatch-events fra samme drag/drop forbliver fortsat én atomisk handling.",
-    "Nye browserregressioner kræver både korrekt Under-placering efter en komplet Auto-kasse-gruppe og tre separate historikstates for start + første drop + andet hurtigt drop.",
-    "LEGO Editor QA er bestået på PHP 8.0/8.2/8.3 samt system Chrome, Chromium, Firefox og WebKit; Architecture QA og Editor Runtime Fast QA er også bestået.",
-    "Manuel v0.8.46 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
+    "Formaliserer Inspector som eneste editor for elementindhold, typografi, medier og design; canvas bruges fortsat direkte til drag/drop og resizing.",
+    "Et almindeligt klik inde i et synligt element vælger nu elementet og aktiverer Inspector, både for topniveau-elementer og børn inde i Kasse/Grid/Auto-kasser; Rediger-knappen fungerer fortsat som alternativ.",
+    "Resize-håndtag, resize-rails og drop-zoner er eksplicit undtaget fra klik-til-Inspector, så layoutmanipulation fortsat virker direkte på canvas.",
+    "Retter den manuelle v0.8.46-fejl hvor Rediger på et nested billedelement kunne efterlade Grid/Auto-kassen visuelt tom; den eksisterende read-only reconciliation genaktiveres ved Inspector-handoff og bevarer børnene synlige uden Fortryd/Gendan.",
+    "Gamle inline tekst-, rich-text-, medie-, billed- og focal-point-kontroller på canvas skjules eller afbrydes og viderestilles til den eksisterende Inspector-selection i stedet for at oprette en parallel editorvej.",
+    "Inspector tydeliggør de eksisterende canonical spacing-felter: Margin.X = vandret afstand omkring element, Margin.Y = lodret afstand omkring element, Gap.X = mellem elementer på samme række og Gap.Y = mellem rækker.",
+    "Inspector tydeliggør også eksisterende designfelter for elementbaggrund, kantfarve, kanttykkelse og hjørner/runding; 0 px betyder henholdsvis ingen synlig kant og lige hjørner.",
+    "LEGO Editor QA, Architecture QA, Editor Runtime Fast QA og I9 Prep QA er bestået; Architecture browser-suite bestod ved genkørsel efter en enkelt ældre Firefox timeout-flake.",
+    "Manuel v0.8.47 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
   ]
 }
