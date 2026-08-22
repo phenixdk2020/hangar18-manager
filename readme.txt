@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.50
+Version: 0.8.51
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.51 – LEGO-editor — 2D Kasse-layout og v0.8.50 testrettelser ==
+
+Nyt:
+- Den gamle Auto-kasse-hjælpetekst og pre-LEGO drop-chrome skjules permanent i normal editorvisning, mens nødvendige drag/drop hit targets bevares internt.
+- Markeringen af det valgte element tegnes nu som et separat komplet overlay på alle fire sider og skal forblive synlig gennem Inspector- og layout-rerenderinger.
+- Baggrund, kant, kanttykkelse og radius anvendes på elementets fulde ydre Kasse/layoutflade i Række- og kolonne-kasser i stedet for kun omkring tekst- eller billedindholdets egen højde.
+- Inspector-panelet Luft, baggrund og placering er omlagt med Desktop/Mobil-faner, bredere felter og kortere labels, så kontrollerne er læsbare på både laptop og store skærme.
+- Baggrund kan fortsat vælges fra design-presets, men Custom kan nu vælges direkte i Inspector via den eksisterende DesignMode/CustomBackgroundColor-model uden nyt side-schema.
+- Over/Under-drop på et element inde i en Række- og kolonne-kasse bliver nu i samme layout-parent og kan oprette en lodret stak i den samme kolonne i stedet for at hoppe ud under hele kassen.
+- LEGO-051 tilføjer 2D Kasse-layout: flere elementer kan stables lodret i samme kolonne, og en vandret splitter kan justere højdefordelingen procentuelt, mens den eksisterende lodrette splitter fortsat styrer kolonnebredde.
+- Den nye stack/højdefordeling har en separat editor-state-ejer; eksisterende container/flex/grid-typer og LayoutParentKey-persistens ændres ikke, så allerede designede sider bevarer deres eksisterende schema.
+- Nested elementvalg er gjort deterministisk på tværs af Chrome, Chromium, Firefox og WebKit ved at resolve den kanoniske række via element-key og aktivere den eksisterende Inspector-handler frem for den klonede proxy.
+- Architecture QA, LEGO Editor QA og I9 Prep QA er grønne på den endelige LEGO-051-kandidat. En kendt timingfølsom legacy E14 Firefox-test blev genkørt isoleret og bestod. Manuel v0.8.51-test på test2 er stadig nødvendig; public cutover er ikke autoriseret.
 
 
 == Version 0.8.50 – LEGO-editor — live Inspector, Kasse-model og responsivt arbejdsområde ==
