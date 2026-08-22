@@ -73,6 +73,14 @@
     border-radius: 0 !important;
 }
 
+/* The old raw Container palette entry is the same underlying type as the
+ * canonical LEGO Kasse tool. Keep it in DOM for programmatic creation, but do
+ * not expose two user-facing ways to create the same thing. */
+.h18-v0850-legacy-container-palette,
+.h18-v0850-legacy-container-palette-shell {
+    display: none !important;
+}
+
 /* Legacy pre-LEGO Grid status chrome. The actual child previews remain visible. */
 .h18-ud-auto-box-canvas-head {
     display: none !important;
