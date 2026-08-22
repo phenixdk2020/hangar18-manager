@@ -22,19 +22,31 @@
 
         document.querySelectorAll('.h18-builder-palette-item[data-section-type="container"]:not([data-h18-layout-tool])').forEach(function (button) {
             button.classList.add('h18-v0850-legacy-container-palette');
+            button.setAttribute('data-h18-v0850-duplicate-container', '1');
             const shell = button.closest('.h18-library-item-shell');
-            if (shell) { shell.classList.add('h18-v0850-legacy-container-palette-shell'); }
+            if (shell) {
+                shell.classList.add('h18-v0850-legacy-container-palette-shell');
+                shell.setAttribute('data-h18-v0850-duplicate-container', '1');
+            }
         });
     }
 
     function renamePaletteTypes() {
         document.querySelectorAll('.h18-builder-palette-item[data-section-type="flex"]:not([data-h18-layout-tool])').forEach(function (button) {
-            setDirectText(button, 'Flex-kasse');
-            button.setAttribute('title', 'Flex-kasse — kasse der fordeler under-elementer i række eller kolonne.');
+            setDirectText(button, 'Række-/kolonne-kasse');
+            button.setAttribute('title', 'Række-/kolonne-kasse — fordeler under-elementer vandret eller lodret i én fleksibel retning.');
         });
         document.querySelectorAll('.h18-builder-palette-item[data-section-type="grid"]:not([data-h18-layout-tool])').forEach(function (button) {
-            setDirectText(button, 'Grid-kasse');
-            button.setAttribute('title', 'Grid-kasse — manuel kasse med kolonne-layout til under-elementer.');
+            setDirectText(button, 'Række- og kolonne-kasse');
+            button.setAttribute('title', 'Række- og kolonne-kasse — opbygger et layout med flere kolonner og eventuelt flere rækker.');
+        });
+        document.querySelectorAll('.h18-builder-palette-item[data-h18-layout-tool="box"]').forEach(function (button) {
+            setDirectText(button, 'Kasse');
+            button.setAttribute('title', 'Kasse — almindelig beholder omkring et eller flere elementer.');
+        });
+        document.querySelectorAll('.h18-builder-palette-item[data-h18-layout-tool="auto-row"]').forEach(function (button) {
+            setDirectText(button, 'Auto-kasser');
+            button.setAttribute('title', 'Auto-kasser — opretter og fordeler automatisk kasser ved siden af hinanden.');
         });
     }
 
@@ -44,8 +56,10 @@
         const value = String(type.textContent || '').trim();
         const labels = {
             'Container': 'Kasse',
-            'Flex container': 'Flex-kasse',
-            'Grid container': 'Grid-kasse'
+            'Flex container': 'Række-/kolonne-kasse',
+            'Grid container': 'Række- og kolonne-kasse',
+            'Flex-kasse': 'Række-/kolonne-kasse',
+            'Grid-kasse': 'Række- og kolonne-kasse'
         };
         if (labels[value]) { type.textContent = labels[value]; }
     }
@@ -53,12 +67,13 @@
     function renameCanvasFallbacks() {
         const labels = {
             container: ['Container', 'Kasse'],
-            flex: ['Flex container', 'Flex-kasse'],
-            grid: ['Grid container', 'Grid-kasse']
+            flex: ['Flex container', 'Række-/kolonne-kasse'],
+            grid: ['Grid container', 'Række- og kolonne-kasse']
         };
         Object.keys(labels).forEach(function (type) {
             document.querySelectorAll('.h18-canvas-type-' + type + ' .h18-canvas-preview-title').forEach(function (title) {
-                if (String(title.textContent || '').trim() === labels[type][0]) {
+                const value = String(title.textContent || '').trim();
+                if (value === labels[type][0] || value === 'Flex-kasse' || value === 'Grid-kasse') {
                     title.textContent = labels[type][1];
                 }
             });
@@ -72,7 +87,7 @@
             const legend = group.querySelector('legend');
             if (!legend) { return; }
             const title = String(legend.textContent || '').trim();
-            if (title === 'Container · farve og kant' || title === 'Farver og kant') {
+            if (title === 'Container · farve og kant' || title === 'Farver og kant' || title === 'Kasse · farve og kant') {
                 legend.textContent = 'Kasse · farve og kant';
                 const description = group.querySelector(':scope > .description');
                 if (description) {
@@ -80,12 +95,32 @@
                 }
                 group.querySelectorAll('.h18-ud-lego-design-control strong').forEach(function (label) {
                     const value = String(label.textContent || '').trim();
-                    if (value === 'Containerbaggrund') { label.textContent = 'Baggrund'; }
-                    if (value === 'Containerkant') { label.textContent = 'Kantfarve'; }
+                    if (value === 'Containerbaggrund') { label.textContent = 'Kassebaggrund'; }
+                    if (value === 'Containerkant') { label.textContent = 'Kassekant'; }
                 });
             }
             if (title === 'Container · form og effekter' || title === 'Form og effekter') {
                 legend.textContent = 'Kasse · form og effekter';
+            }
+        });
+    }
+
+    function renameLibraryMetadata() {
+        document.querySelectorAll('.h18-library-item-shell').forEach(function (shell) {
+            const type = String(shell.getAttribute('data-library-type') || '');
+            const tool = String(shell.getAttribute('data-library-tool') || '');
+            if (type === 'container' && tool === 'box') {
+                shell.setAttribute('data-library-label', 'kasse');
+                shell.setAttribute('data-library-description', 'almindelig beholder omkring et eller flere elementer');
+            } else if (type === 'flex') {
+                shell.setAttribute('data-library-label', 'række-/kolonne-kasse');
+                shell.setAttribute('data-library-description', 'fordeler under-elementer vandret eller lodret');
+            } else if (type === 'grid' && tool !== 'auto-row') {
+                shell.setAttribute('data-library-label', 'række- og kolonne-kasse');
+                shell.setAttribute('data-library-description', 'layout med flere kolonner og eventuelt flere rækker');
+            } else if (tool === 'auto-row') {
+                shell.setAttribute('data-library-label', 'auto-kasser');
+                shell.setAttribute('data-library-description', 'opretter og fordeler automatisk kasser ved siden af hinanden');
             }
         });
     }
@@ -97,6 +132,7 @@
         renameInspectorType();
         renameCanvasFallbacks();
         renameDesignPanel();
+        renameLibraryMetadata();
     }
 
     function queue() {
