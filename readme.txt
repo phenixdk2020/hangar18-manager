@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.46
+Version: 0.8.47
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.47 – LEGO-editor — Inspector som fælles elementeditor ==
+
+Nyt:
+- Formaliserer Inspector som eneste editor for elementindhold, typografi, medier og design; canvas bruges fortsat direkte til drag/drop og resizing.
+- Et almindeligt klik inde i et synligt element vælger nu elementet og aktiverer Inspector, både for topniveau-elementer og børn inde i Kasse/Grid/Auto-kasser; Rediger-knappen fungerer fortsat som alternativ.
+- Resize-håndtag, resize-rails og drop-zoner er eksplicit undtaget fra klik-til-Inspector, så layoutmanipulation fortsat virker direkte på canvas.
+- Retter den manuelle v0.8.46-fejl hvor Rediger på et nested billedelement kunne efterlade Grid/Auto-kassen visuelt tom; den eksisterende read-only reconciliation genaktiveres ved Inspector-handoff og bevarer børnene synlige uden Fortryd/Gendan.
+- Gamle inline tekst-, rich-text-, medie-, billed- og focal-point-kontroller på canvas skjules eller afbrydes og viderestilles til den eksisterende Inspector-selection i stedet for at oprette en parallel editorvej.
+- Inspector tydeliggør de eksisterende canonical spacing-felter: Margin.X = vandret afstand omkring element, Margin.Y = lodret afstand omkring element, Gap.X = mellem elementer på samme række og Gap.Y = mellem rækker.
+- Inspector tydeliggør også eksisterende designfelter for elementbaggrund, kantfarve, kanttykkelse og hjørner/runding; 0 px betyder henholdsvis ingen synlig kant og lige hjørner.
+- LEGO Editor QA, Architecture QA, Editor Runtime Fast QA og I9 Prep QA er bestået; Architecture browser-suite bestod ved genkørsel efter en enkelt ældre Firefox timeout-flake.
+- Manuel v0.8.47 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst.
 
 
 == Version 0.8.46 – LEGO-editor — korrekt Under og separate Undo-trin ==
