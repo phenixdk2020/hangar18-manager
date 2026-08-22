@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "d44a28c5dff25af33257c1bd315677d864c87b9c",
+    "pluginVersion": "0.8.49",
+    "packageSha256": "e9cf73774717cb62e5e47da139e575473e49b6833c9e8c95cb860c08fc0735ca"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "PENDING",
+    "os": "PENDING",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop; Over/Under skal lande på korrekt side af målgruppen"},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting"},
+    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side / Auto-kasser; børn skal vises korrekt straks, forblive synlige ved Inspector-selection og forblive intakte efter kolonne-resize"},
+    "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize; resize-håndtag/rails skal manipulere layout direkte uden at Grid/Auto-kasse mister børn"},
+    "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop"},
+    "F": {"status": "PENDING", "evidence": [], "note": "Inspector-only elementredigering; valgt nested element skal beholde den røde markering gennem Grid/Auto-kasse repaint; Dynamic data binding og Conditions / synlighed skal ligge nederst under Avanceret uden ændrede værdier"},
+    "G": {"status": "PENDING", "evidence": [], "note": "Foldbare paneler"},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo; Inspector-selection må ikke oprette utilsigtede historiktrin"},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence"},
+    "J": {"status": "PENDING", "evidence": [], "note": "Preview Desktop/Tablet/Mobil; nested element må ikke duplikeres som topniveau, og editor-only chrome skal være fjernet"},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore, inkl. PAGE-DELETE safety-backup restore sanity"},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery regression"}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "PENDING",
+  "notes": "Canonical pre-manual acceptance record for official Hangar18 Manager v0.8.49. LEGO-049 keeps nested selection visibly marked through late Grid/Auto-kasse rerenders and moves Dynamic data binding plus Conditions / synlighed to the bottom of Inspector under Avanceret while preserving their element-specific data and behavior. No manual PASS is claimed. Manual testing on test2 is still required, and public cutover is not authorized."
+}
