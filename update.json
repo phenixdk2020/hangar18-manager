@@ -1,20 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.44",
+  "version": "0.8.45",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-22T06:37:13Z",
+  "published_utc": "2026-08-22T06:52:11Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "769326cc16dbc31d93ced93c0eaa95dba6f77715c9e67ec2ef2a3bd6f7479d1f",
+  "package_sha256": "706a28c295276795f268a28bcafd5b4f3a41afaf5f0592c6dfda180f2e4744e0",
   "changelog": [
-    "Retter den fortsatte manuelle Scenario C-fejl i officiel v0.8.43, hvor palette → Venstre/Højre kunne oprette en Grid container / Auto-kasse med 0 børn og lade elementerne stå lodret som topniveau-søskende.",
-    "Den virkelige Ultimate Designer Inspector flytter den valgte rækkes komplette section body ud af rækken; derfor kunne Grid-key og Order midlertidigt være usynlige for nesting-motorens direkte DOM-opslag.",
-    "Nesting-motorens strukturelle Key- og Order-opslag er nu Inspector-aware via den eksisterende controls-abstraktion, så den nyoprettede Grid kan findes og færdigkonfigureres under hele placement-handoffet.",
-    "v0.8.43 ParentKey-guarden er samtidig gjort Inspector-aware, så den kan genkende en valgt Grid-parent, tilføje den nye parent-option og forhindre den normale select → LayoutParentKey-synkronisering i at nulstille børnenes parent igen.",
-    "Placement- og hierarchy-authority er fortsat den eksisterende nesting-motor og LayoutParentKey; der er ikke indført en parallel placement-motor.",
-    "Scenario C-browserregressionen modellerer nu den reelle Inspector-DOM-flytning og WordPress select → hidden-synkronisering og kræver 2 børn, fælles parent-key/select, korrekt Grid-order og 0 orphan Grid-containere.",
+    "Retter den resterende manuelle Scenario C-fejl i v0.8.44, hvor Auto-kassen kunne se tom ud umiddelbart efter palette → Venstre/Højre, selv om Fortryd → Gendan viste hierarkiet korrekt.",
+    "Observationen dokumenterer at LayoutParentKey-hierarkiet allerede var korrekt, mens den levende canvas-komposition kunne blive overskrevet af en sen WordPress/Inspector repaint.",
+    "Tilføjer en afgrænset post-drop reconciliation, som sammenligner det autoritative antal direkte børn fra LayoutParentKey med det faktisk renderede antal Auto-kasse tiles.",
+    "Hvis live-visningen afviger, genbruges den eksisterende nesting-tools refresh til at genopbygge canvas fra den allerede korrekte model; der oprettes eller flyttes ingen rækker, og parent-, history- og persistence-data ændres ikke.",
+    "Regressionstesten simulerer nu direkte den manuelle fejl ved at efterlade en eksisterende Auto-kasse wrapper med 0 synlige tiles efter korrekt placement og kræver automatisk recovery til 2 tiles uden Fortryd/Gendan.",
+    "Den manglende canonical v0.8.44 acceptance-ledger er samtidig genetableret som PENDING, og architecture isolation tillader v0.8.44/v0.8.45 acceptance-ledgers.",
     "QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit, sammen med Architecture, Fast og I9 Prep.",
-    "Manuel v0.8.44 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
+    "Manuel v0.8.45 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
   ]
 }

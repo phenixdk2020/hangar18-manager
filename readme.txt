@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.44
+Version: 0.8.45
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.45 – LEGO-editor — live Auto-kasse reconciliation ==
+
+Nyt:
+- Retter den resterende manuelle Scenario C-fejl i v0.8.44, hvor Auto-kassen kunne se tom ud umiddelbart efter palette → Venstre/Højre, selv om Fortryd → Gendan viste hierarkiet korrekt.
+- Observationen dokumenterer at LayoutParentKey-hierarkiet allerede var korrekt, mens den levende canvas-komposition kunne blive overskrevet af en sen WordPress/Inspector repaint.
+- Tilføjer en afgrænset post-drop reconciliation, som sammenligner det autoritative antal direkte børn fra LayoutParentKey med det faktisk renderede antal Auto-kasse tiles.
+- Hvis live-visningen afviger, genbruges den eksisterende nesting-tools refresh til at genopbygge canvas fra den allerede korrekte model; der oprettes eller flyttes ingen rækker, og parent-, history- og persistence-data ændres ikke.
+- Regressionstesten simulerer nu direkte den manuelle fejl ved at efterlade en eksisterende Auto-kasse wrapper med 0 synlige tiles efter korrekt placement og kræver automatisk recovery til 2 tiles uden Fortryd/Gendan.
+- Den manglende canonical v0.8.44 acceptance-ledger er samtidig genetableret som PENDING, og architecture isolation tillader v0.8.44/v0.8.45 acceptance-ledgers.
+- QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit, sammen med Architecture, Fast og I9 Prep.
+- Manuel v0.8.45 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst.
 
 
 == Version 0.8.44 – LEGO-editor — Inspector-aware Auto-kasse rettelse ==
