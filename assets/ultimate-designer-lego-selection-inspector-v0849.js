@@ -113,6 +113,15 @@
         return found;
     }
 
+    function advancedLayoutIsStable(root, heading, blocks) {
+        if (!heading || !blocks.length) { return false; }
+        if (heading.nextElementSibling !== blocks[0]) { return false; }
+        for (let index = 1; index < blocks.length; index += 1) {
+            if (blocks[index - 1].nextElementSibling !== blocks[index]) { return false; }
+        }
+        return blocks[blocks.length - 1] === root.lastElementChild;
+    }
+
     function moveAdvancedInspectorBlocks() {
         advancedFrame = 0;
         const target = document.querySelector('#h18-page-inspector-target');
@@ -122,16 +131,19 @@
         if (!blocks.length) { return; }
 
         let heading = root.querySelector(':scope > .h18-v0849-advanced-heading');
+        blocks.forEach(function (block) { block.classList.add('h18-v0849-advanced-block'); });
+
+        if (advancedLayoutIsStable(root, heading, blocks)) { return; }
+
         if (!heading) {
             heading = document.createElement('div');
             heading.className = 'h18-v0849-advanced-heading';
             heading.innerHTML = '<strong>Avanceret</strong><span>Dynamiske data og regler for synlighed</span>';
+        } else if (heading.parentElement === root) {
+            root.removeChild(heading);
         }
 
-        blocks.forEach(function (block) {
-            block.classList.add('h18-v0849-advanced-block');
-            root.appendChild(block);
-        });
+        blocks.forEach(function (block) { root.appendChild(block); });
         root.insertBefore(heading, blocks[0]);
     }
 
