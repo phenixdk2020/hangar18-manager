@@ -1,14 +1,14 @@
 {
-  "version": "0.8.42",
-  "title": "LEGO-editor retest + sikker Slet side",
+  "version": "0.8.43",
+  "title": "LEGO-editor — Auto-kasse ParentKey rettelse",
   "changelog": [
-    "Indeholder v0.8.41-rettelsen for palette → Venstre/Højre, så et nyt element bruger den synlige side-zones koordinater og ikke falder tilbage til lodret placement.",
-    "Tilføjer PAGE-DELETE-001: en tydelig Slet side-funktion til almindelige sider med eksakt titelbekræftelse og ekstra afsluttende bekræftelse.",
-    "Slet side kræver delete_pages, objektspecifik delete_post og gyldig nonce server-side.",
-    "Før en side flyttes til WordPress Papirkurv oprettes en B1-kompatibel safety backup med side- og Page Editor-state; permanent/raw delete bruges ikke.",
-    "Hjem, Køretøjer og materiel, Events og Billedgalleri er eksplicit låst mod PAGE-DELETE-001.",
-    "PAGE-DELETE audit registrerer UTC-tid, side-ID/slug/titel, tidligere status, bruger-ID og safety-backup, og restore genbruger den eksisterende B1-motor.",
-    "Nye smoke/contract-tests verificerer afvist titel, protected route, WordPress Trash, fysisk safety backup, audit og fuld B1 restore på PHP 8.0/8.2/8.3.",
-    "Architecture/E14 browser QA og I9 Prep er grønne; manual/live A–L og I9 forbliver PENDING, og I10/public cutover er fortsat låst."
+    "Retter den manuelle v0.8.42 Scenario C-fejl, hvor palette → Venstre/Højre kunne oprette en korrekt Auto-kasse/Grid-række, men efterlade den med 0 børn og lade elementerne stå lodret.",
+    "Fejlen skyldtes WordPress-editorens normale parent-select → LayoutParentKey-synkronisering: en ny Auto-kasse-key kunne blive nulstillet, hvis selecten endnu ikke havde den nye parent som option.",
+    "Tilføjer en snæver admin-only ParentKey-guard, som kun sikrer at en allerede valgt eksisterende container/flex/grid-parent findes som select-option før den normale synkronisering.",
+    "Den eksisterende nesting-tools motor og LayoutParentKey er fortsat eneste placement/hierarchy-authority; fixet flytter ikke rækker, opretter ikke Auto-kasser og ejer ikke history eller persistence.",
+    "Browser-regressionen indeholder nu den reelle WordPress select→hidden handler, som manglede i v0.8.41/v0.8.42-testen.",
+    "Regressionen kræver at begge elementer beholder samme Auto-kasse parent-key, at previewet har 2 børn og at der ikke efterlades en orphan Grid/Auto-kasse med 0 børn.",
+    "QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit, sammen med Architecture, Fast og I9 Prep.",
+    "Manuel v0.8.43 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
   ]
 }
