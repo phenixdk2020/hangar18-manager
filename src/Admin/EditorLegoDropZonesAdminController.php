@@ -22,6 +22,12 @@ namespace Hangar18\UltimateDesigner\Admin;
  * freshly created canonical parent already exists as a select option before the
  * normal WordPress select change handler can mirror an empty value back into the
  * hidden key. It does not choose placement or create a second parent model.
+ *
+ * LEGO-047 makes Inspector the sole owner of content/design/media settings.
+ * Canvas keeps direct layout manipulation (drag/drop and resize), while legacy
+ * inline edit/media controls are redirected to Inspector. Selecting a nested
+ * child also re-arms the existing visual reconciliation so Auto-kasse/Grid stays
+ * visually stable while the authoritative settings body lives in Inspector.
  */
 final class EditorLegoDropZonesAdminController
 {
@@ -50,6 +56,8 @@ final class EditorLegoDropZonesAdminController
         $cssPath = $pluginDir . '/assets/ultimate-designer-lego-drop-zones-v0838.css';
         $paletteSideDropBridgePath = $pluginDir . '/assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js';
         $parentKeyGuardPath = $pluginDir . '/assets/ultimate-designer-lego-parent-key-guard-v0845.js';
+        $inspectorOnlyJsPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.js';
+        $inspectorOnlyCssPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -99,11 +107,30 @@ final class EditorLegoDropZonesAdminController
             false
         );
 
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-inspector-only-v0847',
+            $pluginUrl . 'assets/ultimate-designer-lego-inspector-only-v0847.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-nesting-tools',
+                'hangar18-ultimate-designer-lego-parent-key-guard-v0845',
+            ],
+            is_file($inspectorOnlyJsPath) ? (string) filemtime($inspectorOnlyJsPath) : '0.8.47',
+            false
+        );
+
         wp_enqueue_style(
             'hangar18-ultimate-designer-lego-drop-zones-v0838',
             $pluginUrl . 'assets/ultimate-designer-lego-drop-zones-v0838.css',
             ['hangar18-ultimate-designer-nesting-tools'],
             is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.38'
+        );
+
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-lego-inspector-only-v0847',
+            $pluginUrl . 'assets/ultimate-designer-lego-inspector-only-v0847.css',
+            ['hangar18-ultimate-designer-lego-drop-zones-v0838'],
+            is_file($inspectorOnlyCssPath) ? (string) filemtime($inspectorOnlyCssPath) : '0.8.47'
         );
     }
 }
