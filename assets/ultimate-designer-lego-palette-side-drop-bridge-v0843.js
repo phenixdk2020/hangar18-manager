@@ -193,7 +193,10 @@
     }, true);
 
     document.documentElement.setAttribute('data-h18-lego-palette-side-drop-bridge', '0.8.43');
-    document.documentElement.setAttribute('data-h18-lego-palette-vertical-drop-bridge', '0.8.51');
+    // Keep the established LEGO-046 marker stable for old regression suites and
+    // integrations. LEGO-051 nested vertical placement has its own capability
+    // marker in the dedicated fixes/drop-zone layer.
+    document.documentElement.setAttribute('data-h18-lego-palette-vertical-drop-bridge', '0.8.46');
     window.__h18LegoPaletteSideDropBridgeV0843 = {
         version: '0.8.43', capabilityVersion: '0.8.51',
         sideZoneAt: sideZoneAt, overZoneAt: overZoneAt, underZoneAt: underZoneAt,
