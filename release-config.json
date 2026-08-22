@@ -1,16 +1,16 @@
 {
-  "version": "0.8.50",
-  "title": "LEGO-editor — live Inspector, Kasse-model og responsivt arbejdsområde",
+  "version": "0.8.51",
+  "title": "LEGO-editor — 2D Kasse-layout og v0.8.50 testrettelser",
   "changelog": [
-    "Inspector-ændringer til tekst, overskrift og billede synkroniseres nu direkte til canvas, også når elementet ligger inde i Auto-kasser eller en Række- og kolonne-kasse; genvalg af elementet skal ikke længere være nødvendigt.",
-    "Valg og fjernelse af billede får et selvstændigt historik-checkpoint, så en efterfølgende tekstindsættelse kan fortrydes uden samtidig at fjerne det tidligere valgte billede.",
-    "Den røde markering af det valgte element tegnes som et separat overlay over brugerens egen kant og bevares gennem design- og Grid-rerenderinger.",
-    "Baggrund, kant, kanttykkelse og hjørner/radius behandles visuelt som design af elementets ydre Kasse, mens tekst, billede og øvrigt elementindhold forbliver indholdslaget inde i Kassen.",
-    "Den gamle pre-LEGO editor-chrome 'Kasser i rækken' og 'Slip endnu en Kasse her' skjules; eksisterende dropfunktionalitet bevares som usynlig hit target under drag.",
-    "Brugerfladen anvender nu de danske layoutnavne Kasse, Række-/kolonne-kasse, Række- og kolonne-kasse og Auto-kasser. De interne typer container, flex og grid samt eksisterende persistence ændres ikke.",
-    "Inspector får bedre arbejdsbredde og mere læsbare felter, mens Dynamic data binding og Conditions / synlighed fortsat ligger nederst under Avanceret.",
-    "Editorens egen brugerflade skalerer responsivt med clamp-baserede kolonner, skrift-, kontrol-, padding- og afstandsstørrelser: mere kompakt på laptop og bedre udnyttelse af store skærme uden browser-zoom.",
-    "Responsiv editor-skalering ændrer ikke de gemte mål eller typografiværdier for selve hjemmesidens design; canvas skal fortsat repræsentere frontend-data og LEGO-layout korrekt.",
-    "Architecture QA, LEGO Editor QA og I9 Prep QA er bestået på den endelige LEGO-050-kandidat efter genkørsel af en timingfølsom legacy media-test. Manuel v0.8.50-test på test2 er stadig nødvendig før fuld accept og public cutover."
+    "Den gamle Auto-kasse-hjælpetekst og pre-LEGO drop-chrome skjules permanent i normal editorvisning, mens nødvendige drag/drop hit targets bevares internt.",
+    "Markeringen af det valgte element tegnes nu som et separat komplet overlay på alle fire sider og skal forblive synlig gennem Inspector- og layout-rerenderinger.",
+    "Baggrund, kant, kanttykkelse og radius anvendes på elementets fulde ydre Kasse/layoutflade i Række- og kolonne-kasser i stedet for kun omkring tekst- eller billedindholdets egen højde.",
+    "Inspector-panelet Luft, baggrund og placering er omlagt med Desktop/Mobil-faner, bredere felter og kortere labels, så kontrollerne er læsbare på både laptop og store skærme.",
+    "Baggrund kan fortsat vælges fra design-presets, men Custom kan nu vælges direkte i Inspector via den eksisterende DesignMode/CustomBackgroundColor-model uden nyt side-schema.",
+    "Over/Under-drop på et element inde i en Række- og kolonne-kasse bliver nu i samme layout-parent og kan oprette en lodret stak i den samme kolonne i stedet for at hoppe ud under hele kassen.",
+    "LEGO-051 tilføjer 2D Kasse-layout: flere elementer kan stables lodret i samme kolonne, og en vandret splitter kan justere højdefordelingen procentuelt, mens den eksisterende lodrette splitter fortsat styrer kolonnebredde.",
+    "Den nye stack/højdefordeling har en separat editor-state-ejer; eksisterende container/flex/grid-typer og LayoutParentKey-persistens ændres ikke, så allerede designede sider bevarer deres eksisterende schema.",
+    "Nested elementvalg er gjort deterministisk på tværs af Chrome, Chromium, Firefox og WebKit ved at resolve den kanoniske række via element-key og aktivere den eksisterende Inspector-handler frem for den klonede proxy.",
+    "Architecture QA, LEGO Editor QA og I9 Prep QA er grønne på den endelige LEGO-051-kandidat. En kendt timingfølsom legacy E14 Firefox-test blev genkørt isoleret og bestod. Manuel v0.8.51-test på test2 er stadig nødvendig; public cutover er ikke autoriseret."
   ]
 }
