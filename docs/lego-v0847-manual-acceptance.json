@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "29499282f64cbb7f8baa0f67cb5be70e7d9b13fd",
+    "pluginVersion": "0.8.47",
+    "packageSha256": "4332bd7b02bd98b3453c1c1f5bd0d0ee3ea3a6a402e485084f93612fbecfc500"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "PENDING",
+    "os": "PENDING",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop; Over/Under skal lande på korrekt side af målgruppen"},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting"},
+    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side / Auto-kasser; børn skal vises korrekt straks og forblive synlige når et nested element vælges i Inspector"},
+    "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize; resize-håndtag/rails skal fortsat manipulere layout direkte og må ikke blive opsnappet af klik-til-Inspector"},
+    "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop"},
+    "F": {"status": "PENDING", "evidence": [], "note": "Inspector-only elementredigering: klik direkte i topniveau- og nested element aktiverer korrekt Inspector; Rediger er alternativ; spacing/design viser Margin.X/Y, Gap.X/Y, baggrund, kant og radius; gamle inline medie-/tekstkontroller må ikke overtage canvas"},
+    "G": {"status": "PENDING", "evidence": [], "note": "Foldbare paneler"},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo; Inspector-selection må ikke oprette utilsigtede historiktrin og første Fortryd efter et nyt drop må kun fjerne seneste handling"},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence"},
+    "J": {"status": "PENDING", "evidence": [], "note": "Preview Desktop/Tablet/Mobil"},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore, inkl. PAGE-DELETE safety-backup restore sanity"},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery regression"}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "PENDING",
+  "notes": "Canonical pre-manual acceptance record for official Hangar18 Manager v0.8.47. LEGO-047 makes Inspector the sole content/design editor, adds single-click element selection, preserves direct drag/drop + resize, and re-arms visual reconciliation so nested Grid/Auto-kasse children remain visible during Inspector handoff. Manual retest must especially confirm Scenario C and F on test2. No manual PASS is claimed. I9 remains PENDING and public cutover is not authorized."
+}
