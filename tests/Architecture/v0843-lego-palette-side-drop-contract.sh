@@ -5,11 +5,14 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 bridge="$root/assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js"
 guard="$root/assets/ultimate-designer-lego-parent-key-guard-v0845.js"
 history="$root/assets/ultimate-designer-history-atomic-v0840.js"
+inspector="$root/assets/ultimate-designer-lego-inspector-only-v0847.js"
+inspector_css="$root/assets/ultimate-designer-lego-inspector-only-v0847.css"
 controller="$root/src/Admin/EditorLegoDropZonesAdminController.php"
 
 node --check "$bridge"
 node --check "$guard"
 node --check "$history"
+node --check "$inspector"
 
 # LEGO-041 side-drop targeting contract remains intact.
 grep -Fq "window.addEventListener('dragover'" "$bridge"
@@ -45,8 +48,23 @@ grep -Fq "end(true, true)" "$history"
 grep -Fq "data-h18-v0846-history-gesture-boundary" "$history"
 grep -Fq "capabilityVersion: '0.8.46'" "$history"
 
+# LEGO-047 makes Inspector the only settings editor. Canvas may still own layout
+# gestures such as drag/drop and resize, but not inline text/media/image settings.
+grep -Fq "INLINE_EDIT_SELECTOR" "$inspector"
+grep -Fq "DIRECT_SETTING_SELECTOR" "$inspector"
+grep -Fq "selectInspectorForNode" "$inspector"
+grep -Fq "armCompositionReconcile" "$inspector"
+grep -Fq "__h18LegoParentKeyGuardV0845" "$inspector"
+grep -Fq "data-h18-lego-inspector-only" "$inspector"
+grep -Fq "__h18LegoInspectorOnlyV0847" "$inspector"
+grep -Fq ".h18-canvas-image-tools" "$inspector_css"
+grep -Fq ".h18-canvas-focal-dot" "$inspector_css"
+
 grep -Fq "ultimate-designer-lego-palette-side-drop-bridge-v0843.js" "$controller"
 grep -Fq "ultimate-designer-lego-parent-key-guard-v0845.js" "$controller"
+grep -Fq "ultimate-designer-lego-inspector-only-v0847.js" "$controller"
+grep -Fq "ultimate-designer-lego-inspector-only-v0847.css" "$controller"
+grep -Fq "hangar18-ultimate-designer-lego-inspector-only-v0847" "$controller"
 grep -Fq "hangar18-ultimate-designer-lego-parent-key-guard-v0845" "$controller"
 grep -Fq "hangar18-ultimate-designer-lego-drop-zones-v0838" "$controller"
 
@@ -64,4 +82,12 @@ if grep -Eq 'setParent\s*\(|createAutoFor|placeRowBeside|insertBefore\s*\(|inser
   exit 1
 fi
 
-echo 'LEGO-041/042/046 palette drop + parent-key + gesture-boundary contract: PASS'
+# LEGO-047 is an interaction-policy adapter only. It may select an existing row
+# and request the existing read-only visual reconcile, but it may not write
+# hierarchy/order/persistence or create an independent history/placement model.
+if grep -Eq 'setParent\s*\(|createAutoFor|placeRowBeside|LayoutParentKey\s*=|insertBefore\s*\(|insertAfter\s*\(|appendTo\s*\(|wp_update_post|update_option|localStorage|sessionStorage|undo\s*\(|redo\s*\(' "$inspector"; then
+  echo 'LEGO-047 contract FAILED: Inspector-only adapter contains forbidden placement/persistence/history ownership.' >&2
+  exit 1
+fi
+
+echo 'LEGO-041/042/046/047 palette + Inspector-only interaction contract: PASS'
