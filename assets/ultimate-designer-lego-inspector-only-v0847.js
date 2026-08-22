@@ -70,12 +70,20 @@
         selectInspectorForNode(target);
     }
 
+    function setTextIfChanged(node, value) {
+        if (!node) { return; }
+        const next = String(value || '');
+        if (String(node.textContent || '') !== next) {
+            node.textContent = next;
+        }
+    }
+
     function setControlLabel(input, label, help) {
         if (!input || !input.closest) { return; }
         const shell = input.closest('label');
         if (!shell) { return; }
         const strong = shell.querySelector('strong');
-        if (strong) { strong.textContent = label; }
+        setTextIfChanged(strong, label);
         if (help) {
             let note = shell.querySelector('.h18-v0847-control-help');
             if (!note) {
@@ -83,7 +91,7 @@
                 note.className = 'h18-v0847-control-help';
                 shell.appendChild(note);
             }
-            note.textContent = help;
+            setTextIfChanged(note, help);
         }
     }
 
@@ -102,8 +110,7 @@
             spacing.querySelectorAll('[data-h18-lego-path$=".Gap.Y"]').forEach(function (input) {
                 setControlLabel(input, 'Mellem rækker lodret', 'Afstand i højden mellem rækker/elementer.');
             });
-            const title = spacing.querySelector('.h18-ud-lego-heading h4');
-            if (title) { title.textContent = 'Afstand og spacing'; }
+            setTextIfChanged(spacing.querySelector('.h18-ud-lego-heading h4'), 'Afstand og spacing');
         }
 
         const design = document.querySelector('#h18-ud-lego-design-panel');
@@ -152,7 +159,8 @@
 
     // Spacing/design panels are rendered dynamically when selection changes.
     // Keep the canonical fields unchanged and only give the existing controls the
-    // user-facing names that match the LEGO editing model.
+    // user-facing names that match the LEGO editing model. Relabeling is strictly
+    // idempotent so this observer never feeds itself with redundant text writes.
     if (window.MutationObserver) {
         const observer = new MutationObserver(function () { clarifyInspectorControls(); });
         observer.observe(document.body, { childList: true, subtree: true });
