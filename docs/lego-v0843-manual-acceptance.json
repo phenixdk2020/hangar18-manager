@@ -7,8 +7,8 @@
   },
   "environment": {
     "stagingUrl": "https://test2.hangar18.dk",
-    "browser": "Firefox 153",
-    "os": "Windows 10",
+    "browser": "PENDING",
+    "os": "PENDING",
     "desktopViewport": "PENDING",
     "tabletViewport": "PENDING",
     "mobileViewport": "PENDING"
@@ -16,7 +16,7 @@
   "scenarios": {
     "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop"},
     "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting"},
-    "C": {"status": "FAIL", "evidence": ["manual/test2-v0843-scenario-c-empty-grid"], "note": "Palette-side-drop opretter Grid/Auto-kasse med 0 børn; de to indholdselementer bliver stående som lodrette topniveau-søskende. Reproduceret igen efter installation af officiel v0.8.43."},
+    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side / Auto-kasser"},
     "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize"},
     "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop"},
     "F": {"status": "PENDING", "evidence": [], "note": "Design og spacing"},
@@ -32,6 +32,6 @@
     "dataLossOrDuplicate": false,
     "protectedDomainRegression": false
   },
-  "overallStatus": "FAIL",
-  "notes": "Official Hangar18 Manager v0.8.43 manual acceptance on test2. Scenario C is confirmed FAIL. LEGO-044 addresses the newly identified Inspector-hosted Grid structural-field blind spot. No manual PASS is claimed and I9/I10/public cutover remain locked."
+  "overallStatus": "PENDING",
+  "notes": "Canonical pre-manual acceptance bootstrap for official Hangar18 Manager v0.8.43. The subsequent live Scenario C failure is documented separately in docs/lego-v0843-scenario-c-live-fail.md and issue #131. No manual PASS is claimed. Public cutover is not authorized."
 }
