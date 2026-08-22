@@ -70,6 +70,58 @@
         selectInspectorForNode(target);
     }
 
+    function setControlLabel(input, label, help) {
+        if (!input || !input.closest) { return; }
+        const shell = input.closest('label');
+        if (!shell) { return; }
+        const strong = shell.querySelector('strong');
+        if (strong) { strong.textContent = label; }
+        if (help) {
+            let note = shell.querySelector('.h18-v0847-control-help');
+            if (!note) {
+                note = document.createElement('small');
+                note.className = 'h18-v0847-control-help';
+                shell.appendChild(note);
+            }
+            note.textContent = help;
+        }
+    }
+
+    function clarifyInspectorControls() {
+        const spacing = document.querySelector('#h18-ud-lego-spacing-panel');
+        if (spacing) {
+            spacing.querySelectorAll('[data-h18-lego-path$=".Margin.X"]').forEach(function (input) {
+                setControlLabel(input, 'Vandret afstand omkring element', 'Luft til venstre og højre om elementet.');
+            });
+            spacing.querySelectorAll('[data-h18-lego-path$=".Margin.Y"]').forEach(function (input) {
+                setControlLabel(input, 'Lodret afstand omkring element', 'Luft over og under elementet.');
+            });
+            spacing.querySelectorAll('[data-h18-lego-path$=".Gap.X"]').forEach(function (input) {
+                setControlLabel(input, 'Mellem elementer vandret', 'Afstand mellem elementer, når flere ligger på samme række.');
+            });
+            spacing.querySelectorAll('[data-h18-lego-path$=".Gap.Y"]').forEach(function (input) {
+                setControlLabel(input, 'Mellem rækker lodret', 'Afstand i højden mellem rækker/elementer.');
+            });
+            const title = spacing.querySelector('.h18-ud-lego-heading h4');
+            if (title) { title.textContent = 'Afstand og spacing'; }
+        }
+
+        const design = document.querySelector('#h18-ud-lego-design-panel');
+        if (design) {
+            const background = design.querySelector('[data-h18-lego-design-path="Colors.Background"]');
+            setControlLabel(background, 'Elementfarve / baggrund', 'Farven på selve elementets flade.');
+
+            const borderColor = design.querySelector('[data-h18-lego-design-path="Border.Color"]');
+            setControlLabel(borderColor, 'Kantfarve', 'Bruges når kanttykkelsen er større end 0 px.');
+
+            const borderWidth = design.querySelector('[data-h18-lego-design-path="Border.Width"]');
+            setControlLabel(borderWidth, 'Kanttykkelse', '0 px = ingen synlig kant. 1-12 px = synlig kant.');
+
+            const radius = design.querySelector('[data-h18-lego-design-path="Radius.All"]');
+            setControlLabel(radius, 'Hjørner / runding', '0 px = helt lige hjørner. Højere værdi = mere buede hjørner.');
+        }
+    }
+
     // Content, typography, media and image settings are Inspector-owned.
     // Double-click on canvas content therefore selects the element instead of
     // activating the legacy inline editor/media picker.
@@ -95,12 +147,23 @@
         const trigger = event.target && event.target.closest ? event.target.closest(INSPECTOR_SELECTION_SELECTOR) : null;
         if (!trigger) { return; }
         armCompositionReconcile();
+        window.setTimeout(clarifyInspectorControls, 0);
     }, false);
+
+    // Spacing/design panels are rendered dynamically when selection changes.
+    // Keep the canonical fields unchanged and only give the existing controls the
+    // user-facing names that match the LEGO editing model.
+    if (window.MutationObserver) {
+        const observer = new MutationObserver(function () { clarifyInspectorControls(); });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+    window.setTimeout(clarifyInspectorControls, 0);
 
     document.documentElement.setAttribute('data-h18-lego-inspector-only', '0.8.47');
     window.__h18LegoInspectorOnlyV0847 = {
         version: '0.8.47',
         selectInspectorForNode: selectInspectorForNode,
-        armCompositionReconcile: armCompositionReconcile
+        armCompositionReconcile: armCompositionReconcile,
+        clarifyInspectorControls: clarifyInspectorControls
     };
 }(jQuery));
