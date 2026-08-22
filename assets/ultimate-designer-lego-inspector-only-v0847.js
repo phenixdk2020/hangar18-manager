@@ -45,6 +45,7 @@
     ].join(',');
 
     const SELECTED_CANVAS_CLASS = 'is-h18-v0848-selected-element';
+    let resizePointerActive = false;
 
     function armCompositionReconcile() {
         window.setTimeout(function () {
@@ -70,6 +71,13 @@
         });
         const key = selectedRowKey();
         if (!key) { return; }
+
+        // The selected row's structural body lives in Inspector. Mirror only its
+        // immutable key as DOM metadata so older direct-layout runtimes that use
+        // data-key as fallback (notably v0.8.41 resize) can still resolve it.
+        const selectedRow = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
+        if (selectedRow) { selectedRow.setAttribute('data-key', key); }
+
         document.querySelectorAll('.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]').forEach(function (node) {
             const nodeKey = String(node.getAttribute('data-h18-v0811-row') || node.getAttribute('data-h18-v0811-child') || '');
             if (nodeKey === key) { node.classList.add(SELECTED_CANVAS_CLASS); }
@@ -188,6 +196,28 @@
     }, true);
     document.addEventListener('pointerdown', function (event) {
         suppressDirectSetting(event, '.h18-canvas-focal-dot');
+    }, true);
+
+    // Prepare Inspector-hosted structural identity before the legacy resize
+    // handler resolves left/right rows. After pointerup, re-arm visual composition
+    // because the canonical span input event can repaint the parent Grid.
+    document.addEventListener('pointerdown', function (event) {
+        const target = event.target && event.target.closest ? event.target.closest('.h18-v0841-resize-handle,.h18-v0841-resize-rail') : null;
+        if (!target) { return; }
+        refreshSelectedCanvasMarker();
+        resizePointerActive = true;
+    }, true);
+    document.addEventListener('pointerup', function () {
+        if (!resizePointerActive) { return; }
+        resizePointerActive = false;
+        armCompositionReconcile();
+        window.setTimeout(refreshSelectedCanvasMarker, 0);
+    }, true);
+    document.addEventListener('pointercancel', function () {
+        if (!resizePointerActive) { return; }
+        resizePointerActive = false;
+        armCompositionReconcile();
+        window.setTimeout(refreshSelectedCanvasMarker, 0);
     }, true);
 
     document.addEventListener('click', function (event) {
