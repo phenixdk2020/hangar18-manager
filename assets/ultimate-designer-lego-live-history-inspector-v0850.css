@@ -73,11 +73,13 @@
     border-radius: 0 !important;
 }
 
-/* The old raw Container palette entry is the same underlying type as the
- * canonical LEGO Kasse tool. Keep it in DOM for programmatic creation, but do
- * not expose two user-facing ways to create the same thing. */
+/* Kasse is the one user-facing name for the internal container type. Keep the
+ * old Container entry in DOM for programmatic creation, but hide the duplicate
+ * from the user-facing element library. */
 .h18-v0850-legacy-container-palette,
-.h18-v0850-legacy-container-palette-shell {
+.h18-v0850-legacy-container-palette-shell,
+.h18-builder-palette-item[data-h18-v0850-duplicate-container="1"],
+.h18-library-item-shell[data-h18-v0850-duplicate-container="1"] {
     display: none !important;
 }
 
