@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "fc2446329e1b16d144e78baeb905173e5bac5adf",
+    "pluginVersion": "0.8.45",
+    "packageSha256": "706a28c295276795f268a28bcafd5b4f3a41afaf5f0592c6dfda180f2e4744e0"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "PENDING",
+    "os": "PENDING",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop"},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting"},
+    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side / Auto-kasser; skal være korrekt straks uden Fortryd/Gendan"},
+    "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize"},
+    "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop"},
+    "F": {"status": "PENDING", "evidence": [], "note": "Design og spacing"},
+    "G": {"status": "PENDING", "evidence": [], "note": "Foldbare paneler"},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo"},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence"},
+    "J": {"status": "PENDING", "evidence": [], "note": "Preview Desktop/Tablet/Mobil"},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore, inkl. PAGE-DELETE safety-backup restore sanity"},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery regression"}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "PENDING",
+  "notes": "Canonical pre-manual acceptance record for official Hangar18 Manager v0.8.45. LEGO-045 targets the v0.8.44 symptom where the canonical hierarchy was correct but the live Auto-kasse canvas remained stale until Fortryd/Gendan. Scenario C must now render 2 children immediately without history recovery. No manual PASS is claimed. Public cutover is not authorized."
+}
