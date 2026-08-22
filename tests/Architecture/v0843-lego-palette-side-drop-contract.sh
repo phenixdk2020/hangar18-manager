@@ -60,6 +60,19 @@ grep -Fq "__h18LegoInspectorOnlyV0847" "$inspector"
 grep -Fq ".h18-canvas-image-tools" "$inspector_css"
 grep -Fq ".h18-canvas-focal-dot" "$inspector_css"
 
+# The existing canonical spacing/design fields already model the requested LEGO
+# controls. LEGO-047 exposes them with user-facing Inspector wording without
+# inventing another persistence schema.
+grep -Fq "Afstand og spacing" "$inspector"
+grep -Fq "Lodret afstand omkring element" "$inspector"
+grep -Fq "Mellem elementer vandret" "$inspector"
+grep -Fq "Mellem rækker lodret" "$inspector"
+grep -Fq "Elementfarve / baggrund" "$inspector"
+grep -Fq "Kanttykkelse" "$inspector"
+grep -Fq "0 px = ingen synlig kant" "$inspector"
+grep -Fq "Hjørner / runding" "$inspector"
+grep -Fq "0 px = helt lige hjørner" "$inspector"
+
 grep -Fq "ultimate-designer-lego-palette-side-drop-bridge-v0843.js" "$controller"
 grep -Fq "ultimate-designer-lego-parent-key-guard-v0845.js" "$controller"
 grep -Fq "ultimate-designer-lego-inspector-only-v0847.js" "$controller"
