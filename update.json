@@ -1,20 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.43",
+  "version": "0.8.44",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-22T04:52:20Z",
+  "published_utc": "2026-08-22T06:37:13Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "57ad3bcb33677118e2fcf27cca20a86740e242ffd9286b7aa47b68d7d3fd12c1",
+  "package_sha256": "769326cc16dbc31d93ced93c0eaa95dba6f77715c9e67ec2ef2a3bd6f7479d1f",
   "changelog": [
-    "Retter den manuelle v0.8.42 Scenario C-fejl, hvor palette → Venstre/Højre kunne oprette en korrekt Auto-kasse/Grid-række, men efterlade den med 0 børn og lade elementerne stå lodret.",
-    "Fejlen skyldtes WordPress-editorens normale parent-select → LayoutParentKey-synkronisering: en ny Auto-kasse-key kunne blive nulstillet, hvis selecten endnu ikke havde den nye parent som option.",
-    "Tilføjer en snæver admin-only ParentKey-guard, som kun sikrer at en allerede valgt eksisterende container/flex/grid-parent findes som select-option før den normale synkronisering.",
-    "Den eksisterende nesting-tools motor og LayoutParentKey er fortsat eneste placement/hierarchy-authority; fixet flytter ikke rækker, opretter ikke Auto-kasser og ejer ikke history eller persistence.",
-    "Browser-regressionen indeholder nu den reelle WordPress select→hidden handler, som manglede i v0.8.41/v0.8.42-testen.",
-    "Regressionen kræver at begge elementer beholder samme Auto-kasse parent-key, at previewet har 2 børn og at der ikke efterlades en orphan Grid/Auto-kasse med 0 børn.",
+    "Retter den fortsatte manuelle Scenario C-fejl i officiel v0.8.43, hvor palette → Venstre/Højre kunne oprette en Grid container / Auto-kasse med 0 børn og lade elementerne stå lodret som topniveau-søskende.",
+    "Den virkelige Ultimate Designer Inspector flytter den valgte rækkes komplette section body ud af rækken; derfor kunne Grid-key og Order midlertidigt være usynlige for nesting-motorens direkte DOM-opslag.",
+    "Nesting-motorens strukturelle Key- og Order-opslag er nu Inspector-aware via den eksisterende controls-abstraktion, så den nyoprettede Grid kan findes og færdigkonfigureres under hele placement-handoffet.",
+    "v0.8.43 ParentKey-guarden er samtidig gjort Inspector-aware, så den kan genkende en valgt Grid-parent, tilføje den nye parent-option og forhindre den normale select → LayoutParentKey-synkronisering i at nulstille børnenes parent igen.",
+    "Placement- og hierarchy-authority er fortsat den eksisterende nesting-motor og LayoutParentKey; der er ikke indført en parallel placement-motor.",
+    "Scenario C-browserregressionen modellerer nu den reelle Inspector-DOM-flytning og WordPress select → hidden-synkronisering og kræver 2 børn, fælles parent-key/select, korrekt Grid-order og 0 orphan Grid-containere.",
     "QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit, sammen med Architecture, Fast og I9 Prep.",
-    "Manuel v0.8.43 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
+    "Manuel v0.8.44 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
   ]
 }

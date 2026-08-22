@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.43
+Version: 0.8.44
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.44 – LEGO-editor — Inspector-aware Auto-kasse rettelse ==
+
+Nyt:
+- Retter den fortsatte manuelle Scenario C-fejl i officiel v0.8.43, hvor palette → Venstre/Højre kunne oprette en Grid container / Auto-kasse med 0 børn og lade elementerne stå lodret som topniveau-søskende.
+- Den virkelige Ultimate Designer Inspector flytter den valgte rækkes komplette section body ud af rækken; derfor kunne Grid-key og Order midlertidigt være usynlige for nesting-motorens direkte DOM-opslag.
+- Nesting-motorens strukturelle Key- og Order-opslag er nu Inspector-aware via den eksisterende controls-abstraktion, så den nyoprettede Grid kan findes og færdigkonfigureres under hele placement-handoffet.
+- v0.8.43 ParentKey-guarden er samtidig gjort Inspector-aware, så den kan genkende en valgt Grid-parent, tilføje den nye parent-option og forhindre den normale select → LayoutParentKey-synkronisering i at nulstille børnenes parent igen.
+- Placement- og hierarchy-authority er fortsat den eksisterende nesting-motor og LayoutParentKey; der er ikke indført en parallel placement-motor.
+- Scenario C-browserregressionen modellerer nu den reelle Inspector-DOM-flytning og WordPress select → hidden-synkronisering og kræver 2 børn, fælles parent-key/select, korrekt Grid-order og 0 orphan Grid-containere.
+- QA er bestået på PHP 8.0/8.2/8.3, system Chrome samt Chromium, Firefox og WebKit, sammen med Architecture, Fast og I9 Prep.
+- Manuel v0.8.44 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst.
 
 
 == Version 0.8.43 – LEGO-editor — Auto-kasse ParentKey rettelse ==
