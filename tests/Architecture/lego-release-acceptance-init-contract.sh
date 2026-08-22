@@ -47,7 +47,8 @@ for(const [id,s] of Object.entries(record.scenarios||{})) {
   if(s.status==='PASS' && s.evidence.length===0) throw new Error(`${id} canonical PASS requires evidence`);
 }
 if(record.environment.stagingUrl!=='https://test2.hangar18.dk') throw new Error('canonical staging target mismatch');
-if(!/public cutover is not authorized/i.test(record.notes||'')) throw new Error('canonical cutover safety note required');
+const notes=String(record.notes||'');
+if(!/(?:public cutover is not authorized|public cutover remains unauthorized)/i.test(notes)) throw new Error('canonical cutover safety note required');
 NODE
 
 python3 - "$tmp/update.json" <<'PY'
