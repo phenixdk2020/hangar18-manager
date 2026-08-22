@@ -1,21 +1,21 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.47",
+  "version": "0.8.48",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-22T10:31:09Z",
+  "published_utc": "2026-08-22T10:56:03Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "4332bd7b02bd98b3453c1c1f5bd0d0ee3ea3a6a402e485084f93612fbecfc500",
+  "package_sha256": "84bdb2c883e50dc92395378e71882a2c2693abeaaaef03824b76d94f586e00a6",
   "changelog": [
-    "Formaliserer Inspector som eneste editor for elementindhold, typografi, medier og design; canvas bruges fortsat direkte til drag/drop og resizing.",
-    "Et almindeligt klik inde i et synligt element vælger nu elementet og aktiverer Inspector, både for topniveau-elementer og børn inde i Kasse/Grid/Auto-kasser; Rediger-knappen fungerer fortsat som alternativ.",
-    "Resize-håndtag, resize-rails og drop-zoner er eksplicit undtaget fra klik-til-Inspector, så layoutmanipulation fortsat virker direkte på canvas.",
-    "Retter den manuelle v0.8.46-fejl hvor Rediger på et nested billedelement kunne efterlade Grid/Auto-kassen visuelt tom; den eksisterende read-only reconciliation genaktiveres ved Inspector-handoff og bevarer børnene synlige uden Fortryd/Gendan.",
-    "Gamle inline tekst-, rich-text-, medie-, billed- og focal-point-kontroller på canvas skjules eller afbrydes og viderestilles til den eksisterende Inspector-selection i stedet for at oprette en parallel editorvej.",
-    "Inspector tydeliggør de eksisterende canonical spacing-felter: Margin.X = vandret afstand omkring element, Margin.Y = lodret afstand omkring element, Gap.X = mellem elementer på samme række og Gap.Y = mellem rækker.",
-    "Inspector tydeliggør også eksisterende designfelter for elementbaggrund, kantfarve, kanttykkelse og hjørner/runding; 0 px betyder henholdsvis ingen synlig kant og lige hjørner.",
-    "LEGO Editor QA, Architecture QA, Editor Runtime Fast QA og I9 Prep QA er bestået; Architecture browser-suite bestod ved genkørsel efter en enkelt ældre Firefox timeout-flake.",
-    "Manuel v0.8.47 retest på test2 er stadig nødvendig; I9 forbliver PENDING og I10/public cutover er fortsat låst."
+    "Markerer det aktuelt valgte element tydeligt på canvas med en rød outline, også når elementet ligger inde i Grid/Auto-kasser, uden at ændre elementets layoutmål.",
+    "Fjerner den gamle Direkte design-overlay samt gamle focal-point-, billed- og box-model-kontroller fra canvas; indhold og design styres nu konsekvent i Inspector, mens drag/drop og kolonne-resize fortsat er direkte canvas-manipulation.",
+    "Gør resize Inspector-aware, så et valgt nested element kan ændre kolonnebredde uden at Grid/Auto-kassens børn forsvinder efter resize-handoffet.",
+    "Genaktiverer den eksisterende read-only Grid-reconciliation efter resize i stedet for at indføre en parallel placement- eller resize-motor.",
+    "Gør ugemt Forhåndsvisning Inspector-aware, så et valgt nested element ikke fejlagtigt behandles som topniveau og derfor ikke vises både inde i Grid'et og igen nederst på siden.",
+    "Fjerner editor-only Grid/container-chrome fra Forhåndsvisning, herunder Rediger-toolbar, span-badges, resize-greb, drop-zoner og interne Grid-labels, så preview ligger tættere på den faktiske frontend-rendering.",
+    "Tilføjer browser-regressioner for selected-element-markering, fjernelse af Direkte design, Inspector-hosted resize-stabilitet og preview-de-duplikering.",
+    "Architecture QA og Editor Runtime Fast QA er bestået på PR #148, og PR'en er merged til main.",
+    "Manuel v0.8.48 retest på test2 er stadig nødvendig; public cutover forbliver låst indtil manuel accept."
   ]
 }

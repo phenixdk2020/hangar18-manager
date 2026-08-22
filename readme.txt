@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.47
+Version: 0.8.48
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.48 – LEGO-editor — stabil Inspector, resize og frontend-preview ==
+
+Nyt:
+- Markerer det aktuelt valgte element tydeligt på canvas med en rød outline, også når elementet ligger inde i Grid/Auto-kasser, uden at ændre elementets layoutmål.
+- Fjerner den gamle Direkte design-overlay samt gamle focal-point-, billed- og box-model-kontroller fra canvas; indhold og design styres nu konsekvent i Inspector, mens drag/drop og kolonne-resize fortsat er direkte canvas-manipulation.
+- Gør resize Inspector-aware, så et valgt nested element kan ændre kolonnebredde uden at Grid/Auto-kassens børn forsvinder efter resize-handoffet.
+- Genaktiverer den eksisterende read-only Grid-reconciliation efter resize i stedet for at indføre en parallel placement- eller resize-motor.
+- Gør ugemt Forhåndsvisning Inspector-aware, så et valgt nested element ikke fejlagtigt behandles som topniveau og derfor ikke vises både inde i Grid'et og igen nederst på siden.
+- Fjerner editor-only Grid/container-chrome fra Forhåndsvisning, herunder Rediger-toolbar, span-badges, resize-greb, drop-zoner og interne Grid-labels, så preview ligger tættere på den faktiske frontend-rendering.
+- Tilføjer browser-regressioner for selected-element-markering, fjernelse af Direkte design, Inspector-hosted resize-stabilitet og preview-de-duplikering.
+- Architecture QA og Editor Runtime Fast QA er bestået på PR #148, og PR'en er merged til main.
+- Manuel v0.8.48 retest på test2 er stadig nødvendig; public cutover forbliver låst indtil manuel accept.
 
 
 == Version 0.8.47 – LEGO-editor — Inspector som fælles elementeditor ==
