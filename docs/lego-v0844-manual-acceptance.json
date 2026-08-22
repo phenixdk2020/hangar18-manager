@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "e225fc02d0025de99e8f63719cf08b386b334262",
+    "pluginVersion": "0.8.44",
+    "packageSha256": "769326cc16dbc31d93ced93c0eaa95dba6f77715c9e67ec2ef2a3bd6f7479d1f"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "PENDING",
+    "os": "PENDING",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drop"},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse og nesting"},
+    "C": {"status": "PENDING", "evidence": [], "note": "Side-by-side / Auto-kasser"},
+    "D": {"status": "PENDING", "evidence": [], "note": "Desktop resize"},
+    "E": {"status": "PENDING", "evidence": [], "note": "Tablet/Mobil overrides + Arv Desktop"},
+    "F": {"status": "PENDING", "evidence": [], "note": "Design og spacing"},
+    "G": {"status": "PENDING", "evidence": [], "note": "Foldbare paneler"},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo"},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence"},
+    "J": {"status": "PENDING", "evidence": [], "note": "Preview Desktop/Tablet/Mobil"},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore, inkl. PAGE-DELETE safety-backup restore sanity"},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery regression"}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "PENDING",
+  "notes": "Canonical pre-manual acceptance record for official Hangar18 Manager v0.8.44. Manual Scenario C still reproduces a stale live Auto-kasse view immediately after palette side-drop, while Fortryd followed by Gendan renders the already-correct hierarchy correctly. LEGO-045 addresses that live reconciliation gap. No manual PASS is claimed. Public cutover is not authorized."
+}
