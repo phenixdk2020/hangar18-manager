@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 
-const runtimePath = path.resolve(__dirname, '../../assets/ultimate-designer-lego-selection-inspector-v0849.js');
+const runtimePath = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-selection-inspector-v0849.js');
 
 async function boot(page) {
   await page.setContent(`<!doctype html><html><body>
