@@ -50,7 +50,7 @@
         return depth;
     }
 
-    function end(commit) {
+    function end(commit, immediate) {
         if (depth <= 0) { return false; }
         depth -= 1;
         if (depth > 0) { return true; }
@@ -64,10 +64,17 @@
             return true;
         }
 
-        // Pass the single final capture back through the existing v0.8.21
-        // bridge. That bridge remains authoritative for restore suppression,
-        // pending edits and the real editor history stack.
-        inheritedSetTimeout.apply(window, [capture.callback, 0].concat(capture.args || []));
+        // Normal transactions still hand the single final capture back through
+        // the existing v0.8.21 owner asynchronously. LEGO-046 may close a prior
+        // palette gesture synchronously when a NEW trusted palette gesture drops
+        // before the old 520 ms settling window has expired. The synchronous path
+        // is required so the previous checkpoint is serialized BEFORE the new
+        // base palette handler mutates the DOM.
+        if (immediate === true) {
+            capture.callback.apply(window, capture.args || []);
+        } else {
+            inheritedSetTimeout.apply(window, [capture.callback, 0].concat(capture.args || []));
+        }
         return true;
     }
 
@@ -86,6 +93,8 @@
 
         let paletteDrag = false;
         let paletteAtomicActive = false;
+        let paletteGestureSerial = 0;
+        let activePaletteGestureSerial = 0;
         let sortAtomicActive = false;
 
         document.addEventListener('dragstart', function (event) {
@@ -93,6 +102,9 @@
                 ? event.target.closest('.h18-builder-palette-item')
                 : null;
             paletteDrag = Boolean(item);
+            if (paletteDrag) {
+                paletteGestureSerial += 1;
+            }
         }, true);
 
         // The nesting runtime's capture-phase drop handler is registered before
@@ -100,15 +112,40 @@
         // canvas bubble handler creates a new section, while the nesting runtime
         // has already resolved whether the drop is side/inside/Auto.
         document.addEventListener('drop', function (event) {
-            if (!paletteDrag || paletteAtomicActive) { return; }
+            if (!paletteDrag) { return; }
             const target = event.target && event.target.closest
                 ? event.target.closest('#h18-page-sections-sortable,.h18-builder-canvas')
                 : null;
             if (!target) { return; }
+
+            const gesture = paletteGestureSerial || 1;
+
+            if (paletteAtomicActive) {
+                if (activePaletteGestureSerial === gesture) {
+                    // Same native gesture can be re-dispatched by the visual
+                    // side/vertical bridges. It still belongs to one transaction.
+                    return;
+                }
+
+                // A genuinely new palette gesture started before the previous
+                // 520 ms settle timer fired. Commit the previous pending snapshot
+                // synchronously while the DOM still represents the previous user
+                // action, then open a fresh transaction for the new drop.
+                paletteAtomicActive = false;
+                activePaletteGestureSerial = 0;
+                end(true, true);
+            }
+
             paletteAtomicActive = true;
+            activePaletteGestureSerial = gesture;
             begin('palette-drag-drop');
             inheritedSetTimeout(function () {
+                // Ignore stale settle timers belonging to an earlier gesture.
+                if (!paletteAtomicActive || activePaletteGestureSerial !== gesture) {
+                    return;
+                }
                 paletteAtomicActive = false;
+                activePaletteGestureSerial = 0;
                 end(true);
             }, 520);
         }, true);
@@ -134,8 +171,10 @@
         });
     }
 
+    document.documentElement.setAttribute('data-h18-v0846-history-gesture-boundary', '1');
     window.__h18HistoryAtomicV0840 = {
         version: '0.8.40',
+        capabilityVersion: '0.8.46',
         begin: begin,
         end: end,
         cancel: cancel,
