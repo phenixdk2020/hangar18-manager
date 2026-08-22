@@ -122,6 +122,20 @@ test('LEGO-047 child Rediger keeps Grid composition stable while settings move t
   await expect(page.locator('#row-auto-1 .h18-ud-auto-box-grid .h18-v0811-auto-box')).toHaveCount(3);
 });
 
+test('LEGO-047 clicking inside an element selects it in Inspector without Rediger', async ({ page }) => {
+  await boot(page);
+
+  // Click ordinary visible content in the third Auto-kasse tile. The tile itself
+  // is now the selection surface; Rediger remains only an alternate explicit path.
+  await page.locator('#row-auto-1 .h18-v0811-auto-box').nth(2).locator('.h18-v0811-child-bar strong').click();
+
+  await expect(page.locator('#row-text-1')).toHaveClass(/is-selected/);
+  await expect(page.locator('#h18-page-inspector-target .h18-page-section-key')).toHaveValue('text-1');
+
+  await page.waitForTimeout(1000);
+  await expect(page.locator('#row-auto-1 .h18-ud-auto-box-grid .h18-v0811-auto-box')).toHaveCount(3);
+});
+
 test('LEGO-047 legacy media dblclick is intercepted and routed to Inspector', async ({ page }) => {
   await boot(page);
 
