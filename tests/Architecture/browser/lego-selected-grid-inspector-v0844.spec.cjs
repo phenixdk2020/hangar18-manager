@@ -11,15 +11,16 @@ const bridgeRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer
 
 function row(index, key, type, label) {
   return `<section id="row-${key}" class="h18-page-section-row" data-section-type="${type}" data-section-index="${index}">
+    <!-- These controls are outside .h18-page-section-body in the real PHP template. -->
+    <input class="h18-page-section-order" name="Sections[${index}][Order]" value="${Number(index) * 10 || 0}">
+    <input class="h18-page-section-key" name="Sections[${index}][Key]" value="${key}">
+    <input class="h18-section-navigator-label" name="Sections[${index}][NavigatorLabel]" value="${label}">
     <header class="h18-page-section-header"><span class="h18-page-section-title-summary">${label}</span></header>
     <div class="h18-canvas-preview"><div class="base-preview">${label}</div></div>
     <div class="h18-page-section-body">
-      <input class="h18-page-section-key" name="Sections[${index}][Key]" value="${key}">
       <input class="h18-page-section-type" name="Sections[${index}][Type]" value="${type}">
-      <input class="h18-section-navigator-label" name="Sections[${index}][NavigatorLabel]" value="${label}">
       <input class="h18-layout-parent-key" name="Sections[${index}][LayoutParentKey]" value="">
       <select class="h18-layout-parent-select"><option value="">Topniveau på siden</option></select>
-      <input class="h18-page-section-order" name="Sections[${index}][Order]" value="${index * 10}">
       <input name="Sections[${index}][Title]" value="">
       <input name="Sections[${index}][Content]" value="">
       <input name="Sections[${index}][LayoutColumns]" value="1">
@@ -96,14 +97,15 @@ async function boot(page) {
       $('#h18-page-sections-sortable').append(window.__rowMarkup(index, key, type, label));
       const $row = $('#row-' + key);
       // Real addPageSection() selects every newly created section and physically
-      // moves its .h18-page-section-body into the Inspector.
+      // moves only .h18-page-section-body into the Inspector. Key/order/nav label
+      // remain on the row itself.
       inspect($row);
       return $row;
     }
 
     window.__h18InspectorHarness = {
       controls,
-      inspectedKey: () => inspected.length ? String(controls(inspected, '.h18-page-section-key').first().val() || '') : ''
+      inspectedKey: () => inspected.length ? String(inspected.find('.h18-page-section-key').first().val() || '') : ''
     };
 
     $('#grid-palette').on('click', function () {
@@ -112,7 +114,7 @@ async function boot(page) {
     });
 
     // Model the real pageSectionForElement()/pageSectionControls() path. When a
-    // selected row's select lives in Inspector, closest(row) is intentionally empty.
+    // selected row's parent select lives in Inspector, closest(row) is empty.
     $(document).on('change', '.h18-layout-parent-select', function () {
       const $row = rowForElement(this);
       controls($row, '.h18-layout-parent-key').first()
@@ -130,7 +132,6 @@ async function boot(page) {
     }, false);
   });
 
-  // Supply row markup inside the page context without duplicating test logic in JS.
   await page.evaluate((markup) => {
     window.__rowMarkup = function (index, key, type, label) {
       return markup
@@ -147,7 +148,7 @@ async function boot(page) {
   await page.addScriptTag({ path: bridgeRuntime });
 }
 
-test('selected Grid created during palette side-drop stays discoverable while its body lives in Inspector', async ({ page }) => {
+test('palette side-drop follows the real Inspector body-move lifecycle', async ({ page }) => {
   await boot(page);
 
   await page.evaluate(() => {
