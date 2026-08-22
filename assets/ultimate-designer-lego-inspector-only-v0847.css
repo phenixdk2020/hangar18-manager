@@ -1,8 +1,12 @@
-/* LEGO-047: Inspector is the sole owner of element/content/design settings.
- * Canvas keeps direct layout manipulation (drag/drop + resize), but not inline
- * text/media/image-setting controls. */
+/* LEGO-047/048: Inspector is the sole owner of element/content/design settings.
+ * Canvas keeps direct placement and column resize, but not inline text/media,
+ * focal-point, box-model or "Direkte design" controls. */
 .h18-builder-canvas .h18-canvas-image-tools,
-.h18-builder-canvas .h18-canvas-focal-dot {
+.h18-builder-canvas .h18-canvas-focal-dot,
+.h18-builder-canvas .h18-canvas-direct-controls,
+.h18-builder-canvas .h18-canvas-padding-handle,
+.h18-builder-canvas .h18-canvas-margin-handle,
+.h18-builder-canvas .h18-canvas-box-model-overlay {
     display: none !important;
 }
 
@@ -12,4 +16,14 @@
 .h18-builder-canvas .h18-canvas-card-rich-edit,
 .h18-builder-canvas .h18-canvas-editable-media {
     cursor: default;
+}
+
+/* LEGO-048: make Inspector selection unambiguous on the canvas without changing
+ * the element's geometry. outline/box-shadow do not consume layout space. */
+#h18-page-sections-sortable > .h18-page-section-row.is-selected > .h18-canvas-preview,
+.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element,
+.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element {
+    outline: 2px solid #d63638 !important;
+    outline-offset: -2px;
+    box-shadow: inset 0 0 0 1px rgba(214, 54, 56, .2) !important;
 }
