@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.74
+Version: 0.8.75
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.75 – LEGO-editor — korrekt top-level selection og IND I layoutkasser ==
+
+Nyt:
+- Brugerens v0.8.74-diagnose bekræfter at nested child-selection nu fungerer stabilt: mode=nested, matching=1 og selectedMatching=1. Det resterende selection-problem er kun skiftet fra nested child til et nyt top-level element.
+- Top-level selection læser nu den faktisk valgte canonical/Inspector-key efter det synkrone Rediger/Inspector-handoff og skifter eksplicit til top-mode. Dermed fjernes den gamle nested røde markering, når et frit element vælges.
+- Drag-root-cause er identificeret fra brugerens screenshot: målet er en Række- og kolonne-kasse (grid/flex layout), mens tidligere IND I KASSEN-logik kun klassificerede almindelig container/Kasse som inside-target.
+- IND I KASSEN-zonen gælder nu almindelig Kasse (container), Række-/kolonne-kasse (flex) og Række- og kolonne-kasse (grid). Specialtypen Auto-kasser er fortsat undtaget og beholder sin særskilte placement-semantik.
+- Placement-valideringen accepterer de samme tre layoutkassetyper, så et almindeligt Tekst/Billede-element kan få LayoutParentKey sat til container/flex/grid-målet efter slip på IND I KASSEN.
+- v0.8.51 Over/Under-stacking og Auto-kasser ændres ikke. Diagnosepanelet beholdes til manuel verifikation.
+- Updateren og repaint-sporet ændres ikke; UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne.
+- Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede. v0.8.75 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.74 – LEGO-editor — sikker selection-init og forbedret drag-diagnose ==
