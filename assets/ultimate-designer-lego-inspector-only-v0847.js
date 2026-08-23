@@ -65,32 +65,6 @@
         return inspector && inspector.value ? String(inspector.value) : '';
     }
 
-    function canonicalRowByKey(key) {
-        const requested = String(key || '');
-        if (!requested) { return null; }
-        const rows = document.querySelectorAll('#h18-page-sections-sortable > .h18-page-section-row:not(.h18-page-section-removed)');
-        for (let i = 0; i < rows.length; i += 1) {
-            const row = rows[i];
-            const direct = row.querySelector('.h18-page-section-key');
-            const rowKey = direct && direct.value ? String(direct.value) : String(row.getAttribute('data-key') || '');
-            if (rowKey === requested) { return row; }
-        }
-        return null;
-    }
-
-    function activateCanonicalRow(row) {
-        if (!row) { return false; }
-        const edit = row.querySelector('.h18-page-section-edit');
-        const header = row.querySelector('.h18-page-section-header');
-        const target = edit || header;
-        if (!target) { return false; }
-
-        if (window.jQuery) { window.jQuery(target).trigger('click'); }
-        else if (typeof target.click === 'function') { target.click(); }
-        else { return false; }
-        return true;
-    }
-
     function refreshSelectedCanvasMarker() {
         document.querySelectorAll('.' + SELECTED_CANVAS_CLASS).forEach(function (node) {
             node.classList.remove(SELECTED_CANVAS_CLASS);
@@ -112,18 +86,9 @@
 
         const nested = node.closest('.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]');
         if (nested) {
-            const nestedKey = String(nested.getAttribute('data-h18-v0811-row') || nested.getAttribute('data-h18-v0811-child') || '');
-            const canonicalRow = canonicalRowByKey(nestedKey);
-            if (canonicalRow && activateCanonicalRow(canonicalRow)) {
-                armCompositionReconcile();
-                window.setTimeout(refreshSelectedCanvasMarker, 0);
-                return true;
-            }
-
             const edit = nested.querySelector('.h18-v0811-edit-child');
             if (edit) {
-                if (window.jQuery) { window.jQuery(edit).trigger('click'); }
-                else { edit.click(); }
+                edit.click();
                 armCompositionReconcile();
                 window.setTimeout(refreshSelectedCanvasMarker, 0);
                 return true;
@@ -131,7 +96,12 @@
         }
 
         const row = node.closest('.h18-page-section-row');
-        if (!row || !activateCanonicalRow(row)) { return false; }
+        if (!row) { return false; }
+        const edit = row.querySelector('.h18-page-section-edit');
+        const header = row.querySelector('.h18-page-section-header');
+        if (edit) { edit.click(); }
+        else if (header) { header.click(); }
+        else { return false; }
         armCompositionReconcile();
         window.setTimeout(refreshSelectedCanvasMarker, 0);
         return true;
