@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.69
+Version: 0.8.70
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.70 – LEGO-editor — eksplicit IND I KASSEN og ægte v0.8.48 selection ==
+
+Nyt:
+- Registrerer v0.8.69 som manuel FAIL: child-selection virkede fortsat ikke, og drag over Kassen viste kun Over/Under i stedet for et reelt IND I KASSEN-valg.
+- Rollback-fejlen er identificeret: den tidligere såkaldte v0.8.48 selection brugte faktisk inspector-only JS fra v0.8.51. v0.8.70 gendanner den præcise v0.8.48 nested-click-path direkte fra release v0.8.48.
+- Nested child-click bruger igen child-cardens egen Rediger-knap som i v0.8.48, hvorefter is-h18-v0848-selected-element markeres på den valgte child-card/Auto-box.
+- v0.8.49 forbliver pensioneret som selection-ejer; Avanceret Inspector-layout bevares. v0.8.50 funktioner og v0.8.51 Over/Under stack-runtime bevares.
+- Kasser får nu en eksplicit femte LEGO-dropzone i midten: IND I KASSEN. Over/Under ligger fortsat øverst/nederst og Venstre/Højre langs siderne.
+- Inside-placement er nu bundet direkte til den synlige is-inside-zone. Ved sortstop genberegnes den synlige inside-zone på sidste pointerposition; kun et slip i denne zone må sætte LayoutParentKey til Kassen.
+- Hvis der ikke rammes IND I KASSEN-zonen, udføres ingen inside-parenting af v0.8.70-laget, så almindelig Over/Under/Venstre/Højre/reorder kan fortsætte via deres eksisterende ejere.
+- Runtime QA gemmer data-h18-v0870-last-inside-result/source/box. Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne.
+- Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede. v0.8.70 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.69 – LEGO-editor — restore v0.8.48 selection og deterministisk Kasse-drop ==
