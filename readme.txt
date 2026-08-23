@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.58
+Version: 0.8.59
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.59 – LEGO-editor — lettere selection og færre unødige repaint ==
+
+Nyt:
+- Bevarer den fungerende v0.8.51 drag/drop-, Grid- og stack-model fra v0.8.58 uændret.
+- Filtrerer kun v0.8.51's tunge document.body MutationObserver, så Inspector-udskiftning, selection-overlay og andre ikke-strukturelle wp-admin DOM-ændringer ikke længere udløser en fuld Grid/stack-render.
+- Den filtrerede observer identificeres på sin konkrete v0.8.51-callback og påvirker ikke andre WordPress- eller Hangar18-MutationObservers.
+- Strukturelle ændringer i canvas, sektioner, Grid, Auto-kasser og nested cards kan fortsat starte den nødvendige layout-render.
+- Aktivt element får en ny let selection-markering baseret på CSS outline i stedet for et synligt DOM-overlay; markeringen påvirker ikke layoutmål og kan ikke miste højre kant ved clipping.
+- Selection-markeringen følger både nested elementer i Række- og kolonne-kasser og almindelige top-level elementer og genanvendes efter nødvendige canvas-rerenderinger.
+- Den gamle v0.8.51 selection-span holdes usynlig, så den ikke længere er den visuelle markering; den nye markering kræver ingen ekstra DOM-node.
+- Højderesize beholder én afsluttende legitim state/layout-synkronisering, men de ekstra repaint-kæder fra Inspector/selection reduceres.
+- Ingen ændring af page schema, LayoutParentKey, stack persistence, drag/drop, WhatIf-fjernelsen eller Vehicle/Event/Gallery.
+- v0.8.59 er en testrelease til manuel editor-QA på test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.58 – LEGO-editor — rollback til stabil v0.8.51-baseline ==
