@@ -36,6 +36,7 @@ final class IntegrationAdminBootstrap
         MenuAdminController::register();
         MenuPageChooserAdminController::register();
         SideHealthAdminController::register();
+        UpdaterPostInstallStateAdminController::register();
         EditorLayoutToolsAdminController::register();
         EditorElementLibraryAdminController::register();
         EditorLegoSpacingAdminController::register();

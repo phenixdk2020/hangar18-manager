@@ -120,19 +120,49 @@
         });
         return found;
     }
+
+    /* LEGO-054: preserve the known-good v0.8.51 nested placement model, but
+     * keep the palette drop intention alive until WordPress has actually
+     * created the new row. */
     function adoptNestedDrop(before, targetRow, position) {
-        if (!targetRow || !parentKey(targetRow)) { return; }
+        if (!targetRow) { return; }
         const targetKey = rowKey(targetRow);
+        const targetParentKey = parentKey(targetRow);
+        if (!targetKey || !targetParentKey) { return; }
+
         let done = false;
-        [0, 20, 60, 140, 280].forEach(function (delay) {
-            window.setTimeout(function () {
-                if (done) { return; }
-                const newRow = findNewRow(before);
-                const api = window.__h18LegoFixesV0851;
-                if (!newRow || !api || typeof api.adoptUnder !== 'function') { return; }
-                done = api.adoptUnder(rowKey(newRow), targetKey, position) === true;
-            }, delay);
+        let observer = null;
+        function finish() {
+            if (done) { return; }
+            done = true;
+            if (observer) { observer.disconnect(); observer = null; }
+        }
+        function tryAdopt() {
+            if (done) { return true; }
+            const newRow = findNewRow(before);
+            const liveTarget = rowByKey(targetKey);
+            const api = window.__h18LegoFixesV0851;
+            if (!newRow || !liveTarget || !api || typeof api.adoptUnder !== 'function') { return false; }
+            const liveParent = parentKey(liveTarget) || targetParentKey;
+            if (liveParent !== targetParentKey) { return false; }
+            if (api.adoptUnder(rowKey(newRow), targetKey, position) === true) {
+                finish();
+                return true;
+            }
+            return false;
+        }
+
+        if (window.MutationObserver) {
+            const sections = document.getElementById('h18-page-sections-sortable');
+            if (sections) {
+                observer = new MutationObserver(function () { tryAdopt(); });
+                observer.observe(sections, { childList: true, subtree: true });
+            }
+        }
+        [0, 20, 60, 140, 280, 450, 700, 1000, 1400, 2000, 3000].forEach(function (delay) {
+            window.setTimeout(tryAdopt, delay);
         });
+        window.setTimeout(function () { if (!done) { finish(); } }, 3600);
     }
 
     window.addEventListener('dragover', function (event) {
@@ -193,10 +223,8 @@
     }, true);
 
     document.documentElement.setAttribute('data-h18-lego-palette-side-drop-bridge', '0.8.43');
-    // Keep the established LEGO-046 marker stable for old regression suites and
-    // integrations. LEGO-051 nested vertical placement has its own capability
-    // marker in the dedicated fixes/drop-zone layer.
     document.documentElement.setAttribute('data-h18-lego-palette-vertical-drop-bridge', '0.8.46');
+    document.documentElement.setAttribute('data-h18-lego-palette-nested-drop-stability', '0.8.54');
     window.__h18LegoPaletteSideDropBridgeV0843 = {
         version: '0.8.43', capabilityVersion: '0.8.51',
         sideZoneAt: sideZoneAt, overZoneAt: overZoneAt, underZoneAt: underZoneAt,
