@@ -1,6 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.63
+Version: 0.8.64
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.64 – LEGO-editor — placement rollback og stabil top-level selection ==
+
+Nyt:
+- Deaktiverer v0.8.62's ekstra placement-koordinator, så eksisterende element-drag igen ejes af den kendte v0.8.58/v0.8.51 nesting- og drop-zone-runtime.
+- Retter top-level selection-handoff: elementets canonical key kopieres til rækkens data-key på pointerdown før WordPress flytter nøglefeltet ind i Inspector.
+- Den eksisterende v0.8.63 selection-ejer kan dermed genfinde Tekst/Billede-rækken efter Inspector-handoff og bevare den røde ramme.
+- Ingen nye MutationObservers, refresh-timers eller layout-renders tilføjes af v0.8.64.
+- Repaint-forbedringer fra v0.8.61/v0.8.62 bevares; updateren ændres ikke og UPDATER-STATUS-001 samt UPDATER-VERSION-002 forbliver åbne backlogpunkter.
+- Vehicle/Event/Gallery, page schema, stack-persistence, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.64 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.63 – LEGO-editor — persistent rød selection ==
