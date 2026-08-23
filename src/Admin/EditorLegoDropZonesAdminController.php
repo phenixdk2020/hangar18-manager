@@ -10,6 +10,9 @@ namespace Hangar18\UltimateDesigner\Admin;
  * Placement remains owned by the existing nesting/bridge stack. LEGO-051 adds
  * its own isolated stack-state controller rather than turning this visual layer
  * into a persistence owner.
+ *
+ * LEGO-059 keeps the working v0.8.51 placement model intact while reducing
+ * non-structural repaint work and restoring a lightweight selection outline.
  */
 final class EditorLegoDropZonesAdminController
 {
@@ -46,8 +49,11 @@ final class EditorLegoDropZonesAdminController
         $liveHistoryInspectorJsPath = $pluginDir . '/assets/ultimate-designer-lego-live-history-inspector-v0850.js';
         $liveHistoryInspectorCssPath = $pluginDir . '/assets/ultimate-designer-lego-live-history-inspector-v0850.css';
         $kasseTerminologyJsPath = $pluginDir . '/assets/ultimate-designer-lego-kasse-terminology-v0850.js';
+        $observerFilterJsPath = $pluginDir . '/assets/ultimate-designer-lego-observer-filter-v0859.js';
         $fixesJsPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.js';
         $fixesCssPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.css';
+        $selectionLightJsPath = $pluginDir . '/assets/ultimate-designer-lego-selection-light-v0859.js';
+        $selectionLightCssPath = $pluginDir . '/assets/ultimate-designer-lego-selection-light-v0859.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -114,9 +120,30 @@ final class EditorLegoDropZonesAdminController
         );
 
         wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-observer-filter-v0859',
+            $pluginUrl . 'assets/ultimate-designer-lego-observer-filter-v0859.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-lego-kasse-terminology-v0850',
+                'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843',
+                'hangar18-ultimate-designer-lego-live-history-inspector-v0850',
+                'hangar18-ultimate-designer-lego-resize-v0841',
+            ],
+            is_file($observerFilterJsPath) ? (string) filemtime($observerFilterJsPath) : '0.8.59',
+            false
+        );
+
+        wp_enqueue_script(
             'hangar18-ultimate-designer-lego-fixes-v0851',
             $pluginUrl . 'assets/ultimate-designer-lego-fixes-v0851.js',
-            ['jquery', 'hangar18-ultimate-designer-lego-kasse-terminology-v0850', 'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843', 'hangar18-ultimate-designer-lego-live-history-inspector-v0850', 'hangar18-ultimate-designer-lego-resize-v0841'],
+            [
+                'jquery',
+                'hangar18-ultimate-designer-lego-kasse-terminology-v0850',
+                'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843',
+                'hangar18-ultimate-designer-lego-live-history-inspector-v0850',
+                'hangar18-ultimate-designer-lego-resize-v0841',
+                'hangar18-ultimate-designer-lego-observer-filter-v0859',
+            ],
             is_file($fixesJsPath) ? (string) filemtime($fixesJsPath) : '0.8.51',
             false
         );
@@ -129,6 +156,14 @@ final class EditorLegoDropZonesAdminController
                 'schemaVersion' => 1,
                 'pages' => EditorLegoStackAdminController::store(),
             ]
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-selection-light-v0859',
+            $pluginUrl . 'assets/ultimate-designer-lego-selection-light-v0859.js',
+            ['hangar18-ultimate-designer-lego-fixes-v0851'],
+            is_file($selectionLightJsPath) ? (string) filemtime($selectionLightJsPath) : '0.8.59',
+            false
         );
 
         wp_enqueue_style(
@@ -164,6 +199,13 @@ final class EditorLegoDropZonesAdminController
             $pluginUrl . 'assets/ultimate-designer-lego-fixes-v0851.css',
             ['hangar18-ultimate-designer-lego-live-history-inspector-v0850', 'hangar18-ultimate-designer-lego-resize-v0841'],
             is_file($fixesCssPath) ? (string) filemtime($fixesCssPath) : '0.8.51'
+        );
+
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-lego-selection-light-v0859',
+            $pluginUrl . 'assets/ultimate-designer-lego-selection-light-v0859.css',
+            ['hangar18-ultimate-designer-lego-fixes-v0851'],
+            is_file($selectionLightCssPath) ? (string) filemtime($selectionLightCssPath) : '0.8.59'
         );
     }
 }
