@@ -3,18 +3,8 @@
 
     if (window.__h18LegoSelectionInspectorV0849) { return; }
 
+    const SELECTED_CLASS = 'is-h18-v0848-selected-element';
     const NESTED_SELECTOR = '.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]';
-    const EXCLUDE_SELECTOR = [
-        '.h18-v0841-resize-handle',
-        '.h18-v0841-resize-rail',
-        '.h18-v0811-side-zone',
-        '.h18-v0814-auto-drop-zone',
-        '.h18-v0814-auto-kasse-drop',
-        '.h18-ud-box-drop-zone'
-    ].join(',');
-
-    let activeKey = '';
-    let markerFrame = 0;
     let advancedFrame = 0;
 
     function selectionOwner() {
@@ -30,8 +20,7 @@
         if (!row) { return ''; }
         const direct = row.querySelector('.h18-page-section-key');
         if (direct && direct.value) { return String(direct.value).trim(); }
-        const dataKey = String(row.getAttribute('data-key') || '').trim();
-        return dataKey;
+        return String(row.getAttribute('data-key') || '').trim();
     }
 
     function selectedDomKey() {
@@ -41,44 +30,34 @@
         return keyFromRow(row);
     }
 
-    function rememberKey(key) {
-        const value = String(key || '').trim();
-        if (value) {
-            activeKey = value;
-            const owner = selectionOwner();
-            if (owner && typeof owner.rememberSelectedCanvasKey === 'function') {
-                owner.rememberSelectedCanvasKey(value);
-            }
+    function markerIsCurrent(key) {
+        const nested = Array.from(document.querySelectorAll(NESTED_SELECTOR));
+        const matching = nested.filter(function (node) { return keyFromNested(node) === key; });
+        if (matching.length) {
+            const wrongSelected = nested.some(function (node) {
+                return node.classList.contains(SELECTED_CLASS) && keyFromNested(node) !== key;
+            });
+            return !wrongSelected && matching.some(function (node) { return node.classList.contains(SELECTED_CLASS); });
         }
-        return activeKey;
+
+        const row = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
+        return Boolean(row && keyFromRow(row) === key);
     }
 
-    function inferKey(node) {
-        if (!node || !node.closest) { return ''; }
-        const nested = node.closest(NESTED_SELECTOR);
-        if (nested) { return keyFromNested(nested); }
-        return keyFromRow(node.closest('.h18-page-section-row'));
-    }
-
+    /* Compatibility API for v0.8.50. v0.8.49 no longer owns selection.
+     * Delayed calls from v0.8.50 become no-ops when the v0.8.48 marker is already
+     * correct; only a genuinely replaced nested DOM node is re-marked. */
     function applyMarker() {
-        markerFrame = 0;
+        const key = selectedDomKey();
+        if (!key || markerIsCurrent(key)) { return; }
         const owner = selectionOwner();
         if (owner && typeof owner.refreshSelectedCanvasMarker === 'function') {
             owner.refreshSelectedCanvasMarker();
         }
     }
 
-    function queueMarker() {
-        if (markerFrame) { return; }
-        markerFrame = window.requestAnimationFrame(applyMarker);
-    }
-
-    // Old v0.8.49 called applyMarker again after 40/180/450/900 ms.
-    // That repeatedly removed/re-added the selection class and caused the
-    // visible multi-flash. One animation-frame update is enough now because
-    // v0.8.47 owns a persistent key through the Inspector handoff.
-    function settleMarker() {
-        queueMarker();
+    function rememberKey() {
+        return selectedDomKey();
     }
 
     function advancedLayoutIsStable(root, heading, blocks) {
@@ -131,69 +110,22 @@
         advancedFrame = window.requestAnimationFrame(moveAdvancedInspectorBlocks);
     }
 
-    document.addEventListener('click', function (event) {
-        const target = event.target && event.target.closest ? event.target : null;
-        if (!target || !target.closest('.h18-builder-canvas')) { return; }
-        if (target.closest(EXCLUDE_SELECTOR)) { return; }
-        const key = inferKey(target);
-        if (!key) { return; }
-        rememberKey(key);
-        settleMarker();
-        queueAdvancedLayout();
-    }, true);
-
-    document.addEventListener('click', function (event) {
-        const trigger = event.target && event.target.closest
-            ? event.target.closest('.h18-v0811-edit-child,.h18-page-section-edit,.h18-page-section-header')
-            : null;
-        if (!trigger) { return; }
-        const key = inferKey(trigger);
-        if (key) { rememberKey(key); }
-        settleMarker();
-        queueAdvancedLayout();
-        window.setTimeout(moveAdvancedInspectorBlocks, 120);
-    }, true);
-
-    if (window.MutationObserver) {
-        // Keep only one queued refresh. Do not overwrite a click-cached key with
-        // a transient Inspector key while the settings body is moving.
+    const inspector = document.querySelector('#h18-page-inspector-target');
+    if (window.MutationObserver && inspector) {
         new MutationObserver(function () {
-            if (!activeKey) {
-                const key = selectedDomKey();
-                if (key) { rememberKey(key); }
-            }
-            queueMarker();
-        }).observe(document.body, { childList: true, subtree: true });
-
-        const inspector = document.querySelector('#h18-page-inspector-target');
-        if (inspector) {
-            new MutationObserver(function () {
-                queueAdvancedLayout();
-            }).observe(inspector, { childList: true, subtree: true });
-        }
-    }
-
-    const nesting = window.__h18NestingToolsV0840;
-    if (nesting && typeof nesting.refresh === 'function' && !nesting.__h18V0849Wrapped) {
-        const nativeRefresh = nesting.refresh.bind(nesting);
-        nesting.refresh = function () {
-            const result = nativeRefresh.apply(null, arguments);
-            settleMarker();
-            return result;
-        };
-        nesting.__h18V0849Wrapped = true;
+            queueAdvancedLayout();
+        }).observe(inspector, { childList: true, subtree: true });
     }
 
     window.setTimeout(function () {
-        const key = selectedDomKey();
-        if (key) { rememberKey(key); }
-        applyMarker();
         moveAdvancedInspectorBlocks();
+        applyMarker();
     }, 0);
 
-    document.documentElement.setAttribute('data-h18-lego-selection-inspector', '0.8.61');
+    document.documentElement.setAttribute('data-h18-lego-selection-inspector', '0.8.69-advanced-only');
     window.__h18LegoSelectionInspectorV0849 = {
-        version: '0.8.61',
+        version: '0.8.69',
+        selectionOwner: 'v0.8.48-inspector-only',
         rememberKey: rememberKey,
         applyMarker: applyMarker,
         moveAdvancedInspectorBlocks: moveAdvancedInspectorBlocks
