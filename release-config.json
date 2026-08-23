@@ -1,15 +1,15 @@
 {
-  "version": "0.8.69",
-  "title": "LEGO-editor — restore v0.8.48 selection og deterministisk Kasse-drop",
+  "version": "0.8.70",
+  "title": "LEGO-editor — eksplicit IND I KASSEN og ægte v0.8.48 selection",
   "changelog": [
-    "Historikken viser at v0.8.48 indførte fungerende nested child-selection, mens v0.8.49 tilføjede en anden persistent selection-ejer før v0.8.51 introducerede lodret Over/Under stacking.",
-    "v0.8.49 selection-inspector ejer derfor ikke længere selection, observerer ikke hele document.body for selection, wrapper ikke nesting.refresh for selection og starter ikke egne selection-settle-runder.",
-    "v0.8.49 beholder kun Avanceret Inspector-layout. Dets applyMarker API er nu kun en idempotent kompatibilitetsbro til den kendte v0.8.48 inspector-only selection og gør intet når markeringen allerede er korrekt.",
-    "Dermed kan v0.8.50 media/history/design fortsat fungere uden at overtage eller gentagne gange fjerne/genoprette den røde child-markering. v0.8.51 Over/Under stack-runtime er uændret.",
-    "IND I KASSEN anvender nu Kasse-indholdets center som entydigt inside-mål; kanterne forbliver reserveret til Venstre/Højre/Over/Under.",
-    "Inside-målet genberegnes ved sortstop ud fra den senest registrerede faktiske museposition, så dragged source-zoner eller stale Sortable-state ikke kan få gestussen til at falde tilbage til ren reorder.",
-    "Runtime QA gemmer data-h18-v0869-last-inside-result og candidate/box/source attributter uden console-spam.",
-    "Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.",
-    "v0.8.69 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "Registrerer v0.8.69 som manuel FAIL: child-selection virkede fortsat ikke, og drag over Kassen viste kun Over/Under i stedet for et reelt IND I KASSEN-valg.",
+    "Rollback-fejlen er identificeret: den tidligere såkaldte v0.8.48 selection brugte faktisk inspector-only JS fra v0.8.51. v0.8.70 gendanner den præcise v0.8.48 nested-click-path direkte fra release v0.8.48.",
+    "Nested child-click bruger igen child-cardens egen Rediger-knap som i v0.8.48, hvorefter is-h18-v0848-selected-element markeres på den valgte child-card/Auto-box.",
+    "v0.8.49 forbliver pensioneret som selection-ejer; Avanceret Inspector-layout bevares. v0.8.50 funktioner og v0.8.51 Over/Under stack-runtime bevares.",
+    "Kasser får nu en eksplicit femte LEGO-dropzone i midten: IND I KASSEN. Over/Under ligger fortsat øverst/nederst og Venstre/Højre langs siderne.",
+    "Inside-placement er nu bundet direkte til den synlige is-inside-zone. Ved sortstop genberegnes den synlige inside-zone på sidste pointerposition; kun et slip i denne zone må sætte LayoutParentKey til Kassen.",
+    "Hvis der ikke rammes IND I KASSEN-zonen, udføres ingen inside-parenting af v0.8.70-laget, så almindelig Over/Under/Venstre/Højre/reorder kan fortsætte via deres eksisterende ejere.",
+    "Runtime QA gemmer data-h18-v0870-last-inside-result/source/box. Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne.",
+    "Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede. v0.8.70 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
   ]
 }
