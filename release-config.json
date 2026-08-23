@@ -1,16 +1,15 @@
 {
-  "version": "0.8.51",
-  "title": "LEGO-editor — 2D Kasse-layout og v0.8.50 testrettelser",
+  "version": "0.8.52",
+  "title": "LEGO-editor — stabil selection og rettet Inspector-layout",
   "changelog": [
-    "Den gamle Auto-kasse-hjælpetekst og pre-LEGO drop-chrome skjules permanent i normal editorvisning, mens nødvendige drag/drop hit targets bevares internt.",
-    "Markeringen af det valgte element tegnes nu som et separat komplet overlay på alle fire sider og skal forblive synlig gennem Inspector- og layout-rerenderinger.",
-    "Baggrund, kant, kanttykkelse og radius anvendes på elementets fulde ydre Kasse/layoutflade i Række- og kolonne-kasser i stedet for kun omkring tekst- eller billedindholdets egen højde.",
-    "Inspector-panelet Luft, baggrund og placering er omlagt med Desktop/Mobil-faner, bredere felter og kortere labels, så kontrollerne er læsbare på både laptop og store skærme.",
-    "Baggrund kan fortsat vælges fra design-presets, men Custom kan nu vælges direkte i Inspector via den eksisterende DesignMode/CustomBackgroundColor-model uden nyt side-schema.",
-    "Over/Under-drop på et element inde i en Række- og kolonne-kasse bliver nu i samme layout-parent og kan oprette en lodret stak i den samme kolonne i stedet for at hoppe ud under hele kassen.",
-    "LEGO-051 tilføjer 2D Kasse-layout: flere elementer kan stables lodret i samme kolonne, og en vandret splitter kan justere højdefordelingen procentuelt, mens den eksisterende lodrette splitter fortsat styrer kolonnebredde.",
-    "Den nye stack/højdefordeling har en separat editor-state-ejer; eksisterende container/flex/grid-typer og LayoutParentKey-persistens ændres ikke, så allerede designede sider bevarer deres eksisterende schema.",
-    "Nested elementvalg er gjort deterministisk på tværs af Chrome, Chromium, Firefox og WebKit ved at resolve den kanoniske række via element-key og aktivere den eksisterende Inspector-handler frem for den klonede proxy.",
-    "Architecture QA, LEGO Editor QA og I9 Prep QA er grønne på den endelige LEGO-051-kandidat. En kendt timingfølsom legacy E14 Firefox-test blev genkørt isoleret og bestod. Manuel v0.8.51-test på test2 er stadig nødvendig; public cutover er ikke autoriseret."
+    "Nested elementvalg stabiliseres, så klik på tekst, billede og andre børn ikke længere kan starte en vedvarende layout/reconcile-opdatering.",
+    "MutationObserver i LEGO-layoutlaget skelner nu mellem reel ændring af section-rækker og den normale flytning af valgt editor-indhold til Inspector; Inspector-handoff udløser ikke længere en fuld derived-layout render.",
+    "Den røde selection-markering får dermed lov til at falde til ro og forblive synlig på det valgte element efter Inspector-selection.",
+    "Inspector-sektionen Luft, baggrund og placering bruger nu én selvstændig full-width Desktop/Mobil-shell i stedet for at blive klemt ind i legacy-gridens smalle kolonner.",
+    "Desktop/Mobil-faner og deres eksisterende controls bevares, men fieldsets og bredder isoleres fra den gamle Inspector-gridstruktur, så labels og inputfelter igen er læsbare.",
+    "Ingen ændring af page schema, LayoutParentKey, container/flex/grid, 2D stack-persistens eller gemte frontend-værdier.",
+    "Der er tilføjet målrettede browser-regressionstests for både stabil nested selection/rød markering og full-width Inspector-layout.",
+    "Architecture QA og Editor Runtime Fast QA er grønne på den endelige LEGO-052-kandidat. LEGO Editor QA er grøn efter isoleret rerun af den kendte timingfølsomme legacy media-dobbeltklik-test; de nye LEGO-052-tests består i system Chrome, Chromium, Firefox og WebKit.",
+    "Manuel v0.8.52-test på test2 er stadig nødvendig; public cutover er ikke autoriseret."
   ]
 }
