@@ -36,11 +36,6 @@ jQuery(function ($) {
         return String($row.attr('data-section-type') || controls($row, '.h18-page-section-type').first().val() || '').trim();
     }
 
-    function rowLabel($row) {
-        if (!$row || !$row.length) { return ''; }
-        return String(controls($row, '.h18-section-navigator-label').first().val() || '').trim();
-    }
-
     function parentKey($row) {
         if (!$row || !$row.length) { return ''; }
         return String(controls($row, '.h18-layout-parent-key').first().val() || '').trim();
@@ -53,8 +48,11 @@ jQuery(function ($) {
     }
 
     function isBox($row) {
-        if (!$row || !$row.length || rowType($row) !== 'container') { return false; }
-        return String($row.attr('data-h18-box') || '') === '1' || rowLabel($row).indexOf('Kasse') === 0;
+        if (!$row || !$row.length) { return false; }
+        if (rowType($row) === 'container') { return true; }
+        if (String($row.attr('data-h18-box') || '') === '1') { return true; }
+        const $preview = $row.children('.h18-canvas-preview').first();
+        return Boolean($preview.length && $preview.find('.h18-ud-box-contents-preview,.h18-v0811-box-contents').length);
     }
 
     function isPlainElement($row) {
@@ -129,9 +127,9 @@ jQuery(function ($) {
     function insideZoneAtClientPoint(clientX, clientY, sourceKey) {
         let match = null;
         let bestArea = Number.POSITIVE_INFINITY;
-        document.querySelectorAll('.h18-v0838-drop-zone.is-inside:not(.is-disabled)[data-h18-v0870-inside-kasse]').forEach(function (zone) {
+        document.querySelectorAll('.h18-v0838-drop-zone.is-inside:not(.is-disabled)[data-h18-v0871-inside-kasse]').forEach(function (zone) {
             if (!zone.getClientRects || !zone.getClientRects().length) { return; }
-            const boxKey = String(zone.getAttribute('data-h18-v0870-inside-kasse') || '').trim();
+            const boxKey = String(zone.getAttribute('data-h18-v0871-inside-kasse') || '').trim();
             if (!boxKey || boxKey === sourceKey) { return; }
             const $box = rowByKey(boxKey);
             const $source = rowByKey(sourceKey);
@@ -151,7 +149,7 @@ jQuery(function ($) {
         const $source = rowByKey(sourceKey);
         const $box = rowByKey(boxKey);
         if (!canMovePlainElementIntoBox($source, $box)) {
-            document.documentElement.setAttribute('data-h18-v0870-last-inside-result', 'invalid-target');
+            document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'invalid-target');
             return false;
         }
 
@@ -165,14 +163,14 @@ jQuery(function ($) {
         $source.insertAfter($anchor);
 
         if (!setParent($source, boxKey)) {
-            document.documentElement.setAttribute('data-h18-v0870-last-inside-result', 'parent-write-failed');
+            document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'parent-write-failed');
             return false;
         }
 
         syncFlatOrder();
-        document.documentElement.setAttribute('data-h18-v0870-last-inside-result', 'ok');
-        document.documentElement.setAttribute('data-h18-v0870-last-inside-source', sourceKey);
-        document.documentElement.setAttribute('data-h18-v0870-last-inside-box', boxKey);
+        document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'ok');
+        document.documentElement.setAttribute('data-h18-v0871-last-inside-source', sourceKey);
+        document.documentElement.setAttribute('data-h18-v0871-last-inside-box', boxKey);
 
         const nesting = window.__h18NestingToolsV0840;
         if (nesting && typeof nesting.refresh === 'function') { nesting.refresh(); }
@@ -198,7 +196,7 @@ jQuery(function ($) {
     document.addEventListener('mousemove', trackPointer, true);
     document.addEventListener('pointermove', trackPointer, true);
 
-    $sections.on('sortstart.h18V0870InsideKasse', function (event, ui) {
+    $sections.on('sortstart.h18V0871InsideKasse', function (event, ui) {
         const $source = ui && ui.item ? ui.item : $();
         const sourceKey = rowKey($source);
         insideDrag = sourceKey && isPlainElement($source)
@@ -206,11 +204,11 @@ jQuery(function ($) {
             : null;
         if (insideDrag) {
             $source.attr('data-key', sourceKey);
-            document.documentElement.setAttribute('data-h18-v0870-last-inside-result', 'dragging');
+            document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'dragging');
         }
     });
 
-    $sections.on('sort.h18V0870InsideKasse', function (event) {
+    $sections.on('sort.h18V0871InsideKasse', function (event) {
         if (!insideDrag) { return; }
         const original = event && event.originalEvent ? event.originalEvent : event;
         const clientX = Number(original && original.clientX);
@@ -223,7 +221,7 @@ jQuery(function ($) {
         }
     });
 
-    $sections.on('sortstop.h18V0870InsideKasse', function () {
+    $sections.on('sortstop.h18V0871InsideKasse', function () {
         if (!insideDrag) { return; }
         const state = insideDrag;
         insideDrag = null;
@@ -236,20 +234,20 @@ jQuery(function ($) {
         if (!finalBoxKey) { finalBoxKey = state.boxKey; }
 
         if (!finalBoxKey) {
-            document.documentElement.setAttribute('data-h18-v0870-last-inside-result', 'no-inside-zone');
+            document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'no-inside-zone');
             return;
         }
         movePlainElementIntoBox(state.sourceKey, finalBoxKey);
     });
 
-    $sections.on('sortcancel.h18V0870InsideKasse', function () {
+    $sections.on('sortcancel.h18V0871InsideKasse', function () {
         insideDrag = null;
     });
 
-    document.documentElement.setAttribute('data-h18-lego-placement-stability', '0.8.70-explicit-inside-zone');
+    document.documentElement.setAttribute('data-h18-lego-placement-stability', '0.8.71-structural-inside-zone');
     window.__h18LegoPlacementStabilityV0862 = {
-        version: '0.8.70',
-        placementOwner: 'explicit-inside-zone-only',
+        version: '0.8.71',
+        placementOwner: 'explicit-structural-inside-zone-only',
         moveElementIntoBox: movePlainElementIntoBox
     };
 }());
