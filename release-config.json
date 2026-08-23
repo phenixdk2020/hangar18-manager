@@ -1,6 +1,6 @@
 {
   "version": "0.8.61",
-  "title": "LEGO-editor — stabil selection og færre unødige canvas-renders",
+  "title": "LEGO-editor — stabil selection uden flerblink",
   "changelog": [
     "Bevarer den fungerende v0.8.58/v0.8.60 drag/drop-, Over/Under-, Grid-, Auto-kasse-, bredde- og højdefordelingsmodel uændret.",
     "v0.8.47 er nu eneste ejer af den visuelle selection-key under Inspector-handoff og beholder den valgte element-key, selv hvis WordPress kortvarigt mangler eller flytter .is-selected-rækken.",
