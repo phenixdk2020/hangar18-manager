@@ -5,6 +5,10 @@ const jqueryRuntime = require.resolve('jquery');
 const fixesRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-fixes-v0851.js');
 const fixesCss = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-fixes-v0851.css');
 
+function spacingField(label) {
+  return `<div class="h18-field"><label><strong>${label}</strong></label><input type="number" value="0"></div>`;
+}
+
 function editorRow() {
   return `<section id="row-text-1" class="h18-page-section-row" data-section-type="text" data-section-index="1">
     <div class="h18-canvas-preview" style="background:#fff;border:1px solid #777;border-radius:5px">Tekst-preview</div>
@@ -21,17 +25,17 @@ function editorRow() {
         <div class="legacy-device-grid">
           <fieldset class="legacy-device-panel">
             <legend>Desktop</legend>
-            <label><strong>Placeringsluft før (px)</strong><input type="number" value="0"></label>
-            <label><strong>Luft efter (px)</strong><input type="number" value="0"></label>
-            <label><strong>Indvendig luft – lodret (px)</strong><input type="number" value="0"></label>
-            <label><strong>Indvendig luft – vandret (px)</strong><input type="number" value="0"></label>
+            ${spacingField('Placeringsluft før (px)')}
+            ${spacingField('Luft efter (px)')}
+            ${spacingField('Indvendig luft – lodret (px)')}
+            ${spacingField('Indvendig luft – vandret (px)')}
           </fieldset>
           <fieldset class="legacy-device-panel">
             <legend>Mobil</legend>
-            <label><strong>Placeringsluft før (px)</strong><input type="number" value="0"></label>
-            <label><strong>Luft efter (px)</strong><input type="number" value="0"></label>
-            <label><strong>Indvendig luft – lodret (px)</strong><input type="number" value="0"></label>
-            <label><strong>Indvendig luft – vandret (px)</strong><input type="number" value="0"></label>
+            ${spacingField('Placeringsluft før (px)')}
+            ${spacingField('Luft efter (px)')}
+            ${spacingField('Indvendig luft – lodret (px)')}
+            ${spacingField('Indvendig luft – vandret (px)')}
           </fieldset>
         </div>
       </details>
@@ -51,6 +55,7 @@ async function boot(page) {
     #h18-page-inspector-target{width:340px;padding:10px;box-sizing:border-box}
     .legacy-device-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:320px;box-sizing:border-box}
     .legacy-device-panel{min-width:0;padding:4px;margin:0}
+    .legacy-device-panel .h18-field{display:block;min-width:0;margin-bottom:8px}
     .legacy-device-panel label{display:block;min-width:0}
     .h18-v0811-child-card{position:relative;width:360px;min-height:120px;margin-top:12px}
     .h18-v0811-child-preview{position:relative;width:100%;min-height:110px;box-sizing:border-box;background:#fafafa}
@@ -129,10 +134,11 @@ test('Luft, baggrund og placering uses one full-width device shell instead of le
 
   const desktop = page.locator('[data-h18-v0851-device-panel].is-active');
   const shell = page.locator('.h18-v0852-device-shell');
-  const legacyGrid = page.locator('.legacy-device-grid');
+  const activeInput = desktop.locator('input[type="number"]').first();
   await expect(shell).toHaveCount(1);
   await expect(page.locator('.h18-v0851-device-tab')).toHaveCount(2);
   await expect(desktop).toBeVisible();
+  await expect(activeInput).toBeVisible();
 
   const geometry = await page.evaluate(() => {
     const shell = document.querySelector('.h18-v0852-device-shell');
