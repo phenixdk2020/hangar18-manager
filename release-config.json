@@ -1,14 +1,16 @@
 {
-  "version": "0.8.57",
-  "title": "LEGO-editor — stop fryse-loop og skjul legacy Kasse-felt under drag",
+  "version": "0.8.51",
+  "title": "LEGO-editor — 2D Kasse-layout og v0.8.50 testrettelser",
   "changelog": [
-    "MutationObserver-feedback-loopet fra v0.8.55/v0.8.56 er fjernet: legacy Auto-kasse-feltet bliver ikke længere slettet fra DOM'en og kan derfor ikke blive genskabt/slettet i en uendelig render-loop.",
-    "Legacy-teksten 'Træk en Kasse ind i Auto-kasser.' skjules nu med en entydig display:none-regel også mens et element trækkes hen over editoren; Auto-kasse Grid'et forbliver den egentlige dropflade.",
-    "Nested Under/Over er gjort idempotent: observeren reagerer kun på direkte indsættelse af en ny section-row og ikke på skjulte stack-felter eller canvas-repaint.",
-    "Hvis parent allerede er korrekt men stack-state mangler, udføres kun en målrettet stackUnder/stackOver-reparation i stedet for at køre hele adoptUnder-transaktionen igen.",
-    "Parent-selecten får Grid-parenten som gyldig option før adoption, så LayoutParentKey ikke nulstilles under WordPress/Inspector-handoff.",
-    "Rettelsen målretter både browser-frys/spinner ved Under-drop og fejlen hvor et nyt element ender som en ekstra sibling-kolonne i stedet for lodret under det valgte element.",
-    "Ingen ændring af page schema, eksisterende Container/Flex/Grid-model, gemte designværdier eller public frontend-rendering.",
-    "v0.8.57 er en testrelease til manuel editor-QA på testmiljøet; public cutover er ikke ændret."
+    "Den gamle Auto-kasse-hjælpetekst og pre-LEGO drop-chrome skjules permanent i normal editorvisning, mens nødvendige drag/drop hit targets bevares internt.",
+    "Markeringen af det valgte element tegnes nu som et separat komplet overlay på alle fire sider og skal forblive synlig gennem Inspector- og layout-rerenderinger.",
+    "Baggrund, kant, kanttykkelse og radius anvendes på elementets fulde ydre Kasse/layoutflade i Række- og kolonne-kasser i stedet for kun omkring tekst- eller billedindholdets egen højde.",
+    "Inspector-panelet Luft, baggrund og placering er omlagt med Desktop/Mobil-faner, bredere felter og kortere labels, så kontrollerne er læsbare på både laptop og store skærme.",
+    "Baggrund kan fortsat vælges fra design-presets, men Custom kan nu vælges direkte i Inspector via den eksisterende DesignMode/CustomBackgroundColor-model uden nyt side-schema.",
+    "Over/Under-drop på et element inde i en Række- og kolonne-kasse bliver nu i samme layout-parent og kan oprette en lodret stak i den samme kolonne i stedet for at hoppe ud under hele kassen.",
+    "LEGO-051 tilføjer 2D Kasse-layout: flere elementer kan stables lodret i samme kolonne, og en vandret splitter kan justere højdefordelingen procentuelt, mens den eksisterende lodrette splitter fortsat styrer kolonnebredde.",
+    "Den nye stack/højdefordeling har en separat editor-state-ejer; eksisterende container/flex/grid-typer og LayoutParentKey-persistens ændres ikke, så allerede designede sider bevarer deres eksisterende schema.",
+    "Nested elementvalg er gjort deterministisk på tværs af Chrome, Chromium, Firefox og WebKit ved at resolve den kanoniske række via element-key og aktivere den eksisterende Inspector-handler frem for den klonede proxy.",
+    "Architecture QA, LEGO Editor QA og I9 Prep QA er grønne på den endelige LEGO-051-kandidat. En kendt timingfølsom legacy E14 Firefox-test blev genkørt isoleret og bestod. Manuel v0.8.51-test på test2 er stadig nødvendig; public cutover er ikke autoriseret."
   ]
 }

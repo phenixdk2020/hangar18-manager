@@ -61,10 +61,6 @@ on:
       - 'assets/ultimate-designer-lego-resize-v0841.css'
       - 'assets/ultimate-designer-lego-responsive-layout-v0842.js'
       - 'assets/ultimate-designer-lego-responsive-layout-v0842.css'
-      - 'assets/ultimate-designer-lego-fixes-v0851.js'
-      - 'assets/ultimate-designer-lego-fixes-v0851.css'
-      - 'assets/ultimate-designer-lego-stack-selection-v0853.js'
-      - 'assets/ultimate-designer-lego-stack-selection-v0853.css'
       - 'tests/Architecture/v0830-lego-spacing-*'
       - 'tests/Architecture/v0831-lego-responsive-spacing-*'
       - 'tests/Architecture/v0832-lego-common-design-*'
@@ -98,8 +94,6 @@ on:
       - 'tests/Architecture/browser/lego-palette-side-drop-v0843.spec.cjs'
       - 'tests/Architecture/browser/lego-resize-v0841.spec.cjs'
       - 'tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs'
-      - 'tests/Architecture/browser/lego-selection-inspector-v0852.spec.cjs'
-      - 'tests/Architecture/browser/lego-stack-selection-v0853.spec.cjs'
       - 'tests/Architecture/browser/playwright*.config.cjs'
       - 'tools/lego-staging-verify.cjs'
       - 'tools/lego-acceptance-validate.cjs'
@@ -132,7 +126,6 @@ jobs:
         with: {php-version: '${{ matrix.php-version }}', coverage: none}
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
-      - run: node --check assets/ultimate-designer-lego-fixes-v0851.js && node --check assets/ultimate-designer-lego-stack-selection-v0853.js
       - run: bash tests/Architecture/v0831-lego-responsive-spacing-contract.sh
       - run: bash tests/Architecture/v0832-lego-common-design-contract.sh
       - run: bash tests/Architecture/v0833-lego-responsive-design-contract.sh
@@ -177,11 +170,9 @@ jobs:
           tests/Architecture/browser/lego-palette-side-drop-v0843.spec.cjs
           tests/Architecture/browser/lego-resize-v0841.spec.cjs
           tests/Architecture/browser/lego-responsive-layout-v0842.spec.cjs
-          tests/Architecture/browser/lego-selection-inspector-v0852.spec.cjs
-          tests/Architecture/browser/lego-stack-selection-v0853.spec.cjs
 
   lego-browsers:
-    name: LEGO-031/032/033/041/042/052/053 system Chrome + Chromium Firefox WebKit
+    name: LEGO-031/032/033/041/042 system Chrome + Chromium Firefox WebKit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

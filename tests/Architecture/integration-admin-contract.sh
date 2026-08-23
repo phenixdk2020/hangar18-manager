@@ -13,7 +13,6 @@ for controller in \
   src/Admin/MenuAdminController.php \
   src/Admin/MenuPageChooserAdminController.php \
   src/Admin/SideHealthAdminController.php \
-  src/Admin/UpdaterPostInstallStateAdminController.php \
   src/Admin/EditorLayoutToolsAdminController.php \
   src/Admin/EditorElementLibraryAdminController.php \
   src/Admin/AssetManagerAdminController.php \
@@ -45,7 +44,6 @@ grep -F 'wp_ajax_h18_ud_side_health' src/Admin/SideHealthAdminController.php >/d
 grep -F 'wp_ajax_h18_ud_asset_duplicates' src/Admin/AssetManagerAdminController.php >/dev/null
 grep -F 'wp_ajax_h18_ud_plan_artifact_import' src/Admin/PortabilityAdminController.php >/dev/null
 grep -F 'EditorElementLibraryAdminController::register();' src/Admin/IntegrationAdminBootstrap.php >/dev/null
-grep -F 'UpdaterPostInstallStateAdminController::register();' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'PermissionsAdminController::register();' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'AiAdminController::register();' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'QaDashboardAdminController::register();' src/Admin/IntegrationAdminBootstrap.php >/dev/null
@@ -55,18 +53,8 @@ grep -F 'WordPressOptionConversionAcceptanceRepository' src/Admin/IntegrationAdm
 grep -F 'WordPressOptionCutoverPreflightRepository' src/Admin/IntegrationAdminBootstrap.php >/dev/null
 grep -F 'v0.7.4 – Ultimate Designer integration dashboard' assets/admin.css >/dev/null
 
-# LEGO-054 updater state must reconcile against the version actually installed
-# on disk. The same request still has the old Hangar18_Manager::VERSION loaded.
-grep -F "add_action('upgrader_process_complete'" src/Admin/UpdaterPostInstallStateAdminController.php >/dev/null
-grep -F "add_action('admin_init'" src/Admin/UpdaterPostInstallStateAdminController.php >/dev/null
-grep -F "get_file_data" src/Admin/UpdaterPostInstallStateAdminController.php >/dev/null
-grep -F "version_compare(\$manifestVersion, \$installedVersion, '>')" src/Admin/UpdaterPostInstallStateAdminController.php >/dev/null
-grep -F "delete_site_transient('update_plugins')" src/Admin/UpdaterPostInstallStateAdminController.php >/dev/null
-grep -F "wp_clean_plugins_cache(true)" src/Admin/UpdaterPostInstallStateAdminController.php >/dev/null
-grep -F "hangar18_manager_update_state_v1" src/Admin/UpdaterPostInstallStateAdminController.php >/dev/null
-
 if grep -RInE 'ultimate-designer-(admin|menu-admin|menu-pages|side-health|asset-admin|portability|permissions|ai|qa|conversion|layout-tools|box-tools|nesting-tools|element-library)\.(js|css)' src --include='*.php' | grep -vE '^src/Admin/' >/dev/null; then
   echo 'FAIL: Ultimate Designer admin asset referenced outside Admin namespace'; exit 1
 fi
 
-echo 'Ultimate Designer integration admin safety contract I1-I10 signed preflight + updater reconciliation: PASS'
+echo 'Ultimate Designer integration admin safety contract I1-I10 signed preflight: PASS'

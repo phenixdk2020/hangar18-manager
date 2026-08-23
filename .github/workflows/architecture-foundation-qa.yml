@@ -53,8 +53,6 @@ on:
       - 'assets/ultimate-designer-element-library.css'
       - 'assets/ultimate-designer-history-v0817.js'
       - 'assets/ultimate-designer-history-v0818.js'
-      - 'assets/ultimate-designer-lego-fixes-v0851.js'
-      - 'assets/ultimate-designer-lego-fixes-v0851.css'
       - 'docs/architecture-*.md'
       - 'docs/ud-*.md'
       - 'docs/i9-*'
@@ -145,7 +143,7 @@ jobs:
       - run: bash tests/Architecture/i10-conversion-admin-contract.sh
       - run: bash tests/Architecture/i10-cutover-preflight-admin-contract.sh
       - run: bash tests/Architecture/integration-admin-contract.sh
-      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js && node --check assets/ultimate-designer-portability.js && node --check assets/ultimate-designer-layout-tools.js && node --check assets/ultimate-designer-box-tools.js && node --check assets/ultimate-designer-nesting-tools.js && node --check assets/ultimate-designer-box-content-layout.js && node --check assets/ultimate-designer-visual-composition.js && node --check assets/ultimate-designer-table-appearance.js && node --check assets/ultimate-designer-element-library.js && node --check assets/ultimate-designer-history-v0818.js && node --check assets/ultimate-designer-lego-fixes-v0851.js
+      - run: node --check assets/site-builder-runtime.js && node --check assets/interaction-runtime.js && node --check assets/ultimate-designer-admin.js && node --check assets/ultimate-designer-menu-admin.js && node --check assets/ultimate-designer-menu-pages.js && node --check assets/ultimate-designer-side-health.js && node --check assets/ultimate-designer-asset-admin.js && node --check assets/ultimate-designer-portability.js && node --check assets/ultimate-designer-layout-tools.js && node --check assets/ultimate-designer-box-tools.js && node --check assets/ultimate-designer-nesting-tools.js && node --check assets/ultimate-designer-box-content-layout.js && node --check assets/ultimate-designer-visual-composition.js && node --check assets/ultimate-designer-table-appearance.js && node --check assets/ultimate-designer-element-library.js && node --check assets/ultimate-designer-history-v0818.js
 
   browser-engine-qa:
     name: E14 browser engines (Chromium/Firefox/WebKit)

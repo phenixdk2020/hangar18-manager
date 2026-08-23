@@ -4,7 +4,6 @@
     if (window.__h18LegoFixesV0851) { return; }
 
     const VERSION = '0.8.51';
-    const HOTFIX_VERSION = '0.8.52';
     const config = window.H18LegoFixesV0851 || {};
     const STACK_FIELD_CLASS = 'h18-lego-stack-state-v0851-json';
     const STACK_SUBMIT_ATTR = 'data-h18-v0851-stack-submit';
@@ -668,21 +667,7 @@
             button.setAttribute('data-h18-v0851-device-target', id);
             tabs.appendChild(button);
         });
-
-        /*
-         * LEGO-052: Device controls must not remain direct children of the
-         * legacy Inspector grid. On narrow inspector widths the old grid made
-         * each fieldset/tab a separate very narrow grid column. Keep the
-         * existing fields untouched, but isolate tabs + device fieldsets in a
-         * single full-width shell that can span the legacy grid safely.
-         */
-        const parent = groups[0].parentNode;
-        const shell = document.createElement('div');
-        shell.className = 'h18-v0852-device-shell';
-        shell.setAttribute('data-h18-v0852-device-shell', '1');
-        parent.insertBefore(shell, groups[0]);
-        shell.appendChild(tabs);
-        groups.forEach(function (group) { shell.appendChild(group); });
+        groups[0].parentNode.insertBefore(tabs, groups[0]);
         shortenLegacySpacingLabels(panel);
     }
 
@@ -747,47 +732,6 @@
         inspectorFrame = window.requestAnimationFrame(enhanceInspector);
     }
 
-    function mutationNodeContainsSectionRow(node) {
-        if (!node || node.nodeType !== 1) { return false; }
-        if (node.matches && node.matches('.h18-page-section-row')) { return true; }
-        return !!(node.querySelector && node.querySelector('.h18-page-section-row'));
-    }
-
-    function mutationTouchesInspector(mutation) {
-        const target = mutation && mutation.target;
-        const element = target && target.nodeType === 1 ? target : (target && target.parentElement ? target.parentElement : null);
-        return !!(element && (element.id === 'h18-page-inspector-target' || (element.closest && element.closest('#h18-page-inspector-target'))));
-    }
-
-    function mutationChangesSectionRows(mutation) {
-        if (!mutation || mutation.type !== 'childList') { return false; }
-        const nodes = Array.from(mutation.addedNodes || []).concat(Array.from(mutation.removedNodes || []));
-        return nodes.some(mutationNodeContainsSectionRow);
-    }
-
-    function handleObservedMutations(mutations) {
-        if (Date.now() < suppressObserverUntil) { return; }
-        let inspectorChanged = false;
-        let sectionStructureChanged = false;
-
-        (mutations || []).forEach(function (mutation) {
-            if (mutationTouchesInspector(mutation)) { inspectorChanged = true; }
-            if (mutationChangesSectionRows(mutation)) { sectionStructureChanged = true; }
-        });
-
-        /*
-         * LEGO-052: Selecting an element physically moves its editor body into
-         * #h18-page-inspector-target. v0.8.51 treated that ordinary selection
-         * hand-off as a reason to rebuild the complete derived layout. That
-         * rebuild moved/repainted the nested canvas again, which could create a
-         * render/reconcile loop and prevent the selected proxy/red overlay from
-         * stabilising. Only actual section-row add/remove mutations trigger a
-         * full render now; Inspector mutations only refresh Inspector helpers.
-         */
-        if (sectionStructureChanged) { scheduleRender(); }
-        if (inspectorChanged || sectionStructureChanged) { queueInspector(); }
-    }
-
     function installEvents() {
         const $ = jq();
         if (!$) { return; }
@@ -848,7 +792,11 @@
         }
 
         if (window.MutationObserver) {
-            new MutationObserver(handleObservedMutations).observe(document.body, { childList: true, subtree: true });
+            new MutationObserver(function () {
+                if (Date.now() < suppressObserverUntil) { return; }
+                scheduleRender();
+                queueInspector();
+            }).observe(document.body, { childList: true, subtree: true });
         }
 
         document.addEventListener('click', queueInspector, true);
@@ -875,7 +823,6 @@
         wrapExistingRefresh();
         [0, 60, 180, 500].forEach(function (delay) { window.setTimeout(function () { scheduleRender(); queueInspector(); }, delay); });
         document.documentElement.setAttribute('data-h18-lego-fixes', VERSION);
-        document.documentElement.setAttribute('data-h18-lego-fixes-hotfix', HOTFIX_VERSION);
     }
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install, { once: true }); }
@@ -883,7 +830,6 @@
 
     window.__h18LegoFixesV0851 = {
         version: VERSION,
-        hotfixVersion: HOTFIX_VERSION,
         refresh: renderDerivedLayout,
         stackUnder: stackUnder,
         stackOver: stackOver,
