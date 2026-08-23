@@ -27,3 +27,10 @@
     outline-offset: -2px;
     box-shadow: inset 0 0 0 1px rgba(214, 54, 56, .2) !important;
 }
+
+/* LEGO-068: drop feedback only. This is deliberately separate from selection. */
+.h18-builder-canvas .h18-ud-box-contents-preview.h18-v0868-inside-target {
+    outline: 3px dashed #2271b1 !important;
+    outline-offset: -3px !important;
+    box-shadow: inset 0 0 0 2px rgba(34, 113, 177, .18) !important;
+}
