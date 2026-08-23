@@ -1,22 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.54",
+  "version": "0.8.55",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T07:20:56Z",
+  "published_utc": "2026-08-23T10:51:49Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "72f8eedc92d44f8ccd29d42d859391826d3ae07affb0d84d905bee83563d2d2c",
+  "package_sha256": "6b82115394afa44cb5782918e51f85691c9f74ce9a7a52f400ca99cd9e18c81e",
   "changelog": [
-    "Nested Over/Under fra elementbiblioteket fastholder nu drop-intentionen, indtil det nyoprettede WordPress-element faktisk eksisterer; den kendte v0.8.51 adoptUnder/StackRootKey-model forbliver placement-ejer.",
-    "Den tidligere korte adoption-window er erstattet af bounded MutationObserver og retries op til 3 sekunder, så et nyt Tekst- eller Billede-element kan blive stablet lodret i samme grid-kolonne også når editor/Inspector-handoff er forsinket.",
-    "Legacy Auto-kasse-feltet med teksten 'Træk en Kasse ind i Auto-kasser.' skjules nu permanent i normal editor, mens den nødvendige usynlige drop-hitbox bevares.",
-    "Den røde selection-markering bruger nu en indvendig frame, så højre kant ikke klippes på elementet længst til højre i Grid/Auto-kasser.",
-    "Det godkendte v0.8.52 Inspector-layout for Luft, baggrund og placering er uændret.",
-    "Updater-status afstemmes efter en vellykket Plugin_Upgrader-installation mod den faktisk installerede Version-header på disk, og WordPress' plugin-update-cache ryddes; siden skal derfor straks vise, at den installerede version er ajour uden et ekstra manuelt 'Tjek for opdateringer'.",
-    "Ingen ændring af page schema, container/flex/grid, eksisterende LayoutParentKey/StackRootKey-persistens eller gemte frontend-designværdier.",
-    "Målrettede regressionstests dækker forsinket palette-create på 650 ms, Image/Text nested stack, skjult legacy Auto-kasse-prompt, komplet inset selection-frame samt updater-state/cache-reconciliation.",
-    "Architecture QA, E14 browser-engine QA, Editor Runtime Fast QA, B1 Backup Restore QA, B2 Site Backup QA og LEGO Editor QA er grønne på den endelige LEGO-054-kandidat efter rerun af den kendte timingfølsomme legacy media-dobbeltklik-test.",
-    "Manuel v0.8.54-test på test2 er stadig nødvendig; public cutover er ikke autoriseret."
+    "Legacy Auto-kasse-dropfeltet fjernes nu fra editorens DOM i stedet for kun at blive skjult; det eksisterende Auto-kasse Grid forbliver den aktive dropflade.",
+    "Nested Under/Over accepteres ikke længere som gennemført alene fordi den ældre adoptUnder-funktion returnerer true; den nye guard verificerer både LayoutParentKey og StackRootKey efter hver adoption.",
+    "Hvis WordPress-rækken eller dens parent/stack-state endnu ikke er klar, returnerer adoption false, så den eksisterende bounded retry/MutationObserver fortsætter i stedet for at stoppe for tidligt.",
+    "Fejlbilledet med tre 4/12 sibling-kolonner efter et Under-drop er dermed målrettet ved selve succes-kriteriet, så det nye element først regnes som placeret når den lodrette stack faktisk eksisterer.",
+    "Ingen ændring af page schema, eksisterende Container/Flex/Grid-model, gemte designværdier eller public frontend-rendering.",
+    "v0.8.55 skal fortsat gennem manuel editor-test på testmiljøet; public cutover er ikke autoriseret."
   ]
 }

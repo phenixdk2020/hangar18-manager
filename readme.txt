@@ -1,6 +1,17 @@
 === Hangar18 Manager ===
-Version: 0.8.54
+Version: 0.8.55
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.55 – LEGO-editor — fjern legacy Kasse-felt og verificér lodret Under ==
+
+Nyt:
+- Legacy Auto-kasse-dropfeltet fjernes nu fra editorens DOM i stedet for kun at blive skjult; det eksisterende Auto-kasse Grid forbliver den aktive dropflade.
+- Nested Under/Over accepteres ikke længere som gennemført alene fordi den ældre adoptUnder-funktion returnerer true; den nye guard verificerer både LayoutParentKey og StackRootKey efter hver adoption.
+- Hvis WordPress-rækken eller dens parent/stack-state endnu ikke er klar, returnerer adoption false, så den eksisterende bounded retry/MutationObserver fortsætter i stedet for at stoppe for tidligt.
+- Fejlbilledet med tre 4/12 sibling-kolonner efter et Under-drop er dermed målrettet ved selve succes-kriteriet, så det nye element først regnes som placeret når den lodrette stack faktisk eksisterer.
+- Ingen ændring af page schema, eksisterende Container/Flex/Grid-model, gemte designværdier eller public frontend-rendering.
+- v0.8.55 skal fortsat gennem manuel editor-test på testmiljøet; public cutover er ikke autoriseret.
 
 
 == Version 0.8.54 – LEGO-editor — robust nested Under, komplet selection og ajour updater-status ==
