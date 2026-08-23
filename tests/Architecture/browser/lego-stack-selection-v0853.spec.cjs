@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 const path = require('path');
 
 const jqueryRuntime = require.resolve('jquery');
+const paletteBridgeRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js');
 const fixesRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-fixes-v0851.js');
 const fixesCss = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-fixes-v0851.css');
 const hotfixRuntime = path.resolve(__dirname, '../../../assets/ultimate-designer-lego-stack-selection-v0853.js');
@@ -61,11 +62,6 @@ async function boot(page, childType = 'image') {
     window.__h18NestingToolsV0840 = { refresh() {} };
     window.__h18LegoResizeV0841 = { refresh() {} };
 
-    // Reproduce WordPress' human-facing parent select synchronization.
-    // The newly-created child deliberately has no grid-1 option yet. In
-    // v0.8.52 native adoptUnder writes the hidden parent first and then
-    // .val('grid-1').change() on this select; jQuery resolves that to null,
-    // and this listener therefore clears the canonical hidden ParentKey.
     $(document).on('change', '.h18-layout-parent-select', function () {
       const $row = $(this).closest('.h18-page-section-row');
       if (!$row.length) return;
@@ -91,30 +87,29 @@ for (const childType of ['image', 'text']) {
     await page.waitForTimeout(850);
 
     const state = await page.evaluate(() => {
-      const row = document.getElementById('row-new-child');
-      const hiddenParent = row.querySelector('.h18-layout-parent-key')?.value || '';
-      const stackField = row.querySelector('.h18-lego-stack-state-v0851-json');
+      const currentRow = document.getElementById('row-new-child');
+      const hiddenParent = currentRow.querySelector('.h18-layout-parent-key')?.value || '';
+      const stackField = currentRow.querySelector('.h18-lego-stack-state-v0851-json');
       let stack = {};
       try { stack = JSON.parse(stackField?.value || '{}'); } catch (_) {}
       return {
         hiddenParent,
-        selectParent: row.querySelector('.h18-layout-parent-select')?.value || '',
+        selectParent: currentRow.querySelector('.h18-layout-parent-select')?.value || '',
         stackRootKey: String(stack.StackRootKey || ''),
         stackOrder: Number(stack.StackOrder || 0),
-        parentAttr: row.getAttribute('data-h18-nested-in-box') || ''
+        parentAttr: currentRow.getAttribute('data-h18-nested-in-box') || ''
       };
     });
 
     expect(state.hiddenParent).toBe('grid-1');
     expect(state.parentAttr).toBe('grid-1');
-    // The select may still lack the option; the hidden canonical value must win.
     expect(state.selectParent).toBe('');
     expect(state.stackRootKey).toBe('image-1');
     expect(state.stackOrder).toBeGreaterThan(0);
   });
 }
 
-test('clicking a nested element applies a complete direct red selection outline without legacy class injection', async ({ page }) => {
+test('clicking a nested element applies an inset red selection frame that survives clipping/repaint', async ({ page }) => {
   await boot(page, 'text');
 
   const preview = page.locator('#proxy-image-1 > .h18-v0811-child-preview');
@@ -127,20 +122,18 @@ test('clicking a nested element applies a complete direct red selection outline 
     const rect = node.getBoundingClientRect();
     return {
       outlineStyle: style.outlineStyle,
-      outlineWidth: style.outlineWidth,
-      outlineColor: style.outlineColor,
+      boxShadow: style.boxShadow,
       width: rect.width,
       height: rect.height
     };
   });
 
-  expect(geometry.outlineStyle).toBe('solid');
-  expect(geometry.outlineWidth).toBe('2px');
+  expect(geometry.outlineStyle).toBe('none');
+  expect(geometry.boxShadow).toContain('inset');
+  expect(geometry.boxShadow).toContain('rgb(214, 54, 56)');
   expect(geometry.width).toBeGreaterThan(100);
   expect(geometry.height).toBeGreaterThan(50);
 
-  // A late unrelated canvas mutation must not make the selected key fall back
-  // to another Inspector/Grid key or remove the visible outline.
   await page.evaluate(() => {
     const marker = document.createElement('i');
     marker.className = 'late-layout-mutation';
@@ -148,4 +141,101 @@ test('clicking a nested element applies a complete direct red selection outline 
   });
   await page.waitForTimeout(300);
   await expect(preview).toHaveClass(/h18-v0853-selection-target/);
+});
+
+test('live palette Under keeps intent beyond the old 280ms window and hides legacy Auto-kasse placeholder', async ({ page }) => {
+  await page.setContent(`<!doctype html><html><head><style>
+    body{margin:0}
+    .h18-builder-canvas{width:800px;min-height:400px}
+    .h18-page-section-row{display:block}
+    .h18-canvas-preview{min-height:40px}
+    #under-zone{width:300px;height:30px}
+    #legacy-prompt{min-height:48px;border:1px dashed #999;padding:12px}
+  </style></head><body>
+    <form id="h18-page-editor-form"><input name="page_slug" value="test-side"></form>
+    <div class="h18-builder-canvas" data-canvas-device="desktop">
+      <div id="h18-page-sections-sortable">
+        ${row(1, 'grid-1', 'grid')}
+        ${row(2, 'image-1', 'image', 'grid-1', true)}
+      </div>
+      <div id="under-zone" class="h18-v0838-drop-zone" data-h18-v0838-position="under" data-h18-v0838-target="image-1"></div>
+      <div id="legacy-prompt" class="h18-ud-auto-box-empty-drop">Træk en Kasse ind i Auto-kasser.</div>
+    </div>
+    <aside id="h18-page-inspector"><div id="h18-page-inspector-target"></div></aside>
+  </body></html>`);
+
+  await page.addStyleTag({ path: fixesCss });
+  await page.addStyleTag({ path: hotfixCss });
+  await page.addScriptTag({ path: jqueryRuntime });
+
+  await page.evaluate(() => {
+    const $ = window.jQuery;
+    window.H18LegoFixesV0851 = { pages: {} };
+    window.__h18NestingToolsV0840 = { refresh() {} };
+    window.__h18LegoResizeV0841 = { refresh() {} };
+    window.__h18LegoSideBySideV0840 = { activeSource() { return { Mode: 'palette-image' }; } };
+
+    $(document).on('change', '.h18-layout-parent-select', function () {
+      const $row = $(this).closest('.h18-page-section-row');
+      if (!$row.length) return;
+      $row.find('.h18-layout-parent-key').first().val(String($(this).val() || '')).trigger('change');
+    });
+
+    const sections = document.getElementById('h18-page-sections-sortable');
+    sections.addEventListener('drop', () => {
+      if (window.__latePaletteScheduled) return;
+      window.__latePaletteScheduled = true;
+      setTimeout(() => {
+        sections.insertAdjacentHTML('beforeend', `<section id="row-new-child" class="h18-page-section-row" data-section-type="image" data-section-index="3" data-key="new-child">
+          <div class="h18-canvas-preview">new-child</div>
+          <div class="h18-page-section-body">
+            <input class="h18-page-section-key" value="new-child">
+            <input class="h18-page-section-type" value="image">
+            <input class="h18-layout-parent-key" value="">
+            <select class="h18-layout-parent-select"><option value="">Topniveau</option></select>
+            <input class="h18-page-section-order" value="30">
+          </div>
+        </section>`);
+      }, 650);
+    });
+  });
+
+  await page.addScriptTag({ path: paletteBridgeRuntime });
+  await page.addScriptTag({ path: fixesRuntime });
+  await page.addScriptTag({ path: hotfixRuntime });
+
+  await expect(page.locator('html')).toHaveAttribute('data-h18-lego-palette-nested-drop-stability', '0.8.54');
+
+  await page.locator('#under-zone').evaluate((node) => {
+    node.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true, composed: true }));
+  });
+
+  await page.waitForTimeout(1800);
+
+  const state = await page.evaluate(() => {
+    const currentRow = document.getElementById('row-new-child');
+    const stackField = currentRow?.querySelector('.h18-lego-stack-state-v0851-json');
+    let stack = {};
+    try { stack = JSON.parse(stackField?.value || '{}'); } catch (_) {}
+    const promptStyle = getComputedStyle(document.getElementById('legacy-prompt'));
+    return {
+      hiddenParent: currentRow?.querySelector('.h18-layout-parent-key')?.value || '',
+      parentAttr: currentRow?.getAttribute('data-h18-nested-in-box') || '',
+      stackRootKey: String(stack.StackRootKey || ''),
+      stackOrder: Number(stack.StackOrder || 0),
+      promptWidth: promptStyle.width,
+      promptHeight: promptStyle.height,
+      promptFontSize: promptStyle.fontSize,
+      promptBorderWidth: promptStyle.borderTopWidth
+    };
+  });
+
+  expect(state.hiddenParent).toBe('grid-1');
+  expect(state.parentAttr).toBe('grid-1');
+  expect(state.stackRootKey).toBe('image-1');
+  expect(state.stackOrder).toBeGreaterThan(0);
+  expect(state.promptWidth).toBe('0px');
+  expect(state.promptHeight).toBe('0px');
+  expect(state.promptFontSize).toBe('0px');
+  expect(state.promptBorderWidth).toBe('0px');
 });
