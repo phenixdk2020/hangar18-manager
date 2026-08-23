@@ -68,8 +68,8 @@
         if (!value) { return ''; }
         activeCanvasKey = value;
         activeSelectionMode = mode === 'nested' ? 'nested' : 'top';
-        document.documentElement.setAttribute('data-h18-v0874-selection-mode', activeSelectionMode);
-        document.documentElement.setAttribute('data-h18-v0874-selection-key', value);
+        document.documentElement.setAttribute('data-h18-v0875-selection-mode', activeSelectionMode);
+        document.documentElement.setAttribute('data-h18-v0875-selection-key', value);
         return value;
     }
 
@@ -131,13 +131,20 @@
 
         const row = node.closest('.h18-page-section-row');
         if (!row) { return false; }
-        const key = rowKey(row) || selectedRowKey();
-        if (key) { rememberSelection(key, 'top'); }
+        const beforeKey = rowKey(row);
         const edit = row.querySelector('.h18-page-section-edit');
         const header = row.querySelector('.h18-page-section-header');
         if (edit) { edit.click(); }
         else if (header) { header.click(); }
         else { return false; }
+
+        /* For a top-level click the canonical selection/Inspector handoff is the
+         * authority. Read the key AFTER that synchronous handoff. This prevents
+         * a previously active nested child from staying red when another
+         * top-level element has actually become WordPress' selected row. */
+        const afterKey = selectedRowKey() || beforeKey;
+        if (afterKey) { rememberSelection(afterKey, 'top'); }
+        refreshSelectedCanvasMarker();
         armCompositionReconcile();
         window.setTimeout(refreshSelectedCanvasMarker, 0);
         return true;
@@ -282,7 +289,7 @@
             refreshSelectedCanvasMarker();
         });
         selectionObserver.observe(document.body, { childList: true, subtree: true });
-        document.documentElement.setAttribute('data-h18-v0874-selection-observer', 'active');
+        document.documentElement.setAttribute('data-h18-v0875-selection-observer', 'active');
         return true;
     }
 
@@ -294,14 +301,11 @@
         refreshSelectedCanvasMarker();
     }
 
-    /* Register the public owner BEFORE touching document.body. Earlier versions
-     * could throw while observing a not-yet-created body, leaving click handlers
-     * installed but no runtime API/observer to restore selection after render. */
     document.documentElement.setAttribute('data-h18-lego-inspector-only', '0.8.47');
-    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.74');
+    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.75');
     window.__h18LegoInspectorOnlyV0847 = {
-        version: '0.8.74',
-        selectionOwner: 'stable-v0848-key-safe-init',
+        version: '0.8.75',
+        selectionOwner: 'stable-v0848-key-top-after-handoff',
         selectInspectorForNode: selectInspectorForNode,
         armCompositionReconcile: armCompositionReconcile,
         clarifyInspectorControls: clarifyInspectorControls,
