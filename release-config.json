@@ -1,12 +1,12 @@
 {
-  "version": "0.8.55",
-  "title": "LEGO-editor — fjern legacy Kasse-felt og verificér lodret Under",
+  "version": "0.8.56",
+  "title": "LEGO-editor — robust nested Under og fjern legacy Kasse-felt",
   "changelog": [
-    "Legacy Auto-kasse-dropfeltet fjernes nu fra editorens DOM i stedet for kun at blive skjult; det eksisterende Auto-kasse Grid forbliver den aktive dropflade.",
-    "Nested Under/Over accepteres ikke længere som gennemført alene fordi den ældre adoptUnder-funktion returnerer true; den nye guard verificerer både LayoutParentKey og StackRootKey efter hver adoption.",
-    "Hvis WordPress-rækken eller dens parent/stack-state endnu ikke er klar, returnerer adoption false, så den eksisterende bounded retry/MutationObserver fortsætter i stedet for at stoppe for tidligt.",
-    "Fejlbilledet med tre 4/12 sibling-kolonner efter et Under-drop er dermed målrettet ved selve succes-kriteriet, så det nye element først regnes som placeret når den lodrette stack faktisk eksisterer.",
+    "Nested Under/Over afsluttes nu først, når den nye række faktisk har korrekt LayoutParentKey og, i Grid, samme StackRootKey som målrækken.",
+    "Drop-broen fortsætter bounded retry/MutationObserver, hvis den ældre adoptUnder-funktion melder succes før WordPress har hydreret parent- og stack-state.",
+    "Legacy Auto-kasse/Indsæt Kasse-dropfladen fjernes nu fra DOM'en ved initial load og efter senere editor-renders, i stedet for kun at være skjult med en skrøbelig CSS-selector.",
+    "Rettelsen målretter regressionen hvor et Under-drop blev til tre 4/12 sibling-kolonner i stedet for en lodret stack.",
     "Ingen ændring af page schema, eksisterende Container/Flex/Grid-model, gemte designværdier eller public frontend-rendering.",
-    "v0.8.55 skal fortsat gennem manuel editor-test på testmiljøet; public cutover er ikke autoriseret."
+    "v0.8.56 er en testrelease til manuel editor-QA på testmiljøet; public cutover er ikke ændret."
   ]
 }
