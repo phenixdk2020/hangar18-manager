@@ -1,0 +1,8 @@
+/* LEGO-053: deterministic selection outline without DOM overlay/reconcile churn. */
+.h18-builder-canvas .h18-v0851-selection-overlay{display:none!important}
+.h18-builder-canvas .h18-v0853-selection-target{
+    outline:2px solid #d63638!important;
+    outline-offset:-2px!important;
+    position:relative!important;
+    z-index:85!important;
+}

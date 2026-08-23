@@ -48,6 +48,8 @@ final class EditorLegoDropZonesAdminController
         $kasseTerminologyJsPath = $pluginDir . '/assets/ultimate-designer-lego-kasse-terminology-v0850.js';
         $fixesJsPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.js';
         $fixesCssPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.css';
+        $stackSelectionHotfixJsPath = $pluginDir . '/assets/ultimate-designer-lego-stack-selection-v0853.js';
+        $stackSelectionHotfixCssPath = $pluginDir . '/assets/ultimate-designer-lego-stack-selection-v0853.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -131,6 +133,14 @@ final class EditorLegoDropZonesAdminController
             ]
         );
 
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-stack-selection-v0853',
+            $pluginUrl . 'assets/ultimate-designer-lego-stack-selection-v0853.js',
+            ['jquery', 'hangar18-ultimate-designer-lego-fixes-v0851', 'hangar18-ultimate-designer-lego-selection-inspector-v0849', 'hangar18-ultimate-designer-lego-parent-key-guard-v0845'],
+            is_file($stackSelectionHotfixJsPath) ? (string) filemtime($stackSelectionHotfixJsPath) : '0.8.53',
+            false
+        );
+
         wp_enqueue_style(
             'hangar18-ultimate-designer-lego-drop-zones-v0838',
             $pluginUrl . 'assets/ultimate-designer-lego-drop-zones-v0838.css',
@@ -164,6 +174,13 @@ final class EditorLegoDropZonesAdminController
             $pluginUrl . 'assets/ultimate-designer-lego-fixes-v0851.css',
             ['hangar18-ultimate-designer-lego-live-history-inspector-v0850', 'hangar18-ultimate-designer-lego-resize-v0841'],
             is_file($fixesCssPath) ? (string) filemtime($fixesCssPath) : '0.8.51'
+        );
+
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-lego-stack-selection-v0853',
+            $pluginUrl . 'assets/ultimate-designer-lego-stack-selection-v0853.css',
+            ['hangar18-ultimate-designer-lego-fixes-v0851'],
+            is_file($stackSelectionHotfixCssPath) ? (string) filemtime($stackSelectionHotfixCssPath) : '0.8.53'
         );
     }
 }
