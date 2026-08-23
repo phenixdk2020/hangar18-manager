@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.73
+Version: 0.8.74
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.74 – LEGO-editor — sikker selection-init og forbedret drag-diagnose ==
+
+Nyt:
+- Registrerer brugerens v0.8.73-diagnose: selection-runtime var tom, selv om en native række var valgt. Det viser, at selection-scriptet ikke nåede sin runtime-registrering.
+- Root-cause: inspector-only scriptet kunne forsøge MutationObserver.observe(document.body, ...) før document.body fandtes. Event handlers var allerede installeret, så rød child-markering kunne ses kort, hvorefter scriptet fejlede før API/observer blev registreret.
+- v0.8.74 registrerer selection-runtime API og version før body-afhængig initialisering. MutationObserver installeres først når document.body findes via DOMContentLoaded/sikker init.
+- Selection-diagnosen viser nu runtime-version og om observeren faktisk er active/inactive, så init-status kan verificeres direkte.
+- Kasse-placement semantics ændres ikke i v0.8.74. Diagnosepanelet er forbedret, fordi v0.8.73 bandt Sortable-events direkte før editor-DOM kunne eksistere og mutations kunne overskrive drag-hændelserne.
+- v0.8.74 bruger delegerede Sortable-events og gemmer en særskilt last-drag summary med peak overlays, Kasse-overlays, IND I KASSEN-zoner, synlige inside-zoner, aktive dropzoner og sidste inside-resultat.
+- Mutation-log er begrænset separat, så sortstart/sort/sortstop ikke længere forsvinder fra rapporten i en mutationsstorm.
+- Updateren og repaint-sporet ændres ikke. UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.74 er manuel test/diagnose-release til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.73 – LEGO-editor — read-only diagnose af selection og Kasse-drop ==
