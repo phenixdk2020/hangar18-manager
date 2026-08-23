@@ -1,14 +1,15 @@
 {
-  "version": "0.8.72",
-  "title": "LEGO-editor — bevar nested selection og prioriter IND I KASSEN",
+  "version": "0.8.73",
+  "title": "LEGO-editor — read-only diagnose af selection og Kasse-drop",
   "changelog": [
-    "Registrerer v0.8.71 som manuel FAIL: IND I KASSEN blev fortsat ikke synlig i brugerens drag-scenarie, og child-selection forsvandt stadig næsten øjeblikkeligt.",
-    "Selection-root-cause er identificeret i Inspector-handoff: et child-click gemte korrekt nested key og markerede child, hvorefter den syntetiske canonical .h18-page-section-edit event ændrede samme key til top-level. v0.8.72 bevarer nested-mode når handoff-key er identisk med den aktive child-key.",
-    "Den aktive child-key forbliver derfor autoritativ gennem Inspector-handoff og efterfølgende Kasse/Grid-renders; DOM-reconcile må genmarkere samme key men ikke nedgradere den til top-level.",
-    "Kasse-overlay og child-overlays kan eksistere samtidig. Kasse-overlay med data-h18-v0871-target-box=1 får nu højere z-index end child-overlays, så den centrale IND I KASSEN-zone ikke skjules visuelt af child Over/Under-zoner.",
-    "Drop-zone hit-test prioriterer eksplicit is-inside over overlappende Over/Under/Venstre/Højre-zoner. Hvis pointeren ligger i IND I KASSEN, er inside-semantikken derfor autoritativ.",
-    "v0.8.51 Over/Under stack-runtime og almindelig reorder ændres ikke. Updateren og repaint-sporet ændres ikke.",
+    "Registrerer v0.8.72 som manuel FAIL: child-selection forsvinder fortsat, og IND I KASSEN bliver fortsat ikke synlig i brugerens live drag-scenarie.",
+    "v0.8.73 ændrer ikke placement-, ParentKey-, selection- eller stack-semantik. Den er en ren diagnoseversion for at stoppe blind iteration.",
+    "Tilføjer et read-only LEGO-diagnosepanel i editoren med aktiv selection-key/mode, antal matchende og markerede nested DOM-noder, native selected-row key og beregnet outline.",
+    "Panelet viser samtidig drag source key/type/mode, samlet antal overlays, antal Kasse-overlays, antal IND I KASSEN-zoner, synlige inside-zoner, aktiv dropzone og sidste inside-resultat.",
+    "Diagnosen fører en kort tidslinje ved klik, pointerdown, Sortable start/move/stop og relevante DOM-mutationer, så splitsekunds-selection kan ses som state-overgang i stedet for kun visuelt.",
+    "Kopiér diagnose-knappen kopierer hele den aktuelle state og hændelsestidslinje uden behov for browserens udviklerværktøjer.",
+    "Asset cache-busting er verificeret som filemtime-baseret; denne diagnose skal derfor kunne skelne live runtime-state fra kodeantagelser.",
     "UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.",
-    "v0.8.72 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "v0.8.73 er diagnostic-only på test2; public cutover er fortsat ikke autoriseret."
   ]
 }
