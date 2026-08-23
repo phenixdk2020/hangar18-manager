@@ -19,22 +19,22 @@ jQuery(function ($) {
         if (!$field.length && $row.hasClass('is-selected')) { $field = $('#h18-page-inspector-target .h18-layout-parent-key').first(); }
         return String($field.val() || '');
     }
-    function rowLabel($row) {
-        let $field = $row.find('.h18-section-navigator-label').first();
-        if (!$field.length && $row.hasClass('is-selected')) { $field = $('#h18-page-inspector-target .h18-section-navigator-label').first(); }
-        return String($field.val() || '').trim();
-    }
     function rowByKey(key) {
         const requested = String(key || '');
         return activeRows().filter(function () { return rowKey($(this)) === requested; }).first();
     }
     function isAuto($row) {
         if (!$row || !$row.length || rowType($row) !== 'grid') { return false; }
-        return rowLabel($row) === 'Auto-kasser';
+        let $label = $row.find('.h18-section-navigator-label').first();
+        if (!$label.length && $row.hasClass('is-selected')) { $label = $('#h18-page-inspector-target .h18-section-navigator-label').first(); }
+        return String($label.val() || '').trim() === 'Auto-kasser';
     }
     function isBox($row) {
-        if (!$row || !$row.length || rowType($row) !== 'container') { return false; }
-        return String($row.attr('data-h18-box') || '') === '1' || rowLabel($row).indexOf('Kasse') === 0;
+        if (!$row || !$row.length) { return false; }
+        if (rowType($row) === 'container') { return true; }
+        if (String($row.attr('data-h18-box') || '') === '1') { return true; }
+        const $preview = $row.children('.h18-canvas-preview').first();
+        return Boolean($preview.length && $preview.find('.h18-ud-box-contents-preview,.h18-v0811-box-contents').length);
     }
     function clearOverlays() {
         $('.' + OVERLAY_CLASS).remove();
@@ -69,7 +69,7 @@ jQuery(function ($) {
             attrs['aria-disabled'] = 'true';
         }
         if (position === 'inside') {
-            attrs['data-h18-v0870-inside-kasse'] = targetKey;
+            attrs['data-h18-v0871-inside-kasse'] = targetKey;
         }
         return $('<div>', attrs).append($('<span>', { class: 'h18-v0838-drop-zone-label', text: labelFor(position) }));
     }
@@ -79,10 +79,15 @@ jQuery(function ($) {
         if (!targetParentKey) { return true; }
         return isAuto(rowByKey(targetParentKey));
     }
+    function sourceCanEnterBox() {
+        const type = String(dragSourceType || '').trim();
+        return ['container', 'grid', 'flex'].indexOf(type) === -1;
+    }
     function addZones($overlay, key, $target, sideCompatible) {
         $overlay.append(zone('over', key, false), zone('under', key, false), zone('left', key, sideCompatible), zone('right', key, sideCompatible));
-        if (dragSourceType !== 'container' && dragSourceType !== 'grid' && dragSourceType !== 'flex' && isBox($target)) {
+        if (sourceCanEnterBox() && isBox($target)) {
             $overlay.append(zone('inside', key, false));
+            $overlay.attr('data-h18-v0871-has-inside', '1');
         }
     }
     function addRowOverlay($row) {
@@ -97,6 +102,7 @@ jQuery(function ($) {
             class: OVERLAY_CLASS,
             'data-h18-v0838-target': key,
             'data-h18-v0838-target-kind': rowType($row),
+            'data-h18-v0871-target-box': isBox($row) ? '1' : '0',
             'aria-hidden': 'true'
         });
         addZones($overlay, key, $row, sideCompatible);
@@ -116,6 +122,7 @@ jQuery(function ($) {
             const $overlay = $('<div>', {
                 class: OVERLAY_CLASS + ' h18-v0838-auto-proxy-overlay h18-v0851-nested-proxy-overlay',
                 'data-h18-v0838-target': key,
+                'data-h18-v0871-target-box': isBox($target) ? '1' : '0',
                 'aria-hidden': 'true'
             });
             addZones($overlay, key, $target, sideCompatible);
@@ -195,14 +202,14 @@ jQuery(function ($) {
     document.documentElement.setAttribute('data-h18-lego-drop-zones-runtime', '0.8.38');
     document.documentElement.setAttribute('data-h18-lego-side-by-side-runtime', '0.8.40');
     document.documentElement.setAttribute('data-h18-lego-nested-vertical-targets', '0.8.51');
-    document.documentElement.setAttribute('data-h18-lego-inside-kasse-zone', '0.8.70');
+    document.documentElement.setAttribute('data-h18-lego-inside-kasse-zone', '0.8.71');
     window.__h18LegoDropZonesV0838 = {
-        version: '0.8.38', capabilityVersion: '0.8.70', refresh: renderOverlays, clear: clearOverlays,
+        version: '0.8.38', capabilityVersion: '0.8.71', refresh: renderOverlays, clear: clearOverlays,
         activeSource: function () { return { Key: dragSourceKey, Type: dragSourceType, Mode: dragMode }; },
         hitZone: hitZone
     };
     window.__h18LegoSideBySideV0840 = {
-        version: '0.8.40', capabilityVersion: '0.8.70', refresh: renderOverlays, clear: clearOverlays,
+        version: '0.8.40', capabilityVersion: '0.8.71', refresh: renderOverlays, clear: clearOverlays,
         activeSource: function () { return { Key: dragSourceKey, Type: dragSourceType, Mode: dragMode }; }
     };
 });
