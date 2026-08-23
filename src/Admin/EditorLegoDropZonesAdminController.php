@@ -46,6 +46,7 @@ final class EditorLegoDropZonesAdminController
         $liveHistoryInspectorJsPath = $pluginDir . '/assets/ultimate-designer-lego-live-history-inspector-v0850.js';
         $liveHistoryInspectorCssPath = $pluginDir . '/assets/ultimate-designer-lego-live-history-inspector-v0850.css';
         $kasseTerminologyJsPath = $pluginDir . '/assets/ultimate-designer-lego-kasse-terminology-v0850.js';
+        $renderObserverScopePath = $pluginDir . '/assets/ultimate-designer-lego-render-observer-scope-v0861.js';
         $fixesJsPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.js';
         $fixesCssPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.css';
 
@@ -114,9 +115,17 @@ final class EditorLegoDropZonesAdminController
         );
 
         wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-render-observer-scope-v0861',
+            $pluginUrl . 'assets/ultimate-designer-lego-render-observer-scope-v0861.js',
+            ['hangar18-ultimate-designer-lego-kasse-terminology-v0850'],
+            is_file($renderObserverScopePath) ? (string) filemtime($renderObserverScopePath) : '0.8.61',
+            false
+        );
+
+        wp_enqueue_script(
             'hangar18-ultimate-designer-lego-fixes-v0851',
             $pluginUrl . 'assets/ultimate-designer-lego-fixes-v0851.js',
-            ['jquery', 'hangar18-ultimate-designer-lego-kasse-terminology-v0850', 'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843', 'hangar18-ultimate-designer-lego-live-history-inspector-v0850', 'hangar18-ultimate-designer-lego-resize-v0841'],
+            ['jquery', 'hangar18-ultimate-designer-lego-render-observer-scope-v0861', 'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843', 'hangar18-ultimate-designer-lego-live-history-inspector-v0850', 'hangar18-ultimate-designer-lego-resize-v0841'],
             is_file($fixesJsPath) ? (string) filemtime($fixesJsPath) : '0.8.51',
             false
         );
