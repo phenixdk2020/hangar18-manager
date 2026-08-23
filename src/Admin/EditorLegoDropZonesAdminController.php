@@ -49,6 +49,7 @@ final class EditorLegoDropZonesAdminController
         $renderObserverScopePath = $pluginDir . '/assets/ultimate-designer-lego-render-observer-scope-v0861.js';
         $fixesJsPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.js';
         $fixesCssPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.css';
+        $placementStabilityPath = $pluginDir . '/assets/ultimate-designer-lego-placement-stability-v0862.js';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -138,6 +139,20 @@ final class EditorLegoDropZonesAdminController
                 'schemaVersion' => 1,
                 'pages' => EditorLegoStackAdminController::store(),
             ]
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-placement-stability-v0862',
+            $pluginUrl . 'assets/ultimate-designer-lego-placement-stability-v0862.js',
+            [
+                'jquery',
+                'hangar18-ultimate-designer-lego-fixes-v0851',
+                'hangar18-ultimate-designer-lego-drop-zones-v0838',
+                'hangar18-ultimate-designer-lego-inspector-only-v0847',
+                'hangar18-ultimate-designer-lego-parent-key-guard-v0845',
+            ],
+            is_file($placementStabilityPath) ? (string) filemtime($placementStabilityPath) : '0.8.62',
+            false
         );
 
         wp_enqueue_style(
