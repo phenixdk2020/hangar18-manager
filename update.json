@@ -1,21 +1,22 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.53",
+  "version": "0.8.54",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T06:34:44Z",
+  "published_utc": "2026-08-23T07:20:56Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "bdb2fa443841b7d861e237975653305d0a65cb13e3801ed0fd091de46d20074c",
+  "package_sha256": "72f8eedc92d44f8ccd29d42d859391826d3ae07affb0d84d905bee83563d2d2c",
   "changelog": [
-    "2D Under/Over i Række- og kolonne-kasser verificerer nu, at stack-state faktisk er etableret efter placement; et nyt Tekst- eller Billede-element bliver derfor i samme kolonne som en lodret stack i stedet for at ende som en ekstra sibling-kolonne.",
-    "Hvis ParentKey-selecten under oprettelse midlertidigt nulstiller den nye childs LayoutParentKey, genetablerer LEGO-053 den kanoniske hidden parent og genforsøger stackUnder/stackOver bounded, indtil StackRootKey er korrekt.",
-    "Den røde selection-markering tegnes nu direkte på det valgte nested preview ud fra aktiv element-key med CSS outline i stedet for det tidligere DOM-overlay, så markeringen ikke forsvinder ved Grid/Auto-kasse repaint.",
-    "Selection-outline påvirker ikke layoutmål og ligger inden for elementets visuelle flade, så alle fire sider kan forblive synlige.",
-    "Det godkendte v0.8.52 Inspector-design for Luft, baggrund og placering er uændret.",
-    "Ingen ændring af page schema, LayoutParentKey-model, container/flex/grid, eksisterende 2D stack-persistens eller gemte frontend-værdier.",
-    "Der er tilføjet målrettede regressionstests, som reproducerer transient ParentKey-clear og kræver korrekt StackRootKey for både Image og Text samt direkte selection-outline uden manuel legacy selection-class.",
-    "Architecture QA, E14 browser-engine QA, Editor Runtime Fast QA, I9 Prep QA og LEGO Editor QA er grønne på den endelige LEGO-053-kandidat; LEGO-053-regressionerne består i system Chrome, Chromium, Firefox og WebKit.",
-    "Manuel v0.8.53-test på test2 er stadig nødvendig; public cutover er ikke autoriseret."
+    "Nested Over/Under fra elementbiblioteket fastholder nu drop-intentionen, indtil det nyoprettede WordPress-element faktisk eksisterer; den kendte v0.8.51 adoptUnder/StackRootKey-model forbliver placement-ejer.",
+    "Den tidligere korte adoption-window er erstattet af bounded MutationObserver og retries op til 3 sekunder, så et nyt Tekst- eller Billede-element kan blive stablet lodret i samme grid-kolonne også når editor/Inspector-handoff er forsinket.",
+    "Legacy Auto-kasse-feltet med teksten 'Træk en Kasse ind i Auto-kasser.' skjules nu permanent i normal editor, mens den nødvendige usynlige drop-hitbox bevares.",
+    "Den røde selection-markering bruger nu en indvendig frame, så højre kant ikke klippes på elementet længst til højre i Grid/Auto-kasser.",
+    "Det godkendte v0.8.52 Inspector-layout for Luft, baggrund og placering er uændret.",
+    "Updater-status afstemmes efter en vellykket Plugin_Upgrader-installation mod den faktisk installerede Version-header på disk, og WordPress' plugin-update-cache ryddes; siden skal derfor straks vise, at den installerede version er ajour uden et ekstra manuelt 'Tjek for opdateringer'.",
+    "Ingen ændring af page schema, container/flex/grid, eksisterende LayoutParentKey/StackRootKey-persistens eller gemte frontend-designværdier.",
+    "Målrettede regressionstests dækker forsinket palette-create på 650 ms, Image/Text nested stack, skjult legacy Auto-kasse-prompt, komplet inset selection-frame samt updater-state/cache-reconciliation.",
+    "Architecture QA, E14 browser-engine QA, Editor Runtime Fast QA, B1 Backup Restore QA, B2 Site Backup QA og LEGO Editor QA er grønne på den endelige LEGO-054-kandidat efter rerun af den kendte timingfølsomme legacy media-dobbeltklik-test.",
+    "Manuel v0.8.54-test på test2 er stadig nødvendig; public cutover er ikke autoriseret."
   ]
 }

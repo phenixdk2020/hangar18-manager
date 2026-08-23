@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.53
+Version: 0.8.54
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.54 – LEGO-editor — robust nested Under, komplet selection og ajour updater-status ==
+
+Nyt:
+- Nested Over/Under fra elementbiblioteket fastholder nu drop-intentionen, indtil det nyoprettede WordPress-element faktisk eksisterer; den kendte v0.8.51 adoptUnder/StackRootKey-model forbliver placement-ejer.
+- Den tidligere korte adoption-window er erstattet af bounded MutationObserver og retries op til 3 sekunder, så et nyt Tekst- eller Billede-element kan blive stablet lodret i samme grid-kolonne også når editor/Inspector-handoff er forsinket.
+- Legacy Auto-kasse-feltet med teksten 'Træk en Kasse ind i Auto-kasser.' skjules nu permanent i normal editor, mens den nødvendige usynlige drop-hitbox bevares.
+- Den røde selection-markering bruger nu en indvendig frame, så højre kant ikke klippes på elementet længst til højre i Grid/Auto-kasser.
+- Det godkendte v0.8.52 Inspector-layout for Luft, baggrund og placering er uændret.
+- Updater-status afstemmes efter en vellykket Plugin_Upgrader-installation mod den faktisk installerede Version-header på disk, og WordPress' plugin-update-cache ryddes; siden skal derfor straks vise, at den installerede version er ajour uden et ekstra manuelt 'Tjek for opdateringer'.
+- Ingen ændring af page schema, container/flex/grid, eksisterende LayoutParentKey/StackRootKey-persistens eller gemte frontend-designværdier.
+- Målrettede regressionstests dækker forsinket palette-create på 650 ms, Image/Text nested stack, skjult legacy Auto-kasse-prompt, komplet inset selection-frame samt updater-state/cache-reconciliation.
+- Architecture QA, E14 browser-engine QA, Editor Runtime Fast QA, B1 Backup Restore QA, B2 Site Backup QA og LEGO Editor QA er grønne på den endelige LEGO-054-kandidat efter rerun af den kendte timingfølsomme legacy media-dobbeltklik-test.
+- Manuel v0.8.54-test på test2 er stadig nødvendig; public cutover er ikke autoriseret.
 
 
 == Version 0.8.53 – LEGO-editor — deterministisk 2D Under og synlig selection-markering ==
