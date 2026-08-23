@@ -67,8 +67,8 @@
         if (!value) { return ''; }
         activeCanvasKey = value;
         activeSelectionMode = mode === 'nested' ? 'nested' : 'top';
-        document.documentElement.setAttribute('data-h18-v0871-selection-mode', activeSelectionMode);
-        document.documentElement.setAttribute('data-h18-v0871-selection-key', value);
+        document.documentElement.setAttribute('data-h18-v0872-selection-mode', activeSelectionMode);
+        document.documentElement.setAttribute('data-h18-v0872-selection-key', value);
         return value;
     }
 
@@ -259,7 +259,15 @@
         } else {
             const row = trigger.closest('.h18-page-section-row');
             const key = rowKey(row) || selectedRowKey();
-            if (key) { rememberSelection(key, 'top'); }
+            /* Nested selection opens the same canonical row in Inspector. That
+             * programmatic handoff must not downgrade the active child to a
+             * top-level selection for the identical key. */
+            const sameNestedHandoff = Boolean(
+                key &&
+                activeSelectionMode === 'nested' &&
+                activeCanvasKey === key
+            );
+            if (key && !sameNestedHandoff) { rememberSelection(key, 'top'); }
         }
 
         armCompositionReconcile();
@@ -285,10 +293,10 @@
     }, 0);
 
     document.documentElement.setAttribute('data-h18-lego-inspector-only', '0.8.47');
-    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.71');
+    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.72');
     window.__h18LegoInspectorOnlyV0847 = {
-        version: '0.8.71',
-        selectionOwner: 'stable-v0848-key',
+        version: '0.8.72',
+        selectionOwner: 'stable-v0848-key-preserve-nested-handoff',
         selectInspectorForNode: selectInspectorForNode,
         armCompositionReconcile: armCompositionReconcile,
         clarifyInspectorControls: clarifyInspectorControls,
