@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.77
+Version: 0.8.78
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.78 – Sideversioner — Erstat original eller Restore som kopi ==
+
+Nyt:
+- PAGE-VERSION-RESTORE-001 får første komplette restore-flow direkte på Hangar18 Manager → Sider uden at introducere en parallel versionsdatabase eller restore-motor.
+- Versionshistorikken i hangar18_manager_page_versions_v1 vises med version, tidspunkt, bruger, ændringsnote, aktive sektioner og restore-kilde.
+- For hver version skal restore-mode vælges eksplicit: Erstat original eller Restore som kopi. Der er ingen skjult destruktiv standard.
+- Erstat original genbruger eksisterende B1 ManagedPageBackupRestoreService og preflight. B1 opretter automatisk en sikkerhedsbackup af den aktuelle original før første write og bevarer original side-ID/slug/URL.
+- For en historisk vN bruges den fulde backup registreret ved den næste save som canonical restore-kilde, fordi den er taget umiddelbart før vN+1-save og derfor indeholder både WordPress-siden og den centrale Page Editor-state for vN.
+- Hvis der ikke findes en komplet full-backup med Page Editor-state, låses Erstat original i UI i stedet for at udføre en tvetydig restore.
+- Restore som kopi genbruger B1 createCopy og opretter en ny draft med collision-safe slug. Originalsiden, dens URL og menu ændres ikke.
+- Restore-handlers stoler ikke på et postet backup-filnavn; canonical backup-kilde opløses igen server-side fra versionshistorikken før mutation.
+- v0.8.77 updater state-consistency beholdes. TRACE-076 og de frosne LEGO-fejl ændres ikke. Vehicle/Event/Gallery og public cutover påvirkes ikke.
 
 
 == Version 0.8.77 – Updater — atomisk versionsstatus og korrekt JA/NEJ efter update ==

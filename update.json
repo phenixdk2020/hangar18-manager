@@ -1,20 +1,21 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.77",
+  "version": "0.8.78",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T20:47:32Z",
+  "published_utc": "2026-08-23T20:51:41Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "9df4c82bb2932d40c4025b22522bdc458d7568fa65161538469131495139fc1f",
+  "package_sha256": "1b87f85e2493db007428853347f9b2028d4f16cbb1eb85d03cd071c8d06f17f7",
   "changelog": [
-    "UPDATER-VERSION-002 og UPDATER-STATUS-001 samles i ét isoleret state-consistency fix uden ændringer i LEGO-editoren.",
-    "Når Opdateringer åbnes, hentes update.json frisk og der skrives ét atomisk state-snapshot med current_version, manifest.version, update_available, kompatibilitet og checked_at_utc.",
-    "Opdatering tilgængelig beregnes altid fra præcis den installerede version og den manifestversion, der samtidig vises som Seneste GitHub-version.",
-    "Efter en vellykket pluginopdatering vil første load af Opdateringer derfor genlæse den aktive Hangar18_Manager::VERSION og give NEJ når installeret version er lig eller nyere end manifestversionen.",
-    "Ved midlertidig GitHub-fejl beholdes senest kendte manifest i UI, men JA/NEJ genberegnes mod den aktuelt aktive pluginversion, så et stale JA ikke genopstår.",
-    "Det eksisterende legacy updater-flow ejer fortsat installation, safety backup, package SHA-verifikation, code backup og automatisk rollback; det nye lag ændrer kun read-only state før render.",
-    "TRACE-076 ændres ikke. LEGO-SELECTION-075, LEGO-INSIDE-075 og LEGO-REPAINT-062 forbliver frosset til trace-baseret reproduktion.",
-    "Vehicle/Event/Gallery, page schema, backup/restore-data og public cutover ændres ikke."
+    "PAGE-VERSION-RESTORE-001 får første komplette restore-flow direkte på Hangar18 Manager → Sider uden at introducere en parallel versionsdatabase eller restore-motor.",
+    "Versionshistorikken i hangar18_manager_page_versions_v1 vises med version, tidspunkt, bruger, ændringsnote, aktive sektioner og restore-kilde.",
+    "For hver version skal restore-mode vælges eksplicit: Erstat original eller Restore som kopi. Der er ingen skjult destruktiv standard.",
+    "Erstat original genbruger eksisterende B1 ManagedPageBackupRestoreService og preflight. B1 opretter automatisk en sikkerhedsbackup af den aktuelle original før første write og bevarer original side-ID/slug/URL.",
+    "For en historisk vN bruges den fulde backup registreret ved den næste save som canonical restore-kilde, fordi den er taget umiddelbart før vN+1-save og derfor indeholder både WordPress-siden og den centrale Page Editor-state for vN.",
+    "Hvis der ikke findes en komplet full-backup med Page Editor-state, låses Erstat original i UI i stedet for at udføre en tvetydig restore.",
+    "Restore som kopi genbruger B1 createCopy og opretter en ny draft med collision-safe slug. Originalsiden, dens URL og menu ændres ikke.",
+    "Restore-handlers stoler ikke på et postet backup-filnavn; canonical backup-kilde opløses igen server-side fra versionshistorikken før mutation.",
+    "v0.8.77 updater state-consistency beholdes. TRACE-076 og de frosne LEGO-fejl ændres ikke. Vehicle/Event/Gallery og public cutover påvirkes ikke."
   ]
 }
