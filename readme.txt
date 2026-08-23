@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.75
+Version: 0.8.76
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.76 – Ultimate Designer — opt-in persistent trace/debug ==
+
+Nyt:
+- Tilføjer et separat trace/debug-lag til Ultimate Designer for at gøre fremtidig fejlfinding reproducerbar i stedet for at basere sig på enkeltstående snapshots.
+- Udvidet fejllogning er FRA som standard. På Opdateringer findes nu en master TIL/FRA-indstilling; trace-scriptet indlæses kun i Designeren, når master er slået til.
+- Når master er TIL, starter tung event-log ikke automatisk. Designerens tracebjælke har Start test, Stop/Fortsæt log, Markér, Kopiér, TXT, JSON og Nulstil.
+- Trace registrerer klik/dobbeltklik, pointer/fokus, input/change, tastatur, drag/drop, jQuery Sortable events, relevante DOM-mutations-sammendrag, selection/drop runtime-state, key/type/parent, Inspector/fokus og centrale runtime API-kald.
+- JavaScript-fejl, unhandled promise rejections samt console.warn/error registreres som tvungne fejl-events, mens trace-værktøjet er indlæst, også når den tunge event-log er stoppet.
+- Password/token/nonce/credential-lignende felter maskeres. Trace-data gemmes browser-lokalt i localStorage og overlever refresh; den sender ikke logdata til serveren.
+- Opdateringer-siden viser masterstatus samt browserens gemte trace-session/eventantal og kan eksportere eller nulstille den gemte JSON-log.
+- Det tidligere dynamiske diagnostic-loader-trick fra v0.8.73 fjernes. Trace-assets enqueue'es direkte af WordPress med filemtime cache-busting, så logger-versionen er entydig.
+- LEGO-SELECTION-075 og LEGO-INSIDE-075 fryses som åbne fejl til en senere trace-baseret reproduktion. v0.8.76 ændrer ikke deres placement/selection semantics.
+- Updater-fejlene UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver næste aktive backlogspor. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
 
 
 == Version 0.8.75 – LEGO-editor — korrekt top-level selection og IND I layoutkasser ==
