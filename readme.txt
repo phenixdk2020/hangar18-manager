@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.51
+Version: 0.8.52
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.52 – LEGO-editor — stabil selection og rettet Inspector-layout ==
+
+Nyt:
+- Nested elementvalg stabiliseres, så klik på tekst, billede og andre børn ikke længere kan starte en vedvarende layout/reconcile-opdatering.
+- MutationObserver i LEGO-layoutlaget skelner nu mellem reel ændring af section-rækker og den normale flytning af valgt editor-indhold til Inspector; Inspector-handoff udløser ikke længere en fuld derived-layout render.
+- Den røde selection-markering får dermed lov til at falde til ro og forblive synlig på det valgte element efter Inspector-selection.
+- Inspector-sektionen Luft, baggrund og placering bruger nu én selvstændig full-width Desktop/Mobil-shell i stedet for at blive klemt ind i legacy-gridens smalle kolonner.
+- Desktop/Mobil-faner og deres eksisterende controls bevares, men fieldsets og bredder isoleres fra den gamle Inspector-gridstruktur, så labels og inputfelter igen er læsbare.
+- Ingen ændring af page schema, LayoutParentKey, container/flex/grid, 2D stack-persistens eller gemte frontend-værdier.
+- Der er tilføjet målrettede browser-regressionstests for både stabil nested selection/rød markering og full-width Inspector-layout.
+- Architecture QA og Editor Runtime Fast QA er grønne på den endelige LEGO-052-kandidat. LEGO Editor QA er grøn efter isoleret rerun af den kendte timingfølsomme legacy media-dobbeltklik-test; de nye LEGO-052-tests består i system Chrome, Chromium, Firefox og WebKit.
+- Manuel v0.8.52-test på test2 er stadig nødvendig; public cutover er ikke autoriseret.
 
 
 == Version 0.8.51 – LEGO-editor — 2D Kasse-layout og v0.8.50 testrettelser ==
