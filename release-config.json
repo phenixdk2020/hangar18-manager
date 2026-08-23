@@ -1,12 +1,13 @@
 {
-  "version": "0.8.63",
-  "title": "LEGO-editor — persistent rød selection",
+  "version": "0.8.64",
+  "title": "LEGO-editor — placement rollback og stabil top-level selection",
   "changelog": [
-    "Selection følger nu den kanoniske element-key i stedet for en bestemt visuel wrapper.",
-    "Normale Grid-tiles, child-cards og v0.8.51 stack-segmenter får samme selection-markering, så den røde ramme bevares gennem stack-render.",
-    "Den kanoniske række får en persistent selection-fallback, også når WordPress midlertidigt flytter .is-selected til Inspector-handoff.",
-    "Klik på et stack-segment vælger nu segmentets egen element-key direkte.",
-    "Ingen ændring af drag/drop, bredde/højde-resize, page schema, stack-persistence, Vehicle/Event/Gallery eller updater-backup/rollback.",
-    "v0.8.63 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "Deaktiverer v0.8.62's ekstra placement-koordinator, så eksisterende element-drag igen ejes af den kendte v0.8.58/v0.8.51 nesting- og drop-zone-runtime.",
+    "Retter top-level selection-handoff: elementets canonical key kopieres til rækkens data-key på pointerdown før WordPress flytter nøglefeltet ind i Inspector.",
+    "Den eksisterende v0.8.63 selection-ejer kan dermed genfinde Tekst/Billede-rækken efter Inspector-handoff og bevare den røde ramme.",
+    "Ingen nye MutationObservers, refresh-timers eller layout-renders tilføjes af v0.8.64.",
+    "Repaint-forbedringer fra v0.8.61/v0.8.62 bevares; updateren ændres ikke og UPDATER-STATUS-001 samt UPDATER-VERSION-002 forbliver åbne backlogpunkter.",
+    "Vehicle/Event/Gallery, page schema, stack-persistence, backup, SHA-verifikation og rollback er uændrede.",
+    "v0.8.64 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
   ]
 }
