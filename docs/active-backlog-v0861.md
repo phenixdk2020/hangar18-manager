@@ -1,10 +1,10 @@
-# Hangar18 Manager — aktiv backlog v0.8.61
+# Hangar18 Manager — historisk backlog-snapshot v0.8.61
 
 **Statusdato:** 23. august 2026  
-**Aktuel pluginbaseline:** **v0.8.61**  
+**Pluginbaseline i dette snapshot:** **v0.8.61**  
 **Testtarget:** `https://test2.hangar18.dk`
 
-Denne fil er den aktuelle canonical aktive backlog. `active-backlog-v0840.md`, `active-backlog-v0841.md` og `active-backlog-v0842.md` er historiske snapshots.
+Denne fil er et historisk snapshot. Den aktuelle canonical backlog ligger i `docs/active-backlog-v0862.md`.
 
 ## Status lige nu
 
@@ -16,7 +16,7 @@ Denne fil er den aktuelle canonical aktive backlog. `active-backlog-v0840.md`, `
 | Vehicle/Event/Gallery | 🔒 BESKYT | Må ikke ændres af editor/updater-fixes. |
 | Public cutover | 🔒 LÅST | Ingen public mutation/cutover før manuel QA er stabil. |
 
-## Aktive backlogpunkter
+## Aktive backlogpunkter i dette snapshot
 
 | ID | Prioritet | Status | Problem | Definition of done |
 |---|---|---|---|---|
