@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.56
+Version: 0.8.57
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.57 – LEGO-editor — stop fryse-loop og skjul legacy Kasse-felt under drag ==
+
+Nyt:
+- MutationObserver-feedback-loopet fra v0.8.55/v0.8.56 er fjernet: legacy Auto-kasse-feltet bliver ikke længere slettet fra DOM'en og kan derfor ikke blive genskabt/slettet i en uendelig render-loop.
+- Legacy-teksten 'Træk en Kasse ind i Auto-kasser.' skjules nu med en entydig display:none-regel også mens et element trækkes hen over editoren; Auto-kasse Grid'et forbliver den egentlige dropflade.
+- Nested Under/Over er gjort idempotent: observeren reagerer kun på direkte indsættelse af en ny section-row og ikke på skjulte stack-felter eller canvas-repaint.
+- Hvis parent allerede er korrekt men stack-state mangler, udføres kun en målrettet stackUnder/stackOver-reparation i stedet for at køre hele adoptUnder-transaktionen igen.
+- Parent-selecten får Grid-parenten som gyldig option før adoption, så LayoutParentKey ikke nulstilles under WordPress/Inspector-handoff.
+- Rettelsen målretter både browser-frys/spinner ved Under-drop og fejlen hvor et nyt element ender som en ekstra sibling-kolonne i stedet for lodret under det valgte element.
+- Ingen ændring af page schema, eksisterende Container/Flex/Grid-model, gemte designværdier eller public frontend-rendering.
+- v0.8.57 er en testrelease til manuel editor-QA på testmiljøet; public cutover er ikke ændret.
 
 
 == Version 0.8.56 – LEGO-editor — robust nested Under og fjern legacy Kasse-felt ==
