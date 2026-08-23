@@ -14,24 +14,24 @@
     "mobileViewport": "PENDING"
   },
   "scenarios": {
-    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drag/drop skal fortsat fungere med Kasse, Række-/kolonne-kasse, Række- og kolonne-kasse og Auto-kasser uden synlig legacy Auto-kasse prompt."},
-    "B": {"status": "PENDING", "evidence": [], "note": "Kasse/nesting: eksisterende container/flex/grid og LayoutParentKey-data skal bevares; LEGO-053 må kun stabilisere stack-etablering efter nested Over/Under."},
-    "C": {"status": "PENDING", "evidence": [], "note": "2D nested stack retest: opret fx Overskrift/Billede side-by-side og drop derefter nyt Billede eller Tekst Under det første barn. Resultatet skal være samme grid-kolonne med lodret stack, ikke en ekstra sibling-kolonne. Test både Image og Text."},
-    "D": {"status": "PENDING", "evidence": [], "note": "Resize: eksisterende lodret kolonne-resize og vandret 2D højderesize skal fortsat fungere efter stack-hotfixen."},
-    "E": {"status": "PENDING", "evidence": [], "note": "Responsive Desktop/Mobil-værdier og arv skal være uændrede; LEGO-053 må ikke mutere gemte frontend-layoutværdier."},
-    "F": {"status": "PENDING", "evidence": [], "note": "Selection retest: klik på hvert nested Tekst/Billede-element. En komplet rød markering skal vises på alle fire sider straks og overleve repaint/Inspector-handoff uden layout-loop."},
-    "G": {"status": "PENDING", "evidence": [], "note": "Inspector/workspace: det i v0.8.52 godkendte full-width Desktop/Mobil-layout for Luft, baggrund og placering skal være uændret og fortsat læsbart."},
-    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo: nested drop/stack og øvrige elementændringer skal fortsat give korrekte historiktrin; selection alene må ikke oprette et ekstra historiktrin."},
-    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence: 2D StackRootKey/højdefordeling og eksisterende side-/Kasse-/layoutdata skal overleve gem/genindlæs uden schemaregression."},
-    "J": {"status": "PENDING", "evidence": [], "note": "Ugemt forhåndsvisning Desktop/Tablet/Mobil skal ligne frontend og ikke vise editor-selection eller andet editor-chrome."},
-    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore sanity og eksisterende page backup/restore flows skal være uændret af LEGO-053."},
-    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery og allerede designede sider skal være visuelt og funktionelt uændrede; public cutover må ikke aktiveres af denne release."}
+    "A": {"status": "FAIL", "evidence": ["manual-2026-08-23-screenshot"], "note": "FAIL: legacy prompt 'Træk en Kasse ind i Auto-kasser.' is still visible below the grid in the real editor. It must not be visible in normal editing."},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse/nesting: existing container/flex/grid and LayoutParentKey data must remain intact."},
+    "C": {"status": "FAIL", "evidence": ["manual-2026-08-23-screenshot", "manual-v0851-known-good-observation"], "note": "FAIL: real palette Under still produces three 4/12 sibling columns instead of stacking the new Image/Text below the intended child. User reports the same interaction worked in v0.8.51, so v0.8.54 should restore that known-good drop/stack path rather than add a new placement model."},
+    "D": {"status": "PENDING", "evidence": [], "note": "Resize: existing horizontal column resize and vertical 2D height resize must continue to work."},
+    "E": {"status": "PENDING", "evidence": [], "note": "Responsive Desktop/Mobile values and inheritance must remain unchanged."},
+    "F": {"status": "FAIL", "evidence": ["manual-2026-08-23-screenshot"], "note": "PARTIAL/FAIL: red selection marking now appears and selection no longer loops, but the right red edge is clipped/missing on the rightmost element. A complete four-sided frame is required."},
+    "G": {"status": "PENDING", "evidence": [], "note": "Inspector/workspace: the v0.8.52 full-width Desktop/Mobile layout remains the approved design and must not regress."},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo: nested drop/stack and other element changes must continue to produce correct history checkpoints."},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence: StackRootKey/height distribution and existing page/layout data must survive reload."},
+    "J": {"status": "PENDING", "evidence": [], "note": "Unsaved preview Desktop/Tablet/Mobile must match frontend and contain no editor chrome."},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore sanity must remain unchanged."},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery and already-designed pages must remain unchanged; public cutover is not authorized."}
   },
   "criticalFlags": {
     "consoleError": false,
     "dataLossOrDuplicate": false,
     "protectedDomainRegression": false
   },
-  "overallStatus": "PENDING",
-  "notes": "v0.8.53 official test package was built after Architecture QA, E14 browser-engine QA, Editor Runtime Fast QA, I9 Prep QA and LEGO Editor QA passed on the LEGO-053 candidate. The new LEGO-053 regressions for transient ParentKey clear, Image/Text vertical stack and direct selection outline pass in system Chrome, Chromium, Firefox and WebKit. All manual A-L scenarios start PENDING; no v0.8.52 PASS/FAIL is automatically carried forward. Public cutover remains unauthorized."
+  "overallStatus": "FAIL",
+  "notes": "Manual v0.8.53 staging retest confirms three open regressions: visible legacy Auto-kasse placeholder, real palette Under not establishing the intended vertical stack, and right-edge clipping of the red selection frame. Selection/reconcile looping appears resolved. User additionally identified v0.8.51 as known-good for the nested Under behavior; v0.8.54 is therefore based on restoring the durable v0.8.51 drop intention path while preserving the approved v0.8.52 Inspector design. Public cutover remains unauthorized."
 }
