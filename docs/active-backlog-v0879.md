@@ -1,7 +1,9 @@
 # Hangar18 Manager — canonical backlog delta v0.8.79
 
 **Statusdato:** 23. august 2026  
-**Baseline:** v0.8.79 release-kandidat  
+**Baseline:** v0.8.79 frigivet testkandidat  
+**Release commit:** `739400af13441122341cc81ca91114e4d47bc354`  
+**Package SHA-256:** `8435f911c483699738b06eee7221b5628aec7df57cd7f022b8b3ab8d12228243`  
 **Extends:** `docs/active-backlog-v0878.md`
 
 Denne fil er den aktuelle canonical backlog. Den arver hele master-roadmapet fra v0.8.78 og overskriver kun punkter, som er ændret i v0.8.79-batchen. `tools/backlog-governance.py` merger hele kæden til `docs/backlog-index.json` ved release.
