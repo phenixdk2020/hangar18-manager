@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.66
+Version: 0.8.67
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.67 – LEGO-editor — stabil child-selection og pointerstyret IND I KASSEN ==
+
+Nyt:
+- Registrerer v0.8.66 som manuel FAIL: top-level Kasse/element fik rød markering, men child-elementer i Kassen gjorde ikke, og element til Kasse endte fortsat som Sortable-reorder.
+- Child-selection markeres nu allerede på pointerdown ud fra child-card/stack/Auto-box canonical key og gendannes efter renderBox/strukturmutationer med en childList-only observer.
+- Child-elementer får en særskilt inset rød markering, så Kasse-clipping ikke kan skjule selection-rammen.
+- IND I KASSEN bruger nu den faktiske mus/pointer-position under eksisterende element-drag i stedet for kun jQuery Sortables eventkoordinater.
+- Når pointeren er over midten af et gyldigt Kasse-indhold, markeres Kassen tydeligt som IND I-mål; eksplicitte Venstre/Højre/Over/Under-zoner langs kanterne har fortsat prioritet.
+- Ved sortstop er den pointervalgte Kasse autoritativ: LayoutParentKey sættes, elementets canonical row placeres blandt Kassens children, gammel stack-state ryddes ved behov, rækkefølge synkroniseres og nesting refreshes én gang.
+- Der gemmes et runtime-resultat i data-h18-v0867-last-inside-result for efterfølgende QA uden console-spam.
+- Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.67 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.66 – LEGO-editor — canonical selection og Kasse hit-surface ==

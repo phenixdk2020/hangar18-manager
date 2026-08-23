@@ -1,20 +1,21 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.66",
+  "version": "0.8.67",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T14:10:34Z",
+  "published_utc": "2026-08-23T14:22:52Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "751bb886c25223d476dbc480834ad2a55a52720a4ae9f9f9e492b4e9e3160d91",
+  "package_sha256": "ca8605691c4238fc0f1deddefca57d49bc89262de3d7d5a68b1a7c020ed2d3b0",
   "changelog": [
-    "Retter v0.8.65-selection: den dedikerede data-h18-v0865-selected-markør var korrekt i DOM, men blev visuelt neutraliseret af en senere !important-regel med højere CSS-specificitet.",
-    "Den dedikerede canonical selection-markør har nu højere specificitet end kompatibilitetsreglerne, så præcis én aktiv node igen får synlig rød ramme.",
-    "Fjerner v0.8.65's ekstra Sortable/inside-drop-handler; eksisterende element-placement ejes igen kun af den kanoniske nesting-tools-runtime.",
-    "Nesting-tools har allerede korrekt moveRowIntoBox ved sortstop. Dens eksisterende .h18-ud-box-drop-zone udvides nu geometrisk til hele Kasse-indholdsområdet mens et almindeligt eksisterende element trækkes.",
-    "Dermed kan baseline boxAtPoint registrere IND I KASSEN over hele indholdet og sætte LayoutParentKey via den eksisterende moveRowIntoBox-funktion i stedet for at ende i rå reorder.",
-    "Ingen ændring af Venstre/Højre/Over/Under, page schema, stack-persistence, Vehicle/Event/Gallery eller updater-backup/rollback.",
-    "UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne separate backlogpunkter.",
-    "v0.8.66 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "Registrerer v0.8.66 som manuel FAIL: top-level Kasse/element fik rød markering, men child-elementer i Kassen gjorde ikke, og element til Kasse endte fortsat som Sortable-reorder.",
+    "Child-selection markeres nu allerede på pointerdown ud fra child-card/stack/Auto-box canonical key og gendannes efter renderBox/strukturmutationer med en childList-only observer.",
+    "Child-elementer får en særskilt inset rød markering, så Kasse-clipping ikke kan skjule selection-rammen.",
+    "IND I KASSEN bruger nu den faktiske mus/pointer-position under eksisterende element-drag i stedet for kun jQuery Sortables eventkoordinater.",
+    "Når pointeren er over midten af et gyldigt Kasse-indhold, markeres Kassen tydeligt som IND I-mål; eksplicitte Venstre/Højre/Over/Under-zoner langs kanterne har fortsat prioritet.",
+    "Ved sortstop er den pointervalgte Kasse autoritativ: LayoutParentKey sættes, elementets canonical row placeres blandt Kassens children, gammel stack-state ryddes ved behov, rækkefølge synkroniseres og nesting refreshes én gang.",
+    "Der gemmes et runtime-resultat i data-h18-v0867-last-inside-result for efterfølgende QA uden console-spam.",
+    "Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.",
+    "v0.8.67 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
   ]
 }
