@@ -46,6 +46,13 @@
 
     const SELECTED_CANVAS_CLASS = 'is-h18-v0848-selected-element';
     let resizePointerActive = false;
+    let selectedCanvasKey = '';
+
+    function rememberSelectedCanvasKey(key) {
+        const value = String(key || '').trim();
+        if (value) { selectedCanvasKey = value; }
+        return selectedCanvasKey;
+    }
 
     function armCompositionReconcile() {
         window.setTimeout(function () {
@@ -56,13 +63,25 @@
         }, 0);
     }
 
-    function selectedRowKey() {
-        const row = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
+    function keyFromRow(row) {
         if (!row) { return ''; }
         const direct = row.querySelector('.h18-page-section-key');
-        if (direct && direct.value) { return String(direct.value); }
+        return String((direct && direct.value) || row.getAttribute('data-key') || '').trim();
+    }
+
+    function selectedRowKey() {
+        // The clicked key is authoritative during the short Inspector handoff.
+        // This prevents a transient missing/stale .is-selected row from clearing
+        // the canvas marker while WordPress moves the settings body to Inspector.
+        if (selectedCanvasKey) { return selectedCanvasKey; }
+
+        const row = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
+        const rowKey = keyFromRow(row);
+        if (rowKey) { return rememberSelectedCanvasKey(rowKey); }
+
         const inspector = document.querySelector('#h18-page-inspector-target .h18-page-section-key');
-        return inspector && inspector.value ? String(inspector.value) : '';
+        const inspectorKey = inspector && inspector.value ? String(inspector.value).trim() : '';
+        return inspectorKey ? rememberSelectedCanvasKey(inspectorKey) : '';
     }
 
     function canonicalRowByKey(key) {
@@ -71,9 +90,7 @@
         const rows = document.querySelectorAll('#h18-page-sections-sortable > .h18-page-section-row:not(.h18-page-section-removed)');
         for (let i = 0; i < rows.length; i += 1) {
             const row = rows[i];
-            const direct = row.querySelector('.h18-page-section-key');
-            const rowKey = direct && direct.value ? String(direct.value) : String(row.getAttribute('data-key') || '');
-            if (rowKey === requested) { return row; }
+            if (keyFromRow(row) === requested) { return row; }
         }
         return null;
     }
@@ -85,11 +102,6 @@
         const target = edit || header;
         if (!target) { return false; }
 
-        // Nested canvas cards are presentation proxies. Resolve their immutable
-        // key to the authoritative row and trigger the established WordPress /
-        // jQuery Inspector path there instead of relying on HTMLElement.click()
-        // on a cloned proxy. The latter is timing-sensitive in Firefox/WebKit
-        // when invoked synchronously from a synthetic dblclick event.
         if (window.jQuery) { window.jQuery(target).trigger('click'); }
         else if (typeof target.click === 'function') { target.click(); }
         else { return false; }
@@ -97,21 +109,18 @@
     }
 
     function refreshSelectedCanvasMarker() {
-        document.querySelectorAll('.' + SELECTED_CANVAS_CLASS).forEach(function (node) {
-            node.classList.remove(SELECTED_CANVAS_CLASS);
-        });
         const key = selectedRowKey();
         if (!key) { return; }
 
-        // The selected row's structural body lives in Inspector. Mirror only its
-        // immutable key as DOM metadata so older direct-layout runtimes that use
-        // data-key as fallback (notably v0.8.41 resize) can still resolve it.
         const selectedRow = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
         if (selectedRow) { selectedRow.setAttribute('data-key', key); }
 
+        // Idempotent marker update: do not remove the class from every element
+        // and then add it again. Keeping an unchanged selected node untouched
+        // removes the visible flash that old v0.8.48/v0.8.49 caused.
         document.querySelectorAll('.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]').forEach(function (node) {
             const nodeKey = String(node.getAttribute('data-h18-v0811-row') || node.getAttribute('data-h18-v0811-child') || '');
-            if (nodeKey === key) { node.classList.add(SELECTED_CANVAS_CLASS); }
+            node.classList.toggle(SELECTED_CANVAS_CLASS, nodeKey === key);
         });
     }
 
@@ -120,7 +129,9 @@
 
         const nested = node.closest('.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]');
         if (nested) {
-            const nestedKey = String(nested.getAttribute('data-h18-v0811-row') || nested.getAttribute('data-h18-v0811-child') || '');
+            const nestedKey = String(nested.getAttribute('data-h18-v0811-row') || nested.getAttribute('data-h18-v0811-child') || '').trim();
+            rememberSelectedCanvasKey(nestedKey);
+            refreshSelectedCanvasMarker();
             const canonicalRow = canonicalRowByKey(nestedKey);
             if (canonicalRow && activateCanonicalRow(canonicalRow)) {
                 armCompositionReconcile();
@@ -128,8 +139,6 @@
                 return true;
             }
 
-            // Compatibility fallback for old nested proxies without a resolvable
-            // key. It still delegates to the pre-existing Rediger contract.
             const edit = nested.querySelector('.h18-v0811-edit-child');
             if (edit) {
                 if (window.jQuery) { window.jQuery(edit).trigger('click'); }
@@ -141,7 +150,9 @@
         }
 
         const row = node.closest('.h18-page-section-row');
-        if (!row || !activateCanonicalRow(row)) { return false; }
+        if (!row) { return false; }
+        rememberSelectedCanvasKey(keyFromRow(row));
+        if (!activateCanonicalRow(row)) { return false; }
         armCompositionReconcile();
         window.setTimeout(refreshSelectedCanvasMarker, 0);
         return true;
@@ -235,9 +246,6 @@
         suppressDirectSetting(event, '.h18-canvas-focal-dot');
     }, true);
 
-    // Prepare Inspector-hosted structural identity before the legacy resize
-    // handler resolves left/right rows. After pointerup, re-arm visual composition
-    // because the canonical span input event can repaint the parent Grid.
     document.addEventListener('pointerdown', function (event) {
         const target = event.target && event.target.closest ? event.target.closest('.h18-v0841-resize-handle,.h18-v0841-resize-rail') : null;
         if (!target) { return; }
@@ -260,6 +268,8 @@
     document.addEventListener('click', function (event) {
         const trigger = event.target && event.target.closest ? event.target.closest(INSPECTOR_SELECTION_SELECTOR) : null;
         if (!trigger) { return; }
+        const triggerKey = keyFromRow(trigger.closest('.h18-page-section-row'));
+        if (triggerKey) { rememberSelectedCanvasKey(triggerKey); }
         armCompositionReconcile();
         window.setTimeout(function () {
             clarifyInspectorControls();
@@ -280,12 +290,13 @@
     }, 0);
 
     document.documentElement.setAttribute('data-h18-lego-inspector-only', '0.8.47');
-    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.48');
+    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.61');
     window.__h18LegoInspectorOnlyV0847 = {
-        version: '0.8.48',
+        version: '0.8.61',
         selectInspectorForNode: selectInspectorForNode,
         armCompositionReconcile: armCompositionReconcile,
         clarifyInspectorControls: clarifyInspectorControls,
+        rememberSelectedCanvasKey: rememberSelectedCanvasKey,
         refreshSelectedCanvasMarker: refreshSelectedCanvasMarker
     };
 }(jQuery));
