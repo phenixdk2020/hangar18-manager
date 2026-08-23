@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.52
+Version: 0.8.53
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.53 – LEGO-editor — deterministisk 2D Under og synlig selection-markering ==
+
+Nyt:
+- 2D Under/Over i Række- og kolonne-kasser verificerer nu, at stack-state faktisk er etableret efter placement; et nyt Tekst- eller Billede-element bliver derfor i samme kolonne som en lodret stack i stedet for at ende som en ekstra sibling-kolonne.
+- Hvis ParentKey-selecten under oprettelse midlertidigt nulstiller den nye childs LayoutParentKey, genetablerer LEGO-053 den kanoniske hidden parent og genforsøger stackUnder/stackOver bounded, indtil StackRootKey er korrekt.
+- Den røde selection-markering tegnes nu direkte på det valgte nested preview ud fra aktiv element-key med CSS outline i stedet for det tidligere DOM-overlay, så markeringen ikke forsvinder ved Grid/Auto-kasse repaint.
+- Selection-outline påvirker ikke layoutmål og ligger inden for elementets visuelle flade, så alle fire sider kan forblive synlige.
+- Det godkendte v0.8.52 Inspector-design for Luft, baggrund og placering er uændret.
+- Ingen ændring af page schema, LayoutParentKey-model, container/flex/grid, eksisterende 2D stack-persistens eller gemte frontend-værdier.
+- Der er tilføjet målrettede regressionstests, som reproducerer transient ParentKey-clear og kræver korrekt StackRootKey for både Image og Text samt direkte selection-outline uden manuel legacy selection-class.
+- Architecture QA, E14 browser-engine QA, Editor Runtime Fast QA, I9 Prep QA og LEGO Editor QA er grønne på den endelige LEGO-053-kandidat; LEGO-053-regressionerne består i system Chrome, Chromium, Firefox og WebKit.
+- Manuel v0.8.53-test på test2 er stadig nødvendig; public cutover er ikke autoriseret.
 
 
 == Version 0.8.52 – LEGO-editor — stabil selection og rettet Inspector-layout ==
