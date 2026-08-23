@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.70
+Version: 0.8.71
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.71 – LEGO-editor — strukturel IND I KASSEN og stabil child-selection ==
+
+Nyt:
+- Registrerer v0.8.70 som manuel FAIL: IND I KASSEN blev ikke vist, og child-selection viste kun rød kant et splitsekund.
+- Årsagen til den manglende inside-zone er afgrænset til Kasse-genkendelsen i overlay-laget. En Kasse identificeres nu strukturelt som container/data-h18-box/Kasse-preview og ikke via den flytbare Inspector-label alene.
+- Et almindeligt element-drag over en strukturel Kasse får derfor den eksplicitte femte LEGO-zone IND I KASSEN; overlayet annoteres med data-h18-v0871-target-box og data-h18-v0871-has-inside til manuel QA.
+- Inside-placement bruger den samme strukturelle Kasse-genkendelse og accepterer kun den synlige data-h18-v0871-inside-kasse-zone som parenting-trigger.
+- Selection bygger videre på den ægte v0.8.48 child-click-path, men den aktive key gemmes nu ved selve brugerklikket. Efterfølgende Kasse/Grid DOM-renders må kun genanvende den key og må ikke udlede eller skifte selection fra transient .is-selected state.
+- MutationObserver re-markering er idempotent via classList.toggle og fjerner ikke først alle selection-klasser. Dermed skal child-rammen ikke længere forsvinde mellem repaint-cyklusser.
+- Mens et nested child er aktivt skjules en eventuel stale rød native ramme på parent-rækken, så kun det valgte child vises rødt. Ved top-level valg fjernes nested-mode igen.
+- v0.8.49 forbliver uden selection-ejerskab; v0.8.50 funktioner og v0.8.51 Over/Under stack-runtime er uændrede.
+- Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.71 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.70 – LEGO-editor — eksplicit IND I KASSEN og ægte v0.8.48 selection ==
