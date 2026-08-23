@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.71
+Version: 0.8.72
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.72 – LEGO-editor — bevar nested selection og prioriter IND I KASSEN ==
+
+Nyt:
+- Registrerer v0.8.71 som manuel FAIL: IND I KASSEN blev fortsat ikke synlig i brugerens drag-scenarie, og child-selection forsvandt stadig næsten øjeblikkeligt.
+- Selection-root-cause er identificeret i Inspector-handoff: et child-click gemte korrekt nested key og markerede child, hvorefter den syntetiske canonical .h18-page-section-edit event ændrede samme key til top-level. v0.8.72 bevarer nested-mode når handoff-key er identisk med den aktive child-key.
+- Den aktive child-key forbliver derfor autoritativ gennem Inspector-handoff og efterfølgende Kasse/Grid-renders; DOM-reconcile må genmarkere samme key men ikke nedgradere den til top-level.
+- Kasse-overlay og child-overlays kan eksistere samtidig. Kasse-overlay med data-h18-v0871-target-box=1 får nu højere z-index end child-overlays, så den centrale IND I KASSEN-zone ikke skjules visuelt af child Over/Under-zoner.
+- Drop-zone hit-test prioriterer eksplicit is-inside over overlappende Over/Under/Venstre/Højre-zoner. Hvis pointeren ligger i IND I KASSEN, er inside-semantikken derfor autoritativ.
+- v0.8.51 Over/Under stack-runtime og almindelig reorder ændres ikke. Updateren og repaint-sporet ændres ikke.
+- UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.72 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.71 – LEGO-editor — strukturel IND I KASSEN og stabil child-selection ==

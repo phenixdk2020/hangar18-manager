@@ -1,22 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.71",
+  "version": "0.8.72",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T17:28:18Z",
+  "published_utc": "2026-08-23T17:45:32Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "7eaed0a152c1d6672b9067c85b1e4e5cd5dc598a68a2984833a2781c63582e9e",
+  "package_sha256": "37fd014a92bf3333f0d200f8d2b5621e3ccefbfd86b190b9e26f9ba9803aac68",
   "changelog": [
-    "Registrerer v0.8.70 som manuel FAIL: IND I KASSEN blev ikke vist, og child-selection viste kun rød kant et splitsekund.",
-    "Årsagen til den manglende inside-zone er afgrænset til Kasse-genkendelsen i overlay-laget. En Kasse identificeres nu strukturelt som container/data-h18-box/Kasse-preview og ikke via den flytbare Inspector-label alene.",
-    "Et almindeligt element-drag over en strukturel Kasse får derfor den eksplicitte femte LEGO-zone IND I KASSEN; overlayet annoteres med data-h18-v0871-target-box og data-h18-v0871-has-inside til manuel QA.",
-    "Inside-placement bruger den samme strukturelle Kasse-genkendelse og accepterer kun den synlige data-h18-v0871-inside-kasse-zone som parenting-trigger.",
-    "Selection bygger videre på den ægte v0.8.48 child-click-path, men den aktive key gemmes nu ved selve brugerklikket. Efterfølgende Kasse/Grid DOM-renders må kun genanvende den key og må ikke udlede eller skifte selection fra transient .is-selected state.",
-    "MutationObserver re-markering er idempotent via classList.toggle og fjerner ikke først alle selection-klasser. Dermed skal child-rammen ikke længere forsvinde mellem repaint-cyklusser.",
-    "Mens et nested child er aktivt skjules en eventuel stale rød native ramme på parent-rækken, så kun det valgte child vises rødt. Ved top-level valg fjernes nested-mode igen.",
-    "v0.8.49 forbliver uden selection-ejerskab; v0.8.50 funktioner og v0.8.51 Over/Under stack-runtime er uændrede.",
-    "Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.",
-    "v0.8.71 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "Registrerer v0.8.71 som manuel FAIL: IND I KASSEN blev fortsat ikke synlig i brugerens drag-scenarie, og child-selection forsvandt stadig næsten øjeblikkeligt.",
+    "Selection-root-cause er identificeret i Inspector-handoff: et child-click gemte korrekt nested key og markerede child, hvorefter den syntetiske canonical .h18-page-section-edit event ændrede samme key til top-level. v0.8.72 bevarer nested-mode når handoff-key er identisk med den aktive child-key.",
+    "Den aktive child-key forbliver derfor autoritativ gennem Inspector-handoff og efterfølgende Kasse/Grid-renders; DOM-reconcile må genmarkere samme key men ikke nedgradere den til top-level.",
+    "Kasse-overlay og child-overlays kan eksistere samtidig. Kasse-overlay med data-h18-v0871-target-box=1 får nu højere z-index end child-overlays, så den centrale IND I KASSEN-zone ikke skjules visuelt af child Over/Under-zoner.",
+    "Drop-zone hit-test prioriterer eksplicit is-inside over overlappende Over/Under/Venstre/Højre-zoner. Hvis pointeren ligger i IND I KASSEN, er inside-semantikken derfor autoritativ.",
+    "v0.8.51 Over/Under stack-runtime og almindelig reorder ændres ikke. Updateren og repaint-sporet ændres ikke.",
+    "UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.",
+    "v0.8.72 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
   ]
 }
