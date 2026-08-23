@@ -48,6 +48,7 @@
 
     const SELECTED_CANVAS_CLASS = 'is-h18-v0848-selected-element';
     const SELECTED_ROW_CLASS = 'is-h18-v0863-selected-row';
+    const SELECTED_VISUAL_ATTR = 'data-h18-v0865-selected';
     let resizePointerActive = false;
     let selectedCanvasKey = '';
 
@@ -83,8 +84,6 @@
     }
 
     function selectedRowKey() {
-        // The clicked key is authoritative during the Inspector handoff and
-        // remains authoritative while Grid/stack renderers replace visual DOM.
         if (selectedCanvasKey) { return selectedCanvasKey; }
 
         const row = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
@@ -120,24 +119,63 @@
         return true;
     }
 
+    function visibleNode(node) {
+        return !!(node && node.getClientRects && node.getClientRects().length);
+    }
+
+    function clearDedicatedVisualMarker() {
+        document.querySelectorAll('[' + SELECTED_VISUAL_ATTR + '="1"]').forEach(function (node) {
+            node.removeAttribute(SELECTED_VISUAL_ATTR);
+        });
+    }
+
+    function markDedicatedVisualByKey(key) {
+        clearDedicatedVisualMarker();
+        if (!key) { return null; }
+
+        const selectorGroups = [
+            '.h18-v0851-stack-segment[data-h18-v0851-stack-key]',
+            '.h18-v0811-child-card[data-h18-v0811-child]',
+            '.h18-v0811-auto-box[data-h18-v0811-row]'
+        ];
+
+        for (let groupIndex = 0; groupIndex < selectorGroups.length; groupIndex += 1) {
+            const nodes = document.querySelectorAll(selectorGroups[groupIndex]);
+            for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex += 1) {
+                const node = nodes[nodeIndex];
+                if (visualKey(node) === key && visibleNode(node)) {
+                    node.setAttribute(SELECTED_VISUAL_ATTR, '1');
+                    return node;
+                }
+            }
+        }
+
+        const row = canonicalRowByKey(key);
+        if (row && row.getAttribute('data-h18-v0811-child-source') !== '1') {
+            const preview = row.querySelector(':scope > .h18-canvas-preview');
+            if (visibleNode(preview)) {
+                preview.setAttribute(SELECTED_VISUAL_ATTR, '1');
+                return preview;
+            }
+        }
+        return null;
+    }
+
     function refreshSelectedCanvasMarker() {
         const key = selectedRowKey();
-        if (!key) { return; }
+        if (!key) {
+            clearDedicatedVisualMarker();
+            return;
+        }
 
         document.documentElement.setAttribute('data-h18-selected-element-key', key);
 
-        // Keep a persistent marker on the canonical row as a fallback even when
-        // WordPress temporarily removes .is-selected while moving its body into
-        // Inspector. This does not change layout or persistence.
         document.querySelectorAll('#h18-page-sections-sortable > .h18-page-section-row:not(.h18-page-section-removed)').forEach(function (row) {
             const rowMatches = keyFromRow(row) === key;
             row.classList.toggle(SELECTED_ROW_CLASS, rowMatches);
             if (rowMatches) { row.setAttribute('data-key', key); }
         });
 
-        // LEGO-063: selection follows the canonical element key, not a specific
-        // wrapper instance. Stack rendering can replace an Auto-box child with a
-        // stack-segment; both forms therefore receive the same persistent class.
         document.querySelectorAll([
             '.h18-v0811-auto-box[data-h18-v0811-row]',
             '.h18-v0811-child-card[data-h18-v0811-child]',
@@ -145,6 +183,8 @@
         ].join(',')).forEach(function (node) {
             node.classList.toggle(SELECTED_CANVAS_CLASS, visualKey(node) === key);
         });
+
+        markDedicatedVisualByKey(key);
     }
 
     function selectInspectorForNode(node) {
@@ -178,7 +218,12 @@
 
         const row = node.closest('.h18-page-section-row');
         if (!row) { return false; }
-        rememberSelectedCanvasKey(keyFromRow(row));
+        const rowKey = keyFromRow(row);
+        if (rowKey) {
+            row.setAttribute('data-key', rowKey);
+            rememberSelectedCanvasKey(rowKey);
+            refreshSelectedCanvasMarker();
+        }
         if (!activateCanonicalRow(row)) { return false; }
         armCompositionReconcile();
         window.setTimeout(refreshSelectedCanvasMarker, 0);
@@ -318,9 +363,9 @@
     }, 0);
 
     document.documentElement.setAttribute('data-h18-lego-inspector-only', '0.8.47');
-    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.63');
+    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.65');
     window.__h18LegoInspectorOnlyV0847 = {
-        version: '0.8.63',
+        version: '0.8.65',
         selectInspectorForNode: selectInspectorForNode,
         armCompositionReconcile: armCompositionReconcile,
         clarifyInspectorControls: clarifyInspectorControls,
