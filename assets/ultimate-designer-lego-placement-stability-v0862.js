@@ -6,10 +6,7 @@ jQuery(function ($) {
     if (!$sections.length) { return; }
 
     const MAX_NESTING_DEPTH = 2;
-    const CHILD_SELECTED_ATTR = 'data-h18-v0867-child-selected';
     let insideDrag = null;
-    let visualSelectionKey = '';
-    let selectionFrame = 0;
 
     function activeRows() {
         return $sections.children('.h18-page-section-row:not(.h18-page-section-removed)');
@@ -113,11 +110,9 @@ jQuery(function ($) {
 
         $hidden.val(boxKey).trigger('change');
         ensureParentOption(childKey, boxKey);
-        if ($select.length) {
-            $select.val(boxKey).trigger('change');
-        }
-
+        if ($select.length) { $select.val(boxKey).trigger('change'); }
         if (String($hidden.val() || '') !== boxKey) { return false; }
+
         $row.attr('data-h18-nested-in-box', boxKey).attr('data-h18-v0811-child-source', '1');
         return true;
     }
@@ -153,20 +148,20 @@ jQuery(function ($) {
     }
 
     function boxAtClientPoint(clientX, clientY, sourceKey) {
+        const $source = rowByKey(sourceKey);
         let best = null;
         let bestArea = Number.POSITIVE_INFINITY;
 
         activeRows().each(function () {
             const $box = $(this);
             const key = rowKey($box);
-            if (!key || key === sourceKey || !isBox($box)) { return; }
-            const $source = rowByKey(sourceKey);
-            if (!canMovePlainElementIntoBox($source, $box)) { return; }
+            if (!key || key === sourceKey || !canMovePlainElementIntoBox($source, $box)) { return; }
 
             const surface = boxSurfaceForRow($box);
             if (!surface || !surface.getClientRects || !surface.getClientRects().length) { return; }
             const rect = surface.getBoundingClientRect();
             if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) { return; }
+
             const area = Math.max(1, rect.width * rect.height);
             if (area < bestArea) {
                 best = { key: key, surface: surface };
@@ -178,15 +173,13 @@ jQuery(function ($) {
     }
 
     function clearInsideTarget() {
-        document.querySelectorAll('.h18-v0867-inside-target').forEach(function (node) {
-            node.classList.remove('h18-v0867-inside-target');
+        document.querySelectorAll('.h18-v0868-inside-target').forEach(function (node) {
+            node.classList.remove('h18-v0868-inside-target');
         });
     }
 
     function updateInsideTarget(clientX, clientY) {
         if (!insideDrag) { return; }
-        insideDrag.clientX = clientX;
-        insideDrag.clientY = clientY;
 
         if (explicitLegoZoneAtPoint(clientX, clientY)) {
             insideDrag.boxKey = '';
@@ -197,14 +190,14 @@ jQuery(function ($) {
         const hit = boxAtClientPoint(clientX, clientY, insideDrag.sourceKey);
         insideDrag.boxKey = hit ? hit.key : '';
         clearInsideTarget();
-        if (hit && hit.surface) { hit.surface.classList.add('h18-v0867-inside-target'); }
+        if (hit && hit.surface) { hit.surface.classList.add('h18-v0868-inside-target'); }
     }
 
     function movePlainElementIntoBox(sourceKey, boxKey) {
         const $source = rowByKey(sourceKey);
         const $box = rowByKey(boxKey);
         if (!canMovePlainElementIntoBox($source, $box)) {
-            document.documentElement.setAttribute('data-h18-v0867-last-inside-result', 'invalid-target');
+            document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'invalid-target');
             return false;
         }
 
@@ -218,113 +211,26 @@ jQuery(function ($) {
         $source.insertAfter($anchor);
 
         if (!setParent($source, boxKey)) {
-            document.documentElement.setAttribute('data-h18-v0867-last-inside-result', 'parent-write-failed');
+            document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'parent-write-failed');
             return false;
         }
 
         syncFlatOrder();
-        document.documentElement.setAttribute('data-h18-v0867-last-inside-result', 'ok');
-        document.documentElement.setAttribute('data-h18-v0867-last-inside-source', sourceKey);
-        document.documentElement.setAttribute('data-h18-v0867-last-inside-box', boxKey);
+        document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'ok');
+        document.documentElement.setAttribute('data-h18-v0868-last-inside-source', sourceKey);
+        document.documentElement.setAttribute('data-h18-v0868-last-inside-box', boxKey);
 
         const nesting = window.__h18NestingToolsV0840;
         if (nesting && typeof nesting.refresh === 'function') { nesting.refresh(); }
 
         const selection = window.__h18LegoInspectorOnlyV0847;
-        if (selection) {
-            if (typeof selection.rememberSelectedCanvasKey === 'function') {
-                selection.rememberSelectedCanvasKey(sourceKey);
-            }
-            if (typeof selection.refreshSelectedCanvasMarker === 'function') {
-                window.requestAnimationFrame(function () { selection.refreshSelectedCanvasMarker(); });
-            }
+        if (selection && typeof selection.refreshSelectedCanvasMarker === 'function') {
+            window.setTimeout(selection.refreshSelectedCanvasMarker, 0);
         }
         return true;
     }
 
-    function visualKey(node) {
-        if (!node || !node.getAttribute) { return ''; }
-        const nested = String(
-            node.getAttribute('data-h18-v0851-stack-key') ||
-            node.getAttribute('data-h18-v0811-child') ||
-            node.getAttribute('data-h18-v0811-row') ||
-            ''
-        ).trim();
-        if (nested) { return nested; }
-        const row = node.closest ? node.closest('.h18-page-section-row') : null;
-        return row ? rowKey($(row)) : '';
-    }
-
-    function clearChildSelection() {
-        document.querySelectorAll('[' + CHILD_SELECTED_ATTR + '="1"]').forEach(function (node) {
-            node.removeAttribute(CHILD_SELECTED_ATTR);
-        });
-    }
-
-    function reapplyChildSelection() {
-        selectionFrame = 0;
-        clearChildSelection();
-        const key = String(visualSelectionKey || document.documentElement.getAttribute('data-h18-selected-element-key') || '').trim();
-        if (!key) { return; }
-
-        const selectors = [
-            '.h18-v0811-child-card[data-h18-v0811-child]',
-            '.h18-v0851-stack-segment[data-h18-v0851-stack-key]',
-            '.h18-v0811-auto-box[data-h18-v0811-row]'
-        ];
-        for (let group = 0; group < selectors.length; group += 1) {
-            const nodes = document.querySelectorAll(selectors[group]);
-            for (let index = 0; index < nodes.length; index += 1) {
-                if (visualKey(nodes[index]) === key) {
-                    nodes[index].setAttribute(CHILD_SELECTED_ATTR, '1');
-                    return;
-                }
-            }
-        }
-    }
-
-    function queueChildSelection() {
-        if (selectionFrame) { return; }
-        selectionFrame = window.requestAnimationFrame(reapplyChildSelection);
-    }
-
-    function selectionVisualFromTarget(target) {
-        if (!target || !target.closest) { return null; }
-        return target.closest([
-            '.h18-v0851-stack-segment[data-h18-v0851-stack-key]',
-            '.h18-v0811-child-card[data-h18-v0811-child]',
-            '.h18-v0811-auto-box[data-h18-v0811-row]',
-            '.h18-page-section-row > .h18-canvas-preview'
-        ].join(','));
-    }
-
-    document.addEventListener('pointerdown', function (event) {
-        const target = event.target && event.target.closest ? event.target : null;
-        if (!target || !target.closest('.h18-builder-canvas')) { return; }
-        if (target.closest('.h18-v0841-resize-handle,.h18-v0841-resize-rail,.h18-v0851-stack-resize-handle,.h18-v0838-drop-zone,.h18-v0811-side-zone,.h18-ud-box-drop-zone')) { return; }
-
-        const visual = selectionVisualFromTarget(target);
-        if (!visual) { return; }
-        const key = visualKey(visual);
-        if (!key) { return; }
-
-        visualSelectionKey = key;
-        document.documentElement.setAttribute('data-h18-selected-element-key', key);
-
-        const row = rowByKey(key);
-        if (row.length) { row.attr('data-key', key); }
-
-        const selection = window.__h18LegoInspectorOnlyV0847;
-        if (selection && typeof selection.rememberSelectedCanvasKey === 'function') {
-            selection.rememberSelectedCanvasKey(key);
-        }
-        if (selection && typeof selection.refreshSelectedCanvasMarker === 'function') {
-            selection.refreshSelectedCanvasMarker();
-        }
-        reapplyChildSelection();
-    }, true);
-
-    function pointerTrack(event) {
+    function trackPointer(event) {
         if (!insideDrag) { return; }
         const clientX = Number(event.clientX);
         const clientY = Number(event.clientY);
@@ -332,23 +238,22 @@ jQuery(function ($) {
         updateInsideTarget(clientX, clientY);
     }
 
-    document.addEventListener('mousemove', pointerTrack, true);
-    document.addEventListener('pointermove', pointerTrack, true);
+    document.addEventListener('mousemove', trackPointer, true);
+    document.addEventListener('pointermove', trackPointer, true);
 
-    $sections.on('sortstart.h18V0867InsideKasse', function (event, ui) {
+    $sections.on('sortstart.h18V0868InsideKasse', function (event, ui) {
         const $source = ui && ui.item ? ui.item : $();
         const sourceKey = rowKey($source);
         insideDrag = sourceKey && isPlainElement($source)
-            ? { sourceKey: sourceKey, boxKey: '', clientX: null, clientY: null }
+            ? { sourceKey: sourceKey, boxKey: '' }
             : null;
         if (insideDrag) {
             $source.attr('data-key', sourceKey);
-            $sections.addClass('h18-v0867-inside-drag');
-            document.documentElement.setAttribute('data-h18-v0867-last-inside-result', 'dragging');
+            document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'dragging');
         }
     });
 
-    $sections.on('sort.h18V0867InsideKasse', function (event) {
+    $sections.on('sort.h18V0868InsideKasse', function (event) {
         if (!insideDrag) { return; }
         const original = event && event.originalEvent ? event.originalEvent : event;
         const clientX = Number(original && original.clientX);
@@ -358,41 +263,28 @@ jQuery(function ($) {
         }
     });
 
-    $sections.on('sortstop.h18V0867InsideKasse', function () {
+    $sections.on('sortstop.h18V0868InsideKasse', function () {
         if (!insideDrag) { return; }
         const state = insideDrag;
         insideDrag = null;
-        $sections.removeClass('h18-v0867-inside-drag');
         clearInsideTarget();
 
         if (!state.boxKey) {
-            document.documentElement.setAttribute('data-h18-v0867-last-inside-result', 'no-box-target');
+            document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'no-box-target');
             return;
         }
         movePlainElementIntoBox(state.sourceKey, state.boxKey);
     });
 
-    $sections.on('sortcancel.h18V0867InsideKasse', function () {
+    $sections.on('sortcancel.h18V0868InsideKasse', function () {
         insideDrag = null;
-        $sections.removeClass('h18-v0867-inside-drag');
         clearInsideTarget();
     });
 
-    if (window.MutationObserver) {
-        new MutationObserver(function () {
-            queueChildSelection();
-        }).observe($sections.get(0), { childList: true, subtree: true });
-    }
-
-    window.setTimeout(queueChildSelection, 0);
-    document.documentElement.setAttribute('data-h18-lego-placement-stability', '0.8.67-pointer-owned-inside');
-    document.documentElement.setAttribute('data-h18-lego-selection-key-preflight', '0.8.67');
-
+    document.documentElement.setAttribute('data-h18-lego-placement-stability', '0.8.68-pointer-inside-only');
     window.__h18LegoPlacementStabilityV0862 = {
-        version: '0.8.67',
-        placementOwner: 'baseline-plus-pointer-inside-kasse',
-        selectionKeyPreflight: true,
-        selectedKey: function () { return visualSelectionKey; },
+        version: '0.8.68',
+        placementOwner: 'pointer-inside-kasse-only',
         moveElementIntoBox: movePlainElementIntoBox
     };
 }());
