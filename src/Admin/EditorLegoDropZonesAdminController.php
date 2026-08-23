@@ -48,6 +48,7 @@ final class EditorLegoDropZonesAdminController
         $kasseTerminologyJsPath = $pluginDir . '/assets/ultimate-designer-lego-kasse-terminology-v0850.js';
         $fixesJsPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.js';
         $fixesCssPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.css';
+        $stackSelectionHotfixJsPath = $pluginDir . '/assets/ultimate-designer-lego-stack-selection-v0853.js';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -129,6 +130,19 @@ final class EditorLegoDropZonesAdminController
                 'schemaVersion' => 1,
                 'pages' => EditorLegoStackAdminController::store(),
             ]
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-stack-selection-v0853',
+            $pluginUrl . 'assets/ultimate-designer-lego-stack-selection-v0853.js',
+            ['jquery', 'hangar18-ultimate-designer-lego-fixes-v0851', 'hangar18-ultimate-designer-lego-selection-inspector-v0849', 'hangar18-ultimate-designer-lego-parent-key-guard-v0845'],
+            is_file($stackSelectionHotfixJsPath) ? (string) filemtime($stackSelectionHotfixJsPath) : '0.8.53',
+            false
+        );
+
+        wp_add_inline_style(
+            'hangar18-ultimate-designer-lego-fixes-v0851',
+            '.h18-builder-canvas .h18-v0853-selection-target{outline:2px solid #d63638!important;outline-offset:-2px!important;position:relative!important;z-index:85!important}'
         );
 
         wp_enqueue_style(
