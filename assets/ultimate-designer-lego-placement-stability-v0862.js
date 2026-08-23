@@ -36,6 +36,11 @@ jQuery(function ($) {
         return String($row.attr('data-section-type') || controls($row, '.h18-page-section-type').first().val() || '').trim();
     }
 
+    function rowLabel($row) {
+        if (!$row || !$row.length) { return ''; }
+        return String(controls($row, '.h18-section-navigator-label').first().val() || '').trim();
+    }
+
     function parentKey($row) {
         if (!$row || !$row.length) { return ''; }
         return String(controls($row, '.h18-layout-parent-key').first().val() || '').trim();
@@ -47,9 +52,15 @@ jQuery(function ($) {
         return activeRows().filter(function () { return rowKey($(this)) === wanted; }).first();
     }
 
+    function isAuto($row) {
+        return Boolean($row && $row.length && rowType($row) === 'grid' && rowLabel($row) === 'Auto-kasser');
+    }
+
     function isBox($row) {
         if (!$row || !$row.length) { return false; }
-        if (rowType($row) === 'container') { return true; }
+        const type = rowType($row);
+        if (type === 'grid' && isAuto($row)) { return false; }
+        if (type === 'container' || type === 'flex' || type === 'grid') { return true; }
         if (String($row.attr('data-h18-box') || '') === '1') { return true; }
         const $preview = $row.children('.h18-canvas-preview').first();
         return Boolean($preview.length && $preview.find('.h18-ud-box-contents-preview,.h18-v0811-box-contents').length);
@@ -149,7 +160,7 @@ jQuery(function ($) {
         const $source = rowByKey(sourceKey);
         const $box = rowByKey(boxKey);
         if (!canMovePlainElementIntoBox($source, $box)) {
-            document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'invalid-target');
+            document.documentElement.setAttribute('data-h18-v0875-last-inside-result', 'invalid-target');
             return false;
         }
 
@@ -163,14 +174,15 @@ jQuery(function ($) {
         $source.insertAfter($anchor);
 
         if (!setParent($source, boxKey)) {
-            document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'parent-write-failed');
+            document.documentElement.setAttribute('data-h18-v0875-last-inside-result', 'parent-write-failed');
             return false;
         }
 
         syncFlatOrder();
-        document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'ok');
-        document.documentElement.setAttribute('data-h18-v0871-last-inside-source', sourceKey);
-        document.documentElement.setAttribute('data-h18-v0871-last-inside-box', boxKey);
+        document.documentElement.setAttribute('data-h18-v0875-last-inside-result', 'ok');
+        document.documentElement.setAttribute('data-h18-v0875-last-inside-source', sourceKey);
+        document.documentElement.setAttribute('data-h18-v0875-last-inside-box', boxKey);
+        document.documentElement.setAttribute('data-h18-v0875-last-inside-target-type', rowType($box));
 
         const nesting = window.__h18NestingToolsV0840;
         if (nesting && typeof nesting.refresh === 'function') { nesting.refresh(); }
@@ -196,7 +208,7 @@ jQuery(function ($) {
     document.addEventListener('mousemove', trackPointer, true);
     document.addEventListener('pointermove', trackPointer, true);
 
-    $sections.on('sortstart.h18V0871InsideKasse', function (event, ui) {
+    $sections.on('sortstart.h18V0875InsideKasse', function (event, ui) {
         const $source = ui && ui.item ? ui.item : $();
         const sourceKey = rowKey($source);
         insideDrag = sourceKey && isPlainElement($source)
@@ -204,11 +216,11 @@ jQuery(function ($) {
             : null;
         if (insideDrag) {
             $source.attr('data-key', sourceKey);
-            document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'dragging');
+            document.documentElement.setAttribute('data-h18-v0875-last-inside-result', 'dragging');
         }
     });
 
-    $sections.on('sort.h18V0871InsideKasse', function (event) {
+    $sections.on('sort.h18V0875InsideKasse', function (event) {
         if (!insideDrag) { return; }
         const original = event && event.originalEvent ? event.originalEvent : event;
         const clientX = Number(original && original.clientX);
@@ -221,7 +233,7 @@ jQuery(function ($) {
         }
     });
 
-    $sections.on('sortstop.h18V0871InsideKasse', function () {
+    $sections.on('sortstop.h18V0875InsideKasse', function () {
         if (!insideDrag) { return; }
         const state = insideDrag;
         insideDrag = null;
@@ -234,20 +246,20 @@ jQuery(function ($) {
         if (!finalBoxKey) { finalBoxKey = state.boxKey; }
 
         if (!finalBoxKey) {
-            document.documentElement.setAttribute('data-h18-v0871-last-inside-result', 'no-inside-zone');
+            document.documentElement.setAttribute('data-h18-v0875-last-inside-result', 'no-inside-zone');
             return;
         }
         movePlainElementIntoBox(state.sourceKey, finalBoxKey);
     });
 
-    $sections.on('sortcancel.h18V0871InsideKasse', function () {
+    $sections.on('sortcancel.h18V0875InsideKasse', function () {
         insideDrag = null;
     });
 
-    document.documentElement.setAttribute('data-h18-lego-placement-stability', '0.8.71-structural-inside-zone');
+    document.documentElement.setAttribute('data-h18-lego-placement-stability', '0.8.75-layout-inside-zone');
     window.__h18LegoPlacementStabilityV0862 = {
-        version: '0.8.71',
-        placementOwner: 'explicit-structural-inside-zone-only',
+        version: '0.8.75',
+        placementOwner: 'layout-box-inside-zone-only',
         moveElementIntoBox: movePlainElementIntoBox
     };
 }());
