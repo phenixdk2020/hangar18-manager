@@ -15,21 +15,6 @@
     border:2px solid #d63638;border-radius:inherit;pointer-events:none;
 }
 
-/* Historical selection rules retained for compatibility; LEGO-065 overrides
- * their visual output at the end of this file. */
-.h18-builder-canvas #h18-page-sections-sortable > .h18-page-section-row.is-selected > .h18-canvas-preview,
-.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element > .h18-v0811-auto-box-preview,
-.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element .h18-v0851-stack-root > .h18-v0811-auto-box-preview,
-.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element > .h18-v0811-child-preview {
-    outline:2px solid #d63638!important;
-    outline-offset:-2px!important;
-}
-
-.h18-builder-canvas .h18-v0851-selection-overlay {
-    border:0!important;
-    background:transparent!important;
-}
-
 .h18-builder-canvas .h18-v0811-auto-grid{align-items:stretch!important}
 .h18-builder-canvas .h18-v0811-auto-box{
     display:flex;flex-direction:column;align-self:stretch;min-height:0;
@@ -73,27 +58,3 @@
 .h18-v0851-custom-color-row{display:grid;grid-template-columns:46px minmax(0,1fr);gap:8px;align-items:center;margin-top:6px}
 .h18-v0851-custom-bg-color{width:46px!important;height:36px;padding:2px}
 .h18-v0851-custom-bg-hex{width:100%!important}
-
-/* LEGO-065: single visual selection owner.
- * Old WordPress/.is-selected and v0.8.48/v0.8.63 compatibility classes may
- * remain in DOM, but they no longer draw a red frame. Exactly one visible node
- * receives data-h18-v0865-selected="1" from the canonical key owner. */
-.h18-builder-canvas #h18-page-sections-sortable > .h18-page-section-row.is-selected > .h18-canvas-preview,
-.h18-builder-canvas #h18-page-sections-sortable > .h18-page-section-row.is-h18-v0863-selected-row > .h18-canvas-preview,
-.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element,
-.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element > .h18-v0811-auto-box-preview,
-.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element .h18-v0851-stack-root > .h18-v0811-auto-box-preview,
-.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element,
-.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element > .h18-v0811-child-preview,
-.h18-builder-canvas .h18-v0851-stack-segment.is-h18-v0848-selected-element,
-.h18-builder-canvas .h18-v0851-stack-segment.is-h18-v0848-selected-element > .h18-v0811-auto-box-preview,
-.h18-builder-canvas .h18-v0851-stack-segment.is-h18-v0848-selected-element > .h18-v0811-child-preview {
-    outline:none!important;
-    box-shadow:none!important;
-}
-
-.h18-builder-canvas [data-h18-v0865-selected="1"] {
-    outline:2px solid #d63638!important;
-    outline-offset:-2px!important;
-    box-shadow:inset 0 0 0 1px rgba(214,54,56,.20)!important;
-}
