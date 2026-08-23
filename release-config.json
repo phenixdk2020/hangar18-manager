@@ -1,15 +1,15 @@
 {
-  "version": "0.8.73",
-  "title": "LEGO-editor — read-only diagnose af selection og Kasse-drop",
+  "version": "0.8.74",
+  "title": "LEGO-editor — sikker selection-init og forbedret drag-diagnose",
   "changelog": [
-    "Registrerer v0.8.72 som manuel FAIL: child-selection forsvinder fortsat, og IND I KASSEN bliver fortsat ikke synlig i brugerens live drag-scenarie.",
-    "v0.8.73 ændrer ikke placement-, ParentKey-, selection- eller stack-semantik. Den er en ren diagnoseversion for at stoppe blind iteration.",
-    "Tilføjer et read-only LEGO-diagnosepanel i editoren med aktiv selection-key/mode, antal matchende og markerede nested DOM-noder, native selected-row key og beregnet outline.",
-    "Panelet viser samtidig drag source key/type/mode, samlet antal overlays, antal Kasse-overlays, antal IND I KASSEN-zoner, synlige inside-zoner, aktiv dropzone og sidste inside-resultat.",
-    "Diagnosen fører en kort tidslinje ved klik, pointerdown, Sortable start/move/stop og relevante DOM-mutationer, så splitsekunds-selection kan ses som state-overgang i stedet for kun visuelt.",
-    "Kopiér diagnose-knappen kopierer hele den aktuelle state og hændelsestidslinje uden behov for browserens udviklerværktøjer.",
-    "Asset cache-busting er verificeret som filemtime-baseret; denne diagnose skal derfor kunne skelne live runtime-state fra kodeantagelser.",
-    "UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.",
-    "v0.8.73 er diagnostic-only på test2; public cutover er fortsat ikke autoriseret."
+    "Registrerer brugerens v0.8.73-diagnose: selection-runtime var tom, selv om en native række var valgt. Det viser, at selection-scriptet ikke nåede sin runtime-registrering.",
+    "Root-cause: inspector-only scriptet kunne forsøge MutationObserver.observe(document.body, ...) før document.body fandtes. Event handlers var allerede installeret, så rød child-markering kunne ses kort, hvorefter scriptet fejlede før API/observer blev registreret.",
+    "v0.8.74 registrerer selection-runtime API og version før body-afhængig initialisering. MutationObserver installeres først når document.body findes via DOMContentLoaded/sikker init.",
+    "Selection-diagnosen viser nu runtime-version og om observeren faktisk er active/inactive, så init-status kan verificeres direkte.",
+    "Kasse-placement semantics ændres ikke i v0.8.74. Diagnosepanelet er forbedret, fordi v0.8.73 bandt Sortable-events direkte før editor-DOM kunne eksistere og mutations kunne overskrive drag-hændelserne.",
+    "v0.8.74 bruger delegerede Sortable-events og gemmer en særskilt last-drag summary med peak overlays, Kasse-overlays, IND I KASSEN-zoner, synlige inside-zoner, aktive dropzoner og sidste inside-resultat.",
+    "Mutation-log er begrænset separat, så sortstart/sort/sortstop ikke længere forsvinder fra rapporten i en mutationsstorm.",
+    "Updateren og repaint-sporet ændres ikke. UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.",
+    "v0.8.74 er manuel test/diagnose-release til test2; public cutover er fortsat ikke autoriseret."
   ]
 }
