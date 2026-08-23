@@ -15,6 +15,25 @@
     border:2px solid #d63638;border-radius:inherit;pointer-events:none;
 }
 
+/* LEGO-060: selection frame is CSS-only on the existing selection classes.
+ * No extra observer, timeout, DOM node or placement/runtime hook is introduced.
+ * A negative outline offset keeps all four red sides inside the visual element,
+ * including the right edge when a Grid/stack wrapper clips overflow. */
+.h18-builder-canvas #h18-page-sections-sortable > .h18-page-section-row.is-selected > .h18-canvas-preview,
+.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element > .h18-v0811-auto-box-preview,
+.h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element .h18-v0851-stack-root > .h18-v0811-auto-box-preview,
+.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element > .h18-v0811-child-preview {
+    outline:2px solid #d63638!important;
+    outline-offset:-2px!important;
+}
+
+/* Keep the legacy v0.8.51 span visually neutral. It may still be created by
+ * the baseline runtime, but it is no longer responsible for the visible frame. */
+.h18-builder-canvas .h18-v0851-selection-overlay {
+    border:0!important;
+    background:transparent!important;
+}
+
 .h18-builder-canvas .h18-v0811-auto-grid{align-items:stretch!important}
 .h18-builder-canvas .h18-v0811-auto-box{
     display:flex;flex-direction:column;align-self:stretch;min-height:0;
