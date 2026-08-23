@@ -1,15 +1,16 @@
 {
-  "version": "0.8.58",
-  "title": "LEGO-editor — rollback til stabil v0.8.51-baseline",
+  "version": "0.8.59",
+  "title": "LEGO-editor — lettere selection og færre unødige repaint",
   "changelog": [
-    "Editorens kodebase er rullet tilbage til den kendte v0.8.51-baseline i stedet for at lægge flere hotfix-lag oven på v0.8.57.",
-    "Genskaber v0.8.51-adfærden for 2D Kasse-layout, hvor Over/Under kan oprette en lodret stak i samme Grid-kolonne.",
-    "Genskaber v0.8.51-markeringen af aktivt element som et separat komplet rødt overlay på alle fire sider.",
-    "Genskaber v0.8.51-håndteringen af Auto-kasse-hjælpetekst/pre-LEGO drop-chrome, hvor synlig legacy-tekst skjules mens de nødvendige interne drop-hit targets bevares.",
-    "Fjerner v0.8.52-v0.8.57 selection-, stack-, retry- og MutationObserver-hotfixlag fra den aktive editor-runtime ved at gendanne v0.8.51-kodetræet.",
-    "WhatIf/simulering fjernes fra Hangar18-admins brugerflade: checkboxe, knapper og hjælpetekster vises ikke længere og normal gemning sender ikke et WhatIf-felt.",
-    "Den historiske backend-kompatibilitet for WhatIf er ikke slettet i denne rollback, så gamle direkte requests ikke giver fatal fejl; funktionen er blot ikke længere eksponeret i UI'et.",
-    "Vehicle/Event/Gallery-funktionalitet er ikke ændret af rollbacken; sammenligningen mellem v0.8.51 og v0.8.57 viste ingen ændringer i disse domæner.",
-    "v0.8.58 er en testrelease til manuel editor-QA på test2; public cutover er fortsat ikke autoriseret."
+    "Bevarer den fungerende v0.8.51 drag/drop-, Grid- og stack-model fra v0.8.58 uændret.",
+    "Filtrerer kun v0.8.51's tunge document.body MutationObserver, så Inspector-udskiftning, selection-overlay og andre ikke-strukturelle wp-admin DOM-ændringer ikke længere udløser en fuld Grid/stack-render.",
+    "Den filtrerede observer identificeres på sin konkrete v0.8.51-callback og påvirker ikke andre WordPress- eller Hangar18-MutationObservers.",
+    "Strukturelle ændringer i canvas, sektioner, Grid, Auto-kasser og nested cards kan fortsat starte den nødvendige layout-render.",
+    "Aktivt element får en ny let selection-markering baseret på CSS outline i stedet for et synligt DOM-overlay; markeringen påvirker ikke layoutmål og kan ikke miste højre kant ved clipping.",
+    "Selection-markeringen følger både nested elementer i Række- og kolonne-kasser og almindelige top-level elementer og genanvendes efter nødvendige canvas-rerenderinger.",
+    "Den gamle v0.8.51 selection-span holdes usynlig, så den ikke længere er den visuelle markering; den nye markering kræver ingen ekstra DOM-node.",
+    "Højderesize beholder én afsluttende legitim state/layout-synkronisering, men de ekstra repaint-kæder fra Inspector/selection reduceres.",
+    "Ingen ændring af page schema, LayoutParentKey, stack persistence, drag/drop, WhatIf-fjernelsen eller Vehicle/Event/Gallery.",
+    "v0.8.59 er en testrelease til manuel editor-QA på test2; public cutover er fortsat ikke autoriseret."
   ]
 }
