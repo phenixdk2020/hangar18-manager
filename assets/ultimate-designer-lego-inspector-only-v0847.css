@@ -1,6 +1,6 @@
-/* LEGO-047/048/063: Inspector is the sole owner of element/content/design settings.
- * Canvas keeps direct placement and resize, while selection follows the canonical
- * element key across normal Grid tiles and v0.8.51 vertical stack segments. */
+/* LEGO-047/048: Inspector is the sole owner of element/content/design settings.
+ * Canvas keeps direct placement and column resize, but not inline text/media,
+ * focal-point, box-model or "Direkte design" controls. */
 .h18-builder-canvas .h18-canvas-image-tools,
 .h18-builder-canvas .h18-canvas-focal-dot,
 .h18-builder-canvas .h18-canvas-direct-controls,
@@ -18,50 +18,12 @@
     cursor: default;
 }
 
-/* Historical compatibility selection. The later v0.8.51 CSS neutralizes
- * these red frames; the dedicated canonical marker below is authoritative. */
+/* LEGO-048: make Inspector selection unambiguous on the canvas without changing
+ * the element's geometry. outline/box-shadow do not consume layout space. */
 #h18-page-sections-sortable > .h18-page-section-row.is-selected > .h18-canvas-preview,
-#h18-page-sections-sortable > .h18-page-section-row.is-h18-v0863-selected-row > .h18-canvas-preview,
 .h18-builder-canvas .h18-v0811-auto-box.is-h18-v0848-selected-element,
-.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element,
-.h18-builder-canvas .h18-v0851-stack-segment.is-h18-v0848-selected-element {
+.h18-builder-canvas .h18-v0811-child-card.is-h18-v0848-selected-element {
     outline: 2px solid #d63638 !important;
-    outline-offset: -2px !important;
+    outline-offset: -2px;
     box-shadow: inset 0 0 0 1px rgba(214, 54, 56, .2) !important;
-}
-
-.h18-builder-canvas .h18-v0851-stack-segment.is-h18-v0848-selected-element > .h18-v0811-auto-box-preview,
-.h18-builder-canvas .h18-v0851-stack-segment.is-h18-v0848-selected-element > .h18-v0811-child-preview {
-    outline: 2px solid #d63638 !important;
-    outline-offset: -2px !important;
-}
-
-/* LEGO-066/067: single canonical selection for top-level and Grid wrappers. */
-.h18-builder-canvas #h18-page-sections-sortable [data-h18-v0865-selected="1"][data-h18-v0865-selected="1"][data-h18-v0865-selected="1"][data-h18-v0865-selected="1"] {
-    outline: 2px solid #d63638 !important;
-    outline-offset: -2px !important;
-    box-shadow: inset 0 0 0 1px rgba(214, 54, 56, .22) !important;
-}
-
-/* LEGO-067: child elements inside a Kasse are re-created by renderBox().
- * A dedicated child marker is restored from the canonical selected key after
- * every structural mutation. Use inset shadow as well as outline so clipping
- * by the Kasse wrapper cannot hide the red indication. */
-.h18-builder-canvas #h18-page-sections-sortable [data-h18-v0867-child-selected="1"] {
-    outline: 2px solid #d63638 !important;
-    outline-offset: -2px !important;
-    box-shadow: inset 0 0 0 2px #d63638 !important;
-}
-
-.h18-builder-canvas #h18-page-sections-sortable .h18-v0811-child-card[data-h18-v0867-child-selected="1"] > .h18-v0811-child-preview,
-.h18-builder-canvas #h18-page-sections-sortable .h18-v0851-stack-segment[data-h18-v0867-child-selected="1"] > .h18-v0811-child-preview,
-.h18-builder-canvas #h18-page-sections-sortable .h18-v0851-stack-segment[data-h18-v0867-child-selected="1"] > .h18-v0811-auto-box-preview {
-    box-shadow: inset 0 0 0 2px #d63638 !important;
-}
-
-/* LEGO-067: visible feedback for the actual pointer-owned IND I KASSEN target. */
-.h18-builder-canvas .h18-ud-box-contents-preview.h18-v0867-inside-target {
-    outline: 3px dashed #2271b1 !important;
-    outline-offset: -3px !important;
-    box-shadow: inset 0 0 0 2px rgba(34, 113, 177, .20) !important;
 }
