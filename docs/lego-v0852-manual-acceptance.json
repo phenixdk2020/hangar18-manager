@@ -16,7 +16,7 @@
   "scenarios": {
     "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drag/drop: Kasse, Række-/kolonne-kasse, Række- og kolonne-kasse og Auto-kasser skal fortsat fungere med dansk terminologi uden synlig legacy Auto-kasse prompt."},
     "B": {"status": "PENDING", "evidence": [], "note": "Kasse/nesting: eksisterende container/flex/grid, LayoutParentKey og nested Over/Under fra v0.8.51 skal være uændret efter LEGO-052 hotfixen."},
-    "C": {"status": "PENDING", "evidence": [], "note": "Nested selection: klik på tekst, billede og andre børn i samme Række- og kolonne-kasse skal stabilisere straks uden vedvarende Opdaterer layoutet/reconcile-loop; børn må ikke forsvinde eller duplikeres."},
+    "C": {"status": "FAIL", "evidence": ["Manual test 2026-08-23: Tekst + Billede blev placeret i Række- og kolonne-kasse; endnu et Billede blev droppet Under det første billede. Resultatet blev tre 4/12 sibling-kolonner i stedet for at det nye billede blev stablet lodret under det første i samme kolonne."], "note": "2D nested stack FAIL: LayoutParentKey ser ud til at blive sat til samme grid-parent, men det nye barns stack-state/StackRootKey bliver ikke etableret, så grid'et fordeler alle tre børn som almindelige kolonner. Selection-loop hotfixen testes separat."},
     "D": {"status": "PENDING", "evidence": [], "note": "Resize: lodret kolonne-resize og vandret 2D højderesize fra v0.8.51 skal fortsat fungere uden at selection eller nested layout går tabt."},
     "E": {"status": "PENDING", "evidence": [], "note": "Responsive Desktop/Mobil-værdier og arv skal være uændrede; LEGO-052 må ikke mutere gemte frontend-layoutværdier."},
     "F": {"status": "PENDING", "evidence": [], "note": "Inspector-selection: valgt element skal få og beholde den komplette røde markering, også efter skift mellem nested tekst/billede og efter Inspector-handoff."},
@@ -32,6 +32,6 @@
     "dataLossOrDuplicate": false,
     "protectedDomainRegression": false
   },
-  "overallStatus": "PENDING",
-  "notes": "v0.8.52 official test package is built after Architecture QA and Editor Runtime Fast QA passed on the LEGO-052 candidate. LEGO Editor QA passed after an isolated rerun of the known timing-sensitive legacy media double-click test; the new LEGO-052 selection-loop and Inspector full-width regression tests pass in system Chrome, Chromium, Firefox and WebKit. All v0.8.52 manual A-L scenarios intentionally start PENDING. Public cutover remains unauthorized."
+  "overallStatus": "FAIL",
+  "notes": "v0.8.52 automated QA passed on the LEGO-052 candidate, but manual test2 acceptance found a 2D nested stack regression: dropping a new image Under an existing image inside the same grid created a third sibling column rather than a vertical stack. Scenario C is therefore FAIL and public cutover remains unauthorized."
 }
