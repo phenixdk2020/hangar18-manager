@@ -1,12 +1,14 @@
 # Hangar18 Manager — aktiv backlog v0.8.42
 
+> **Historisk snapshot.** Den aktuelle canonical backlog er `docs/active-backlog-v0861.md`.
+
 **Statusdato:** 21. august 2026  
 **Aktuel officiel pluginbaseline:** **v0.8.42**  
 **Officiel release package commit:** `55625c67f61d78bc83a2546acac77a08e7879b09`  
 **Package SHA-256:** `6c57740f1a3fda1348850bdede7d0303bee523da58aeec91d58d27be482b39e8`  
 **Testtarget:** `https://test2.hangar18.dk`
 
-Denne fil er den korte canonical aktive backlog. Ældre `active-backlog-v0840.md` og `active-backlog-v0841.md` er historiske snapshots. `integration-backlog-after-ud120.md` er den detaljerede arkitektur-/implementeringshistorik.
+Denne fil er et historisk snapshot. Den aktuelle aktive backlog ligger i `docs/active-backlog-v0861.md`. Ældre `active-backlog-v0840.md` og `active-backlog-v0841.md` er ligeledes historiske snapshots. `integration-backlog-after-ud120.md` er den detaljerede arkitektur-/implementeringshistorik.
 
 ## Status lige nu
 
