@@ -49,6 +49,7 @@ final class EditorLegoDropZonesAdminController
         $fixesJsPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.js';
         $fixesCssPath = $pluginDir . '/assets/ultimate-designer-lego-fixes-v0851.css';
         $stackSelectionHotfixJsPath = $pluginDir . '/assets/ultimate-designer-lego-stack-selection-v0853.js';
+        $stackSelectionHotfixCssPath = $pluginDir . '/assets/ultimate-designer-lego-stack-selection-v0853.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-history-atomic-v0840',
@@ -140,11 +141,6 @@ final class EditorLegoDropZonesAdminController
             false
         );
 
-        wp_add_inline_style(
-            'hangar18-ultimate-designer-lego-fixes-v0851',
-            '.h18-builder-canvas .h18-v0853-selection-target{outline:2px solid #d63638!important;outline-offset:-2px!important;position:relative!important;z-index:85!important}'
-        );
-
         wp_enqueue_style(
             'hangar18-ultimate-designer-lego-drop-zones-v0838',
             $pluginUrl . 'assets/ultimate-designer-lego-drop-zones-v0838.css',
@@ -178,6 +174,13 @@ final class EditorLegoDropZonesAdminController
             $pluginUrl . 'assets/ultimate-designer-lego-fixes-v0851.css',
             ['hangar18-ultimate-designer-lego-live-history-inspector-v0850', 'hangar18-ultimate-designer-lego-resize-v0841'],
             is_file($fixesCssPath) ? (string) filemtime($fixesCssPath) : '0.8.51'
+        );
+
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-lego-stack-selection-v0853',
+            $pluginUrl . 'assets/ultimate-designer-lego-stack-selection-v0853.css',
+            ['hangar18-ultimate-designer-lego-fixes-v0851'],
+            is_file($stackSelectionHotfixCssPath) ? (string) filemtime($stackSelectionHotfixCssPath) : '0.8.53'
         );
     }
 }
