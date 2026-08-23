@@ -1,22 +1,21 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.51",
+  "version": "0.8.58",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-22T18:19:24Z",
+  "published_utc": "2026-08-23T12:11:20Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "d62b1e403e3f7691533eb46551ab1e433024e7becd369de23bca8021bf000077",
+  "package_sha256": "240de06f1ca866ae9235193f4269f4907cc03f232ff28e7d4ebf405ffa5df493",
   "changelog": [
-    "Den gamle Auto-kasse-hjælpetekst og pre-LEGO drop-chrome skjules permanent i normal editorvisning, mens nødvendige drag/drop hit targets bevares internt.",
-    "Markeringen af det valgte element tegnes nu som et separat komplet overlay på alle fire sider og skal forblive synlig gennem Inspector- og layout-rerenderinger.",
-    "Baggrund, kant, kanttykkelse og radius anvendes på elementets fulde ydre Kasse/layoutflade i Række- og kolonne-kasser i stedet for kun omkring tekst- eller billedindholdets egen højde.",
-    "Inspector-panelet Luft, baggrund og placering er omlagt med Desktop/Mobil-faner, bredere felter og kortere labels, så kontrollerne er læsbare på både laptop og store skærme.",
-    "Baggrund kan fortsat vælges fra design-presets, men Custom kan nu vælges direkte i Inspector via den eksisterende DesignMode/CustomBackgroundColor-model uden nyt side-schema.",
-    "Over/Under-drop på et element inde i en Række- og kolonne-kasse bliver nu i samme layout-parent og kan oprette en lodret stak i den samme kolonne i stedet for at hoppe ud under hele kassen.",
-    "LEGO-051 tilføjer 2D Kasse-layout: flere elementer kan stables lodret i samme kolonne, og en vandret splitter kan justere højdefordelingen procentuelt, mens den eksisterende lodrette splitter fortsat styrer kolonnebredde.",
-    "Den nye stack/højdefordeling har en separat editor-state-ejer; eksisterende container/flex/grid-typer og LayoutParentKey-persistens ændres ikke, så allerede designede sider bevarer deres eksisterende schema.",
-    "Nested elementvalg er gjort deterministisk på tværs af Chrome, Chromium, Firefox og WebKit ved at resolve den kanoniske række via element-key og aktivere den eksisterende Inspector-handler frem for den klonede proxy.",
-    "Architecture QA, LEGO Editor QA og I9 Prep QA er grønne på den endelige LEGO-051-kandidat. En kendt timingfølsom legacy E14 Firefox-test blev genkørt isoleret og bestod. Manuel v0.8.51-test på test2 er stadig nødvendig; public cutover er ikke autoriseret."
+    "Editorens kodebase er rullet tilbage til den kendte v0.8.51-baseline i stedet for at lægge flere hotfix-lag oven på v0.8.57.",
+    "Genskaber v0.8.51-adfærden for 2D Kasse-layout, hvor Over/Under kan oprette en lodret stak i samme Grid-kolonne.",
+    "Genskaber v0.8.51-markeringen af aktivt element som et separat komplet rødt overlay på alle fire sider.",
+    "Genskaber v0.8.51-håndteringen af Auto-kasse-hjælpetekst/pre-LEGO drop-chrome, hvor synlig legacy-tekst skjules mens de nødvendige interne drop-hit targets bevares.",
+    "Fjerner v0.8.52-v0.8.57 selection-, stack-, retry- og MutationObserver-hotfixlag fra den aktive editor-runtime ved at gendanne v0.8.51-kodetræet.",
+    "WhatIf/simulering fjernes fra Hangar18-admins brugerflade: checkboxe, knapper og hjælpetekster vises ikke længere og normal gemning sender ikke et WhatIf-felt.",
+    "Den historiske backend-kompatibilitet for WhatIf er ikke slettet i denne rollback, så gamle direkte requests ikke giver fatal fejl; funktionen er blot ikke længere eksponeret i UI'et.",
+    "Vehicle/Event/Gallery-funktionalitet er ikke ændret af rollbacken; sammenligningen mellem v0.8.51 og v0.8.57 viste ingen ændringer i disse domæner.",
+    "v0.8.58 er en testrelease til manuel editor-QA på test2; public cutover er fortsat ikke autoriseret."
   ]
 }

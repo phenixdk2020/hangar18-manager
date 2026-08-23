@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.51
+Version: 0.8.58
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.58 – LEGO-editor — rollback til stabil v0.8.51-baseline ==
+
+Nyt:
+- Editorens kodebase er rullet tilbage til den kendte v0.8.51-baseline i stedet for at lægge flere hotfix-lag oven på v0.8.57.
+- Genskaber v0.8.51-adfærden for 2D Kasse-layout, hvor Over/Under kan oprette en lodret stak i samme Grid-kolonne.
+- Genskaber v0.8.51-markeringen af aktivt element som et separat komplet rødt overlay på alle fire sider.
+- Genskaber v0.8.51-håndteringen af Auto-kasse-hjælpetekst/pre-LEGO drop-chrome, hvor synlig legacy-tekst skjules mens de nødvendige interne drop-hit targets bevares.
+- Fjerner v0.8.52-v0.8.57 selection-, stack-, retry- og MutationObserver-hotfixlag fra den aktive editor-runtime ved at gendanne v0.8.51-kodetræet.
+- WhatIf/simulering fjernes fra Hangar18-admins brugerflade: checkboxe, knapper og hjælpetekster vises ikke længere og normal gemning sender ikke et WhatIf-felt.
+- Den historiske backend-kompatibilitet for WhatIf er ikke slettet i denne rollback, så gamle direkte requests ikke giver fatal fejl; funktionen er blot ikke længere eksponeret i UI'et.
+- Vehicle/Event/Gallery-funktionalitet er ikke ændret af rollbacken; sammenligningen mellem v0.8.51 og v0.8.57 viste ingen ændringer i disse domæner.
+- v0.8.58 er en testrelease til manuel editor-QA på test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.51 – LEGO-editor — 2D Kasse-layout og v0.8.50 testrettelser ==
