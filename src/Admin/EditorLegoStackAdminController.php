@@ -23,7 +23,31 @@ final class EditorLegoStackAdminController
             return;
         }
         self::$registered = true;
+        add_action('admin_enqueue_scripts', [self::class, 'enqueueRegressionHotfixV0855']);
         add_action('admin_post_h18_save_page_editor', [self::class, 'captureSave'], 5);
+    }
+
+    public static function enqueueRegressionHotfixV0855(): void
+    {
+        $page = isset($_GET['page']) ? sanitize_key((string) wp_unslash($_GET['page'])) : '';
+        if ($page !== 'hangar18-pages' || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        $pluginDir = dirname(__DIR__, 2);
+        $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
+        $jsPath = $pluginDir . '/assets/ultimate-designer-lego-regression-hotfix-v0855.js';
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-regression-hotfix-v0855',
+            $pluginUrl . 'assets/ultimate-designer-lego-regression-hotfix-v0855.js',
+            [
+                'hangar18-ultimate-designer-lego-stack-selection-v0853',
+                'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843',
+            ],
+            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.55',
+            false
+        );
     }
 
     /** @return array<string,mixed> */
