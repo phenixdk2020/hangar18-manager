@@ -1,13 +1,12 @@
 {
-  "version": "0.8.62",
-  "title": "LEGO-editor — placement og stabilitet",
+  "version": "0.8.63",
+  "title": "LEGO-editor — persistent rød selection",
   "changelog": [
-    "Eksisterende elementer følger nu den valgte LEGO-zone ved afslutning af drag i stedet for at falde tilbage til almindelig reorder.",
-    "Venstre og Højre kan samle to eksisterende elementer i samme Auto-kasse; Over og Under bruger den eksisterende stack-model, når målet ligger i et Grid.",
-    "Almindeligt valg af element eller Rediger starter ikke længere den gamle komplette nesting-refresh.",
-    "Parent-key guard tæller nu både normale Grid-tiles og lodrette stack-segmenter, så en gyldig stack ikke udløser gentagne reconcile-renders.",
-    "Den eksisterende røde selection-ramme og persistente selection-key bevares uden ændring af page schema eller stack-persistence.",
-    "Vehicle/Event/Gallery og updater-backup/rollback er ikke ændret; UPDATER-STATUS-001 forbliver separat backlog.",
-    "v0.8.62 er en manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "Selection følger nu den kanoniske element-key i stedet for en bestemt visuel wrapper.",
+    "Normale Grid-tiles, child-cards og v0.8.51 stack-segmenter får samme selection-markering, så den røde ramme bevares gennem stack-render.",
+    "Den kanoniske række får en persistent selection-fallback, også når WordPress midlertidigt flytter .is-selected til Inspector-handoff.",
+    "Klik på et stack-segment vælger nu segmentets egen element-key direkte.",
+    "Ingen ændring af drag/drop, bredde/højde-resize, page schema, stack-persistence, Vehicle/Event/Gallery eller updater-backup/rollback.",
+    "v0.8.63 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
   ]
 }
