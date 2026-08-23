@@ -1,14 +1,16 @@
 {
-  "version": "0.8.75",
-  "title": "LEGO-editor — korrekt top-level selection og IND I layoutkasser",
+  "version": "0.8.76",
+  "title": "Ultimate Designer — opt-in persistent trace/debug",
   "changelog": [
-    "Brugerens v0.8.74-diagnose bekræfter at nested child-selection nu fungerer stabilt: mode=nested, matching=1 og selectedMatching=1. Det resterende selection-problem er kun skiftet fra nested child til et nyt top-level element.",
-    "Top-level selection læser nu den faktisk valgte canonical/Inspector-key efter det synkrone Rediger/Inspector-handoff og skifter eksplicit til top-mode. Dermed fjernes den gamle nested røde markering, når et frit element vælges.",
-    "Drag-root-cause er identificeret fra brugerens screenshot: målet er en Række- og kolonne-kasse (grid/flex layout), mens tidligere IND I KASSEN-logik kun klassificerede almindelig container/Kasse som inside-target.",
-    "IND I KASSEN-zonen gælder nu almindelig Kasse (container), Række-/kolonne-kasse (flex) og Række- og kolonne-kasse (grid). Specialtypen Auto-kasser er fortsat undtaget og beholder sin særskilte placement-semantik.",
-    "Placement-valideringen accepterer de samme tre layoutkassetyper, så et almindeligt Tekst/Billede-element kan få LayoutParentKey sat til container/flex/grid-målet efter slip på IND I KASSEN.",
-    "v0.8.51 Over/Under-stacking og Auto-kasser ændres ikke. Diagnosepanelet beholdes til manuel verifikation.",
-    "Updateren og repaint-sporet ændres ikke; UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne.",
-    "Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede. v0.8.75 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "Tilføjer et separat trace/debug-lag til Ultimate Designer for at gøre fremtidig fejlfinding reproducerbar i stedet for at basere sig på enkeltstående snapshots.",
+    "Udvidet fejllogning er FRA som standard. På Opdateringer findes nu en master TIL/FRA-indstilling; trace-scriptet indlæses kun i Designeren, når master er slået til.",
+    "Når master er TIL, starter tung event-log ikke automatisk. Designerens tracebjælke har Start test, Stop/Fortsæt log, Markér, Kopiér, TXT, JSON og Nulstil.",
+    "Trace registrerer klik/dobbeltklik, pointer/fokus, input/change, tastatur, drag/drop, jQuery Sortable events, relevante DOM-mutations-sammendrag, selection/drop runtime-state, key/type/parent, Inspector/fokus og centrale runtime API-kald.",
+    "JavaScript-fejl, unhandled promise rejections samt console.warn/error registreres som tvungne fejl-events, mens trace-værktøjet er indlæst, også når den tunge event-log er stoppet.",
+    "Password/token/nonce/credential-lignende felter maskeres. Trace-data gemmes browser-lokalt i localStorage og overlever refresh; den sender ikke logdata til serveren.",
+    "Opdateringer-siden viser masterstatus samt browserens gemte trace-session/eventantal og kan eksportere eller nulstille den gemte JSON-log.",
+    "Det tidligere dynamiske diagnostic-loader-trick fra v0.8.73 fjernes. Trace-assets enqueue'es direkte af WordPress med filemtime cache-busting, så logger-versionen er entydig.",
+    "LEGO-SELECTION-075 og LEGO-INSIDE-075 fryses som åbne fejl til en senere trace-baseret reproduktion. v0.8.76 ændrer ikke deres placement/selection semantics.",
+    "Updater-fejlene UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver næste aktive backlogspor. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede."
   ]
 }
