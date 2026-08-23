@@ -49,6 +49,7 @@
     let resizePointerActive = false;
     let activeCanvasKey = '';
     let activeSelectionMode = 'top';
+    let selectionObserver = null;
 
     function rowKey(row) {
         if (!row) { return ''; }
@@ -67,8 +68,8 @@
         if (!value) { return ''; }
         activeCanvasKey = value;
         activeSelectionMode = mode === 'nested' ? 'nested' : 'top';
-        document.documentElement.setAttribute('data-h18-v0872-selection-mode', activeSelectionMode);
-        document.documentElement.setAttribute('data-h18-v0872-selection-key', value);
+        document.documentElement.setAttribute('data-h18-v0874-selection-mode', activeSelectionMode);
+        document.documentElement.setAttribute('data-h18-v0874-selection-key', value);
         return value;
     }
 
@@ -259,9 +260,6 @@
         } else {
             const row = trigger.closest('.h18-page-section-row');
             const key = rowKey(row) || selectedRowKey();
-            /* Nested selection opens the same canonical row in Inspector. That
-             * programmatic handoff must not downgrade the active child to a
-             * top-level selection for the identical key. */
             const sameNestedHandoff = Boolean(
                 key &&
                 activeSelectionMode === 'nested' &&
@@ -277,31 +275,47 @@
         }, 0);
     }, false);
 
-    if (window.MutationObserver) {
-        const observer = new MutationObserver(function () {
+    function installSelectionObserver() {
+        if (selectionObserver || !window.MutationObserver || !document.body) { return false; }
+        selectionObserver = new MutationObserver(function () {
             clarifyInspectorControls();
             refreshSelectedCanvasMarker();
         });
-        observer.observe(document.body, { childList: true, subtree: true });
+        selectionObserver.observe(document.body, { childList: true, subtree: true });
+        document.documentElement.setAttribute('data-h18-v0874-selection-observer', 'active');
+        return true;
     }
 
-    window.setTimeout(function () {
+    function initializeSelectionDom() {
+        installSelectionObserver();
         const initial = selectedRowKey();
         if (initial && !activeCanvasKey) { rememberSelection(initial, 'top'); }
         clarifyInspectorControls();
         refreshSelectedCanvasMarker();
-    }, 0);
+    }
 
+    /* Register the public owner BEFORE touching document.body. Earlier versions
+     * could throw while observing a not-yet-created body, leaving click handlers
+     * installed but no runtime API/observer to restore selection after render. */
     document.documentElement.setAttribute('data-h18-lego-inspector-only', '0.8.47');
-    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.72');
+    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.74');
     window.__h18LegoInspectorOnlyV0847 = {
-        version: '0.8.72',
-        selectionOwner: 'stable-v0848-key-preserve-nested-handoff',
+        version: '0.8.74',
+        selectionOwner: 'stable-v0848-key-safe-init',
         selectInspectorForNode: selectInspectorForNode,
         armCompositionReconcile: armCompositionReconcile,
         clarifyInspectorControls: clarifyInspectorControls,
         refreshSelectedCanvasMarker: refreshSelectedCanvasMarker,
         rememberSelectedCanvasKey: function (key, nested) { return rememberSelection(key, nested ? 'nested' : 'top'); },
-        activeSelection: function () { return { key: activeCanvasKey, mode: activeSelectionMode }; }
+        activeSelection: function () { return { key: activeCanvasKey, mode: activeSelectionMode }; },
+        observerActive: function () { return Boolean(selectionObserver); }
     };
+
+    if (document.body) {
+        window.setTimeout(initializeSelectionDom, 0);
+    } else if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeSelectionDom, { once: true });
+    } else {
+        window.setTimeout(initializeSelectionDom, 0);
+    }
 }(jQuery));
