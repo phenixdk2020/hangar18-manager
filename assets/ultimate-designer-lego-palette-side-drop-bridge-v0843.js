@@ -6,6 +6,7 @@
     const UNDER_ZONE_SELECTOR = '.h18-v0838-drop-zone[data-h18-v0838-position="under"]:not(.is-disabled)';
     const ACTIVE_ROW_SELECTOR = '#h18-page-sections-sortable > .h18-page-section-row:not(.h18-page-section-removed)';
     const INSPECTOR_SELECTOR = '#h18-page-inspector-target';
+    const LEGACY_AUTO_DROP_SELECTOR = '.h18-v0814-auto-drop-zone,.h18-v0814-auto-kasse-drop,.h18-ud-auto-box-empty-drop,[data-h18-v0814-auto-drop]';
     let redispatching = false;
 
     function activePaletteDrag() {
@@ -121,9 +122,63 @@
         return found;
     }
 
-    /* LEGO-054: preserve the known-good v0.8.51 nested placement model, but
-     * keep the palette drop intention alive until WordPress has actually
-     * created the new row. */
+    /* LEGO-055: the legacy Auto-kasse insertion surface is no longer part of
+     * the LEGO composition model. Remove it at source-render time and after
+     * later editor re-renders instead of relying on a scoped CSS hide. */
+    function removeLegacyAutoDropPrompts(root) {
+        const scope = root && root.querySelectorAll ? root : document;
+        if (scope.matches && scope.matches(LEGACY_AUTO_DROP_SELECTOR)) {
+            scope.remove();
+            return;
+        }
+        scope.querySelectorAll(LEGACY_AUTO_DROP_SELECTOR).forEach(function (node) { node.remove(); });
+    }
+    function watchLegacyAutoDropPrompts() {
+        removeLegacyAutoDropPrompts(document);
+        if (!window.MutationObserver) { return; }
+        const root = document.body || document.documentElement;
+        if (!root) { return; }
+        const observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                Array.from(mutation.addedNodes || []).forEach(function (node) {
+                    if (node && node.nodeType === 1) { removeLegacyAutoDropPrompts(node); }
+                });
+            });
+        });
+        observer.observe(root, { childList: true, subtree: true });
+    }
+
+    function nestedAdoptionComplete(api, childKey, targetKey, targetParentKey, position) {
+        const liveChild = rowByKey(childKey);
+        const liveTarget = rowByKey(targetKey);
+        if (!liveChild || !liveTarget) { return false; }
+        if (parentKey(liveChild) !== targetParentKey || parentKey(liveTarget) !== targetParentKey) { return false; }
+
+        if (typeof api.rowByKey !== 'function' || typeof api.rowType !== 'function' || typeof api.stackStateForKey !== 'function') {
+            return false;
+        }
+        const apiParent = api.rowByKey(targetParentKey);
+        if (!apiParent || !apiParent.length) { return false; }
+        if (api.rowType(apiParent) !== 'grid') { return true; }
+
+        const childStack = api.stackStateForKey(childKey) || {};
+        const targetStack = api.stackStateForKey(targetKey) || {};
+        const childRoot = String(childStack.StackRootKey || '');
+        const targetRoot = String(targetStack.StackRootKey || targetKey);
+        const childOrder = Number(childStack.StackOrder);
+        const targetOrder = Number(targetStack.StackOrder);
+        if (!childRoot || childRoot !== targetRoot) { return false; }
+        if (!Number.isFinite(childOrder) || !Number.isFinite(targetOrder)) { return false; }
+        if (position === 'over' && !(childOrder < targetOrder)) { return false; }
+        if (position === 'under' && !(childOrder > targetOrder)) { return false; }
+        return true;
+    }
+
+    /* LEGO-055: keep the palette drop intention alive until the live editor
+     * proves that both the parent relation and (for grids) the vertical stack
+     * state have actually been persisted. adoptUnder() can temporarily report
+     * true while WordPress is still hydrating the new row, so success alone is
+     * not a valid completion signal. */
     function adoptNestedDrop(before, targetRow, position) {
         if (!targetRow) { return; }
         const targetKey = rowKey(targetRow);
@@ -143,13 +198,13 @@
             const liveTarget = rowByKey(targetKey);
             const api = window.__h18LegoFixesV0851;
             if (!newRow || !liveTarget || !api || typeof api.adoptUnder !== 'function') { return false; }
+            const childKey = rowKey(newRow);
             const liveParent = parentKey(liveTarget) || targetParentKey;
-            if (liveParent !== targetParentKey) { return false; }
-            if (api.adoptUnder(rowKey(newRow), targetKey, position) === true) {
-                finish();
-                return true;
-            }
-            return false;
+            if (!childKey || liveParent !== targetParentKey) { return false; }
+            if (api.adoptUnder(childKey, targetKey, position) !== true) { return false; }
+            if (!nestedAdoptionComplete(api, childKey, targetKey, targetParentKey, position)) { return false; }
+            finish();
+            return true;
         }
 
         if (window.MutationObserver) {
@@ -222,11 +277,17 @@
         adoptNestedDrop(before, targetRow, 'under');
     }, true);
 
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watchLegacyAutoDropPrompts, { once: true });
+    } else {
+        watchLegacyAutoDropPrompts();
+    }
+
     document.documentElement.setAttribute('data-h18-lego-palette-side-drop-bridge', '0.8.43');
     document.documentElement.setAttribute('data-h18-lego-palette-vertical-drop-bridge', '0.8.46');
-    document.documentElement.setAttribute('data-h18-lego-palette-nested-drop-stability', '0.8.54');
+    document.documentElement.setAttribute('data-h18-lego-palette-nested-drop-stability', '0.8.55');
     window.__h18LegoPaletteSideDropBridgeV0843 = {
-        version: '0.8.43', capabilityVersion: '0.8.51',
+        version: '0.8.43', capabilityVersion: '0.8.55',
         sideZoneAt: sideZoneAt, overZoneAt: overZoneAt, underZoneAt: underZoneAt,
         canonicalUnderTarget: canonicalUnderTarget, canonicalOverTarget: canonicalOverTarget,
         activePaletteDrag: activePaletteDrag
