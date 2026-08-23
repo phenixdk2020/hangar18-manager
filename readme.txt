@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.72
+Version: 0.8.73
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.73 – LEGO-editor — read-only diagnose af selection og Kasse-drop ==
+
+Nyt:
+- Registrerer v0.8.72 som manuel FAIL: child-selection forsvinder fortsat, og IND I KASSEN bliver fortsat ikke synlig i brugerens live drag-scenarie.
+- v0.8.73 ændrer ikke placement-, ParentKey-, selection- eller stack-semantik. Den er en ren diagnoseversion for at stoppe blind iteration.
+- Tilføjer et read-only LEGO-diagnosepanel i editoren med aktiv selection-key/mode, antal matchende og markerede nested DOM-noder, native selected-row key og beregnet outline.
+- Panelet viser samtidig drag source key/type/mode, samlet antal overlays, antal Kasse-overlays, antal IND I KASSEN-zoner, synlige inside-zoner, aktiv dropzone og sidste inside-resultat.
+- Diagnosen fører en kort tidslinje ved klik, pointerdown, Sortable start/move/stop og relevante DOM-mutationer, så splitsekunds-selection kan ses som state-overgang i stedet for kun visuelt.
+- Kopiér diagnose-knappen kopierer hele den aktuelle state og hændelsestidslinje uden behov for browserens udviklerværktøjer.
+- Asset cache-busting er verificeret som filemtime-baseret; denne diagnose skal derfor kunne skelne live runtime-state fra kodeantagelser.
+- UPDATER-STATUS-001, UPDATER-VERSION-002 og LEGO-REPAINT-062 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.73 er diagnostic-only på test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.72 – LEGO-editor — bevar nested selection og prioriter IND I KASSEN ==
