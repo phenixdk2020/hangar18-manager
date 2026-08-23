@@ -1,19 +1,18 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.62",
+  "version": "0.8.63",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T13:19:35Z",
+  "published_utc": "2026-08-23T13:25:37Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "b34e0715d28206087ef3f8a2e22a569a25897f32985c828947fadb73d7ba1e62",
+  "package_sha256": "49387856070b576f6a700c419a1aba111f5e301ed282389f0729944c4c715cbb",
   "changelog": [
-    "Eksisterende elementer følger nu den valgte LEGO-zone ved afslutning af drag i stedet for at falde tilbage til almindelig reorder.",
-    "Venstre og Højre kan samle to eksisterende elementer i samme Auto-kasse; Over og Under bruger den eksisterende stack-model, når målet ligger i et Grid.",
-    "Almindeligt valg af element eller Rediger starter ikke længere den gamle komplette nesting-refresh.",
-    "Parent-key guard tæller nu både normale Grid-tiles og lodrette stack-segmenter, så en gyldig stack ikke udløser gentagne reconcile-renders.",
-    "Den eksisterende røde selection-ramme og persistente selection-key bevares uden ændring af page schema eller stack-persistence.",
-    "Vehicle/Event/Gallery og updater-backup/rollback er ikke ændret; UPDATER-STATUS-001 forbliver separat backlog.",
-    "v0.8.62 er en manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "Selection følger nu den kanoniske element-key i stedet for en bestemt visuel wrapper.",
+    "Normale Grid-tiles, child-cards og v0.8.51 stack-segmenter får samme selection-markering, så den røde ramme bevares gennem stack-render.",
+    "Den kanoniske række får en persistent selection-fallback, også når WordPress midlertidigt flytter .is-selected til Inspector-handoff.",
+    "Klik på et stack-segment vælger nu segmentets egen element-key direkte.",
+    "Ingen ændring af drag/drop, bredde/højde-resize, page schema, stack-persistence, Vehicle/Event/Gallery eller updater-backup/rollback.",
+    "v0.8.63 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
   ]
 }

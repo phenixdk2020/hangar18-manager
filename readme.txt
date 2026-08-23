@@ -1,6 +1,17 @@
 === Hangar18 Manager ===
-Version: 0.8.62
+Version: 0.8.63
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.63 – LEGO-editor — persistent rød selection ==
+
+Nyt:
+- Selection følger nu den kanoniske element-key i stedet for en bestemt visuel wrapper.
+- Normale Grid-tiles, child-cards og v0.8.51 stack-segmenter får samme selection-markering, så den røde ramme bevares gennem stack-render.
+- Den kanoniske række får en persistent selection-fallback, også når WordPress midlertidigt flytter .is-selected til Inspector-handoff.
+- Klik på et stack-segment vælger nu segmentets egen element-key direkte.
+- Ingen ændring af drag/drop, bredde/højde-resize, page schema, stack-persistence, Vehicle/Event/Gallery eller updater-backup/rollback.
+- v0.8.63 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.62 – LEGO-editor — placement og stabilitet ==
