@@ -16,6 +16,7 @@ final class UltimateDesignerTraceAdminController
     private const OPTION = 'hangar18_manager_trace_settings_v1';
     private const STORAGE_KEY = 'h18.ultimate-designer.trace.v0876';
     private const TRACE_VERSION = '0.8.76';
+    private const TRACE_TOOLS_VERSION = '0.8.79';
     private static bool $registered = false;
 
     public static function register(): void
@@ -112,6 +113,25 @@ final class UltimateDesignerTraceAdminController
             ],
             is_file($tracePath) ? (string) filemtime($tracePath) : self::TRACE_VERSION,
             true
+        );
+
+        $toolsPath = $pluginDir . '/assets/ultimate-designer-trace-tools-v0879.js';
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-trace-tools-v0879',
+            $pluginUrl . 'assets/ultimate-designer-trace-tools-v0879.js',
+            ['hangar18-ultimate-designer-trace-v0876'],
+            is_file($toolsPath) ? (string) filemtime($toolsPath) : self::TRACE_TOOLS_VERSION,
+            true
+        );
+        wp_localize_script(
+            'hangar18-ultimate-designer-trace-tools-v0879',
+            'H18UltimateDesignerTraceToolsV0879',
+            [
+                'pluginVersion' => class_exists('Hangar18_Manager') ? (string) \Hangar18_Manager::VERSION : '',
+                'traceVersion' => self::TRACE_VERSION,
+                'toolsVersion' => self::TRACE_TOOLS_VERSION,
+                'storageKey' => self::STORAGE_KEY,
+            ]
         );
     }
 
