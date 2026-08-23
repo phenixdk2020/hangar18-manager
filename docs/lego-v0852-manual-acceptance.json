@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "build": {
+    "commitSha": "8aed9aa927ea864465a307fb50493d5ccfe4e1a6",
+    "pluginVersion": "0.8.52",
+    "packageSha256": "e2eb69a04a2a8b0126d428640bdd344a2bb16a37919fa511412209588c765408"
+  },
+  "environment": {
+    "stagingUrl": "https://test2.hangar18.dk",
+    "browser": "PENDING",
+    "os": "PENDING",
+    "desktopViewport": "PENDING",
+    "tabletViewport": "PENDING",
+    "mobileViewport": "PENDING"
+  },
+  "scenarios": {
+    "A": {"status": "PENDING", "evidence": [], "note": "Elementbibliotek og drag/drop: Kasse, Række-/kolonne-kasse, Række- og kolonne-kasse og Auto-kasser skal fortsat fungere med dansk terminologi uden synlig legacy Auto-kasse prompt."},
+    "B": {"status": "PENDING", "evidence": [], "note": "Kasse/nesting: eksisterende container/flex/grid, LayoutParentKey og nested Over/Under fra v0.8.51 skal være uændret efter LEGO-052 hotfixen."},
+    "C": {"status": "PENDING", "evidence": [], "note": "Nested selection: klik på tekst, billede og andre børn i samme Række- og kolonne-kasse skal stabilisere straks uden vedvarende Opdaterer layoutet/reconcile-loop; børn må ikke forsvinde eller duplikeres."},
+    "D": {"status": "PENDING", "evidence": [], "note": "Resize: lodret kolonne-resize og vandret 2D højderesize fra v0.8.51 skal fortsat fungere uden at selection eller nested layout går tabt."},
+    "E": {"status": "PENDING", "evidence": [], "note": "Responsive Desktop/Mobil-værdier og arv skal være uændrede; LEGO-052 må ikke mutere gemte frontend-layoutværdier."},
+    "F": {"status": "PENDING", "evidence": [], "note": "Inspector-selection: valgt element skal få og beholde den komplette røde markering, også efter skift mellem nested tekst/billede og efter Inspector-handoff."},
+    "G": {"status": "PENDING", "evidence": [], "note": "Inspector/workspace: Luft, baggrund og placering skal vises i én full-width Desktop/Mobil-shell med læsbare labels og inputfelter; den gamle smalle fler-kolonne-visning må ikke genopstå."},
+    "H": {"status": "PENDING", "evidence": [], "note": "Undo/Redo og historik skal være uændret; selection alene må ikke oprette historiktrin, og tidligere v0.8.51 nested/drop/resize-historik skal bestå."},
+    "I": {"status": "PENDING", "evidence": [], "note": "Save/reload persistence: eksisterende 2D stack/højdefordeling, side-, Kasse- og layoutdata skal overleve gem/genindlæs uden schemaændring."},
+    "J": {"status": "PENDING", "evidence": [], "note": "Ugemt forhåndsvisning Desktop/Tablet/Mobil skal ligne frontend og må ikke påvirkes af Inspector hotfixen eller vise editor-chrome."},
+    "K": {"status": "PENDING", "evidence": [], "note": "Backup/restore sanity og eksisterende page backup/restore flows skal være uændret af LEGO-052."},
+    "L": {"status": "PENDING", "evidence": [], "note": "Vehicle/Event/Gallery og allerede designede sider skal være visuelt og funktionelt uændrede; public cutover må ikke aktiveres af denne release."}
+  },
+  "criticalFlags": {
+    "consoleError": false,
+    "dataLossOrDuplicate": false,
+    "protectedDomainRegression": false
+  },
+  "overallStatus": "PENDING",
+  "notes": "v0.8.52 official test package is built after Architecture QA and Editor Runtime Fast QA passed on the LEGO-052 candidate. LEGO Editor QA passed after an isolated rerun of the known timing-sensitive legacy media double-click test; the new LEGO-052 selection-loop and Inspector full-width regression tests pass in system Chrome, Chromium, Firefox and WebKit. All v0.8.52 manual A-L scenarios intentionally start PENDING. Public cutover remains unauthorized."
+}
