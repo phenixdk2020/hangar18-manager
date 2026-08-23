@@ -22,6 +22,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Resolve and index canonical backlog
+        id: backlog
+        shell: bash
+        run: |
+          FILE="$(ls docs/active-backlog-v*.md | sort -V | tail -n1)"
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+          python3 tools/backlog-governance.py --backlog "$FILE" --output docs/backlog-index.json
+
       - name: Apply release metadata
         shell: bash
         run: |
@@ -46,6 +54,12 @@ jobs:
               raise SystemExit('release-config.json must contain at least one backlog_ids entry')
           if not changelog:
               raise SystemExit('release-config.json must contain at least one changelog item')
+
+          index = json.loads((root / 'docs/backlog-index.json').read_text(encoding='utf-8'))
+          known = {str(item.get('id', '')) for item in index.get('items', [])}
+          unknown = [item for item in backlog_ids if item not in known]
+          if unknown:
+              raise SystemExit('release-config references unknown backlog IDs: ' + ', '.join(unknown))
 
           php_path = root / 'hangar18-manager.php'
           php = php_path.read_text(encoding='utf-8')
@@ -87,6 +101,16 @@ jobs:
               readme = readme[:insertion] + section + readme[insertion:]
           readme_path.write_text(readme, encoding='utf-8')
           PY
+
+      - name: Source QA for release support files
+        shell: bash
+        run: |
+          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py
+          python3 tools/trace-redaction-qa.py
+          node --check assets/ultimate-designer-trace-tools-v0879.js
+          node --check assets/updater-support-v0879.js
+          php -l src/Admin/UltimateDesignerTraceAdminController.php
+          php -l src/Admin/UpdaterStateConsistencyAdminController.php
 
       - name: Build installable ZIP
         shell: bash
@@ -141,7 +165,7 @@ jobs:
           VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add hangar18-manager.php readme.txt update.json release-manifest.json dist/hangar18-manager.zip
+          git add hangar18-manager.php readme.txt update.json release-manifest.json docs/backlog-index.json dist/hangar18-manager.zip
           if git diff --cached --quiet; then
             echo 'Release files are already current.'
             exit 0
