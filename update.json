@@ -1,22 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.76",
+  "version": "0.8.77",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T20:25:47Z",
+  "published_utc": "2026-08-23T20:47:32Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "148ceec83e3c756f11741c8e7f53f2c94535e8434379d919fa68c63d2264a0d6",
+  "package_sha256": "9df4c82bb2932d40c4025b22522bdc458d7568fa65161538469131495139fc1f",
   "changelog": [
-    "Tilføjer et separat trace/debug-lag til Ultimate Designer for at gøre fremtidig fejlfinding reproducerbar i stedet for at basere sig på enkeltstående snapshots.",
-    "Udvidet fejllogning er FRA som standard. På Opdateringer findes nu en master TIL/FRA-indstilling; trace-scriptet indlæses kun i Designeren, når master er slået til.",
-    "Når master er TIL, starter tung event-log ikke automatisk. Designerens tracebjælke har Start test, Stop/Fortsæt log, Markér, Kopiér, TXT, JSON og Nulstil.",
-    "Trace registrerer klik/dobbeltklik, pointer/fokus, input/change, tastatur, drag/drop, jQuery Sortable events, relevante DOM-mutations-sammendrag, selection/drop runtime-state, key/type/parent, Inspector/fokus og centrale runtime API-kald.",
-    "JavaScript-fejl, unhandled promise rejections samt console.warn/error registreres som tvungne fejl-events, mens trace-værktøjet er indlæst, også når den tunge event-log er stoppet.",
-    "Password/token/nonce/credential-lignende felter maskeres. Trace-data gemmes browser-lokalt i localStorage og overlever refresh; den sender ikke logdata til serveren.",
-    "Opdateringer-siden viser masterstatus samt browserens gemte trace-session/eventantal og kan eksportere eller nulstille den gemte JSON-log.",
-    "Det tidligere dynamiske diagnostic-loader-trick fra v0.8.73 fjernes. Trace-assets enqueue'es direkte af WordPress med filemtime cache-busting, så logger-versionen er entydig.",
-    "LEGO-SELECTION-075 og LEGO-INSIDE-075 fryses som åbne fejl til en senere trace-baseret reproduktion. v0.8.76 ændrer ikke deres placement/selection semantics.",
-    "Updater-fejlene UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver næste aktive backlogspor. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede."
+    "UPDATER-VERSION-002 og UPDATER-STATUS-001 samles i ét isoleret state-consistency fix uden ændringer i LEGO-editoren.",
+    "Når Opdateringer åbnes, hentes update.json frisk og der skrives ét atomisk state-snapshot med current_version, manifest.version, update_available, kompatibilitet og checked_at_utc.",
+    "Opdatering tilgængelig beregnes altid fra præcis den installerede version og den manifestversion, der samtidig vises som Seneste GitHub-version.",
+    "Efter en vellykket pluginopdatering vil første load af Opdateringer derfor genlæse den aktive Hangar18_Manager::VERSION og give NEJ når installeret version er lig eller nyere end manifestversionen.",
+    "Ved midlertidig GitHub-fejl beholdes senest kendte manifest i UI, men JA/NEJ genberegnes mod den aktuelt aktive pluginversion, så et stale JA ikke genopstår.",
+    "Det eksisterende legacy updater-flow ejer fortsat installation, safety backup, package SHA-verifikation, code backup og automatisk rollback; det nye lag ændrer kun read-only state før render.",
+    "TRACE-076 ændres ikke. LEGO-SELECTION-075, LEGO-INSIDE-075 og LEGO-REPAINT-062 forbliver frosset til trace-baseret reproduktion.",
+    "Vehicle/Event/Gallery, page schema, backup/restore-data og public cutover ændres ikke."
   ]
 }

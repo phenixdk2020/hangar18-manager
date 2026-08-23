@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.76
+Version: 0.8.77
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.77 – Updater — atomisk versionsstatus og korrekt JA/NEJ efter update ==
+
+Nyt:
+- UPDATER-VERSION-002 og UPDATER-STATUS-001 samles i ét isoleret state-consistency fix uden ændringer i LEGO-editoren.
+- Når Opdateringer åbnes, hentes update.json frisk og der skrives ét atomisk state-snapshot med current_version, manifest.version, update_available, kompatibilitet og checked_at_utc.
+- Opdatering tilgængelig beregnes altid fra præcis den installerede version og den manifestversion, der samtidig vises som Seneste GitHub-version.
+- Efter en vellykket pluginopdatering vil første load af Opdateringer derfor genlæse den aktive Hangar18_Manager::VERSION og give NEJ når installeret version er lig eller nyere end manifestversionen.
+- Ved midlertidig GitHub-fejl beholdes senest kendte manifest i UI, men JA/NEJ genberegnes mod den aktuelt aktive pluginversion, så et stale JA ikke genopstår.
+- Det eksisterende legacy updater-flow ejer fortsat installation, safety backup, package SHA-verifikation, code backup og automatisk rollback; det nye lag ændrer kun read-only state før render.
+- TRACE-076 ændres ikke. LEGO-SELECTION-075, LEGO-INSIDE-075 og LEGO-REPAINT-062 forbliver frosset til trace-baseret reproduktion.
+- Vehicle/Event/Gallery, page schema, backup/restore-data og public cutover ændres ikke.
 
 
 == Version 0.8.76 – Ultimate Designer — opt-in persistent trace/debug ==
