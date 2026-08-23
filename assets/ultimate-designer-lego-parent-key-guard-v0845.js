@@ -105,7 +105,36 @@
     function visualChildCount($auto) {
         const $preview = $auto.children('.h18-canvas-preview').first();
         if (!$preview.length) { return 0; }
-        return $preview.find('.h18-ud-auto-box-grid .h18-v0811-auto-box').length;
+        const $grid = $preview.children('.h18-ud-auto-box-grid').first();
+        if (!$grid.length) { return 0; }
+
+        // LEGO-062: a valid vertical stack intentionally removes the stacked
+        // child's outer .h18-v0811-auto-box and renders it as a stack segment
+        // inside the root tile. Counting only outer tiles therefore made a
+        // healthy 2-element stack look like 1 missing child and armed six full
+        // nesting refreshes. Count unique canonical child keys instead.
+        const keys = new Set();
+        $grid.children('.h18-v0811-auto-box').each(function () {
+            const key = String(
+                this.getAttribute('data-h18-v0811-row') ||
+                this.getAttribute('data-h18-v0840-auto-child') ||
+                ''
+            ).trim();
+            if (key) { keys.add(key); }
+
+            $(this)
+                .children('.h18-v0851-stack-column')
+                .children('.h18-v0851-stack-segment')
+                .each(function () {
+                    const stackKey = String(
+                        this.getAttribute('data-h18-v0851-stack-key') ||
+                        this.getAttribute('data-h18-v0811-child') ||
+                        ''
+                    ).trim();
+                    if (stackKey) { keys.add(stackKey); }
+                });
+        });
+        return keys.size;
     }
 
     function autoRows() {
@@ -164,21 +193,16 @@
         armVisualReconcile();
     });
 
-    // Live WordPress can perform one more canvas/Inspector repaint after the
-    // canonical side-drop has already committed the correct LayoutParentKey
-    // model. That late repaint can leave an existing Auto-kasse preview at
-    // "0 stk." even though the two rows already point at the Auto-kasse. Undo
-    // followed by Redo fixes it because history performs a full render. These
-    // bounded post-gesture checkpoints perform only that missing visual
-    // reconciliation. They never create/move rows, write parents or touch
-    // history/persistence; nesting-tools remains the single placement authority.
+    // Bounded checkpoints remain as a safety net for a genuinely stale visual
+    // composition, but LEGO-062's stack-aware count prevents a valid stack from
+    // being mistaken for corruption and repeatedly rebuilt.
     document.addEventListener('drop', armVisualReconcile, true);
     document.addEventListener('dragend', armVisualReconcile, true);
 
-    document.documentElement.setAttribute('data-h18-lego-parent-key-guard', '0.8.45');
-    document.documentElement.setAttribute('data-h18-lego-live-reconcile', '0.8.45');
+    document.documentElement.setAttribute('data-h18-lego-parent-key-guard', '0.8.62');
+    document.documentElement.setAttribute('data-h18-lego-live-reconcile', '0.8.62');
     window.__h18LegoParentKeyGuardV0845 = {
-        version: '0.8.45',
+        version: '0.8.62',
         ensureParentOption: function (rowKeyValue, parentKeyValue) {
             return ensureParentOption(rowByKey(rowKeyValue), parentKeyValue);
         },
