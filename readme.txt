@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.67
+Version: 0.8.68
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.68 – LEGO-editor — restore kendt v0.8.51 child-selection ==
+
+Nyt:
+- Ruller selection-runtime tilbage til den kendte v0.8.51/LEGO-048-model, hvor nested .h18-v0811-child-card og Auto-box markeres direkte med is-h18-v0848-selected-element.
+- Fjerner de senere data-h18-v0865/data-h18-v0867 selection-lag og deres CSS-neutraliseringer, som gav manglende eller dobbelt rød markering.
+- ultimate-designer-lego-fixes-v0851.css er tilbage på v0.8.51-selection-kompatibilitet, så senere !important-regler ikke længere slukker den kendte child-outline.
+- IND I KASSEN holdes helt separat fra selection: en pointer-baseret handler følger den faktiske museposition under Sortable-drag og skriver kun parent/placement ved et gyldigt Kasse-hit.
+- Midten af et gyldigt Kasse-indhold vises med blå stiplet ramme under drag, så man kan se om inside-target faktisk registreres; eksisterende Venstre/Højre/Over/Under-zoner har fortsat prioritet.
+- Ved vellykket inside-drop sættes LayoutParentKey, canonical row placeres blandt Kassens children, gammel stack-state ryddes ved behov, order synkroniseres og nesting refreshes én gang.
+- Runtime QA-resultat gemmes i data-h18-v0868-last-inside-result uden console-spam.
+- Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.68 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.67 – LEGO-editor — stabil child-selection og pointerstyret IND I KASSEN ==
