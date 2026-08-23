@@ -106,12 +106,13 @@ test('LEGO-055 real-like palette Under beats side fallback and survives Inspecto
 
   await expect(page.locator('html')).toHaveAttribute('data-h18-lego-palette-nested-drop-stability', '0.8.55');
 
-  // Coordinates deliberately hit both the visual Under zone and the right-side
-  // hitbox. Under must win; old behavior falls through to side-by-side / 4-4-4.
+  // The point (190,150) is deliberately inside the actual overlap between the
+  // visual Under zone (x 80..200, y 140..180) and right-side hitbox
+  // (x 180..260, y 60..160). Under must win; old behavior becomes 4-4-4.
   await page.locator('#right-zone').evaluate((node) => {
     const event = new Event('drop', { bubbles: true, cancelable: true, composed: true });
-    Object.defineProperty(event, 'clientX', { value: 170 });
-    Object.defineProperty(event, 'clientY', { value: 135 });
+    Object.defineProperty(event, 'clientX', { value: 190 });
+    Object.defineProperty(event, 'clientY', { value: 150 });
     node.dispatchEvent(event);
   });
 
