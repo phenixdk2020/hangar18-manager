@@ -128,23 +128,22 @@ jQuery(function ($) {
         if ($sections.hasClass('ui-sortable')) { $sections.sortable('refresh'); }
     }
 
-    function explicitLegoZoneAtPoint(clientX, clientY) {
-        let found = false;
-        $('.h18-v0838-drop-zone:not(.is-disabled),.h18-v0811-side-zone').each(function () {
-            if (found || !this.getClientRects || !this.getClientRects().length) { return; }
-            const rect = this.getBoundingClientRect();
-            if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
-                found = true;
-            }
-        });
-        return found;
-    }
-
     function boxSurfaceForRow($box) {
         if (!$box || !$box.length) { return null; }
         const preview = $box.children('.h18-canvas-preview').first().get(0);
         if (!preview) { return null; }
         return preview.querySelector('.h18-ud-box-contents-preview') || preview;
+    }
+
+    function pointInsideCenter(rect, clientX, clientY) {
+        if (!rect || rect.width <= 0 || rect.height <= 0) { return false; }
+        const insetX = Math.min(72, Math.max(12, rect.width * 0.16));
+        const insetY = Math.min(42, Math.max(10, rect.height * 0.16));
+        const left = rect.width > (insetX * 2 + 24) ? rect.left + insetX : rect.left;
+        const right = rect.width > (insetX * 2 + 24) ? rect.right - insetX : rect.right;
+        const top = rect.height > (insetY * 2 + 24) ? rect.top + insetY : rect.top;
+        const bottom = rect.height > (insetY * 2 + 24) ? rect.bottom - insetY : rect.bottom;
+        return clientX >= left && clientX <= right && clientY >= top && clientY <= bottom;
     }
 
     function boxAtClientPoint(clientX, clientY, sourceKey) {
@@ -160,7 +159,7 @@ jQuery(function ($) {
             const surface = boxSurfaceForRow($box);
             if (!surface || !surface.getClientRects || !surface.getClientRects().length) { return; }
             const rect = surface.getBoundingClientRect();
-            if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) { return; }
+            if (!pointInsideCenter(rect, clientX, clientY)) { return; }
 
             const area = Math.max(1, rect.width * rect.height);
             if (area < bestArea) {
@@ -180,24 +179,25 @@ jQuery(function ($) {
 
     function updateInsideTarget(clientX, clientY) {
         if (!insideDrag) { return; }
-
-        if (explicitLegoZoneAtPoint(clientX, clientY)) {
-            insideDrag.boxKey = '';
-            clearInsideTarget();
-            return;
-        }
+        insideDrag.lastClientX = clientX;
+        insideDrag.lastClientY = clientY;
 
         const hit = boxAtClientPoint(clientX, clientY, insideDrag.sourceKey);
         insideDrag.boxKey = hit ? hit.key : '';
         clearInsideTarget();
-        if (hit && hit.surface) { hit.surface.classList.add('h18-v0868-inside-target'); }
+        if (hit && hit.surface) {
+            hit.surface.classList.add('h18-v0868-inside-target');
+            document.documentElement.setAttribute('data-h18-v0869-inside-candidate', hit.key);
+        } else {
+            document.documentElement.removeAttribute('data-h18-v0869-inside-candidate');
+        }
     }
 
     function movePlainElementIntoBox(sourceKey, boxKey) {
         const $source = rowByKey(sourceKey);
         const $box = rowByKey(boxKey);
         if (!canMovePlainElementIntoBox($source, $box)) {
-            document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'invalid-target');
+            document.documentElement.setAttribute('data-h18-v0869-last-inside-result', 'invalid-target');
             return false;
         }
 
@@ -211,14 +211,14 @@ jQuery(function ($) {
         $source.insertAfter($anchor);
 
         if (!setParent($source, boxKey)) {
-            document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'parent-write-failed');
+            document.documentElement.setAttribute('data-h18-v0869-last-inside-result', 'parent-write-failed');
             return false;
         }
 
         syncFlatOrder();
-        document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'ok');
-        document.documentElement.setAttribute('data-h18-v0868-last-inside-source', sourceKey);
-        document.documentElement.setAttribute('data-h18-v0868-last-inside-box', boxKey);
+        document.documentElement.setAttribute('data-h18-v0869-last-inside-result', 'ok');
+        document.documentElement.setAttribute('data-h18-v0869-last-inside-source', sourceKey);
+        document.documentElement.setAttribute('data-h18-v0869-last-inside-box', boxKey);
 
         const nesting = window.__h18NestingToolsV0840;
         if (nesting && typeof nesting.refresh === 'function') { nesting.refresh(); }
@@ -241,19 +241,20 @@ jQuery(function ($) {
     document.addEventListener('mousemove', trackPointer, true);
     document.addEventListener('pointermove', trackPointer, true);
 
-    $sections.on('sortstart.h18V0868InsideKasse', function (event, ui) {
+    $sections.on('sortstart.h18V0869InsideKasse', function (event, ui) {
         const $source = ui && ui.item ? ui.item : $();
         const sourceKey = rowKey($source);
         insideDrag = sourceKey && isPlainElement($source)
-            ? { sourceKey: sourceKey, boxKey: '' }
+            ? { sourceKey: sourceKey, boxKey: '', lastClientX: NaN, lastClientY: NaN }
             : null;
         if (insideDrag) {
             $source.attr('data-key', sourceKey);
-            document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'dragging');
+            document.documentElement.setAttribute('data-h18-v0869-last-inside-result', 'dragging');
+            document.documentElement.removeAttribute('data-h18-v0869-inside-candidate');
         }
     });
 
-    $sections.on('sort.h18V0868InsideKasse', function (event) {
+    $sections.on('sort.h18V0869InsideKasse', function (event) {
         if (!insideDrag) { return; }
         const original = event && event.originalEvent ? event.originalEvent : event;
         const clientX = Number(original && original.clientX);
@@ -263,28 +264,37 @@ jQuery(function ($) {
         }
     });
 
-    $sections.on('sortstop.h18V0868InsideKasse', function () {
+    $sections.on('sortstop.h18V0869InsideKasse', function () {
         if (!insideDrag) { return; }
         const state = insideDrag;
         insideDrag = null;
         clearInsideTarget();
+        document.documentElement.removeAttribute('data-h18-v0869-inside-candidate');
 
-        if (!state.boxKey) {
-            document.documentElement.setAttribute('data-h18-v0868-last-inside-result', 'no-box-target');
+        let finalBoxKey = '';
+        if (Number.isFinite(state.lastClientX) && Number.isFinite(state.lastClientY)) {
+            const finalHit = boxAtClientPoint(state.lastClientX, state.lastClientY, state.sourceKey);
+            finalBoxKey = finalHit ? finalHit.key : '';
+        }
+        if (!finalBoxKey) { finalBoxKey = state.boxKey; }
+
+        if (!finalBoxKey) {
+            document.documentElement.setAttribute('data-h18-v0869-last-inside-result', 'no-box-target');
             return;
         }
-        movePlainElementIntoBox(state.sourceKey, state.boxKey);
+        movePlainElementIntoBox(state.sourceKey, finalBoxKey);
     });
 
-    $sections.on('sortcancel.h18V0868InsideKasse', function () {
+    $sections.on('sortcancel.h18V0869InsideKasse', function () {
         insideDrag = null;
         clearInsideTarget();
+        document.documentElement.removeAttribute('data-h18-v0869-inside-candidate');
     });
 
-    document.documentElement.setAttribute('data-h18-lego-placement-stability', '0.8.68-pointer-inside-only');
+    document.documentElement.setAttribute('data-h18-lego-placement-stability', '0.8.69-center-inside');
     window.__h18LegoPlacementStabilityV0862 = {
-        version: '0.8.68',
-        placementOwner: 'pointer-inside-kasse-only',
+        version: '0.8.69',
+        placementOwner: 'center-of-kasse-inside-only',
         moveElementIntoBox: movePlainElementIntoBox
     };
 }());
