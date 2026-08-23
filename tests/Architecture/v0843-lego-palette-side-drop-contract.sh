@@ -29,16 +29,21 @@ grep -Fq "event.stopPropagation()" "$bridge"
 grep -Fq "data-h18-lego-palette-side-drop-bridge" "$bridge"
 grep -Fq "__h18LegoPaletteSideDropBridgeV0843" "$bridge"
 
-# LEGO-046/051 use the same event-target bridge for vertical semantics. The
-# bridge resolves a nested target but delegates hierarchy/stack state to LEGO-051.
+# LEGO-046/051/055 use the same event-target bridge for vertical semantics. The
+# bridge resolves the live nested target while hierarchy/stack writes remain in LEGO-051.
 grep -Fq 'data-h18-v0838-position="under"' "$bridge"
 grep -Fq 'data-h18-v0838-position="over"' "$bridge"
 grep -Fq "canonicalUnderTarget" "$bridge"
 grep -Fq "canonicalOverTarget" "$bridge"
 grep -Fq "nextTopLevelRow" "$bridge"
 grep -Fq "adoptNestedDrop" "$bridge"
+grep -Fq "snapshotRows" "$bridge"
+grep -Fq "findNewRow" "$bridge"
+grep -Fq "placementEstablished" "$bridge"
+grep -Fq "stackStateForKey" "$bridge"
 grep -Fq "data-h18-lego-palette-vertical-drop-bridge" "$bridge"
-grep -Fq "capabilityVersion: '0.8.51'" "$bridge"
+grep -Fq "data-h18-lego-palette-nested-drop-stability', '0.8.55'" "$bridge"
+grep -Fq "capabilityVersion: '0.8.55'" "$bridge"
 
 grep -Fq "change.h18V0845ParentKeyGuard" "$guard"
 grep -Fq ".h18-layout-parent-key" "$guard"
@@ -109,7 +114,7 @@ grep -Fq "hangar18-ultimate-designer-lego-drop-zones-v0838" "$controller"
 # The bridge remains an event-target adapter; actual hierarchy/stack writes live
 # in the dedicated LEGO-051 runtime and isolated stack controller.
 if grep -Eq 'setParent\s*\(|createAutoFor|placeRowBeside|LayoutParentKey\s*=|insertBefore\s*\(|insertAfter\s*\(|appendTo\s*\(|\.before\s*\(|\.after\s*\(|wp_update_post|update_option|localStorage|sessionStorage|undo\s*\(|redo\s*\(' "$bridge"; then
-  echo 'LEGO-041/046/051 bridge contract FAILED: palette bridge contains forbidden direct placement/persistence/history ownership.' >&2
+  echo 'LEGO-041/046/051/055 bridge contract FAILED: palette bridge contains forbidden direct placement/persistence/history ownership.' >&2
   exit 1
 fi
 
@@ -123,4 +128,4 @@ if grep -Eq 'setParent\s*\(|createAutoFor|placeRowBeside|LayoutParentKey\s*=|ins
   exit 1
 fi
 
-echo 'LEGO-041/042/046/047/051 palette + Inspector interaction contract: PASS'
+echo 'LEGO-041/042/046/047/051/055 palette + Inspector interaction contract: PASS'

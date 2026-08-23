@@ -204,7 +204,7 @@ test('live palette Under keeps intent beyond the old 280ms window and hides lega
   await page.addScriptTag({ path: fixesRuntime });
   await page.addScriptTag({ path: hotfixRuntime });
 
-  await expect(page.locator('html')).toHaveAttribute('data-h18-lego-palette-nested-drop-stability', '0.8.54');
+  await expect(page.locator('html')).toHaveAttribute('data-h18-lego-palette-nested-drop-stability', '0.8.55');
 
   await page.locator('#under-zone').evaluate((node) => {
     node.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true, composed: true }));
