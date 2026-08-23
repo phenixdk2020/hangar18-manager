@@ -1,0 +1,66 @@
+name: Backlog and Release Governance QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/active-backlog-v*.md'
+      - 'docs/backlog-index.json'
+      - 'docs/BACKLOG-CONTRIBUTING.md'
+      - 'release-config.json'
+      - 'update.json'
+      - 'dist/hangar18-manager.zip'
+      - 'tools/backlog-governance.py'
+      - 'tools/release-integrity.py'
+      - '.github/workflows/backlog-release-governance-qa.yml'
+  pull_request:
+    paths:
+      - 'docs/active-backlog-v*.md'
+      - 'docs/backlog-index.json'
+      - 'release-config.json'
+      - 'update.json'
+      - 'dist/hangar18-manager.zip'
+      - 'tools/backlog-governance.py'
+      - 'tools/release-integrity.py'
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve canonical backlog
+        id: backlog
+        shell: bash
+        run: |
+          FILE="$(ls docs/active-backlog-v*.md | sort -V | tail -n1)"
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+          echo "Canonical candidate: $FILE"
+      - name: Generate backlog index
+        shell: bash
+        run: |
+          python3 tools/backlog-governance.py --backlog '${{ steps.backlog.outputs.file }}' --output /tmp/backlog-index.json
+      - name: Verify duplicate IDs and required fields
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/backlog-index.json', encoding='utf-8'))
+          ids=[x['id'] for x in p['items']]
+          if len(ids)!=len(set(ids)):
+              raise SystemExit('duplicate backlog IDs')
+          for item in p['items']:
+              if not item['priority'] or not item['status'] or not item['definition_of_done']:
+                  raise SystemExit('incomplete backlog item: '+item['id'])
+          print(f"PASS: {len(ids)} backlog items")
+          PY
+      - name: Release integrity when package is present
+        shell: bash
+        run: |
+          if [ -f dist/hangar18-manager.zip ] && [ -f update.json ]; then
+            python3 tools/release-integrity.py
+          else
+            echo 'No built release package in this checkout; release integrity deferred to release workflow.'
+          fi
