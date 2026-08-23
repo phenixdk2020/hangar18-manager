@@ -35,5 +35,15 @@ final class Autoload
         ) {
             \Hangar18\UltimateDesigner\Event\EventArchiveRuntime::register();
         }
+
+        // UPDATER-003: normalize the updater status only in wp-admin. The legacy
+        // updater remains installation/backup/rollback owner.
+        if (
+            function_exists('is_admin') &&
+            function_exists('add_action') &&
+            is_admin()
+        ) {
+            \Hangar18\UltimateDesigner\Admin\UpdaterStateConsistencyAdminController::register();
+        }
     }
 }
