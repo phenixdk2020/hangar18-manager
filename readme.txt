@@ -1,6 +1,18 @@
 === Hangar18 Manager ===
-Version: 0.8.61
+Version: 0.8.62
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.62 – LEGO-editor — placement og stabilitet ==
+
+Nyt:
+- Eksisterende elementer følger nu den valgte LEGO-zone ved afslutning af drag i stedet for at falde tilbage til almindelig reorder.
+- Venstre og Højre kan samle to eksisterende elementer i samme Auto-kasse; Over og Under bruger den eksisterende stack-model, når målet ligger i et Grid.
+- Almindeligt valg af element eller Rediger starter ikke længere den gamle komplette nesting-refresh.
+- Parent-key guard tæller nu både normale Grid-tiles og lodrette stack-segmenter, så en gyldig stack ikke udløser gentagne reconcile-renders.
+- Den eksisterende røde selection-ramme og persistente selection-key bevares uden ændring af page schema eller stack-persistence.
+- Vehicle/Event/Gallery og updater-backup/rollback er ikke ændret; UPDATER-STATUS-001 forbliver separat backlog.
+- v0.8.62 er en manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.61 – LEGO-editor — stabil selection uden flerblink ==
