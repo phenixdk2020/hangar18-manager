@@ -1,21 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.58",
+  "version": "0.8.60",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T12:11:20Z",
+  "published_utc": "2026-08-23T12:37:17Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "240de06f1ca866ae9235193f4269f4907cc03f232ff28e7d4ebf405ffa5df493",
+  "package_sha256": "85dd0ac015189777b04a44ebe67ec8d1cadb819f1ee009e14718865612198235",
   "changelog": [
-    "Editorens kodebase er rullet tilbage til den kendte v0.8.51-baseline i stedet for at lægge flere hotfix-lag oven på v0.8.57.",
-    "Genskaber v0.8.51-adfærden for 2D Kasse-layout, hvor Over/Under kan oprette en lodret stak i samme Grid-kolonne.",
-    "Genskaber v0.8.51-markeringen af aktivt element som et separat komplet rødt overlay på alle fire sider.",
-    "Genskaber v0.8.51-håndteringen af Auto-kasse-hjælpetekst/pre-LEGO drop-chrome, hvor synlig legacy-tekst skjules mens de nødvendige interne drop-hit targets bevares.",
-    "Fjerner v0.8.52-v0.8.57 selection-, stack-, retry- og MutationObserver-hotfixlag fra den aktive editor-runtime ved at gendanne v0.8.51-kodetræet.",
-    "WhatIf/simulering fjernes fra Hangar18-admins brugerflade: checkboxe, knapper og hjælpetekster vises ikke længere og normal gemning sender ikke et WhatIf-felt.",
-    "Den historiske backend-kompatibilitet for WhatIf er ikke slettet i denne rollback, så gamle direkte requests ikke giver fatal fejl; funktionen er blot ikke længere eksponeret i UI'et.",
-    "Vehicle/Event/Gallery-funktionalitet er ikke ændret af rollbacken; sammenligningen mellem v0.8.51 og v0.8.57 viste ingen ændringer i disse domæner.",
-    "v0.8.58 er en testrelease til manuel editor-QA på test2; public cutover er fortsat ikke autoriseret."
+    "Fjerner hele v0.8.59 repaint/observer/selection-eksperimentet og gendanner den fungerende v0.8.58-runtime som aktiv editorbaseline.",
+    "Drag/drop, Over/Under, Grid, Auto-kasser, side- og højdefordeling samt stack-persistence er identiske med v0.8.58 og er ikke ændret i denne release.",
+    "Den røde markering tilføjes kun med CSS på de eksisterende selection-klasser som editoren allerede sætter; der tilføjes ingen JavaScript-events, MutationObservers, timers eller nye DOM-noder.",
+    "Markeringen bruger en 2 px rød outline med negativ offset, så alle fire sider ligger inde i elementets visuelle flade og højre kant ikke klippes af Grid/stack-wrappers.",
+    "Både top-level valgte elementer og nested elementer i Række- og kolonne-kasser dækkes af CSS-markeringen.",
+    "Det gamle v0.8.51 selection-span gøres visuelt neutralt, så der ikke opstår dobbelt markering; baseline-runtime ændres ellers ikke.",
+    "Ingen ændring af page schema, LayoutParentKey, WhatIf-fjernelsen eller Vehicle/Event/Gallery.",
+    "v0.8.60 er en testrelease til manuel editor-QA på test2; public cutover er fortsat ikke autoriseret."
   ]
 }

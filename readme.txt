@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.58
+Version: 0.8.60
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.60 – LEGO-editor — tilbage til v0.8.58-runtime og CSS-only selection ==
+
+Nyt:
+- Fjerner hele v0.8.59 repaint/observer/selection-eksperimentet og gendanner den fungerende v0.8.58-runtime som aktiv editorbaseline.
+- Drag/drop, Over/Under, Grid, Auto-kasser, side- og højdefordeling samt stack-persistence er identiske med v0.8.58 og er ikke ændret i denne release.
+- Den røde markering tilføjes kun med CSS på de eksisterende selection-klasser som editoren allerede sætter; der tilføjes ingen JavaScript-events, MutationObservers, timers eller nye DOM-noder.
+- Markeringen bruger en 2 px rød outline med negativ offset, så alle fire sider ligger inde i elementets visuelle flade og højre kant ikke klippes af Grid/stack-wrappers.
+- Både top-level valgte elementer og nested elementer i Række- og kolonne-kasser dækkes af CSS-markeringen.
+- Det gamle v0.8.51 selection-span gøres visuelt neutralt, så der ikke opstår dobbelt markering; baseline-runtime ændres ellers ikke.
+- Ingen ændring af page schema, LayoutParentKey, WhatIf-fjernelsen eller Vehicle/Event/Gallery.
+- v0.8.60 er en testrelease til manuel editor-QA på test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.58 – LEGO-editor — rollback til stabil v0.8.51-baseline ==
