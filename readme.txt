@@ -1,6 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.8.78
+Version: 0.8.79
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.79 – 20+ backlogopgaver — governance, release QA, trace og updater support ==
+
+Channel: test
+Backlog: BACKLOG-MAINT-004, BACKLOG-MAINT-005, BACKLOG-MAINT-006, BACKLOG-MAINT-007, RELEASE-002, RELEASE-003, RELEASE-004, RELEASE-005, TRACE-077, TRACE-078, TRACE-084, TRACE-085, TRACE-086, TRACE-087, TRACE-088, TRACE-089, UPDATER-004, UPDATER-005, UPDATER-011, UPDATER-012, UPDATER-013, UPDATER-014
+
+Nyt:
+- Canonical backlog understøtter nu lagdelte release-deltaer via Extends; release-workflow genererer et samlet maskinlæsbart backlog-index og CI validerer entydige backlog-ID’er og obligatoriske felter.
+- Release-config får eksplicit channel og backlog_ids. update.json og et nyt release-manifest binder version, source commit, package SHA, backlog-ID’er og QA-summary sammen.
+- Release-integrity QA verificerer versionsmatch mellem release-config, update.json og begge plugin-versioner inde i ZIP samt denylist mod dev/test/tools/docs/PowerShell/log/tmp/bak og kendte legacy VehicleRegister-artifacts.
+- Trace support får tydelig optagelsesindikator, sessionsmetadata, eventfiltre, fritekstsøgning, support bundle, ringbuffer-advarsel og Critical JS error/unhandled rejection events.
+- Trace support bundle har rekursiv redaction af password/token/nonce/cookie/session/authorization samt runtime self-test og automatiseret CI-redaction QA.
+- Updater-siden får fresh/stale-status, tydelig GitHub/netværksfejl, samlet installed/latest/SHA/published/compatibility-kort og changelog for seneste manifest.
+- Install-knapper disables i supportlaget når installed >= latest, og en read-only Kopiér updater diagnose giver versions/state/SHA/error-data uden credentials.
+- LEGO selection/drop/repaint semantics er ikke ændret i denne release. Vehicle/Event/Gallery og public cutover er fortsat beskyttet.
 
 
 == Version 0.8.78 – Sideversioner — Erstat original eller Restore som kopi ==

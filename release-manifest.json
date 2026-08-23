@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "version": "0.8.79",
+  "channel": "test",
+  "source_commit": "e774fd83d7916c4338a5c4d6f735c3b09eb5fc05",
+  "built_utc": "2026-08-23T21:13:42Z",
+  "package_path": "dist/hangar18-manager.zip",
+  "package_sha256": "8435f911c483699738b06eee7221b5628aec7df57cd7f022b8b3ab8d12228243",
+  "plugin_header_version": "0.8.79",
+  "plugin_constant_version": "0.8.79",
+  "backlog_ids": [
+    "BACKLOG-MAINT-004",
+    "BACKLOG-MAINT-005",
+    "BACKLOG-MAINT-006",
+    "BACKLOG-MAINT-007",
+    "RELEASE-002",
+    "RELEASE-003",
+    "RELEASE-004",
+    "RELEASE-005",
+    "TRACE-077",
+    "TRACE-078",
+    "TRACE-084",
+    "TRACE-085",
+    "TRACE-086",
+    "TRACE-087",
+    "TRACE-088",
+    "TRACE-089",
+    "UPDATER-004",
+    "UPDATER-005",
+    "UPDATER-011",
+    "UPDATER-012",
+    "UPDATER-013",
+    "UPDATER-014"
+  ],
+  "qa": {
+    "version_match": true,
+    "package_sha_match": true,
+    "zip_tree_policy": true
+  }
+}
