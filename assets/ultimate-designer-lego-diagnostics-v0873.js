@@ -3,12 +3,17 @@
 
     if (window.__h18LegoDiagnosticsV0873) { return; }
 
-    const VERSION = '0.8.73';
-    const LOG_LIMIT = 28;
-    const log = [];
-    let lastSignature = '';
+    const VERSION = '0.8.74';
+    const ACTION_LIMIT = 28;
+    const MUTATION_LIMIT = 6;
+    const actions = [];
+    const mutations = [];
     let panel = null;
     let pre = null;
+    let mutationFrame = 0;
+    let dragFrame = 0;
+    let dragActive = false;
+    let lastDrag = null;
 
     function now() {
         const d = new Date();
@@ -26,6 +31,13 @@
         return String(row.getAttribute('data-key') || '');
     }
 
+    function isVisible(node) {
+        if (!node || !window.getComputedStyle) { return false; }
+        const r = node.getBoundingClientRect();
+        const s = window.getComputedStyle(node);
+        return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden' && Number(s.opacity || 1) > 0;
+    }
+
     function selectionState() {
         const api = window.__h18LegoInspectorOnlyV0847;
         const active = api && typeof api.activeSelection === 'function' ? api.activeSelection() : { key: '', mode: '' };
@@ -39,41 +51,34 @@
         const selectedMatching = matching.filter(function (node) { return node.classList.contains('is-h18-v0848-selected-element'); });
         const selectedRow = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
         let outline = '';
-        let visible = 0;
         if (matching[0] && window.getComputedStyle) {
             const style = window.getComputedStyle(matching[0]);
             outline = [style.outlineStyle, style.outlineWidth, style.outlineColor].join(' ');
-            visible = matching.filter(function (node) {
-                const r = node.getBoundingClientRect();
-                const s = window.getComputedStyle(node);
-                return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
-            }).length;
         }
         return {
             key: key,
             mode: mode,
             matching: matching.length,
-            visibleMatching: visible,
+            visibleMatching: matching.filter(isVisible).length,
             selectedTotal: selected.length,
             selectedMatching: selectedMatching.length,
             nativeRowKey: keyOfRow(selectedRow),
             outline: outline,
-            runtime: esc(document.documentElement.getAttribute('data-h18-lego-selection-marker'))
+            runtime: esc(document.documentElement.getAttribute('data-h18-lego-selection-marker')),
+            apiVersion: api ? esc(api.version) : '',
+            observer: api && typeof api.observerActive === 'function' ? (api.observerActive() ? 'active' : 'inactive') : 'no-api'
         };
     }
 
     function dropState() {
         const api = window.__h18LegoDropZonesV0838;
         const source = api && typeof api.activeSource === 'function' ? api.activeSource() : {};
-        const overlays = document.querySelectorAll('.h18-v0838-drop-overlay');
-        const boxOverlays = document.querySelectorAll('.h18-v0838-drop-overlay[data-h18-v0871-target-box="1"]');
-        const inside = document.querySelectorAll('.h18-v0838-drop-zone.is-inside');
-        const insideVisible = Array.from(inside).filter(function (node) {
-            const r = node.getBoundingClientRect();
-            const s = window.getComputedStyle(node);
-            return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden' && Number(s.opacity || 1) > 0;
-        });
+        const overlays = Array.from(document.querySelectorAll('.h18-v0838-drop-overlay'));
+        const boxOverlays = overlays.filter(function (node) { return node.getAttribute('data-h18-v0871-target-box') === '1'; });
+        const inside = Array.from(document.querySelectorAll('.h18-v0838-drop-zone.is-inside'));
+        const insideVisible = inside.filter(isVisible);
         const active = document.querySelector('.h18-v0838-drop-zone.is-active');
+        const activeText = active ? esc(active.getAttribute('data-h18-v0838-position')) + ':' + esc(active.getAttribute('data-h18-v0838-target')) : '';
         return {
             sourceKey: esc(source && (source.Key || source.key)),
             sourceType: esc(source && (source.Type || source.type)),
@@ -82,21 +87,55 @@
             boxOverlays: boxOverlays.length,
             inside: inside.length,
             insideVisible: insideVisible.length,
-            active: active ? esc(active.getAttribute('data-h18-v0838-position')) + ':' + esc(active.getAttribute('data-h18-v0838-target')) : '',
+            active: activeText,
             runtime: esc(document.documentElement.getAttribute('data-h18-lego-inside-kasse-zone')),
+            dropApi: api ? esc(api.capabilityVersion || api.version) : '',
             lastResult: esc(document.documentElement.getAttribute('data-h18-v0870-last-inside-result') || document.documentElement.getAttribute('data-h18-v0871-last-inside-result') || document.documentElement.getAttribute('data-h18-v0872-last-inside-result'))
         };
     }
 
-    function snapshot(reason) {
+    function line(reason, s, d) {
+        return now() + ' [' + reason + '] SEL rt=' + (s.runtime || '-') + '/' + (s.apiVersion || '-') + ' obs=' + s.observer + ' key=' + (s.key || '-') + ' mode=' + (s.mode || '-') + ' match=' + s.matching + '/' + s.visibleMatching + ' red=' + s.selectedMatching + ' allRed=' + s.selectedTotal + ' row=' + (s.nativeRowKey || '-') + ' outline=' + (s.outline || '-') + ' | DROP rt=' + (d.runtime || '-') + '/' + (d.dropApi || '-') + ' src=' + (d.sourceKey || '-') + '/' + (d.sourceType || '-') + '/' + (d.sourceMode || '-') + ' overlays=' + d.overlays + ' box=' + d.boxOverlays + ' inside=' + d.inside + '/' + d.insideVisible + ' active=' + (d.active || '-') + ' result=' + (d.lastResult || '-');
+    }
+
+    function updateLastDrag(reason, d) {
+        if (!dragActive && reason !== 'sortstop') { return; }
+        if (!lastDrag) {
+            lastDrag = {
+                started: now(), sourceKey: d.sourceKey, sourceType: d.sourceType,
+                peakOverlays: 0, peakBoxOverlays: 0, peakInside: 0, peakVisibleInside: 0,
+                activeSeen: [], stop: '', result: ''
+            };
+        }
+        if (!lastDrag.sourceKey && d.sourceKey) { lastDrag.sourceKey = d.sourceKey; }
+        if (!lastDrag.sourceType && d.sourceType) { lastDrag.sourceType = d.sourceType; }
+        lastDrag.peakOverlays = Math.max(lastDrag.peakOverlays, d.overlays);
+        lastDrag.peakBoxOverlays = Math.max(lastDrag.peakBoxOverlays, d.boxOverlays);
+        lastDrag.peakInside = Math.max(lastDrag.peakInside, d.inside);
+        lastDrag.peakVisibleInside = Math.max(lastDrag.peakVisibleInside, d.insideVisible);
+        if (d.active && lastDrag.activeSeen.indexOf(d.active) === -1) { lastDrag.activeSeen.push(d.active); }
+        if (reason === 'sortstop') {
+            lastDrag.stop = now();
+            lastDrag.result = d.lastResult;
+        }
+    }
+
+    function snapshot(reason, kind) {
         const s = selectionState();
         const d = dropState();
-        const signature = JSON.stringify([s.key, s.mode, s.matching, s.selectedMatching, s.selectedTotal, s.nativeRowKey, s.outline, d.sourceKey, d.sourceType, d.overlays, d.boxOverlays, d.inside, d.insideVisible, d.active, d.lastResult]);
-        if (reason === 'tick' && signature === lastSignature) { return; }
-        lastSignature = signature;
-        log.push(now() + ' [' + reason + '] SEL key=' + (s.key || '-') + ' mode=' + (s.mode || '-') + ' match=' + s.matching + '/' + s.visibleMatching + ' red=' + s.selectedMatching + ' allRed=' + s.selectedTotal + ' row=' + (s.nativeRowKey || '-') + ' outline=' + (s.outline || '-') + ' | DROP src=' + (d.sourceKey || '-') + '/' + (d.sourceType || '-') + ' overlays=' + d.overlays + ' box=' + d.boxOverlays + ' inside=' + d.inside + '/' + d.insideVisible + ' active=' + (d.active || '-') + ' result=' + (d.lastResult || '-'));
-        while (log.length > LOG_LIMIT) { log.shift(); }
+        updateLastDrag(reason, d);
+        const entry = line(reason, s, d);
+        const target = kind === 'mutation' ? mutations : actions;
+        target.push(entry);
+        const limit = kind === 'mutation' ? MUTATION_LIMIT : ACTION_LIMIT;
+        while (target.length > limit) { target.shift(); }
         render();
+        return { selection: s, drop: d };
+    }
+
+    function dragSummary() {
+        if (!lastDrag) { return 'last-drag: ingen registreret drag endnu'; }
+        return 'last-drag: source=' + (lastDrag.sourceKey || '-') + '/' + (lastDrag.sourceType || '-') + ' peakOverlays=' + lastDrag.peakOverlays + ' peakBox=' + lastDrag.peakBoxOverlays + ' peakInside=' + lastDrag.peakInside + '/' + lastDrag.peakVisibleInside + ' activeSeen=' + (lastDrag.activeSeen.length ? lastDrag.activeSeen.join(',') : '-') + ' result=' + (lastDrag.result || '-');
     }
 
     function report() {
@@ -104,84 +143,111 @@
         const d = dropState();
         return [
             'Hangar18 LEGO diagnose ' + VERSION,
-            'selection-runtime=' + s.runtime,
-            'inside-runtime=' + d.runtime,
+            'selection-runtime=' + (s.runtime || '-') + ' api=' + (s.apiVersion || '-') + ' observer=' + s.observer,
+            'inside-runtime=' + (d.runtime || '-') + ' drop-api=' + (d.dropApi || '-'),
             'selection: key=' + (s.key || '-') + ' mode=' + (s.mode || '-') + ' matching=' + s.matching + ' visible=' + s.visibleMatching + ' selectedMatching=' + s.selectedMatching + ' selectedTotal=' + s.selectedTotal + ' nativeRow=' + (s.nativeRowKey || '-') + ' outline=' + (s.outline || '-'),
-            'drop: source=' + (d.sourceKey || '-') + ' type=' + (d.sourceType || '-') + ' mode=' + (d.sourceMode || '-') + ' overlays=' + d.overlays + ' boxOverlays=' + d.boxOverlays + ' inside=' + d.inside + ' visibleInside=' + d.insideVisible + ' active=' + (d.active || '-') + ' lastResult=' + (d.lastResult || '-'),
+            'drop-now: source=' + (d.sourceKey || '-') + ' type=' + (d.sourceType || '-') + ' mode=' + (d.sourceMode || '-') + ' overlays=' + d.overlays + ' boxOverlays=' + d.boxOverlays + ' inside=' + d.inside + ' visibleInside=' + d.insideVisible + ' active=' + (d.active || '-') + ' lastResult=' + (d.lastResult || '-'),
+            dragSummary(),
             '',
-            'Seneste hændelser:',
-            log.join('\n')
+            'Handlinger:',
+            actions.join('\n'),
+            '',
+            'Seneste mutationer (begrænset):',
+            mutations.join('\n')
         ].join('\n');
     }
 
     function render() {
-        if (!pre) { return; }
-        pre.textContent = report();
+        if (pre) { pre.textContent = report(); }
     }
 
     function installPanel() {
         if (panel || !document.body) { return; }
         panel = document.createElement('aside');
         panel.id = 'h18-lego-diagnostics-v0873';
-        panel.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483000;width:min(620px,calc(100vw - 32px));max-height:44vh;overflow:auto;background:#fff;border:2px solid #1d2327;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:10px;font:12px/1.35 Consolas,Monaco,monospace;color:#1d2327;';
+        panel.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483000;width:min(680px,calc(100vw - 32px));max-height:48vh;overflow:auto;background:#fff;border:2px solid #1d2327;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:10px;font:12px/1.35 Consolas,Monaco,monospace;color:#1d2327;';
         const head = document.createElement('div');
         head.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;position:sticky;top:0;background:#fff;padding-bottom:6px;';
         const title = document.createElement('strong');
-        title.textContent = 'LEGO diagnose v0.8.73';
+        title.textContent = 'LEGO diagnose v0.8.74';
         title.style.marginRight = 'auto';
         const copy = document.createElement('button');
-        copy.type = 'button';
-        copy.className = 'button button-small';
-        copy.textContent = 'Kopiér diagnose';
+        copy.type = 'button'; copy.className = 'button button-small'; copy.textContent = 'Kopiér diagnose';
         copy.addEventListener('click', function () {
             const text = report();
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(function () { copy.textContent = 'Kopieret'; window.setTimeout(function () { copy.textContent = 'Kopiér diagnose'; }, 1200); });
-            } else {
-                window.prompt('Kopiér diagnosen:', text);
-            }
+            } else { window.prompt('Kopiér diagnosen:', text); }
         });
+        const clear = document.createElement('button');
+        clear.type = 'button'; clear.className = 'button button-small'; clear.textContent = 'Nulstil log';
+        clear.addEventListener('click', function () { actions.length = 0; mutations.length = 0; lastDrag = null; snapshot('reset', 'action'); });
         const close = document.createElement('button');
-        close.type = 'button';
-        close.className = 'button button-small';
-        close.textContent = 'Skjul';
+        close.type = 'button'; close.className = 'button button-small'; close.textContent = 'Skjul';
         close.addEventListener('click', function () { panel.style.display = 'none'; });
         pre = document.createElement('pre');
         pre.style.cssText = 'white-space:pre-wrap;margin:0;user-select:text;';
-        head.append(title, copy, close);
+        head.append(title, copy, clear, close);
         panel.append(head, pre);
         document.body.appendChild(panel);
-        snapshot('install');
+        snapshot('install', 'action');
     }
 
     document.addEventListener('click', function (event) {
-        if (event.target && event.target.closest && event.target.closest('.h18-builder-canvas')) { window.setTimeout(function () { snapshot('canvas-click'); }, 0); }
+        if (event.target && event.target.closest && event.target.closest('.h18-builder-canvas')) {
+            window.setTimeout(function () { snapshot('canvas-click', 'action'); }, 0);
+        }
     }, true);
     document.addEventListener('pointerdown', function (event) {
-        if (event.target && event.target.closest && event.target.closest('.h18-builder-canvas')) { window.setTimeout(function () { snapshot('pointerdown'); }, 0); }
+        if (event.target && event.target.closest && event.target.closest('.h18-builder-canvas')) {
+            window.setTimeout(function () { snapshot('pointerdown', 'action'); }, 0);
+        }
     }, true);
 
-    if (window.jQuery) {
+    function installSortableDiagnostics() {
+        if (!window.jQuery) { return; }
         const $ = window.jQuery;
-        $('#h18-page-sections-sortable').on('sortstart.h18Diag0873', function () { window.setTimeout(function () { snapshot('sortstart'); }, 30); });
-        $('#h18-page-sections-sortable').on('sort.h18Diag0873', function () { snapshot('sort'); });
-        $('#h18-page-sections-sortable').on('sortstop.h18Diag0873', function () { window.setTimeout(function () { snapshot('sortstop'); }, 30); });
+        $(document).off('.h18Diag0874');
+        $(document).on('sortstart.h18Diag0874', '#h18-page-sections-sortable', function () {
+            dragActive = true; lastDrag = null;
+            window.setTimeout(function () { snapshot('sortstart', 'action'); }, 0);
+        });
+        $(document).on('sort.h18Diag0874', '#h18-page-sections-sortable', function () {
+            if (dragFrame) { return; }
+            dragFrame = window.requestAnimationFrame(function () { dragFrame = 0; snapshot('sort', 'action'); });
+        });
+        $(document).on('sortstop.h18Diag0874', '#h18-page-sections-sortable', function () {
+            snapshot('sortstop', 'action');
+            dragActive = false;
+            window.setTimeout(function () { snapshot('after-sortstop', 'action'); }, 25);
+        });
+        $(document).on('sortcancel.h18Diag0874', '#h18-page-sections-sortable', function () {
+            snapshot('sortcancel', 'action'); dragActive = false;
+        });
     }
 
-    if (window.MutationObserver) {
+    function installMutationDiagnostics() {
+        if (!window.MutationObserver || !document.body) { return; }
         const root = document.querySelector('.h18-builder-canvas') || document.body;
-        if (root) {
-            let frame = 0;
-            new MutationObserver(function () {
-                if (frame) { return; }
-                frame = window.requestAnimationFrame(function () { frame = 0; snapshot('mutation'); });
-            }).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'data-h18-v0871-target-box', 'data-h18-v0871-inside-kasse'] });
-        }
+        new MutationObserver(function () {
+            if (mutationFrame) { return; }
+            mutationFrame = window.requestAnimationFrame(function () {
+                mutationFrame = 0;
+                snapshot('mutation', 'mutation');
+            });
+        }).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'data-h18-v0871-target-box', 'data-h18-v0871-inside-kasse'] });
     }
 
-    window.setInterval(function () { snapshot('tick'); }, 250);
-    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', installPanel, { once: true }); }
-    else { installPanel(); }
+    function install() {
+        installPanel();
+        installSortableDiagnostics();
+        installMutationDiagnostics();
+        window.setInterval(function () { render(); }, 300);
+    }
+
+    if (document.body) { install(); }
+    else if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install, { once: true }); }
+    else { window.setTimeout(install, 0); }
 
     document.documentElement.setAttribute('data-h18-lego-diagnostics', VERSION);
     window.__h18LegoDiagnosticsV0873 = { version: VERSION, report: report, snapshot: snapshot };
