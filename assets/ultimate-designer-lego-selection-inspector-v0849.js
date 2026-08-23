@@ -3,7 +3,6 @@
 
     if (window.__h18LegoSelectionInspectorV0849) { return; }
 
-    const SELECTED_CLASS = 'is-h18-v0848-selected-element';
     const NESTED_SELECTOR = '.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]';
     const EXCLUDE_SELECTOR = [
         '.h18-v0841-resize-handle',
@@ -18,6 +17,10 @@
     let markerFrame = 0;
     let advancedFrame = 0;
 
+    function selectionOwner() {
+        return window.__h18LegoInspectorOnlyV0847 || null;
+    }
+
     function keyFromNested(node) {
         if (!node) { return ''; }
         return String(node.getAttribute('data-h18-v0811-row') || node.getAttribute('data-h18-v0811-child') || '').trim();
@@ -28,13 +31,10 @@
         const direct = row.querySelector('.h18-page-section-key');
         if (direct && direct.value) { return String(direct.value).trim(); }
         const dataKey = String(row.getAttribute('data-key') || '').trim();
-        if (dataKey) { return dataKey; }
-        return '';
+        return dataKey;
     }
 
     function selectedDomKey() {
-        // Inspector owns the active element settings. Prefer its key over a
-        // transient/stale .is-selected class on the visual parent Grid row.
         const inspector = document.querySelector('#h18-page-inspector-target .h18-page-section-key');
         if (inspector && inspector.value) { return String(inspector.value).trim(); }
         const row = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
@@ -43,7 +43,13 @@
 
     function rememberKey(key) {
         const value = String(key || '').trim();
-        if (value) { activeKey = value; }
+        if (value) {
+            activeKey = value;
+            const owner = selectionOwner();
+            if (owner && typeof owner.rememberSelectedCanvasKey === 'function') {
+                owner.rememberSelectedCanvasKey(value);
+            }
+        }
         return activeKey;
     }
 
@@ -56,19 +62,10 @@
 
     function applyMarker() {
         markerFrame = 0;
-        document.querySelectorAll('.' + SELECTED_CLASS).forEach(function (node) {
-            node.classList.remove(SELECTED_CLASS);
-        });
-
-        const domKey = selectedDomKey();
-        if (domKey) { activeKey = domKey; }
-        if (!activeKey) { return; }
-
-        document.querySelectorAll(NESTED_SELECTOR).forEach(function (node) {
-            if (keyFromNested(node) === activeKey) {
-                node.classList.add(SELECTED_CLASS);
-            }
-        });
+        const owner = selectionOwner();
+        if (owner && typeof owner.refreshSelectedCanvasMarker === 'function') {
+            owner.refreshSelectedCanvasMarker();
+        }
     }
 
     function queueMarker() {
@@ -76,11 +73,12 @@
         markerFrame = window.requestAnimationFrame(applyMarker);
     }
 
+    // Old v0.8.49 called applyMarker again after 40/180/450/900 ms.
+    // That repeatedly removed/re-added the selection class and caused the
+    // visible multi-flash. One animation-frame update is enough now because
+    // v0.8.47 owns a persistent key through the Inspector handoff.
     function settleMarker() {
         queueMarker();
-        [40, 180, 450, 900].forEach(function (delay) {
-            window.setTimeout(applyMarker, delay);
-        });
     }
 
     function advancedLayoutIsStable(root, heading, blocks) {
@@ -97,8 +95,6 @@
         const target = document.querySelector('#h18-page-inspector-target');
         if (!target) { return; }
 
-        // These are canonical existing Inspector modules. Keep their fields and
-        // event handlers intact; only demote their visual position.
         const dynamic = target.querySelector('.h18-dynamic-binding-box');
         const conditions = target.querySelector('.h18-condition-editor');
         const blocks = [dynamic, conditions].filter(Boolean);
@@ -111,9 +107,6 @@
         const root = commonParent || body;
         if (!root) { return; }
 
-        // Only move blocks that actually belong to this Inspector group. If a
-        // future markup revision separates them into different panels, leave that
-        // panel structure intact rather than pulling controls across boundaries.
         const movable = blocks.filter(function (block) { return block.parentElement === root; });
         if (!movable.length) { return; }
 
@@ -162,20 +155,19 @@
     }, true);
 
     if (window.MutationObserver) {
-        // v0.8.48 has a document-wide childList observer that may briefly remove
-        // the tile marker while Inspector/Grid is repainting. Register after it
-        // on the same mutation scope so the cached active key wins last.
+        // Keep only one queued refresh. Do not overwrite a click-cached key with
+        // a transient Inspector key while the settings body is moving.
         new MutationObserver(function () {
-            const key = selectedDomKey();
-            if (key) { rememberKey(key); }
+            if (!activeKey) {
+                const key = selectedDomKey();
+                if (key) { rememberKey(key); }
+            }
             queueMarker();
         }).observe(document.body, { childList: true, subtree: true });
 
         const inspector = document.querySelector('#h18-page-inspector-target');
         if (inspector) {
             new MutationObserver(function () {
-                const key = selectedDomKey();
-                if (key) { rememberKey(key); }
                 queueAdvancedLayout();
             }).observe(inspector, { childList: true, subtree: true });
         }
@@ -199,9 +191,9 @@
         moveAdvancedInspectorBlocks();
     }, 0);
 
-    document.documentElement.setAttribute('data-h18-lego-selection-inspector', '0.8.49');
+    document.documentElement.setAttribute('data-h18-lego-selection-inspector', '0.8.61');
     window.__h18LegoSelectionInspectorV0849 = {
-        version: '0.8.49',
+        version: '0.8.61',
         rememberKey: rememberKey,
         applyMarker: applyMarker,
         moveAdvancedInspectorBlocks: moveAdvancedInspectorBlocks
