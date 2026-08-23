@@ -9,9 +9,15 @@ on:
       - 'docs/BACKLOG-CONTRIBUTING.md'
       - 'release-config.json'
       - 'update.json'
+      - 'release-manifest.json'
       - 'dist/hangar18-manager.zip'
       - 'tools/backlog-governance.py'
       - 'tools/release-integrity.py'
+      - 'tools/trace-redaction-qa.py'
+      - 'assets/ultimate-designer-trace*.js'
+      - 'assets/updater-support-v0879.js'
+      - 'src/Admin/UltimateDesignerTraceAdminController.php'
+      - 'src/Admin/UpdaterStateConsistencyAdminController.php'
       - '.github/workflows/backlog-release-governance-qa.yml'
   pull_request:
     paths:
@@ -19,9 +25,15 @@ on:
       - 'docs/backlog-index.json'
       - 'release-config.json'
       - 'update.json'
+      - 'release-manifest.json'
       - 'dist/hangar18-manager.zip'
       - 'tools/backlog-governance.py'
       - 'tools/release-integrity.py'
+      - 'tools/trace-redaction-qa.py'
+      - 'assets/ultimate-designer-trace*.js'
+      - 'assets/updater-support-v0879.js'
+      - 'src/Admin/UltimateDesignerTraceAdminController.php'
+      - 'src/Admin/UpdaterStateConsistencyAdminController.php'
 
 permissions:
   contents: read
@@ -31,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Resolve canonical backlog
         id: backlog
         shell: bash
@@ -38,13 +51,11 @@ jobs:
           FILE="$(ls docs/active-backlog-v*.md | sort -V | tail -n1)"
           echo "file=$FILE" >> "$GITHUB_OUTPUT"
           echo "Canonical candidate: $FILE"
-      - name: Generate backlog index
+
+      - name: Generate and validate backlog index
         shell: bash
         run: |
           python3 tools/backlog-governance.py --backlog '${{ steps.backlog.outputs.file }}' --output /tmp/backlog-index.json
-      - name: Verify duplicate IDs and required fields
-        shell: bash
-        run: |
           python3 - <<'PY'
           import json
           p=json.load(open('/tmp/backlog-index.json', encoding='utf-8'))
@@ -56,6 +67,28 @@ jobs:
                   raise SystemExit('incomplete backlog item: '+item['id'])
           print(f"PASS: {len(ids)} backlog items")
           PY
+
+      - name: Python syntax
+        shell: bash
+        run: |
+          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py
+
+      - name: Trace redaction QA
+        shell: bash
+        run: python3 tools/trace-redaction-qa.py
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          node --check assets/ultimate-designer-trace-tools-v0879.js
+          node --check assets/updater-support-v0879.js
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          php -l src/Admin/UltimateDesignerTraceAdminController.php
+          php -l src/Admin/UpdaterStateConsistencyAdminController.php
+
       - name: Release integrity when package is present
         shell: bash
         run: |
