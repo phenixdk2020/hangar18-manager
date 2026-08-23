@@ -1,8 +1,10 @@
-/* LEGO-051: follow-up fixes from manual v0.8.50 acceptance. */
+/* LEGO-051/056: follow-up fixes from manual acceptance. */
 .h18-builder-canvas .h18-v0851-hidden-legacy-drop,
 .h18-builder-canvas .h18-v0814-auto-drop-zone,
 .h18-builder-canvas .h18-v0814-auto-kasse-drop,
-.h18-builder-canvas .h18-ud-auto-box-empty-drop {
+.h18-builder-canvas .h18-ud-auto-box-empty-drop,
+.h18-builder-canvas [data-h18-v0814-auto-drop] {
+    display:none!important;pointer-events:none!important;
     width:0!important;height:0!important;min-width:0!important;min-height:0!important;
     margin:0!important;padding:0!important;overflow:hidden!important;border:0!important;
     background:transparent!important;color:transparent!important;font-size:0!important;line-height:0!important;box-shadow:none!important;
