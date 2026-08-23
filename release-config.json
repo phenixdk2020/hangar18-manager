@@ -1,12 +1,14 @@
 {
-  "version": "0.8.56",
-  "title": "LEGO-editor — robust nested Under og fjern legacy Kasse-felt",
+  "version": "0.8.57",
+  "title": "LEGO-editor — stop fryse-loop og skjul legacy Kasse-felt under drag",
   "changelog": [
-    "Nested Under/Over afsluttes nu først, når den nye række faktisk har korrekt LayoutParentKey og, i Grid, samme StackRootKey som målrækken.",
-    "Drop-broen fortsætter bounded retry/MutationObserver, hvis den ældre adoptUnder-funktion melder succes før WordPress har hydreret parent- og stack-state.",
-    "Legacy Auto-kasse/Indsæt Kasse-dropfladen fjernes nu fra DOM'en ved initial load og efter senere editor-renders, i stedet for kun at være skjult med en skrøbelig CSS-selector.",
-    "Rettelsen målretter regressionen hvor et Under-drop blev til tre 4/12 sibling-kolonner i stedet for en lodret stack.",
+    "MutationObserver-feedback-loopet fra v0.8.55/v0.8.56 er fjernet: legacy Auto-kasse-feltet bliver ikke længere slettet fra DOM'en og kan derfor ikke blive genskabt/slettet i en uendelig render-loop.",
+    "Legacy-teksten 'Træk en Kasse ind i Auto-kasser.' skjules nu med en entydig display:none-regel også mens et element trækkes hen over editoren; Auto-kasse Grid'et forbliver den egentlige dropflade.",
+    "Nested Under/Over er gjort idempotent: observeren reagerer kun på direkte indsættelse af en ny section-row og ikke på skjulte stack-felter eller canvas-repaint.",
+    "Hvis parent allerede er korrekt men stack-state mangler, udføres kun en målrettet stackUnder/stackOver-reparation i stedet for at køre hele adoptUnder-transaktionen igen.",
+    "Parent-selecten får Grid-parenten som gyldig option før adoption, så LayoutParentKey ikke nulstilles under WordPress/Inspector-handoff.",
+    "Rettelsen målretter både browser-frys/spinner ved Under-drop og fejlen hvor et nyt element ender som en ekstra sibling-kolonne i stedet for lodret under det valgte element.",
     "Ingen ændring af page schema, eksisterende Container/Flex/Grid-model, gemte designværdier eller public frontend-rendering.",
-    "v0.8.56 er en testrelease til manuel editor-QA på testmiljøet; public cutover er ikke ændret."
+    "v0.8.57 er en testrelease til manuel editor-QA på testmiljøet; public cutover er ikke ændret."
   ]
 }
