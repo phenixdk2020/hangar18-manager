@@ -146,12 +146,15 @@ jQuery(function ($) {
     function hitZone(pageX, pageY) {
         const clientX = Number(pageX) - (window.pageXOffset || document.documentElement.scrollLeft || 0);
         const clientY = Number(pageY) - (window.pageYOffset || document.documentElement.scrollTop || 0);
-        let match = null;
+        let fallbackMatch = null;
+        let insideMatch = null;
         $('.' + ZONE_CLASS + ':not(.is-disabled)').each(function () {
             const rect = this.getBoundingClientRect();
-            if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) { match = this; }
+            if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) { return; }
+            if (this.classList.contains('is-inside')) { insideMatch = this; }
+            else { fallbackMatch = this; }
         });
-        return match;
+        return insideMatch || fallbackMatch;
     }
     function highlightAt(pageX, pageY) {
         $('.' + ZONE_CLASS).removeClass('is-active');
@@ -202,14 +205,14 @@ jQuery(function ($) {
     document.documentElement.setAttribute('data-h18-lego-drop-zones-runtime', '0.8.38');
     document.documentElement.setAttribute('data-h18-lego-side-by-side-runtime', '0.8.40');
     document.documentElement.setAttribute('data-h18-lego-nested-vertical-targets', '0.8.51');
-    document.documentElement.setAttribute('data-h18-lego-inside-kasse-zone', '0.8.71');
+    document.documentElement.setAttribute('data-h18-lego-inside-kasse-zone', '0.8.72');
     window.__h18LegoDropZonesV0838 = {
-        version: '0.8.38', capabilityVersion: '0.8.71', refresh: renderOverlays, clear: clearOverlays,
+        version: '0.8.38', capabilityVersion: '0.8.72', refresh: renderOverlays, clear: clearOverlays,
         activeSource: function () { return { Key: dragSourceKey, Type: dragSourceType, Mode: dragMode }; },
         hitZone: hitZone
     };
     window.__h18LegoSideBySideV0840 = {
-        version: '0.8.40', capabilityVersion: '0.8.71', refresh: renderOverlays, clear: clearOverlays,
+        version: '0.8.40', capabilityVersion: '0.8.72', refresh: renderOverlays, clear: clearOverlays,
         activeSource: function () { return { Key: dragSourceKey, Type: dragSourceType, Mode: dragMode }; }
     };
 });
