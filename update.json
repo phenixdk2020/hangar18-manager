@@ -1,19 +1,20 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.64",
+  "version": "0.8.65",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T13:41:04Z",
+  "published_utc": "2026-08-23T13:57:05Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "3407cdab2a61db688148526ffbd07cebd6c5edb92a8c1fe5ba06eb451f3b9e14",
+  "package_sha256": "823f6ab315eddb5b891d2bb0e0d097ba1049cba8d72ef6efbd9d7f104cbf0cbe",
   "changelog": [
-    "Deaktiverer v0.8.62's ekstra placement-koordinator, så eksisterende element-drag igen ejes af den kendte v0.8.58/v0.8.51 nesting- og drop-zone-runtime.",
-    "Retter top-level selection-handoff: elementets canonical key kopieres til rækkens data-key på pointerdown før WordPress flytter nøglefeltet ind i Inspector.",
-    "Den eksisterende v0.8.63 selection-ejer kan dermed genfinde Tekst/Billede-rækken efter Inspector-handoff og bevare den røde ramme.",
-    "Ingen nye MutationObservers, refresh-timers eller layout-renders tilføjes af v0.8.64.",
-    "Repaint-forbedringer fra v0.8.61/v0.8.62 bevares; updateren ændres ikke og UPDATER-STATUS-001 samt UPDATER-VERSION-002 forbliver åbne backlogpunkter.",
-    "Vehicle/Event/Gallery, page schema, stack-persistence, backup, SHA-verifikation og rollback er uændrede.",
-    "v0.8.64 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
+    "Selection har nu én visuel ejer: præcis én synlig node får data-h18-v0865-selected=1 ud fra den aktive canonical element-key.",
+    "Gamle .is-selected- og kompatibilitetsklasser må fortsat eksistere i DOM, men tegner ikke længere røde rammer; derfor kan Kasse og element ikke længere se aktive ud samtidig.",
+    "Ved klik på et element inde i en Kasse prioriteres den synlige child-card/stack-segment/Auto-box for den valgte key; top-level Kasse-markering må ikke blive stående.",
+    "Eksisterende almindelige elementer får et autoritativt IND I KASSEN-dropmål over hele det synlige Kasse-indholdsområde i stedet for kun den lille legacy-dropzone.",
+    "Ved sortstop afsluttes en eksplicit IND I KASSEN-gestus ved at sætte LayoutParentKey til Kassen, placere elementets canonical row blandt Kassens children og lave én nesting-refresh.",
+    "Venstre/Højre/Over/Under forbliver ejet af den etablerede baseline; v0.8.65 griber kun ind i almindeligt element til Kasse-inside placement.",
+    "Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne backlogpunkter. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.",
+    "v0.8.65 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret."
   ]
 }

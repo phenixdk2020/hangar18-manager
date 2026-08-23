@@ -1,6 +1,19 @@
 === Hangar18 Manager ===
-Version: 0.8.64
+Version: 0.8.65
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.65 – LEGO-editor — én aktiv markering og stabil IND I KASSEN ==
+
+Nyt:
+- Selection har nu én visuel ejer: præcis én synlig node får data-h18-v0865-selected=1 ud fra den aktive canonical element-key.
+- Gamle .is-selected- og kompatibilitetsklasser må fortsat eksistere i DOM, men tegner ikke længere røde rammer; derfor kan Kasse og element ikke længere se aktive ud samtidig.
+- Ved klik på et element inde i en Kasse prioriteres den synlige child-card/stack-segment/Auto-box for den valgte key; top-level Kasse-markering må ikke blive stående.
+- Eksisterende almindelige elementer får et autoritativt IND I KASSEN-dropmål over hele det synlige Kasse-indholdsområde i stedet for kun den lille legacy-dropzone.
+- Ved sortstop afsluttes en eksplicit IND I KASSEN-gestus ved at sætte LayoutParentKey til Kassen, placere elementets canonical row blandt Kassens children og lave én nesting-refresh.
+- Venstre/Højre/Over/Under forbliver ejet af den etablerede baseline; v0.8.65 griber kun ind i almindeligt element til Kasse-inside placement.
+- Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne backlogpunkter. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.65 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.64 – LEGO-editor — placement rollback og stabil top-level selection ==
