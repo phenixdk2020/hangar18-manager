@@ -3,6 +3,21 @@ Version: 0.8.61
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
 
+== Version 0.8.61 – LEGO-editor — stabil selection uden flerblink ==
+
+Nyt:
+- Bevarer den fungerende v0.8.58/v0.8.60 drag/drop-, Over/Under-, Grid-, Auto-kasse-, bredde- og højdefordelingsmodel uændret.
+- v0.8.47 er nu eneste ejer af den visuelle selection-key under Inspector-handoff og beholder den valgte element-key, selv hvis WordPress kortvarigt mangler eller flytter .is-selected-rækken.
+- Selection-klassen opdateres idempotent med classList.toggle i stedet for at blive fjernet fra alle elementer og derefter tilføjet igen; et allerede valgt element ændres derfor ikke ved almindelige refresh-kørsler.
+- v0.8.49's gamle forsinkede selection-kørsler efter 40, 180, 450 og 900 ms er fjernet; selection opdateres nu højst én gang pr. animation-frame.
+- v0.8.49 delegerer selection-markering til v0.8.47 i stedet for at være en konkurrerende anden writer af samme selection-klasse.
+- Den gamle v0.8.51 body-wide fuld-render observer identificeres eksplicit og filtreres, så Inspector-DOM-ændringer ikke længere udløser en komplet Grid/stack-render af canvas.
+- Strukturelle ændringer i #h18-page-sections-sortable og .h18-builder-canvas må fortsat udløse den nødvendige layout-render, så drag/drop og stack-opbygning bevares.
+- Bredde- og højderesize beholder deres eksisterende direkte drag-preview og én nødvendig afsluttende state/layout-synkronisering, men selection-settle og Inspector-rerender må ikke længere give gentagne blink.
+- Den røde 2 px selection-ramme fra v0.8.60 bevares på de eksisterende selection-klasser og skal nu blive stående på det valgte element i stedet for kun at vises kortvarigt.
+- Ingen ændring af page schema, LayoutParentKey, stack-persistence, WhatIf-fjernelsen eller Vehicle/Event/Gallery. v0.8.61 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
+
+
 == Version 0.8.61 – LEGO-editor — stabil selection og færre unødige canvas-renders ==
 
 Nyt:

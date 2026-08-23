@@ -4,9 +4,9 @@
   "version": "0.8.61",
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-23T12:56:14Z",
+  "published_utc": "2026-08-23T12:57:41Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "bad261f9ae7c26e25cd13c58154e3342b7dda8ed6cb882a9e6b711caf53be091",
+  "package_sha256": "2904c129b2cc463f92678bd79124ad0afd0bf965005af971c085b0376a665efb",
   "changelog": [
     "Bevarer den fungerende v0.8.58/v0.8.60 drag/drop-, Over/Under-, Grid-, Auto-kasse-, bredde- og højdefordelingsmodel uændret.",
     "v0.8.47 er nu eneste ejer af den visuelle selection-key under Inspector-handoff og beholder den valgte element-key, selv hvis WordPress kortvarigt mangler eller flytter .is-selected-rækken.",
