@@ -34,10 +34,16 @@ jobs:
           config = json.loads((root / 'release-config.json').read_text(encoding='utf-8'))
           version = str(config.get('version', '')).strip()
           title = str(config.get('title', '')).strip() or 'Release'
+          channel = str(config.get('channel', '')).strip()
+          backlog_ids = [str(item).strip() for item in config.get('backlog_ids', []) if str(item).strip()]
           changelog = [str(item).strip() for item in config.get('changelog', []) if str(item).strip()]
 
           if not re.fullmatch(r'\d+\.\d+\.\d+', version):
               raise SystemExit('release-config.json contains an invalid semantic version')
+          if channel not in {'test', 'staging', 'production'}:
+              raise SystemExit('release-config.json must contain channel=test|staging|production')
+          if not backlog_ids:
+              raise SystemExit('release-config.json must contain at least one backlog_ids entry')
           if not changelog:
               raise SystemExit('release-config.json must contain at least one changelog item')
 
@@ -75,7 +81,9 @@ jobs:
               insertion = readme.find('== Version ')
               if insertion < 0:
                   raise SystemExit('Could not find readme changelog insertion point')
-              section = marker + '\n\nNyt:\n' + ''.join(f'- {item}\n' for item in changelog) + '\n\n'
+              backlog_line = 'Backlog: ' + ', '.join(backlog_ids) + '\n'
+              channel_line = 'Channel: ' + channel + '\n'
+              section = marker + '\n\n' + channel_line + backlog_line + '\nNyt:\n' + ''.join(f'- {item}\n' for item in changelog) + '\n\n'
               readme = readme[:insertion] + section + readme[insertion:]
           readme_path.write_text(readme, encoding='utf-8')
           PY
@@ -102,9 +110,11 @@ jobs:
 
           config = json.loads(pathlib.Path('release-config.json').read_text(encoding='utf-8'))
           manifest = {
-              'schema_version': '1.0',
+              'schema_version': '1.1',
               'plugin': 'hangar18-manager',
               'version': str(config['version']).strip(),
+              'channel': str(config['channel']).strip(),
+              'backlog_ids': [str(item).strip() for item in config.get('backlog_ids', []) if str(item).strip()],
               'min_wp': '6.4',
               'min_php': '8.0',
               'published_utc': datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z'),
@@ -123,6 +133,7 @@ jobs:
           test "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["version"] ?? "";')" = "$VERSION"
           echo "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["package_sha256"] ?? "";')  dist/hangar18-manager.zip" | sha256sum -c -
           unzip -tq dist/hangar18-manager.zip
+          python3 tools/release-integrity.py --write-manifest
 
       - name: Commit release package
         shell: bash
@@ -130,7 +141,7 @@ jobs:
           VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip
+          git add hangar18-manager.php readme.txt update.json release-manifest.json dist/hangar18-manager.zip
           if git diff --cached --quiet; then
             echo 'Release files are already current.'
             exit 0
