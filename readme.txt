@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.68
+Version: 0.8.69
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.69 – LEGO-editor — restore v0.8.48 selection og deterministisk Kasse-drop ==
+
+Nyt:
+- Historikken viser at v0.8.48 indførte fungerende nested child-selection, mens v0.8.49 tilføjede en anden persistent selection-ejer før v0.8.51 introducerede lodret Over/Under stacking.
+- v0.8.49 selection-inspector ejer derfor ikke længere selection, observerer ikke hele document.body for selection, wrapper ikke nesting.refresh for selection og starter ikke egne selection-settle-runder.
+- v0.8.49 beholder kun Avanceret Inspector-layout. Dets applyMarker API er nu kun en idempotent kompatibilitetsbro til den kendte v0.8.48 inspector-only selection og gør intet når markeringen allerede er korrekt.
+- Dermed kan v0.8.50 media/history/design fortsat fungere uden at overtage eller gentagne gange fjerne/genoprette den røde child-markering. v0.8.51 Over/Under stack-runtime er uændret.
+- IND I KASSEN anvender nu Kasse-indholdets center som entydigt inside-mål; kanterne forbliver reserveret til Venstre/Højre/Over/Under.
+- Inside-målet genberegnes ved sortstop ud fra den senest registrerede faktiske museposition, så dragged source-zoner eller stale Sortable-state ikke kan få gestussen til at falde tilbage til ren reorder.
+- Runtime QA gemmer data-h18-v0869-last-inside-result og candidate/box/source attributter uden console-spam.
+- Updateren ændres ikke; UPDATER-STATUS-001 og UPDATER-VERSION-002 forbliver åbne. Vehicle/Event/Gallery, page schema, backup, SHA-verifikation og rollback er uændrede.
+- v0.8.69 er manuel testrelease til test2; public cutover er fortsat ikke autoriseret.
 
 
 == Version 0.8.68 – LEGO-editor — restore kendt v0.8.51 child-selection ==
