@@ -27,9 +27,9 @@
         '.h18-v0811-edit-child'
     ].join(',');
 
+    const NESTED_SELECTOR = '.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]';
     const CANVAS_ELEMENT_SELECTOR = [
-        '.h18-v0811-auto-box[data-h18-v0811-row]',
-        '.h18-v0811-child-card[data-h18-v0811-child]',
+        NESTED_SELECTOR,
         '.h18-page-section-row > .h18-canvas-preview'
     ].join(',');
 
@@ -41,11 +41,36 @@
         '.h18-v0811-side-zone',
         '.h18-v0814-auto-drop-zone',
         '.h18-v0814-auto-kasse-drop',
-        '.h18-ud-box-drop-zone'
+        '.h18-ud-box-drop-zone',
+        '.h18-v0838-drop-zone'
     ].join(',');
 
     const SELECTED_CANVAS_CLASS = 'is-h18-v0848-selected-element';
     let resizePointerActive = false;
+    let activeCanvasKey = '';
+    let activeSelectionMode = 'top';
+
+    function rowKey(row) {
+        if (!row) { return ''; }
+        const direct = row.querySelector('.h18-page-section-key');
+        if (direct && direct.value) { return String(direct.value); }
+        return String(row.getAttribute('data-key') || '');
+    }
+
+    function nestedKey(node) {
+        if (!node) { return ''; }
+        return String(node.getAttribute('data-h18-v0811-row') || node.getAttribute('data-h18-v0811-child') || '');
+    }
+
+    function rememberSelection(key, mode) {
+        const value = String(key || '').trim();
+        if (!value) { return ''; }
+        activeCanvasKey = value;
+        activeSelectionMode = mode === 'nested' ? 'nested' : 'top';
+        document.documentElement.setAttribute('data-h18-v0871-selection-mode', activeSelectionMode);
+        document.documentElement.setAttribute('data-h18-v0871-selection-key', value);
+        return value;
+    }
 
     function armCompositionReconcile() {
         window.setTimeout(function () {
@@ -62,30 +87,38 @@
         const direct = row.querySelector('.h18-page-section-key');
         if (direct && direct.value) { return String(direct.value); }
         const inspector = document.querySelector('#h18-page-inspector-target .h18-page-section-key');
-        return inspector && inspector.value ? String(inspector.value) : '';
+        if (inspector && inspector.value) { return String(inspector.value); }
+        return rowKey(row);
     }
 
     function refreshSelectedCanvasMarker() {
-        document.querySelectorAll('.' + SELECTED_CANVAS_CLASS).forEach(function (node) {
-            node.classList.remove(SELECTED_CANVAS_CLASS);
-        });
-        const key = selectedRowKey();
-        if (!key) { return; }
+        if (!activeCanvasKey) {
+            const initial = selectedRowKey();
+            if (initial) { rememberSelection(initial, 'top'); }
+        }
 
-        const selectedRow = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
-        if (selectedRow) { selectedRow.setAttribute('data-key', key); }
-
-        document.querySelectorAll('.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]').forEach(function (node) {
-            const nodeKey = String(node.getAttribute('data-h18-v0811-row') || node.getAttribute('data-h18-v0811-child') || '');
-            if (nodeKey === key) { node.classList.add(SELECTED_CANVAS_CLASS); }
+        const key = activeCanvasKey;
+        const nestedMode = activeSelectionMode === 'nested';
+        document.querySelectorAll(NESTED_SELECTOR).forEach(function (node) {
+            const shouldSelect = Boolean(key && nestedMode && nestedKey(node) === key);
+            node.classList.toggle(SELECTED_CANVAS_CLASS, shouldSelect);
         });
+
+        if (!nestedMode) {
+            const selectedRow = document.querySelector('#h18-page-sections-sortable > .h18-page-section-row.is-selected');
+            if (selectedRow && key) { selectedRow.setAttribute('data-key', key); }
+        }
     }
 
     function selectInspectorForNode(node) {
         if (!node || !node.closest) { return false; }
 
-        const nested = node.closest('.h18-v0811-auto-box[data-h18-v0811-row],.h18-v0811-child-card[data-h18-v0811-child]');
+        const nested = node.closest(NESTED_SELECTOR);
         if (nested) {
+            const key = nestedKey(nested);
+            if (key) { rememberSelection(key, 'nested'); }
+            refreshSelectedCanvasMarker();
+
             const edit = nested.querySelector('.h18-v0811-edit-child');
             if (edit) {
                 edit.click();
@@ -97,6 +130,8 @@
 
         const row = node.closest('.h18-page-section-row');
         if (!row) { return false; }
+        const key = rowKey(row) || selectedRowKey();
+        if (key) { rememberSelection(key, 'top'); }
         const edit = row.querySelector('.h18-page-section-edit');
         const header = row.querySelector('.h18-page-section-header');
         if (edit) { edit.click(); }
@@ -217,6 +252,16 @@
     document.addEventListener('click', function (event) {
         const trigger = event.target && event.target.closest ? event.target.closest(INSPECTOR_SELECTION_SELECTOR) : null;
         if (!trigger) { return; }
+
+        if (trigger.classList.contains('h18-v0811-edit-child')) {
+            const key = String(trigger.getAttribute('data-h18-v0811-edit-child') || '').trim();
+            if (key) { rememberSelection(key, 'nested'); }
+        } else {
+            const row = trigger.closest('.h18-page-section-row');
+            const key = rowKey(row) || selectedRowKey();
+            if (key) { rememberSelection(key, 'top'); }
+        }
+
         armCompositionReconcile();
         window.setTimeout(function () {
             clarifyInspectorControls();
@@ -231,18 +276,24 @@
         });
         observer.observe(document.body, { childList: true, subtree: true });
     }
+
     window.setTimeout(function () {
+        const initial = selectedRowKey();
+        if (initial && !activeCanvasKey) { rememberSelection(initial, 'top'); }
         clarifyInspectorControls();
         refreshSelectedCanvasMarker();
     }, 0);
 
     document.documentElement.setAttribute('data-h18-lego-inspector-only', '0.8.47');
-    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.48');
+    document.documentElement.setAttribute('data-h18-lego-selection-marker', '0.8.71');
     window.__h18LegoInspectorOnlyV0847 = {
-        version: '0.8.48',
+        version: '0.8.71',
+        selectionOwner: 'stable-v0848-key',
         selectInspectorForNode: selectInspectorForNode,
         armCompositionReconcile: armCompositionReconcile,
         clarifyInspectorControls: clarifyInspectorControls,
-        refreshSelectedCanvasMarker: refreshSelectedCanvasMarker
+        refreshSelectedCanvasMarker: refreshSelectedCanvasMarker,
+        rememberSelectedCanvasKey: function (key, nested) { return rememberSelection(key, nested ? 'nested' : 'top'); },
+        activeSelection: function () { return { key: activeCanvasKey, mode: activeSelectionMode }; }
     };
 }(jQuery));
