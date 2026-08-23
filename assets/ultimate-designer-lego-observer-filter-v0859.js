@@ -4,7 +4,7 @@
     if (window.__h18LegoObserverFilterV0859 || !window.MutationObserver) { return; }
 
     const NativeMutationObserver = window.MutationObserver;
-    let captureNextBodyObserver = true;
+    let capturedV0851Observer = false;
 
     function isSelectionOverlayNode(node) {
         if (!node || node.nodeType !== 1) { return false; }
@@ -36,7 +36,16 @@
         });
     }
 
+    function isV0851HeavyCallback(callback) {
+        let source = '';
+        try { source = Function.prototype.toString.call(callback); } catch (ignore) {}
+        return source.indexOf('suppressObserverUntil') !== -1 &&
+            source.indexOf('scheduleRender') !== -1 &&
+            source.indexOf('queueInspector') !== -1;
+    }
+
     function FilteredMutationObserver(callback) {
+        const candidate = !capturedV0851Observer && isV0851HeavyCallback(callback);
         let filterThisObserver = false;
 
         const observer = new NativeMutationObserver(function (records, nativeObserver) {
@@ -54,14 +63,14 @@
         const nativeObserve = observer.observe.bind(observer);
         observer.observe = function (target, options) {
             if (
-                captureNextBodyObserver &&
+                candidate &&
                 target === document.body &&
                 options && options.childList === true && options.subtree === true
             ) {
-                captureNextBodyObserver = false;
+                capturedV0851Observer = true;
                 filterThisObserver = true;
-                // The observer we wanted has now been captured. Restore the native
-                // constructor immediately so later runtimes are completely untouched.
+                // The exact v0.8.51 observer has now been captured. Restore the
+                // native constructor so every later WordPress/runtime observer is untouched.
                 window.MutationObserver = NativeMutationObserver;
             }
             return nativeObserve(target, options);
