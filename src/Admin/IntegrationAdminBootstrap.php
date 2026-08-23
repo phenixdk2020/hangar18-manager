@@ -36,6 +36,7 @@ final class IntegrationAdminBootstrap
         MenuAdminController::register();
         MenuPageChooserAdminController::register();
         SideHealthAdminController::register();
+        NoWhatIfAdminController::register();
         EditorLayoutToolsAdminController::register();
         EditorElementLibraryAdminController::register();
         EditorLegoSpacingAdminController::register();
