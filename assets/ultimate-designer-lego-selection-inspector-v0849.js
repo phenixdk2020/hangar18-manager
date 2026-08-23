@@ -44,9 +44,6 @@
         return Boolean(row && keyFromRow(row) === key);
     }
 
-    /* Compatibility API for v0.8.50. v0.8.49 no longer owns selection.
-     * Delayed calls from v0.8.50 become no-ops when the v0.8.48 marker is already
-     * correct; only a genuinely replaced nested DOM node is re-marked. */
     function applyMarker() {
         const key = selectedDomKey();
         if (!key || markerIsCurrent(key)) { return; }
@@ -110,6 +107,20 @@
         advancedFrame = window.requestAnimationFrame(moveAdvancedInspectorBlocks);
     }
 
+    function loadDiagnostics() {
+        if (window.__h18LegoDiagnosticsV0873 || document.querySelector('script[data-h18-lego-diagnostics-loader="1"]')) { return; }
+        const scripts = Array.from(document.scripts || []);
+        const self = scripts.reverse().find(function (script) { return /ultimate-designer-lego-selection-inspector-v0849\.js/.test(String(script.src || '')); });
+        if (!self || !self.src) { return; }
+        const url = self.src.replace(/ultimate-designer-lego-selection-inspector-v0849\.js(?:\?.*)?$/, 'ultimate-designer-lego-diagnostics-v0873.js?ver=0.8.73');
+        if (!url || url === self.src) { return; }
+        const script = document.createElement('script');
+        script.src = url;
+        script.async = false;
+        script.setAttribute('data-h18-lego-diagnostics-loader', '1');
+        document.head.appendChild(script);
+    }
+
     const inspector = document.querySelector('#h18-page-inspector-target');
     if (window.MutationObserver && inspector) {
         new MutationObserver(function () {
@@ -120,12 +131,13 @@
     window.setTimeout(function () {
         moveAdvancedInspectorBlocks();
         applyMarker();
+        loadDiagnostics();
     }, 0);
 
-    document.documentElement.setAttribute('data-h18-lego-selection-inspector', '0.8.69-advanced-only');
+    document.documentElement.setAttribute('data-h18-lego-selection-inspector', '0.8.73-advanced-only');
     window.__h18LegoSelectionInspectorV0849 = {
-        version: '0.8.69',
-        selectionOwner: 'v0.8.48-inspector-only',
+        version: '0.8.73',
+        selectionOwner: 'v0.8.71-inspector-only',
         rememberKey: rememberKey,
         applyMarker: applyMarker,
         moveAdvancedInspectorBlocks: moveAdvancedInspectorBlocks
