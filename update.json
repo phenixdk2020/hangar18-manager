@@ -1,9 +1,10 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.87",
+  "version": "0.8.88",
   "channel": "test",
   "backlog_ids": [
+    "DIAG-LIVE-101",
     "IMAGE-FIT-PARITY-100",
     "VERTICAL-ELEMENT-RESIZE-099",
     "FRONTEND-STACK-096",
@@ -11,16 +12,16 @@
   ],
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-24T16:17:45Z",
+  "published_utc": "2026-08-24T16:26:39Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "634a9ec98b96c686e4661c85b5c6d040b56e057e293a1e769c7257cad7b99b7f",
+  "package_sha256": "8723d9bdb8f8a5f5ecf4b1f7ea971addbd25e5cdc0e7d62bf1980d2ba2f39d18",
   "changelog": [
-    "Pure Billede-elementer med Format = Auto / original bruger nu contain-semantik i editor og frontend, så motivet ikke beskæres når kolonnen ændres mellem eksempelvis 8/12 og 4/12.",
-    "Billede og figure begrænses til deres elementbredde; frontend-preview må ikke længere vise billedet bredere end den Billede-kasse, det tilhører.",
-    "Valgte elementer får et bund-håndtag med ↕ til lodret resize.",
-    "For Billede ændrer bund-håndtaget ImageHeightPx/MobileImageHeightPx og bevarer hele motivet med contain ved Auto/original.",
-    "For Tekst, Kasse, Grid/Flex og Række- og kolonne-kasse ændrer bund-håndtaget eksisterende min-height-felter; trækkes tilbage til naturlig indholdshøjde nulstilles højden til Auto i stedet for at klippe indhold.",
-    "Horisontal 12-kolonne-span, StackRootKey og højre/venstre/over/under placement ændres ikke af højde-resize.",
-    "Gem/genindlæsning af hierarki forbliver et separat log-diagnosepunkt og er ikke markeret som løst i denne release."
+    "Når Udvidet fejllogning er aktiv, streamer Trace nu automatisk sanitiserede events i små batches til en privat WordPress diagnose-store.",
+    "Trace support viser Site-log klar samt Kopiér diagnose-link; linket er beskyttet af en tilfældig 256-bit read-only token og returnerer seneste sanitiserede session via REST med no-store/noindex.",
+    "Browser og server redigerer passwords, tokens, nonces, cookies, authorization/credentials samt rå UI value/text/content før data gemmes.",
+    "Live-loggen registrerer strukturelle snapshots ved page-load, preview og før Gem med Key, Type, LayoutParentKey, span, stack og relevante element-/billedstørrelser.",
+    "Gem-side registrerer desuden et nonce-valideret SERVER_BEFORE_SAVE snapshot før den normale save-handler, så payload-strukturen kan sammenlignes med editor-state og efterfølgende reload.",
+    "Diagnoselageret er bounded til de seneste 20 sessioner og 3000 entries pr. session og bruger non-autoload WordPress options.",
+    "v0.8.87 image-fit, lodret resize, stack-paritet og eksisterende placement-runtimes videreføres uændret."
   ]
 }

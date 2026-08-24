@@ -1,14 +1,17 @@
 {
   "schema_version": "1.0",
-  "version": "0.8.86",
+  "version": "0.8.88",
   "channel": "test",
-  "source_commit": "17f8fdd8752846b02a81b2f64b9baa1e49a44ba7",
-  "built_utc": "2026-08-24T15:12:09Z",
+  "source_commit": "55755f607cd58d2d0450f786f8f177a02515eed7",
+  "built_utc": "2026-08-24T16:26:39Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "54ee921da18850fd66f8fd1ba6bd6e23386387102ed28c20ec64fd6d9f11aa5e",
-  "plugin_header_version": "0.8.86",
-  "plugin_constant_version": "0.8.86",
+  "package_sha256": "8723d9bdb8f8a5f5ecf4b1f7ea971addbd25e5cdc0e7d62bf1980d2ba2f39d18",
+  "plugin_header_version": "0.8.88",
+  "plugin_constant_version": "0.8.88",
   "backlog_ids": [
+    "DIAG-LIVE-101",
+    "IMAGE-FIT-PARITY-100",
+    "VERTICAL-ELEMENT-RESIZE-099",
     "FRONTEND-STACK-096",
     "CANVAS-STACK-AUTOHEIGHT-097"
   ],
