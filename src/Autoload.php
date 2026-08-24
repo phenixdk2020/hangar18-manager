@@ -45,6 +45,7 @@ final class Autoload
             \Hangar18\UltimateDesigner\Admin\UpdaterStateConsistencyAdminController::register();
             \Hangar18\UltimateDesigner\Admin\PageVersionRestoreAdminController::register();
             \Hangar18\UltimateDesigner\Admin\EditorNavigatorAdminController::register();
+            \Hangar18\UltimateDesigner\Admin\LegacyCleanupAuditAdminController::register();
         }
     }
 }
