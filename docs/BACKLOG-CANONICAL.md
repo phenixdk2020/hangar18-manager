@@ -1,6 +1,6 @@
 # Hangar18 backlog — canonical pointer
 
-**Canonical backlog:** `docs/active-backlog-v0881.md`
+**Canonical backlog:** `docs/active-backlog-v0882.md`
 
 Dette dokument er den entydige indgang til projektets aktuelle backlog.
 
