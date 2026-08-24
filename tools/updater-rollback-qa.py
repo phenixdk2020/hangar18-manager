@@ -4,7 +4,8 @@
 This is intentionally a simulation + static-source contract test, not a WordPress
 integration installer. It verifies the hardened legacy source owns exactly one
 rollback path and exercises failure points before/after code backup, including a
-rollback failure, so future refactors cannot silently drop the safety behavior.
+rollback failure. Successful rollback must verify the restored previous version,
+persist from/to versions and a SHA-256 of the restored plugin main file.
 """
 from __future__ import annotations
 
@@ -33,7 +34,15 @@ def simulate(*, backup_created: bool, install_fails: bool, rollback_fails: bool)
         events.append('rollback_failed')
         return {'events': events, 'success': False, 'rollback_attempted': True, 'rollback_success': False}
 
-    events.extend(['rollback_success', 'pending_transition_cleared', 'cache_invalidated'])
+    events.extend([
+        'rollback_source_restored',
+        'rollback_version_verified',
+        'rollback_sha_verified',
+        'rollback_audit_persisted',
+        'rollback_success',
+        'pending_transition_cleared',
+        'cache_invalidated',
+    ])
     return {'events': events, 'success': False, 'rollback_attempted': True, 'rollback_success': True}
 
 
@@ -43,8 +52,15 @@ def assert_source(path: pathlib.Path) -> dict:
         'rollback_start_log': "'UPDATE_ROLLBACK_START'",
         'rollback_success_log': "'UPDATE_ROLLBACK_SUCCESS'",
         'rollback_failed_log': "'UPDATE_ROLLBACK_FAILED'",
+        'rollback_verified_log': "'UPDATE_ROLLBACK_VERIFIED'",
         'backup_reinstall': "$this->install_local_plugin_zip(\n                        $code_backup,\n                        true\n                    );",
-        'pending_cleanup_marker': 'H18-UPDATER-HARDENING-010-ROLLBACK',
+        'verification_marker': 'H18-UPDATER-HARDENING-010-ROLLBACK',
+        'rollback_audit_option': "'hangar18_manager_update_rollback_verification_v1'",
+        'from_version': "'from_version' => (string) ($manifest['version'] ?? '')",
+        'to_version': "'to_version' => self::VERSION",
+        'restored_sha': "'restored_main_sha256' => $rollback_main_sha256",
+        'restored_header_check': "preg_match('/\\*\\s+Version:\\s*' . $rollback_expected",
+        'restored_const_check': "const\\\\s+VERSION",
         'pending_option_cleanup': "delete_option('hangar18_manager_update_post_install_pending_v1')",
         'cache_cleanup': "delete_site_transient('update_plugins')",
     }
@@ -69,13 +85,19 @@ def run(root: pathlib.Path) -> dict:
     assert cases['fail_before_backup']['rollback_attempted'] is False
     assert cases['fail_after_backup']['rollback_attempted'] is True
     assert cases['fail_after_backup']['rollback_success'] is True
-    assert 'pending_transition_cleared' in cases['fail_after_backup']['events']
-    assert 'cache_invalidated' in cases['fail_after_backup']['events']
+    for event in [
+        'rollback_version_verified',
+        'rollback_sha_verified',
+        'rollback_audit_persisted',
+        'pending_transition_cleared',
+        'cache_invalidated',
+    ]:
+        assert event in cases['fail_after_backup']['events']
     assert cases['rollback_failure']['rollback_attempted'] is True
     assert cases['rollback_failure']['rollback_success'] is False
 
     return {
-        'schema_version': '1.0',
+        'schema_version': '1.1',
         'result': 'PASS',
         'source_contract': source,
         'cases': cases,
