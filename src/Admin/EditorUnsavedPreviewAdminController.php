@@ -44,7 +44,7 @@ final class EditorUnsavedPreviewAdminController
             'hangar18-ultimate-designer-unsaved-preview',
             $pluginUrl . 'assets/ultimate-designer-unsaved-preview.js',
             ['jquery', 'hangar18-manager-admin'],
-            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.85',
+            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.86',
             true
         );
         wp_enqueue_style(
@@ -120,19 +120,8 @@ final class EditorUnsavedPreviewAdminController
             }
         }
 
-        $spanSections = [];
-        $rawSpans = isset($_POST['spans_json']) ? (string) wp_unslash($_POST['spans_json']) : '';
-        if ($rawSpans !== '' && strlen($rawSpans) <= 512 * 1024) {
-            $decoded = json_decode($rawSpans, true);
-            if (is_array($decoded)) {
-                foreach (array_slice($decoded, 0, 150, true) as $key => $state) {
-                    $cleanKey = sanitize_key((string) $key);
-                    if ($cleanKey !== '' && is_array($state)) {
-                        $spanSections[$cleanKey] = $state;
-                    }
-                }
-            }
-        }
+        $spanSections = self::decodeStateMap('spans_json', 512 * 1024, false);
+        $stackSections = self::decodeStateMap('stacks_json', 512 * 1024, true);
 
         try {
             $token = bin2hex(random_bytes(16));
@@ -146,6 +135,7 @@ final class EditorUnsavedPreviewAdminController
                 'PageSlug' => $slug,
                 'PageData' => $pageData,
                 'SpanSections' => $spanSections,
+                'StackSections' => $stackSections,
                 'UserId' => get_current_user_id(),
                 'CreatedUtc' => gmdate('c'),
             ],
@@ -164,6 +154,59 @@ final class EditorUnsavedPreviewAdminController
             'previewUrl' => esc_url_raw($url),
             'sectionCount' => count($sections),
             'spanCount' => count($spanSections),
+            'stackCount' => count($stackSections),
         ]);
+    }
+
+    /** @return array<string,mixed> */
+    private static function decodeStateMap(string $postKey, int $maxBytes, bool $stack): array
+    {
+        $raw = isset($_POST[$postKey]) ? (string) wp_unslash($_POST[$postKey]) : '';
+        if ($raw === '' || strlen($raw) > $maxBytes) {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $result = [];
+        foreach (array_slice($decoded, 0, 150, true) as $key => $state) {
+            $cleanKey = sanitize_key((string) $key);
+            if ($cleanKey === '' || !is_array($state)) {
+                continue;
+            }
+            $result[$cleanKey] = $stack
+                ? self::sanitizeStackState($cleanKey, $state)
+                : $state;
+        }
+        return $result;
+    }
+
+    /** @param array<string,mixed> $state @return array<string,mixed> */
+    private static function sanitizeStackState(string $key, array $state): array
+    {
+        $root = sanitize_key((string) ($state['StackRootKey'] ?? ''));
+        if ($root === $key) {
+            $root = '';
+        }
+        return [
+            'SchemaVersion' => 1,
+            'StackRootKey' => $root,
+            'StackOrder' => max(0, (int) ($state['StackOrder'] ?? 0)),
+            'DesktopPercent' => self::stackPercent($state['DesktopPercent'] ?? 0),
+            'TabletPercent' => self::stackPercent($state['TabletPercent'] ?? 0),
+            'MobilePercent' => self::stackPercent($state['MobilePercent'] ?? 0),
+        ];
+    }
+
+    /** @param mixed $value */
+    private static function stackPercent($value): int
+    {
+        if (!is_numeric($value)) {
+            return 0;
+        }
+        $percent = (int) $value;
+        return $percent > 0 ? max(10, min(90, $percent)) : 0;
     }
 }
