@@ -125,6 +125,10 @@ final class EditorDiagnosticRuntime
         if (!current_user_can('edit_pages')) {
             return;
         }
+        $saveNonce = isset($_POST['_wpnonce']) ? sanitize_text_field((string) wp_unslash($_POST['_wpnonce'])) : '';
+        if ($saveNonce === '' || !wp_verify_nonce($saveNonce, 'h18_save_page_editor')) {
+            return;
+        }
         $session = self::sessionId($_POST['h18_diag_session'] ?? '');
         if ($session === '') {
             return;
@@ -356,6 +360,10 @@ final class EditorDiagnosticRuntime
         }
         if (preg_match('/pass(word)?|secret|token|nonce|authorization|api[-_ ]?key|cookie|bearer|credential|csrf/i', $key)) {
             return '[REDACTED]';
+        }
+        if (preg_match('/^(value|text|content|html|markup|body)$/i', $key)) {
+            $length = is_scalar($value) ? strlen((string) $value) : 0;
+            return '[REDACTED_UI length=' . $length . ']';
         }
         if (is_array($value)) {
             $out = [];
