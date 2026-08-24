@@ -4,7 +4,7 @@
     if (window.__h18LegoRuntimeSafetyV0883) { return; }
 
     const VERSION = '0.8.83';
-    const TRACE_PANEL_SELECTOR = '#h18-ultimate-designer-trace-v0876';
+    const TRACE_UI_SELECTOR = '#h18-ultimate-designer-trace-v0876,#h18-trace-tools-v0879,#h18-trace-recording-indicator-v0879';
     const NativeMutationObserver = window.MutationObserver;
     let editorDragActive = false;
     let lastDragActivity = 0;
@@ -18,16 +18,26 @@
             source.indexOf('MUTATION_MS') !== -1;
     }
 
-    function insideTracePanel(node) {
+    function insideTraceUi(node) {
         if (!node) { return false; }
         if (node.nodeType === 3) { node = node.parentNode; }
         if (!node || node.nodeType !== 1) { return false; }
-        if (node.matches && node.matches(TRACE_PANEL_SELECTOR)) { return true; }
-        return !!(node.closest && node.closest(TRACE_PANEL_SELECTOR));
+        if (node.matches && node.matches(TRACE_UI_SELECTOR)) { return true; }
+        return !!(node.closest && node.closest(TRACE_UI_SELECTOR));
+    }
+
+    function addedOrRemovedTraceUi(record) {
+        const nodes = Array.prototype.slice.call(record && record.addedNodes || [])
+            .concat(Array.prototype.slice.call(record && record.removedNodes || []));
+        return nodes.length > 0 && nodes.every(function (node) {
+            return node.nodeType !== 1 || insideTraceUi(node);
+        });
     }
 
     function traceUiMutation(record) {
-        return !!(record && insideTracePanel(record.target));
+        if (!record) { return false; }
+        if (insideTraceUi(record.target)) { return true; }
+        return record.type === 'childList' && addedOrRemovedTraceUi(record);
     }
 
     if (NativeMutationObserver) {
@@ -139,9 +149,9 @@
         if (editorDragActive) { lastDragActivity = Date.now(); }
     }, true);
 
-    // This listener is intentionally installed before the palette redirect bridge.
-    // The bridge may stopImmediatePropagation() on the native drop, but the queued
-    // microtask survives and runs immediately after all synchronous drop handlers.
+    // Installed before the palette redirect bridge. That bridge can call
+    // stopImmediatePropagation() on the native drop; this queued cleanup still
+    // runs after the synchronous drop chain and cannot be skipped by that call.
     window.addEventListener('drop', function () {
         if (!editorDragActive) { return; }
         lastDragActivity = Date.now();
