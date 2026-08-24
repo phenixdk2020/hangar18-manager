@@ -1,10 +1,11 @@
 {
   "version": "0.8.81",
-  "title": "26 backlogopgaver — permanent WhatIf cleanup, updater compatibility og Navigator productivity",
+  "title": "27 backlogopgaver — WhatIf cleanup, updater compatibility/QA og Navigator productivity",
   "channel": "test",
   "backlog_ids": [
     "RELEASE-007",
     "UPDATER-SCHEMA-003",
+    "UPDATER-015",
     "WHATIF-CLEANUP-001",
     "WHATIF-002",
     "WHATIF-003",
@@ -37,6 +38,7 @@
     "NoWhatIfAdminController og de to v0.8.58 shim-assets slettes i samme release transaction; release ZIP blokerer genintroduktion af shim-filer.",
     "Fail-closed release-diagnostik gemmer ved cleanup-stop kun den konkrete fejlrapport og ruller delvise source-writes tilbage; den første virkelige diagnose fandt syv præcise rester og er nu dækket.",
     "Updater-manifestet er låst til schema_version 1.0 for bagudkompatibilitet med installerede v0.8.80-updatere; brugerens update-check er verificeret igen og package-QA afviser andre schema-versioner.",
+    "Ny updater-contract QA tester behind/equal/ahead, schema/plugin/version/SHA og at atomisk state fortsat beregner update-status ud fra latest mod aktiv current-version.",
     "Cleanup-audit skelner mellem aktive runtime-referencer og panelets egne diagnostiske omtaler og kan automatisk fejle på aktive WhatIf paths.",
     "Legacy runtime er klassificeret: aktive Astra/public/data guards beholdes, one-time repair hooks isoleres som senere cleanup-kandidater, og manuelle repair-handlers slettes ikke blindt.",
     "Navigator får typefilter, autoscroll til valgt node og højreklik-menu med eksisterende Redigér, Duplikér, Kopiér/Indsæt design, Flyt til, Vis/skjul og Fjern handlers.",
