@@ -23,7 +23,7 @@ Denne batch arbejder på **24 backlog-ID’er**. Hovedmålet er permanent WhatIf
 | WHATIF-007 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Menu create/add/repair/save simulation controls og branches fjernes; normale menu-handlinger smoke-testes efter release. |
 | WHATIF-008 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Design/Header/Footer/shell relaterede WhatIf runtime-referencer må ikke overleve primary-runtime assertion. |
 | WHATIF-009 | Normal | 🟡 AUTOMATISK QA v0.8.81 | Primære runtime-filer må ikke længere indeholde gamle WhatIf help/log/runtime-tekster. Historisk cleanup-dokumentation er tilladt. |
-| WHATIF-010 | Normal | 🟡 AUTOMATISK QA v0.8.81 | `.h18-whatif-help` og WhatIf-only styling fjernes; `.h18-safe-switch` fjernes fra fælles badge-regel når shim migreres væk. |
+| WHATIF-010 | Normal | 🟡 AUTOMATISK QA v0.8.81 | `.h18-whatif-help` omdøbes/fjernes. Blandede wrappers med reelle kontroller bevares som neutral `.h18-action-options`; den generiske `.h18-safe-switch` beholdes, fordi den også bruges af aktive indstillinger som Pin menu/header. |
 | WHATIF-011 | Normal | 🟡 AUTOMATISK QA v0.8.81 | Page Editor WhatIf selectors/state fjernes fra `assets/admin.js`; JS syntax kontrolleres efter mutation. |
 | WHATIF-012 | Høj | 🟡 RELEASE-MIGRATION v0.8.81 | `NoWhatIfAdminController::register()` og controllerfilen fjernes efter source-cleanup i samme release transaction. |
 | WHATIF-013 | Høj | 🟡 RELEASE-MIGRATION v0.8.81 | `hangar18-no-whatif-v0858.js/.css` slettes i samme release transaction og må ikke findes i ZIP. |
