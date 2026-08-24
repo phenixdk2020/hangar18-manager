@@ -11,6 +11,11 @@ namespace Hangar18\UltimateDesigner\Admin;
  * stack state after reload. It does not own drag/drop. Implicit multi-column
  * layouts are materialized through the established v0.8.41 span API so Gem can
  * persist the same layout the editor shows.
+ *
+ * v0.8.91 adds a narrowly-scoped save integrity guard. It snapshots the active
+ * rows at the user's Save activation and only restores that snapshot if the
+ * same submit transaction has catastrophically marked every active row removed
+ * before the normal serializer runs. Normal section deletion remains untouched.
  */
 final class EditorGenericLayoutRebuildAdminController
 {
@@ -34,8 +39,17 @@ final class EditorGenericLayoutRebuildAdminController
 
         $pluginDir = dirname(__DIR__, 2);
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
+        $saveGuardPath = $pluginDir . '/assets/ultimate-designer-save-integrity-guard-v0891.js';
         $jsPath = $pluginDir . '/assets/ultimate-designer-saved-layout-rebuild-v0890.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-saved-layout-rebuild-v0890.css';
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-save-integrity-guard-v0891',
+            $pluginUrl . 'assets/ultimate-designer-save-integrity-guard-v0891.js',
+            [],
+            is_file($saveGuardPath) ? (string) filemtime($saveGuardPath) : '0.8.91',
+            false
+        );
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-saved-layout-rebuild-v0890',
@@ -46,6 +60,7 @@ final class EditorGenericLayoutRebuildAdminController
                 'hangar18-ultimate-designer-lego-fixes-v0851',
                 'hangar18-ultimate-designer-lego-placement-stability-v0862',
                 'hangar18-ultimate-designer-lego-inspector-only-v0847',
+                'hangar18-ultimate-designer-save-integrity-guard-v0891',
             ],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.90',
             false
