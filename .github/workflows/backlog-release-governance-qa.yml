@@ -7,6 +7,7 @@ on:
       - 'docs/active-backlog-v*.md'
       - 'docs/backlog-index.json'
       - 'docs/BACKLOG-CONTRIBUTING.md'
+      - 'docs/lego-navigator-v0880-test.md'
       - 'release-config.json'
       - 'update.json'
       - 'release-manifest.json'
@@ -14,15 +15,22 @@ on:
       - 'tools/backlog-governance.py'
       - 'tools/release-integrity.py'
       - 'tools/trace-redaction-qa.py'
+      - 'tools/legacy-cleanup-audit.py'
       - 'assets/ultimate-designer-trace*.js'
       - 'assets/updater-support-v0879.js'
+      - 'assets/ultimate-designer-navigator-v0880.js'
+      - 'assets/ultimate-designer-navigator-v0880.css'
       - 'src/Admin/UltimateDesignerTraceAdminController.php'
       - 'src/Admin/UpdaterStateConsistencyAdminController.php'
+      - 'src/Admin/EditorNavigatorAdminController.php'
+      - 'src/Admin/LegacyCleanupAuditAdminController.php'
+      - 'src/Autoload.php'
       - '.github/workflows/backlog-release-governance-qa.yml'
   pull_request:
     paths:
       - 'docs/active-backlog-v*.md'
       - 'docs/backlog-index.json'
+      - 'docs/lego-navigator-v0880-test.md'
       - 'release-config.json'
       - 'update.json'
       - 'release-manifest.json'
@@ -30,10 +38,14 @@ on:
       - 'tools/backlog-governance.py'
       - 'tools/release-integrity.py'
       - 'tools/trace-redaction-qa.py'
+      - 'tools/legacy-cleanup-audit.py'
       - 'assets/ultimate-designer-trace*.js'
       - 'assets/updater-support-v0879.js'
-      - 'src/Admin/UltimateDesignerTraceAdminController.php'
-      - 'src/Admin/UpdaterStateConsistencyAdminController.php'
+      - 'assets/ultimate-designer-navigator-v0880.js'
+      - 'assets/ultimate-designer-navigator-v0880.css'
+      - 'src/Admin/EditorNavigatorAdminController.php'
+      - 'src/Admin/LegacyCleanupAuditAdminController.php'
+      - 'src/Autoload.php'
 
 permissions:
   contents: read
@@ -71,23 +83,49 @@ jobs:
       - name: Python syntax
         shell: bash
         run: |
-          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py
+          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py
 
       - name: Trace redaction QA
         shell: bash
         run: python3 tools/trace-redaction-qa.py
+
+      - name: Legacy cleanup read-only audit
+        shell: bash
+        run: |
+          python3 tools/legacy-cleanup-audit.py --output /tmp/legacy-cleanup.json --require-no-powershell --require-no-bootstrap-json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/legacy-cleanup.json', encoding='utf-8'))
+          print('WhatIf runtime files:', p['whatif_runtime_file_count'])
+          print('WhatIf non-shim matches:', p['whatif_nonshim_matches'])
+          print('Shim files:', ', '.join(p['shim_files']) or 'none')
+          PY
 
       - name: JavaScript syntax
         shell: bash
         run: |
           node --check assets/ultimate-designer-trace-tools-v0879.js
           node --check assets/updater-support-v0879.js
+          node --check assets/ultimate-designer-navigator-v0880.js
 
       - name: PHP syntax
         shell: bash
         run: |
           php -l src/Admin/UltimateDesignerTraceAdminController.php
           php -l src/Admin/UpdaterStateConsistencyAdminController.php
+          php -l src/Admin/EditorNavigatorAdminController.php
+          php -l src/Admin/LegacyCleanupAuditAdminController.php
+          php -l src/Autoload.php
+
+      - name: Navigator static contract
+        shell: bash
+        run: |
+          grep -q 'window.__h18NavigatorV0880' assets/ultimate-designer-navigator-v0880.js
+          grep -q 'h18-layout-parent-key' assets/ultimate-designer-navigator-v0880.js
+          grep -q 'moveInto' assets/ultimate-designer-navigator-v0880.js
+          grep -q 'moveOut' assets/ultimate-designer-navigator-v0880.js
+          grep -q 'wouldCycle' assets/ultimate-designer-navigator-v0880.js
+          grep -q '__h18NestingToolsV0840' assets/ultimate-designer-navigator-v0880.js
 
       - name: Release integrity when package is present
         shell: bash
