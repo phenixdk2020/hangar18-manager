@@ -26,6 +26,16 @@
     box-shadow: inset 0 0 0 1px rgba(214, 54, 56, .2) !important;
 }
 
+/* LEGO-CANVAS-082: a selected source row is editor structure, not a second
+ * visual element. Keep the red selection/design edge on the actual preview only.
+ * The source row may remain full-width for editor mechanics without presenting
+ * a duplicate border/box-shadow around the content-sized element. */
+.h18-live-canvas-ready #h18-page-sections-sortable > .h18-page-section-row.is-selected {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
 /* When a child is selected, WordPress may leave the canonical parent row with
  * .is-selected while its settings body is in Inspector. Do not draw the parent
  * red at the same time; the key-owned child card is the visual selection. */
