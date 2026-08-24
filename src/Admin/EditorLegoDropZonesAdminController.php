@@ -39,6 +39,7 @@ final class EditorLegoDropZonesAdminController
         $cssPath = $pluginDir . '/assets/ultimate-designer-lego-drop-zones-v0838.css';
         $paletteSideDropBridgePath = $pluginDir . '/assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js';
         $parentKeyGuardPath = $pluginDir . '/assets/ultimate-designer-lego-parent-key-guard-v0845.js';
+        $runtimeSafetyPath = $pluginDir . '/assets/ultimate-designer-lego-runtime-safety-v0883.js';
         $inspectorOnlyJsPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.js';
         $inspectorOnlyCssPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.css';
         $selectionInspectorJsPath = $pluginDir . '/assets/ultimate-designer-lego-selection-inspector-v0849.js';
@@ -76,6 +77,14 @@ final class EditorLegoDropZonesAdminController
         );
 
         wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-runtime-safety-v0883',
+            $pluginUrl . 'assets/ultimate-designer-lego-runtime-safety-v0883.js',
+            ['jquery', 'hangar18-ultimate-designer-lego-parent-key-guard-v0845'],
+            is_file($runtimeSafetyPath) ? (string) filemtime($runtimeSafetyPath) : '0.8.83',
+            false
+        );
+
+        wp_enqueue_script(
             'hangar18-ultimate-designer-lego-palette-side-drop-bridge-v0843',
             $pluginUrl . 'assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js',
             ['jquery', 'hangar18-ultimate-designer-nesting-tools', 'hangar18-ultimate-designer-lego-drop-zones-v0838', 'hangar18-ultimate-designer-lego-parent-key-guard-v0845'],
@@ -86,7 +95,7 @@ final class EditorLegoDropZonesAdminController
         wp_enqueue_script(
             'hangar18-ultimate-designer-lego-inspector-only-v0847',
             $pluginUrl . 'assets/ultimate-designer-lego-inspector-only-v0847.js',
-            ['jquery', 'hangar18-ultimate-designer-nesting-tools', 'hangar18-ultimate-designer-lego-parent-key-guard-v0845'],
+            ['jquery', 'hangar18-ultimate-designer-nesting-tools', 'hangar18-ultimate-designer-lego-parent-key-guard-v0845', 'hangar18-ultimate-designer-lego-runtime-safety-v0883'],
             is_file($inspectorOnlyJsPath) ? (string) filemtime($inspectorOnlyJsPath) : '0.8.47',
             false
         );
