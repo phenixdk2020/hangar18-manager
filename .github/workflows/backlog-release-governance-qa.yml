@@ -22,6 +22,7 @@ on:
       - 'tools/trace-redaction-qa.py'
       - 'tools/legacy-cleanup-audit.py'
       - 'tools/whatif-source-cleanup.py'
+      - 'tools/updater-contract-qa.py'
       - 'assets/ultimate-designer-trace*.js'
       - 'assets/updater-support-v0879.js'
       - 'assets/ultimate-designer-navigator-v0880.js'
@@ -56,6 +57,7 @@ on:
       - 'tools/trace-redaction-qa.py'
       - 'tools/legacy-cleanup-audit.py'
       - 'tools/whatif-source-cleanup.py'
+      - 'tools/updater-contract-qa.py'
       - 'assets/ultimate-designer-trace*.js'
       - 'assets/updater-support-v0879.js'
       - 'assets/ultimate-designer-navigator-v0880.js'
@@ -105,7 +107,11 @@ jobs:
       - name: Python syntax
         shell: bash
         run: |
-          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py
+          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py tools/updater-contract-qa.py
+
+      - name: Updater compatibility QA
+        shell: bash
+        run: python3 tools/updater-contract-qa.py
 
       - name: WhatIf source-cleaner dry-run
         shell: bash
