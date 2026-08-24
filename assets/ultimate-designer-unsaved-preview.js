@@ -93,22 +93,40 @@ jQuery(function ($) {
         });
     }
 
-    function collectSpanState() {
-        const api = window.__h18LegoResizeV0841;
-        const spans = {};
-        if (!api || typeof api.stateForKey !== 'function') { return spans; }
-
+    function eachSectionKey(callback) {
         const seen = {};
         $form.find('.h18-page-section-key').each(function () {
             const key = String($(this).val() || '').trim();
             if (!key || seen[key]) { return; }
             seen[key] = true;
+            callback(key);
+        });
+    }
+
+    function collectSpanState() {
+        const api = window.__h18LegoResizeV0841;
+        const spans = {};
+        if (!api || typeof api.stateForKey !== 'function') { return spans; }
+        eachSectionKey(function (key) {
             try {
                 const state = api.stateForKey(key);
                 if (state && typeof state === 'object') { spans[key] = state; }
             } catch (ignore) {}
         });
         return spans;
+    }
+
+    function collectStackState() {
+        const api = window.__h18LegoFixesV0851;
+        const stacks = {};
+        if (!api || typeof api.stackStateForKey !== 'function') { return stacks; }
+        eachSectionKey(function (key) {
+            try {
+                const state = api.stackStateForKey(key);
+                if (state && typeof state === 'object') { stacks[key] = state; }
+            } catch (ignore) {}
+        });
+        return stacks;
     }
 
     function prepareLivePreview() {
@@ -130,7 +148,8 @@ jQuery(function ($) {
                 nonce: nonce,
                 page_slug: pageSlug,
                 form_data: $form.serialize(),
-                spans_json: JSON.stringify(collectSpanState())
+                spans_json: JSON.stringify(collectSpanState()),
+                stacks_json: JSON.stringify(collectStackState())
             }
         }).done(function (response) {
             const data = response && response.data ? response.data : {};
