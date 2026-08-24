@@ -31,7 +31,7 @@ final class Autoload
             \Hangar18\UltimateDesigner\Diagnostics\EditorDiagnosticRuntime::register();
         }
 
-        // Public runtimes. They only affect render-time output; no admin writes.
+        // Public runtimes remain unchanged in v0.9.0.
         if (
             function_exists('is_admin') &&
             function_exists('add_filter') &&
@@ -43,7 +43,10 @@ final class Autoload
             \Hangar18\UltimateDesigner\Frontend\ImageElementFrontendRuntime::register();
         }
 
-        // Admin-only compatibility/tooling layers. They do not own frontend rendering.
+        // Admin-only tooling. v0.9.0 makes one canonical layout engine the
+        // active generic Grid/Flex render/save owner. The v0.8.90 rebuild and
+        // v0.8.91 save guard stay in the package for rollback/audit only and
+        // are deliberately no longer registered here.
         if (
             function_exists('is_admin') &&
             function_exists('add_action') &&
@@ -56,7 +59,7 @@ final class Autoload
             \Hangar18\UltimateDesigner\Admin\LegacyCleanupAuditAdminController::register();
             \Hangar18\UltimateDesigner\Admin\LegacyStateBackupAdminController::register();
             \Hangar18\UltimateDesigner\Admin\BackupHealthAdminController::register();
-            \Hangar18\UltimateDesigner\Admin\EditorGenericLayoutRebuildAdminController::register();
+            \Hangar18\UltimateDesigner\Admin\EditorLayoutEngineAdminController::register();
         }
     }
 }
