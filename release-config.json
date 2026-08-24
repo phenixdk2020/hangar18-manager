@@ -39,7 +39,7 @@
     "Source-cleaner v1.5 er fail-closed og idempotent, fjerner de sidste Page Editor change/draft-save-referencer og omskriver de sidste fem gamle WhatIf-hjælpetekster uden at ændre aktiv funktionalitet.",
     "Source-cleaner bevarer blandede wrappers med reelle kontroller som Pin menu/header, kræver nul WhatIf hits i primær runtime og linter muteret PHP/JavaScript før pakning.",
     "NoWhatIfAdminController og de to v0.8.58 shim-assets slettes i samme release transaction; release ZIP blokerer genintroduktion af shim-filer.",
-    "Fail-closed release-diagnostik gemmer ved cleanup-stop kun den konkrete fejlrapport og ruller delvise source-writes tilbage; første virkelige diagnose fandt syv præcise rester, som cleaner v1.5 nu dækker.",
+    "Fail-closed release-diagnostik dækker nu hele pre-package QA-kæden og gemmer ved stop den konkrete stderr/stdout samt cleanup/legacy-rapport, mens delvise source-writes rulles tilbage.",
     "Release-concurrency er ændret så nyeste trigger annullerer ældre builds, og readme-release-noter normaliseres pr. versionsnummer så retries ikke kan skabe dubletter.",
     "Updater-manifestet er låst til schema_version 1.0 for bagudkompatibilitet med installerede v0.8.80-updatere; brugerens update-check er verificeret igen og package-QA afviser andre schema-versioner.",
     "Updater-contract QA tester behind/equal/ahead, schema/plugin/version/SHA og at atomisk state fortsat beregner update-status ud fra latest mod aktiv current-version.",
