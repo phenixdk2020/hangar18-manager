@@ -1,11 +1,12 @@
 {
   "schema_version": "1.1",
-  "canonical_backlog": "docs/active-backlog-v0879.md",
+  "canonical_backlog": "docs/active-backlog-v0880.md",
   "extends_chain": [
     "docs/active-backlog-v0878.md",
-    "docs/active-backlog-v0879.md"
+    "docs/active-backlog-v0879.md",
+    "docs/active-backlog-v0880.md"
   ],
-  "generated_utc": "2026-08-23T21:13:41Z",
+  "generated_utc": "2026-08-24T03:58:39Z",
   "item_count": 400,
   "items": [
     {
@@ -596,11 +597,11 @@
     {
       "id": "WHATIF-CLEANUP-001",
       "priority": "Høj",
-      "status": "🟠 SOURCE AUDIT AKTIV",
-      "definition_of_done": "Fjern WhatIf ved kilden; shim/assets slettes til sidst.",
+      "status": "🟡 AUDIT FÆRDIG / SOURCE REMOVAL NÆSTE",
+      "definition_of_done": "Installeret admin-runtime har read-only cleanup-panel på Opdateringer, og repository-audit måler WhatIf runtime-referencer uden writes. Selve source-removal fortsætter i næste sikre batch.",
       "area_code": "E",
       "area": "WhatIf cleanup",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "WHATIF-002",
@@ -713,11 +714,11 @@
     {
       "id": "WHATIF-014",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Repository-wide QA: ingen aktiv `whatif` request/state/runtime reference.",
+      "status": "🟡 BASELINE QA v0.8.80",
+      "definition_of_done": "`tools/legacy-cleanup-audit.py` tæller WhatIf-referencer separat fra shim og gør reduktionen målbar i CI; DoD=0 aktive runtime-referencer er endnu ikke nået.",
       "area_code": "E",
       "area": "WhatIf cleanup",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "WHATIF-015",
@@ -731,47 +732,47 @@
     {
       "id": "LEGACY-POWERSHELL-CLEANUP-001",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Read-only audit af repo, release ZIP, plugin dir, uploads og legacy data.",
+      "status": "🟡 AUDIT FÆRDIG v0.8.80",
+      "definition_of_done": "Opdateringer viser read-only installed-runtime audit af plugin/uploads for `.ps1`, bootstrap-artifacts og legacy options; ingen automatisk sletning.",
       "area_code": "F",
       "area": "PowerShell / legacy bootstrap / gammel runtime cleanup",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGACY-002",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Bekræft at ingen `.ps1` ligger i release ZIP/installationsmappe.",
+      "status": "✅ AUTOMATISK QA v0.8.80",
+      "definition_of_done": "CI fejler på `.ps1` i repository/source, mens release-integrity denylist fortsat beskytter ZIP. Installeret runtime vises separat i auditpanelet.",
       "area_code": "F",
       "area": "PowerShell / legacy bootstrap / gammel runtime cleanup",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGACY-003",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Audit efter `Hangar18-VehicleRegister.json` og beslægtede bootstrap JSON-filer.",
+      "status": "✅ AUTOMATISK QA + MANUEL RUNTIME AUDIT v0.8.80",
+      "definition_of_done": "CI fejler på VehicleRegister/bootstrap JSON artifacts i source; admin audit scanner også faktisk plugin/uploads.",
       "area_code": "F",
       "area": "PowerShell / legacy bootstrap / gammel runtime cleanup",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGACY-004",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Audit WordPress options for gamle bootstrap/config-import flags og data.",
+      "status": "🟡 AUDIT FÆRDIG v0.8.80",
+      "definition_of_done": "Admin audit viser kendte bootstrap/config-import/baseline/repair WordPress-options som findes/ikke findes.",
       "area_code": "F",
       "area": "PowerShell / legacy bootstrap / gammel runtime cleanup",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGACY-005",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Klassificér legacy options som required migration data vs dead state.",
+      "status": "🟡 KLASSIFICERET v0.8.80",
+      "definition_of_done": "Legacy options klassificeres som aktiv data, migration/baseline eller one-time repair-kandidat; ingen option slettes uden senere backup/QA.",
       "area_code": "F",
       "area": "PowerShell / legacy bootstrap / gammel runtime cleanup",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGACY-006",
@@ -956,38 +957,38 @@
     {
       "id": "LEGO-NAV-001",
       "priority": "Kritisk",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Hierarkisk Navigator/lagtræ: Side → Kasse/Grid/Flex → børn.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Nyt flydende hierarkisk Navigator-panel bygger `Side → parent → children` direkte fra canonical rows + `LayoutParentKey`; ingen parallel data-model.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-NAV-002",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Klik i Navigator vælger præcis samme canonical element som canvas.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Klik i Navigator bruger eksisterende selection API/Inspector-handoff til den samme canonical key.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-NAV-003",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Canvas-selection synkroniserer Navigator highlight og autoscroll.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Canvas/Inspector selection læses tilbage via existing `activeSelection()`/selected row og synkroniserer Navigator-highlight.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-NAV-004",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Fold/udfold containere i Navigator.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Containere kan foldes/udfoldes; state gemmes browser-lokalt.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-NAV-005",
@@ -1010,20 +1011,20 @@
     {
       "id": "LEGO-NAV-007",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Breadcrumb: Side > Container > Row > Element.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Breadcrumb `Side › parent › element` vises og ancestors kan vælges.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-NAV-008",
       "priority": "Normal",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Søg i Navigator efter navn/type/key.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Søgning matcher label, type og key og beholder relevante parentgrene.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-NAV-009",
@@ -1037,56 +1038,56 @@
     {
       "id": "LEGO-NAV-010",
       "priority": "Normal",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Vis skjulte/disabled elementer med særskilt statusikon.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Inaktive/skjulte rows vises dæmpet med status i Navigator i stedet for at forsvinde.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-MOVE-001",
       "priority": "Kritisk",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Alternativ deterministisk `Flyt til…` via Inspector/Navigator uden drag/drop.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "`Flyt til…` skriver eksisterende `LayoutParentKey`/select, flytter canonical row og kalder nesting refresh; ingen canvas drag/drop kræves.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-MOVE-002",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "`Flyt ud af Kasse` handling.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "`Flyt ud` flytter valgt element ét parentniveau op.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-MOVE-003",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "`Flyt før/efter…` via menu.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "`Før`/`Efter` flytter valgt element relativt til sibling i samme parent.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-MOVE-004",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "`Flyt til top/bund` i samme parent.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "`Til top`/`Til bund` ændrer sibling-order via eksisterende flat order fields.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-MOVE-005",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Parent-picker viser kun gyldige targets og forhindrer cycles.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Parent-picker viser kun container/flex/grid targets som er gyldige; self/descendant cycles og for dyb nesting blokeres; Auto-kasser accepterer kun Kasse.",
       "area_code": "H",
       "area": "LEGO Navigator, selection og produktivitets-UX",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "LEGO-COPY-001",
@@ -1991,11 +1992,11 @@
     {
       "id": "CANVAS-007",
       "priority": "Normal",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Toggle outlines for all containers.",
+      "status": "🟡 MANUEL TEST v0.8.80",
+      "definition_of_done": "Navigator har browser-local toggle til at vise outline på alle container/grid/flex previews uden at ændre side-state.",
       "area_code": "N",
       "area": "Canvas og editor workspace",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "CANVAS-008",
@@ -2045,11 +2046,11 @@
     {
       "id": "WORKSPACE-003",
       "priority": "Normal",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Gem workspace layout per bruger/browser.",
+      "status": "🟡 DELVIST v0.8.80",
+      "definition_of_done": "Navigator collapse/fold og container-outline gemmes pr. browser; øvrige workspace rail-bredder/layout-state er stadig åbne.",
       "area_code": "N",
       "area": "Canvas og editor workspace",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "WORKSPACE-004",
@@ -3161,11 +3162,11 @@
     {
       "id": "QA-004",
       "priority": "Høj",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "Browser test for Navigator move-to-parent.",
+      "status": "🟡 TESTPLAN KLAR v0.8.80",
+      "definition_of_done": "`docs/lego-navigator-v0880-test.md` har 20-trins acceptance for Navigator/Move inkl. cycle/Auto-kasser/regression/trace evidence; faktisk browser-PASS mangler.",
       "area_code": "W",
       "area": "Testing og QA automation",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "QA-005",
@@ -3305,11 +3306,11 @@
     {
       "id": "QA-020",
       "priority": "Normal",
-      "status": "🔴 ÅBEN",
-      "definition_of_done": "JS syntax/lint/build checks for all editor assets.",
+      "status": "🟡 DELVIST v0.8.80",
+      "definition_of_done": "Governance CI kører `node --check` på Navigator og PHP lint på nye controllere/Autoload samt static Navigator contract; fuld lint af alle historiske editor-assets er stadig åben.",
       "area_code": "W",
       "area": "Testing og QA automation",
-      "source_file": "docs/active-backlog-v0878.md"
+      "source_file": "docs/active-backlog-v0880.md"
     },
     {
       "id": "DOC-001",

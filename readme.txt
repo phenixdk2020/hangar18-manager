@@ -1,6 +1,23 @@
 === Hangar18 Manager ===
-Version: 0.8.79
+Version: 0.8.80
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.80 – 23 backlogopgaver — Navigator, Flyt til og cleanup-audit ==
+
+Channel: test
+Backlog: WHATIF-CLEANUP-001, WHATIF-014, LEGACY-POWERSHELL-CLEANUP-001, LEGACY-002, LEGACY-003, LEGACY-004, LEGACY-005, LEGO-NAV-001, LEGO-NAV-002, LEGO-NAV-003, LEGO-NAV-004, LEGO-NAV-007, LEGO-NAV-008, LEGO-NAV-010, LEGO-MOVE-001, LEGO-MOVE-002, LEGO-MOVE-003, LEGO-MOVE-004, LEGO-MOVE-005, CANVAS-007, WORKSPACE-003, QA-004, QA-020
+
+Nyt:
+- Tilføjer et separat hierarkisk Navigator-panel til Sider-editoren, bygget direkte fra eksisterende canonical rows og LayoutParentKey uden ny page schema eller parallel parent-database.
+- Navigator klik bruger eksisterende selection/Inspector API, canvas-selection synkroniserer tilbage til Navigator, og breadcrumb, fold/udfold, søgning samt inaktiv-status giver overblik over komplekse sider.
+- Tilføjer deterministisk Flyt til, Flyt ud, Før, Efter, Til top og Til bund som alternativ til canvas drag/drop; operationerne skriver eksisterende ParentKey/order-felter og kalder den eksisterende nesting refresh.
+- Parent-picker blokerer self/descendant cycles og for dyb nesting; Auto-kasser accepterer kun Kasse som child i dette værktøjslag.
+- Tilføjer valgfri browser-local container/grid/flex outlines og gemmer Navigator fold/collapse-state lokalt uden side-write.
+- Tilføjer read-only cleanup-audit på Opdateringer, der scanner den installerede plugin/uploads for WhatIf-referencer, .ps1, VehicleRegister/bootstrap JSON og kendte legacy WordPress-options uden at slette noget.
+- Repository CI får legacy-cleanup audit med hard fail på PowerShell/bootstrap JSON, Navigator JS syntax/PHP lint og static contract checks.
+- Tilføjer 20-trins manual acceptance-plan for Navigator/Move med cycle, Auto-kasser, regression og TRACE evidence.
+- De frosne LEGO selection/IND I KASSEN/repaint bugs ændres ikke. Vehicle/Event/Gallery og public cutover forbliver beskyttet.
 
 
 == Version 0.8.79 – 20+ backlogopgaver — governance, release QA, trace og updater support ==
