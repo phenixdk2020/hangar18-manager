@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.85
+Version: 0.8.86
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.86 – Stack-aware preview og naturlig billedhøjde ==
+
+Channel: test
+Backlog: FRONTEND-STACK-096, CANVAS-STACK-AUTOHEIGHT-097
+
+Nyt:
+- Frontend og live-preview bliver stack-aware: elementer under hinanden i samme Grid-kolonne tæller som én logisk kolonne og bruger stack-rodens 12-kolonne-span.
+- Testcasen 4/12 venstre + 8/12 højre med Billede under højre Tekst må derfor ikke længere blive reduceret til en smal 1/12-billedstribe i preview.
+- Live-preview sender nu både aktuelle span-data og aktuelle StackRootKey/StackOrder/højdedata uden at gemme siden.
+- Lodrette stacks uden manuelt ↕-resize bruger naturlig indholdshøjde, så et stort billede får elementrammen til at vokse i stedet for at flyde ud af rammen.
+- Hvis en lodret ↕-fordeling er sat eksplicit, bevares den som autoritativ højde på Desktop/Tablet/Mobil.
+- De manuelt godkendte fixes for image-freeze, højre/venstre/over/under placement og Inspector-rækkefølge ændres ikke.
+- Gem/genindlæsning af hierarki for Række- og kolonne-kasse forbliver et separat log-diagnosepunkt og er ikke markeret som løst i denne release.
 
 
 == Version 0.8.85 – Live frontend-preview og fælles layout-geometri ==
