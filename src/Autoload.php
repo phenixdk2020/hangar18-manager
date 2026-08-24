@@ -26,14 +26,14 @@ final class Autoload
             }
         });
 
-        // Public EVENT-001 runtime: render-time archive classification only.
-        // Admin/CLI tests keep the historical autoload-only behavior.
+        // Public runtimes. They only affect render-time output; no admin writes.
         if (
             function_exists('is_admin') &&
             function_exists('add_filter') &&
             !is_admin()
         ) {
             \Hangar18\UltimateDesigner\Event\EventArchiveRuntime::register();
+            \Hangar18\UltimateDesigner\Frontend\LegoLayoutFrontendRuntime::register();
         }
 
         // Admin-only compatibility/tooling layers. They do not own frontend rendering.
