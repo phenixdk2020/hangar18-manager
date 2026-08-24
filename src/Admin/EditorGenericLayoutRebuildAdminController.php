@@ -36,12 +36,20 @@ final class EditorGenericLayoutRebuildAdminController
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-saved-layout-rebuild-v0889.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-saved-layout-rebuild-v0889.css';
+        $refreshPath = $pluginDir . '/assets/ultimate-designer-saved-layout-refresh-v0889.js';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-saved-layout-rebuild-v0889',
             $pluginUrl . 'assets/ultimate-designer-saved-layout-rebuild-v0889.js',
             ['jquery'],
             is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.89',
+            false
+        );
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-saved-layout-refresh-v0889',
+            $pluginUrl . 'assets/ultimate-designer-saved-layout-refresh-v0889.js',
+            ['hangar18-ultimate-designer-saved-layout-rebuild-v0889'],
+            is_file($refreshPath) ? (string) filemtime($refreshPath) : '0.8.89',
             false
         );
         wp_enqueue_style(
