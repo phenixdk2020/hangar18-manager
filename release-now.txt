@@ -1,0 +1,3 @@
+v0.8.82
+triggered_utc=2026-08-24T08:31:00Z
+reason=Build verified test package after primary release workflow failed to start.
