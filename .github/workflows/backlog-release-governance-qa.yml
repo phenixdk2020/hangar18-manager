@@ -33,6 +33,7 @@ on:
       - 'src/Admin/UpdaterStateConsistencyAdminController.php'
       - 'src/Admin/EditorNavigatorAdminController.php'
       - 'src/Admin/LegacyCleanupAuditAdminController.php'
+      - 'src/Admin/LegacyStateBackupAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
       - 'src/Admin/NoWhatIfAdminController.php'
       - 'src/Autoload.php'
@@ -66,6 +67,7 @@ on:
       - 'assets/ultimate-designer-navigator-productivity-v0881.css'
       - 'src/Admin/EditorNavigatorAdminController.php'
       - 'src/Admin/LegacyCleanupAuditAdminController.php'
+      - 'src/Admin/LegacyStateBackupAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
       - 'src/Admin/NoWhatIfAdminController.php'
       - 'src/Autoload.php'
@@ -166,6 +168,7 @@ jobs:
           php -l src/Admin/UpdaterStateConsistencyAdminController.php
           php -l src/Admin/EditorNavigatorAdminController.php
           php -l src/Admin/LegacyCleanupAuditAdminController.php
+          php -l src/Admin/LegacyStateBackupAdminController.php
           php -l src/Autoload.php
 
       - name: Navigator static contract
