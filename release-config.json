@@ -36,6 +36,7 @@
     "Legacy runtime er klassificeret: aktive Astra/public/data guards beholdes, one-time repair hooks isoleres som senere cleanup-kandidater, og manuelle repair-handlers slettes ikke blindt.",
     "Navigator får typefilter, autoscroll til valgt node og højreklik-menu med eksisterende Redigér, Duplikér, Kopiér/Indsæt design, Flyt til, Vis/skjul og Fjern handlers.",
     "Navigator productivity-laget introducerer ingen ny selection-, history-, persistence- eller drag/drop-owner og ændrer ikke de frosne canvas-runtimebugs.",
-    "Governance og release-pipelines er gjort idempotente efter shim-sletning og validerer cleaner, legacy audit, PHP/JS syntax, release integrity og package policy."
+    "Governance og release-pipelines er gjort idempotente efter shim-sletning og validerer cleaner, legacy audit, PHP/JS syntax, release integrity og package policy.",
+    "Updater-manifestet er låst til schema_version 1.0 for bagudkompatibilitet med installerede v0.8.80-updatere; release-QA afviser andre schema-versioner."
   ]
 }
