@@ -1,6 +1,6 @@
 {
   "version": "0.8.84",
-  "title": "Placement rollback og fast Inspector-rækkefølge",
+  "title": "v0.8.82 placement restore og fast Inspector-rækkefølge",
   "channel": "test",
   "backlog_ids": [
     "INSPECTOR-IMAGE-086",
@@ -16,6 +16,7 @@
     "Inspectorens avancerede hale er fast: Billede/Mediebibliotek placeres umiddelbart før Dynamic data binding og Conditions / synlighed, når medie findes.",
     "Dynamic data binding er altid næstsidst og Conditions / synlighed altid sidst i Inspector; begge er foldet ind som standard og kan åbnes med mus eller tastatur.",
     "Inspector-rækkefølge-runtime er idempotent, så den ikke kan skabe en selvforstærkende MutationObserver-loop.",
-    "Trace self-observation/repaint hardening og viewport-sikker placering af Start/Stop-panelet bevares uden placement ownership."
+    "Trace self-observation/repaint hardening og viewport-sikker placering af Start/Stop-panelet bevares uden placement ownership.",
+    "Backlog-delta v0.8.84 indeholder kun nye unikke ID'er; release refererer fortsat til videreførte v0.8.83 gates gennem canonical extends-kæden."
   ]
 }
