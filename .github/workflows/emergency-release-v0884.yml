@@ -1,0 +1,142 @@
+name: Emergency Release v0.8.84
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/emergency-release-v0884.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hangar18-emergency-release-v0884
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate target and canonical backlog
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
+          test "$VERSION" = "0.8.84"
+          FILE="$(ls docs/active-backlog-v*.md | sort -V | tail -n1)"
+          test "$FILE" = "docs/active-backlog-v0884.md"
+          python3 tools/backlog-governance.py --backlog "$FILE" --output docs/backlog-index.json
+
+      - name: Focused source QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l hangar18-manager.php
+          php -l src/Admin/EditorLegoDropZonesAdminController.php
+          node --check assets/ultimate-designer-lego-runtime-safety-v0883.js
+          node --check assets/ultimate-designer-inspector-order-v0884.js
+          node --check assets/ultimate-designer-lego-inspector-only-v0847.js
+          node --check assets/ultimate-designer-lego-drop-zones-v0838.js
+          node --check assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js
+          node --check assets/ultimate-designer-lego-fixes-v0851.js
+          node --check assets/ultimate-designer-lego-placement-stability-v0862.js
+
+      - name: Apply release metadata
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import json
+          import pathlib
+          import re
+
+          root = pathlib.Path('.')
+          config = json.loads((root / 'release-config.json').read_text(encoding='utf-8'))
+          version = str(config['version']).strip()
+          title = str(config.get('title', '')).strip() or 'Release'
+          channel = str(config['channel']).strip()
+          backlog_ids = [str(x).strip() for x in config.get('backlog_ids', []) if str(x).strip()]
+          changelog = [str(x).strip() for x in config.get('changelog', []) if str(x).strip()]
+
+          if version != '0.8.84':
+              raise SystemExit('Emergency workflow is locked to v0.8.84')
+          if channel not in {'test','staging','production'}:
+              raise SystemExit('Invalid release channel')
+
+          index = json.loads((root / 'docs/backlog-index.json').read_text(encoding='utf-8'))
+          known = {str(item.get('id','')) for item in index.get('items', [])}
+          unknown = [item for item in backlog_ids if item not in known]
+          if unknown:
+              raise SystemExit('Unknown backlog IDs: ' + ', '.join(unknown))
+
+          php_path = root / 'hangar18-manager.php'
+          php = php_path.read_text(encoding='utf-8')
+          php, hc = re.subn(r'(?m)^ \* Version: \d+\.\d+\.\d+\s*$', f' * Version: {version}', php, count=1)
+          php, cc = re.subn(r"const VERSION = '\d+\.\d+\.\d+';", f"const VERSION = '{version}';", php, count=1)
+          if hc != 1 or cc != 1:
+              raise SystemExit('Could not update plugin version declarations')
+          php_path.write_text(php, encoding='utf-8')
+
+          readme_path = root / 'readme.txt'
+          readme = readme_path.read_text(encoding='utf-8')
+          readme, vc = re.subn(r'(?m)^Version: \d+\.\d+\.\d+\s*$', f'Version: {version}', readme, count=1)
+          if vc != 1:
+              raise SystemExit('Could not update readme version')
+
+          marker = f'== Version {version} – {title} =='
+          section = marker + '\n\n' + f'Channel: {channel}\n' + 'Backlog: ' + ', '.join(backlog_ids) + '\n\nNyt:\n' + ''.join(f'- {item}\n' for item in changelog) + '\n\n'
+          same = re.compile(rf'(?ms)^== Version {re.escape(version)}[^\n]*\n.*?(?=^== Version |\Z)')
+          readme = same.sub('', readme)
+          pos = readme.find('== Version ')
+          if pos < 0:
+              raise SystemExit('Could not find readme changelog insertion point')
+          readme_path.write_text(readme[:pos] + section + readme[pos:], encoding='utf-8')
+          PY
+
+      - name: Build package and manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build
+          rm -f dist/hangar18-manager.zip
+          mkdir -p build/hangar18-manager dist
+          cp hangar18-manager.php readme.txt build/hangar18-manager/
+          cp -R assets src build/hangar18-manager/
+          (cd build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          PACKAGE_SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"
+          export PACKAGE_SHA
+          python3 <<'PY'
+          import datetime, json, os, pathlib
+          config=json.loads(pathlib.Path('release-config.json').read_text(encoding='utf-8'))
+          manifest={
+            'schema_version':'1.0',
+            'plugin':'hangar18-manager',
+            'version':str(config['version']).strip(),
+            'channel':str(config['channel']).strip(),
+            'backlog_ids':[str(x).strip() for x in config.get('backlog_ids',[]) if str(x).strip()],
+            'min_wp':'6.4','min_php':'8.0',
+            'published_utc':datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+            'package_path':'dist/hangar18-manager.zip',
+            'package_sha256':os.environ['PACKAGE_SHA'],
+            'changelog':[str(x).strip() for x in config.get('changelog',[]) if str(x).strip()],
+          }
+          pathlib.Path('update.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+          python3 tools/release-integrity.py --write-manifest
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/hangar18-manager.php | sed -n 's/^ \* Version: //p' | head -n1 | tr -d '\r')" = "0.8.84"
+          echo "$(python3 -c "import json; print(json.load(open('update.json'))['package_sha256'])")  dist/hangar18-manager.zip" | sha256sum -c -
+          unzip -tq dist/hangar18-manager.zip
+
+      - name: Commit v0.8.84 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- hangar18-manager.php readme.txt update.json release-manifest.json docs/backlog-index.json dist/hangar18-manager.zip
+          git commit -m 'Release v0.8.84 package [emergency-release]'
+          git push
