@@ -1,4 +1,4 @@
 v0.8.82
-triggered_utc=2026-08-24T08:45:00Z
-reason=Direct git-ref push to trigger emergency test release workflow.
-nonce=2
+triggered_utc=2026-08-24T08:48:00Z
+reason=PR artifact build for verified v0.8.82 package.
+nonce=3
