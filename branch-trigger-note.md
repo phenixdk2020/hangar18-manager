@@ -1,0 +1,1 @@
+Temporary marker for v0.8.82 updater button rebuild.
