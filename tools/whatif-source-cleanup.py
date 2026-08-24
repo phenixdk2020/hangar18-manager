@@ -37,7 +37,6 @@ def write(path: pathlib.Path, text: str) -> None:
 
 
 def brace_delta(line: str) -> int:
-    """Brace counter for the exact legacy PHP branches targeted here."""
     cleaned = re.sub(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"", '', line)
     return cleaned.count('{') - cleaned.count('}')
 
@@ -96,16 +95,13 @@ def clean_primary_php(text: str) -> tuple[str, dict[str, int]]:
     lines = text.splitlines(keepends=True)
     counts: dict[str, int] = {}
 
-    safe_switch = re.compile(
-        r'^\s*<label\s+class=["\']h18-safe-switch["\'][^\n]*name=["\']whatif["\'][^\n]*</label>\s*$',
-        re.I,
-    )
-    before = len(lines)
-    lines = [line for line in lines if not safe_switch.search(line)]
-    counts['safe_switch_lines'] = before - len(lines)
-
     lines, removed_html = remove_html_div_blocks(lines)
     counts['help_blocks'] = removed_html
+
+    whatif_input = re.compile(r'^\s*.*<input\b[^>]*name=["\']whatif["\'][^>]*>.*$', re.I)
+    before = len(lines)
+    lines = [line for line in lines if not whatif_input.search(line)]
+    counts['standalone_input_lines'] = before - len(lines)
 
     assignment = re.compile(r"^\s*\$whatif\s*=\s*!empty\(\$_POST\[['\"]whatif['\"]\]\);\s*$", re.I)
     before = len(lines)
@@ -192,7 +188,7 @@ def apply(root: pathlib.Path) -> dict:
     pre_hits = assert_clean(root)
     if not pre_hits:
         return {
-            'schema_version': '1.2',
+            'schema_version': '1.3',
             'already_clean': True,
             'changed': [],
             'removed': [],
@@ -200,7 +196,7 @@ def apply(root: pathlib.Path) -> dict:
         }
 
     report: dict[str, object] = {
-        'schema_version': '1.2',
+        'schema_version': '1.3',
         'already_clean': False,
         'pre_cleanup_hit_count': len(pre_hits),
         'changed': [],
@@ -239,6 +235,8 @@ def apply(root: pathlib.Path) -> dict:
 
     if php_counts['help_blocks'] < 1:
         raise RuntimeError('Expected at least one h18-whatif-help block')
+    if php_counts['standalone_input_lines'] < 1:
+        raise RuntimeError('Expected at least one standalone WhatIf input line')
     if php_counts['backend_branches'] < 1:
         raise RuntimeError('Expected at least one WhatIf backend branch')
     if bootstrap_count != 1:
@@ -249,7 +247,7 @@ def apply(root: pathlib.Path) -> dict:
     hits = assert_clean(root)
     report['remaining_active_hits'] = hits
     if hits:
-        raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:80]))
+        raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:100]))
     return report
 
 
@@ -267,9 +265,9 @@ def main() -> int:
             report = apply(root)
         else:
             hits = assert_clean(root)
-            report = {'schema_version': '1.2', 'remaining_active_hits': hits}
+            report = {'schema_version': '1.3', 'remaining_active_hits': hits}
             if args.assert_clean and hits:
-                raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:80]))
+                raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:100]))
         payload = json.dumps(report, ensure_ascii=False, indent=2) + '\n'
         if args.report:
             pathlib.Path(args.report).write_text(payload, encoding='utf-8')
