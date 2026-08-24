@@ -63,8 +63,7 @@ jobs:
           node --check assets/ultimate-designer-element-sizing-v0887.js
           node --check assets/ultimate-designer-live-diagnostics-v0888.js
           node --check assets/ultimate-designer-live-diagnostics-reload-v0889.js
-          node --check assets/ultimate-designer-saved-layout-rebuild-v0889.js
-          node --check assets/ultimate-designer-saved-layout-refresh-v0889.js
+          node --check assets/ultimate-designer-saved-layout-rebuild-v0890.js
           node --check assets/ultimate-designer-trace-v0876.js
           node --check assets/ultimate-designer-trace-tools-v0879.js
           node --check assets/updater-support-v0879.js
@@ -149,7 +148,8 @@ jobs:
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Admin/EditorGenericLayoutRebuildAdminController.php | grep -c 'class EditorGenericLayoutRebuildAdminController')" = "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-live-diagnostics-v0888.js | grep -c '__h18LiveDiagnosticsV0888')" -ge "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-live-diagnostics-reload-v0889.js | grep -c '__h18LiveDiagnosticsReloadV0889')" -ge "1"
-          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-saved-layout-rebuild-v0889.js | grep -c '__h18SavedLayoutRebuildV0889')" -ge "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-saved-layout-rebuild-v0890.js | grep -c '__h18SavedLayoutRebuildV0890')" -ge "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-saved-layout-rebuild-v0890.css | grep -c 'data-h18-v0890-layout-ready')" -ge "1"
           if unzip -Z1 dist/hangar18-manager.zip | grep -Eqi 'NoWhatIfAdminController|hangar18-no-whatif'; then
             echo 'Legacy WhatIf shim leaked into ZIP' >&2; exit 1
           fi
