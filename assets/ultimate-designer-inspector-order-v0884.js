@@ -19,6 +19,12 @@
         }) || box.querySelector('h4');
     }
 
+    function updateMarker(box, collapsed) {
+        const header = directHeader(box);
+        const marker = header ? header.querySelector('.h18-v0884-collapse-marker') : null;
+        if (marker) { marker.textContent = collapsed ? '▸' : '▾'; }
+    }
+
     function setCollapsed(box, collapsed) {
         if (!box) { return; }
         const header = directHeader(box);
@@ -31,6 +37,7 @@
             if (child === header) { return; }
             child.hidden = value;
         });
+        updateMarker(box, value);
     }
 
     function prepareCollapsible(box) {
@@ -49,7 +56,6 @@
                 const marker = document.createElement('span');
                 marker.className = 'h18-v0884-collapse-marker';
                 marker.setAttribute('aria-hidden', 'true');
-                marker.textContent = '▸';
                 header.appendChild(marker);
             }
 
@@ -64,13 +70,22 @@
         if (!box) { return; }
         const collapsed = box.getAttribute('data-h18-v0884-collapsed') === '1';
         setCollapsed(box, !collapsed);
-        const marker = directHeader(box).querySelector('.h18-v0884-collapse-marker');
-        if (marker) { marker.textContent = collapsed ? '▾' : '▸'; }
     }
 
     function mediaBox(body) {
         const input = body ? body.querySelector(MEDIA_INPUT_SELECTOR) : null;
         return input && input.closest ? input.closest('.h18-section-module-box') : null;
+    }
+
+    function tailIsCorrect(body, desired) {
+        const nodes = desired.filter(Boolean);
+        if (!nodes.length) { return true; }
+        const children = Array.from(body.children || []);
+        if (children.length < nodes.length) { return false; }
+        const start = children.length - nodes.length;
+        return nodes.every(function (node, index) {
+            return node.parentElement === body && children[start + index] === node;
+        });
     }
 
     function applyOrder() {
@@ -95,12 +110,14 @@
              * - Dynamic data binding is penultimate
              * - Conditions / synlighed is always last
              */
-            if (imageBox && imageBox.parentElement !== body) { body.appendChild(imageBox); }
-            if (imageBox) { body.appendChild(imageBox); }
-            if (dynamicBox) { body.appendChild(dynamicBox); }
-            if (conditionsBox) { body.appendChild(conditionsBox); }
+            const desiredTail = [imageBox, dynamicBox, conditionsBox].filter(Boolean);
+            if (!tailIsCorrect(body, desiredTail)) {
+                desiredTail.forEach(function (node) { body.appendChild(node); });
+            }
 
-            body.setAttribute('data-h18-v0884-inspector-order', 'media-dynamic-conditions');
+            if (body.getAttribute('data-h18-v0884-inspector-order') !== 'media-dynamic-conditions') {
+                body.setAttribute('data-h18-v0884-inspector-order', 'media-dynamic-conditions');
+            }
         } finally {
             applying = false;
         }
