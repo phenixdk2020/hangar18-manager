@@ -53,6 +53,7 @@
     "Inspectorens Luft, baggrund og placering er igen layoutet efter Inspectorens faktiske smalle bredde: Desktop/Mobil og felter stables læsbart uden vandret overflow.",
     "Valgte top-level elementer viser ikke længere både strukturel source-row ramme og elementramme; den faktiske preview-boks ejer den synlige selection/design-kant.",
     "Billede- og tekst+billede-elementer viser billedvælgeren højt i Inspector før de valgfrie tekstfelter; eksisterende datafelter og frontend-schema ændres ikke.",
-    "Forhåndsvis side bruger ikke længere et renset editor-klon men indlæser den rigtige senest gemte WordPress-side i et responsivt iframe, så frontend-rendering og CSS vises 1:1."
+    "Forhåndsvis side bruger ikke længere et renset editor-klon men indlæser den rigtige senest gemte WordPress-side i et responsivt iframe, så frontend-rendering og CSS vises 1:1.",
+    "Preview-kontrakten er eksplicit: v0.8.82 viser den senest gemte frontend-side 1:1; ugemte live-værdier er fortsat separat backlogarbejde PREVIEW-LIVE-085."
   ]
 }
