@@ -8,7 +8,8 @@ adds only missing safety contracts around the existing transaction:
 - verify both plugin header and VERSION constant in the installed source;
 - write a short-lived pending transition for next-request runtime verification;
 - invalidate updater/plugin caches as one post-install operation;
-- clear pending transition after successful rollback.
+- verify rollback restores the previous version and persist restored main-file SHA;
+- clear pending transition after successful verified rollback.
 
 The migration is fail-closed and idempotent. It is intended to run after the
 WhatIf source cleanup and before syntax/package QA.
@@ -134,7 +135,52 @@ def apply(path: pathlib.Path) -> dict:
         changed.append('installed_source_and_cache_handoff')
 
     rollback_anchor = "                    $this->log(\n                        'INFO',\n                        'UPDATE_ROLLBACK_SUCCESS',\n                        'Plugin-kode blev rullet tilbage til backup.'\n                    );"
-    rollback_insertion = r'''                    // H18-UPDATER-HARDENING-010-ROLLBACK: a rolled-back install must not leave a pending success transition.
+    rollback_insertion = r'''                    // H18-UPDATER-HARDENING-010-ROLLBACK: verify the restored source and persist rollback evidence.
+                    $rollback_main_file = WP_PLUGIN_DIR . '/hangar18-manager/hangar18-manager.php';
+                    if (!is_file($rollback_main_file) || !is_readable($rollback_main_file)) {
+                        throw new RuntimeException('Rollback gendannede ikke en læsbar plugin-hovedfil.');
+                    }
+                    $rollback_source = file_get_contents($rollback_main_file);
+                    if ($rollback_source === false) {
+                        throw new RuntimeException('Rollback-hovedfilen kunne ikke læses til verifikation.');
+                    }
+                    $rollback_expected = preg_quote(self::VERSION, '/');
+                    if (
+                        !preg_match('/\*\s+Version:\s*' . $rollback_expected . '\s*$/m', $rollback_source) ||
+                        !preg_match("/const\\s+VERSION\\s*=\\s*'" . $rollback_expected . "';/", $rollback_source)
+                    ) {
+                        throw new RuntimeException(
+                            'Rollback gendannede ikke den forventede version ' . self::VERSION . '.'
+                        );
+                    }
+                    $rollback_main_sha256 = strtolower((string) hash_file('sha256', $rollback_main_file));
+                    if (!preg_match('/^[a-f0-9]{64}$/', $rollback_main_sha256)) {
+                        throw new RuntimeException('SHA-256 af gendannet plugin-hovedfil kunne ikke beregnes.');
+                    }
+                    $rollback_audit = [
+                        'schema_version' => '1.0',
+                        'from_version' => (string) ($manifest['version'] ?? ''),
+                        'to_version' => self::VERSION,
+                        'restored_main_sha256' => $rollback_main_sha256,
+                        'code_backup_sha256' => ($code_backup && is_file($code_backup))
+                            ? strtolower((string) hash_file('sha256', $code_backup))
+                            : '',
+                        'verified_at_utc' => gmdate('c'),
+                    ];
+                    update_option(
+                        'hangar18_manager_update_rollback_verification_v1',
+                        $rollback_audit,
+                        false
+                    );
+                    $this->log(
+                        'INFO',
+                        'UPDATE_ROLLBACK_VERIFIED',
+                        'Rollback verificeret: FromVersion=' . $rollback_audit['from_version'] .
+                        '; ToVersion=' . $rollback_audit['to_version'] .
+                        '; RestoredMainSHA256=' . $rollback_main_sha256 . '.'
+                    );
+
+                    // A rolled-back install must not leave a pending success transition or stale updater cache.
                     delete_option('hangar18_manager_update_post_install_pending_v1');
                     delete_option(self::UPDATE_STATE_OPTION);
                     if (function_exists('delete_site_transient')) {
@@ -147,11 +193,11 @@ def apply(path: pathlib.Path) -> dict:
 '''
     text, did = insert_before_once(text, rollback_anchor, rollback_insertion, MARKER_ROLLBACK)
     if did:
-        changed.append('rollback_pending_state_cleanup')
+        changed.append('rollback_version_sha_verification')
 
     path.write_text(text, encoding='utf-8')
     return {
-        'schema_version': '1.0',
+        'schema_version': '1.1',
         'target': path.as_posix(),
         'changed': changed,
         'already_hardened': not changed,
@@ -166,15 +212,20 @@ def assert_hardened(path: pathlib.Path) -> dict:
         raise RuntimeError('Updater hardening markers missing: ' + ', '.join(missing))
     required = [
         'UPDATE_CODE_BACKUP_VERIFIED',
-        'hash_file(\'sha256\', $file)',
+        "hash_file('sha256', $file)",
         'hangar18_manager_update_post_install_pending_v1',
-        'delete_site_transient(\'update_plugins\')',
+        "delete_site_transient('update_plugins')",
         'wp_clean_plugins_cache(true)',
+        'UPDATE_ROLLBACK_VERIFIED',
+        'hangar18_manager_update_rollback_verification_v1',
+        'restored_main_sha256',
+        "'from_version' => (string) ($manifest['version'] ?? '')",
+        "'to_version' => self::VERSION",
     ]
     absent = [value for value in required if value not in text]
     if absent:
         raise RuntimeError('Updater hardening contracts missing: ' + ', '.join(absent))
-    return {'schema_version': '1.0', 'target': path.as_posix(), 'hardened': True}
+    return {'schema_version': '1.1', 'target': path.as_posix(), 'hardened': True}
 
 
 def main() -> int:
