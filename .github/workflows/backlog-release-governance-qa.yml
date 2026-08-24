@@ -8,14 +8,20 @@ on:
       - 'docs/backlog-index.json'
       - 'docs/BACKLOG-CONTRIBUTING.md'
       - 'docs/lego-navigator-v0880-test.md'
+      - 'docs/whatif-removal-v0881.md'
+      - 'docs/legacy-runtime-audit-v0881.md'
       - 'release-config.json'
       - 'update.json'
       - 'release-manifest.json'
       - 'dist/hangar18-manager.zip'
+      - 'hangar18-manager.php'
+      - 'assets/admin.js'
+      - 'assets/admin.css'
       - 'tools/backlog-governance.py'
       - 'tools/release-integrity.py'
       - 'tools/trace-redaction-qa.py'
       - 'tools/legacy-cleanup-audit.py'
+      - 'tools/whatif-source-cleanup.py'
       - 'assets/ultimate-designer-trace*.js'
       - 'assets/updater-support-v0879.js'
       - 'assets/ultimate-designer-navigator-v0880.js'
@@ -24,28 +30,40 @@ on:
       - 'src/Admin/UpdaterStateConsistencyAdminController.php'
       - 'src/Admin/EditorNavigatorAdminController.php'
       - 'src/Admin/LegacyCleanupAuditAdminController.php'
+      - 'src/Admin/IntegrationAdminBootstrap.php'
+      - 'src/Admin/NoWhatIfAdminController.php'
       - 'src/Autoload.php'
       - '.github/workflows/backlog-release-governance-qa.yml'
+      - '.github/workflows/build-plugin-release.yml'
   pull_request:
     paths:
       - 'docs/active-backlog-v*.md'
       - 'docs/backlog-index.json'
       - 'docs/lego-navigator-v0880-test.md'
+      - 'docs/whatif-removal-v0881.md'
+      - 'docs/legacy-runtime-audit-v0881.md'
       - 'release-config.json'
       - 'update.json'
       - 'release-manifest.json'
       - 'dist/hangar18-manager.zip'
+      - 'hangar18-manager.php'
+      - 'assets/admin.js'
+      - 'assets/admin.css'
       - 'tools/backlog-governance.py'
       - 'tools/release-integrity.py'
       - 'tools/trace-redaction-qa.py'
       - 'tools/legacy-cleanup-audit.py'
+      - 'tools/whatif-source-cleanup.py'
       - 'assets/ultimate-designer-trace*.js'
       - 'assets/updater-support-v0879.js'
       - 'assets/ultimate-designer-navigator-v0880.js'
       - 'assets/ultimate-designer-navigator-v0880.css'
       - 'src/Admin/EditorNavigatorAdminController.php'
       - 'src/Admin/LegacyCleanupAuditAdminController.php'
+      - 'src/Admin/IntegrationAdminBootstrap.php'
+      - 'src/Admin/NoWhatIfAdminController.php'
       - 'src/Autoload.php'
+      - '.github/workflows/build-plugin-release.yml'
 
 permissions:
   contents: read
@@ -83,7 +101,22 @@ jobs:
       - name: Python syntax
         shell: bash
         run: |
-          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py
+          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py
+
+      - name: WhatIf source-cleaner dry-run
+        shell: bash
+        run: |
+          TMP="$(mktemp -d)"
+          mkdir -p "$TMP/assets" "$TMP/src/Admin"
+          cp hangar18-manager.php "$TMP/"
+          cp assets/admin.js assets/admin.css assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css "$TMP/assets/"
+          cp src/Admin/IntegrationAdminBootstrap.php src/Admin/NoWhatIfAdminController.php "$TMP/src/Admin/"
+          python3 tools/whatif-source-cleanup.py --root "$TMP" --apply --report /tmp/whatif-cleanup.json
+          php -l "$TMP/hangar18-manager.php"
+          php -l "$TMP/src/Admin/IntegrationAdminBootstrap.php"
+          node --check "$TMP/assets/admin.js"
+          python3 tools/whatif-source-cleanup.py --root "$TMP" --assert-clean
+          cat /tmp/whatif-cleanup.json
 
       - name: Trace redaction QA
         shell: bash
