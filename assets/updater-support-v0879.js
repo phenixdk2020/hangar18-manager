@@ -3,18 +3,15 @@
 
     const cfg = window.H18UpdaterSupportV0879 || {};
 
-    function disableInstallWhenCurrent() {
-        if (cfg.updateAvailable === true) { return; }
-        document.querySelectorAll('form input[name="action"][value="h18_install_update"]').forEach(function (input) {
-            const form = input.closest('form');
-            if (!form) { return; }
-            form.querySelectorAll('button[type="submit"],input[type="submit"]').forEach(function (button) {
-                button.disabled = true;
-                button.setAttribute('aria-disabled', 'true');
-                button.title = 'Ingen nyere version er tilgængelig.';
-            });
-        });
-    }
+    /*
+     * Install eligibility is owned by PHP/render_updates().
+     *
+     * Do NOT disable the install form from localized JavaScript state. WordPress
+     * localization may serialize scalar values as strings (for example "1"),
+     * while PHP already renders the install form only when a newer compatible
+     * release exists. A second JS owner previously caused a valid update button
+     * to be disabled even though the server-side updater state was JA.
+     */
 
     function copyDiagnosis() {
         const value = JSON.stringify(cfg.diagnosis || {}, null, 2);
@@ -38,10 +35,13 @@
     }
 
     function install() {
-        disableInstallWhenCurrent();
         const button = document.getElementById('h18-copy-updater-diagnosis');
         if (button) { button.addEventListener('click', copyDiagnosis); }
     }
 
-    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install, { once: true }); } else { install(); }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', install, { once: true });
+    } else {
+        install();
+    }
 }());
