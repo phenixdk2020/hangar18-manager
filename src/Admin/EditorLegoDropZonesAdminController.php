@@ -41,6 +41,7 @@ final class EditorLegoDropZonesAdminController
         $parentKeyGuardPath = $pluginDir . '/assets/ultimate-designer-lego-parent-key-guard-v0845.js';
         $runtimeSafetyPath = $pluginDir . '/assets/ultimate-designer-lego-runtime-safety-v0883.js';
         $inspectorOnlyJsPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.js';
+        $inspectorOrderPath = $pluginDir . '/assets/ultimate-designer-inspector-order-v0884.js';
         $inspectorOnlyCssPath = $pluginDir . '/assets/ultimate-designer-lego-inspector-only-v0847.css';
         $selectionInspectorJsPath = $pluginDir . '/assets/ultimate-designer-lego-selection-inspector-v0849.js';
         $selectionInspectorCssPath = $pluginDir . '/assets/ultimate-designer-lego-selection-inspector-v0849.css';
@@ -80,7 +81,7 @@ final class EditorLegoDropZonesAdminController
             'hangar18-ultimate-designer-lego-runtime-safety-v0883',
             $pluginUrl . 'assets/ultimate-designer-lego-runtime-safety-v0883.js',
             ['jquery', 'hangar18-ultimate-designer-lego-parent-key-guard-v0845'],
-            is_file($runtimeSafetyPath) ? (string) filemtime($runtimeSafetyPath) : '0.8.83',
+            is_file($runtimeSafetyPath) ? (string) filemtime($runtimeSafetyPath) : '0.8.84',
             false
         );
 
@@ -101,9 +102,17 @@ final class EditorLegoDropZonesAdminController
         );
 
         wp_enqueue_script(
+            'hangar18-ultimate-designer-inspector-order-v0884',
+            $pluginUrl . 'assets/ultimate-designer-inspector-order-v0884.js',
+            ['hangar18-ultimate-designer-lego-inspector-only-v0847'],
+            is_file($inspectorOrderPath) ? (string) filemtime($inspectorOrderPath) : '0.8.84',
+            false
+        );
+
+        wp_enqueue_script(
             'hangar18-ultimate-designer-lego-selection-inspector-v0849',
             $pluginUrl . 'assets/ultimate-designer-lego-selection-inspector-v0849.js',
-            ['hangar18-ultimate-designer-lego-inspector-only-v0847', 'hangar18-ultimate-designer-nesting-tools'],
+            ['hangar18-ultimate-designer-inspector-order-v0884', 'hangar18-ultimate-designer-nesting-tools'],
             is_file($selectionInspectorJsPath) ? (string) filemtime($selectionInspectorJsPath) : '0.8.49',
             false
         );
