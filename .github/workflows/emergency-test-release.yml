@@ -1,0 +1,135 @@
+name: Emergency Test Release Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release-now.txt'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hangar18-emergency-test-release
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read release config
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,re
+          c=json.load(open('release-config.json',encoding='utf-8'))
+          v=str(c.get('version','')).strip()
+          assert re.fullmatch(r'\d+\.\d+\.\d+',v), v
+          assert c.get('channel') == 'test'
+          print('Building test release', v)
+          PY
+
+      - name: Apply guarded source migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/whatif-source-cleanup.py --apply --report /tmp/whatif-cleanup.json
+          python3 tools/whatif-source-cleanup.py --assert-clean
+          python3 tools/updater-install-hardening.py --apply --report /tmp/updater-hardening.json
+          python3 tools/updater-install-hardening.py --assert-hardened
+          php -l hangar18-manager.php
+          php -l src/Admin/IntegrationAdminBootstrap.php
+          php -l src/Admin/UpdaterPostInstallVerificationAdminController.php
+          php -l src/Autoload.php
+          node --check assets/admin.js
+          node --check assets/ultimate-designer-inspector-image-priority-v0882.js
+          node --check assets/ultimate-designer-preview-frontend-v0882.js
+
+      - name: Apply version metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,re
+          root=pathlib.Path('.')
+          cfg=json.loads((root/'release-config.json').read_text(encoding='utf-8'))
+          v=str(cfg['version']).strip()
+          p=root/'hangar18-manager.php'
+          s=p.read_text(encoding='utf-8')
+          s,n1=re.subn(r'(?m)^ \* Version: \d+\.\d+\.\d+\s*$',f' * Version: {v}',s,count=1)
+          s,n2=re.subn(r"const VERSION = '\d+\.\d+\.\d+';",f"const VERSION = '{v}';",s,count=1)
+          if n1!=1 or n2!=1: raise SystemExit('plugin version metadata update failed')
+          p.write_text(s,encoding='utf-8')
+          r=root/'readme.txt'
+          x=r.read_text(encoding='utf-8')
+          x,n=re.subn(r'(?m)^Version: \d+\.\d+\.\d+\s*$',f'Version: {v}',x,count=1)
+          if n!=1: raise SystemExit('readme version update failed')
+          r.write_text(x,encoding='utf-8')
+          PY
+          php -l hangar18-manager.php
+
+      - name: Build ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf build
+          mkdir -p build/hangar18-manager dist
+          cp hangar18-manager.php readme.txt build/hangar18-manager/
+          cp -R assets src build/hangar18-manager/
+          rm -f build/hangar18-manager/assets/hangar18-no-whatif-v0858.js build/hangar18-manager/assets/hangar18-no-whatif-v0858.css
+          rm -f build/hangar18-manager/src/Admin/NoWhatIfAdminController.php
+          (cd build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
+          unzip -tq dist/hangar18-manager.zip
+
+      - name: Write update manifest
+        shell: bash
+        run: |
+          export PACKAGE_SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"
+          python3 - <<'PY'
+          import datetime,json,os,pathlib
+          cfg=json.loads(pathlib.Path('release-config.json').read_text(encoding='utf-8'))
+          m={
+            'schema_version':'1.0',
+            'plugin':'hangar18-manager',
+            'version':str(cfg['version']).strip(),
+            'channel':'test',
+            'backlog_ids':[str(x).strip() for x in cfg.get('backlog_ids',[]) if str(x).strip()],
+            'min_wp':'6.4','min_php':'8.0',
+            'published_utc':datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+            'package_path':'dist/hangar18-manager.zip',
+            'package_sha256':os.environ['PACKAGE_SHA'],
+            'changelog':[str(x).strip() for x in cfg.get('changelog',[]) if str(x).strip()],
+          }
+          pathlib.Path('update.json').write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Verify package contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(python3 -c "import json;print(json.load(open('release-config.json'))['version'])")"
+          MANIFEST_VERSION="$(python3 -c "import json;print(json.load(open('update.json'))['version'])")"
+          SCHEMA="$(python3 -c "import json;print(json.load(open('update.json'))['schema_version'])")"
+          SHA="$(python3 -c "import json;print(json.load(open('update.json'))['package_sha256'])")"
+          ZIP_VERSION="$(unzip -p dist/hangar18-manager.zip hangar18-manager/hangar18-manager.php | sed -n 's/^ \* Version: //p' | head -n1 | tr -d '\r')"
+          test "$VERSION" = "$MANIFEST_VERSION"
+          test "$VERSION" = "$ZIP_VERSION"
+          test "$SCHEMA" = "1.0"
+          echo "$SHA  dist/hangar18-manager.zip" | sha256sum -c -
+          if unzip -l dist/hangar18-manager.zip | grep -Eqi 'NoWhatIfAdminController|hangar18-no-whatif'; then
+            echo 'Legacy WhatIf shim leaked into ZIP' >&2; exit 1
+          fi
+
+      - name: Commit package
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(python3 -c "import json;print(json.load(open('release-config.json'))['version'])")"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip assets src/Admin
+          git commit -m "Release v${VERSION} package [emergency-release]"
+          git push
