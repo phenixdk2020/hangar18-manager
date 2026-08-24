@@ -1,4 +1,4 @@
-v0.8.89
-triggered_utc=2026-08-24T16:52:00Z
-reason=Build saved Grid/Flex reload parity and direct diagnostics payload/reload snapshots.
-nonce=5
+v0.8.90
+triggered_utc=2026-08-24T17:17:00Z
+reason=Fix generic Grid/Flex reload source visibility and persist implicit column spans.
+nonce=6
