@@ -1,0 +1,75 @@
+name: Legacy Reference Graph QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'hangar18-manager.php'
+      - 'src/Admin/**'
+      - 'src/Migration/**'
+      - 'src/SiteBuilder/**'
+      - 'src/Infrastructure/**'
+      - 'tools/legacy-reference-graph.py'
+      - 'docs/active-backlog-v*.md'
+      - '.github/workflows/legacy-reference-graph-qa.yml'
+  pull_request:
+    paths:
+      - 'hangar18-manager.php'
+      - 'src/Admin/**'
+      - 'src/Migration/**'
+      - 'src/SiteBuilder/**'
+      - 'src/Infrastructure/**'
+      - 'tools/legacy-reference-graph.py'
+      - 'docs/active-backlog-v*.md'
+      - '.github/workflows/legacy-reference-graph-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reference-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python syntax
+        run: python3 -m py_compile tools/legacy-reference-graph.py
+
+      - name: Build conservative legacy reference graph
+        run: |
+          python3 tools/legacy-reference-graph.py \
+            --output /tmp/legacy-reference-graph.json \
+            --require-expected-active
+
+      - name: Summarize review candidates
+        run: |
+          python3 - <<'PY'
+          import json
+          report=json.load(open('/tmp/legacy-reference-graph.json', encoding='utf-8'))
+          print('PHP files scanned:', report['php_file_count'])
+          print('Legacy/migration classes:', report['class_count'])
+          print('Definition-only review candidates:', report['definition_only_candidate_count'])
+          print('One-time admin_init repair hooks:', len(report['admin_init_repair_hooks']))
+          print('Migration/repair option constants:', len(report['migration_option_constants']))
+          print('\nDefinition-only candidates:')
+          candidates=[row for row in report['classes'] if row['status']=='definition-only-review-candidate']
+          if not candidates:
+              print('  none')
+          for row in candidates:
+              d=row['definition']
+              print(f"  {row['class']} @ {d['path']}:{d['line']}")
+          print('\nActive reference examples:')
+          for row in report['classes']:
+              if row['external_reference_count'] > 0:
+                  print(f"  {row['class']}: {row['external_reference_count']} external ref(s)")
+          PY
+
+      - name: Upload graph as workflow summary
+        run: |
+          {
+            echo '## LEGACY-011 reference graph'
+            echo
+            echo '```json'
+            cat /tmp/legacy-reference-graph.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
