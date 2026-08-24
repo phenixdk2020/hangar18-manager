@@ -33,7 +33,40 @@ jobs:
       - name: Apply guarded source cleanup
         shell: bash
         run: |
-          python3 tools/whatif-source-cleanup.py --apply --report /tmp/whatif-cleanup.json
+          set +e
+          python3 tools/whatif-source-cleanup.py --apply --report /tmp/whatif-cleanup.json >/tmp/whatif-cleanup.stdout 2>/tmp/whatif-cleanup.stderr
+          CLEANUP_RC=$?
+          set -e
+          if [ "$CLEANUP_RC" -ne 0 ]; then
+            VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
+            {
+              echo '# Hangar18 release build failure'
+              echo
+              echo "- Version: $VERSION"
+              echo "- Source commit: $GITHUB_SHA"
+              echo "- UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              echo '- Step: guarded WhatIf source cleanup'
+              echo
+              echo '## stderr'
+              echo '```text'
+              cat /tmp/whatif-cleanup.stderr
+              echo '```'
+              echo
+              echo '## stdout'
+              echo '```text'
+              cat /tmp/whatif-cleanup.stdout
+              echo '```'
+            } > docs/release-build-failure.md
+            git restore --worktree -- hangar18-manager.php assets/admin.js assets/admin.css src/Admin/IntegrationAdminBootstrap.php 2>/dev/null || true
+            git restore --worktree -- assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css src/Admin/NoWhatIfAdminController.php 2>/dev/null || true
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -- docs/release-build-failure.md
+            git commit -m "Release v${VERSION} cleanup diagnostic [release-diagnostic]"
+            git push
+            exit "$CLEANUP_RC"
+          fi
+          rm -f docs/release-build-failure.md
           php -l hangar18-manager.php
           php -l src/Admin/IntegrationAdminBootstrap.php
           node --check assets/admin.js
@@ -188,7 +221,7 @@ jobs:
           VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A -- hangar18-manager.php assets src/Admin readme.txt update.json release-manifest.json docs/backlog-index.json dist/hangar18-manager.zip
+          git add -A -- hangar18-manager.php assets src/Admin readme.txt update.json release-manifest.json docs/backlog-index.json docs/release-build-failure.md dist/hangar18-manager.zip
           if git diff --cached --quiet; then
             echo 'Release files are already current.'
             exit 0
