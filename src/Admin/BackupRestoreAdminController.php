@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Hangar18\UltimateDesigner\Admin;
 
+use Hangar18\UltimateDesigner\Backup\ManagedPageBackupIntegrityService;
 use Hangar18\UltimateDesigner\Backup\ManagedPageBackupRestorePreflightService;
 use Hangar18\UltimateDesigner\Backup\ManagedPageBackupRestoreService;
 use Hangar18\UltimateDesigner\Backup\ManagedPageTrashService;
@@ -81,23 +82,33 @@ final class BackupRestoreAdminController
 
         $service = new ManagedPageBackupRestoreService();
         $preflight = new ManagedPageBackupRestorePreflightService();
+        $integrity = new ManagedPageBackupIntegrityService();
         $backups = $service->listBackups(30);
         $audit = $service->audit(20);
 
         echo '<section class="h18-ud-panel"><h2>B1 · Gendan sidebackup</h2>';
         echo '<p class="description">Bruger de eksisterende Hangar18 JSON-backups. <strong>Erstat original</strong> tager altid en ny sikkerhedsbackup før første write. <strong>Opret som kopi</strong> laver kun en ny draft og ændrer ikke originalens URL eller menu.</p>';
-        echo '<div class="notice notice-warning inline"><p><strong>Restore er en eksplicit mutation:</strong> kontrollér backup, side og restore-mode før du fortsætter. Page Editor-sider kan kun erstatte originalen, når backupfilen også indeholder den centrale editor-state; ellers er kun sikker kopi-mode tilgængelig.</p></div>';
+        echo '<div class="notice notice-warning inline"><p><strong>Restore er en eksplicit mutation:</strong> JSON-struktur og SHA-256 kontrolleres, og handlingen bindes til den præcise filversion der blev vist. Hvis backupfilen ændres før klik/udførelse, afvises restore/copy. Page Editor-sider kan kun erstatte originalen, når backupfilen også indeholder den centrale editor-state.</p></div>';
 
         if (!$backups) {
             echo '<p>Ingen læsbare managed backups blev fundet i <code>uploads/hangar18-manager-backups</code>.</p></section>';
             return;
         }
 
-        echo '<div style="overflow:auto"><table class="widefat striped"><thead><tr><th>Backup</th><th>Side</th><th>Editor-data</th><th>Handlinger</th></tr></thead><tbody>';
+        echo '<div style="overflow:auto"><table class="widefat striped"><thead><tr><th>Backup</th><th>Side</th><th>Editor-data / integritet</th><th>Handlinger</th></tr></thead><tbody>';
         foreach ($backups as $backup) {
             $filename = (string) ($backup['Filename'] ?? '');
             $created = (string) ($backup['CreatedUtc'] ?? '');
             $reason = (string) ($backup['Reason'] ?? '');
+            $backupSha = '';
+            $integrityError = '';
+            try {
+                $integrityReport = $integrity->inspect($filename);
+                $backupSha = (string) ($integrityReport['Sha256'] ?? '');
+            } catch (\Throwable $error) {
+                $integrityError = $error->getMessage();
+            }
+
             foreach ((array) ($backup['Pages'] ?? []) as $page) {
                 if (!is_array($page)) {
                     continue;
@@ -111,22 +122,35 @@ final class BackupRestoreAdminController
                     $replaceAllowed = !empty($check['Allowed']);
                     $replaceReason = (string) ($check['Reason'] ?? '');
                     $editorSource = (string) ($check['EditorDataSource'] ?? 'ukendt');
+                    $preflightSha = (string) ($check['BackupSha256'] ?? '');
+                    if ($backupSha !== '' && $preflightSha !== '' && !hash_equals($backupSha, $preflightSha)) {
+                        $replaceAllowed = false;
+                        $integrityError = 'Backup SHA ændrede sig under preflight. Genindlæs siden.';
+                    }
                 } catch (\Throwable $error) {
                     $replaceReason = 'Preflight-fejl: ' . $error->getMessage();
                 }
 
+                $canMutate = $backupSha !== '' && $integrityError === '';
                 echo '<tr><td><code>' . esc_html($filename) . '</code><br><small>' . esc_html($created) . '</small>';
                 if ($reason !== '') {
                     echo '<br><small>' . esc_html($reason) . '</small>';
                 }
-                echo '</td><td><strong>' . esc_html((string) ($page['Title'] ?? '')) . '</strong><br><code>' . esc_html((string) ($page['Slug'] ?? '')) . '</code><br><small>ID ' . esc_html((string) ($page['ID'] ?? 0)) . ' · ' . esc_html((string) ($page['Status'] ?? '')) . '</small></td>';
-                echo '<td><code>' . esc_html($editorSource) . '</code><br><small>' . esc_html($replaceReason) . '</small></td><td>';
-                if ($replaceAllowed) {
-                    self::renderActionForm('h18_ud_restore_backup_original', $filename, $sourceKey, 'Erstat original', true);
-                } else {
-                    echo '<button type="button" class="button" disabled title="' . esc_attr($replaceReason) . '">Erstat original · låst</button> ';
+                if ($backupSha !== '') {
+                    echo '<br><small>SHA-256 <code title="' . esc_attr($backupSha) . '">' . esc_html(substr($backupSha, 0, 16)) . '…</code></small>';
                 }
-                self::renderActionForm('h18_ud_restore_backup_copy', $filename, $sourceKey, 'Opret som kopi', false);
+                echo '</td><td><strong>' . esc_html((string) ($page['Title'] ?? '')) . '</strong><br><code>' . esc_html((string) ($page['Slug'] ?? '')) . '</code><br><small>ID ' . esc_html((string) ($page['ID'] ?? 0)) . ' · ' . esc_html((string) ($page['Status'] ?? '')) . '</small></td>';
+                echo '<td><code>' . esc_html($editorSource) . '</code><br><small>' . esc_html($integrityError !== '' ? 'Integritetsfejl: ' . $integrityError : $replaceReason) . '</small></td><td>';
+                if ($replaceAllowed && $canMutate) {
+                    self::renderActionForm('h18_ud_restore_backup_original', $filename, $sourceKey, $backupSha, 'Erstat original', true);
+                } else {
+                    echo '<button type="button" class="button" disabled title="' . esc_attr($integrityError !== '' ? $integrityError : $replaceReason) . '">Erstat original · låst</button> ';
+                }
+                if ($canMutate) {
+                    self::renderActionForm('h18_ud_restore_backup_copy', $filename, $sourceKey, $backupSha, 'Opret som kopi', false);
+                } else {
+                    echo '<button type="button" class="button" disabled>Opret som kopi · integritet låst</button>';
+                }
                 echo '</td></tr>';
             }
         }
@@ -154,14 +178,20 @@ final class BackupRestoreAdminController
         try {
             $filename = sanitize_file_name((string) wp_unslash($_POST['backup_file'] ?? ''));
             $sourceKey = sanitize_text_field((string) wp_unslash($_POST['source_key'] ?? ''));
+            $expectedSha = sanitize_text_field((string) wp_unslash($_POST['backup_sha256'] ?? ''));
+            $integrity = (new ManagedPageBackupIntegrityService())->assertUnchanged($filename, $expectedSha);
             $check = (new ManagedPageBackupRestorePreflightService())->analyzeReplace($filename, $sourceKey);
             if (empty($check['Allowed'])) {
                 throw new RuntimeException((string) ($check['Reason'] ?? 'Restore preflight afviste backup-kilden.'));
             }
+            if (!hash_equals((string) ($integrity['Sha256'] ?? ''), (string) ($check['BackupSha256'] ?? ''))) {
+                throw new RuntimeException('Backup-filen ændrede sig mellem integritetskontrol og restore-preflight.');
+            }
             $result = (new ManagedPageBackupRestoreService())->restoreOriginal($filename, $sourceKey);
             self::redirect('success', sprintf(
-                'Side ID %d blev gendannet. Sikkerhedsbackup: %s',
+                'Side ID %d blev gendannet fra verificeret SHA %s…. Sikkerhedsbackup: %s',
                 (int) ($result['TargetPageId'] ?? 0),
+                substr((string) ($integrity['Sha256'] ?? ''), 0, 12),
                 (string) ($result['SafetyBackup'] ?? '')
             ));
         } catch (\Throwable $error) {
@@ -173,14 +203,16 @@ final class BackupRestoreAdminController
     {
         self::authorize();
         try {
-            $result = (new ManagedPageBackupRestoreService())->createCopy(
-                sanitize_file_name((string) wp_unslash($_POST['backup_file'] ?? '')),
-                sanitize_text_field((string) wp_unslash($_POST['source_key'] ?? ''))
-            );
+            $filename = sanitize_file_name((string) wp_unslash($_POST['backup_file'] ?? ''));
+            $sourceKey = sanitize_text_field((string) wp_unslash($_POST['source_key'] ?? ''));
+            $expectedSha = sanitize_text_field((string) wp_unslash($_POST['backup_sha256'] ?? ''));
+            $integrity = (new ManagedPageBackupIntegrityService())->assertUnchanged($filename, $expectedSha);
+            $result = (new ManagedPageBackupRestoreService())->createCopy($filename, $sourceKey);
             self::redirect('success', sprintf(
-                'Backup-siden blev oprettet som draft-kopi: %s (ID %d).',
+                'Backup-siden blev oprettet som draft-kopi: %s (ID %d) fra verificeret SHA %s….',
                 (string) ($result['TargetSlug'] ?? ''),
-                (int) ($result['TargetPageId'] ?? 0)
+                (int) ($result['TargetPageId'] ?? 0),
+                substr((string) ($integrity['Sha256'] ?? ''), 0, 12)
             ));
         } catch (\Throwable $error) {
             self::redirect('error', 'Kopi kunne ikke oprettes: ' . $error->getMessage());
@@ -219,14 +251,15 @@ final class BackupRestoreAdminController
         }
     }
 
-    private static function renderActionForm(string $action, string $filename, string $sourceKey, string $label, bool $destructive): void
+    private static function renderActionForm(string $action, string $filename, string $sourceKey, string $backupSha256, string $label, bool $destructive): void
     {
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline-block;margin:0 8px 6px 0">';
         wp_nonce_field('h18_ud_backup_restore');
         echo '<input type="hidden" name="action" value="' . esc_attr($action) . '">';
         echo '<input type="hidden" name="backup_file" value="' . esc_attr($filename) . '">';
         echo '<input type="hidden" name="source_key" value="' . esc_attr($sourceKey) . '">';
-        $confirm = $destructive ? ' onclick="return confirm(\'Erstat originalsiden med denne backup? Der oprettes først en ny sikkerhedsbackup af den nuværende original.\');"' : '';
+        echo '<input type="hidden" name="backup_sha256" value="' . esc_attr($backupSha256) . '">';
+        $confirm = $destructive ? ' onclick="return confirm(\'Erstat originalsiden med denne verificerede backup? Der oprettes først en ny sikkerhedsbackup af den nuværende original.\');"' : '';
         echo '<button type="submit" class="button' . ($destructive ? ' button-secondary' : '') . '"' . $confirm . '>' . esc_html($label) . '</button>';
         echo '</form>';
     }
