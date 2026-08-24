@@ -1,4 +1,4 @@
 v0.8.82
-triggered_utc=2026-08-24T08:52:00Z
-reason=Retry PR artifact build after fixing clean ZIP recreation.
-nonce=4
+triggered_utc=2026-08-24T08:56:00Z
+reason=Final PR build and verified package publish to main.
+nonce=5
