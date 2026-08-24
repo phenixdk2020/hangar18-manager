@@ -1,6 +1,22 @@
 === Hangar18 Manager ===
-Version: 0.8.83
+Version: 0.8.84
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.84 – v0.8.82 placement restore og fast Inspector-rækkefølge ==
+
+Channel: test
+Backlog: INSPECTOR-IMAGE-086, INSPECTOR-ORDER-090, PLACEMENT-ROLLBACK-089, TRACE-SAFETY-088, TRACE-UI-087
+
+Nyt:
+- Ruller v0.8.83's generelle drag/drop safety ownership tilbage: ingen nye dragstart/dragover/drop/dragend listeners, watchdog, syntetisk dragend eller overlay-cleanup må konkurrere med den dokumenteret fungerende v0.8.82 placement-kæde.
+- Højre, venstre, over og under ejes igen alene af den eksisterende v0838/v0843/v0851/v0862 placement-runtime.
+- Image-freeze beskyttelsen beholdes som et isoleret Inspector MutationObserver-filter og må ikke ændre drag/drop-state.
+- Inspectorens avancerede hale er fast: Billede/Mediebibliotek placeres umiddelbart før Dynamic data binding og Conditions / synlighed for medie-typerne Billede, Tekst + billede og Hero.
+- Dynamic data binding er altid næstsidst og Conditions / synlighed altid sidst i Inspector; begge er foldet ind som standard og kan åbnes med mus eller tastatur.
+- Inspector-rækkefølge-runtime er idempotent, så den ikke kan skabe en selvforstærkende MutationObserver-loop.
+- Trace self-observation/repaint hardening og viewport-sikker placering af Start/Stop-panelet bevares uden placement ownership.
+- Canonical backlog-delta v0.8.84 registrerer placement-rollback og Inspector-order som særskilte regressionsgates.
 
 
 == Version 0.8.83 – Billede-element freeze fix og trace-sikkerhed ==

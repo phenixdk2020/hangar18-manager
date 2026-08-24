@@ -1,16 +1,17 @@
 {
   "schema_version": "1.2",
-  "canonical_backlog": "docs/active-backlog-v0883.md",
+  "canonical_backlog": "docs/active-backlog-v0884.md",
   "extends_chain": [
     "docs/active-backlog-v0878.md",
     "docs/active-backlog-v0879.md",
     "docs/active-backlog-v0880.md",
     "docs/active-backlog-v0881.md",
     "docs/active-backlog-v0882.md",
-    "docs/active-backlog-v0883.md"
+    "docs/active-backlog-v0883.md",
+    "docs/active-backlog-v0884.md"
   ],
-  "generated_utc": "2026-08-24T11:28:06Z",
-  "item_count": 419,
+  "generated_utc": "2026-08-24T13:31:23Z",
+  "item_count": 421,
   "items": [
     {
       "id": "BACKLOG-MAINT-001",
@@ -4206,6 +4207,26 @@
       "area_code": "T",
       "area": "Trace / diagnostik",
       "source_file": "docs/active-backlog-v0883.md"
+    },
+    {
+      "id": "INSPECTOR-ORDER-090",
+      "priority": "Høj",
+      "status": "🟡 FIX-KANDIDAT / MANUEL TEST v0.8.84",
+      "dependencies": [],
+      "definition_of_done": "Inspectorens avancerede hale er fast: almindelige/type-specifikke felter først; når elementet har medie, placeres hele **Billede/Mediebibliotek**-modulet umiddelbart før de avancerede sektioner; **Dynamic data binding** er næstsidst og **Conditions / synlighed** er altid sidst. Dynamic data binding og Conditions / synlighed er foldet sammen som standard på hver ny Inspector-render og kan åbnes med klik/Enter/Space. Rækkefølge-runtime skal være idempotent og må ikke skabe MutationObserver-loop.",
+      "area_code": "H",
+      "area": "LEGO Inspector",
+      "source_file": "docs/active-backlog-v0884.md"
+    },
+    {
+      "id": "PLACEMENT-ROLLBACK-089",
+      "priority": "Kritisk",
+      "status": "🟡 ROLLBACK-KANDIDAT / MANUEL TEST v0.8.84",
+      "dependencies": [],
+      "definition_of_done": "Fjern v0.8.83 runtime-sikkerhedens dragstart/dragover/drop/dragend listeners, watchdog, syntetiske dragend og overlay-cleanup. Den dokumenteret fungerende v0.8.82-kæde `v0838/v0843/v0851/v0862` skal igen være eneste placement-authority for højre/venstre/over/under/inside. Image- og trace-sikkerhed må ikke ændre placement-state.",
+      "area_code": "P",
+      "area": "Placement regression",
+      "source_file": "docs/active-backlog-v0884.md"
     }
   ]
 }

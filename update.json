@@ -1,24 +1,28 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.83",
+  "version": "0.8.84",
   "channel": "test",
   "backlog_ids": [
     "INSPECTOR-IMAGE-086",
+    "INSPECTOR-ORDER-090",
+    "PLACEMENT-ROLLBACK-089",
     "TRACE-SAFETY-088",
     "TRACE-UI-087"
   ],
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-24T11:28:07Z",
+  "published_utc": "2026-08-24T13:31:23Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "d2e7550e2c8f13399ba5bc6212a8e1ad979975bc313cb5f9c39250492a001362",
+  "package_sha256": "3662abdae20ed6a20ab4e7953f685c35920d77ee48e79f41085e2208e691cd6e",
   "changelog": [
-    "Retter en reproduceret hard-freeze i Designer, når et rent Billede-element indsættes til højre/venstre for et element eller over/under et stacked/nested element.",
-    "Image Inspector-observeren får en dedikeret debounce/suppress guard før Inspector-runtime, så Inspectorens egne DOM-flytninger og label-polish ikke kan skabe en selvforstærkende MutationObserver-loop.",
-    "Tekst/stacking-sporet ændres ikke; den reproducerede kontrol Tekst → tekst til højre → tekst under forbliver regressionstest.",
-    "Udvidet trace ignorerer egne UI-mutations, throttler panel-repaint og højfrekvente drag/sort events, så diagnostik ikke kan forstærke editorbelastning.",
-    "Trace Start/Stop-panelet holdes fast synligt over viewportens nederste kant med sikker max-height og scrolling.",
-    "Drag/drop runtime får defensiv cleanup/watchdog som ekstra sikkerhed mod efterladte overlays eller aktiv drag-state efter afbrudte drop-forløb."
+    "Ruller v0.8.83's generelle drag/drop safety ownership tilbage: ingen nye dragstart/dragover/drop/dragend listeners, watchdog, syntetisk dragend eller overlay-cleanup må konkurrere med den dokumenteret fungerende v0.8.82 placement-kæde.",
+    "Højre, venstre, over og under ejes igen alene af den eksisterende v0838/v0843/v0851/v0862 placement-runtime.",
+    "Image-freeze beskyttelsen beholdes som et isoleret Inspector MutationObserver-filter og må ikke ændre drag/drop-state.",
+    "Inspectorens avancerede hale er fast: Billede/Mediebibliotek placeres umiddelbart før Dynamic data binding og Conditions / synlighed for medie-typerne Billede, Tekst + billede og Hero.",
+    "Dynamic data binding er altid næstsidst og Conditions / synlighed altid sidst i Inspector; begge er foldet ind som standard og kan åbnes med mus eller tastatur.",
+    "Inspector-rækkefølge-runtime er idempotent, så den ikke kan skabe en selvforstærkende MutationObserver-loop.",
+    "Trace self-observation/repaint hardening og viewport-sikker placering af Start/Stop-panelet bevares uden placement ownership.",
+    "Canonical backlog-delta v0.8.84 registrerer placement-rollback og Inspector-order som særskilte regressionsgates."
   ]
 }
