@@ -1,6 +1,20 @@
 === Hangar18 Manager ===
-Version: 0.8.82
+Version: 0.8.83
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.83 – Billede-element freeze fix og trace-sikkerhed ==
+
+Channel: test
+Backlog: INSPECTOR-IMAGE-086, TRACE-SAFETY-088, TRACE-UI-087
+
+Nyt:
+- Retter en reproduceret hard-freeze i Designer, når et rent Billede-element indsættes til højre/venstre for et element eller over/under et stacked/nested element.
+- Image Inspector-observeren får en dedikeret debounce/suppress guard før Inspector-runtime, så Inspectorens egne DOM-flytninger og label-polish ikke kan skabe en selvforstærkende MutationObserver-loop.
+- Tekst/stacking-sporet ændres ikke; den reproducerede kontrol Tekst → tekst til højre → tekst under forbliver regressionstest.
+- Udvidet trace ignorerer egne UI-mutations, throttler panel-repaint og højfrekvente drag/sort events, så diagnostik ikke kan forstærke editorbelastning.
+- Trace Start/Stop-panelet holdes fast synligt over viewportens nederste kant med sikker max-height og scrolling.
+- Drag/drop runtime får defensiv cleanup/watchdog som ekstra sikkerhed mod efterladte overlays eller aktiv drag-state efter afbrudte drop-forløb.
 
 
 == Version 0.8.80 – 23 backlogopgaver — Navigator, Flyt til og cleanup-audit ==
