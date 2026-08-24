@@ -183,6 +183,41 @@
         }
     }
 
+    function polishImageInspector() {
+        const $body = $('#h18-page-inspector-target > .h18-page-section-body').first();
+        if (!$body.length) { return; }
+
+        const type = String(
+            $body.find('.h18-page-section-type').first().val() ||
+            $body.find('[name$="[Type]"]').first().val() ||
+            ''
+        ).trim();
+        if (type !== 'image' && type !== 'text_image') { return; }
+
+        const $mediaField = $body.find('.h18-section-media-id').first().closest('.h18-field');
+        const $titleField = $body.find('.h18-section-title-input').first().closest('.h18-field');
+        if ($mediaField.length) {
+            $mediaField.addClass('h18-v0882-image-media-primary');
+            if ($titleField.length && $mediaField.parent().get(0) === $titleField.parent().get(0)) {
+                $mediaField.insertBefore($titleField);
+            } else {
+                const $typeField = $body.find('.h18-page-section-type').first().closest('.h18-field');
+                if ($typeField.length && $mediaField.parent().get(0) === $typeField.parent().get(0)) {
+                    $mediaField.insertAfter($typeField);
+                }
+            }
+            const $choose = $mediaField.find('.h18-page-select-media').first();
+            if ($choose.length) { $choose.text(type === 'image' ? 'Vælg billede' : 'Vælg billede til element'); }
+        }
+
+        if (type === 'image') {
+            const titleInput = $body.find('.h18-section-title-input').first().get(0);
+            if (titleInput) { setControlLabel(titleInput, 'Overskrift over billede (valgfri)'); }
+            const contentInput = $body.find('.h18-page-section-content textarea,[name$="[Content]"]').first().get(0);
+            if (contentInput) { setControlLabel(contentInput, 'Billedtekst (valgfri)'); }
+        }
+    }
+
     function clarifyInspectorControls() {
         const spacing = document.querySelector('#h18-ud-lego-spacing-panel');
         if (spacing) {
@@ -208,6 +243,8 @@
             setControlLabel(design.querySelector('[data-h18-lego-design-path="Border.Width"]'), 'Kanttykkelse', '0 px = ingen synlig kant. 1-12 px = synlig kant.');
             setControlLabel(design.querySelector('[data-h18-lego-design-path="Radius.All"]'), 'Hjørner / runding', '0 px = helt lige hjørner. Højere værdi = mere buede hjørner.');
         }
+
+        polishImageInspector();
     }
 
     document.addEventListener('click', function (event) {
@@ -309,6 +346,7 @@
         selectInspectorForNode: selectInspectorForNode,
         armCompositionReconcile: armCompositionReconcile,
         clarifyInspectorControls: clarifyInspectorControls,
+        polishImageInspector: polishImageInspector,
         refreshSelectedCanvasMarker: refreshSelectedCanvasMarker,
         rememberSelectedCanvasKey: function (key, nested) { return rememberSelection(key, nested ? 'nested' : 'top'); },
         activeSelection: function () { return { key: activeCanvasKey, mode: activeSelectionMode }; },
