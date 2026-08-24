@@ -1,4 +1,4 @@
-v0.8.91
-triggered_utc=2026-08-24T18:19:00Z
-reason=Publish verified save-integrity guard for existing Grid/Flex layouts.
-nonce=7
+v0.9.0
+triggered_utc=2026-08-24T20:28:00Z
+reason=Publish Editor Architecture Consolidation with canonical layout state and save projection.
+nonce=8
