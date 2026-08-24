@@ -1,4 +1,4 @@
-v0.8.90
-triggered_utc=2026-08-24T17:17:00Z
-reason=Fix generic Grid/Flex reload source visibility and persist implicit column spans.
-nonce=6
+v0.8.91
+triggered_utc=2026-08-24T18:19:00Z
+reason=Publish verified save-integrity guard for existing Grid/Flex layouts.
+nonce=7
