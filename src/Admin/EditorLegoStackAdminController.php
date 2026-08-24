@@ -24,10 +24,10 @@ final class EditorLegoStackAdminController
         }
         self::$registered = true;
         add_action('admin_post_h18_save_page_editor', [self::class, 'captureSave'], 5);
-        add_action('admin_enqueue_scripts', [self::class, 'enqueueV0886Autosize']);
+        add_action('admin_enqueue_scripts', [self::class, 'enqueueSizingRuntimes']);
     }
 
-    public static function enqueueV0886Autosize(): void
+    public static function enqueueSizingRuntimes(): void
     {
         $page = isset($_GET['page']) ? sanitize_key((string) wp_unslash($_GET['page'])) : '';
         if ($page !== 'hangar18-pages' || !current_user_can('edit_pages')) {
@@ -36,13 +36,31 @@ final class EditorLegoStackAdminController
 
         $pluginDir = dirname(__DIR__, 2);
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
-        $path = $pluginDir . '/assets/ultimate-designer-lego-stack-autosize-v0886.js';
+        $autosizePath = $pluginDir . '/assets/ultimate-designer-lego-stack-autosize-v0886.js';
+        $elementSizingJsPath = $pluginDir . '/assets/ultimate-designer-element-sizing-v0887.js';
+        $elementSizingCssPath = $pluginDir . '/assets/ultimate-designer-element-sizing-v0887.css';
+
         wp_enqueue_script(
             'hangar18-ultimate-designer-lego-stack-autosize-v0886',
             $pluginUrl . 'assets/ultimate-designer-lego-stack-autosize-v0886.js',
             ['hangar18-ultimate-designer-lego-fixes-v0851'],
-            is_file($path) ? (string) filemtime($path) : '0.8.86',
+            is_file($autosizePath) ? (string) filemtime($autosizePath) : '0.8.86',
             false
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-element-sizing-v0887',
+            $pluginUrl . 'assets/ultimate-designer-element-sizing-v0887.js',
+            ['hangar18-ultimate-designer-lego-stack-autosize-v0886'],
+            is_file($elementSizingJsPath) ? (string) filemtime($elementSizingJsPath) : '0.8.87',
+            false
+        );
+
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-element-sizing-v0887',
+            $pluginUrl . 'assets/ultimate-designer-element-sizing-v0887.css',
+            ['hangar18-ultimate-designer-lego-fixes-v0851'],
+            is_file($elementSizingCssPath) ? (string) filemtime($elementSizingCssPath) : '0.8.87'
         );
     }
 
