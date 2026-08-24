@@ -106,33 +106,17 @@ jobs:
 
           php_path = root / 'hangar18-manager.php'
           php = php_path.read_text(encoding='utf-8')
-          php, header_count = re.subn(
-              r'(?m)^ \* Version: \d+\.\d+\.\d+\s*$',
-              f' * Version: {version}',
-              php,
-              count=1,
-          )
-          php, const_count = re.subn(
-              r"const VERSION = '\d+\.\d+\.\d+';",
-              f"const VERSION = '{version}';",
-              php,
-              count=1,
-          )
+          php, header_count = re.subn(r'(?m)^ \* Version: \d+\.\d+\.\d+\s*$', f' * Version: {version}', php, count=1)
+          php, const_count = re.subn(r"const VERSION = '\d+\.\d+\.\d+';", f"const VERSION = '{version}';", php, count=1)
           if header_count != 1 or const_count != 1:
               raise SystemExit('Could not update both plugin version declarations')
           php_path.write_text(php, encoding='utf-8')
 
           readme_path = root / 'readme.txt'
           readme = readme_path.read_text(encoding='utf-8')
-          readme, version_count = re.subn(
-              r'(?m)^Version: \d+\.\d+\.\d+\s*$',
-              f'Version: {version}',
-              readme,
-              count=1,
-          )
+          readme, version_count = re.subn(r'(?m)^Version: \d+\.\d+\.\d+\s*$', f'Version: {version}', readme, count=1)
           if version_count != 1:
               raise SystemExit('Could not update readme version')
-
           marker = f'== Version {version} – {title} =='
           if marker not in readme:
               insertion = readme.find('== Version ')
@@ -148,10 +132,11 @@ jobs:
       - name: Source QA for release support files
         shell: bash
         run: |
-          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py
+          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py tools/updater-contract-qa.py
           python3 tools/trace-redaction-qa.py
           python3 tools/legacy-cleanup-audit.py --output /tmp/legacy-cleanup.json --require-no-powershell --require-no-bootstrap-json --require-no-active-whatif
           python3 tools/whatif-source-cleanup.py --assert-clean
+          python3 tools/updater-contract-qa.py
           node --check assets/admin.js
           node --check assets/ultimate-designer-trace-tools-v0879.js
           node --check assets/updater-support-v0879.js
