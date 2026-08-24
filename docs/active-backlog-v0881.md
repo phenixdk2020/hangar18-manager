@@ -8,7 +8,7 @@ Denne fil er den aktuelle canonical backlog. Den arver hele master-roadmapet via
 
 ## Batchstatus
 
-Denne arbejdsbatch omfatter nu **38 backlog-ID’er**. `release-config.json` holdes bevidst urørt mens v0.8.81 release-pipelinen er blokeret, så yderligere source-arbejde ikke starter flere konkurrerende release-runs. Hovedmålet er permanent WhatIf source-removal, fail-closed release-QA, updater/release-hardening, dokumenteret legacy-klassifikation/rollback og sikre Navigator-produktivitetsfunktioner. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
+Denne arbejdsbatch omfatter nu **42 backlog-ID’er**. `release-config.json` holdes bevidst urørt mens v0.8.81 release-pipelinen er blokeret, så yderligere source-arbejde ikke starter flere konkurrerende release-runs. Hovedmålet er permanent WhatIf source-removal, fail-closed release-QA, updater/release-hardening, backup-integritet/health, dokumenteret legacy-klassifikation/rollback og sikre Navigator-produktivitetsfunktioner. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
 
 # A. Release / sporbarhed
 
@@ -30,6 +30,15 @@ Denne arbejdsbatch omfatter nu **38 backlog-ID’er**. `release-config.json` hol
 | UPDATER-009 | Høj | 🟡 AUTOMATISK QA + MANUEL UPDATE-TEST | Code-backup oprettes fortsat før mutation. Hardening genåbner backup-ZIP, kræver hovedfil med både korrekt plugin-header og VERSION-konstant og beregner backup-SHA før update-pakken installeres. |
 | UPDATER-010 | Høj | 🟡 AUTOMATISK KONTRAKT-QA | `tools/updater-rollback-qa.py` tester simuleret success, fejl før backup, fejl efter verificeret backup og rollback-fejl. Succesfuld rollback skal nu også verificere restored version + SHA og persistere rollback-audit før pending/cache ryddes. Fuld WordPress integrationstest med rigtig Plugin_Upgrader mangler fortsat. |
 | UPDATER-015 | Normal | ✅ AUTOMATISK QA v0.8.81 | `tools/updater-contract-qa.py` tester behind/equal/ahead, schema 1.0 vs ukendt schema, plugin-id, versionformat, SHA-format og at atomisk state fortsat beregner JA/NEJ ud fra `latest` mod aktiv `current`. Kører i governance og release-QA. |
+
+# D. Backup, restore og retention
+
+| ID | Pri | Status | Leverance / Definition of done |
+|---|---|---|---|
+| BACKUP-002 | Høj | 🟡 FIX-KANDIDAT / MANUEL UI-TEST | `BackupHealthAdminController` viser read-only retention-overblik for B1/B2 med antal backups, samlet diskforbrug, ældste/nyeste tidspunkt og ældste alder i dage. Ingen automatisk sletning introduceres. |
+| BACKUP-003 | Høj | 🟡 AUTOMATISK QA + MANUEL RESTORE-TEST | B2 validerede allerede manifest/payload/media SHA ved plan og igen før execute. Ny `ManagedPageBackupIntegrityService` validerer legacy B1 JSON path/størrelse/struktur og SHA-256. B1 restore/copy forms bindes til den viste SHA og afviser mutation hvis filen ændres. `backup-safety-qa.yml` beskytter kontrakten. Versionshistorik-flow skal stadig manuelt verificeres. |
+| BACKUP-004 | Normal | 🟡 FIX-KANDIDAT / MANUEL DOWNLOAD-TEST | Backup support kan eksportere samlet B1+B2 restore-audit som UTF-8 JSON eller semikolon-separeret CSV med source/tid/mode/backup/side/safety backup/user/error. Maks 500 nyeste records. |
+| BACKUP-006 | Normal | 🟡 FIX-KANDIDAT / MANUEL UI-TEST | Read-only health-check køres højst hver 6. time på Opdateringer/Designer eller manuelt. Seneste 10 B1 JSON-filer SHA/struktur-valideres og seneste 5 B2-pakker gennem `SiteBackupPackageService::validate`; fejl vises uden at ændre backupdata. |
 
 # E. WhatIf cleanup
 
@@ -76,13 +85,14 @@ Denne arbejdsbatch omfatter nu **38 backlog-ID’er**. `release-config.json` hol
 
 | ID | Pri | Status | Leverance / Definition of done |
 |---|---|---|---|
-| QA-020 | Normal | 🟡 DELVIST v0.8.81 | Governance QA dry-runs WhatIf-cleaner + updater-hardening på kopi, linter muteret PHP/JS, kører updater contract/rollback matrix, linter post-install/legacy rollback controllers og syntax-checker Navigator productivity-laget. Separat legacy-referencegraph workflow beskytter aktive migration/shadow references; fuld historisk asset-lint er fortsat åben. |
+| QA-020 | Normal | 🟡 DELVIST v0.8.81 | Governance QA dry-runs WhatIf-cleaner + updater-hardening på kopi, linter muteret PHP/JS, kører updater contract/rollback matrix, linter post-install/legacy rollback controllers og syntax-checker Navigator productivity-laget. Separate legacy-referencegraph og backup-safety workflows beskytter aktive migration/shadow references samt backup-integritetskontrakter; fuld historisk asset-lint er fortsat åben. |
 
 # Næste sikre arbejde mens v0.8.81 build er blokeret
 
 1. Review definition-only resultater fra LEGACY-011 workflow; slet kun kandidater hvor dynamisk autoload/handler-reference også er udelukket.
 2. Fortsæt ikke LEGACY-007/008 destruktivt før `LEGACY-006` rollback-punkt er live-verificeret på test2.
 3. Manuel updater acceptance skal verificere from/to/runtime, package SHA, code-backup SHA, restored rollback SHA og cache-invalidation.
-4. Når v0.8.81 kan pakkes: smoke-test Vehicle/Event/Gallery/Menu/Page Editor saves efter WhatIf removal.
-5. Smoke-test Navigator typefilter, autoscroll og context menu.
-6. De tre frosne canvas-runtimebugs genåbnes kun med TRACE evidence.
+4. Manuel backup acceptance skal verificere B1 SHA-change rejection, B2 validate-before-execute, audit-download og retention/health UI.
+5. Når v0.8.81 kan pakkes: smoke-test Vehicle/Event/Gallery/Menu/Page Editor saves efter WhatIf removal.
+6. Smoke-test Navigator typefilter, autoscroll og context menu.
+7. De tre frosne canvas-runtimebugs genåbnes kun med TRACE evidence.
