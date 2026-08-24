@@ -26,6 +26,11 @@ final class Autoload
             }
         });
 
+        // Diagnostics must register on both admin/AJAX and public REST requests.
+        if (function_exists('add_action')) {
+            \Hangar18\UltimateDesigner\Diagnostics\EditorDiagnosticRuntime::register();
+        }
+
         // Public runtimes. They only affect render-time output; no admin writes.
         if (
             function_exists('is_admin') &&
