@@ -141,6 +141,37 @@ jobs:
             update.json
             release-source-v0882.tar.gz
 
+      - name: Publish verified PR build to main
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'release-v0882-artifact'
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(python3 -c "import json;print(json.load(open('release-config.json'))['version'])")"
+          rm -rf /tmp/h18-release
+          mkdir -p /tmp/h18-release/dist /tmp/h18-release/assets /tmp/h18-release/src/Admin
+          cp dist/hangar18-manager.zip /tmp/h18-release/dist/
+          cp update.json hangar18-manager.php readme.txt /tmp/h18-release/
+          cp assets/admin.js assets/admin.css /tmp/h18-release/assets/
+          cp src/Admin/IntegrationAdminBootstrap.php /tmp/h18-release/src/Admin/
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          git checkout -B h18-release-publish origin/main
+
+          cp /tmp/h18-release/hangar18-manager.php ./hangar18-manager.php
+          cp /tmp/h18-release/readme.txt ./readme.txt
+          cp /tmp/h18-release/update.json ./update.json
+          cp /tmp/h18-release/dist/hangar18-manager.zip ./dist/hangar18-manager.zip
+          cp /tmp/h18-release/assets/admin.js ./assets/admin.js
+          cp /tmp/h18-release/assets/admin.css ./assets/admin.css
+          cp /tmp/h18-release/src/Admin/IntegrationAdminBootstrap.php ./src/Admin/IntegrationAdminBootstrap.php
+          rm -f assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css src/Admin/NoWhatIfAdminController.php
+
+          git add -A -- hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip assets/admin.js assets/admin.css assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css src/Admin/IntegrationAdminBootstrap.php src/Admin/NoWhatIfAdminController.php
+          git commit -m "Release v${VERSION} package [emergency-release]"
+          git push origin HEAD:main
+
       - name: Commit package on direct push only
         if: github.event_name == 'push'
         shell: bash
