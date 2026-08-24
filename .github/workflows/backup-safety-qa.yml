@@ -1,0 +1,71 @@
+name: Backup Safety QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Backup/**'
+      - 'src/Admin/BackupRestoreAdminController.php'
+      - 'src/Admin/BackupHealthAdminController.php'
+      - 'src/Admin/PageVersionRestoreAdminController.php'
+      - 'src/Autoload.php'
+      - 'docs/active-backlog-v*.md'
+      - '.github/workflows/backup-safety-qa.yml'
+  pull_request:
+    paths:
+      - 'src/Backup/**'
+      - 'src/Admin/BackupRestoreAdminController.php'
+      - 'src/Admin/BackupHealthAdminController.php'
+      - 'src/Admin/PageVersionRestoreAdminController.php'
+      - 'src/Autoload.php'
+      - 'docs/active-backlog-v*.md'
+      - '.github/workflows/backup-safety-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backup-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP syntax
+        run: |
+          php -l src/Backup/ManagedPageBackupIntegrityService.php
+          php -l src/Backup/ManagedPageBackupRestorePreflightService.php
+          php -l src/Backup/ManagedPageBackupRestoreService.php
+          php -l src/Backup/SiteBackupPackageService.php
+          php -l src/Backup/SiteBackupRestoreService.php
+          php -l src/Backup/SiteBackupRestoreCoordinator.php
+          php -l src/Backup/SiteBackupSecurityPolicy.php
+          php -l src/Admin/BackupRestoreAdminController.php
+          php -l src/Admin/BackupHealthAdminController.php
+          php -l src/Admin/PageVersionRestoreAdminController.php
+          php -l src/Autoload.php
+
+      - name: B1 JSON integrity contract
+        run: |
+          grep -q "JSON_THROW_ON_ERROR" src/Backup/ManagedPageBackupIntegrityService.php
+          grep -q "hash_file('sha256'" src/Backup/ManagedPageBackupIntegrityService.php
+          grep -q "assertUnchanged" src/Backup/ManagedPageBackupIntegrityService.php
+          grep -q "backup_sha256" src/Admin/BackupRestoreAdminController.php
+          grep -q "assertUnchanged" src/Admin/BackupRestoreAdminController.php
+          grep -q "BackupSha256" src/Backup/ManagedPageBackupRestorePreflightService.php
+
+      - name: B2 package integrity contract
+        run: |
+          grep -q "packages->validate" src/Backup/SiteBackupRestoreService.php
+          grep -q "ManifestSha256" src/Backup/SiteBackupRestoreService.php
+          grep -q "CurrentStateHash" src/Backup/SiteBackupRestoreService.php
+          grep -q "hash_file('sha256'" src/Backup/SiteBackupPackageService.php
+          grep -q "inspectZip" src/Admin/SiteBackupAdminController.php
+
+      - name: Audit export and health contract
+        run: |
+          grep -q "h18_backup_audit_export" src/Admin/BackupHealthAdminController.php
+          grep -q "fputcsv" src/Admin/BackupHealthAdminController.php
+          grep -q "';'" src/Admin/BackupHealthAdminController.php
+          grep -q "ManagedPageBackupIntegrityService" src/Admin/BackupHealthAdminController.php
+          grep -q "packages->validate" src/Admin/BackupHealthAdminController.php
+          grep -q "ReadOnly.*true" src/Admin/BackupHealthAdminController.php
