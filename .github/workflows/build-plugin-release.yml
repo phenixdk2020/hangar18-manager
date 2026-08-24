@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: hangar18-plugin-release
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build-release:
@@ -117,15 +117,23 @@ jobs:
           readme, version_count = re.subn(r'(?m)^Version: \d+\.\d+\.\d+\s*$', f'Version: {version}', readme, count=1)
           if version_count != 1:
               raise SystemExit('Could not update readme version')
+
           marker = f'== Version {version} – {title} =='
-          if marker not in readme:
-              insertion = readme.find('== Version ')
-              if insertion < 0:
-                  raise SystemExit('Could not find readme changelog insertion point')
-              backlog_line = 'Backlog: ' + ', '.join(backlog_ids) + '\n'
-              channel_line = 'Channel: ' + channel + '\n'
-              section = marker + '\n\n' + channel_line + backlog_line + '\nNyt:\n' + ''.join(f'- {item}\n' for item in changelog) + '\n\n'
-              readme = readme[:insertion] + section + readme[insertion:]
+          backlog_line = 'Backlog: ' + ', '.join(backlog_ids) + '\n'
+          channel_line = 'Channel: ' + channel + '\n'
+          section = marker + '\n\n' + channel_line + backlog_line + '\nNyt:\n' + ''.join(f'- {item}\n' for item in changelog) + '\n\n'
+
+          # Retries of the same version must replace, never duplicate, changelog sections.
+          same_version = re.compile(
+              rf'(?ms)^== Version {re.escape(version)}[^\n]*\n.*?(?=^== Version |\Z)'
+          )
+          readme, removed_sections = same_version.subn('', readme)
+          insertion = readme.find('== Version ')
+          if insertion < 0:
+              raise SystemExit('Could not find readme changelog insertion point')
+          readme = readme[:insertion] + section + readme[insertion:]
+          if removed_sections > 1:
+              print(f'Normalized {removed_sections} duplicate v{version} readme sections')
           readme_path.write_text(readme, encoding='utf-8')
           PY
 
@@ -148,6 +156,7 @@ jobs:
           php -l src/Admin/UpdaterStateConsistencyAdminController.php
           php -l src/Admin/EditorNavigatorAdminController.php
           php -l src/Admin/LegacyCleanupAuditAdminController.php
+          php -l src/Admin/LegacyStateBackupAdminController.php
 
       - name: Build installable ZIP
         shell: bash
