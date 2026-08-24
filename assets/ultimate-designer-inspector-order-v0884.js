@@ -8,6 +8,7 @@
     const DYNAMIC_SELECTOR = '.h18-dynamic-binding-box';
     const CONDITIONS_SELECTOR = '.h18-condition-editor';
     const MEDIA_INPUT_SELECTOR = '.h18-section-media-id';
+    const MEDIA_TYPES = ['hero', 'text_image', 'image'];
     let observer = null;
     let timer = 0;
     let applying = false;
@@ -72,8 +73,15 @@
         setCollapsed(box, !collapsed);
     }
 
+    function sectionType(body) {
+        if (!body) { return ''; }
+        const field = body.querySelector('.h18-page-section-type,[name$="[Type]"]');
+        return String(field && field.value || '').trim();
+    }
+
     function mediaBox(body) {
-        const input = body ? body.querySelector(MEDIA_INPUT_SELECTOR) : null;
+        if (!body || MEDIA_TYPES.indexOf(sectionType(body)) === -1) { return null; }
+        const input = body.querySelector(MEDIA_INPUT_SELECTOR);
         return input && input.closest ? input.closest('.h18-section-module-box') : null;
     }
 
@@ -106,7 +114,7 @@
             /*
              * Inspector contract v0.8.84:
              * - all ordinary/type-specific controls remain before the advanced tail
-             * - image/media module is immediately before the advanced tail when present
+             * - image/media module is immediately before the advanced tail for media-capable types
              * - Dynamic data binding is penultimate
              * - Conditions / synlighed is always last
              */
