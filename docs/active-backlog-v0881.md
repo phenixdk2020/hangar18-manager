@@ -8,7 +8,7 @@ Denne fil er den aktuelle canonical backlog. Den arver hele master-roadmapet via
 
 ## Batchstatus
 
-Denne batch arbejder nu på **26 backlog-ID’er**. Hovedmålet er permanent WhatIf source-removal med fail-closed release-QA, dokumenteret legacy-klassifikation, sikre Navigator-produktivitetsfunktioner samt den updater-schema-regression der blev fundet under testen. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
+Denne batch arbejder nu på **27 backlog-ID’er**. Hovedmålet er permanent WhatIf source-removal med fail-closed release-QA, dokumenteret legacy-klassifikation, sikre Navigator-produktivitetsfunktioner samt updater-kompatibilitet/QA efter den schema-regression der blev fundet under testen. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
 
 # A. Release / sporbarhed
 
@@ -21,6 +21,7 @@ Denne batch arbejder nu på **26 backlog-ID’er**. Hovedmålet er permanent Wha
 | ID | Pri | Status | Leverance / Definition of done |
 |---|---|---|---|
 | UPDATER-SCHEMA-003 | Kritisk | ✅ USER PASS / PIPELINE FIX v0.8.81 | Installeret v0.8.80 accepterer kun `schema_version=1.0`. Aktiv `update.json` er hotfixet til 1.0 og brugerens update-check er bekræftet fungerende. Release-generatoren er låst til 1.0 og package verification fejler ved andet schema, indtil alle installerbare legacy-updatere er migreret. |
+| UPDATER-015 | Normal | ✅ AUTOMATISK QA v0.8.81 | `tools/updater-contract-qa.py` tester behind/equal/ahead, schema 1.0 vs ukendt schema, plugin-id, versionformat, SHA-format og at atomisk state fortsat beregner JA/NEJ ud fra `latest` mod aktiv `current`. Kører i governance og release-QA. |
 
 # E. WhatIf cleanup
 
@@ -64,7 +65,7 @@ Denne batch arbejder nu på **26 backlog-ID’er**. Hovedmålet er permanent Wha
 
 | ID | Pri | Status | Leverance / Definition of done |
 |---|---|---|---|
-| QA-020 | Normal | 🟡 DELVIST v0.8.81 | Governance QA dry-runs WhatIf source-cleaner på kopi, linter muteret PHP/JS og syntax-checker Navigator productivity-laget; fuld historisk asset-lint er fortsat åben. |
+| QA-020 | Normal | 🟡 DELVIST v0.8.81 | Governance QA dry-runs WhatIf source-cleaner på kopi, linter muteret PHP/JS, kører updater-contract matrix og syntax-checker Navigator productivity-laget; fuld historisk asset-lint er fortsat åben. |
 
 # Næste batch efter v0.8.81
 
