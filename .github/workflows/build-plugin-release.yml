@@ -30,14 +30,39 @@ jobs:
           echo "file=$FILE" >> "$GITHUB_OUTPUT"
           python3 tools/backlog-governance.py --backlog "$FILE" --output docs/backlog-index.json
 
-      - name: Apply guarded source cleanup
+      - name: Guarded pre-package cleanup and QA
         shell: bash
         run: |
           set +e
-          python3 tools/whatif-source-cleanup.py --apply --report /tmp/whatif-cleanup.json >/tmp/whatif-cleanup.stdout 2>/tmp/whatif-cleanup.stderr
-          CLEANUP_RC=$?
+          {
+            echo '=== WhatIf source cleanup ==='
+            python3 tools/whatif-source-cleanup.py --apply --report /tmp/whatif-cleanup.json
+            echo '=== Primary syntax and cleanup contract ==='
+            php -l hangar18-manager.php
+            php -l src/Admin/IntegrationAdminBootstrap.php
+            node --check assets/admin.js
+            python3 tools/whatif-source-cleanup.py --assert-clean
+            echo '=== Python QA tools ==='
+            python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py tools/updater-contract-qa.py
+            python3 tools/trace-redaction-qa.py
+            python3 tools/legacy-cleanup-audit.py --output /tmp/legacy-cleanup.json --require-no-powershell --require-no-bootstrap-json --require-no-active-whatif
+            python3 tools/updater-contract-qa.py
+            echo '=== Editor JavaScript syntax ==='
+            node --check assets/ultimate-designer-trace-tools-v0879.js
+            node --check assets/updater-support-v0879.js
+            node --check assets/ultimate-designer-navigator-v0880.js
+            node --check assets/ultimate-designer-navigator-productivity-v0881.js
+            echo '=== Admin PHP syntax ==='
+            php -l src/Admin/UltimateDesignerTraceAdminController.php
+            php -l src/Admin/UpdaterStateConsistencyAdminController.php
+            php -l src/Admin/EditorNavigatorAdminController.php
+            php -l src/Admin/LegacyCleanupAuditAdminController.php
+            php -l src/Admin/LegacyStateBackupAdminController.php
+          } >/tmp/prepackage-qa.stdout 2>/tmp/prepackage-qa.stderr
+          PRE_QA_RC=$?
           set -e
-          if [ "$CLEANUP_RC" -ne 0 ]; then
+
+          if [ "$PRE_QA_RC" -ne 0 ]; then
             VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
             {
               echo '# Hangar18 release build failure'
@@ -45,33 +70,47 @@ jobs:
               echo "- Version: $VERSION"
               echo "- Source commit: $GITHUB_SHA"
               echo "- UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-              echo '- Step: guarded WhatIf source cleanup'
+              echo '- Step: guarded pre-package cleanup and QA'
               echo
               echo '## stderr'
               echo '```text'
-              cat /tmp/whatif-cleanup.stderr
+              cat /tmp/prepackage-qa.stderr
               echo '```'
               echo
               echo '## stdout'
               echo '```text'
-              cat /tmp/whatif-cleanup.stdout
+              cat /tmp/prepackage-qa.stdout
               echo '```'
+              if [ -f /tmp/whatif-cleanup.json ]; then
+                echo
+                echo '## cleanup report'
+                echo '```json'
+                cat /tmp/whatif-cleanup.json
+                echo '```'
+              fi
+              if [ -f /tmp/legacy-cleanup.json ]; then
+                echo
+                echo '## legacy audit'
+                echo '```json'
+                cat /tmp/legacy-cleanup.json
+                echo '```'
+              fi
             } > docs/release-build-failure.md
+
             git restore --worktree -- hangar18-manager.php assets/admin.js assets/admin.css src/Admin/IntegrationAdminBootstrap.php 2>/dev/null || true
             git restore --worktree -- assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css src/Admin/NoWhatIfAdminController.php 2>/dev/null || true
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add -- docs/release-build-failure.md
-            git commit -m "Release v${VERSION} cleanup diagnostic [release-diagnostic]"
+            git commit -m "Release v${VERSION} pre-package diagnostic [release-diagnostic]"
             git push
-            exit "$CLEANUP_RC"
+            exit "$PRE_QA_RC"
           fi
+
           rm -f docs/release-build-failure.md
-          php -l hangar18-manager.php
-          php -l src/Admin/IntegrationAdminBootstrap.php
-          node --check assets/admin.js
-          python3 tools/whatif-source-cleanup.py --assert-clean
-          cat /tmp/whatif-cleanup.json
+          cat /tmp/prepackage-qa.stdout
+          if [ -f /tmp/whatif-cleanup.json ]; then cat /tmp/whatif-cleanup.json; fi
+          if [ -f /tmp/legacy-cleanup.json ]; then cat /tmp/legacy-cleanup.json; fi
 
       - name: Apply release metadata
         shell: bash
@@ -122,11 +161,7 @@ jobs:
           backlog_line = 'Backlog: ' + ', '.join(backlog_ids) + '\n'
           channel_line = 'Channel: ' + channel + '\n'
           section = marker + '\n\n' + channel_line + backlog_line + '\nNyt:\n' + ''.join(f'- {item}\n' for item in changelog) + '\n\n'
-
-          # Retries of the same version must replace, never duplicate, changelog sections.
-          same_version = re.compile(
-              rf'(?ms)^== Version {re.escape(version)}[^\n]*\n.*?(?=^== Version |\Z)'
-          )
+          same_version = re.compile(rf'(?ms)^== Version {re.escape(version)}[^\n]*\n.*?(?=^== Version |\Z)')
           readme, removed_sections = same_version.subn('', readme)
           insertion = readme.find('== Version ')
           if insertion < 0:
@@ -136,27 +171,6 @@ jobs:
               print(f'Normalized {removed_sections} duplicate v{version} readme sections')
           readme_path.write_text(readme, encoding='utf-8')
           PY
-
-      - name: Source QA for release support files
-        shell: bash
-        run: |
-          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py tools/updater-contract-qa.py
-          python3 tools/trace-redaction-qa.py
-          python3 tools/legacy-cleanup-audit.py --output /tmp/legacy-cleanup.json --require-no-powershell --require-no-bootstrap-json --require-no-active-whatif
-          python3 tools/whatif-source-cleanup.py --assert-clean
-          python3 tools/updater-contract-qa.py
-          node --check assets/admin.js
-          node --check assets/ultimate-designer-trace-tools-v0879.js
-          node --check assets/updater-support-v0879.js
-          node --check assets/ultimate-designer-navigator-v0880.js
-          node --check assets/ultimate-designer-navigator-productivity-v0881.js
-          php -l hangar18-manager.php
-          php -l src/Admin/IntegrationAdminBootstrap.php
-          php -l src/Admin/UltimateDesignerTraceAdminController.php
-          php -l src/Admin/UpdaterStateConsistencyAdminController.php
-          php -l src/Admin/EditorNavigatorAdminController.php
-          php -l src/Admin/LegacyCleanupAuditAdminController.php
-          php -l src/Admin/LegacyStateBackupAdminController.php
 
       - name: Build installable ZIP
         shell: bash
