@@ -35,6 +35,8 @@ final class EditorNavigatorAdminController
         $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
         $jsPath = $pluginDir . '/assets/ultimate-designer-navigator-v0880.js';
         $cssPath = $pluginDir . '/assets/ultimate-designer-navigator-v0880.css';
+        $productivityJsPath = $pluginDir . '/assets/ultimate-designer-navigator-productivity-v0881.js';
+        $productivityCssPath = $pluginDir . '/assets/ultimate-designer-navigator-productivity-v0881.css';
 
         wp_enqueue_script(
             'hangar18-ultimate-designer-navigator-v0880',
@@ -59,10 +61,24 @@ final class EditorNavigatorAdminController
             'hangar18-ultimate-designer-navigator-v0880',
             'H18NavigatorV0880',
             [
-                'version' => '0.8.80',
+                'version' => '0.8.81',
                 'workspaceKey' => 'h18.ultimate-designer.navigator.v0880',
                 'outlineKey' => 'h18.ultimate-designer.container-outlines.v0880',
             ]
+        );
+
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-navigator-productivity-v0881',
+            $pluginUrl . 'assets/ultimate-designer-navigator-productivity-v0881.js',
+            ['jquery', 'hangar18-ultimate-designer-navigator-v0880', 'hangar18-manager-admin'],
+            is_file($productivityJsPath) ? (string) filemtime($productivityJsPath) : '0.8.81',
+            true
+        );
+        wp_enqueue_style(
+            'hangar18-ultimate-designer-navigator-productivity-v0881',
+            $pluginUrl . 'assets/ultimate-designer-navigator-productivity-v0881.css',
+            ['hangar18-ultimate-designer-navigator-v0880'],
+            is_file($productivityCssPath) ? (string) filemtime($productivityCssPath) : '0.8.81'
         );
     }
 }
