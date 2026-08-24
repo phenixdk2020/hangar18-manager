@@ -1,0 +1,68 @@
+name: Diagnose Release v0.8.85
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/diagnose-release-v0885.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run and persist diagnostics
+        shell: bash
+        run: |
+          set +e
+          {
+            echo '=== TARGET ==='
+            python3 -c "import json; print(json.load(open('release-config.json'))['version'])"
+            FILE="$(ls docs/active-backlog-v*.md | sort -V | tail -n1)"
+            echo "canonical=$FILE"
+            python3 tools/backlog-governance.py --backlog "$FILE" --output docs/backlog-index.json
+            echo '=== PHP ==='
+            php -l hangar18-manager.php
+            php -l src/Autoload.php
+            php -l src/Admin/EditorUnsavedPreviewAdminController.php
+            php -l src/Admin/EditorLegoDropZonesAdminController.php
+            php -l src/Frontend/LegoLayoutFrontendRuntime.php
+            echo '=== JS ==='
+            node --check assets/ultimate-designer-unsaved-preview.js
+            node --check assets/ultimate-designer-inspector-order-v0884.js
+            node --check assets/ultimate-designer-lego-selection-inspector-v0849.js
+            node --check assets/ultimate-designer-lego-resize-v0841.js
+            node --check assets/ultimate-designer-lego-runtime-safety-v0883.js
+            node --check assets/ultimate-designer-lego-drop-zones-v0838.js
+            node --check assets/ultimate-designer-lego-palette-side-drop-bridge-v0843.js
+            node --check assets/ultimate-designer-lego-fixes-v0851.js
+            node --check assets/ultimate-designer-lego-placement-stability-v0862.js
+          } >/tmp/v0885-diagnostic.log 2>&1
+          RC=$?
+          set -e
+
+          {
+            echo '# v0.8.85 release diagnostic'
+            echo
+            echo "- Source commit: $GITHUB_SHA"
+            echo "- Exit code: $RC"
+            echo "- UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo '```text'
+            cat /tmp/v0885-diagnostic.log
+            echo '```'
+          } > docs/release-diagnostic-v0885.md
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/release-diagnostic-v0885.md docs/backlog-index.json
+          git commit -m "Release v0.8.85 diagnostic [release-diagnostic]"
+          git push
+          exit "$RC"
