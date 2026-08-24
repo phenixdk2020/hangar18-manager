@@ -1,9 +1,10 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.90",
+  "version": "0.8.91",
   "channel": "test",
   "backlog_ids": [
+    "SAVE-INTEGRITY-106",
     "SAVE-RELOAD-GRID-104",
     "SIDE-SPAN-PERSIST-105",
     "DIAG-RELOAD-103",
@@ -15,16 +16,16 @@
   ],
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-24T17:27:05Z",
+  "published_utc": "2026-08-24T18:21:28Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "6b50471cf0672a244ae6b8bf32093562c01ccdd86843c90c94dbcd416058db30",
+  "package_sha256": "033a0777e4360dd134362779f59847af9304ce55e1ed45e2dffe54317a6fdc28",
   "changelog": [
-    "Retter v0.8.89 source-visibility-kontrakten: JavaScript og CSS bruger nu samme generic-child-markør, og source-rækker skjules først efter en verificeret proxy er indsat i Grid/Flex-parenten.",
-    "Generic Grid/Flex rebuild bruger direkte child-DOM traversal og kører efter resize/stack/placement-runtimes, så gemte LayoutParentKey- og StackRootKey-relationer kan genopbygges deterministisk efter reload.",
-    "Implicitte fler-kolonne layouts materialiseres via den eksisterende v0.8.41 writeStateForKey-API: to auto-kolonner bliver 6/6, tre bliver 4/4/4 osv.; eksplicitte bruger-resizes overskrives ikke.",
-    "Span-canonicalisering udføres før Gem-serialiseringen, så h18_lego_layout_span indeholder ikke-nul Desktop spans for implicitte fler-kolonne layouts.",
-    "Trace registrerer DIAG_LAYOUT_REBUILD_V0890 med renderer-marker, proxyCount, hiddenSourceCount, parent/root keys og effektive spans, så næste save/reload-test direkte viser om rebuild-laget faktisk tog ejerskab.",
-    "v0.8.90 registrerer ingen nye dragstart/dragover/drop/dragend handlers; højre/venstre/over/under forbliver ejet af den eksisterende placement-kæde.",
-    "Almindelig Kasse og Auto-kasser forbliver på legacy nesting-runtime; v0.8.90 aktiveres kun for generiske Grid/Flex-parents."
+    "Tilføjer en snæver v0.8.91 save-integrity guard baseret på den reproducerede v0.8.90-log, hvor et korrekt reloadet layout blev konverteret til sectionCount=0 og alle Remove=1 før server-normalisering.",
+    "Ved faktisk Gem-aktivering snapshots aktive sektioner, remove-state og LayoutParentKey; snapshot tages ved pointer/keyboard-aktivering, så brugerens seneste layoutændringer bevares.",
+    "På window capture-phase submit kontrolleres den dokumenterede katastrofe-signatur. Kun hvis Gem-snapshot havde aktive rækker, submit-state pludselig har nul aktive rækker, og de samme rækker stadig findes i DOM, gendannes de snapshot-aktive rækker til Remove=0 med deres parent-key.",
+    "Bevidst slettede sektioner genoplives ikke: hvis brugeren har slettet alle sektioner før Gem, er snapshot activeCount=0 og guard-laget gør ingenting.",
+    "Span- og stack-state forbliver ejet af de eksisterende v0.8.41/v0.8.51 runtimes; v0.8.91 ændrer ikke drag/drop, højre/venstre/over/under eller container-placement.",
+    "Trace får DIAG_SAVE_GUARD_CAPTURE_V0891 og DIAG_SAVE_GUARD_RECOVER_V0891, så næste reproduktion viser både brugerens Gem-state og eventuel recovery før normal save-serialisering.",
+    "v0.8.90 generic saved-layout rebuild og implicit span-canonicalisering bevares uændret under save-integrity-laget."
   ]
 }

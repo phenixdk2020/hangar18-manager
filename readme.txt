@@ -1,5 +1,5 @@
 === Hangar18 Manager ===
-Version: 0.8.90
+Version: 0.8.91
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
 
 
