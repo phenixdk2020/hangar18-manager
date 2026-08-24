@@ -13,10 +13,10 @@
     "Ruller v0.8.83's generelle drag/drop safety ownership tilbage: ingen nye dragstart/dragover/drop/dragend listeners, watchdog, syntetisk dragend eller overlay-cleanup må konkurrere med den dokumenteret fungerende v0.8.82 placement-kæde.",
     "Højre, venstre, over og under ejes igen alene af den eksisterende v0838/v0843/v0851/v0862 placement-runtime.",
     "Image-freeze beskyttelsen beholdes som et isoleret Inspector MutationObserver-filter og må ikke ændre drag/drop-state.",
-    "Inspectorens avancerede hale er fast: Billede/Mediebibliotek placeres umiddelbart før Dynamic data binding og Conditions / synlighed, når medie findes.",
+    "Inspectorens avancerede hale er fast: Billede/Mediebibliotek placeres umiddelbart før Dynamic data binding og Conditions / synlighed for medie-typerne Billede, Tekst + billede og Hero.",
     "Dynamic data binding er altid næstsidst og Conditions / synlighed altid sidst i Inspector; begge er foldet ind som standard og kan åbnes med mus eller tastatur.",
     "Inspector-rækkefølge-runtime er idempotent, så den ikke kan skabe en selvforstærkende MutationObserver-loop.",
     "Trace self-observation/repaint hardening og viewport-sikker placering af Start/Stop-panelet bevares uden placement ownership.",
-    "Backlog-delta v0.8.84 indeholder kun nye unikke ID'er; release refererer fortsat til videreførte v0.8.83 gates gennem canonical extends-kæden."
+    "Canonical backlog-delta v0.8.84 registrerer placement-rollback og Inspector-order som særskilte regressionsgates."
   ]
 }
