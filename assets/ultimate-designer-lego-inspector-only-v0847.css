@@ -40,3 +40,56 @@ html[data-h18-v0871-selection-mode="nested"] #h18-page-sections-sortable > .h18-
     outline-offset: -3px !important;
     box-shadow: inset 0 0 0 2px rgba(34, 113, 177, .18) !important;
 }
+
+/* INSPECTOR-DESIGN-081:
+ * The legacy "Luft, baggrund og placering" block is cloned into an Inspector
+ * that is only ~320-380 px wide on desktop. Its original responsive CSS uses
+ * viewport breakpoints, so a wide browser incorrectly keeps Desktop/Mobil and
+ * their fields in multiple columns inside the narrow Inspector. Scope the fix
+ * to Inspector only: source editor markup, canvas and public rendering remain
+ * unchanged. */
+.h18-pages-admin .h18-builder-inspector #h18-page-inspector-target .h18-page-section-layout > .h18-layout-devices {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    width: 100%;
+    min-width: 0;
+    padding: 12px 0 !important;
+    box-sizing: border-box;
+}
+
+.h18-pages-admin .h18-builder-inspector #h18-page-inspector-target .h18-layout-device {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 12px 12px 4px;
+    box-sizing: border-box;
+}
+
+.h18-pages-admin .h18-builder-inspector #h18-page-inspector-target .h18-layout-fields {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    width: 100%;
+    min-width: 0;
+}
+
+.h18-pages-admin .h18-builder-inspector #h18-page-inspector-target .h18-layout-fields .h18-field {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 8px;
+}
+
+.h18-pages-admin .h18-builder-inspector #h18-page-inspector-target .h18-layout-fields input,
+.h18-pages-admin .h18-builder-inspector #h18-page-inspector-target .h18-layout-fields select,
+.h18-pages-admin .h18-builder-inspector #h18-page-inspector-target .h18-layout-fields textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.h18-pages-admin .h18-builder-inspector #h18-page-inspector-target .h18-layout-fields .description {
+    overflow-wrap: anywhere;
+}
