@@ -7,17 +7,28 @@
     const TRACE_UI_SELECTOR = '#h18-ultimate-designer-trace-v0876,#h18-trace-tools-v0879,#h18-trace-recording-indicator-v0879';
     const TRACE_PANEL_ID = 'h18-ultimate-designer-trace-v0876';
     const NativeMutationObserver = window.MutationObserver;
-    let TraceSafeMutationObserver = null;
+    let RuntimeSafeMutationObserver = null;
     let editorDragActive = false;
     let lastDragActivity = 0;
     let watchdogTimer = 0;
     let safetyDispatchingDragEnd = false;
 
+    function callbackSource(callback) {
+        try { return Function.prototype.toString.call(callback); }
+        catch (ignore) { return String(callback || ''); }
+    }
+
     function isTraceObserver(callback) {
-        const source = String(callback || '');
+        const source = callbackSource(callback);
         return source.indexOf('mutationBucket') !== -1 &&
             source.indexOf('DOM_MUTATIONS') !== -1 &&
             source.indexOf('MUTATION_MS') !== -1;
+    }
+
+    function isInspectorSelectionObserver(callback) {
+        const source = callbackSource(callback);
+        return source.indexOf('clarifyInspectorControls') !== -1 &&
+            source.indexOf('refreshSelectedCanvasMarker') !== -1;
     }
 
     function insideTraceUi(node) {
@@ -59,24 +70,40 @@
     }
 
     if (NativeMutationObserver) {
-        TraceSafeMutationObserver = function (callback) {
-            if (!isTraceObserver(callback)) {
-                return new NativeMutationObserver(callback);
+        RuntimeSafeMutationObserver = function (callback) {
+            if (isInspectorSelectionObserver(callback)) {
+                let scheduled = false;
+                let suppressUntil = 0;
+                let pendingObserver = null;
+
+                return new NativeMutationObserver(function (records, nativeObserver) {
+                    if (Date.now() < suppressUntil) { return; }
+                    pendingObserver = nativeObserver;
+                    if (scheduled) { return; }
+                    scheduled = true;
+                    window.setTimeout(function () {
+                        scheduled = false;
+                        suppressUntil = Date.now() + 90;
+                        try { callback(records, pendingObserver || nativeObserver); }
+                        finally {
+                            document.documentElement.setAttribute('data-h18-v0883-inspector-observer-guard', 'active');
+                        }
+                    }, 0);
+                });
             }
 
-            const observer = new NativeMutationObserver(function (records, nativeObserver) {
-                const relevant = records.filter(function (record) { return !traceUiMutation(record); });
-                if (relevant.length) { callback(relevant, nativeObserver); }
-            });
+            if (isTraceObserver(callback)) {
+                return new NativeMutationObserver(function (records, nativeObserver) {
+                    const relevant = records.filter(function (record) { return !traceUiMutation(record); });
+                    if (relevant.length) { callback(relevant, nativeObserver); }
+                });
+            }
 
-            // Only the known trace observer needs this isolation. Restore the
-            // constructor afterwards so unrelated late runtimes stay native.
-            window.MutationObserver = NativeMutationObserver;
-            return observer;
+            return new NativeMutationObserver(callback);
         };
 
-        TraceSafeMutationObserver.prototype = NativeMutationObserver.prototype;
-        window.MutationObserver = TraceSafeMutationObserver;
+        RuntimeSafeMutationObserver.prototype = NativeMutationObserver.prototype;
+        window.MutationObserver = RuntimeSafeMutationObserver;
 
         // The trace panel is created late in the footer. A small native observer
         // moves it into a viewport-safe position once, then disconnects itself.
@@ -86,15 +113,7 @@
         if (document.documentElement) {
             tracePanelObserver.observe(document.documentElement, { childList: true, subtree: true });
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            keepTracePanelVisible();
-            window.setTimeout(function () {
-                if (!window.__h18UltimateDesignerTraceV0876 && window.MutationObserver === TraceSafeMutationObserver) {
-                    window.MutationObserver = NativeMutationObserver;
-                }
-            }, 0);
-        }, { once: true });
+        document.addEventListener('DOMContentLoaded', keepTracePanelVisible, { once: true });
     }
 
     function editorSections() {
@@ -185,9 +204,6 @@
         if (editorDragActive) { lastDragActivity = Date.now(); }
     }, true);
 
-    // Installed before the palette redirect bridge. That bridge can call
-    // stopImmediatePropagation() on the native drop; this queued cleanup still
-    // runs after the synchronous drop chain and cannot be skipped by that call.
     window.addEventListener('drop', function () {
         if (!editorDragActive) { return; }
         lastDragActivity = Date.now();
