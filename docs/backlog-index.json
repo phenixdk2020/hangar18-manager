@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2",
-  "canonical_backlog": "docs/active-backlog-v0884.md",
+  "canonical_backlog": "docs/active-backlog-v0885.md",
   "extends_chain": [
     "docs/active-backlog-v0878.md",
     "docs/active-backlog-v0879.md",
@@ -8,10 +8,11 @@
     "docs/active-backlog-v0881.md",
     "docs/active-backlog-v0882.md",
     "docs/active-backlog-v0883.md",
-    "docs/active-backlog-v0884.md"
+    "docs/active-backlog-v0884.md",
+    "docs/active-backlog-v0885.md"
   ],
-  "generated_utc": "2026-08-24T13:31:23Z",
-  "item_count": 421,
+  "generated_utc": "2026-08-24T14:01:03Z",
+  "item_count": 425,
   "items": [
     {
       "id": "BACKLOG-MAINT-001",
@@ -4227,6 +4228,46 @@
       "area_code": "P",
       "area": "Placement regression",
       "source_file": "docs/active-backlog-v0884.md"
+    },
+    {
+      "id": "INSPECTOR-ORDER-095",
+      "priority": "Høj",
+      "status": "🟡 FIX-KANDIDAT / MANUEL TEST v0.8.85",
+      "dependencies": [],
+      "definition_of_done": "Inspectorens faste hale er **Billede/Mediebibliotek → Layout-hierarki → Dynamic data binding → Conditions / synlighed** for medie-typer. For elementer uden medie er halen **Layout-hierarki → Dynamic data binding → Conditions / synlighed**. Dynamic og Conditions starter foldet ind. Kun v0.8.85 order-runtime må eje denne rækkefølge; ældre Selection Inspector må ikke flytte blokkene tilbage eller genoprette en konkurrerende Avanceret-heading.",
+      "area_code": "H",
+      "area": "Inspector-rækkefølge",
+      "source_file": "docs/active-backlog-v0885.md"
+    },
+    {
+      "id": "FRONTEND-SPAN-094",
+      "priority": "Kritisk",
+      "status": "🟡 FIX-KANDIDAT / MANUEL TEST v0.8.85",
+      "dependencies": [],
+      "definition_of_done": "Den gemte 12-kolonne LEGO span-state skal være fælles autoritet for editor, live preview og public frontend. Grid/Flex-børn skal bruge samme effektive Desktop/Tablet/Mobile spans som resize-runtime. Public renderer må ikke længere falde tilbage til en separat lige-fordeling, når eksplicitte spans findes.",
+      "area_code": "L",
+      "area": "Frontend / canvas layout parity",
+      "source_file": "docs/active-backlog-v0885.md"
+    },
+    {
+      "id": "CANVAS-FIDELITY-093",
+      "priority": "Høj",
+      "status": "🟡 FIX-KANDIDAT / MANUEL TEST v0.8.85",
+      "dependencies": [],
+      "definition_of_done": "En tom grid-kolonne skal stadig optage sin fulde tildelte span-bredde og strække sig til rækkens højde i editoren. Tomt indhold må ikke få kolonnen til visuelt at kollapse eller give et falsk billede af frontend-geometrien. Rettelsen er CSS-only og må ikke ændre resize/drag/drop JavaScript.",
+      "area_code": "L",
+      "area": "Frontend / canvas layout parity",
+      "source_file": "docs/active-backlog-v0885.md"
+    },
+    {
+      "id": "PREVIEW-LIVE-092",
+      "priority": "Kritisk",
+      "status": "🟡 FIX-KANDIDAT / MANUEL TEST v0.8.85",
+      "dependencies": [],
+      "definition_of_done": "**Forhåndsvis side** skal vise den aktuelle, også ugemte editor-state gennem den rigtige public PHP-renderer. Klik må ikke gemme WordPress-siden eller canonical page-option. Editor-form og aktuelle LEGO spans lægges i en kortlivet, brugerbeskyttet preview-transient; iframe renderer via read-only token og no-cache/noindex.",
+      "area_code": "V",
+      "area": "Frontend-forhåndsvisning",
+      "source_file": "docs/active-backlog-v0885.md"
     }
   ]
 }

@@ -1,19 +1,20 @@
 {
   "schema_version": "1.0",
-  "version": "0.8.84",
+  "version": "0.8.85",
   "channel": "test",
-  "source_commit": "f96de30116458f57210e1fee363d82514951b981",
-  "built_utc": "2026-08-24T13:31:23Z",
+  "source_commit": "1f0bbf467be0e92847907c7ebf3fd4c647ef0bcb",
+  "built_utc": "2026-08-24T14:01:06Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "3662abdae20ed6a20ab4e7953f685c35920d77ee48e79f41085e2208e691cd6e",
-  "plugin_header_version": "0.8.84",
-  "plugin_constant_version": "0.8.84",
+  "package_sha256": "05138fefd659ae28350fc5596a5551866f269d843869bee1c8d11b4c8d04b0c0",
+  "plugin_header_version": "0.8.85",
+  "plugin_constant_version": "0.8.85",
   "backlog_ids": [
-    "INSPECTOR-IMAGE-086",
-    "INSPECTOR-ORDER-090",
+    "PREVIEW-LIVE-092",
+    "CANVAS-FIDELITY-093",
+    "FRONTEND-SPAN-094",
+    "INSPECTOR-ORDER-095",
     "PLACEMENT-ROLLBACK-089",
-    "TRACE-SAFETY-088",
-    "TRACE-UI-087"
+    "INSPECTOR-IMAGE-086"
   ],
   "qa": {
     "version_match": true,

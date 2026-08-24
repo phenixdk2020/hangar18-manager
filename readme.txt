@@ -1,6 +1,21 @@
 === Hangar18 Manager ===
-Version: 0.8.84
+Version: 0.8.85
 Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
+
+
+== Version 0.8.85 – Live frontend-preview og fælles layout-geometri ==
+
+Channel: test
+Backlog: PREVIEW-LIVE-092, CANVAS-FIDELITY-093, FRONTEND-SPAN-094, INSPECTOR-ORDER-095, PLACEMENT-ROLLBACK-089, INSPECTOR-IMAGE-086
+
+Nyt:
+- Forhåndsvis side ændres fra senest gemte frontend til en rigtig read-only live-preview af den aktuelle editor-state; preview gemmer ikke WordPress-siden.
+- Editorens aktuelle sections og LEGO span-state sendes til en kortlivet, brugerbeskyttet preview-token og renderes gennem den rigtige public PHP-renderer i iframe.
+- Den gemte 12-kolonne LEGO span-state bliver fælles autoritet for editor og public frontend, så eksplicitte kolonnebredder gengives ens i begge visninger.
+- Tomme grid-kolonner bevarer deres tildelte bredde og strækker sig visuelt til rækkens højde i editoren, selv uden indhold.
+- Inspector-halen er fast: Billede/Mediebibliotek → Layout-hierarki → Dynamic data binding → Conditions / synlighed; uden medie starter halen ved Layout-hierarki.
+- Dynamic data binding og Conditions / synlighed starter fortsat foldet ind, og ældre Selection Inspector må ikke konkurrere om rækkefølgen.
+- Højre/venstre/over/under placement og image-freeze-fix ændres ikke af v0.8.85; de eksisterende placement-runtimes forbliver autoritative.
 
 
 == Version 0.8.84 – v0.8.82 placement restore og fast Inspector-rækkefølge ==

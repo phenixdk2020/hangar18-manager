@@ -1,28 +1,28 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.84",
+  "version": "0.8.85",
   "channel": "test",
   "backlog_ids": [
-    "INSPECTOR-IMAGE-086",
-    "INSPECTOR-ORDER-090",
+    "PREVIEW-LIVE-092",
+    "CANVAS-FIDELITY-093",
+    "FRONTEND-SPAN-094",
+    "INSPECTOR-ORDER-095",
     "PLACEMENT-ROLLBACK-089",
-    "TRACE-SAFETY-088",
-    "TRACE-UI-087"
+    "INSPECTOR-IMAGE-086"
   ],
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-24T13:31:23Z",
+  "published_utc": "2026-08-24T14:01:06Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "3662abdae20ed6a20ab4e7953f685c35920d77ee48e79f41085e2208e691cd6e",
+  "package_sha256": "05138fefd659ae28350fc5596a5551866f269d843869bee1c8d11b4c8d04b0c0",
   "changelog": [
-    "Ruller v0.8.83's generelle drag/drop safety ownership tilbage: ingen nye dragstart/dragover/drop/dragend listeners, watchdog, syntetisk dragend eller overlay-cleanup må konkurrere med den dokumenteret fungerende v0.8.82 placement-kæde.",
-    "Højre, venstre, over og under ejes igen alene af den eksisterende v0838/v0843/v0851/v0862 placement-runtime.",
-    "Image-freeze beskyttelsen beholdes som et isoleret Inspector MutationObserver-filter og må ikke ændre drag/drop-state.",
-    "Inspectorens avancerede hale er fast: Billede/Mediebibliotek placeres umiddelbart før Dynamic data binding og Conditions / synlighed for medie-typerne Billede, Tekst + billede og Hero.",
-    "Dynamic data binding er altid næstsidst og Conditions / synlighed altid sidst i Inspector; begge er foldet ind som standard og kan åbnes med mus eller tastatur.",
-    "Inspector-rækkefølge-runtime er idempotent, så den ikke kan skabe en selvforstærkende MutationObserver-loop.",
-    "Trace self-observation/repaint hardening og viewport-sikker placering af Start/Stop-panelet bevares uden placement ownership.",
-    "Canonical backlog-delta v0.8.84 registrerer placement-rollback og Inspector-order som særskilte regressionsgates."
+    "Forhåndsvis side ændres fra senest gemte frontend til en rigtig read-only live-preview af den aktuelle editor-state; preview gemmer ikke WordPress-siden.",
+    "Editorens aktuelle sections og LEGO span-state sendes til en kortlivet, brugerbeskyttet preview-token og renderes gennem den rigtige public PHP-renderer i iframe.",
+    "Den gemte 12-kolonne LEGO span-state bliver fælles autoritet for editor og public frontend, så eksplicitte kolonnebredder gengives ens i begge visninger.",
+    "Tomme grid-kolonner bevarer deres tildelte bredde og strækker sig visuelt til rækkens højde i editoren, selv uden indhold.",
+    "Inspector-halen er fast: Billede/Mediebibliotek → Layout-hierarki → Dynamic data binding → Conditions / synlighed; uden medie starter halen ved Layout-hierarki.",
+    "Dynamic data binding og Conditions / synlighed starter fortsat foldet ind, og ældre Selection Inspector må ikke konkurrere om rækkefølgen.",
+    "Højre/venstre/over/under placement og image-freeze-fix ændres ikke af v0.8.85; de eksisterende placement-runtimes forbliver autoritative."
   ]
 }
