@@ -161,7 +161,22 @@ def clean_primary_php(text: str) -> tuple[str, dict[str, int]]:
     lines, branch_count = remove_php_if_blocks(lines, branch_patterns)
     counts['backend_branches_removed'] = branch_count
 
-    return ''.join(lines), counts
+    out = ''.join(lines)
+    legacy_copy = [
+        ('WhatIf er FRA som standard', 'Ændringer gemmes kun ved en eksplicit Gem-handling'),
+        ('Web-managerens checkpoints, WhatIf, fejl og succeser.', 'Web-managerens checkpoints, fejl og succeser.'),
+        ('Vælg et eksisterende køretøj eller opret et nyt. WhatIf er slået fra som standard.', 'Vælg et eksisterende køretøj eller opret et nyt.'),
+        ('Hver rigtig gemning får sit eget versionsnummer og en beskrivelse. WhatIf opretter ingen historik.', 'Hver gemning får sit eget versionsnummer og en beskrivelse.'),
+        ('Først når WhatIf slås fra og du trykker <strong>Gem menu</strong>,', 'Når du trykker <strong>Gem menu</strong>,'),
+    ]
+    copy_count = 0
+    for old, new in legacy_copy:
+        hits = out.count(old)
+        out = out.replace(old, new)
+        copy_count += hits
+    counts['legacy_copy_rewritten'] = copy_count
+
+    return out, counts
 
 
 def clean_admin_js(text: str) -> tuple[str, dict[str, int]]:
@@ -171,6 +186,16 @@ def clean_admin_js(text: str) -> tuple[str, dict[str, int]]:
             r'''(?m)^\s*const \$pageWhatIf = \$pageEditorForm\.find\('\[name="whatif"\]'\);\s*\n''',
             '',
             'page_whatif_var_removed',
+        ),
+        (
+            r'''(?m)^\s*\$pageWhatIf\.on\('change',\s*syncPageChangeNoteRequirement\);\s*\n''',
+            '',
+            'page_whatif_change_handler_removed',
+        ),
+        (
+            r'''editorDraftSaveNow\(!\$pageWhatIf\.is\(':checked'\)\);''',
+            'editorDraftSaveNow(true);',
+            'draft_save_rewritten',
         ),
         (
             r'''(?m)^\s*const whatIf = \$h18PageEditorFormV064\.find\('\[name="whatif"\]'\)\.is\(':checked'\);\s*\n''',
@@ -234,7 +259,7 @@ def apply(root: pathlib.Path) -> dict:
     pre_hits = assert_clean(root)
     if not pre_hits:
         return {
-            'schema_version': '1.4',
+            'schema_version': '1.5',
             'already_clean': True,
             'changed': [],
             'removed': [],
@@ -242,7 +267,7 @@ def apply(root: pathlib.Path) -> dict:
         }
 
     report: dict[str, object] = {
-        'schema_version': '1.4',
+        'schema_version': '1.5',
         'already_clean': False,
         'pre_cleanup_hit_count': len(pre_hits),
         'changed': [],
@@ -287,8 +312,14 @@ def apply(root: pathlib.Path) -> dict:
         raise RuntimeError('Expected at least one standalone WhatIf input line')
     if php_counts['backend_branches_removed'] < 1:
         raise RuntimeError('Expected at least one WhatIf backend branch')
+    if php_counts['legacy_copy_rewritten'] < 5:
+        raise RuntimeError(f"Expected at least five legacy WhatIf copy rewrites, got {php_counts['legacy_copy_rewritten']}")
     if bootstrap_count != 1:
         raise RuntimeError(f'Expected exactly one NoWhatIf registration, got {bootstrap_count}')
+    if js_counts['page_whatif_change_handler_removed'] != 1:
+        raise RuntimeError(f"Expected one Page Editor WhatIf change handler, got {js_counts['page_whatif_change_handler_removed']}")
+    if js_counts['draft_save_rewritten'] != 1:
+        raise RuntimeError(f"Expected one WhatIf-gated draft save, got {js_counts['draft_save_rewritten']}")
     if js_counts['submit_status_rewritten'] != 1:
         raise RuntimeError(f"Expected one Page Editor WhatIf save status, got {js_counts['submit_status_rewritten']}")
 
@@ -313,7 +344,7 @@ def main() -> int:
             report = apply(root)
         else:
             hits = assert_clean(root)
-            report = {'schema_version': '1.4', 'remaining_active_hits': hits}
+            report = {'schema_version': '1.5', 'remaining_active_hits': hits}
             if args.assert_clean and hits:
                 raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:120]))
         payload = json.dumps(report, ensure_ascii=False, indent=2) + '\n'
