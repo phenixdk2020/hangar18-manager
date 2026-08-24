@@ -170,7 +170,11 @@ jobs:
           cp /tmp/h18-release/src/Admin/IntegrationAdminBootstrap.php ./src/Admin/IntegrationAdminBootstrap.php
           rm -f assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css src/Admin/NoWhatIfAdminController.php
 
-          git add -A -- hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip assets/admin.js assets/admin.css assets/updater-support-v0879.js assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css src/Admin/IntegrationAdminBootstrap.php src/Admin/NoWhatIfAdminController.php
+          git add -A -- hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip assets/admin.js assets/admin.css assets/updater-support-v0879.js src/Admin/IntegrationAdminBootstrap.php
+          if git diff --cached --quiet; then
+            echo 'Verified release files already match main.'
+            exit 0
+          fi
           git commit -m "Release v${VERSION} package [emergency-release]"
           git push origin HEAD:main
 
@@ -183,5 +187,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A -- hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip assets src/Admin
+          if git diff --cached --quiet; then
+            echo 'Verified release files already match main.'
+            exit 0
+          fi
           git commit -m "Release v${VERSION} package [emergency-release]"
           git push
