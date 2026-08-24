@@ -37,16 +37,22 @@ jobs:
           {
             echo '=== WhatIf source cleanup ==='
             python3 tools/whatif-source-cleanup.py --apply --report /tmp/whatif-cleanup.json
-            echo '=== Primary syntax and cleanup contract ==='
+            echo '=== Updater install hardening ==='
+            python3 tools/updater-install-hardening.py --apply --report /tmp/updater-hardening.json
+            echo '=== Primary syntax and cleanup contracts ==='
             php -l hangar18-manager.php
             php -l src/Admin/IntegrationAdminBootstrap.php
+            php -l src/Admin/UpdaterPostInstallVerificationAdminController.php
+            php -l src/Autoload.php
             node --check assets/admin.js
             python3 tools/whatif-source-cleanup.py --assert-clean
+            python3 tools/updater-install-hardening.py --assert-hardened
             echo '=== Python QA tools ==='
-            python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py tools/updater-contract-qa.py
+            python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py tools/updater-contract-qa.py tools/updater-install-hardening.py tools/updater-rollback-qa.py
             python3 tools/trace-redaction-qa.py
             python3 tools/legacy-cleanup-audit.py --output /tmp/legacy-cleanup.json --require-no-powershell --require-no-bootstrap-json --require-no-active-whatif
             python3 tools/updater-contract-qa.py
+            python3 tools/updater-rollback-qa.py --report /tmp/updater-rollback-qa.json
             echo '=== Editor JavaScript syntax ==='
             node --check assets/ultimate-designer-trace-tools-v0879.js
             node --check assets/updater-support-v0879.js
@@ -81,20 +87,15 @@ jobs:
               echo '```text'
               cat /tmp/prepackage-qa.stdout
               echo '```'
-              if [ -f /tmp/whatif-cleanup.json ]; then
-                echo
-                echo '## cleanup report'
-                echo '```json'
-                cat /tmp/whatif-cleanup.json
-                echo '```'
-              fi
-              if [ -f /tmp/legacy-cleanup.json ]; then
-                echo
-                echo '## legacy audit'
-                echo '```json'
-                cat /tmp/legacy-cleanup.json
-                echo '```'
-              fi
+              for report in /tmp/whatif-cleanup.json /tmp/updater-hardening.json /tmp/updater-rollback-qa.json /tmp/legacy-cleanup.json; do
+                if [ -f "$report" ]; then
+                  echo
+                  echo "## $(basename "$report")"
+                  echo '```json'
+                  cat "$report"
+                  echo '```'
+                fi
+              done
             } > docs/release-build-failure.md
 
             git restore --worktree -- hangar18-manager.php assets/admin.js assets/admin.css src/Admin/IntegrationAdminBootstrap.php 2>/dev/null || true
@@ -109,8 +110,9 @@ jobs:
 
           rm -f docs/release-build-failure.md
           cat /tmp/prepackage-qa.stdout
-          if [ -f /tmp/whatif-cleanup.json ]; then cat /tmp/whatif-cleanup.json; fi
-          if [ -f /tmp/legacy-cleanup.json ]; then cat /tmp/legacy-cleanup.json; fi
+          for report in /tmp/whatif-cleanup.json /tmp/updater-hardening.json /tmp/updater-rollback-qa.json /tmp/legacy-cleanup.json; do
+            if [ -f "$report" ]; then cat "$report"; fi
+          done
 
       - name: Apply release metadata
         shell: bash
@@ -194,7 +196,6 @@ jobs:
 
           config = json.loads(pathlib.Path('release-config.json').read_text(encoding='utf-8'))
           manifest = {
-              # Keep 1.0 until every installable legacy updater accepts a newer schema.
               'schema_version': '1.0',
               'plugin': 'hangar18-manager',
               'version': str(config['version']).strip(),
