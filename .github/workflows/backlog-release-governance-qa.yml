@@ -113,8 +113,14 @@ jobs:
           TMP="$(mktemp -d)"
           mkdir -p "$TMP/assets" "$TMP/src/Admin"
           cp hangar18-manager.php "$TMP/"
-          cp assets/admin.js assets/admin.css assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css "$TMP/assets/"
-          cp src/Admin/IntegrationAdminBootstrap.php src/Admin/NoWhatIfAdminController.php "$TMP/src/Admin/"
+          cp assets/admin.js assets/admin.css "$TMP/assets/"
+          cp src/Admin/IntegrationAdminBootstrap.php "$TMP/src/Admin/"
+          for file in assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css; do
+            if [ -f "$file" ]; then cp "$file" "$TMP/assets/"; fi
+          done
+          if [ -f src/Admin/NoWhatIfAdminController.php ]; then
+            cp src/Admin/NoWhatIfAdminController.php "$TMP/src/Admin/"
+          fi
           python3 tools/whatif-source-cleanup.py --root "$TMP" --apply --report /tmp/whatif-cleanup.json
           php -l "$TMP/hangar18-manager.php"
           php -l "$TMP/src/Admin/IntegrationAdminBootstrap.php"
@@ -133,8 +139,9 @@ jobs:
           python3 - <<'PY'
           import json
           p=json.load(open('/tmp/legacy-cleanup.json', encoding='utf-8'))
-          print('WhatIf runtime files:', p['whatif_runtime_file_count'])
-          print('WhatIf non-shim matches:', p['whatif_nonshim_matches'])
+          print('Active WhatIf runtime files:', p['whatif_runtime_file_count'])
+          print('Active WhatIf non-shim matches:', p['whatif_nonshim_matches'])
+          print('Diagnostic mentions:', len(p.get('whatif_diagnostic_mentions', [])))
           print('Shim files:', ', '.join(p['shim_files']) or 'none')
           PY
 
