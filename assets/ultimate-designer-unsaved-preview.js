@@ -8,7 +8,12 @@ jQuery(function ($) {
     const $header = $form.children('.h18-form-header').first();
     if (!$header.length || $('#h18-unsaved-preview-open').length) { return; }
 
-    const previewUrl = String(config.previewUrl || '').trim();
+    const basePreviewUrl = String(config.previewUrl || '').trim();
+    const ajaxUrl = String(config.ajaxUrl || '').trim();
+    const ajaxAction = String(config.action || 'h18_prepare_live_page_preview').trim();
+    const nonce = String(config.nonce || '').trim();
+    const pageSlug = String(config.pageSlug || '').trim();
+
     const $open = $('<button>', {
         type: 'button',
         id: 'h18-unsaved-preview-open',
@@ -27,6 +32,10 @@ jQuery(function ($) {
         title: 'Frontend-forhåndsvisning af siden',
         loading: 'eager'
     });
+    const $status = $('<div>', {
+        class: 'h18-unsaved-preview-empty',
+        text: 'Klargør live-forhåndsvisning…'
+    });
 
     const $modal = $('<div>', {
         id: 'h18-unsaved-preview-modal',
@@ -43,7 +52,7 @@ jQuery(function ($) {
             $('<header>', { class: 'h18-unsaved-preview-toolbar' }).append(
                 $('<div>', { class: 'h18-unsaved-preview-heading' }).append(
                     $('<strong>', { id: 'h18-unsaved-preview-title', text: 'Frontend-forhåndsvisning' }),
-                    $('<span>', { text: 'Viser den senest gemte side med den rigtige frontend-renderer. Gem først for at medtage nye ændringer.' })
+                    $('<span>', { text: 'Viser den aktuelle editor-tilstand med den rigtige frontend-renderer. Forhåndsvisning gemmer ikke siden.' })
                 ),
                 $('<div>', { class: 'h18-unsaved-preview-devices', role: 'group', 'aria-label': 'Preview-størrelse' }).append(
                     $('<button>', { type: 'button', class: 'button is-active', text: 'Desktop', 'data-h18-preview-device': 'desktop', 'aria-pressed': 'true' }),
@@ -59,11 +68,7 @@ jQuery(function ($) {
                 })
             ),
             $('<div>', { class: 'h18-unsaved-preview-shell' }).append(
-                $('<div>', { class: 'h18-unsaved-preview-viewport is-desktop', 'data-h18-unsaved-preview-viewport': '1' }).append(
-                    previewUrl
-                        ? $frame
-                        : $('<p>', { class: 'h18-unsaved-preview-empty', text: 'Den valgte side kunne ikke findes som offentlig WordPress-side.' })
-                )
+                $('<div>', { class: 'h18-unsaved-preview-viewport is-desktop', 'data-h18-unsaved-preview-viewport': '1' }).append($status, $frame)
             )
         )
     );
@@ -72,11 +77,11 @@ jQuery(function ($) {
 
     const $viewport = $modal.find('[data-h18-unsaved-preview-viewport]');
     let opener = null;
+    let request = null;
 
-    function cacheBustedUrl() {
-        if (!previewUrl) { return ''; }
-        const separator = previewUrl.indexOf('?') === -1 ? '?' : '&';
-        return previewUrl + separator + 'h18_frontend_preview=' + Date.now();
+    function setStatus(message, isError) {
+        $status.text(String(message || '')).toggleClass('is-error', Boolean(isError)).prop('hidden', !message);
+        $frame.prop('hidden', Boolean(message));
     }
 
     function setDevice(device) {
@@ -88,19 +93,82 @@ jQuery(function ($) {
         });
     }
 
+    function collectSpanState() {
+        const api = window.__h18LegoResizeV0841;
+        const spans = {};
+        if (!api || typeof api.stateForKey !== 'function') { return spans; }
+
+        const seen = {};
+        $form.find('.h18-page-section-key').each(function () {
+            const key = String($(this).val() || '').trim();
+            if (!key || seen[key]) { return; }
+            seen[key] = true;
+            try {
+                const state = api.stateForKey(key);
+                if (state && typeof state === 'object') { spans[key] = state; }
+            } catch (ignore) {}
+        });
+        return spans;
+    }
+
+    function prepareLivePreview() {
+        if (!basePreviewUrl || !ajaxUrl || !nonce || !pageSlug) {
+            setStatus('Den valgte side kunne ikke klargøres til live-forhåndsvisning.', true);
+            return;
+        }
+
+        if (request && typeof request.abort === 'function') { request.abort(); }
+        setStatus('Klargør live-forhåndsvisning…', false);
+        $frame.attr('src', 'about:blank');
+
+        request = $.ajax({
+            url: ajaxUrl,
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                action: ajaxAction,
+                nonce: nonce,
+                page_slug: pageSlug,
+                form_data: $form.serialize(),
+                spans_json: JSON.stringify(collectSpanState())
+            }
+        }).done(function (response) {
+            const data = response && response.data ? response.data : {};
+            const url = response && response.success ? String(data.previewUrl || '').trim() : '';
+            if (!url) {
+                setStatus(String(data.message || 'Live-forhåndsvisningen kunne ikke oprettes.'), true);
+                return;
+            }
+            setStatus('', false);
+            $frame.attr('src', url);
+        }).fail(function (xhr, textStatus) {
+            if (textStatus === 'abort') { return; }
+            let message = 'Live-forhåndsvisningen kunne ikke oprettes.';
+            if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                message = String(xhr.responseJSON.data.message);
+            }
+            setStatus(message, true);
+        }).always(function () {
+            request = null;
+        });
+    }
+
     function openPreview() {
         opener = document.activeElement;
         setDevice('desktop');
-        if (previewUrl) { $frame.attr('src', cacheBustedUrl()); }
         $modal.prop('hidden', false).addClass('is-open');
         $('body').addClass('h18-unsaved-preview-open-body');
         $modal.find('.h18-unsaved-preview-close').trigger('focus');
+        prepareLivePreview();
     }
 
     function closePreview() {
+        if (request && typeof request.abort === 'function') { request.abort(); }
+        request = null;
         $modal.removeClass('is-open').prop('hidden', true);
         $('body').removeClass('h18-unsaved-preview-open-body');
-        if (previewUrl) { $frame.attr('src', 'about:blank'); }
+        $frame.attr('src', 'about:blank');
+        setStatus('Klargør live-forhåndsvisning…', false);
         if (opener && typeof opener.focus === 'function') { opener.focus(); }
         opener = null;
     }
