@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Deterministically remove legacy WhatIf runtime from Hangar18 source.
 
-The script is intentionally conservative: it only removes known markup/control
-shapes and exact PHP WhatIf branches. It then refuses success while the word
-WhatIf remains anywhere in the primary runtime files. Diagnostic/docs files are
-outside that assertion by design.
+The migration is fail-closed. Pure WhatIf UI blocks are removed, while legacy
+wrappers that also contain real controls are preserved under a neutral class.
+After mutation the primary runtime must contain zero case-insensitive WhatIf
+references and the compatibility shim files must be gone.
 """
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ SHIM_FILES = [
 ]
 
 ACTIVE_PATTERN = re.compile(r'whatif', re.I)
+NAME_PATTERN = re.compile(r'name\s*=\s*["\']([^"\']+)["\']', re.I)
 
 
 def read(path: pathlib.Path) -> str:
@@ -65,29 +66,69 @@ def remove_php_if_blocks(lines: list[str], patterns: Iterable[re.Pattern[str]]) 
     return result, removed
 
 
-def remove_html_div_blocks(lines: list[str]) -> tuple[list[str], int]:
+def collect_html_block(lines: list[str], start: int, tag: str) -> tuple[list[str], int]:
+    block: list[str] = []
+    depth = 0
+    i = start
+    open_re = re.compile(r'<' + re.escape(tag) + r'\b', re.I)
+    close_re = re.compile(r'</' + re.escape(tag) + r'\s*>', re.I)
+    while i < len(lines):
+        line = lines[i]
+        block.append(line)
+        depth += len(open_re.findall(line)) - len(close_re.findall(line))
+        i += 1
+        if depth <= 0:
+            return block, i
+    raise RuntimeError(f'Unbalanced HTML <{tag}> block starting at line {start + 1}')
+
+
+def non_whatif_names(text: str) -> list[str]:
+    return [name for name in NAME_PATTERN.findall(text) if name.lower() != 'whatif']
+
+
+def clean_help_wrappers(lines: list[str]) -> tuple[list[str], int, int]:
+    """Remove pure simulation help; preserve mixed blocks such as Pin menu."""
+    result: list[str] = []
+    removed = 0
+    preserved = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if 'h18-whatif-help' not in line.lower() or '<div' not in line.lower():
+            result.append(line)
+            i += 1
+            continue
+        block, i = collect_html_block(lines, i, 'div')
+        text = ''.join(block)
+        if non_whatif_names(text):
+            block[0] = re.sub(r'h18-whatif-help', 'h18-action-options', block[0], flags=re.I)
+            result.extend(block)
+            preserved += 1
+        else:
+            removed += 1
+    return result, removed, preserved
+
+
+def clean_safe_switch_labels(lines: list[str]) -> tuple[list[str], int]:
+    """Remove only safe-switch labels whose control is the WhatIf checkbox."""
     result: list[str] = []
     removed = 0
     i = 0
     while i < len(lines):
         line = lines[i]
-        if 'h18-whatif-help' not in line.lower():
+        if 'h18-safe-switch' not in line.lower() or '<label' not in line.lower():
             result.append(line)
             i += 1
             continue
-        if '<div' not in line.lower():
-            result.append(line)
-            i += 1
+        block, i = collect_html_block(lines, i, 'label')
+        text = ''.join(block)
+        names = NAME_PATTERN.findall(text)
+        has_whatif = any(name.lower() == 'whatif' for name in names)
+        has_other = any(name.lower() != 'whatif' for name in names)
+        if has_whatif and not has_other:
+            removed += 1
             continue
-        depth = len(re.findall(r'<div\b', line, re.I)) - len(re.findall(r'</div\s*>', line, re.I))
-        removed += 1
-        i += 1
-        while i < len(lines) and depth > 0:
-            depth += len(re.findall(r'<div\b', lines[i], re.I))
-            depth -= len(re.findall(r'</div\s*>', lines[i], re.I))
-            i += 1
-        if depth != 0:
-            raise RuntimeError('Unbalanced HTML divs while removing h18-whatif-help')
+        result.extend(block)
     return result, removed
 
 
@@ -95,25 +136,30 @@ def clean_primary_php(text: str) -> tuple[str, dict[str, int]]:
     lines = text.splitlines(keepends=True)
     counts: dict[str, int] = {}
 
-    lines, removed_html = remove_html_div_blocks(lines)
-    counts['help_blocks'] = removed_html
+    lines, removed_help, preserved_help = clean_help_wrappers(lines)
+    counts['help_blocks_removed'] = removed_help
+    counts['mixed_help_blocks_preserved'] = preserved_help
 
+    lines, safe_switches = clean_safe_switch_labels(lines)
+    counts['whatif_safe_switches_removed'] = safe_switches
+
+    # Handles isolated menu/action checkboxes outside the old help wrapper.
     whatif_input = re.compile(r'^\s*.*<input\b[^>]*name=["\']whatif["\'][^>]*>.*$', re.I)
     before = len(lines)
     lines = [line for line in lines if not whatif_input.search(line)]
-    counts['standalone_input_lines'] = before - len(lines)
+    counts['standalone_input_lines_removed'] = before - len(lines)
 
     assignment = re.compile(r"^\s*\$whatif\s*=\s*!empty\(\$_POST\[['\"]whatif['\"]\]\);\s*$", re.I)
     before = len(lines)
     lines = [line for line in lines if not assignment.search(line)]
-    counts['assignments'] = before - len(lines)
+    counts['assignments_removed'] = before - len(lines)
 
     branch_patterns = [
         re.compile(r"^\s*if\s*\(\s*\$whatif\s*\)\s*\{\s*$", re.I),
         re.compile(r"^\s*if\s*\(\s*!empty\(\$_POST\[['\"]whatif['\"]\]\)\s*\)\s*\{\s*$", re.I),
     ]
     lines, branch_count = remove_php_if_blocks(lines, branch_patterns)
-    counts['backend_branches'] = branch_count
+    counts['backend_branches_removed'] = branch_count
 
     return ''.join(lines), counts
 
@@ -124,17 +170,17 @@ def clean_admin_js(text: str) -> tuple[str, dict[str, int]]:
         (
             r'''(?m)^\s*const \$pageWhatIf = \$pageEditorForm\.find\('\[name="whatif"\]'\);\s*\n''',
             '',
-            'page_whatif_var',
+            'page_whatif_var_removed',
         ),
         (
             r'''(?m)^\s*const whatIf = \$h18PageEditorFormV064\.find\('\[name="whatif"\]'\)\.is\(':checked'\);\s*\n''',
             '',
-            'submit_whatif_var',
+            'submit_whatif_var_removed',
         ),
         (
             r'''h18EditorSetSaveStatusV064\(whatIf \? 'Simulerer…' : 'Gemmer…', 'saving'\);''',
             "h18EditorSetSaveStatusV064('Gemmer…', 'saving');",
-            'submit_status',
+            'submit_status_rewritten',
         ),
     ]
     out = text
@@ -145,14 +191,14 @@ def clean_admin_js(text: str) -> tuple[str, dict[str, int]]:
 
 
 def clean_admin_css(text: str) -> tuple[str, dict[str, int]]:
+    """Rename the old wrapper styling for the real controls we preserve."""
     out = text
     counts: dict[str, int] = {}
     replacements = [
-        (r'\.h18-safe-badge,\.h18-safe-switch\{', '.h18-safe-badge{', 'safe_switch_combined'),
-        (r'\.h18-whatif-help,\.h18-action-submit\{', '.h18-action-submit{', 'combined_help_submit'),
-        (r'\.h18-whatif-help\{[^{}]*\}', '', 'help_rule'),
-        (r'\.h18-whatif-help label\{[^{}]*\}', '', 'help_label_rule'),
-        (r'\.h18-whatif-help input\{[^{}]*\}', '', 'help_input_rule'),
+        (r'\.h18-whatif-help,\.h18-action-submit\{', '.h18-action-options,.h18-action-submit{', 'combined_wrapper_renamed'),
+        (r'\.h18-whatif-help\{', '.h18-action-options{', 'wrapper_rule_renamed'),
+        (r'\.h18-whatif-help label\{', '.h18-action-options label{', 'wrapper_label_rule_renamed'),
+        (r'\.h18-whatif-help input\{', '.h18-action-options input{', 'wrapper_input_rule_renamed'),
     ]
     for pattern, repl, name in replacements:
         out, count = re.subn(pattern, repl, out)
@@ -188,7 +234,7 @@ def apply(root: pathlib.Path) -> dict:
     pre_hits = assert_clean(root)
     if not pre_hits:
         return {
-            'schema_version': '1.3',
+            'schema_version': '1.4',
             'already_clean': True,
             'changed': [],
             'removed': [],
@@ -196,7 +242,7 @@ def apply(root: pathlib.Path) -> dict:
         }
 
     report: dict[str, object] = {
-        'schema_version': '1.3',
+        'schema_version': '1.4',
         'already_clean': False,
         'pre_cleanup_hit_count': len(pre_hits),
         'changed': [],
@@ -233,21 +279,23 @@ def apply(root: pathlib.Path) -> dict:
             path.unlink()
             report['removed'].append(rel.as_posix())
 
-    if php_counts['help_blocks'] < 1:
-        raise RuntimeError('Expected at least one h18-whatif-help block')
-    if php_counts['standalone_input_lines'] < 1:
+    if php_counts['help_blocks_removed'] < 1:
+        raise RuntimeError('Expected at least one pure h18-whatif-help block')
+    if php_counts['whatif_safe_switches_removed'] < 1:
+        raise RuntimeError('Expected at least one WhatIf safe-switch label')
+    if php_counts['standalone_input_lines_removed'] < 1:
         raise RuntimeError('Expected at least one standalone WhatIf input line')
-    if php_counts['backend_branches'] < 1:
+    if php_counts['backend_branches_removed'] < 1:
         raise RuntimeError('Expected at least one WhatIf backend branch')
     if bootstrap_count != 1:
         raise RuntimeError(f'Expected exactly one NoWhatIf registration, got {bootstrap_count}')
-    if js_counts['submit_status'] != 1:
-        raise RuntimeError(f"Expected one Page Editor WhatIf save status, got {js_counts['submit_status']}")
+    if js_counts['submit_status_rewritten'] != 1:
+        raise RuntimeError(f"Expected one Page Editor WhatIf save status, got {js_counts['submit_status_rewritten']}")
 
     hits = assert_clean(root)
     report['remaining_active_hits'] = hits
     if hits:
-        raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:100]))
+        raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:120]))
     return report
 
 
@@ -265,9 +313,9 @@ def main() -> int:
             report = apply(root)
         else:
             hits = assert_clean(root)
-            report = {'schema_version': '1.3', 'remaining_active_hits': hits}
+            report = {'schema_version': '1.4', 'remaining_active_hits': hits}
             if args.assert_clean and hits:
-                raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:100]))
+                raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:120]))
         payload = json.dumps(report, ensure_ascii=False, indent=2) + '\n'
         if args.report:
             pathlib.Path(args.report).write_text(payload, encoding='utf-8')
