@@ -2,8 +2,9 @@
 """Deterministically remove legacy WhatIf runtime from Hangar18 source.
 
 The script is intentionally conservative: it only removes known markup/control
-shapes and exact PHP WhatIf branches. It then refuses success while any active
-WhatIf request/state reference remains in the primary runtime files.
+shapes and exact PHP WhatIf branches. It then refuses success while the word
+WhatIf remains anywhere in the primary runtime files. Diagnostic/docs files are
+outside that assertion by design.
 """
 from __future__ import annotations
 
@@ -24,14 +25,7 @@ SHIM_FILES = [
     pathlib.Path('assets/hangar18-no-whatif-v0858.css'),
 ]
 
-ACTIVE_PATTERNS = [
-    re.compile(r"\$_POST\s*\[\s*['\"]whatif['\"]\s*\]", re.I),
-    re.compile(r'name\s*=\s*["\']whatif["\']', re.I),
-    re.compile(r'\$whatif\b', re.I),
-    re.compile(r'h18-whatif-help', re.I),
-    re.compile(r'WHATIF_[A-Z0-9_]+'),
-    re.compile(r'\[WHATIF\]', re.I),
-]
+ACTIVE_PATTERN = re.compile(r'whatif', re.I)
 
 
 def read(path: pathlib.Path) -> str:
@@ -43,8 +37,7 @@ def write(path: pathlib.Path, text: str) -> None:
 
 
 def brace_delta(line: str) -> int:
-    """Good enough for the exact legacy branches we target."""
-    # Remove quoted strings so braces in user-facing text do not affect depth.
+    """Brace counter for the exact legacy PHP branches targeted here."""
     cleaned = re.sub(r"'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"", '', line)
     return cleaned.count('{') - cleaned.count('}')
 
@@ -83,9 +76,7 @@ def remove_html_div_blocks(lines: list[str]) -> tuple[list[str], int]:
             result.append(line)
             i += 1
             continue
-        lower = line.lower()
-        if '<div' not in lower:
-            # CSS/JS is handled elsewhere; in PHP this should always be a div.
+        if '<div' not in line.lower():
             result.append(line)
             i += 1
             continue
@@ -105,8 +96,10 @@ def clean_primary_php(text: str) -> tuple[str, dict[str, int]]:
     lines = text.splitlines(keepends=True)
     counts: dict[str, int] = {}
 
-    # One-line header switch used by several edit forms.
-    safe_switch = re.compile(r'^\s*<label\s+class=\\?["\']h18-safe-switch\\?["\'][^\n]*name=\\?["\']whatif\\?["\'][^\n]*</label>\s*$', re.I)
+    safe_switch = re.compile(
+        r'^\s*<label\s+class=["\']h18-safe-switch["\'][^\n]*name=["\']whatif["\'][^\n]*</label>\s*$',
+        re.I,
+    )
     before = len(lines)
     lines = [line for line in lines if not safe_switch.search(line)]
     counts['safe_switch_lines'] = before - len(lines)
@@ -126,16 +119,27 @@ def clean_primary_php(text: str) -> tuple[str, dict[str, int]]:
     lines, branch_count = remove_php_if_blocks(lines, branch_patterns)
     counts['backend_branches'] = branch_count
 
-    cleaned = ''.join(lines)
-    return cleaned, counts
+    return ''.join(lines), counts
 
 
 def clean_admin_js(text: str) -> tuple[str, dict[str, int]]:
     counts: dict[str, int] = {}
     patterns = [
-        (r"(?m)^\s*const \$pageWhatIf = \$pageEditorForm\.find\('\[name=\\\"whatif\\\"\]'\);\s*\n", '', 'page_whatif_var'),
-        (r"(?m)^\s*const whatIf = \$h18PageEditorFormV064\.find\('\[name=\\\"whatif\\\"\]'\)\.is\(':checked'\);\s*\n", '', 'submit_whatif_var'),
-        (r"h18EditorSetSaveStatusV064\(whatIf \? 'Simulerer…' : 'Gemmer…', 'saving'\);", "h18EditorSetSaveStatusV064('Gemmer…', 'saving');", 'submit_status'),
+        (
+            r'''(?m)^\s*const \$pageWhatIf = \$pageEditorForm\.find\('\[name="whatif"\]'\);\s*\n''',
+            '',
+            'page_whatif_var',
+        ),
+        (
+            r'''(?m)^\s*const whatIf = \$h18PageEditorFormV064\.find\('\[name="whatif"\]'\)\.is\(':checked'\);\s*\n''',
+            '',
+            'submit_whatif_var',
+        ),
+        (
+            r'''h18EditorSetSaveStatusV064\(whatIf \? 'Simulerer…' : 'Gemmer…', 'saving'\);''',
+            "h18EditorSetSaveStatusV064('Gemmer…', 'saving');",
+            'submit_status',
+        ),
     ]
     out = text
     for pattern, repl, name in patterns:
@@ -148,11 +152,11 @@ def clean_admin_css(text: str) -> tuple[str, dict[str, int]]:
     out = text
     counts: dict[str, int] = {}
     replacements = [
-        (r'\.h18-whatif-help,\.h18-action-submit\{', '.h18-action-submit{', 'combined_base'),
+        (r'\.h18-safe-badge,\.h18-safe-switch\{', '.h18-safe-badge{', 'safe_switch_combined'),
+        (r'\.h18-whatif-help,\.h18-action-submit\{', '.h18-action-submit{', 'combined_help_submit'),
         (r'\.h18-whatif-help\{[^{}]*\}', '', 'help_rule'),
         (r'\.h18-whatif-help label\{[^{}]*\}', '', 'help_label_rule'),
         (r'\.h18-whatif-help input\{[^{}]*\}', '', 'help_input_rule'),
-        (r'\.h18-whatif-help,\.h18-action-submit\{', '.h18-action-submit{', 'combined_media'),
     ]
     for pattern, repl, name in replacements:
         out, count = re.subn(pattern, repl, out)
@@ -161,16 +165,15 @@ def clean_admin_css(text: str) -> tuple[str, dict[str, int]]:
 
 
 def clean_bootstrap(text: str) -> tuple[str, int]:
-    out, count = re.subn(r'(?m)^\s*NoWhatIfAdminController::register\(\);\s*\n', '', text)
-    return out, count
+    return re.subn(r'(?m)^\s*NoWhatIfAdminController::register\(\);\s*\n', '', text)
 
 
 def active_hits(path: pathlib.Path, text: str) -> list[str]:
-    hits: list[str] = []
-    for number, line in enumerate(text.splitlines(), start=1):
-        if any(pattern.search(line) for pattern in ACTIVE_PATTERNS):
-            hits.append(f'{path.as_posix()}:{number}:{line.strip()}')
-    return hits
+    return [
+        f'{path.as_posix()}:{number}:{line.strip()}'
+        for number, line in enumerate(text.splitlines(), start=1)
+        if ACTIVE_PATTERN.search(line)
+    ]
 
 
 def assert_clean(root: pathlib.Path) -> list[str]:
@@ -186,7 +189,7 @@ def assert_clean(root: pathlib.Path) -> list[str]:
 
 
 def apply(root: pathlib.Path) -> dict:
-    report: dict[str, object] = {'schema_version': '1.0', 'changed': [], 'removed': []}
+    report: dict[str, object] = {'schema_version': '1.1', 'changed': [], 'removed': []}
 
     php_path = root / PRIMARY_PHP
     php, php_counts = clean_primary_php(read(php_path))
@@ -218,18 +221,19 @@ def apply(root: pathlib.Path) -> dict:
             path.unlink()
             report['removed'].append(rel.as_posix())
 
-    # Guardrails: a cleaner that matched nothing is more dangerous than a hard failure.
     if php_counts['help_blocks'] < 1:
         raise RuntimeError('Expected at least one h18-whatif-help block')
     if php_counts['backend_branches'] < 1:
         raise RuntimeError('Expected at least one WhatIf backend branch')
     if bootstrap_count != 1:
         raise RuntimeError(f'Expected exactly one NoWhatIf registration, got {bootstrap_count}')
+    if js_counts['submit_status'] != 1:
+        raise RuntimeError(f"Expected one Page Editor WhatIf save status, got {js_counts['submit_status']}")
 
     hits = assert_clean(root)
     report['remaining_active_hits'] = hits
     if hits:
-        raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:50]))
+        raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:80]))
     return report
 
 
@@ -247,16 +251,16 @@ def main() -> int:
             report = apply(root)
         else:
             hits = assert_clean(root)
-            report = {'schema_version': '1.0', 'remaining_active_hits': hits}
+            report = {'schema_version': '1.1', 'remaining_active_hits': hits}
             if args.assert_clean and hits:
-                raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:50]))
+                raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:80]))
         payload = json.dumps(report, ensure_ascii=False, indent=2) + '\n'
         if args.report:
             pathlib.Path(args.report).write_text(payload, encoding='utf-8')
         else:
             sys.stdout.write(payload)
         return 0
-    except Exception as exc:  # fail closed for release use
+    except Exception as exc:
         print(f'ERROR: {exc}', file=sys.stderr)
         return 1
 
