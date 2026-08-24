@@ -4335,8 +4335,6 @@ jQuery(function ($) {
 
     const $pageEditorForm = $('#h18-page-editor-form');
     const $pageChangeNote = $pageEditorForm.find('[name="page_change_note"]');
-    const $pageWhatIf = $pageEditorForm.find('[name="whatif"]');
-
     function syncPageChangeNoteRequirement() {
         if (!$pageChangeNote.length) { return; }
         $pageChangeNote.prop('required', false).removeAttr('required').attr('aria-required', 'false').each(function () {
@@ -4345,13 +4343,12 @@ jQuery(function ($) {
     }
 
     if ($pageEditorForm.length) {
-        $pageWhatIf.on('change', syncPageChangeNoteRequirement);
         syncPageChangeNoteRequirement();
         $pageEditorForm.on('submit', function () {
             editorHistoryFlushPending();
             window.clearTimeout(editorDraftTimer);
             editorDraftTimer = null;
-            editorDraftSaveNow(!$pageWhatIf.is(':checked'));
+            editorDraftSaveNow(true);
             editorHistorySubmitting = true;
         });
         window.setTimeout(initializeEditorHistory, 0);
@@ -4906,10 +4903,9 @@ jQuery(function ($) {
         $h18PageEditorFormV064.on('submit', function (event) {
             h18MakeChangeNoteOptionalV072();
             h18RefreshAutomaticSummaryV071();
-            const whatIf = $h18PageEditorFormV064.find('[name="whatif"]').is(':checked');
             h18EditorSubmittingV064 = true;
             h18EditorDirtyV064 = false;
-            h18EditorSetSaveStatusV064(whatIf ? 'Simulerer…' : 'Gemmer…', 'saving');
+            h18EditorSetSaveStatusV064('Gemmer…', 'saving');
             $h18EditorSaveTopV064.prop('disabled', true);
         });
 

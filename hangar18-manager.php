@@ -3,7 +3,7 @@
  * Plugin Name: Hangar18 Manager
  * Plugin URI: https://hangar18.dk/
  * Description: Webbaseret management-værktøj til Aalborg Kaserners Veteran Panser- og Køretøjsforening.
- * Version: 0.8.80
+ * Version: 0.8.82
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Hangar18_Manager {
-    const VERSION = '0.8.80';
+    const VERSION = '0.8.82';
 
     const MENU_SLUG = 'hangar18-manager';
 
@@ -4132,7 +4132,7 @@ HTML;
                     <h2>Aalborg Kaserners Veteran Panser- og Køretøjsforening</h2>
                     <p>Web-manageren arbejder direkte på de eksisterende WordPress-sider og gemmer indstillingerne centralt i WordPress.</p>
                 </div>
-                <div class="h18-safe-badge">WhatIf er FRA som standard</div>
+                <div class="h18-safe-badge">Ændringer gemmes kun ved en eksplicit Gem-handling</div>
             </div>
 
             <div class="h18-stat-grid">
@@ -4154,7 +4154,7 @@ HTML;
                     ['hangar18-header-footer', 'dashicons-layout', 'Header / Footer', 'Sticky header, bredde, skalaer, placering og global shell-synkronisering.', 'Aktiv'],
                     ['hangar18-backup', 'dashicons-backup', 'Backup', 'Manuel samlet backup og oversigt over automatisk oprettede JSON-backups.', 'Aktiv'],
                     ['hangar18-updates', 'dashicons-update', 'Opdateringer', 'GitHub-versionstjek, SHA-256, automatisk backup, installation og rollback.', 'Aktiv'],
-                    ['hangar18-log', 'dashicons-list-view', 'Log', 'Web-managerens checkpoints, WhatIf, fejl og succeser.', 'Aktiv'],
+                    ['hangar18-log', 'dashicons-list-view', 'Log', 'Web-managerens checkpoints, fejl og succeser.', 'Aktiv'],
                 ];
 
                 foreach ($modules as $module) :
@@ -4389,7 +4389,7 @@ HTML;
 
             <div class="h18-help-box">
                 <strong>Sådan styres køretøjer:</strong>
-                Vælg et eksisterende køretøj eller opret et nyt. WhatIf er slået fra som standard.
+                Vælg et eksisterende køretøj eller opret et nyt.
                 <strong>Registerlayout</strong> er en global indstilling for køretøjsoversigten og detaljesiderne.
                 Tekniske felter styres nu under <strong>Køretøjsfelter</strong>; de kan aktiveres/deaktiveres, omdøbes, flyttes og udvides uden at slette eksisterende værdier.
             </div>
@@ -4451,10 +4451,6 @@ HTML;
                 </div>
 
                 <div class="h18-layout-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér kun for at kontrollere valgene uden at gemme eller ændre sider.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-secondary" type="submit">Gem layout og anvend</button>
                         <div class="h18-action-copy"><strong>Gemmer placeringerne</strong><span>Opdaterer køretøjsoversigten og alle eksisterende køretøjssider.</span></div>
@@ -4492,7 +4488,6 @@ HTML;
                     <div>
                         <h2><?php echo $vehicle ? 'Redigér: ' . esc_html($vehicle->post_title) : 'Nyt køretøj'; ?></h2>
                     </div>
-                    <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
                 </div>
 
                 <div class="h18-form-grid">
@@ -4552,9 +4547,6 @@ HTML;
                 </div>
 
                 <div class="h18-form-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, vises resultatet uden at noget bliver gemt.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-primary button-hero" type="submit">Gem / opdater køretøj</button>
                         <div class="h18-action-copy"><strong>Gemmer hele køretøjet</strong><span>Gemmer data, billede og status og opdaterer derefter køretøjsoversigten.</span></div>
@@ -4565,10 +4557,6 @@ HTML;
             <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_rebuild_vehicle_register'); ?>
                 <input type="hidden" name="action" value="h18_rebuild_vehicle_register" />
-                <div class="h18-whatif-help">
-                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                    <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere handlingen uden at skrive ændringer.</span></div>
-                </div>
                 <div class="h18-action-submit">
                     <button class="button" type="submit">Genbyg køretøjsoversigten</button>
                     <div class="h18-action-copy"><strong>Reparation</strong><span>Brug kun hvis oversigten mangler eller ikke viser de gemte køretøjer korrekt. Køretøjsdata ændres ikke.</span></div>
@@ -4664,10 +4652,6 @@ HTML;
                 </section>
 
                 <div class="h18-form-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere feltændringerne uden at gemme dem.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-primary button-hero" type="submit">Gem feltopsætning</button>
                         <div class="h18-action-copy"><strong>Opdaterer alle køretøjssider</strong><span>Gemmer aktive felter, navne, rækkefølge og visning. Eksisterende feltværdier slettes ikke.</span></div>
@@ -4754,11 +4738,6 @@ HTML;
             'Fields'  => $raw_fields,
         ]);
 
-        if (!empty($_POST['whatif'])) {
-            $this->log('WARN', 'WHATIF_VEHICLE_FIELDS_SAVE', '[WHATIF] Ville gemme ' . count($settings['Fields']) . ' køretøjsfelter og genbygge køretøjssiderne.');
-            $this->set_notice('warning', 'WHATIF: Feltopsætningen blev valideret, men intet blev gemt eller genbygget.');
-            $this->redirect('hangar18-vehicle-fields');
-        }
 
         try {
             $this->create_full_managed_backup('Før køretøjsfeltopsætning blev ændret');
@@ -4788,7 +4767,6 @@ HTML;
         check_admin_referer('h18_save_vehicle');
 
         $id = absint($_POST['vehicle_id'] ?? 0);
-        $whatif = !empty($_POST['whatif']);
         $name = $this->post_text('name');
 
         if ($name === '') {
@@ -4807,11 +4785,6 @@ HTML;
         $media_id = absint($_POST['main_media_id'] ?? 0);
         $media_url = $media_id ? wp_get_attachment_url($media_id) : $this->post_url('main_media_url');
 
-        if ($whatif) {
-            $this->log('WARN', 'WHATIF_VEHICLE_SAVE', "[WHATIF] Ville gemme '{$name}' ({$slug}) status {$status}.");
-            $this->set_notice('warning', "WHATIF: Ville gemme '{$name}'. Ingen data blev ændret.");
-            $this->redirect('hangar18-vehicles', $id ? ['vehicle_id' => $id] : []);
-        }
 
         try {
             $target = $id ? get_post($id) : null;
@@ -4973,24 +4946,6 @@ HTML;
             'MobileDetailAlignment'     => $this->post_text('mobile_detail_alignment'),
         ]);
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_VEHICLE_REGISTER_SETTINGS',
-                '[WHATIF] Ville gemme køretøjslayout: ' .
-                'DesktopRegister=' . $settings['RegisterAlignment'] .
-                '; DesktopDetail=' . $settings['DetailAlignment'] .
-                '; MobileRegister=' . $settings['MobileRegisterAlignment'] .
-                '; MobileDetail=' . $settings['MobileDetailAlignment'] . '.'
-            );
-
-            $this->set_notice(
-                'warning',
-                'WHATIF: Køretøjslayoutet ville blive gemt for desktop og mobil. Ingen data blev ændret.'
-            );
-
-            $this->redirect('hangar18-vehicles');
-        }
 
         try {
             $this->create_full_managed_backup(
@@ -5062,11 +5017,6 @@ HTML;
         $this->require_capability();
         check_admin_referer('h18_rebuild_vehicle_register');
 
-        if (!empty($_POST['whatif'])) {
-            $this->set_notice('warning', 'WHATIF: Køretøjsregisteret ville blive genbygget. Ingen data blev ændret.');
-            $this->log('WARN', 'WHATIF_VEHICLE_REGISTER', '[WHATIF] Genbygning simuleret.');
-            $this->redirect('hangar18-vehicles');
-        }
 
         try {
             $parent = $this->post_by_slug(self::VEHICLE_PARENT_SLUG);
@@ -5397,10 +5347,6 @@ HTML;
                     </fieldset>
                 </div>
                 <div class="h18-layout-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér kun for at kontrollere valgene uden at gemme eller ændre sider.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-secondary" type="submit">Gem layout og anvend</button>
                         <div class="h18-action-copy"><strong>Gemmer placeringerne</strong><span>Opdaterer eventoversigten og alle eksisterende eventsider.</span></div>
@@ -5433,7 +5379,6 @@ HTML;
 
                 <div class="h18-form-header">
                     <h2><?php echo $post ? 'Redigér: ' . esc_html($post->post_title) : 'Nyt event'; ?></h2>
-                    <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
                 </div>
 
                 <div class="h18-form-grid">
@@ -5478,9 +5423,6 @@ HTML;
                 </div>
 
                 <div class="h18-form-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, vises resultatet uden at noget bliver gemt.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-primary button-hero" type="submit">Gem / opdater event</button>
                         <div class="h18-action-copy"><strong>Gemmer hele eventet</strong><span>Gemmer data, billede, albumlink og status og opdaterer eventoversigten.</span></div>
@@ -5491,10 +5433,6 @@ HTML;
             <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_rebuild_event_register'); ?>
                 <input type="hidden" name="action" value="h18_rebuild_event_register" />
-                <div class="h18-whatif-help">
-                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                    <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere handlingen uden at skrive ændringer.</span></div>
-                </div>
                 <div class="h18-action-submit">
                     <button class="button" type="submit">Genbyg eventoversigten</button>
                     <div class="h18-action-copy"><strong>Reparation</strong><span>Brug kun hvis kommende eller tidligere events mangler på oversigten. Eventdata ændres ikke.</span></div>
@@ -5533,18 +5471,6 @@ HTML;
         $settings['MobileEventDetailAlignment'] = $mobile_detail_alignment;
         $settings = $this->normalize_content_layout_settings($settings);
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_EVENT_LAYOUT',
-                "[WHATIF] EventIndexAlignment={$index_alignment}; EventDetailAlignment={$detail_alignment}; MobileEventIndexAlignment={$mobile_index_alignment}; MobileEventDetailAlignment={$mobile_detail_alignment}."
-            );
-            $this->set_notice(
-                'warning',
-                'WHATIF: Eventoversigt og eventdetaljesider ville få de valgte desktop- og mobilplaceringer. Ingen data blev ændret.'
-            );
-            $this->redirect('hangar18-events');
-        }
 
         try {
             $this->create_full_managed_backup(
@@ -5608,7 +5534,6 @@ HTML;
         check_admin_referer('h18_save_event');
 
         $id = absint($_POST['event_id'] ?? 0);
-        $whatif = !empty($_POST['whatif']);
         $name = $this->post_text('event_name');
         $date = $this->post_text('event_date');
 
@@ -5666,11 +5591,6 @@ HTML;
             'GalleryAlbumUrl'   => $album_url ?: '',
         ];
 
-        if ($whatif) {
-            $this->log('WARN', 'WHATIF_EVENT_SAVE', "[WHATIF] Ville gemme event '{$name}' {$date}.");
-            $this->set_notice('warning', "WHATIF: Ville gemme event '{$name}'. Ingen data blev ændret.");
-            $this->redirect('hangar18-events', $id ? ['event_id' => $id] : []);
-        }
 
         try {
             $target = $id ? get_post($id) : null;
@@ -5735,11 +5655,6 @@ HTML;
         $this->require_capability();
         check_admin_referer('h18_rebuild_event_register');
 
-        if (!empty($_POST['whatif'])) {
-            $this->log('WARN', 'WHATIF_EVENT_REGISTER', '[WHATIF] Genbygning simuleret.');
-            $this->set_notice('warning', 'WHATIF: Eventregisteret ville blive genbygget. Ingen data blev ændret.');
-            $this->redirect('hangar18-events');
-        }
 
         try {
             $parent = $this->post_by_slug(self::EVENT_PARENT_SLUG);
@@ -6032,10 +5947,6 @@ HTML;
                     </fieldset>
                 </div>
                 <div class="h18-layout-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér kun for at kontrollere valgene uden at gemme eller ændre sider.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-secondary" type="submit">Gem layout og anvend</button>
                         <div class="h18-action-copy"><strong>Gemmer placeringerne</strong><span>Opdaterer albumoversigten og alle eksisterende albumsider.</span></div>
@@ -6069,7 +5980,6 @@ HTML;
 
                 <div class="h18-form-header">
                     <h2><?php echo $post ? 'Redigér album: ' . esc_html($post->post_title) : 'Nyt album'; ?></h2>
-                    <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
                 </div>
 
                 <div class="h18-form-grid">
@@ -6133,9 +6043,6 @@ HTML;
                 </div>
 
                 <div class="h18-form-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, vises resultatet uden at noget bliver gemt.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-primary button-hero" type="submit">Gem / opdater album</button>
                         <div class="h18-action-copy"><strong>Gemmer hele albummet</strong><span>Gemmer albumdata, billedrækkefølge og status og opdaterer gallerioversigten.</span></div>
@@ -6146,10 +6053,6 @@ HTML;
             <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_rebuild_gallery_index'); ?>
                 <input type="hidden" name="action" value="h18_rebuild_gallery_index" />
-                <div class="h18-whatif-help">
-                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                    <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere handlingen uden at skrive ændringer.</span></div>
-                </div>
                 <div class="h18-action-submit">
                     <button class="button" type="submit">Genbyg gallerioversigten</button>
                     <div class="h18-action-copy"><strong>Reparation</strong><span>Brug kun hvis albumkort mangler eller står forkert. Albumdata og billeder ændres ikke.</span></div>
@@ -6188,18 +6091,6 @@ HTML;
         $settings['MobileGalleryDetailAlignment'] = $mobile_detail_alignment;
         $settings = $this->normalize_content_layout_settings($settings);
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_GALLERY_LAYOUT',
-                "[WHATIF] GalleryIndexAlignment={$index_alignment}; GalleryDetailAlignment={$detail_alignment}; MobileGalleryIndexAlignment={$mobile_index_alignment}; MobileGalleryDetailAlignment={$mobile_detail_alignment}."
-            );
-            $this->set_notice(
-                'warning',
-                'WHATIF: Gallerioversigt og albumsider ville få de valgte desktop- og mobilplaceringer. Ingen data blev ændret.'
-            );
-            $this->redirect('hangar18-gallery');
-        }
 
         try {
             $this->create_full_managed_backup(
@@ -6264,7 +6155,6 @@ HTML;
         check_admin_referer('h18_save_gallery_album');
 
         $id = absint($_POST['album_id'] ?? 0);
-        $whatif = !empty($_POST['whatif']);
         $name = $this->post_text('album_name');
 
         if ($name === '') {
@@ -6297,11 +6187,6 @@ HTML;
             'Items'       => $items,
         ];
 
-        if ($whatif) {
-            $this->log('WARN', 'WHATIF_GALLERY_SAVE', "[WHATIF] Ville gemme album '{$name}' med " . count($items) . ' billeder.');
-            $this->set_notice('warning', "WHATIF: Ville gemme album '{$name}' med " . count($items) . ' billeder. Ingen data blev ændret.');
-            $this->redirect('hangar18-gallery', $id ? ['album_id' => $id] : []);
-        }
 
         try {
             $target = $id ? get_post($id) : null;
@@ -6371,11 +6256,6 @@ HTML;
         $this->require_capability();
         check_admin_referer('h18_rebuild_gallery_index');
 
-        if (!empty($_POST['whatif'])) {
-            $this->log('WARN', 'WHATIF_GALLERY_INDEX', '[WHATIF] Genbygning simuleret.');
-            $this->set_notice('warning', 'WHATIF: Billedgalleri-indekset ville blive genbygget. Ingen data blev ændret.');
-            $this->redirect('hangar18-gallery');
-        }
 
         try {
             $parent = $this->post_by_slug(self::GALLERY_PARENT_SLUG);
@@ -11121,7 +11001,6 @@ HTML;
 
                     <div class="h18-form-header">
                         <div><h2><?php echo esc_html($definitions[$slug]); ?></h2><p>Tilføj sektioner, træk dem i den ønskede rækkefølge, og kontrollér desktop- og mobilvisningen.</p><small class="h18-editor-version">Editor v<?php echo esc_html(self::VERSION); ?></small></div>
-                        <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
                     </div>
 
                     <div class="h18-page-editor-title h18-layout-card">
@@ -11280,14 +11159,13 @@ HTML;
                     </div>
 
                     <div class="h18-form-actions h18-explained-action">
-                        <div class="h18-whatif-help"><div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Simulering kontrollerer opsætningen uden at gemme siden, nulstille stemmer eller sende noget.</span></div></div>
                         <div class="h18-action-submit"><button class="button button-primary button-hero" type="submit">Gem som ny version</button><div class="h18-action-copy"><strong>Backup, sidekopi og versionshistorik</strong><span>Gemmer ændringsbeskrivelsen, tager backup og bygger siden igen som næste versionsnummer.</span></div></div>
                     </div>
                 </form>
 
                 <section class="h18-layout-card" style="margin-top:18px;padding:18px;">
                     <h2>Versionshistorik</h2>
-                    <p>Hver rigtig gemning får sit eget versionsnummer og en beskrivelse. WhatIf opretter ingen historik.</p>
+                    <p>Hver gemning får sit eget versionsnummer og en beskrivelse.</p>
                     <?php if (!$versions) : ?>
                         <p><em>Der er endnu ingen registrerede versioner. Den næste rigtige gemning bliver registreret her.</em></p>
                     <?php else : ?>
@@ -11685,12 +11563,6 @@ HTML;
             'Sections'           => $sections,
         ], $page);
 
-        if (!empty($_POST['whatif'])) {
-            $active = count(array_filter($data['Sections'], static function($section) { return !empty($section['Active']); }));
-            $this->log('WARN', 'WHATIF_PAGE_EDITOR_SAVE', "[WHATIF] {$slug} ville blive v{$next_content_version} med {$active} aktive sektioner.");
-            $this->set_notice('warning', "WHATIF: Siden ville blive v{$next_content_version} med {$active} aktive sektioner. Ingen version, backup, stemmer eller data blev oprettet eller ændret.");
-            $this->redirect_page_editor($slug);
-        }
 
         if (trim($auto_change_summary) === '') {
             $auto_change_summary = $this->summarize_page_editor_changes_v071($current, $data);
@@ -12092,7 +11964,6 @@ HTML;
                         <h2>Introduktion og indholdskasser</h2>
                         <p>Ændringerne gælder kun siden Om foreningen.</p>
                     </div>
-                    <label class="h18-safe-switch"><input type="checkbox" name="whatif" value="1" /> <span>WhatIf / simulering</span></label>
                 </div>
 
                 <div class="h18-form-grid">
@@ -12168,9 +12039,6 @@ HTML;
                 </section>
 
                 <div class="h18-form-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, ændres hverken indhold, rækkefølge eller luft.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-primary button-hero" type="submit">Gem sideindhold og opdater siden</button>
                         <div class="h18-action-copy"><strong>Gemmer hele opsætningen</strong><span>Tager backup og opdaterer introduktion, synlige sektioner, rækkefølge og afstande.</span></div>
@@ -12234,14 +12102,6 @@ HTML;
             'Sections'                => $sections,
         ]);
 
-        if (!empty($_POST['whatif'])) {
-            $active = count(array_filter($settings['Sections'], static function($section) {
-                return !empty($section['Active']);
-            }));
-            $this->log('WARN', 'WHATIF_STATIC_CONTENT', "[WHATIF] Om foreningen ville få {$active} synlige indholdssektioner.");
-            $this->set_notice('warning', "WHATIF: Om foreningen ville få {$active} synlige indholdssektioner. Ingen data blev ændret.");
-            $this->redirect('hangar18-static-content');
-        }
 
         try {
             $page = $this->post_by_slug('om-foreningen');
@@ -12926,14 +12786,14 @@ HTML;
                 ret det viste navn direkte i feltet, og vælg eventuelt
                 <strong>Undermenu under</strong>.
                 <strong>Fjern</strong> markerer et punkt til sletning.
-                Først når WhatIf slås fra og du trykker <strong>Gem menu</strong>,
+                Når du trykker <strong>Gem menu</strong>,
                 ændres WordPress. Derefter opdateres Hangar18-headeren automatisk på alle styrede sider.
             </div>
 
             <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_save_menu_pin'); ?>
                 <input type="hidden" name="action" value="h18_save_menu_pin" />
-                <div class="h18-whatif-help">
+                <div class="h18-action-options">
                     <label class="h18-safe-switch">
                         <input type="checkbox" name="pin_menu" value="1" <?php checked($menu_pinned); ?> />
                         <span><strong>Pin menu/header ved scroll</strong></span>
@@ -12942,7 +12802,6 @@ HTML;
                 </div>
                 <div class="h18-action-submit">
                     <button class="button button-secondary" type="submit">Gem pinning</button>
-                    <div class="h18-action-copy"><strong>Anvendes på alle sider</strong><span><label><input type="checkbox" name="whatif" value="1" /> WhatIf – kontrollér først uden at gemme</label></span></div>
                 </div>
             </form>
 
@@ -12954,10 +12813,6 @@ HTML;
                 <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <?php wp_nonce_field('h18_create_menu'); ?>
                     <input type="hidden" name="action" value="h18_create_menu" />
-                    <div class="h18-whatif-help">
-                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                        <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at se hvad der ville blive oprettet.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-primary" type="submit">Opret Hangar18 Hovedmenu</button>
                         <div class="h18-action-copy"><strong>Kun når ingen menu findes</strong><span>Opretter hovedmenuen med Hangar18-standardsiderne.</span></div>
@@ -13004,10 +12859,6 @@ HTML;
                             <h2><?php echo esc_html($menu ? $menu->name : 'Menu'); ?></h2>
                             <p>Menu ID <?php echo esc_html($menu_id); ?> · <?php echo esc_html(count($items)); ?> punkter</p>
                         </div>
-                        <label class="h18-safe-switch">
-                            <input type="checkbox" name="whatif" value="1" />
-                            <span>WhatIf / simulering</span>
-                        </label>
                     </div>
 
                     <section class="h18-panel">
@@ -13077,9 +12928,6 @@ HTML;
                     </section>
 
                     <div class="h18-form-actions h18-explained-action">
-                        <div class="h18-whatif-help">
-                            <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Er simulering markeret, ændres hverken menuen eller siderne.</span></div>
-                        </div>
                         <div class="h18-action-submit">
                             <button class="button button-primary button-hero" type="submit">Gem menu</button>
                             <div class="h18-action-copy"><strong>Gemmer hele menustrukturen</strong><span>Gemmer rækkefølge, navne, undermenuer og fjernelser og opdaterer headeren.</span></div>
@@ -13114,7 +12962,6 @@ HTML;
                             <input type="text" name="custom_title" value="" />
                         </div>
 
-                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
                         <p><button class="button button-secondary" type="submit">Tilføj side</button></p>
                     </form>
 
@@ -13128,7 +12975,6 @@ HTML;
                         <p><strong><?php echo esc_html(implode(' · ', array_map(static function($definition) { return $definition['title']; }, $this->get_default_menu_page_definitions()))); ?></strong></p>
                         <p>Dubletter af de samme WordPress-sider fjernes. Andre/manuelle menupunkter bevares bagefter.</p>
 
-                        <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
                         <p><button class="button button-secondary" type="submit">Sikr Hjem / standardsider og ryd dubletter</button></p>
                     </form>
                 </div>
@@ -13146,18 +12992,6 @@ HTML;
         $settings['StickyOnScroll'] = $pinned;
         $settings = $this->normalize_header_design($settings);
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_MENU_PIN',
-                '[WHATIF] Menu/header ville blive ' . ($pinned ? 'pinnet' : 'frigivet') . ' på alle styrede sider.'
-            );
-            $this->set_notice(
-                'warning',
-                'WHATIF: Menu/header ville blive ' . ($pinned ? 'pinnet' : 'frigivet') . '. Ingen data blev ændret.'
-            );
-            $this->redirect('hangar18-menu');
-        }
 
         try {
             $this->create_full_managed_backup(
@@ -13208,18 +13042,6 @@ HTML;
         $this->require_capability();
         check_admin_referer('h18_create_menu');
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_MENU_CREATE',
-                '[WHATIF] Ville oprette Hangar18 Hovedmenu og tilføje standardsider.'
-            );
-            $this->set_notice(
-                'warning',
-                'WHATIF: Hangar18 Hovedmenu med standardsider ville blive oprettet. Ingen data blev ændret.'
-            );
-            $this->redirect('hangar18-menu');
-        }
 
         try {
             $this->create_full_managed_backup(
@@ -13326,25 +13148,6 @@ HTML;
             }
         }
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_MENU_SAVE',
-                "[WHATIF] Ville gemme Menu ID {$menu_id}. Punkter=" .
-                count($kept_ids) . '; Fjernes=' . count($removed) .
-                ($theme_location ? "; ThemeLocation={$theme_location}" : '')
-            );
-
-            $this->set_notice(
-                'warning',
-                'WHATIF: Menuen ville blive gemt, og Hangar18-headeren ville blive opdateret. Ingen data blev ændret.'
-            );
-
-            $this->redirect(
-                'hangar18-menu',
-                ['menu_id' => $menu_id]
-            );
-        }
 
         try {
             $this->backup_menu(
@@ -13493,21 +13296,6 @@ HTML;
 
         $custom_title = $this->post_text('custom_title');
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_MENU_ITEM_ADD',
-                "[WHATIF] Ville tilføje side ID {$page_id} '{$page->post_title}' til Menu ID {$menu_id}."
-            );
-            $this->set_notice(
-                'warning',
-                "WHATIF: '{$page->post_title}' ville blive tilføjet til menuen. Ingen data blev ændret."
-            );
-            $this->redirect(
-                'hangar18-menu',
-                ['menu_id' => $menu_id]
-            );
-        }
 
         try {
             $this->backup_menu(
@@ -13615,27 +13403,6 @@ HTML;
             }
         }
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_MENU_REPAIR',
-                "[WHATIF] Menu ID {$menu_id}: mangler " .
-                count($missing) . ' standardsider; dubletter=' .
-                count($duplicates) . '.'
-            );
-
-            $this->set_notice(
-                'warning',
-                'WHATIF: Menuen ville blive repareret. Manglende standardsider: ' .
-                count($missing) . '; dubletter der ville blive fjernet: ' .
-                count($duplicates) . '. Ingen data blev ændret.'
-            );
-
-            $this->redirect(
-                'hangar18-menu',
-                ['menu_id' => $menu_id]
-            );
-        }
 
         try {
             $this->backup_menu(
@@ -13986,10 +13753,6 @@ HTML;
                         <h2>Designindstillinger</h2>
                         <p>Indstillinger for header, menu, sidebredde, afstande og footer.</p>
                     </div>
-                    <label class="h18-safe-switch">
-                        <input type="checkbox" name="whatif" value="1" />
-                        <span>WhatIf / simulering</span>
-                    </label>
                 </div>
 
                 <div class="h18-settings-groups">
@@ -14195,9 +13958,6 @@ HTML;
                 </div>
 
                 <div class="h18-form-actions h18-explained-action">
-                    <div class="h18-whatif-help">
-                        <div class="h18-action-copy"><strong>WhatIf styres øverst</strong><span>Brug simulering til at kontrollere indstillingerne uden at ændre siderne.</span></div>
-                    </div>
                     <div class="h18-action-submit">
                         <button class="button button-primary button-hero" type="submit">Gem design og opdater alle sider</button>
                         <div class="h18-action-copy"><strong>Normal gemning</strong><span>Gemmer header, footer, bredder og afstande og anvender dem på alle styrede sider.</span></div>
@@ -14208,10 +13968,6 @@ HTML;
             <form class="h18-secondary-action h18-explained-action" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <?php wp_nonce_field('h18_sync_shell'); ?>
                 <input type="hidden" name="action" value="h18_sync_shell" />
-                <div class="h18-whatif-help">
-                    <label><input type="checkbox" name="whatif" value="1" /> WhatIf</label>
-                    <div class="h18-action-copy"><strong>Kun simulering</strong><span>Markér for at kontrollere hvor mange sider der ville blive synkroniseret.</span></div>
-                </div>
                 <div class="h18-action-submit">
                     <button class="button button-secondary" type="submit">Kopiér header/footer fra Hjem</button>
                     <div class="h18-action-copy"><strong>Reparation</strong><span>Brug kun hvis Hjem er korrekt, men header eller footer på andre sider er kommet ud af sync.</span></div>
@@ -14227,34 +13983,6 @@ HTML;
 
         $settings = $this->header_design_from_post();
 
-        if (!empty($_POST['whatif'])) {
-            $this->log(
-                'WARN',
-                'WHATIF_HEADER_DESIGN_1TO1',
-                '[WHATIF] HeaderDesign schema 2.3 + Designer schema 1.0 ville blive gemt centralt og anvendt på ' .
-                count($this->get_managed_pages()) .
-                ' sider. StickyOnScroll=' .
-                ($settings['StickyOnScroll'] ? 'True' : 'False') .
-                '; Identity=' .
-                $settings['IdentityAlignment'] .
-                '; Menu=' .
-                $settings['MenuAlignment'] .
-                '; BrandSize=' .
-                $settings['BrandSizePercent'] .
-                '%; LogoSize=' .
-                $settings['LogoSizePercent'] .
-                '%; MenuSize=' .
-                $settings['MenuSizePercent'] .
-                '%.'
-            );
-
-            $this->set_notice(
-                'warning',
-                'WHATIF: Designindstillingerne ville blive gemt og anvendt på alle styrede sider. Ingen data blev ændret.'
-            );
-
-            $this->redirect('hangar18-header-footer');
-        }
 
         try {
             $this->create_full_managed_backup(
@@ -14329,11 +14057,6 @@ HTML;
 
         $pages = $this->get_managed_pages();
 
-        if (!empty($_POST['whatif'])) {
-            $this->log('WARN', 'WHATIF_SHELL_SYNC', '[WHATIF] Header/footer ville blive synkroniseret til ' . count($pages) . ' sider.');
-            $this->set_notice('warning', 'WHATIF: Header/footer ville blive synkroniseret til ' . count($pages) . ' sider. Ingen data blev ændret.');
-            $this->redirect('hangar18-header-footer');
-        }
 
         try {
             $this->create_full_managed_backup('Før header/footer-synkronisering');
@@ -14914,6 +14637,31 @@ HTML;
             );
         }
 
+        // H18-UPDATER-HARDENING-009: verify backup contents before any plugin mutation.
+        $verify_backup = new ZipArchive();
+        if ($verify_backup->open($file) !== true) {
+            throw new RuntimeException('Plugin-kodebackup kunne ikke genåbnes til verifikation.');
+        }
+        $backup_main = $verify_backup->getFromName('hangar18-manager/hangar18-manager.php');
+        $verify_backup->close();
+        $backup_expected = preg_quote(self::VERSION, '/');
+        if (
+            $backup_main === false ||
+            !preg_match('/\*\s+Version:\s*' . $backup_expected . '\s*$/m', $backup_main) ||
+            !preg_match("/const\\s+VERSION\\s*=\\s*'" . $backup_expected . "';/", $backup_main)
+        ) {
+            throw new RuntimeException('Plugin-kodebackup indeholder ikke den forventede aktive version.');
+        }
+        $backup_sha256 = strtolower((string) hash_file('sha256', $file));
+        if (!preg_match('/^[a-f0-9]{64}$/', $backup_sha256)) {
+            throw new RuntimeException('SHA-256 af plugin-kodebackup kunne ikke beregnes.');
+        }
+        $this->log(
+            'INFO',
+            'UPDATE_CODE_BACKUP_VERIFIED',
+            'Plugin-kodebackup verificeret. SHA256=' . $backup_sha256 . '.'
+        );
+
         $this->log(
             'INFO',
             'UPDATE_CODE_BACKUP_SUCCESS',
@@ -14966,6 +14714,16 @@ HTML;
             throw new RuntimeException(
                 'Update-pakken er tom efter download.'
             );
+        }
+
+        // H18-UPDATER-HARDENING-008: verify the actual persisted ZIP, not only downloaded bytes.
+        $disk_sha256 = strtolower((string) hash_file('sha256', $file));
+        if (
+            !preg_match('/^[a-f0-9]{64}$/', $disk_sha256) ||
+            !hash_equals(strtolower((string) $manifest['package_sha256']), $disk_sha256)
+        ) {
+            @unlink($file);
+            throw new RuntimeException('SHA-256-validering af den gemte update-ZIP fejlede.');
         }
 
         $this->log(
@@ -15423,6 +15181,46 @@ HTML;
                 );
             }
 
+            // H18-UPDATER-HARDENING-006-007: verify installed source and hand off to next-request runtime verification.
+            if (!preg_match(
+                "/const\\s+VERSION\\s*=\\s*'" . $expected . "';/",
+                $installed_source
+            )) {
+                throw new RuntimeException(
+                    'Den installerede Hangar18_Manager::VERSION-kilde har ikke forventet version ' .
+                    (string) $manifest['version'] . '.'
+                );
+            }
+
+            $installed_main_sha256 = strtolower((string) hash_file('sha256', $installed_file));
+            if (!preg_match('/^[a-f0-9]{64}$/', $installed_main_sha256)) {
+                throw new RuntimeException('SHA-256 af installeret plugin-hovedfil kunne ikke beregnes.');
+            }
+
+            update_option(
+                'hangar18_manager_update_post_install_pending_v1',
+                [
+                    'from_version' => self::VERSION,
+                    'expected_version' => (string) $manifest['version'],
+                    'package_sha256' => strtolower((string) $manifest['package_sha256']),
+                    'installed_main_sha256' => $installed_main_sha256,
+                    'code_backup_sha256' => ($code_backup && is_file($code_backup))
+                        ? strtolower((string) hash_file('sha256', $code_backup))
+                        : '',
+                    'created_at_utc' => gmdate('c'),
+                ],
+                false
+            );
+
+            // Clear all updater/plugin cache state in one post-install operation.
+            delete_option(self::UPDATE_STATE_OPTION);
+            if (function_exists('delete_site_transient')) {
+                delete_site_transient('update_plugins');
+            }
+            if (function_exists('wp_clean_plugins_cache')) {
+                wp_clean_plugins_cache(true);
+            }
+
             $this->log(
                 'INFO',
                 'UPDATE_SUCCESS',
@@ -15461,6 +15259,61 @@ HTML;
                         $code_backup,
                         true
                     );
+
+                    // H18-UPDATER-HARDENING-010-ROLLBACK: verify the restored source and persist rollback evidence.
+                    $rollback_main_file = WP_PLUGIN_DIR . '/hangar18-manager/hangar18-manager.php';
+                    if (!is_file($rollback_main_file) || !is_readable($rollback_main_file)) {
+                        throw new RuntimeException('Rollback gendannede ikke en læsbar plugin-hovedfil.');
+                    }
+                    $rollback_source = file_get_contents($rollback_main_file);
+                    if ($rollback_source === false) {
+                        throw new RuntimeException('Rollback-hovedfilen kunne ikke læses til verifikation.');
+                    }
+                    $rollback_expected = preg_quote(self::VERSION, '/');
+                    if (
+                        !preg_match('/\*\s+Version:\s*' . $rollback_expected . '\s*$/m', $rollback_source) ||
+                        !preg_match("/const\\s+VERSION\\s*=\\s*'" . $rollback_expected . "';/", $rollback_source)
+                    ) {
+                        throw new RuntimeException(
+                            'Rollback gendannede ikke den forventede version ' . self::VERSION . '.'
+                        );
+                    }
+                    $rollback_main_sha256 = strtolower((string) hash_file('sha256', $rollback_main_file));
+                    if (!preg_match('/^[a-f0-9]{64}$/', $rollback_main_sha256)) {
+                        throw new RuntimeException('SHA-256 af gendannet plugin-hovedfil kunne ikke beregnes.');
+                    }
+                    $rollback_audit = [
+                        'schema_version' => '1.0',
+                        'from_version' => (string) ($manifest['version'] ?? ''),
+                        'to_version' => self::VERSION,
+                        'restored_main_sha256' => $rollback_main_sha256,
+                        'code_backup_sha256' => ($code_backup && is_file($code_backup))
+                            ? strtolower((string) hash_file('sha256', $code_backup))
+                            : '',
+                        'verified_at_utc' => gmdate('c'),
+                    ];
+                    update_option(
+                        'hangar18_manager_update_rollback_verification_v1',
+                        $rollback_audit,
+                        false
+                    );
+                    $this->log(
+                        'INFO',
+                        'UPDATE_ROLLBACK_VERIFIED',
+                        'Rollback verificeret: FromVersion=' . $rollback_audit['from_version'] .
+                        '; ToVersion=' . $rollback_audit['to_version'] .
+                        '; RestoredMainSHA256=' . $rollback_main_sha256 . '.'
+                    );
+
+                    // A rolled-back install must not leave a pending success transition or stale updater cache.
+                    delete_option('hangar18_manager_update_post_install_pending_v1');
+                    delete_option(self::UPDATE_STATE_OPTION);
+                    if (function_exists('delete_site_transient')) {
+                        delete_site_transient('update_plugins');
+                    }
+                    if (function_exists('wp_clean_plugins_cache')) {
+                        wp_clean_plugins_cache(true);
+                    }
 
                     $this->log(
                         'INFO',

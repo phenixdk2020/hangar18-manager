@@ -1,7 +1,0 @@
-/* v0.8.58: WhatIf/simulation is no longer exposed in Hangar18 admin UI. */
-.h18-admin input[name="whatif"],
-.h18-admin .h18-whatif-help,
-.h18-admin .h18-safe-switch:has(input[name="whatif"]),
-.h18-admin label:has(> input[name="whatif"]) {
-    display: none !important;
-}
