@@ -24,6 +24,26 @@ final class EditorLegoStackAdminController
         }
         self::$registered = true;
         add_action('admin_post_h18_save_page_editor', [self::class, 'captureSave'], 5);
+        add_action('admin_enqueue_scripts', [self::class, 'enqueueV0886Autosize']);
+    }
+
+    public static function enqueueV0886Autosize(): void
+    {
+        $page = isset($_GET['page']) ? sanitize_key((string) wp_unslash($_GET['page'])) : '';
+        if ($page !== 'hangar18-pages' || !current_user_can('edit_pages')) {
+            return;
+        }
+
+        $pluginDir = dirname(__DIR__, 2);
+        $pluginUrl = plugin_dir_url($pluginDir . '/hangar18-manager.php');
+        $path = $pluginDir . '/assets/ultimate-designer-lego-stack-autosize-v0886.js';
+        wp_enqueue_script(
+            'hangar18-ultimate-designer-lego-stack-autosize-v0886',
+            $pluginUrl . 'assets/ultimate-designer-lego-stack-autosize-v0886.js',
+            ['hangar18-ultimate-designer-lego-fixes-v0851'],
+            is_file($path) ? (string) filemtime($path) : '0.8.86',
+            false
+        );
     }
 
     /** @return array<string,mixed> */
