@@ -1,0 +1,70 @@
+name: Backlog Snapshot QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/active-backlog-v*.md'
+      - 'docs/BACKLOG-CANONICAL.md'
+      - 'docs/BACKLOG-CONTRIBUTING.md'
+      - 'tools/backlog-snapshot-guard.py'
+      - 'tools/backlog-governance.py'
+      - '.github/workflows/backlog-snapshot-qa.yml'
+  pull_request:
+    paths:
+      - 'docs/active-backlog-v*.md'
+      - 'docs/BACKLOG-CANONICAL.md'
+      - 'docs/BACKLOG-CONTRIBUTING.md'
+      - 'tools/backlog-snapshot-guard.py'
+      - 'tools/backlog-governance.py'
+      - '.github/workflows/backlog-snapshot-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python syntax
+        run: python3 -m py_compile tools/backlog-snapshot-guard.py tools/backlog-governance.py
+
+      - name: Resolve canonical pointer and snapshot roles
+        run: |
+          python3 tools/backlog-snapshot-guard.py --output /tmp/backlog-snapshots.json
+          cat /tmp/backlog-snapshots.json
+
+      - name: Validate canonical merged backlog with dependencies
+        run: |
+          CANONICAL="$(python3 - <<'PY'
+          import re
+          text=open('docs/BACKLOG-CANONICAL.md', encoding='utf-8').read()
+          m=re.search(r'^\*\*Canonical backlog:\*\*\s+`([^`]+)`\s*$', text, re.M)
+          if not m:
+              raise SystemExit('canonical pointer missing')
+          print(m.group(1))
+          PY
+          )"
+          python3 tools/backlog-governance.py --backlog "$CANONICAL" --output /tmp/backlog-index.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/backlog-index.json', encoding='utf-8'))
+          if p.get('schema_version') != '1.2':
+              raise SystemExit('backlog index schema must be 1.2')
+          for item in p.get('items', []):
+              if 'dependencies' not in item or not isinstance(item['dependencies'], list):
+                  raise SystemExit('missing dependencies field: ' + str(item.get('id')))
+          print('PASS dependencies:', len(p.get('items', [])), 'items')
+          PY
+
+      - name: Workflow summary
+        run: |
+          {
+            echo '## Backlog canonical/snapshot roles'
+            echo
+            echo '```json'
+            cat /tmp/backlog-snapshots.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
