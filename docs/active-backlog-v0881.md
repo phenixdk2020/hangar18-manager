@@ -8,7 +8,19 @@ Denne fil er den aktuelle canonical backlog. Den arver hele master-roadmapet via
 
 ## Batchstatus
 
-Denne batch arbejder på **24 backlog-ID’er**. Hovedmålet er permanent WhatIf source-removal med fail-closed release-QA, dokumenteret legacy-klassifikation og sikre Navigator-produktivitetsfunktioner. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
+Denne batch arbejder nu på **26 backlog-ID’er**. Hovedmålet er permanent WhatIf source-removal med fail-closed release-QA, dokumenteret legacy-klassifikation, sikre Navigator-produktivitetsfunktioner samt den updater-schema-regression der blev fundet under testen. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
+
+# A. Release / sporbarhed
+
+| ID | Pri | Status | Leverance / Definition of done |
+|---|---|---|---|
+| RELEASE-007 | Høj | ✅ FÆRDIG v0.8.81 | Fail-closed release-cleanup skriver ved stop en isoleret `docs/release-build-failure.md` med version/source commit/step/stderr/stdout, ruller delvise source-writes tilbage og committer kun diagnosen. Første virkelige diagnose identificerede 7 resterende WhatIf-referencer. |
+
+# C. GitHub updater
+
+| ID | Pri | Status | Leverance / Definition of done |
+|---|---|---|---|
+| UPDATER-SCHEMA-003 | Kritisk | ✅ USER PASS / PIPELINE FIX v0.8.81 | Installeret v0.8.80 accepterer kun `schema_version=1.0`. Aktiv `update.json` er hotfixet til 1.0 og brugerens update-check er bekræftet fungerende. Release-generatoren er låst til 1.0 og package verification fejler ved andet schema, indtil alle installerbare legacy-updatere er migreret. |
 
 # E. WhatIf cleanup
 
@@ -18,13 +30,13 @@ Denne batch arbejder på **24 backlog-ID’er**. Hovedmålet er permanent WhatIf
 | WHATIF-002 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Vehicle WhatIf markup/backend branches fjernes ved source-cleanup; normal save/layout/register/fields skal smoke-testes på test2. |
 | WHATIF-003 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Event WhatIf markup/backend branches fjernes; normal save/layout/rebuild skal smoke-testes. |
 | WHATIF-004 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Gallery WhatIf markup/backend branches fjernes; normal save/layout/rebuild skal smoke-testes. |
-| WHATIF-005 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Page Editor WhatIf request/state fjernes; save-status er altid `Gemmer…`; normal save/history smoke-test mangler. |
+| WHATIF-005 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Page Editor WhatIf request/state fjernes; save-status er altid `Gemmer…`; draft-save er ikke længere simulation-gated; normal save/history smoke-test mangler. |
 | WHATIF-006 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Static/legacy content WhatIf markup/backend paths fjernes af samme guarded source-cleanup; normal save smoke-test mangler. |
 | WHATIF-007 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Menu create/add/repair/save simulation controls og branches fjernes; normale menu-handlinger smoke-testes efter release. |
 | WHATIF-008 | Høj | 🟡 AUTOMATISK QA + MANUEL TEST v0.8.81 | Design/Header/Footer/shell relaterede WhatIf runtime-referencer må ikke overleve primary-runtime assertion. |
-| WHATIF-009 | Normal | 🟡 AUTOMATISK QA v0.8.81 | Primære runtime-filer må ikke længere indeholde gamle WhatIf help/log/runtime-tekster. Historisk cleanup-dokumentation er tilladt. |
+| WHATIF-009 | Normal | 🟡 AUTOMATISK QA v0.8.81 | Primære runtime-filer må ikke længere indeholde gamle WhatIf help/log/runtime-tekster. Fail-closed diagnose fandt fem resterende UI/help-tekster; cleaner v1.5 omskriver dem deterministisk. Historisk cleanup-dokumentation er tilladt. |
 | WHATIF-010 | Normal | 🟡 AUTOMATISK QA v0.8.81 | `.h18-whatif-help` omdøbes/fjernes. Blandede wrappers med reelle kontroller bevares som neutral `.h18-action-options`; den generiske `.h18-safe-switch` beholdes, fordi den også bruges af aktive indstillinger som Pin menu/header. |
-| WHATIF-011 | Normal | 🟡 AUTOMATISK QA v0.8.81 | Page Editor WhatIf selectors/state fjernes fra `assets/admin.js`; JS syntax kontrolleres efter mutation. |
+| WHATIF-011 | Normal | 🟡 AUTOMATISK QA v0.8.81 | Page Editor WhatIf selectors/state fjernes fra `assets/admin.js`; fail-closed diagnose fandt de sidste change/draft-save-referencer og cleaner v1.5 fjerner/omskriver dem; JS syntax kontrolleres efter mutation. |
 | WHATIF-012 | Høj | 🟡 RELEASE-MIGRATION v0.8.81 | `NoWhatIfAdminController::register()` og controllerfilen fjernes efter source-cleanup i samme release transaction. |
 | WHATIF-013 | Høj | 🟡 RELEASE-MIGRATION v0.8.81 | `hangar18-no-whatif-v0858.js/.css` slettes i samme release transaction og må ikke findes i ZIP. |
 | WHATIF-014 | Høj | 🟡 AUTOMATISK QA v0.8.81 | Cleaner kræver 0 case-insensitive `whatif` hits i `hangar18-manager.php`, `assets/admin.js`, `assets/admin.css`, `IntegrationAdminBootstrap.php` samt ingen shim-filer; PHP/JS lint er obligatorisk. |
