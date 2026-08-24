@@ -3,8 +3,9 @@
 
     if (window.__h18InspectorOrderV0884) { return; }
 
-    const VERSION = '0.8.84';
+    const VERSION = '0.8.85';
     const ROOT_SELECTOR = '#h18-page-inspector-target > .h18-page-section-body';
+    const LAYOUT_SELECTOR = '.h18-layout-parent-box';
     const DYNAMIC_SELECTOR = '.h18-dynamic-binding-box';
     const CONDITIONS_SELECTOR = '.h18-condition-editor';
     const MEDIA_INPUT_SELECTOR = '.h18-section-media-id';
@@ -96,6 +97,13 @@
         });
     }
 
+    function removeLegacyAdvancedHeading(body) {
+        if (!body) { return; }
+        body.querySelectorAll(':scope > .h18-v0849-advanced-heading').forEach(function (heading) {
+            heading.remove();
+        });
+    }
+
     function applyOrder() {
         timer = 0;
         if (applying) { return; }
@@ -104,27 +112,30 @@
 
         applying = true;
         try {
+            const imageBox = mediaBox(body);
+            const layoutBox = body.querySelector(LAYOUT_SELECTOR);
             const dynamicBox = body.querySelector(DYNAMIC_SELECTOR);
             const conditionsBox = body.querySelector(CONDITIONS_SELECTOR);
-            const imageBox = mediaBox(body);
 
             prepareCollapsible(dynamicBox);
             prepareCollapsible(conditionsBox);
+            removeLegacyAdvancedHeading(body);
 
             /*
-             * Inspector contract v0.8.84:
-             * - all ordinary/type-specific controls remain before the advanced tail
-             * - image/media module is immediately before the advanced tail for media-capable types
-             * - Dynamic data binding is penultimate
-             * - Conditions / synlighed is always last
+             * Inspector contract v0.8.85:
+             * - ordinary/type-specific controls first
+             * - media library immediately before Layout hierarchy for media types
+             * - Layout hierarchy always immediately before the advanced tail
+             * - Dynamic data binding is penultimate and collapsed by default
+             * - Conditions / synlighed is always last and collapsed by default
              */
-            const desiredTail = [imageBox, dynamicBox, conditionsBox].filter(Boolean);
+            const desiredTail = [imageBox, layoutBox, dynamicBox, conditionsBox].filter(Boolean);
             if (!tailIsCorrect(body, desiredTail)) {
                 desiredTail.forEach(function (node) { body.appendChild(node); });
             }
 
-            if (body.getAttribute('data-h18-v0884-inspector-order') !== 'media-dynamic-conditions') {
-                body.setAttribute('data-h18-v0884-inspector-order', 'media-dynamic-conditions');
+            if (body.getAttribute('data-h18-v0884-inspector-order') !== 'media-layout-dynamic-conditions') {
+                body.setAttribute('data-h18-v0884-inspector-order', 'media-layout-dynamic-conditions');
             }
         } finally {
             applying = false;
@@ -169,7 +180,8 @@
         '.h18-v0884-collapse-header{cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}',
         '.h18-v0884-collapse-marker{margin-left:auto;font-size:13px;line-height:1}',
         '.h18-v0884-collapsed{padding-bottom:8px}',
-        '#h18-page-inspector-target .h18-dynamic-binding-box,#h18-page-inspector-target .h18-condition-editor{order:9998}',
+        '#h18-page-inspector-target .h18-layout-parent-box{order:9997}',
+        '#h18-page-inspector-target .h18-dynamic-binding-box{order:9998}',
         '#h18-page-inspector-target .h18-condition-editor{order:9999}'
     ].join('');
     (document.head || document.documentElement).appendChild(style);
