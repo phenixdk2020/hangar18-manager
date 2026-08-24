@@ -81,6 +81,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf build
+          rm -f dist/hangar18-manager.zip
           mkdir -p build/hangar18-manager dist
           cp hangar18-manager.php readme.txt build/hangar18-manager/
           cp -R assets src build/hangar18-manager/
@@ -124,7 +125,7 @@ jobs:
           test "$VERSION" = "$ZIP_VERSION"
           test "$SCHEMA" = "1.0"
           echo "$SHA  dist/hangar18-manager.zip" | sha256sum -c -
-          if unzip -l dist/hangar18-manager.zip | grep -Eqi 'NoWhatIfAdminController|hangar18-no-whatif'; then
+          if unzip -Z1 dist/hangar18-manager.zip | grep -Eqi 'NoWhatIfAdminController|hangar18-no-whatif'; then
             echo 'Legacy WhatIf shim leaked into ZIP' >&2; exit 1
           fi
           tar -czf release-source-v0882.tar.gz hangar18-manager.php readme.txt assets src
