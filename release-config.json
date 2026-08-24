@@ -1,9 +1,10 @@
 {
-  "version": "0.8.89",
-  "title": "Gem/reload parity for Række- og kolonne-kasse",
+  "version": "0.8.90",
+  "title": "Robust Grid/Flex reload og persistente kolonne-spans",
   "channel": "test",
   "backlog_ids": [
-    "SAVE-RELOAD-GRID-102",
+    "SAVE-RELOAD-GRID-104",
+    "SIDE-SPAN-PERSIST-105",
     "DIAG-RELOAD-103",
     "DIAG-LIVE-101",
     "IMAGE-FIT-PARITY-100",
@@ -12,12 +13,12 @@
     "CANVAS-STACK-AUTOHEIGHT-097"
   ],
   "changelog": [
-    "Række- og kolonne-kasse og andre almindelige Grid/Flex-parents genopbygges efter Gem/reload direkte fra de bevarede LayoutParentKey-relationer i stedet for at falde ud som separate top-level elementer.",
-    "Den dokumenterede testcase bevarer 4/12 Tekst til venstre, 8/12 Tekst til højre og Billede under den højre Tekst via StackRootKey/StackOrder i samme 8/12-kolonne.",
-    "v0.8.89 canvas-rebuild er read/render-only: den registrerer ingen dragstart/dragover/drop/dragend handlers og skriver ikke LayoutParentKey, span eller stack-state.",
-    "Almindelig Kasse og Auto-kasser forbliver ejet af den eksisterende legacy nesting-runtime; v0.8.89 aktiveres kun for generiske Grid/Flex-parents.",
-    "Site-diagnosen får et direkte reload-snapshot uden den gamle Trace-depth-begrænsning samt et snapshot af de faktisk genererede h18_lego_layout_span- og h18_lego_stack_v0851-submitfelter.",
-    "Den tidligere hasSpanState=false-observation er korrigeret som en diagnosefejl: den rigtige POST-kontrakt hedder h18_lego_layout_span.",
-    "Eksisterende image-fit, lodret resize, live preview og højre/venstre/over/under placement videreføres uden ændring."
+    "Retter v0.8.89 source-visibility-kontrakten: JavaScript og CSS bruger nu samme generic-child-markør, og source-rækker skjules først efter en verificeret proxy er indsat i Grid/Flex-parenten.",
+    "Generic Grid/Flex rebuild bruger direkte child-DOM traversal og kører efter resize/stack/placement-runtimes, så gemte LayoutParentKey- og StackRootKey-relationer kan genopbygges deterministisk efter reload.",
+    "Implicitte fler-kolonne layouts materialiseres via den eksisterende v0.8.41 writeStateForKey-API: to auto-kolonner bliver 6/6, tre bliver 4/4/4 osv.; eksplicitte bruger-resizes overskrives ikke.",
+    "Span-canonicalisering udføres før Gem-serialiseringen, så h18_lego_layout_span indeholder ikke-nul Desktop spans for implicitte fler-kolonne layouts.",
+    "Trace registrerer DIAG_LAYOUT_REBUILD_V0890 med renderer-marker, proxyCount, hiddenSourceCount, parent/root keys og effektive spans, så næste save/reload-test direkte viser om rebuild-laget faktisk tog ejerskab.",
+    "v0.8.90 registrerer ingen nye dragstart/dragover/drop/dragend handlers; højre/venstre/over/under forbliver ejet af den eksisterende placement-kæde.",
+    "Almindelig Kasse og Auto-kasser forbliver på legacy nesting-runtime; v0.8.90 aktiveres kun for generiske Grid/Flex-parents."
   ]
 }
