@@ -12,16 +12,16 @@ use RuntimeException;
  * Legacy single-page backups may contain an embedded Page Editor marker but no
  * central page_editor store entry. Replacing a live editor page from such a
  * backup would be ambiguous because the newer central store can override the
- * restored marker. Copy-mode is intentionally not blocked by this gate.
+ * restored marker. Copy-mode is intentionally not blocked by this editor-state
+ * rule, but both modes use ManagedPageBackupIntegrityService before mutation.
  */
 final class ManagedPageBackupRestorePreflightService
 {
-    private const FILE_PATTERN = '/^Hangar18-Web-(?:Full-Backup|Backup)-\d{8}-\d{6}(?:-Post-\d+)?\.json$/';
-
     /** @return array<string,mixed> */
     public function analyzeReplace(string $filename, string $sourceKey): array
     {
-        $payload = $this->readBackup($filename);
+        $integrity = (new ManagedPageBackupIntegrityService())->inspect($filename);
+        $payload = is_array($integrity['Payload'] ?? null) ? $integrity['Payload'] : [];
         $source = $this->findSourcePage($payload, $sourceKey);
         $slug = sanitize_title((string) ($source['post_name'] ?? ''));
         if ($slug === '') {
@@ -41,39 +41,14 @@ final class ManagedPageBackupRestorePreflightService
             'UsesPageEditor' => $usesPageEditor,
             'HasPageEditorStoreEntry' => $hasEditorStore,
             'EditorDataSource' => $hasEditorStore ? 'page-editor-store' : ($usesPageEditor ? 'embedded-marker-only' : 'not-required'),
+            'BackupSha256' => (string) ($integrity['Sha256'] ?? ''),
+            'BackupBytes' => (int) ($integrity['Bytes'] ?? 0),
+            'BackupPageCount' => (int) ($integrity['PageCount'] ?? 0),
+            'IntegrityValid' => !empty($integrity['Valid']),
             'Reason' => $allowed
-                ? 'Backup-kilden har tilstrækkelig state til replace-original.'
+                ? 'Backup-kilden har gyldig JSON/SHA-integritet og tilstrækkelig state til replace-original.'
                 : 'Replace-original er låst: backup-siden bruger Page Editor, men backupfilen mangler den centrale page_editor state. Brug Opret som kopi eller en full-backup med editor-data.',
         ];
-    }
-
-    /** @return array<string,mixed> */
-    private function readBackup(string $filename): array
-    {
-        $filename = sanitize_file_name($filename);
-        if ($filename === '' || !preg_match(self::FILE_PATTERN, $filename)) {
-            throw new RuntimeException('Ugyldigt backup-filnavn.');
-        }
-        $uploads = wp_upload_dir();
-        if (!empty($uploads['error']) || empty($uploads['basedir'])) {
-            throw new RuntimeException('WordPress uploads-mappen er ikke tilgængelig.');
-        }
-        $dir = trailingslashit((string) $uploads['basedir']) . 'hangar18-manager-backups';
-        $realDir = realpath($dir);
-        $realPath = realpath(trailingslashit($dir) . $filename);
-        if ($realDir === false || $realPath === false) {
-            throw new RuntimeException('Backup-filen blev ikke fundet.');
-        }
-        $prefix = rtrim($realDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-        if (strpos($realPath, $prefix) !== 0 || !is_readable($realPath)) {
-            throw new RuntimeException('Backup-filen ligger uden for den administrerede backup-mappe.');
-        }
-        $json = file_get_contents($realPath);
-        $payload = is_string($json) ? json_decode($json, true) : null;
-        if (!is_array($payload)) {
-            throw new RuntimeException('Backup-filen indeholder ikke gyldig JSON.');
-        }
-        return $payload;
     }
 
     /** @return array<string,mixed> */
