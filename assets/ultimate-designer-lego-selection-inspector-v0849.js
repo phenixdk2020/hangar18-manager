@@ -68,6 +68,19 @@
 
     function moveAdvancedInspectorBlocks() {
         advancedFrame = 0;
+
+        /* v0.8.85 has a single explicit Inspector-order owner. Once it exists,
+         * this older compatibility layer must not move Dynamic/Conditions or
+         * recreate its old "Avanceret" heading. */
+        const orderOwner = window.__h18InspectorOrderV0884;
+        if (orderOwner) {
+            document.querySelectorAll('#h18-page-inspector-target .h18-v0849-advanced-heading').forEach(function (heading) {
+                heading.remove();
+            });
+            if (typeof orderOwner.apply === 'function') { orderOwner.apply(); }
+            return;
+        }
+
         const target = document.querySelector('#h18-page-inspector-target');
         if (!target) { return; }
 
@@ -119,9 +132,9 @@
         applyMarker();
     }, 0);
 
-    document.documentElement.setAttribute('data-h18-lego-selection-inspector', '0.8.76-advanced-only');
+    document.documentElement.setAttribute('data-h18-lego-selection-inspector', '0.8.85-order-deferred');
     window.__h18LegoSelectionInspectorV0849 = {
-        version: '0.8.76',
+        version: '0.8.85',
         selectionOwner: 'v0.8.75-inspector-only',
         rememberKey: rememberKey,
         applyMarker: applyMarker,
