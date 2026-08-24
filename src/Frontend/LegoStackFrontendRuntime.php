@@ -11,7 +11,8 @@ namespace Hangar18\UltimateDesigner\Frontend;
  * same LayoutParentKey plus additive StackRootKey metadata. The editor folds
  * those sections into one horizontal tile. This runtime mirrors that contract
  * on public/live-preview DOM so stack members do not consume extra 12-column
- * spans.
+ * spans. Natural content height is authoritative until a vertical split has
+ * explicitly been set by the editor.
  */
 final class LegoStackFrontendRuntime
 {
@@ -148,6 +149,9 @@ final class LegoStackFrontendRuntime
                     $desktopRules[] = $wrapperSelector . '{grid-column:span ' . $desktopSpan . '!important}';
                     $tabletRules[] = $wrapperSelector . '{grid-column:span ' . $tabletSpan . '!important}';
                     $mobileRules[] = $wrapperSelector . '{grid-column:span ' . $mobileSpan . '!important}';
+                    self::appendStackHeightRules($desktopRules, $wrapperSelector, $groupMembers, $stackSections, 'Desktop');
+                    self::appendStackHeightRules($tabletRules, $wrapperSelector, $groupMembers, $stackSections, 'Tablet');
+                    self::appendStackHeightRules($mobileRules, $wrapperSelector, $groupMembers, $stackSections, 'Mobile');
                     $parentConfig['groups'][] = [
                         'root' => $rootKey,
                         'members' => $groupMembers,
@@ -171,8 +175,8 @@ final class LegoStackFrontendRuntime
 
         $baseRules = [
             '.h18-lego-stack-column-v0886{display:flex;flex-direction:column;align-self:stretch;min-width:0;width:100%;box-sizing:border-box}',
-            '.h18-lego-stack-column-v0886>.h18-editor-section{min-width:0;box-sizing:border-box}',
-            '.h18-lego-stack-column-v0886[data-h18-stack-auto="1"]>.h18-editor-section{flex:0 0 auto}',
+            '.h18-lego-stack-column-v0886>.h18-editor-section{min-width:0;box-sizing:border-box;flex:0 0 auto}',
+            '.h18-lego-stack-column-v0886>.h18-editor-section .h18-editor-media img,.h18-lego-stack-column-v0886>.h18-editor-section .h18-editor-image img{max-width:100%}',
         ];
 
         echo "\n<style id=\"h18-lego-stack-parity-v0886\">\n";
@@ -189,7 +193,7 @@ final class LegoStackFrontendRuntime
         if (!is_string($json) || $json === '') {
             return;
         }
-        echo '<script id="h18-lego-stack-parity-runtime-v0886">(function(){"use strict";var cfg=' . $json . ';function run(){(cfg.parents||[]).forEach(function(p){var parent=document.querySelector("#h18-section-"+CSS.escape(p.key)+">.h18-layout-children");if(!parent){return;}(p.groups||[]).forEach(function(g){if(parent.querySelector(":scope>.h18-lego-stack-column-v0886[data-h18-stack-root=\\\""+CSS.escape(g.root)+"\\\"]")){return;}var nodes=(g.members||[]).map(function(k){return document.getElementById("h18-section-"+k);}).filter(function(n){return n&&n.parentNode===parent;});if(nodes.length<2){return;}var wrap=document.createElement("div");wrap.className="h18-lego-stack-column-v0886";wrap.setAttribute("data-h18-stack-root",g.root);wrap.setAttribute("data-h18-stack-auto","1");parent.insertBefore(wrap,nodes[0]);nodes.forEach(function(n){wrap.appendChild(n);});});});}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run,{once:true});}else{run();}}());</script>' . "\n";
+        echo '<script id="h18-lego-stack-parity-runtime-v0886">(function(){"use strict";var cfg=' . $json . ';function run(){(cfg.parents||[]).forEach(function(p){var section=document.getElementById("h18-section-"+p.key);var parent=section?section.querySelector(":scope>.h18-layout-children"):null;if(!parent){return;}(p.groups||[]).forEach(function(g){var existing=Array.from(parent.children).find(function(n){return n.classList&&n.classList.contains("h18-lego-stack-column-v0886")&&n.getAttribute("data-h18-stack-root")===g.root;});if(existing){return;}var nodes=(g.members||[]).map(function(k){return document.getElementById("h18-section-"+k);}).filter(function(n){return n&&n.parentNode===parent;});if(nodes.length<2){return;}var wrap=document.createElement("div");wrap.className="h18-lego-stack-column-v0886";wrap.setAttribute("data-h18-stack-root",g.root);parent.insertBefore(wrap,nodes[0]);nodes.forEach(function(n){wrap.appendChild(n);});});});}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",run,{once:true});}else{run();}}());</script>' . "\n";
     }
 
     /** @return array<string,mixed> */
@@ -280,6 +284,65 @@ final class LegoStackFrontendRuntime
         return $inherit ? $desktop : self::span($deviceState['Span'] ?? 0);
     }
 
+    /** @param array<int,string> $keys @param array<string,mixed> $states @return array<int,int> */
+    private static function effectiveStackPercents(array $keys, array $states, string $device): array
+    {
+        $raw = [];
+        foreach ($keys as $key) {
+            $state = isset($states[$key]) && is_array($states[$key]) ? $states[$key] : [];
+            $desktop = self::percent($state['DesktopPercent'] ?? 0);
+            if ($device === 'Desktop') {
+                $raw[] = $desktop;
+                continue;
+            }
+            $ownField = $device === 'Mobile' ? 'MobilePercent' : 'TabletPercent';
+            $own = self::percent($state[$ownField] ?? 0);
+            $raw[] = $own > 0 ? $own : $desktop;
+        }
+        if (!$raw || count(array_filter($raw, static fn(int $value): bool => $value > 0)) === 0) {
+            return [];
+        }
+        $filled = array_map(static fn(int $value): int => $value > 0 ? $value : 10, $raw);
+        $sum = max(1, array_sum($filled));
+        $normalized = array_map(static fn(int $value): int => max(10, (int) round(($value / $sum) * 100)), $filled);
+        $total = array_sum($normalized);
+        while ($total > 100) {
+            $index = -1;
+            foreach ($normalized as $candidate => $value) {
+                if ($value > 10) {
+                    $index = $candidate;
+                    break;
+                }
+            }
+            if ($index < 0) {
+                break;
+            }
+            $normalized[$index]--;
+            $total--;
+        }
+        while ($total < 100 && $normalized) {
+            $normalized[count($normalized) - 1]++;
+            $total++;
+        }
+        return $normalized;
+    }
+
+    /** @param array<int,string> $keys @param array<string,mixed> $states @param array<int,string> $rules */
+    private static function appendStackHeightRules(array &$rules, string $wrapperSelector, array $keys, array $states, string $device): void
+    {
+        $percents = self::effectiveStackPercents($keys, $states, $device);
+        if (!$percents) {
+            return;
+        }
+        foreach ($keys as $index => $key) {
+            $value = isset($percents[$index]) ? max(10, min(90, (int) $percents[$index])) : 0;
+            if ($value <= 0) {
+                continue;
+            }
+            $rules[] = $wrapperSelector . '>#h18-section-' . sanitize_html_class($key) . '{flex:0 0 ' . $value . '%!important;min-height:0!important}';
+        }
+    }
+
     /** @param mixed $value */
     private static function span($value): int
     {
@@ -288,6 +351,16 @@ final class LegoStackFrontendRuntime
         }
         $span = (int) $value;
         return $span > 0 ? max(1, min(self::COLUMN_COUNT, $span)) : 0;
+    }
+
+    /** @param mixed $value */
+    private static function percent($value): int
+    {
+        if (!is_numeric($value)) {
+            return 0;
+        }
+        $percent = (int) $value;
+        return $percent > 0 ? max(10, min(90, $percent)) : 0;
     }
 
     /** @param mixed $value */
