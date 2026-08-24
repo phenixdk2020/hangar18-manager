@@ -30,6 +30,16 @@ jobs:
           echo "file=$FILE" >> "$GITHUB_OUTPUT"
           python3 tools/backlog-governance.py --backlog "$FILE" --output docs/backlog-index.json
 
+      - name: Apply guarded source cleanup
+        shell: bash
+        run: |
+          python3 tools/whatif-source-cleanup.py --apply --report /tmp/whatif-cleanup.json
+          php -l hangar18-manager.php
+          php -l src/Admin/IntegrationAdminBootstrap.php
+          node --check assets/admin.js
+          python3 tools/whatif-source-cleanup.py --assert-clean
+          cat /tmp/whatif-cleanup.json
+
       - name: Apply release metadata
         shell: bash
         run: |
@@ -105,12 +115,20 @@ jobs:
       - name: Source QA for release support files
         shell: bash
         run: |
-          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py
+          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py
           python3 tools/trace-redaction-qa.py
+          python3 tools/legacy-cleanup-audit.py --output /tmp/legacy-cleanup.json --require-no-powershell --require-no-bootstrap-json
+          python3 tools/whatif-source-cleanup.py --assert-clean
+          node --check assets/admin.js
           node --check assets/ultimate-designer-trace-tools-v0879.js
           node --check assets/updater-support-v0879.js
+          node --check assets/ultimate-designer-navigator-v0880.js
+          php -l hangar18-manager.php
+          php -l src/Admin/IntegrationAdminBootstrap.php
           php -l src/Admin/UltimateDesignerTraceAdminController.php
           php -l src/Admin/UpdaterStateConsistencyAdminController.php
+          php -l src/Admin/EditorNavigatorAdminController.php
+          php -l src/Admin/LegacyCleanupAuditAdminController.php
 
       - name: Build installable ZIP
         shell: bash
@@ -157,15 +175,28 @@ jobs:
           test "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["version"] ?? "";')" = "$VERSION"
           echo "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["package_sha256"] ?? "";')  dist/hangar18-manager.zip" | sha256sum -c -
           unzip -tq dist/hangar18-manager.zip
+          test "$(unzip -l dist/hangar18-manager.zip | grep -ci 'whatif')" = "0"
           python3 tools/release-integrity.py --write-manifest
 
-      - name: Commit release package
+      - name: Commit release package and source cleanup
         shell: bash
         run: |
           VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add hangar18-manager.php readme.txt update.json release-manifest.json docs/backlog-index.json dist/hangar18-manager.zip
+          git add -A -- \
+            hangar18-manager.php \
+            assets/admin.js \
+            assets/admin.css \
+            assets/hangar18-no-whatif-v0858.js \
+            assets/hangar18-no-whatif-v0858.css \
+            src/Admin/IntegrationAdminBootstrap.php \
+            src/Admin/NoWhatIfAdminController.php \
+            readme.txt \
+            update.json \
+            release-manifest.json \
+            docs/backlog-index.json \
+            dist/hangar18-manager.zip
           if git diff --cached --quiet; then
             echo 'Release files are already current.'
             exit 0
