@@ -2,10 +2,10 @@
   "schema_version": "1.0",
   "version": "0.9.0",
   "channel": "test",
-  "source_commit": "678dc55d133473d1506af46c560e14ea50a146e0",
-  "built_utc": "2026-08-24T20:42:55Z",
+  "source_commit": "fdb89486760b033d4e7e7829e53c2682fa222fa1",
+  "built_utc": "2026-08-24T20:47:35Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "d3bdf38dd7bfbf96d0c4b929dbcedcae6a5f4b25593c9df08b8953739c1498e9",
+  "package_sha256": "17db845a9b412d366916a2f67d5c4f64ef48d079d83e191c5b75e28c5750a4fa",
   "plugin_header_version": "0.9.0",
   "plugin_constant_version": "0.9.0",
   "backlog_ids": [
