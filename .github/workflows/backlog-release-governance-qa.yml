@@ -26,6 +26,8 @@ on:
       - 'assets/updater-support-v0879.js'
       - 'assets/ultimate-designer-navigator-v0880.js'
       - 'assets/ultimate-designer-navigator-v0880.css'
+      - 'assets/ultimate-designer-navigator-productivity-v0881.js'
+      - 'assets/ultimate-designer-navigator-productivity-v0881.css'
       - 'src/Admin/UltimateDesignerTraceAdminController.php'
       - 'src/Admin/UpdaterStateConsistencyAdminController.php'
       - 'src/Admin/EditorNavigatorAdminController.php'
@@ -58,6 +60,8 @@ on:
       - 'assets/updater-support-v0879.js'
       - 'assets/ultimate-designer-navigator-v0880.js'
       - 'assets/ultimate-designer-navigator-v0880.css'
+      - 'assets/ultimate-designer-navigator-productivity-v0881.js'
+      - 'assets/ultimate-designer-navigator-productivity-v0881.css'
       - 'src/Admin/EditorNavigatorAdminController.php'
       - 'src/Admin/LegacyCleanupAuditAdminController.php'
       - 'src/Admin/IntegrationAdminBootstrap.php'
@@ -140,6 +144,7 @@ jobs:
           node --check assets/ultimate-designer-trace-tools-v0879.js
           node --check assets/updater-support-v0879.js
           node --check assets/ultimate-designer-navigator-v0880.js
+          node --check assets/ultimate-designer-navigator-productivity-v0881.js
 
       - name: PHP syntax
         shell: bash
@@ -159,6 +164,10 @@ jobs:
           grep -q 'moveOut' assets/ultimate-designer-navigator-v0880.js
           grep -q 'wouldCycle' assets/ultimate-designer-navigator-v0880.js
           grep -q '__h18NestingToolsV0840' assets/ultimate-designer-navigator-v0880.js
+          grep -q 'window.__h18NavigatorProductivityV0881' assets/ultimate-designer-navigator-productivity-v0881.js
+          grep -q 'contextmenu' assets/ultimate-designer-navigator-productivity-v0881.js
+          grep -q 'h18-v0881-type-filter' assets/ultimate-designer-navigator-productivity-v0881.js
+          grep -q 'scrollIntoView' assets/ultimate-designer-navigator-productivity-v0881.js
 
       - name: Release integrity when package is present
         shell: bash
