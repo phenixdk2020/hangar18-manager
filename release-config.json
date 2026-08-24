@@ -1,18 +1,21 @@
 {
-  "version": "0.8.83",
-  "title": "Billede-element freeze fix og trace-sikkerhed",
+  "version": "0.8.84",
+  "title": "Placement rollback og fast Inspector-rækkefølge",
   "channel": "test",
   "backlog_ids": [
     "INSPECTOR-IMAGE-086",
+    "INSPECTOR-ORDER-090",
+    "PLACEMENT-ROLLBACK-089",
     "TRACE-SAFETY-088",
     "TRACE-UI-087"
   ],
   "changelog": [
-    "Retter en reproduceret hard-freeze i Designer, når et rent Billede-element indsættes til højre/venstre for et element eller over/under et stacked/nested element.",
-    "Image Inspector-observeren får en dedikeret debounce/suppress guard før Inspector-runtime, så Inspectorens egne DOM-flytninger og label-polish ikke kan skabe en selvforstærkende MutationObserver-loop.",
-    "Tekst/stacking-sporet ændres ikke; den reproducerede kontrol Tekst → tekst til højre → tekst under forbliver regressionstest.",
-    "Udvidet trace ignorerer egne UI-mutations, throttler panel-repaint og højfrekvente drag/sort events, så diagnostik ikke kan forstærke editorbelastning.",
-    "Trace Start/Stop-panelet holdes fast synligt over viewportens nederste kant med sikker max-height og scrolling.",
-    "Drag/drop runtime får defensiv cleanup/watchdog som ekstra sikkerhed mod efterladte overlays eller aktiv drag-state efter afbrudte drop-forløb."
+    "Ruller v0.8.83's generelle drag/drop safety ownership tilbage: ingen nye dragstart/dragover/drop/dragend listeners, watchdog, syntetisk dragend eller overlay-cleanup må konkurrere med den dokumenteret fungerende v0.8.82 placement-kæde.",
+    "Højre, venstre, over og under ejes igen alene af den eksisterende v0838/v0843/v0851/v0862 placement-runtime.",
+    "Image-freeze beskyttelsen beholdes som et isoleret Inspector MutationObserver-filter og må ikke ændre drag/drop-state.",
+    "Inspectorens avancerede hale er fast: Billede/Mediebibliotek placeres umiddelbart før Dynamic data binding og Conditions / synlighed, når medie findes.",
+    "Dynamic data binding er altid næstsidst og Conditions / synlighed altid sidst i Inspector; begge er foldet ind som standard og kan åbnes med mus eller tastatur.",
+    "Inspector-rækkefølge-runtime er idempotent, så den ikke kan skabe en selvforstærkende MutationObserver-loop.",
+    "Trace self-observation/repaint hardening og viewport-sikker placering af Start/Stop-panelet bevares uden placement ownership."
   ]
 }
