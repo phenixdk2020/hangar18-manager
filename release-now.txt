@@ -1,4 +1,4 @@
-v0.8.87
-triggered_utc=2026-08-24T16:19:00Z
-reason=Trigger existing emergency test release workflow for image fit parity and vertical resize.
-nonce=3
+v0.8.88
+triggered_utc=2026-08-24T16:28:00Z
+reason=Build live diagnostics support endpoint and private site trace store.
+nonce=4
