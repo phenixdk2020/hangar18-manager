@@ -9,7 +9,7 @@ use Hangar18\UltimateDesigner\Backup\ManagedPageBackupRestoreService;
 use Hangar18\UltimateDesigner\Backup\SiteBackupPackageService;
 use Hangar18\UltimateDesigner\Backup\SiteBackupRestoreService;
 
-/** Read-only backup health and restore-audit support layer. */
+/** Read-only backup health, retention overview and restore-audit support layer. */
 final class BackupHealthAdminController
 {
     private const HEALTH_OPTION = 'hangar18_manager_backup_health_v1';
@@ -54,7 +54,7 @@ final class BackupHealthAdminController
     {
         self::authorize();
         self::runCheck();
-        self::redirect('Backup health-check er opdateret.');
+        self::redirect('Backup health-check og retention-overblik er opdateret.');
     }
 
     public static function render(): void
@@ -72,13 +72,23 @@ final class BackupHealthAdminController
         $checked = (string) ($health['CheckedUtc'] ?? 'ikke kørt');
         $b1 = is_array($health['B1'] ?? null) ? $health['B1'] : [];
         $b2 = is_array($health['B2'] ?? null) ? $health['B2'] : [];
+        $retention = is_array($health['Retention'] ?? null) ? $health['Retention'] : [];
+        $rB1 = is_array($retention['B1'] ?? null) ? $retention['B1'] : [];
+        $rB2 = is_array($retention['B2'] ?? null) ? $retention['B2'] : [];
         $class = $errors ? 'notice notice-warning' : 'notice notice-info';
 
         echo '<div class="' . esc_attr($class) . '" style="padding:12px 16px;margin-top:14px">';
-        echo '<h2 style="margin:0 0 8px">Backup health · read-only</h2>';
+        echo '<h2 style="margin:0 0 8px">Backup health & retention · read-only</h2>';
         echo '<p><strong>Sidst kontrolleret:</strong> ' . esc_html($checked) .
             ' · B1: ' . esc_html((string) ($b1['Valid'] ?? 0)) . '/' . esc_html((string) ($b1['Checked'] ?? 0)) . ' valide' .
             ' · B2: ' . esc_html((string) ($b2['Valid'] ?? 0)) . '/' . esc_html((string) ($b2['Checked'] ?? 0)) . ' valide.</p>';
+
+        echo '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin:10px 0">';
+        self::retentionCard('B1 JSON-backups', $rB1);
+        self::retentionCard('B2 site-backups', $rB2);
+        echo '</div>';
+        echo '<p class="description">Retention-panelet er kun observation: det viser antal, alder og diskforbrug og sletter aldrig backups automatisk.</p>';
+
         if ($errors) {
             echo '<details><summary><strong>' . esc_html((string) count($errors)) . ' backup health-fejl</strong></summary><ul style="list-style:disc;padding-left:22px">';
             foreach ($errors as $error) {
@@ -127,7 +137,6 @@ final class BackupHealthAdminController
         if ($out === false) {
             wp_die(esc_html__('CSV-output kunne ikke åbnes.', 'hangar18-manager'));
         }
-        // Excel-friendly UTF-8 BOM and semicolon delimiter, matching Hangar18 admin conventions.
         fwrite($out, "\xEF\xBB\xBF");
         fputcsv($out, ['Source','Utc','Mode','Backup','PageSlug','TargetPageId','SafetyBackup','UserId','Error'], ';');
         foreach ($records as $row) {
@@ -169,8 +178,8 @@ final class BackupHealthAdminController
                 }
                 $b1Checked++;
                 try {
-                    $report = $integrity->inspect($filename);
-                    if (!empty($report['Valid'])) {
+                    $check = $integrity->inspect($filename);
+                    if (!empty($check['Valid'])) {
                         $b1Valid++;
                     }
                 } catch (\Throwable $error) {
@@ -192,11 +201,11 @@ final class BackupHealthAdminController
                     continue;
                 }
                 $b2Checked++;
-                $report = $packages->validate($id);
-                if (!empty($report['Valid'])) {
+                $check = $packages->validate($id);
+                if (!empty($check['Valid'])) {
                     $b2Valid++;
                 } else {
-                    $messages = is_array($report['Errors'] ?? null) ? $report['Errors'] : [];
+                    $messages = is_array($check['Errors'] ?? null) ? $check['Errors'] : [];
                     $errors[] = 'B2 ' . $id . ': ' . ($messages ? implode(' | ', array_map('strval', $messages)) : 'ukendt integritetsfejl');
                 }
             }
@@ -205,15 +214,137 @@ final class BackupHealthAdminController
         }
 
         $report = [
-            'SchemaVersion'=>'1.0',
+            'SchemaVersion'=>'1.1',
             'CheckedUtc'=>gmdate('c'),
             'ReadOnly'=>true,
             'B1'=>['Checked'=>$b1Checked,'Valid'=>$b1Valid],
             'B2'=>['Checked'=>$b2Checked,'Valid'=>$b2Valid],
+            'Retention'=>self::retentionMetrics(),
             'Errors'=>array_slice(array_values(array_unique($errors)), 0, 50),
         ];
         update_option(self::HEALTH_OPTION, $report, false);
         return $report;
+    }
+
+    /** @return array<string,array<string,mixed>> */
+    private static function retentionMetrics(): array
+    {
+        $result = [
+            'B1'=>self::emptyRetention(),
+            'B2'=>self::emptyRetention(),
+        ];
+        $uploads = wp_upload_dir();
+        if (!empty($uploads['error']) || empty($uploads['basedir'])) {
+            return $result;
+        }
+        $base = rtrim((string) $uploads['basedir'], '/\\');
+
+        $b1Dir = $base . DIRECTORY_SEPARATOR . 'hangar18-manager-backups';
+        $b1Files = is_dir($b1Dir) ? (glob($b1Dir . DIRECTORY_SEPARATOR . 'Hangar18-Web-*.json') ?: []) : [];
+        $result['B1'] = self::metricsFromFiles($b1Files);
+
+        $b2Dir = $base . DIRECTORY_SEPARATOR . 'hangar18-manager-site-backups';
+        $b2Files = [];
+        if (is_dir($b2Dir)) {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($b2Dir, \FilesystemIterator::SKIP_DOTS)
+            );
+            foreach ($iterator as $file) {
+                if ($file instanceof \SplFileInfo && $file->isFile()) {
+                    $b2Files[] = $file->getPathname();
+                }
+            }
+        }
+        $b2Metrics = self::metricsFromFiles($b2Files);
+        try {
+            $catalog = (new SiteBackupPackageService())->listBackups();
+            $b2Metrics['Count'] = count($catalog);
+            $created = [];
+            foreach ($catalog as $entry) {
+                if (!is_array($entry)) {
+                    continue;
+                }
+                $ts = strtotime((string) ($entry['CreatedUtc'] ?? ''));
+                if ($ts !== false) {
+                    $created[] = $ts;
+                }
+            }
+            if ($created) {
+                $b2Metrics['OldestUtc'] = gmdate('c', min($created));
+                $b2Metrics['NewestUtc'] = gmdate('c', max($created));
+                $b2Metrics['OldestAgeDays'] = (int) floor(max(0, time() - min($created)) / DAY_IN_SECONDS);
+            }
+        } catch (\Throwable $ignore) {
+            // Filesystem metrics are still useful if the catalog cannot be read.
+        }
+        $result['B2'] = $b2Metrics;
+        return $result;
+    }
+
+    /** @param array<int,string> $files @return array<string,mixed> */
+    private static function metricsFromFiles(array $files): array
+    {
+        $total = 0;
+        $times = [];
+        $count = 0;
+        foreach ($files as $path) {
+            if (!is_file($path)) {
+                continue;
+            }
+            $count++;
+            $size = filesize($path);
+            if ($size !== false && $size > 0) {
+                $total += (int) $size;
+            }
+            $mtime = filemtime($path);
+            if ($mtime !== false) {
+                $times[] = (int) $mtime;
+            }
+        }
+        $oldest = $times ? min($times) : 0;
+        $newest = $times ? max($times) : 0;
+        return [
+            'Count'=>$count,
+            'TotalBytes'=>$total,
+            'TotalHuman'=>self::formatBytes($total),
+            'OldestUtc'=>$oldest > 0 ? gmdate('c', $oldest) : '',
+            'NewestUtc'=>$newest > 0 ? gmdate('c', $newest) : '',
+            'OldestAgeDays'=>$oldest > 0 ? (int) floor(max(0, time() - $oldest) / DAY_IN_SECONDS) : 0,
+        ];
+    }
+
+    /** @return array<string,mixed> */
+    private static function emptyRetention(): array
+    {
+        return ['Count'=>0,'TotalBytes'=>0,'TotalHuman'=>'0 B','OldestUtc'=>'','NewestUtc'=>'','OldestAgeDays'=>0];
+    }
+
+    /** @param array<string,mixed> $metrics */
+    private static function retentionCard(string $title, array $metrics): void
+    {
+        echo '<div style="background:#fff;border:1px solid #dcdcde;border-radius:4px;padding:10px 12px">';
+        echo '<strong>' . esc_html($title) . '</strong><br>';
+        echo '<span>' . esc_html((string) ($metrics['Count'] ?? 0)) . ' backups · ' . esc_html((string) ($metrics['TotalHuman'] ?? '0 B')) . '</span><br>';
+        $oldest = (string) ($metrics['OldestUtc'] ?? '');
+        $newest = (string) ($metrics['NewestUtc'] ?? '');
+        echo '<small>Ældste: ' . esc_html($oldest !== '' ? $oldest : '—') . ' (' . esc_html((string) ($metrics['OldestAgeDays'] ?? 0)) . ' dage)<br>Nyeste: ' . esc_html($newest !== '' ? $newest : '—') . '</small>';
+        echo '</div>';
+    }
+
+    private static function formatBytes(int $bytes): string
+    {
+        if ($bytes < 1024) {
+            return $bytes . ' B';
+        }
+        $units = ['KB','MB','GB','TB'];
+        $value = (float) $bytes;
+        foreach ($units as $unit) {
+            $value /= 1024;
+            if ($value < 1024 || $unit === 'TB') {
+                return number_format($value, $value >= 100 ? 0 : ($value >= 10 ? 1 : 2), ',', '.') . ' ' . $unit;
+            }
+        }
+        return $bytes . ' B';
     }
 
     /** @return array<int,array<string,mixed>> */
