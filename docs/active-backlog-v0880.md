@@ -1,7 +1,9 @@
 # Hangar18 Manager — canonical backlog delta v0.8.80
 
 **Statusdato:** 24. august 2026  
-**Baseline:** v0.8.80 testkandidat under build  
+**Baseline:** v0.8.80 frigivet testkandidat  
+**Release commit:** `54f6ca7b8dc9e3e2ac5b773b86d38fd7e92c2304`  
+**Package SHA-256:** `15785874c54772b229856ca4b4cb1b83279b89bff4e183546c6f53b5c7534523`  
 **Extends:** `docs/active-backlog-v0879.md`
 
 Denne fil er den aktuelle canonical backlog. Den arver v0.8.78-masteren via v0.8.79 og overskriver kun status for denne batch.
@@ -9,6 +11,8 @@ Denne fil er den aktuelle canonical backlog. Den arver v0.8.78-masteren via v0.8
 ## Batchstatus
 
 Denne batch arbejder på **23 backlog-ID’er**. De kendte `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` er fortsat frosset; Navigator/Move er et separat deterministisk værktøjslag og ændrer ikke canvas drag/drop-semantikken.
+
+Release-integritet for v0.8.80: `version_match=true`, `package_sha_match=true`, `zip_tree_policy=true`.
 
 # E. WhatIf cleanup
 
