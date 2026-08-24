@@ -10,25 +10,11 @@
 .h18-unsaved-preview-devices{display:flex;align-items:center;gap:6px}
 .h18-unsaved-preview-devices .button.is-active{background:#2271b1;border-color:#2271b1;color:#fff}
 .h18-unsaved-preview-shell{flex:1;min-height:0;overflow:auto;padding:24px;background:#dcdcde}
-.h18-unsaved-preview-viewport{min-height:100%;margin:0 auto;background:#fff;box-shadow:0 3px 16px rgba(0,0,0,.16);transition:width .16s ease,max-width .16s ease}
+.h18-unsaved-preview-viewport{height:100%;min-height:640px;margin:0 auto;background:#fff;box-shadow:0 3px 16px rgba(0,0,0,.16);transition:width .16s ease,max-width .16s ease}
 .h18-unsaved-preview-viewport.is-desktop{width:100%;max-width:100%}
 .h18-unsaved-preview-viewport.is-tablet{width:768px;max-width:100%}
 .h18-unsaved-preview-viewport.is-mobile{width:390px;max-width:100%}
-.h18-unsaved-preview-stage{min-height:100%;padding:0;background:#fff;overflow:hidden}
-.h18-unsaved-preview-section{margin:0!important;border:0!important;box-shadow:none!important;border-radius:0!important;cursor:default!important;outline:0!important}
-.h18-unsaved-preview-section+.h18-unsaved-preview-section{margin-top:0!important}
-
-/* LEGO-048: composed layout previews should read as page content, not editor cards. */
-.h18-unsaved-preview-stage .h18-ud-auto-box-grid,
-.h18-unsaved-preview-stage .h18-v0811-auto-grid,
-.h18-unsaved-preview-stage .h18-ud-box-contents-items,
-.h18-unsaved-preview-stage .h18-v0811-child-list{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
-.h18-unsaved-preview-stage .h18-v0811-auto-box,
-.h18-unsaved-preview-stage .h18-v0811-child-card{border:0!important;background:transparent!important;box-shadow:none!important;outline:0!important;min-width:0}
-.h18-unsaved-preview-stage .h18-v0811-auto-box-preview,
-.h18-unsaved-preview-stage .h18-v0811-child-preview{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
-.h18-unsaved-preview-stage .h18-canvas-preview{cursor:default!important;outline:0!important}
-
+.h18-unsaved-preview-frame{display:block;width:100%;height:100%;min-height:640px;border:0;background:#fff}
 .h18-unsaved-preview-empty{padding:50px 24px;text-align:center;color:#646970}
 .h18-unsaved-preview-open-body{overflow:hidden!important}
 
@@ -40,6 +26,7 @@
     .h18-unsaved-preview-heading{flex:1 1 100%}
     .h18-unsaved-preview-devices{flex:1 1 auto}
     .h18-unsaved-preview-shell{padding:12px}
+    .h18-unsaved-preview-viewport,.h18-unsaved-preview-frame{min-height:calc(100vh - 150px)}
 }
 
 @media(prefers-reduced-motion:reduce){
