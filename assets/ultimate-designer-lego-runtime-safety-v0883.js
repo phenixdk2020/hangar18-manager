@@ -5,7 +5,9 @@
 
     const VERSION = '0.8.83';
     const TRACE_UI_SELECTOR = '#h18-ultimate-designer-trace-v0876,#h18-trace-tools-v0879,#h18-trace-recording-indicator-v0879';
+    const TRACE_PANEL_ID = 'h18-ultimate-designer-trace-v0876';
     const NativeMutationObserver = window.MutationObserver;
+    let TraceSafeMutationObserver = null;
     let editorDragActive = false;
     let lastDragActivity = 0;
     let watchdogTimer = 0;
@@ -40,8 +42,24 @@
         return record.type === 'childList' && addedOrRemovedTraceUi(record);
     }
 
+    function keepTracePanelVisible() {
+        const panel = document.getElementById(TRACE_PANEL_ID);
+        if (!panel) { return false; }
+        panel.style.setProperty('position', 'fixed', 'important');
+        panel.style.setProperty('left', '206px', 'important');
+        panel.style.setProperty('right', 'auto', 'important');
+        panel.style.setProperty('top', 'auto', 'important');
+        panel.style.setProperty('bottom', '76px', 'important');
+        panel.style.setProperty('width', 'min(760px,calc(100vw - 238px))', 'important');
+        panel.style.setProperty('max-height', 'calc(100vh - 120px)', 'important');
+        panel.style.setProperty('overflow', 'auto', 'important');
+        panel.style.setProperty('z-index', '2147483100', 'important');
+        panel.setAttribute('data-h18-v0883-viewport-safe', '1');
+        return true;
+    }
+
     if (NativeMutationObserver) {
-        function TraceSafeMutationObserver(callback) {
+        TraceSafeMutationObserver = function (callback) {
             if (!isTraceObserver(callback)) {
                 return new NativeMutationObserver(callback);
             }
@@ -55,10 +73,28 @@
             // constructor afterwards so unrelated late runtimes stay native.
             window.MutationObserver = NativeMutationObserver;
             return observer;
-        }
+        };
 
         TraceSafeMutationObserver.prototype = NativeMutationObserver.prototype;
         window.MutationObserver = TraceSafeMutationObserver;
+
+        // The trace panel is created late in the footer. A small native observer
+        // moves it into a viewport-safe position once, then disconnects itself.
+        const tracePanelObserver = new NativeMutationObserver(function () {
+            if (keepTracePanelVisible()) { tracePanelObserver.disconnect(); }
+        });
+        if (document.documentElement) {
+            tracePanelObserver.observe(document.documentElement, { childList: true, subtree: true });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            keepTracePanelVisible();
+            window.setTimeout(function () {
+                if (!window.__h18UltimateDesignerTraceV0876 && window.MutationObserver === TraceSafeMutationObserver) {
+                    window.MutationObserver = NativeMutationObserver;
+                }
+            }, 0);
+        }, { once: true });
     }
 
     function editorSections() {
@@ -184,6 +220,7 @@
     window.__h18LegoRuntimeSafetyV0883 = {
         version: VERSION,
         cleanup: forceDragCleanup,
+        keepTracePanelVisible: keepTracePanelVisible,
         isDragActive: function () { return editorDragActive; }
     };
 }());
