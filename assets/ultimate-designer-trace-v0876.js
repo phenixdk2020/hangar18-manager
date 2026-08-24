@@ -4,11 +4,14 @@
     if (window.__h18UltimateDesignerTraceV0876) { return; }
 
     const VERSION = '0.8.76';
+    const SAFETY_VERSION = '0.8.83';
     const STORAGE_KEY = 'h18.ultimate-designer.trace.v0876';
     const MAX_EVENTS = 2200;
     const MAX_PERSISTED = 1400;
-    const HIGH_FREQ_MS = 90;
-    const MUTATION_MS = 140;
+    const HIGH_FREQ_MS = 160;
+    const MUTATION_MS = 180;
+    const PANEL_REFRESH_MS = 120;
+    const TRACE_UI_SELECTOR = '#h18-ultimate-designer-trace-v0876,#h18-trace-tools-v0879,#h18-trace-recording-indicator-v0879';
 
     let events = [];
     let seq = 0;
@@ -23,6 +26,7 @@
     let persistTimer = 0;
     let highFreqTimer = 0;
     let mutationTimer = 0;
+    let panelRefreshTimer = 0;
     let mutationBucket = null;
     const wrapped = [];
 
@@ -199,13 +203,17 @@
         if (!sessionId) { sessionId = id(); }
         if (!startedAt) { startedAt = iso(); }
     }
+    function schedulePanelUpdate() {
+        if (panelRefreshTimer) { return; }
+        panelRefreshTimer = setTimeout(function () { panelRefreshTimer = 0; updatePanel(); }, PANEL_REFRESH_MS);
+    }
     function record(type, target, detail, options) {
         const force = options && options.force;
         if (!logging && !force) { return null; }
         const entry = { seq: ++seq, time: iso(), local: clock(), session: sessionId, type: type, target: targetInfo(target && target.nodeType === 1 ? target : null), detail: simple(detail || {}, 0), state: state() };
         events.push(entry);
         if (events.length > MAX_EVENTS) { events.splice(0, events.length - MAX_EVENTS); }
-        updatePanel(); schedulePersist();
+        schedulePanelUpdate(); schedulePersist();
         return entry;
     }
     function line(entry) {
@@ -215,7 +223,7 @@
     function exportText() {
         return ['Hangar18 Ultimate Designer Trace ' + VERSION, 'session=' + sessionId, 'started=' + startedAt, 'logging=' + (logging ? 'ON' : 'OFF'), 'exported=' + iso(), 'url=' + location.href, 'events=' + events.length, ''].join('\n') + events.map(line).join('\n');
     }
-    function exportJson() { return JSON.stringify({ product: 'Hangar18 Ultimate Designer', traceVersion: VERSION, sessionId: sessionId, startedAt: startedAt, logging: logging, exportedAt: iso(), url: location.href, runtime: state(), events: events }, null, 2); }
+    function exportJson() { return JSON.stringify({ product: 'Hangar18 Ultimate Designer', traceVersion: VERSION, traceSafetyVersion: SAFETY_VERSION, sessionId: sessionId, startedAt: startedAt, logging: logging, exportedAt: iso(), url: location.href, runtime: state(), events: events }, null, 2); }
     function download(name, content, mime) {
         const blob = new Blob([content], { type: mime }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
         a.href = url; a.download = name; a.style.display = 'none'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
@@ -227,7 +235,7 @@
     }
     function startTest() {
         events = []; seq = 0; sessionId = id(); startedAt = iso(); logging = true;
-        record('TEST_START', document.activeElement, { version: VERSION }, { force: true }); persist(); updatePanel();
+        record('TEST_START', document.activeElement, { version: VERSION, safetyVersion: SAFETY_VERSION }, { force: true }); persist(); updatePanel();
     }
     function reset() {
         events = []; seq = 0; sessionId = id(); startedAt = iso(); logging = false;
@@ -238,18 +246,24 @@
         const b = document.createElement('button'); b.type = 'button'; b.className = 'button button-small'; b.textContent = label;
         b.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); fn(b); }); return b;
     }
+    function setNodeText(node, value) {
+        if (node && node.textContent !== value) { node.textContent = value; }
+    }
     function updatePanel() {
         if (!panel) { return; }
-        statusNode.textContent = logging ? 'LOG TIL' : 'LOG FRA';
+        setNodeText(statusNode, logging ? 'LOG TIL' : 'LOG FRA');
         statusNode.style.fontWeight = '700';
-        countNode.textContent = events.length + ' events';
-        toggleButton.textContent = logging ? 'Stop log' : 'Fortsæt log';
-        if (panel.getAttribute('data-expanded') === '1') { pre.textContent = events.slice(-45).map(line).join('\n') || 'Ingen events endnu.'; pre.scrollTop = pre.scrollHeight; }
+        setNodeText(countNode, events.length + ' events');
+        setNodeText(toggleButton, logging ? 'Stop log' : 'Fortsæt log');
+        if (panel.getAttribute('data-expanded') === '1') {
+            const value = events.slice(-45).map(line).join('\n') || 'Ingen events endnu.';
+            if (pre.textContent !== value) { pre.textContent = value; pre.scrollTop = pre.scrollHeight; }
+        }
     }
     function installPanel() {
         if (panel || !document.body) { return; }
         panel = document.createElement('aside'); panel.id = 'h18-ultimate-designer-trace-v0876'; panel.setAttribute('data-expanded', '0');
-        panel.style.cssText = 'position:fixed;left:16px;bottom:16px;z-index:2147483100;width:min(800px,calc(100vw - 32px));background:#fff;border:2px solid #1d2327;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.24);font:12px/1.35 Consolas,Monaco,monospace;color:#1d2327;';
+        panel.style.cssText = 'position:fixed;left:206px;bottom:76px;z-index:2147483100;width:min(760px,calc(100vw - 238px));max-height:calc(100vh - 120px);overflow:auto;background:#fff;border:2px solid #1d2327;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.24);font:12px/1.35 Consolas,Monaco,monospace;color:#1d2327;';
         const head = document.createElement('div'); head.style.cssText = 'display:flex;align-items:center;gap:6px;padding:8px;flex-wrap:wrap;';
         statusNode = document.createElement('strong'); countNode = document.createElement('span'); countNode.style.marginRight = 'auto';
         const show = button('Vis log', function (b) { const on = panel.getAttribute('data-expanded') === '1'; panel.setAttribute('data-expanded', on ? '0' : '1'); pre.style.display = on ? 'none' : 'block'; b.textContent = on ? 'Vis log' : 'Skjul log'; updatePanel(); });
@@ -278,12 +292,28 @@
         ['sortstart', 'sortchange', 'sortupdate', 'sortstop', 'sortcancel', 'sortreceive', 'sortremove'].forEach(function (name) { $(document).on(name + '.h18Trace0876', selector, function (event, ui) { const item = ui && ui.item && ui.item.length ? ui.item.get(0) : event.target; record(name, item, {}); }); });
         $(document).on('sort.h18Trace0876', selector, function (event, ui) { if (!logging || highFreqTimer) { return; } highFreqTimer = setTimeout(function () { highFreqTimer = 0; const item = ui && ui.item && ui.item.length ? ui.item.get(0) : event.target; record('sort', item, {}); }, HIGH_FREQ_MS); });
     }
+    function isTraceUiNode(node) {
+        if (!node) { return false; }
+        if (node.nodeType === 3) { node = node.parentNode; }
+        if (!node || node.nodeType !== 1) { return false; }
+        if (node.matches && node.matches(TRACE_UI_SELECTOR)) { return true; }
+        return !!(node.closest && node.closest(TRACE_UI_SELECTOR));
+    }
+    function mutationIsTraceUi(mutation) {
+        if (!mutation) { return false; }
+        if (isTraceUiNode(mutation.target)) { return true; }
+        if (mutation.type !== 'childList') { return false; }
+        const nodes = Array.prototype.slice.call(mutation.addedNodes || []).concat(Array.prototype.slice.call(mutation.removedNodes || []));
+        return nodes.length > 0 && nodes.every(function (node) { return node.nodeType !== 1 || isTraceUiNode(node); });
+    }
     function installMutations() {
         if (!window.MutationObserver || !document.body) { return; }
         new MutationObserver(function (list) {
             if (!logging) { return; }
+            const relevant = Array.prototype.filter.call(list || [], function (mutation) { return !mutationIsTraceUi(mutation); });
+            if (!relevant.length) { return; }
             if (!mutationBucket) { mutationBucket = { childList: 0, attributes: 0, added: 0, removed: 0, samples: [] }; }
-            list.forEach(function (m) { if (m.type === 'childList') { mutationBucket.childList += 1; mutationBucket.added += m.addedNodes.length; mutationBucket.removed += m.removedNodes.length; } else { mutationBucket.attributes += 1; } if (mutationBucket.samples.length < 8 && m.target && m.target.nodeType === 1) { mutationBucket.samples.push({ type: m.type, attr: m.attributeName || '', target: nodeName(m.target) }); } });
+            relevant.forEach(function (m) { if (m.type === 'childList') { mutationBucket.childList += 1; mutationBucket.added += m.addedNodes.length; mutationBucket.removed += m.removedNodes.length; } else { mutationBucket.attributes += 1; } if (mutationBucket.samples.length < 8 && m.target && m.target.nodeType === 1) { mutationBucket.samples.push({ type: m.type, attr: m.attributeName || '', target: nodeName(m.target) }); } });
             clearTimeout(mutationTimer); mutationTimer = setTimeout(function () { const bucket = mutationBucket; mutationBucket = null; record('DOM_MUTATIONS', document.activeElement, bucket); }, MUTATION_MS);
         }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'data-key', 'data-h18-v0838-position', 'data-h18-v0838-target', 'data-h18-v0871-inside-kasse', 'data-h18-nested-in-box', 'data-h18-v0811-child-source'] });
     }
@@ -296,15 +326,16 @@
     }
     function instrument() {
         [['nesting', window.__h18NestingToolsV0840, ['refresh']], ['selection', window.__h18LegoInspectorOnlyV0847, ['selectInspectorForNode', 'refreshSelectedCanvasMarker', 'rememberSelectedCanvasKey']], ['parentGuard', window.__h18LegoParentKeyGuardV0845, ['reconcileNow', 'ensureParentOption', 'armVisualReconcile']], ['stack', window.__h18LegoFixesV0851, ['adoptUnder', 'clearStackForKey']], ['placement', window.__h18LegoPlacementStabilityV0862, ['moveElementIntoBox']], ['dropZones', window.__h18LegoDropZonesV0838, ['refresh', 'clear']]].forEach(function (group) { group[2].forEach(function (method) { wrap(group[0], group[1], method); }); });
-        record('TRACE_INSTRUMENTATION', null, { wrapped: wrapped.slice() }, { force: true });
+        record('TRACE_INSTRUMENTATION', null, { wrapped: wrapped.slice(), safetyVersion: SAFETY_VERSION }, { force: true });
     }
     function install() {
         installPanel(); wrapConsole(); installEvents(); installSortable(); installMutations(); instrument();
-        record('PAGE_LOAD', document.activeElement, { version: VERSION, loggingRestored: logging, viewport: { width: innerWidth, height: innerHeight }, userAgent: navigator.userAgent }, { force: true }); persist();
+        record('PAGE_LOAD', document.activeElement, { version: VERSION, safetyVersion: SAFETY_VERSION, loggingRestored: logging, viewport: { width: innerWidth, height: innerHeight }, userAgent: navigator.userAgent }, { force: true }); persist();
     }
 
     restore();
     document.documentElement.setAttribute('data-h18-ultimate-designer-trace', VERSION);
-    window.__h18UltimateDesignerTraceV0876 = { version: VERSION, record: record, events: function () { return events.slice(); }, exportText: exportText, exportJson: exportJson, startTest: startTest, setLogging: setLogging, reset: reset, state: state, isLogging: function () { return logging; } };
+    document.documentElement.setAttribute('data-h18-ultimate-designer-trace-safety', SAFETY_VERSION);
+    window.__h18UltimateDesignerTraceV0876 = { version: VERSION, safetyVersion: SAFETY_VERSION, record: record, events: function () { return events.slice(); }, exportText: exportText, exportJson: exportJson, startTest: startTest, setLogging: setLogging, reset: reset, state: state, isLogging: function () { return logging; } };
     if (document.body) { setTimeout(install, 0); } else if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install, { once: true }); } else { setTimeout(install, 0); }
 }());
