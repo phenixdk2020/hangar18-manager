@@ -8,12 +8,13 @@ Denne fil er den aktuelle canonical backlog. Den arver hele master-roadmapet via
 
 ## Batchstatus
 
-Denne arbejdsbatch omfatter nu **37 backlog-ID’er**. `release-config.json` holdes bevidst urørt mens v0.8.81 release-pipelinen er blokeret, så yderligere source-arbejde ikke starter flere konkurrerende release-runs. Hovedmålet er permanent WhatIf source-removal, fail-closed release-QA, updater/release-hardening, dokumenteret legacy-klassifikation/rollback og sikre Navigator-produktivitetsfunktioner. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
+Denne arbejdsbatch omfatter nu **38 backlog-ID’er**. `release-config.json` holdes bevidst urørt mens v0.8.81 release-pipelinen er blokeret, så yderligere source-arbejde ikke starter flere konkurrerende release-runs. Hovedmålet er permanent WhatIf source-removal, fail-closed release-QA, updater/release-hardening, dokumenteret legacy-klassifikation/rollback og sikre Navigator-produktivitetsfunktioner. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
 
 # A. Release / sporbarhed
 
 | ID | Pri | Status | Leverance / Definition of done |
 |---|---|---|---|
+| RELEASE-006 | Normal | 🟡 AUTOMATISK QA + MANUEL ROLLBACK-TEST | Updater-hardening verificerer efter succesfuld rollback den faktisk gendannede `hangar18-manager.php`: plugin-header og `Hangar18_Manager::VERSION` skal være den tidligere version. `hangar18_manager_update_rollback_verification_v1` gemmer `from_version`, `to_version`, `restored_main_sha256`, code-backup SHA og UTC; loggen skriver `UPDATE_ROLLBACK_VERIFIED`. `tools/updater-rollback-qa.py` kræver kontrakten. Rigtig Plugin_Upgrader rollback-test mangler. |
 | RELEASE-007 | Høj | ✅ FÆRDIG v0.8.81 | Fail-closed release-cleanup skriver ved stop en isoleret `docs/release-build-failure.md` med version/source commit/step/stderr/stdout, ruller delvise source-writes tilbage og committer kun diagnosen. Diagnosen er udvidet til hele pre-package QA-kæden. |
 | RELEASE-008 | Høj | ✅ FÆRDIG v0.8.81 | Release-workflow bruger én concurrency-gruppe med `cancel-in-progress: true`, så nyeste release-config-trigger vinder og ældre køede/in-progress builds ikke senere kan publicere stale packages. |
 | RELEASE-009 | Normal | ✅ FÆRDIG v0.8.81 | Release-metadata normaliserer readme pr. versionsnummer: alle eksisterende sektioner for samme version fjernes og præcis én aktuel sektion indsættes, så retries ikke skaber dublerede release-noter. |
@@ -27,7 +28,7 @@ Denne arbejdsbatch omfatter nu **37 backlog-ID’er**. `release-config.json` hol
 | UPDATER-007 | Høj | 🟡 FIX-KANDIDAT / MANUEL UPDATE-TEST | Efter installation invalidates `hangar18_manager_update_state_v1`, `update_plugins` site-transient og WordPress plugin-cache samlet; næste request verificerer runtime før atomisk updater-state genopbygges. Samme cache cleanup udføres efter succesfuld rollback. |
 | UPDATER-008 | Høj | 🟡 AUTOMATISK QA + MANUEL UPDATE-TEST | Eksisterende SHA-kontrol af GitHub-bytes bevares. `tools/updater-install-hardening.py` tilføjer anden SHA-256-kontrol af den faktisk gemte ZIP-fil før udpakning; mismatch sletter ZIP og stopper transactionen. |
 | UPDATER-009 | Høj | 🟡 AUTOMATISK QA + MANUEL UPDATE-TEST | Code-backup oprettes fortsat før mutation. Hardening genåbner backup-ZIP, kræver hovedfil med både korrekt plugin-header og VERSION-konstant og beregner backup-SHA før update-pakken installeres. |
-| UPDATER-010 | Høj | 🟡 AUTOMATISK KONTRAKT-QA | `tools/updater-rollback-qa.py` tester simuleret success, fejl før backup, fejl efter verificeret backup og rollback-fejl og kræver den eksisterende rollback-owner samt cleanup af pending/cache efter succesfuld rollback. Fuld WordPress integrationstest med rigtig Plugin_Upgrader mangler fortsat. |
+| UPDATER-010 | Høj | 🟡 AUTOMATISK KONTRAKT-QA | `tools/updater-rollback-qa.py` tester simuleret success, fejl før backup, fejl efter verificeret backup og rollback-fejl. Succesfuld rollback skal nu også verificere restored version + SHA og persistere rollback-audit før pending/cache ryddes. Fuld WordPress integrationstest med rigtig Plugin_Upgrader mangler fortsat. |
 | UPDATER-015 | Normal | ✅ AUTOMATISK QA v0.8.81 | `tools/updater-contract-qa.py` tester behind/equal/ahead, schema 1.0 vs ukendt schema, plugin-id, versionformat, SHA-format og at atomisk state fortsat beregner JA/NEJ ud fra `latest` mod aktiv `current`. Kører i governance og release-QA. |
 
 # E. WhatIf cleanup
@@ -59,7 +60,7 @@ Denne arbejdsbatch omfatter nu **37 backlog-ID’er**. `release-config.json` hol
 | LEGACY-008 | Normal | ⛔ BLOKERET AF LEGACY-006 + LEGACY-007 | One-time repair flags slettes først efter hook-retirement og dokumenteret upgrade-path. Ingen automatisk flag-sletning er implementeret. |
 | LEGACY-009 | Normal | ✅ AUDIT FÆRDIG v0.8.81 | Astra runtime guard er klassificeret som aktiv; `maybe_repair_astra_banner_047` er særskilt one-time migration-kandidat og slettes ikke blindt. |
 | LEGACY-010 | Normal | ✅ AUDIT FÆRDIG v0.8.81 | `handle_repair_menu()` klassificeres som manuel vedligeholdelse, ikke automatisk dead code; beholdes indtil Menu UI v2 har verificeret fuld erstatning. |
-| LEGACY-011 | Normal | 🟠 REFERENCEGRAPH AKTIV | `LegacyShellShadowAdminController` er verificeret aktiv: den registreres og renderes direkte i Ultimate Designer og bruger `LegacyShellSnapshotService` som I2A baseline. Næste del er maskinelt definition/reference-graph for øvrige legacy/migration/import/shadow-klasser; kun definition-only kandidater kan gå videre til removal-review. |
+| LEGACY-011 | Normal | 🟡 AUTOMATISK REFERENCEGRAPH QA | `tools/legacy-reference-graph.py` scanner `hangar18-manager.php` + `src/**/*.php`, inventerer legacy/migration/import/conversion/shadow-klasser, one-time `admin_init` repair-hooks og migration/repair option-konstanter. `legacy-reference-graph-qa.yml` kræver fortsatte eksterne referencer for kendte aktive `LegacyShellShadowAdminController`, `LegacyShellSnapshotService` og `ConversionAdminController`; definition-only resultater er kun review-kandidater og slettes ikke automatisk. |
 | LEGACY-012 | Normal | ✅ AUTOMATISK QA v0.8.81 | Release ZIP-policy + legacy audit blokerer PowerShell, bootstrap/VehicleRegister JSON og dev-only leftovers; v0.8.81 tilføjer desuden blokering af WhatIf shim-filer. |
 | LEGACY-013 | Normal | ✅ FÆRDIG v0.8.81 | `docs/legacy-runtime-audit-v0881.md` dokumenterer ønsket WordPress-native ejerarkitektur og cleanup-grænser. |
 
@@ -75,13 +76,13 @@ Denne arbejdsbatch omfatter nu **37 backlog-ID’er**. `release-config.json` hol
 
 | ID | Pri | Status | Leverance / Definition of done |
 |---|---|---|---|
-| QA-020 | Normal | 🟡 DELVIST v0.8.81 | Governance QA dry-runs WhatIf-cleaner + updater-hardening på kopi, linter muteret PHP/JS, kører updater contract/rollback matrix, linter post-install/legacy rollback controllers og syntax-checker Navigator productivity-laget; fuld historisk asset-lint er fortsat åben. |
+| QA-020 | Normal | 🟡 DELVIST v0.8.81 | Governance QA dry-runs WhatIf-cleaner + updater-hardening på kopi, linter muteret PHP/JS, kører updater contract/rollback matrix, linter post-install/legacy rollback controllers og syntax-checker Navigator productivity-laget. Separat legacy-referencegraph workflow beskytter aktive migration/shadow references; fuld historisk asset-lint er fortsat åben. |
 
 # Næste sikre arbejde mens v0.8.81 build er blokeret
 
-1. Færdiggør LEGACY-011 referencegraph og klassificér definition-only kandidater uden at slette aktive shadow/conversion paths.
+1. Review definition-only resultater fra LEGACY-011 workflow; slet kun kandidater hvor dynamisk autoload/handler-reference også er udelukket.
 2. Fortsæt ikke LEGACY-007/008 destruktivt før `LEGACY-006` rollback-punkt er live-verificeret på test2.
-3. Fortsæt updater-hardening QA; manuel update acceptance skal verificere from/to/runtime, package SHA, code-backup SHA og cache-invalidation.
+3. Manuel updater acceptance skal verificere from/to/runtime, package SHA, code-backup SHA, restored rollback SHA og cache-invalidation.
 4. Når v0.8.81 kan pakkes: smoke-test Vehicle/Event/Gallery/Menu/Page Editor saves efter WhatIf removal.
 5. Smoke-test Navigator typefilter, autoscroll og context menu.
 6. De tre frosne canvas-runtimebugs genåbnes kun med TRACE evidence.
