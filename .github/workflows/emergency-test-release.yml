@@ -37,7 +37,7 @@ jobs:
           print('Building test release', v)
           PY
 
-      - name: Apply guarded source migrations
+      - name: Apply guarded source migrations and lint
         shell: bash
         run: |
           set -euo pipefail
@@ -46,13 +46,23 @@ jobs:
           python3 tools/updater-install-hardening.py --apply --report /tmp/updater-hardening.json
           python3 tools/updater-install-hardening.py --assert-hardened
           php -l hangar18-manager.php
+          php -l src/Autoload.php
           php -l src/Admin/IntegrationAdminBootstrap.php
           php -l src/Admin/UpdaterPostInstallVerificationAdminController.php
-          php -l src/Autoload.php
+          php -l src/Admin/EditorLegoStackAdminController.php
+          php -l src/Admin/EditorUnsavedPreviewAdminController.php
+          php -l src/Diagnostics/EditorDiagnosticRuntime.php
+          php -l src/Frontend/LegoLayoutFrontendRuntime.php
+          php -l src/Frontend/LegoStackFrontendRuntime.php
+          php -l src/Frontend/ImageElementFrontendRuntime.php
           node --check assets/admin.js
           node --check assets/ultimate-designer-lego-inspector-only-v0847.js
           node --check assets/ultimate-designer-unsaved-preview.js
           node --check assets/ultimate-designer-navigator-productivity-v0881.js
+          node --check assets/ultimate-designer-element-sizing-v0887.js
+          node --check assets/ultimate-designer-live-diagnostics-v0888.js
+          node --check assets/ultimate-designer-trace-v0876.js
+          node --check assets/ultimate-designer-trace-tools-v0879.js
           node --check assets/updater-support-v0879.js
 
       - name: Apply version metadata
@@ -91,7 +101,7 @@ jobs:
           (cd build && zip -qr ../dist/hangar18-manager.zip hangar18-manager)
           unzip -tq dist/hangar18-manager.zip
 
-      - name: Write update manifest
+      - name: Write update and release manifests
         shell: bash
         run: |
           export PACKAGE_SHA="$(sha256sum dist/hangar18-manager.zip | awk '{print $1}')"
@@ -112,6 +122,7 @@ jobs:
           }
           pathlib.Path('update.json').write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           PY
+          python3 tools/release-integrity.py --write-manifest
 
       - name: Verify package contract
         shell: bash
@@ -119,28 +130,35 @@ jobs:
           set -euo pipefail
           VERSION="$(python3 -c "import json;print(json.load(open('release-config.json'))['version'])")"
           MANIFEST_VERSION="$(python3 -c "import json;print(json.load(open('update.json'))['version'])")"
+          RELEASE_VERSION="$(python3 -c "import json;print(json.load(open('release-manifest.json'))['version'])")"
           SCHEMA="$(python3 -c "import json;print(json.load(open('update.json'))['schema_version'])")"
           SHA="$(python3 -c "import json;print(json.load(open('update.json'))['package_sha256'])")"
+          RELEASE_SHA="$(python3 -c "import json;print(json.load(open('release-manifest.json'))['package_sha256'])")"
           ZIP_VERSION="$(unzip -p dist/hangar18-manager.zip hangar18-manager/hangar18-manager.php | sed -n 's/^ \* Version: //p' | head -n1 | tr -d '\r')"
           test "$VERSION" = "$MANIFEST_VERSION"
+          test "$VERSION" = "$RELEASE_VERSION"
           test "$VERSION" = "$ZIP_VERSION"
+          test "$SHA" = "$RELEASE_SHA"
           test "$SCHEMA" = "1.0"
           echo "$SHA  dist/hangar18-manager.zip" | sha256sum -c -
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Diagnostics/EditorDiagnosticRuntime.php | grep -c 'class EditorDiagnosticRuntime')" = "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-live-diagnostics-v0888.js | grep -c '__h18LiveDiagnosticsV0888')" -ge "1"
           if unzip -Z1 dist/hangar18-manager.zip | grep -Eqi 'NoWhatIfAdminController|hangar18-no-whatif'; then
             echo 'Legacy WhatIf shim leaked into ZIP' >&2; exit 1
           fi
-          tar -czf release-source-v0882.tar.gz hangar18-manager.php readme.txt assets src
+          tar -czf release-source-current.tar.gz hangar18-manager.php readme.txt assets src
 
       - name: Upload verified package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: hangar18-manager-v0882
+          name: hangar18-manager-test-release
           if-no-files-found: error
           retention-days: 7
           path: |
             dist/hangar18-manager.zip
             update.json
-            release-source-v0882.tar.gz
+            release-manifest.json
+            release-source-current.tar.gz
 
       - name: Publish verified PR build to main
         if: github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'release-v')
@@ -149,11 +167,9 @@ jobs:
           set -euo pipefail
           VERSION="$(python3 -c "import json;print(json.load(open('release-config.json'))['version'])")"
           rm -rf /tmp/h18-release
-          mkdir -p /tmp/h18-release/dist /tmp/h18-release/assets /tmp/h18-release/src/Admin
+          mkdir -p /tmp/h18-release/dist
           cp dist/hangar18-manager.zip /tmp/h18-release/dist/
-          cp update.json hangar18-manager.php readme.txt /tmp/h18-release/
-          cp assets/admin.js assets/admin.css assets/updater-support-v0879.js /tmp/h18-release/assets/
-          cp src/Admin/IntegrationAdminBootstrap.php /tmp/h18-release/src/Admin/
+          cp update.json release-manifest.json hangar18-manager.php readme.txt /tmp/h18-release/
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -163,14 +179,11 @@ jobs:
           cp /tmp/h18-release/hangar18-manager.php ./hangar18-manager.php
           cp /tmp/h18-release/readme.txt ./readme.txt
           cp /tmp/h18-release/update.json ./update.json
+          cp /tmp/h18-release/release-manifest.json ./release-manifest.json
           cp /tmp/h18-release/dist/hangar18-manager.zip ./dist/hangar18-manager.zip
-          cp /tmp/h18-release/assets/admin.js ./assets/admin.js
-          cp /tmp/h18-release/assets/admin.css ./assets/admin.css
-          cp /tmp/h18-release/assets/updater-support-v0879.js ./assets/updater-support-v0879.js
-          cp /tmp/h18-release/src/Admin/IntegrationAdminBootstrap.php ./src/Admin/IntegrationAdminBootstrap.php
           rm -f assets/hangar18-no-whatif-v0858.js assets/hangar18-no-whatif-v0858.css src/Admin/NoWhatIfAdminController.php
 
-          git add -A -- hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip assets/admin.js assets/admin.css assets/updater-support-v0879.js src/Admin/IntegrationAdminBootstrap.php
+          git add -A -- hangar18-manager.php readme.txt update.json release-manifest.json dist/hangar18-manager.zip
           if git diff --cached --quiet; then
             echo 'Verified release files already match main.'
             exit 0
@@ -186,7 +199,7 @@ jobs:
           VERSION="$(python3 -c "import json;print(json.load(open('release-config.json'))['version'])")"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A -- hangar18-manager.php readme.txt update.json dist/hangar18-manager.zip assets src/Admin
+          git add -A -- hangar18-manager.php readme.txt update.json release-manifest.json dist/hangar18-manager.zip
           if git diff --cached --quiet; then
             echo 'Verified release files already match main.'
             exit 0
