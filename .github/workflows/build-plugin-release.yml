@@ -186,7 +186,8 @@ jobs:
 
           config = json.loads(pathlib.Path('release-config.json').read_text(encoding='utf-8'))
           manifest = {
-              'schema_version': '1.1',
+              # Keep 1.0 until every installable legacy updater accepts a newer schema.
+              'schema_version': '1.0',
               'plugin': 'hangar18-manager',
               'version': str(config['version']).strip(),
               'channel': str(config['channel']).strip(),
@@ -205,6 +206,7 @@ jobs:
         shell: bash
         run: |
           VERSION="$(python3 -c "import json; print(json.load(open('release-config.json'))['version'])")"
+          test "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["schema_version"] ?? "";')" = "1.0"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/hangar18-manager.php | sed -n 's/^ \* Version: //p' | head -n1 | tr -d '\r')" = "$VERSION"
           test "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["version"] ?? "";')" = "$VERSION"
           echo "$(php -r '$j=json_decode(file_get_contents("update.json"),true); echo $j["package_sha256"] ?? "";')  dist/hangar18-manager.zip" | sha256sum -c -
