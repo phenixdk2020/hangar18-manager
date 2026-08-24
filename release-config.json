@@ -1,18 +1,20 @@
 {
-  "version": "0.8.86",
-  "title": "Stack-aware preview og naturlig billedhøjde",
+  "version": "0.8.87",
+  "title": "Billede-fit parity og lodret element-resize",
   "channel": "test",
   "backlog_ids": [
+    "IMAGE-FIT-PARITY-100",
+    "VERTICAL-ELEMENT-RESIZE-099",
     "FRONTEND-STACK-096",
     "CANVAS-STACK-AUTOHEIGHT-097"
   ],
   "changelog": [
-    "Frontend og live-preview bliver stack-aware: elementer under hinanden i samme Grid-kolonne tæller som én logisk kolonne og bruger stack-rodens 12-kolonne-span.",
-    "Testcasen 4/12 venstre + 8/12 højre med Billede under højre Tekst må derfor ikke længere blive reduceret til en smal 1/12-billedstribe i preview.",
-    "Live-preview sender nu både aktuelle span-data og aktuelle StackRootKey/StackOrder/højdedata uden at gemme siden.",
-    "Lodrette stacks uden manuelt ↕-resize bruger naturlig indholdshøjde, så et stort billede får elementrammen til at vokse i stedet for at flyde ud af rammen.",
-    "Hvis en lodret ↕-fordeling er sat eksplicit, bevares den som autoritativ højde på Desktop/Tablet/Mobil.",
-    "De manuelt godkendte fixes for image-freeze, højre/venstre/over/under placement og Inspector-rækkefølge ændres ikke.",
-    "Gem/genindlæsning af hierarki for Række- og kolonne-kasse forbliver et separat log-diagnosepunkt og er ikke markeret som løst i denne release."
+    "Pure Billede-elementer med Format = Auto / original bruger nu contain-semantik i editor og frontend, så motivet ikke beskæres når kolonnen ændres mellem eksempelvis 8/12 og 4/12.",
+    "Billede og figure begrænses til deres elementbredde; frontend-preview må ikke længere vise billedet bredere end den Billede-kasse, det tilhører.",
+    "Valgte elementer får et bund-håndtag med ↕ til lodret resize.",
+    "For Billede ændrer bund-håndtaget ImageHeightPx/MobileImageHeightPx og bevarer hele motivet med contain ved Auto/original.",
+    "For Tekst, Kasse, Grid/Flex og Række- og kolonne-kasse ændrer bund-håndtaget eksisterende min-height-felter; trækkes tilbage til naturlig indholdshøjde nulstilles højden til Auto i stedet for at klippe indhold.",
+    "Horisontal 12-kolonne-span, StackRootKey og højre/venstre/over/under placement ændres ikke af højde-resize.",
+    "Gem/genindlæsning af hierarki forbliver et separat log-diagnosepunkt og er ikke markeret som løst i denne release."
   ]
 }
