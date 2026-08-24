@@ -5,12 +5,16 @@ on:
     branches: [main]
     paths:
       - 'release-now.txt'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'release-now.txt'
 
 permissions:
   contents: write
 
 concurrency:
-  group: hangar18-emergency-test-release
+  group: hangar18-emergency-test-release-${{ github.event.pull_request.number || 'push' }}
   cancel-in-progress: true
 
 jobs:
@@ -46,8 +50,9 @@ jobs:
           php -l src/Admin/UpdaterPostInstallVerificationAdminController.php
           php -l src/Autoload.php
           node --check assets/admin.js
-          node --check assets/ultimate-designer-inspector-image-priority-v0882.js
-          node --check assets/ultimate-designer-preview-frontend-v0882.js
+          node --check assets/ultimate-designer-lego-inspector-only-v0847.js
+          node --check assets/ultimate-designer-unsaved-preview.js
+          node --check assets/ultimate-designer-navigator-productivity-v0881.js
 
       - name: Apply version metadata
         shell: bash
@@ -122,8 +127,21 @@ jobs:
           if unzip -l dist/hangar18-manager.zip | grep -Eqi 'NoWhatIfAdminController|hangar18-no-whatif'; then
             echo 'Legacy WhatIf shim leaked into ZIP' >&2; exit 1
           fi
+          tar -czf release-source-v0882.tar.gz hangar18-manager.php readme.txt assets src
 
-      - name: Commit package
+      - name: Upload verified package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hangar18-manager-v0882
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/hangar18-manager.zip
+            update.json
+            release-source-v0882.tar.gz
+
+      - name: Commit package on direct push only
+        if: github.event_name == 'push'
         shell: bash
         run: |
           set -euo pipefail
