@@ -23,6 +23,8 @@ on:
       - 'tools/legacy-cleanup-audit.py'
       - 'tools/whatif-source-cleanup.py'
       - 'tools/updater-contract-qa.py'
+      - 'tools/updater-install-hardening.py'
+      - 'tools/updater-rollback-qa.py'
       - 'assets/ultimate-designer-trace*.js'
       - 'assets/updater-support-v0879.js'
       - 'assets/ultimate-designer-navigator-v0880.js'
@@ -31,6 +33,7 @@ on:
       - 'assets/ultimate-designer-navigator-productivity-v0881.css'
       - 'src/Admin/UltimateDesignerTraceAdminController.php'
       - 'src/Admin/UpdaterStateConsistencyAdminController.php'
+      - 'src/Admin/UpdaterPostInstallVerificationAdminController.php'
       - 'src/Admin/EditorNavigatorAdminController.php'
       - 'src/Admin/LegacyCleanupAuditAdminController.php'
       - 'src/Admin/LegacyStateBackupAdminController.php'
@@ -59,12 +62,15 @@ on:
       - 'tools/legacy-cleanup-audit.py'
       - 'tools/whatif-source-cleanup.py'
       - 'tools/updater-contract-qa.py'
+      - 'tools/updater-install-hardening.py'
+      - 'tools/updater-rollback-qa.py'
       - 'assets/ultimate-designer-trace*.js'
       - 'assets/updater-support-v0879.js'
       - 'assets/ultimate-designer-navigator-v0880.js'
       - 'assets/ultimate-designer-navigator-v0880.css'
       - 'assets/ultimate-designer-navigator-productivity-v0881.js'
       - 'assets/ultimate-designer-navigator-productivity-v0881.css'
+      - 'src/Admin/UpdaterPostInstallVerificationAdminController.php'
       - 'src/Admin/EditorNavigatorAdminController.php'
       - 'src/Admin/LegacyCleanupAuditAdminController.php'
       - 'src/Admin/LegacyStateBackupAdminController.php'
@@ -109,13 +115,13 @@ jobs:
       - name: Python syntax
         shell: bash
         run: |
-          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py tools/updater-contract-qa.py
+          python3 -m py_compile tools/backlog-governance.py tools/release-integrity.py tools/trace-redaction-qa.py tools/legacy-cleanup-audit.py tools/whatif-source-cleanup.py tools/updater-contract-qa.py tools/updater-install-hardening.py tools/updater-rollback-qa.py
 
       - name: Updater compatibility QA
         shell: bash
         run: python3 tools/updater-contract-qa.py
 
-      - name: WhatIf source-cleaner dry-run
+      - name: Cleanup and updater source migrations dry-run
         shell: bash
         run: |
           TMP="$(mktemp -d)"
@@ -130,11 +136,16 @@ jobs:
             cp src/Admin/NoWhatIfAdminController.php "$TMP/src/Admin/"
           fi
           python3 tools/whatif-source-cleanup.py --root "$TMP" --apply --report /tmp/whatif-cleanup.json
+          python3 tools/updater-install-hardening.py --root "$TMP" --apply --report /tmp/updater-hardening.json
           php -l "$TMP/hangar18-manager.php"
           php -l "$TMP/src/Admin/IntegrationAdminBootstrap.php"
           node --check "$TMP/assets/admin.js"
           python3 tools/whatif-source-cleanup.py --root "$TMP" --assert-clean
+          python3 tools/updater-install-hardening.py --root "$TMP" --assert-hardened
+          python3 tools/updater-rollback-qa.py --root "$TMP" --report /tmp/updater-rollback-qa.json
           cat /tmp/whatif-cleanup.json
+          cat /tmp/updater-hardening.json
+          cat /tmp/updater-rollback-qa.json
 
       - name: Trace redaction QA
         shell: bash
@@ -166,6 +177,7 @@ jobs:
         run: |
           php -l src/Admin/UltimateDesignerTraceAdminController.php
           php -l src/Admin/UpdaterStateConsistencyAdminController.php
+          php -l src/Admin/UpdaterPostInstallVerificationAdminController.php
           php -l src/Admin/EditorNavigatorAdminController.php
           php -l src/Admin/LegacyCleanupAuditAdminController.php
           php -l src/Admin/LegacyStateBackupAdminController.php
