@@ -1,4 +1,4 @@
 v0.9.0
-triggered_utc=2026-08-24T20:28:00Z
-reason=Publish Editor Architecture Consolidation with canonical layout state and save projection.
-nonce=8
+triggered_utc=2026-08-24T20:46:00Z
+reason=Rebuild verified v0.9.0 after canonical source-row discovery correction.
+nonce=9
