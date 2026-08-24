@@ -1,4 +1,4 @@
 v0.8.82
-triggered_utc=2026-08-24T09:29:00Z
-reason=Rebuild v0.8.82 with UPDATER-BUTTON-082 fix.
-nonce=5
+triggered_utc=2026-08-24T09:38:00Z
+reason=Retrigger verified v0.8.82 build after RELEASE-014 publisher fix.
+nonce=6
