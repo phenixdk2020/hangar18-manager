@@ -189,7 +189,23 @@ def assert_clean(root: pathlib.Path) -> list[str]:
 
 
 def apply(root: pathlib.Path) -> dict:
-    report: dict[str, object] = {'schema_version': '1.1', 'changed': [], 'removed': []}
+    pre_hits = assert_clean(root)
+    if not pre_hits:
+        return {
+            'schema_version': '1.2',
+            'already_clean': True,
+            'changed': [],
+            'removed': [],
+            'remaining_active_hits': [],
+        }
+
+    report: dict[str, object] = {
+        'schema_version': '1.2',
+        'already_clean': False,
+        'pre_cleanup_hit_count': len(pre_hits),
+        'changed': [],
+        'removed': [],
+    }
 
     php_path = root / PRIMARY_PHP
     php, php_counts = clean_primary_php(read(php_path))
@@ -251,7 +267,7 @@ def main() -> int:
             report = apply(root)
         else:
             hits = assert_clean(root)
-            report = {'schema_version': '1.1', 'remaining_active_hits': hits}
+            report = {'schema_version': '1.2', 'remaining_active_hits': hits}
             if args.assert_clean and hits:
                 raise RuntimeError('Active WhatIf runtime remains:\n' + '\n'.join(hits[:80]))
         payload = json.dumps(report, ensure_ascii=False, indent=2) + '\n'
