@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace Hangar18\UltimateDesigner\Admin;
 
 /**
- * Browser-local preview of the current unsaved Sider editor state.
+ * Exact frontend preview for the page currently open in the Sider editor.
  *
- * The preview clones the already rendered admin canvas. It has no AJAX,
- * admin-post handler, option/post mutation or public renderer hook.
+ * The old implementation cloned the admin canvas and tried to remove editor
+ * chrome afterwards. That could never be 1:1 with the public renderer and was
+ * fragile whenever LEGO/Inspector markup changed. The preview now loads the
+ * real saved public page in an iframe. It remains read-only and performs no
+ * option/post mutation. Unsaved editor changes must be saved before they can be
+ * represented by this exact frontend preview.
  */
 final class EditorUnsavedPreviewAdminController
 {
@@ -25,8 +29,8 @@ final class EditorUnsavedPreviewAdminController
 
     public static function enqueue(): void
     {
-        $page = isset($_GET['page']) ? sanitize_key((string) wp_unslash($_GET['page'])) : '';
-        if ($page !== 'hangar18-pages' || !current_user_can('edit_pages')) {
+        $adminPage = isset($_GET['page']) ? sanitize_key((string) wp_unslash($_GET['page'])) : '';
+        if ($adminPage !== 'hangar18-pages' || !current_user_can('edit_pages')) {
             return;
         }
 
@@ -39,14 +43,28 @@ final class EditorUnsavedPreviewAdminController
             'hangar18-ultimate-designer-unsaved-preview',
             $pluginUrl . 'assets/ultimate-designer-unsaved-preview.js',
             ['jquery', 'hangar18-manager-admin'],
-            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.25',
+            is_file($jsPath) ? (string) filemtime($jsPath) : '0.8.82',
             true
         );
         wp_enqueue_style(
             'hangar18-ultimate-designer-unsaved-preview',
             $pluginUrl . 'assets/ultimate-designer-unsaved-preview.css',
             [],
-            is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.25'
+            is_file($cssPath) ? (string) filemtime($cssPath) : '0.8.82'
+        );
+
+        $slug = isset($_GET['page_slug']) ? sanitize_title((string) wp_unslash($_GET['page_slug'])) : '';
+        $page = $slug !== '' ? get_page_by_path($slug, OBJECT, 'page') : null;
+        $previewUrl = $page instanceof \WP_Post ? get_permalink($page) : '';
+
+        wp_localize_script(
+            'hangar18-ultimate-designer-unsaved-preview',
+            'H18UnsavedPreview',
+            [
+                'mode'       => 'saved-frontend',
+                'pageSlug'   => $slug,
+                'previewUrl' => $previewUrl ? esc_url_raw((string) $previewUrl) : '',
+            ]
         );
     }
 }
