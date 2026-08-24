@@ -1,4 +1,4 @@
-v0.8.88
-triggered_utc=2026-08-24T16:28:00Z
-reason=Build live diagnostics support endpoint and private site trace store.
-nonce=4
+v0.8.89
+triggered_utc=2026-08-24T16:52:00Z
+reason=Build saved Grid/Flex reload parity and direct diagnostics payload/reload snapshots.
+nonce=5
