@@ -35,6 +35,7 @@ final class Autoload
             \Hangar18\UltimateDesigner\Event\EventArchiveRuntime::register();
             \Hangar18\UltimateDesigner\Frontend\LegoLayoutFrontendRuntime::register();
             \Hangar18\UltimateDesigner\Frontend\LegoStackFrontendRuntime::register();
+            \Hangar18\UltimateDesigner\Frontend\ImageElementFrontendRuntime::register();
         }
 
         // Admin-only compatibility/tooling layers. They do not own frontend rendering.
