@@ -42,6 +42,7 @@ final class Autoload
             function_exists('add_action') &&
             is_admin()
         ) {
+            \Hangar18\UltimateDesigner\Admin\UpdaterPostInstallVerificationAdminController::register();
             \Hangar18\UltimateDesigner\Admin\UpdaterStateConsistencyAdminController::register();
             \Hangar18\UltimateDesigner\Admin\PageVersionRestoreAdminController::register();
             \Hangar18\UltimateDesigner\Admin\EditorNavigatorAdminController::register();
