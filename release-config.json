@@ -1,8 +1,10 @@
 {
-  "version": "0.8.88",
-  "title": "Live diagnosekanal og support-link",
+  "version": "0.8.89",
+  "title": "Gem/reload parity for Række- og kolonne-kasse",
   "channel": "test",
   "backlog_ids": [
+    "SAVE-RELOAD-GRID-102",
+    "DIAG-RELOAD-103",
     "DIAG-LIVE-101",
     "IMAGE-FIT-PARITY-100",
     "VERTICAL-ELEMENT-RESIZE-099",
@@ -10,12 +12,12 @@
     "CANVAS-STACK-AUTOHEIGHT-097"
   ],
   "changelog": [
-    "Når Udvidet fejllogning er aktiv, streamer Trace nu automatisk sanitiserede events i små batches til en privat WordPress diagnose-store.",
-    "Trace support viser Site-log klar samt Kopiér diagnose-link; linket er beskyttet af en tilfældig 256-bit read-only token og returnerer seneste sanitiserede session via REST med no-store/noindex.",
-    "Browser og server redigerer passwords, tokens, nonces, cookies, authorization/credentials samt rå UI value/text/content før data gemmes.",
-    "Live-loggen registrerer strukturelle snapshots ved page-load, preview og før Gem med Key, Type, LayoutParentKey, span, stack og relevante element-/billedstørrelser.",
-    "Gem-side registrerer desuden et nonce-valideret SERVER_BEFORE_SAVE snapshot før den normale save-handler, så payload-strukturen kan sammenlignes med editor-state og efterfølgende reload.",
-    "Diagnoselageret er bounded til de seneste 20 sessioner og 3000 entries pr. session og bruger non-autoload WordPress options.",
-    "v0.8.87 image-fit, lodret resize, stack-paritet og eksisterende placement-runtimes videreføres uændret."
+    "Række- og kolonne-kasse og andre almindelige Grid/Flex-parents genopbygges efter Gem/reload direkte fra de bevarede LayoutParentKey-relationer i stedet for at falde ud som separate top-level elementer.",
+    "Den dokumenterede testcase bevarer 4/12 Tekst til venstre, 8/12 Tekst til højre og Billede under den højre Tekst via StackRootKey/StackOrder i samme 8/12-kolonne.",
+    "v0.8.89 canvas-rebuild er read/render-only: den registrerer ingen dragstart/dragover/drop/dragend handlers og skriver ikke LayoutParentKey, span eller stack-state.",
+    "Almindelig Kasse og Auto-kasser forbliver ejet af den eksisterende legacy nesting-runtime; v0.8.89 aktiveres kun for generiske Grid/Flex-parents.",
+    "Site-diagnosen får et direkte reload-snapshot uden den gamle Trace-depth-begrænsning samt et snapshot af de faktisk genererede h18_lego_layout_span- og h18_lego_stack_v0851-submitfelter.",
+    "Den tidligere hasSpanState=false-observation er korrigeret som en diagnosefejl: den rigtige POST-kontrakt hedder h18_lego_layout_span.",
+    "Eksisterende image-fit, lodret resize, live preview og højre/venstre/over/under placement videreføres uden ændring."
   ]
 }
