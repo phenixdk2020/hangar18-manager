@@ -1,12 +1,13 @@
 {
   "schema_version": "1.0",
   "plugin": "hangar18-manager",
-  "version": "0.8.91",
+  "version": "0.9.0",
   "channel": "test",
   "backlog_ids": [
-    "SAVE-INTEGRITY-106",
-    "SAVE-RELOAD-GRID-104",
-    "SIDE-SPAN-PERSIST-105",
+    "ARCH-CANONICAL-MODEL-107",
+    "ARCH-SAVE-PROJECTION-108",
+    "ARCH-RENDER-OWNER-109",
+    "ARCH-LEGACY-ADAPTERS-110",
     "DIAG-RELOAD-103",
     "DIAG-LIVE-101",
     "IMAGE-FIT-PARITY-100",
@@ -16,16 +17,18 @@
   ],
   "min_wp": "6.4",
   "min_php": "8.0",
-  "published_utc": "2026-08-24T18:21:28Z",
+  "published_utc": "2026-08-24T20:42:55Z",
   "package_path": "dist/hangar18-manager.zip",
-  "package_sha256": "033a0777e4360dd134362779f59847af9304ce55e1ed45e2dffe54317a6fdc28",
+  "package_sha256": "d3bdf38dd7bfbf96d0c4b929dbcedcae6a5f4b25593c9df08b8953739c1498e9",
   "changelog": [
-    "Tilføjer en snæver v0.8.91 save-integrity guard baseret på den reproducerede v0.8.90-log, hvor et korrekt reloadet layout blev konverteret til sectionCount=0 og alle Remove=1 før server-normalisering.",
-    "Ved faktisk Gem-aktivering snapshots aktive sektioner, remove-state og LayoutParentKey; snapshot tages ved pointer/keyboard-aktivering, så brugerens seneste layoutændringer bevares.",
-    "På window capture-phase submit kontrolleres den dokumenterede katastrofe-signatur. Kun hvis Gem-snapshot havde aktive rækker, submit-state pludselig har nul aktive rækker, og de samme rækker stadig findes i DOM, gendannes de snapshot-aktive rækker til Remove=0 med deres parent-key.",
-    "Bevidst slettede sektioner genoplives ikke: hvis brugeren har slettet alle sektioner før Gem, er snapshot activeCount=0 og guard-laget gør ingenting.",
-    "Span- og stack-state forbliver ejet af de eksisterende v0.8.41/v0.8.51 runtimes; v0.8.91 ændrer ikke drag/drop, højre/venstre/over/under eller container-placement.",
-    "Trace får DIAG_SAVE_GUARD_CAPTURE_V0891 og DIAG_SAVE_GUARD_RECOVER_V0891, så næste reproduktion viser både brugerens Gem-state og eventuel recovery før normal save-serialisering.",
-    "v0.8.90 generic saved-layout rebuild og implicit span-canonicalisering bevares uændret under save-integrity-laget."
+    "Introducerer én canonical v0.9.0 layout-model for editorens parent-hierarki, rækkefølge, Remove-state, responsive 12-kolonne-spans og stack-relationer.",
+    "Gem tager et canonical snapshot ved brugerens Save-intent og skriver modellen som én strukturel transaktion; modellen udledes af source rows og aldrig af visuelle proxy-kloner.",
+    "Serveren validerer model/schema, kræver nøjagtigt samme sektionsnøgler som den normale sections-POST og failer åbent til eksisterende data, hvis modellen er manglende eller ufuldstændig.",
+    "Den validerede model projiceres før de eksisterende save-handlers til sections, h18_lego_layout_span og h18_lego_stack_v0851, så de tre gamle persistence-lag modtager samme struktur under migrationen.",
+    "v0.8.90 generic saved-layout rebuild og v0.8.91 save-integrity guard er koblet ud af aktiv registrering; filerne beholdes kun til rollback og audit.",
+    "Generic Grid/Flex genopbygges nu af én modeldrevet v0.9.0 renderer med 12-kolonne-spans, stack-visning og direkte kolonne-resize gennem den canonical state-adapter.",
+    "Eksisterende drag/drop, Inspector, resize- og stack-runtimes fungerer midlertidigt som input-adaptere til v0.9.0-modellen; de migreres ud enkeltvis efter stabilitets-QA i stedet for at få flere patch-lag.",
+    "Offentlig frontend, Vehicle, Event og Gallery rendering ændres ikke i v0.9.0; arkitekturændringen er isoleret til sideeditorens layout-state og Gem/reload-flow.",
+    "Trace logger DIAG_LAYOUT_ENGINE_BOOT_V0900, DIAG_LAYOUT_MODEL_RECONCILE_V0900, DIAG_LAYOUT_MODEL_SAVE_INTENT_V0900 og DIAG_LAYOUT_MODEL_SAVE_V0900 som strukturelle diagnostics uden rå indholdstekst."
   ]
 }
