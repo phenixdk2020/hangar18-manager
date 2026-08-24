@@ -8,13 +8,15 @@ Denne fil er den aktuelle canonical backlog. Den arver hele master-roadmapet via
 
 ## Batchstatus
 
-Denne batch arbejder nu på **27 backlog-ID’er**. Hovedmålet er permanent WhatIf source-removal med fail-closed release-QA, dokumenteret legacy-klassifikation, sikre Navigator-produktivitetsfunktioner samt updater-kompatibilitet/QA efter den schema-regression der blev fundet under testen. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
+Denne batch arbejder nu på **30 backlog-ID’er**. Hovedmålet er permanent WhatIf source-removal med fail-closed release-QA, dokumenteret legacy-klassifikation/rollback, sikre Navigator-produktivitetsfunktioner samt updater/release-kompatibilitet efter de fejl der blev fundet under testen. De frosne `LEGO-SELECTION-075`, `LEGO-INSIDE-075` og `LEGO-REPAINT-062` ændres ikke.
 
 # A. Release / sporbarhed
 
 | ID | Pri | Status | Leverance / Definition of done |
 |---|---|---|---|
 | RELEASE-007 | Høj | ✅ FÆRDIG v0.8.81 | Fail-closed release-cleanup skriver ved stop en isoleret `docs/release-build-failure.md` med version/source commit/step/stderr/stdout, ruller delvise source-writes tilbage og committer kun diagnosen. Første virkelige diagnose identificerede 7 resterende WhatIf-referencer. |
+| RELEASE-008 | Høj | ✅ FÆRDIG v0.8.81 | Release-workflow bruger én concurrency-gruppe med `cancel-in-progress: true`, så nyeste release-config-trigger vinder og ældre køede/in-progress builds ikke senere kan publicere stale packages. |
+| RELEASE-009 | Normal | ✅ FÆRDIG v0.8.81 | Release-metadata normaliserer readme pr. versionsnummer: alle eksisterende sektioner for samme version fjernes og præcis én aktuel sektion indsættes, så retries ikke skaber dublerede release-noter. |
 
 # C. GitHub updater
 
@@ -47,6 +49,7 @@ Denne batch arbejder nu på **27 backlog-ID’er**. Hovedmålet er permanent Wha
 
 | ID | Pri | Status | Leverance / Definition of done |
 |---|---|---|---|
+| LEGACY-006 | Høj | 🟡 MANUEL TEST v0.8.81 | Nyt `LegacyStateBackupAdminController` på Opdateringer opretter før cleanup et SHA-mærket snapshot af kendte migration/repair-options i `hangar18_manager_legacy_cleanup_backups_v1`, inkl. exists/value, pluginversion, UTC og user ID. Maks 10 snapshots; handlingen sletter/ændrer ingen kilde-options. Senere destructive cleanup skal kræve rollback-punkt først. |
 | LEGACY-009 | Normal | ✅ AUDIT FÆRDIG v0.8.81 | Astra runtime guard er klassificeret som aktiv; `maybe_repair_astra_banner_047` er særskilt one-time migration-kandidat og slettes ikke blindt. |
 | LEGACY-010 | Normal | ✅ AUDIT FÆRDIG v0.8.81 | `handle_repair_menu()` klassificeres som manuel vedligeholdelse, ikke automatisk dead code; beholdes indtil Menu UI v2 har verificeret fuld erstatning. |
 | LEGACY-011 | Normal | 🟡 AUDIT DELVIST v0.8.81 | Editor migration/import/shadow/conversion paths er klassificeret efter ansvar; konkrete nul-reference shims skal stadig identificeres før removal. |
@@ -65,12 +68,13 @@ Denne batch arbejder nu på **27 backlog-ID’er**. Hovedmålet er permanent Wha
 
 | ID | Pri | Status | Leverance / Definition of done |
 |---|---|---|---|
-| QA-020 | Normal | 🟡 DELVIST v0.8.81 | Governance QA dry-runs WhatIf source-cleaner på kopi, linter muteret PHP/JS, kører updater-contract matrix og syntax-checker Navigator productivity-laget; fuld historisk asset-lint er fortsat åben. |
+| QA-020 | Normal | 🟡 DELVIST v0.8.81 | Governance QA dry-runs WhatIf source-cleaner på kopi, linter muteret PHP/JS, kører updater-contract matrix, linter legacy rollback-controller og syntax-checker Navigator productivity-laget; fuld historisk asset-lint er fortsat åben. |
 
 # Næste batch efter v0.8.81
 
 1. Smoke-test v0.8.81 på test2: normale Vehicle/Event/Gallery/Menu/Page Editor saves efter WhatIf removal.
 2. Smoke-test Navigator typefilter, autoscroll og context menu.
-3. Brug installed Cleanup-audit til at afgøre LEGACY-006..008: backup af døde options → fjern dokumenterede one-time repair hooks/flags i små batches.
-4. Fortsæt LEGACY-011 med konkret referencegraph over gamle editor importers/shims.
-5. De tre frosne canvas-runtimebugs genåbnes kun med TRACE evidence.
+3. Opret `LEGACY-006` rollback-punkt på Opdateringer før LEGACY-007/008 kan blive destructive.
+4. Efter dokumenteret backup: fjern kun de startup/one-time repair hooks/flags der kan bevises døde, i små batches med QA.
+5. Fortsæt LEGACY-011 med konkret referencegraph over gamle editor importers/shims.
+6. De tre frosne canvas-runtimebugs genåbnes kun med TRACE evidence.
