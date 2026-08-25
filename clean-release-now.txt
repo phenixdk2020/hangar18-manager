@@ -1,4 +1,4 @@
 v0.1.6
-triggered_utc=2026-08-25T12:25:00Z
-reason=Physical editor chrome, configurable borders, container auto-grow and clearer left/right drop guidance.
-nonce=6
+triggered_utc=2026-08-25T12:32:00Z
+reason=Rebuild after auto-grow shrink correction; includes physical editor chrome, configurable borders and clearer left/right drop guidance.
+nonce=7
