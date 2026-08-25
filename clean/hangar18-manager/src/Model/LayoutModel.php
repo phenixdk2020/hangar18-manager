@@ -242,10 +242,10 @@ final class LayoutModel
                 'boxTransparent' => array_key_exists('boxTransparent', $raw) ? (bool) $raw['boxTransparent'] : true,
                 'focalX' => self::clamp($raw['focalX'] ?? 50, 0, 100, 50),
                 'focalY' => self::clamp($raw['focalY'] ?? 50, 0, 100, 50),
-                'manualX' => self::clamp($raw['manualX'] ?? 0, -300, 300, 0),
-                'manualY' => self::clamp($raw['manualY'] ?? 0, -300, 300, 0),
-                'manualW' => self::clamp($raw['manualW'] ?? 100, 1, 600, 100),
-                'manualH' => self::clamp($raw['manualH'] ?? 100, 1, 600, 100),
+                'manualX' => self::clamp($raw['manualX'] ?? 0, -4000, 4000, 0),
+                'manualY' => self::clamp($raw['manualY'] ?? 0, -4000, 4000, 0),
+                'manualW' => self::clamp($raw['manualW'] ?? 320, 1, 4000, 320),
+                'manualH' => self::clamp($raw['manualH'] ?? 240, 1, 4000, 240),
                 'lockAspect' => array_key_exists('lockAspect', $raw) ? (bool) $raw['lockAspect'] : true,
             ], $border);
         }
