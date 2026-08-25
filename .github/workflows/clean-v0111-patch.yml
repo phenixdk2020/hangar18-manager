@@ -1,0 +1,61 @@
+name: Apply Clean v0.1.11 Patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'clean-v0111-patch-now.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply and validate v0.1.11 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/apply-clean-v0111.py
+          php -l clean/hangar18-manager/hangar18-manager.php
+          php -l clean/hangar18-manager/src/Model/LayoutModel.php
+          php -l clean/hangar18-manager/src/Frontend/Renderer.php
+          php -l clean/hangar18-manager/src/Update/GitHubUpdater.php
+          php -l clean/hangar18-manager/src/Admin/AdminController.php
+          node --check clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "Version: 0.1.11" clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.11'" clean/hangar18-manager/hangar18-manager.php
+          grep -q "gapX" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -q "installNow" clean/hangar18-manager/src/Update/GitHubUpdater.php
+
+      - name: Commit source and release trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php \
+                  clean/hangar18-manager/assets/editor-v018-core.js \
+                  clean/hangar18-manager/src/Model/LayoutModel.php \
+                  clean/hangar18-manager/src/Frontend/Renderer.php \
+                  clean/hangar18-manager/src/Update/GitHubUpdater.php \
+                  clean/hangar18-manager/src/Admin/AdminController.php \
+                  clean/hangar18-manager/readme.txt \
+                  clean-release-notes.html \
+                  clean-release-now.txt
+          git commit -m 'Prepare clean v0.1.11 border spacing and self-update'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push race on attempt ${attempt}; retrying..."
+            sleep 2
+          done
+          exit 1
