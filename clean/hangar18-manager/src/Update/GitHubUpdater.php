@@ -200,6 +200,10 @@ final class GitHubUpdater
             self::redirectToUpdates(['h18_clean_update_install' => 'current']);
         }
 
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        $wasNetworkActive = is_multisite() && is_plugin_active_for_network(self::PLUGIN_FILE);
+        $wasActive = $wasNetworkActive || is_plugin_active(self::PLUGIN_FILE);
+
         self::clearCache();
         delete_site_transient('update_plugins');
         wp_clean_plugins_cache(true);
@@ -215,6 +219,27 @@ final class GitHubUpdater
                 'h18_clean_update_install' => 'error',
                 'h18_clean_update_version' => $latest,
             ]);
+        }
+
+        wp_clean_plugins_cache(true);
+        if ($wasActive) {
+            $stillActive = $wasNetworkActive
+                ? is_plugin_active_for_network(self::PLUGIN_FILE)
+                : is_plugin_active(self::PLUGIN_FILE);
+            if (!$stillActive) {
+                $activation = activate_plugin(self::PLUGIN_FILE, '', $wasNetworkActive, true);
+                wp_clean_plugins_cache(true);
+                $stillActive = !is_wp_error($activation) && ($wasNetworkActive
+                    ? is_plugin_active_for_network(self::PLUGIN_FILE)
+                    : is_plugin_active(self::PLUGIN_FILE));
+                if (!$stillActive) {
+                    wp_safe_redirect(add_query_arg([
+                        'h18_clean_update_install' => 'activation_error',
+                        'h18_clean_update_version' => $latest,
+                    ], admin_url('plugins.php')));
+                    exit;
+                }
+            }
         }
 
         self::redirectToUpdates([

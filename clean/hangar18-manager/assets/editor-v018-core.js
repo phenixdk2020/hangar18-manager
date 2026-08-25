@@ -600,7 +600,8 @@
         const id = makeId(type);
         const defaultW = defaultWidth(type, parentId);
         const p = placement || { parentId: parentId, x: 0, y: nextFreeY(parentId), w: defaultW, targetId: '', zone: 'free', bandIds: [], bandH: MIN_SPLIT_H };
-        const desktop = normalizeDevice({ x: p.x, y: p.y, w: p.w || defaultW, h: 0 }, false);
+        const defaultH = (type === 'text' || type === 'image') ? Math.max(1, Math.ceil(80 / ROW_PX)) : 0;
+        const desktop = normalizeDevice({ x: p.x, y: p.y, w: p.w || defaultW, h: defaultH }, false);
         state.nodes.push({
             id: id,
             type: type,
@@ -609,7 +610,7 @@
             geometry: {
                 desktop: desktop,
                 tablet: Object.assign({}, desktop, { inheritDesktop: true }),
-                mobile: { x: 0, y: 0, w: 120, h: 0, inheritDesktop: true }
+                mobile: { x: 0, y: 0, w: 120, h: defaultH, inheritDesktop: true }
             },
             props: normalizeProps(type, {})
         });

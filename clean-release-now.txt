@@ -1,4 +1,4 @@
-v0.1.12
-triggered_utc=2026-08-25T16:45:00Z
-reason=Wrapper-safe overlap diagnostics, Danish labels and selection clarity.
+v0.1.13
+triggered_utc=2026-08-25T16:58:00Z
+reason=Preserve plugin activation across direct self-update and use 80px default text height.
 nonce=13

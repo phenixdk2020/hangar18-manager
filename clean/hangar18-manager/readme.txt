@@ -2,8 +2,14 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.12
+Version: 0.1.13
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.13 ==
+* Direkte opdatering fra Hangar18 Manager husker om pluginet var aktivt eller netværksaktivt før opdateringen og genaktiverer/verificerer samme tilstand før redirect.
+* Hvis genaktivering mod forventning fejler, sendes administratoren sikkert til Plugins i stedet for en ikke-registreret Manager-side.
+* Nye Tekst-elementer starter med 80 px / 10 grid-rækker, samme grundhøjde som Billede.
+* Celle-split kan stadig ændre højden efterfølgende, og eksisterende elementer ændres ikke automatisk.
 
 == 0.1.12 ==
 * Blå markering betyder valgt/aktivt element; overlap-advarsel er en separat rød diagnostisk markering.
