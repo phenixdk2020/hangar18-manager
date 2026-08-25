@@ -1,4 +1,4 @@
-v0.1.5
-triggered_utc=2026-08-25T12:06:00Z
-reason=Auto-grow parent boxes and visible left/right spatial drop guides.
-nonce=5
+v0.1.6
+triggered_utc=2026-08-25T12:25:00Z
+reason=Physical editor chrome, configurable borders, container auto-grow and clearer left/right drop guidance.
+nonce=6
