@@ -1,4 +1,4 @@
-v0.9.0
-triggered_utc=2026-08-24T20:46:00Z
-reason=Rebuild verified v0.9.0 after canonical source-row discovery correction.
-nonce=9
+v0.9.1
+triggered_utc=2026-08-25T06:11:00Z
+reason=Build physical 120-unit canvas with Undo/Redo and existing-element re-parenting.
+nonce=10
