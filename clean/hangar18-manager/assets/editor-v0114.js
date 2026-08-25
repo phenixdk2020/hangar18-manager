@@ -7,6 +7,7 @@
         input.name = name;
         input.value = value;
         form.appendChild(input);
+        return input;
     }
 
     function setupChangeNote() {
@@ -22,6 +23,11 @@
         input.placeholder = 'Fx: Flyttet billede og rettet overskrift';
         input.setAttribute('aria-label', 'Ændringer i denne version');
 
+        var userEntered = hidden(form, 'change_note_user_entered', '0');
+        input.addEventListener('input', function () {
+            userEntered.value = (input.value || '').trim() !== '' ? '1' : '0';
+        });
+
         var wrapper = document.createElement('label');
         wrapper.className = 'h18-clean-change-note-wrap';
         var caption = document.createElement('span');
@@ -34,8 +40,10 @@
         toolbar.insertBefore(wrapper, firstSave || null);
 
         form.addEventListener('submit', function (event) {
-            if ((input.value || '').trim() !== '') { return; }
+            if (userEntered.value === '1' && (input.value || '').trim() !== '') { return; }
             event.preventDefault();
+            input.value = '';
+            userEntered.value = '0';
             window.alert('Skriv en kort ændringsbeskrivelse før siden gemmes som en ny version.');
             input.focus();
         });
