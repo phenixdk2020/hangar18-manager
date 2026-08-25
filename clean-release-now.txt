@@ -1,4 +1,4 @@
 v0.1.10
-triggered_utc=2026-08-25T16:25:00Z
+triggered_utc=2026-08-25T16:16:00Z
 reason=Canonical natural-height materialization, recursive container auto-grow and visible overlap diagnostics.
-nonce=10
+nonce=11
