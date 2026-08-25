@@ -2,8 +2,18 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.7
+Version: 0.1.8
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.8 ==
+* Over/Under deler nu kun den valgte celles højde i stedet for altid at oprette en fuldbredde-række.
+* Venstre/Højre deler kun den valgte celles bredde; øvrige celler i layoutet ændres ikke unødigt.
+* Naboceller i samme bånd materialiseres med fælles højde, så en nabocelle kan spænde over begge nye under-rækker.
+* Eksempel: Billede øverst til venstre + Tekst nederst til venstre kan dele samme højde som ét Tekst-element til højre, der spænder over begge rækker.
+* Sektion/Kasse beholder central Ind i Kassen-zone; kantzonerne deler parentens egen celle.
+* Elementets canonical x/y/w/h renderes som eksplicit 120-kolonne/8-px grid både i editor og frontend, når højden er fastlagt.
+* Flyttes et element ud af en celle, forsøger editoren kun en lokal, sikker sammensmeltning med én direkte nabocelle frem for at omfordele hele rækken.
+* Label/type/ID/drag-håndtag er fortsat editor-overlay og tæller ikke med i fysisk geometri.
 
 == 0.1.7 ==
 * Drag/drop har nu fire placeringer omkring et almindeligt element: Over, Under, Venstre og Højre.
