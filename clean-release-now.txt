@@ -1,0 +1,4 @@
+v0.1.0
+triggered_utc=2026-08-25T06:52:00Z
+reason=Build standalone clean Hangar18 Manager without legacy editor runtime.
+nonce=1
