@@ -7,8 +7,8 @@
   "requires_php": "8.0",
   "tested": "6.8",
   "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.6.zip",
-  "sha256": "f8ace1166160d3dcb88ff34888c34a0249d3d90a99341c351119079a0703a983",
-  "source_commit": "a6dec5f4f087959e94159688c371cfaf5e7137bb",
+  "sha256": "f49b42922e8949dbab574b541d7289e26c745949dbbad2207a61b95ba94867c8",
+  "source_commit": "a1fbf8ad0ddf8284dc8f35b502b174b56c0f1b51",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
     "changelog": "<h4>0.1.6</h4><ul><li>Editorlabel og drag-håndtag ligger nu uden for elementets fysiske x/y/w/h og ændrer ikke geometrien.</li><li>Alle elementer kan få ramme med valgfri farve og tykkelse 0-20 px; standard er 0 px.</li><li>Sektioner og Kasser vokser automatisk, så børn under hinanden fortsat er indeholdt.</li><li>Venstre/højre-drop viser begge valg samtidigt, fremhæver aktiv side tydeligt og viser en flydende drop-indikator ved markøren.</li></ul>"
