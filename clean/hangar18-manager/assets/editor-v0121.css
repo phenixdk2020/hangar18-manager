@@ -19,4 +19,51 @@ body[data-h18-clean-device="laptop"] .h18-clean-move,
 body[data-h18-clean-device="mobile"] .h18-clean-move{cursor:move}
 body[data-h18-clean-device="laptop"] .h18-clean-v018-drop-overlay,
 body[data-h18-clean-device="mobile"] .h18-clean-v018-drop-overlay{display:none!important}
-@media(max-width:782px){.h18-clean-device-switcher{width:100%;justify-content:stretch}.h18-clean-device-switcher .button{flex:1;min-width:0}}
+
+/* Collapsible Elementer / Inspector panels. */
+.h18-clean-workspace{grid-template-columns:minmax(180px,220px) minmax(0,1fr) minmax(260px,310px);gap:10px!important;min-width:0}
+.h18-clean-palette,.h18-clean-inspector{min-width:0;transition:width .15s ease,padding .15s ease}
+.h18-clean-panel-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:0 0 10px!important;min-height:30px}
+.h18-clean-panel-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h18-clean-panel-toggle{flex:0 0 30px;min-width:30px!important;height:30px!important;padding:0!important;font-size:20px!important;line-height:26px!important;text-align:center}
+.h18-clean-workspace.is-palette-collapsed{grid-template-columns:48px minmax(0,1fr) minmax(260px,310px)}
+.h18-clean-workspace.is-inspector-collapsed{grid-template-columns:minmax(180px,220px) minmax(0,1fr) 48px}
+.h18-clean-workspace.is-palette-collapsed.is-inspector-collapsed{grid-template-columns:48px minmax(0,1fr) 48px}
+.h18-clean-palette.is-collapsed,.h18-clean-inspector.is-collapsed{padding:8px 6px!important;overflow:hidden}
+.h18-clean-palette.is-collapsed>:not(.h18-clean-panel-head),.h18-clean-inspector.is-collapsed>:not(.h18-clean-panel-head){display:none!important}
+.h18-clean-palette.is-collapsed .h18-clean-panel-title,.h18-clean-inspector.is-collapsed .h18-clean-panel-title{display:none}
+.h18-clean-palette.is-collapsed .h18-clean-panel-head,.h18-clean-inspector.is-collapsed .h18-clean-panel-head{justify-content:center;margin-bottom:0!important}
+.h18-clean-canvas-column{min-width:0!important;max-width:100%;box-sizing:border-box}
+#h18-clean-wide-canvas{white-space:nowrap}
+
+/* Compact workspace for ordinary 13–15 inch laptop screens. */
+@media(max-width:1440px){
+  .h18-clean-workspace{grid-template-columns:170px minmax(0,1fr) 260px;gap:8px!important}
+  .h18-clean-workspace.is-palette-collapsed{grid-template-columns:46px minmax(0,1fr) 260px}
+  .h18-clean-workspace.is-inspector-collapsed{grid-template-columns:170px minmax(0,1fr) 46px}
+  .h18-clean-workspace.is-palette-collapsed.is-inspector-collapsed{grid-template-columns:46px minmax(0,1fr) 46px}
+  .h18-clean-palette,.h18-clean-inspector{padding:9px}
+  .h18-clean-toolbar{gap:6px}
+  .h18-clean-device-switcher .button{min-width:68px;padding-left:7px;padding-right:7px}
+}
+
+/* Override the older editor.css stacking rule: sidebars stay usable as narrow
+   collapsible rails on smaller laptops so the canvas remains the main surface. */
+@media(max-width:1100px) and (min-width:783px){
+  .h18-clean-workspace{grid-template-columns:46px minmax(0,1fr) 46px!important}
+  .h18-clean-palette,.h18-clean-inspector{position:sticky!important;top:86px!important;grid-column:auto!important;max-height:calc(100vh - 110px)!important}
+  .h18-clean-palette:not(.is-collapsed),.h18-clean-inspector:not(.is-collapsed){position:fixed!important;top:86px!important;bottom:16px!important;z-index:80;width:min(320px,calc(100vw - 90px));max-height:none!important;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+  .h18-clean-palette:not(.is-collapsed){left:176px}
+  .h18-clean-inspector:not(.is-collapsed){right:16px}
+  .h18-clean-workspace:not(.is-palette-collapsed) .h18-clean-palette{display:block}
+  .h18-clean-workspace:not(.is-inspector-collapsed) .h18-clean-inspector{display:block}
+}
+
+@media(max-width:782px){
+  .h18-clean-device-switcher{width:100%;justify-content:stretch}
+  .h18-clean-device-switcher .button{flex:1;min-width:0}
+  .h18-clean-workspace,.h18-clean-workspace.is-palette-collapsed,.h18-clean-workspace.is-inspector-collapsed,.h18-clean-workspace.is-palette-collapsed.is-inspector-collapsed{grid-template-columns:1fr!important}
+  .h18-clean-palette,.h18-clean-inspector{position:static!important;width:auto!important;max-height:none!important}
+  .h18-clean-palette.is-collapsed,.h18-clean-inspector.is-collapsed{min-height:44px}
+  .h18-clean-palette.is-collapsed>:not(.h18-clean-panel-head),.h18-clean-inspector.is-collapsed>:not(.h18-clean-panel-head){display:none!important}
+}
