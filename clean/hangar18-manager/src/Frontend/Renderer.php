@@ -97,9 +97,10 @@ CSS;
         $id = esc_attr((string) $node['id']);
         $type = (string) $node['type'];
         $props = is_array($node['props'] ?? null) ? $node['props'] : [];
+        $borderStyle = self::borderStyle($props);
 
         if ($type === 'text') {
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($style . 'text-align:' . (string) ($props['align'] ?? 'left') . ';') . '">' . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($style . $borderStyle . 'text-align:' . (string) ($props['align'] ?? 'left') . ';') . '">' . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
         }
         if ($type === 'image') {
             $url = esc_url((string) ($props['url'] ?? ''));
@@ -114,14 +115,48 @@ CSS;
             } else {
                 $imageStyle .= 'height:auto;';
             }
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style) . '"><figure class="h18-clean-front-image"' . ($h > 0 ? ' style="height:100%"' : '') . '>' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle) . '"><figure class="h18-clean-front-image"' . ($h > 0 ? ' style="height:100%"' : '') . '>' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
         }
 
         $background = sanitize_hex_color((string) ($props['background'] ?? '')) ?: 'transparent';
         $radius = max(0, min(100, (int) ($props['radius'] ?? 0)));
         $padding = max(0, min(120, (int) ($props['padding'] ?? 0)));
         $classes = $type === 'section' ? 'h18-clean-front-section' : 'h18-clean-front-container';
-        $boxStyle = $style . 'background:' . $background . ';border-radius:' . $radius . 'px;padding:' . $padding . 'px;';
+        $requiredHeight = self::requiredChildHeightPx((string) $node['id'], $byParent);
+        $selectedHeight = $h * LayoutModel::ROW_PX;
+        $minimumHeight = max($selectedHeight, $requiredHeight);
+        if ($minimumHeight > 0) {
+            $style .= 'min-height:' . $minimumHeight . 'px;';
+        }
+        $boxStyle = $style . $borderStyle . 'background:' . $background . ';border-radius:' . $radius . 'px;padding:' . $padding . 'px;';
         return '<section id="h18-clean-' . $id . '" class="h18-clean-front-node ' . esc_attr($classes) . '" style="' . esc_attr($boxStyle) . '">' . self::children((string) $node['id'], $byParent, $byId) . '</section>';
+    }
+
+    /** @param array<string,mixed> $props */
+    private static function borderStyle(array $props): string
+    {
+        $width = max(0, min(20, (int) ($props['borderWidth'] ?? 0)));
+        if ($width === 0) {
+            return 'border:0 solid transparent;';
+        }
+        $color = sanitize_hex_color((string) ($props['borderColor'] ?? '#000000')) ?: '#000000';
+        return 'border:' . $width . 'px solid ' . $color . ';';
+    }
+
+    /** @param array<string,array<int,array<string,mixed>>> $byParent */
+    private static function requiredChildHeightPx(string $parentId, array $byParent): int
+    {
+        $required = 0;
+        foreach ($byParent[$parentId] ?? [] as $child) {
+            $g = isset($child['geometry']['desktop']) && is_array($child['geometry']['desktop']) ? $child['geometry']['desktop'] : [];
+            $y = max(0, (int) ($g['y'] ?? 0));
+            $h = max(0, (int) ($g['h'] ?? 0));
+            $childHeight = $h * LayoutModel::ROW_PX;
+            if (in_array((string) ($child['type'] ?? ''), ['section', 'container'], true)) {
+                $childHeight = max($childHeight, self::requiredChildHeightPx((string) ($child['id'] ?? ''), $byParent));
+            }
+            $required = max($required, ($y * LayoutModel::ROW_PX) + $childHeight);
+        }
+        return $required;
     }
 }
