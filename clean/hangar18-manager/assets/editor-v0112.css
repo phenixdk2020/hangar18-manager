@@ -1,0 +1,13 @@
+/* Clean 0.1.12: blue selection remains distinct from red overlap diagnostics. */
+.h18-clean-node.is-selected.has-layout-overlap{
+    outline:2px solid #2271b1!important;
+    outline-offset:2px;
+    box-shadow:0 0 0 4px rgba(214,54,56,.75);
+}
+
+/* Editor chrome only: labels never contribute to canonical x/y/w/h. */
+.h18-clean-node>.h18-clean-node-header{
+    position:absolute!important;
+    top:-29px!important;
+    margin:0!important;
+}
