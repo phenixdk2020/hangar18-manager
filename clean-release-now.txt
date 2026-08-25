@@ -1,4 +1,4 @@
-v0.1.8
-triggered_utc=2026-08-25T13:26:00Z
-reason=Cell-split grid: local horizontal/vertical cell division with sibling row-span preservation and canonical grid-row rendering.
-nonce=9
+v0.1.9
+triggered_utc=2026-08-25T13:48:00Z
+reason=Unified Clean Manager admin with nested Designer, page/content overview, backup, updates and diagnostics log.
+nonce=10
