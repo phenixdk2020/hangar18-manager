@@ -33,5 +33,12 @@
 .h18-manager-json{display:block;max-width:900px;max-height:160px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.35}
 .h18-manager-module{border-left:4px solid #dba617}
 .h18-clean-update-check{display:inline-flex;margin:0}
+.h18-clean-update-details{flex:1 1 100%;width:100%;box-sizing:border-box;margin-top:10px;padding:14px 16px;border:1px solid #dcdcde;border-left:4px solid #c3ae83;border-radius:6px;background:#f9f9f9}
+.h18-clean-update-details>p{margin-top:0}
+.h18-clean-update-details details{margin-top:10px}
+.h18-clean-update-details summary{cursor:pointer}
+.h18-clean-update-changelog{margin-top:8px;padding:10px 12px;border-radius:5px;background:#fff}
+.h18-clean-update-changelog h4{margin:0 0 8px}
+.h18-clean-update-changelog ul{margin:0 0 0 20px;list-style:disc}
 @media(max-width:1100px){.h18-manager-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.h18-manager-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:782px){.h18-manager-hero{align-items:flex-start;flex-direction:column}.h18-manager-hero-actions{justify-content:flex-start}.h18-manager-stats,.h18-manager-card-grid,.h18-manager-two-col{grid-template-columns:1fr}.h18-manager-actions{min-width:170px}}
