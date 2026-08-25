@@ -6,7 +6,6 @@
 .h18-clean-node:hover:has(.h18-clean-node:hover)>.h18-clean-node-header,
 .h18-clean-node.is-selected:has(.h18-clean-node:hover)>.h18-clean-node-header{display:none!important}
 
-
 /* Clean 0.1.15: semantic editor state colours.
    Blue = hover, green = selected/active, red = overlap warning. */
 .h18-clean-node.is-selected{
@@ -23,4 +22,27 @@
     outline:2px solid #00a32a!important;
     outline-offset:2px!important;
     box-shadow:0 0 0 4px rgba(214,54,56,.75)!important;
+}
+
+/* Clean 0.1.19: every saved page version gets a visible change description. */
+.h18-clean-change-note-wrap{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    flex:1 1 360px;
+    min-width:280px;
+    margin-left:auto;
+}
+.h18-clean-change-note-label{
+    font-weight:700;
+    white-space:nowrap;
+}
+.h18-clean-change-note-wrap input{
+    flex:1 1 320px;
+    min-width:220px;
+    max-width:560px;
+}
+@media(max-width:782px){
+    .h18-clean-change-note-wrap{flex-basis:100%;margin-left:0}
+    .h18-clean-change-note-wrap input{max-width:none}
 }
