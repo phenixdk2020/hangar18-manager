@@ -1,0 +1,108 @@
+name: Clean GitHub Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'clean-release-now.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(php -r '$s=file_get_contents("clean/hangar18-manager/hangar18-manager.php"); if (!preg_match("/Version:\\s*([0-9]+\\.[0-9]+\\.[0-9]+)/", $s, $m)) exit(2); echo $m[1];')"
+          grep -q "H18_CLEAN_VERSION', '$VERSION'" clean/hangar18-manager/hangar18-manager.php
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Clean version: $VERSION"
+
+      - name: Verify clean source
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l clean/hangar18-manager/hangar18-manager.php
+          php -l clean/hangar18-manager/src/Model/LayoutModel.php
+          php -l clean/hangar18-manager/src/Diagnostics/DiagnosticStore.php
+          php -l clean/hangar18-manager/src/Admin/EditorController.php
+          php -l clean/hangar18-manager/src/Frontend/Renderer.php
+          php -l clean/hangar18-manager/src/Update/GitHubUpdater.php
+          node --check clean/hangar18-manager/assets/editor.js
+          if grep -R -n -E 'Hangar18\\\\UltimateDesigner|ultimate-designer-|EditorLego|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then
+            echo 'Legacy editor runtime dependency found in clean plugin.' >&2
+            exit 1
+          fi
+
+      - name: Build package and manifest
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          VERSIONED="dist/hangar18-manager-clean-v${VERSION}.zip"
+          rm -f "$VERSIONED" dist/hangar18-manager-clean.zip
+          (cd clean && zip -qr "../$VERSIONED" hangar18-manager)
+          cp "$VERSIONED" dist/hangar18-manager-clean.zip
+          unzip -tq "$VERSIONED"
+          SHA="$(sha256sum "$VERSIONED" | awk '{print $1}')"
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          python - "$VERSION" "$SHA" "$SOURCE_COMMIT" <<'PY'
+          import json, sys
+          from pathlib import Path
+          version, sha, source_commit = sys.argv[1:4]
+          notes_path = Path('clean-release-notes.html')
+          notes = notes_path.read_text(encoding='utf-8').strip() if notes_path.exists() else f'<h4>{version}</h4><p>Hangar18 Manager Clean release.</p>'
+          data = {
+              'name': 'Hangar18 Manager Clean',
+              'slug': 'hangar18-manager',
+              'version': version,
+              'homepage': 'https://hangar18.dk/',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'tested': '6.8',
+              'package': f'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v{version}.zip',
+              'sha256': sha,
+              'source_commit': source_commit,
+              'sections': {
+                  'description': 'Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.',
+                  'changelog': notes,
+              },
+          }
+          Path('clean-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          echo "Package SHA256: $SHA"
+
+      - name: Commit verified release
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean-update.json "dist/hangar18-manager-clean-v${VERSION}.zip" dist/hangar18-manager-clean.zip
+          if git diff --cached --quiet; then
+            echo 'Release artifacts already current.'
+          else
+            git commit -m "Release clean v${VERSION}"
+            git push origin HEAD:main
+          fi
+
+      - name: Upload installable ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hangar18-manager-clean-v${{ steps.version.outputs.version }}
+          if-no-files-found: error
+          retention-days: 14
+          path: dist/hangar18-manager-clean-v${{ steps.version.outputs.version }}.zip
