@@ -176,9 +176,10 @@ final class LayoutModel
     private static function geometry(array $raw): array
     {
         $desktop = self::device(isset($raw['desktop']) && is_array($raw['desktop']) ? $raw['desktop'] : [], false);
+        $laptop = self::device(isset($raw['laptop']) && is_array($raw['laptop']) ? $raw['laptop'] : [], true);
         $tablet = self::device(isset($raw['tablet']) && is_array($raw['tablet']) ? $raw['tablet'] : [], true);
         $mobile = self::device(isset($raw['mobile']) && is_array($raw['mobile']) ? $raw['mobile'] : [], true);
-        return ['desktop' => $desktop, 'tablet' => $tablet, 'mobile' => $mobile];
+        return ['desktop' => $desktop, 'laptop' => $laptop, 'tablet' => $tablet, 'mobile' => $mobile];
     }
 
     /** @param array<string,mixed> $raw @return array<string,mixed> */
