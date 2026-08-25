@@ -1,27 +1,27 @@
 {
-  "version": "0.9.1",
-  "title": "Physical Canvas – 120 units, Undo/Redo og re-parenting",
+  "version": "0.9.2",
+  "title": "Save/Restore Diagnostics – end-to-end persistence trace",
   "channel": "test",
   "backlog_ids": [
+    "SAVE-DIAG-116",
+    "RESTORE-DIAG-117",
+    "SAVE-RESTORE-CORRELATION-118",
+    "DIAG-INTERACTION-115",
+    "FRONTEND-PHYSICAL-PARITY-114",
     "CANVAS-PHYSICAL-GEOMETRY-111",
     "CANVAS-REPARENT-112",
-    "CANVAS-HISTORY-113",
-    "FRONTEND-PHYSICAL-PARITY-114",
-    "DIAG-INTERACTION-115",
-    "ARCH-CANONICAL-MODEL-107",
-    "ARCH-SAVE-PROJECTION-108",
-    "ARCH-RENDER-OWNER-109"
+    "CANVAS-HISTORY-113"
   ],
   "changelog": [
-    "Tilføjer et fysisk 120-unit canvas-lag til den kanoniske 0.9.x-editor; elementets synlige ramme kan nu have persistent bredde og højde i stedet for kun en administrativ proxy-størrelse.",
-    "Tilføjer otte resize-zoner pr. element: top, bund, venstre, højre og alle fire hjørner. Venstre/top-resize flytter origin samtidig, så den modsatte kant forbliver forankret.",
-    "Horisontal resize snapper til 120 layout-units, mens lodret resize snapper i 8-px units. En pointer-gesture bliver én historiktransaktion.",
-    "Tilføjer Fortryd/Gentag-knapper samt Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z og Ctrl+Y. Historikken gemmer kanonisk parent/order, fysisk geometri og redigerbare feltværdier for layout-/inspektørændringer.",
-    "Et allerede deployet element kan flyttes med et særskilt move-håndtag ind i container/grid/flex eller ud til root. Ugyldige self/descendant-drops afvises for at forhindre cycles.",
-    "Re-parenting skriver LayoutParentKey og Order tilbage til canonical source rows og lader v0.9.0-layout-engine validere stack/hierarki før Save.",
-    "Fysisk geometri gemmes efter den kanoniske v0.9.0-save i samme per-page layout option under Section Geometry; den er dermed persisted state og ikke editor-CSS alene.",
-    "Tilføjer frontend parity-runtime for gemt 120-unit bredde, signed vertical offset og eksplicit højde. Den eksisterende 12-kolonne frontend-runtime forbliver fallback for elementer uden fysisk geometri.",
-    "Tilføjer strukturelle diagnostics for resize begin/commit, re-parent begin/commit, Undo og Redo uden rå tekstindhold eller credentials.",
-    "Vehicle, Event og Gallery får ingen nye editor-hooks; v0.9.1-funktionerne enqueuees kun i den almindelige Hangar18 sideeditor og fysisk frontend-CSS genereres kun for sider med gemt geometry-state."
+    "Tilføjer et observer-only v0.9.2 debuglag omkring hele Page Editor Save-kæden uden at ændre layoutmotor, content-saver, backup eller restore-ejerskab.",
+    "SERVER_SAVE_INTENT_V0902 logger strukturel før-state med WordPress hash, seneste sideversion og canonical layout digest; rå tekstindhold, nonces og credentials logges ikke.",
+    "SERVER_SAVE_PROJECTED_V0902 kører efter v0.9.0 canonical projection og v0.9.1 geometry merge og registrerer de faktiske strukturelle payload-kontrakter h18_lego_layout_span, h18_lego_stack_v0851 og h18_layout_geometry_v0901.",
+    "SERVER_SAVE_RESULT_V0902 kører via PHP shutdown efter den eksisterende Page Editor-saver, så version før/efter, WordPress hash, canonical layout digest og fatal-state kan sammenlignes selv når WordPress redirecter og afslutter requesten.",
+    "Både Erstat original og Restore som kopi får SERVER_RESTORE_BEGIN_V0902 og SERVER_RESTORE_RESULT_V0902 omkring den eksisterende B1 restore/preflight service; debuglaget ændrer ikke restore-kilde eller beslutning.",
+    "Restore redirect observeres kun som HTTP-status, restore-status, slug og beskedlængde. Selve redirect-beskeden gemmes ikke i diagnosticloggen.",
+    "Browsertrace tilføjer DIAG_CLIENT_SAVE_INTENT_V0902, DIAG_CLIENT_RESTORE_INTENT_V0902 og DIAG_CLIENT_RESTORE_RETURN_V0902 med kun SectionKey, type, parent/order, span, stack og fysisk geometri.",
+    "Den aktive private diagnostics-session videreføres til Restore-formen, så klient- og serverevents kan ses i samme eksisterende read-only support-log.",
+    "Den gamle diagnostics-fejl omkring span-feltnavnet omgås i det nye Save-spor: v0.9.2 kontrollerer den reelle POST-kontrakt h18_lego_layout_span.",
+    "Backloggen er flyttet frem til v0.9.2 og næste funktionelle batch er IMAGE-PHYSICAL-BOX-119: billede skal følge den fysiske elementkasse med contain/cover/crop/fri deformation og frontend parity."
   ]
 }
