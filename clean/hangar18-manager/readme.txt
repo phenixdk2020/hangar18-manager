@@ -2,8 +2,23 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.0
+Version: 0.1.5
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.5 ==
+* Sektioner og Kasser bruger deres valgte højde som minimum og vokser automatisk, når børn kræver mere plads.
+* Samme auto-grow-regel anvendes på offentlig frontend.
+* Under drag vises tydelig venstre/højre halvside-guide direkte på nabo-elementet.
+* GitHub-updateren er fortsat normal update-kanal.
+
+== 0.1.4 ==
+* Hangar18 Base Theme 1.2.x genkender Clean Manager som aktiv via en isoleret kompatibilitetsmarkør.
+* Indeholder spatial drag/drop og fix mod duplikerede drop-handlers.
+
+== 0.1.3 ==
+* Drop placeres fysisk venstre/højre efter pointer og nabo.
+* Eksisterende element kan omplaceres inden for samme Kasse.
+* Root/surface drop-handlers bindes kun én gang og duplikerer ikke elementer efter Undo/Redo.
 
 == 0.1.2 ==
 * GitHub-baseret WordPress updater via clean-update.json.
@@ -26,8 +41,3 @@ Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 * Billeder følger elementkassen med Cover, Contain eller Stretch og focal X/Y.
 * Save som versionshistorik og Restore som ny sikker version.
 * Strukturelle diagnostics med privat read-only support-link.
-
-== 0.1.3 ==
-* Drop placeres fysisk venstre/højre efter pointer og nabo.
-* Eksisterende element kan omplaceres inden for samme Kasse.
-* Root/surface drop-handlers bindes kun én gang og duplikerer ikke elementer efter Undo/Redo.
