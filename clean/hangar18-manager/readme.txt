@@ -2,8 +2,14 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.14
+Version: 0.1.15
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.15 ==
+* Valgt/aktivt element markeres grønt i stedet for blåt.
+* Resize-punkter og aktiv resize følger den grønne selection-farve.
+* Blå er fortsat hover/drop-kontekst, mens rød fortsat udelukkende betyder overlap/advarsel.
+* Et valgt element med overlap har grøn selection plus separat rød overlap-markering.
 
 == 0.1.14 ==
 * Kasse-/barn-labels kolliderer ikke længere: labels er kontekstuelle og ancestor-label skjules, når et barn er det direkte hover/valgte element.
