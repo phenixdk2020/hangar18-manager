@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.17.zip",
-  "sha256": "ecd84dd47fb3bb1cbd3e16967b19b7e381b673ee6be716b51e09ab3d09f20d4a",
-  "source_commit": "16bb0efa4aad5b889dc25b58149466fe4f1800d7",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.18.zip",
+  "sha256": "e1b611b10134dc63c72646fd3d82df630dcf462d0ac0c65e7bec6e4f6d35ebc8",
+  "source_commit": "dd4b041b7099cd8ee6f4d1fcfa6bb998cd10eb59",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.17</h4><ul><li>Tekst-elementet har nu en valgfri Overskrift i samme element.</li><li>Overskrifttype kan vælges som H2-H6; standard er H2.</li><li>Tom Overskrift giver kun brødtekst og ændrer ikke eksisterende layouts.</li><li>Overskrift vises både på canvas, i usavet forhåndsvisning og på gemt frontend.</li><li>Border, Afstand X/Y, resize og canonical geometri gælder fortsat for hele Tekst-elementet.</li></ul>"
+    "changelog": "<h4>0.1.18</h4><ul><li>Gemte versioner har nu Forhåndsvis, Gendan original og Opret kopi.</li><li>Gendan original er ikke-destruktiv og opretter en ny version; tidligere historik bevares.</li><li>Opret kopi laver en ny WordPress-kladdeside med sin egen Clean-historik fra v1.</li><li>Billedboksen og selve billedet styres nu separat.</li><li>Billeder kan Vis hele, Fyld/beskær, Original størrelse eller Stræk; vandret/lodret placering og boksbaggrund kan vælges.</li><li>Nye billeder bruger Vis hele billedet + centreret som standard.</li></ul>"
   }
 }
