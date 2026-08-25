@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.14.zip",
-  "sha256": "972af84a60de23ec5aaed540f344c57304cfbc793273fe0b805edbc718caba60",
-  "source_commit": "f061783a38854bd8631377fd540d2bab6f4b6ae7",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.15.zip",
+  "sha256": "9638e0adc14ddc97accc2db6e705798fbe420acb2e983fc171ab4a45d8369060",
+  "source_commit": "dff2dc1cf311b4c294f0112a1e581c973933ec69",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.14</h4><ul><li>Kontekstuelle labels fjerner Kasse/barn-label-kollision uden at ændre fysisk geometri.</li><li>Forhåndsvis viser den aktuelle usavede model i den rigtige frontend/theme via et kortlivet brugerspecifikt token.</li><li>Gem &amp; vis gemmer en ny version og åbner den offentlige side i en ny fane.</li><li>Save verificerer den fulde canonical digest efter reload, og digest inkluderer nu alle normaliserede props.</li></ul>"
+    "changelog": "<h4>0.1.15</h4><ul><li>Selection er nu grøn i stedet for blå.</li><li>Resize-punkter og aktiv resize er grønne.</li><li>Blå bruges til hover/drop-kontekst, mens rød fortsat kun betyder overlap/advarsel.</li><li>Valgt + overlap vises som grøn selection med separat rød overlap-markering.</li></ul>"
   }
 }
