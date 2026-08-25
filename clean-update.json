@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.11.zip",
-  "sha256": "87d9998da38414c7dc8b16dbc673cd4c0f133fb2d1ca76158786698e40c2b21d",
-  "source_commit": "f748e67a0f37da55a6d0b3dc36c288101166ad9a",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.12.zip",
+  "sha256": "c789a8b06fe6fddd7ea256f1aa10e790d4b03ad7b261ace3500e512091aabc7b",
+  "source_commit": "3b36e6bbbab7d920518f1c2fc62cbf49d3c2241e",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.11</h4><ul><li>Border er nu native Clean-layoutdata på alle elementer med tykkelse, farve og standard 0 px.</li><li>Afstand X og Afstand Y kan sættes pr. element (standard 0) og renderes ens i editor/frontend.</li><li>Afstand Y indgår i canonical højde og container auto-grow.</li><li>Opdateringer-siden kan nu både tjekke og installere en ny GitHub-version direkte uden at åbne Plugins.</li><li>Direkte installation bruger WordPress Plugin_Upgrader og bevarer SHA-256-verifikation af pakken.</li></ul>"
+    "changelog": "<h4>0.1.12</h4><ul><li>Blå markering betyder valgt element; rød markering er kun overlap-diagnostik.</li><li>Kasse og Sektion er layout-wrappers og tæller ikke selv som OVERLAP.</li><li>Editorlabels vises som KASSE, SEKTION, TEKST og BILLEDE, mens canonical type keys er uændrede.</li><li>Label og drag-håndtag er fortsat editor-chrome og påvirker ikke fysisk x/y/w/h eller containerens auto-grow.</li></ul>"
   }
 }
