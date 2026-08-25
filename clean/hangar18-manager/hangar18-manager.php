@@ -4,7 +4,7 @@
  * Plugin URI: https://hangar18.dk/
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.
- * Version: 0.1.11
+ * Version: 0.1.12
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.11');
+define('H18_CLEAN_VERSION', '0.1.12');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -62,8 +62,8 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     }
 
     /*
-     * 0.1.11 makes border and X/Y spacing native Clean properties and keeps
-     * the 0.1.10 canonical height/container reconciliation model.
+     * 0.1.12 separates selection from overlap diagnostics, localises editor
+     * labels and keeps editor chrome outside canonical element geometry.
      */
     wp_dequeue_script('h18-clean-editor');
 
@@ -109,5 +109,11 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ['h18-clean-editor-v018'],
         H18_CLEAN_VERSION
     );
-    /* v0.1.6 border/autogrow JS is retired; v0.1.11 handles these natively in core. */
+    wp_enqueue_style(
+        'h18-clean-editor-v0112',
+        H18_CLEAN_URL . 'assets/editor-v0112.css',
+        ['h18-clean-editor-v0110'],
+        H18_CLEAN_VERSION
+    );
+    /* v0.1.6 border/autogrow JS is retired; current Clean core handles these natively. */
 }, 20);
