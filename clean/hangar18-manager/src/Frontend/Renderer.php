@@ -73,7 +73,9 @@ final class Renderer
         if ($postId <= 0 || self::previewModel($postId) === null) {
             return;
         }
-        echo '<div style="position:fixed;right:16px;bottom:16px;z-index:2147483647;padding:8px 12px;border:1px solid #2271b1;border-radius:6px;background:#fff;color:#1d2327;box-shadow:0 4px 18px rgba(0,0,0,.2);font:600 13px/1.3 system-ui,sans-serif;pointer-events:none">Forhåndsvisning · ikke gemt</div>';
+        $version = isset($_GET['h18_clean_preview_version']) ? absint($_GET['h18_clean_preview_version']) : 0;
+        $label = $version > 0 ? 'Historisk version v' . $version . ' · ikke aktiv' : 'Forhåndsvisning · ikke gemt';
+        echo '<div style="position:fixed;right:16px;bottom:16px;z-index:2147483647;padding:8px 12px;border:1px solid #2271b1;border-radius:6px;background:#fff;color:#1d2327;box-shadow:0 4px 18px rgba(0,0,0,.2);font:600 13px/1.3 system-ui,sans-serif;pointer-events:none">' . esc_html($label) . '</div>';
     }
 
     /** @return array<string,mixed>|null */
@@ -159,11 +161,28 @@ final class Renderer
             if ($url === '' && !empty($props['mediaId'])) {
                 $url = esc_url((string) wp_get_attachment_image_url((int) $props['mediaId'], 'full'));
             }
-            $fit = (string) ($props['fit'] ?? 'cover');
-            $fitCss = $fit === 'contain' ? 'contain' : ($fit === 'stretch' ? 'fill' : 'cover');
-            $imageStyle = 'object-fit:' . $fitCss . ';object-position:' . (int) ($props['focalX'] ?? 50) . '% ' . (int) ($props['focalY'] ?? 50) . '%;';
-            $imageStyle .= $h > 0 ? 'height:100%;' : 'height:auto;';
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '"><figure class="h18-clean-front-image"' . ($h > 0 ? ' style="height:100%"' : '') . '>' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
+            $fit = (string) ($props['fit'] ?? 'contain');
+            if (!in_array($fit, ['cover', 'contain', 'original', 'stretch'], true)) {
+                $fit = 'contain';
+            }
+            $alignX = in_array((string) ($props['imageAlignX'] ?? 'center'), ['left', 'center', 'right'], true) ? (string) $props['imageAlignX'] : 'center';
+            $alignY = in_array((string) ($props['imageAlignY'] ?? 'center'), ['top', 'center', 'bottom'], true) ? (string) $props['imageAlignY'] : 'center';
+            $justify = ['left' => 'flex-start', 'center' => 'center', 'right' => 'flex-end'][$alignX];
+            $alignItems = ['top' => 'flex-start', 'center' => 'center', 'bottom' => 'flex-end'][$alignY];
+            $posX = ['left' => '0%', 'center' => '50%', 'right' => '100%'][$alignX];
+            $posY = ['top' => '0%', 'center' => '50%', 'bottom' => '100%'][$alignY];
+            $background = !empty($props['boxTransparent']) ? 'transparent' : (sanitize_hex_color((string) ($props['boxBackground'] ?? '#ffffff')) ?: '#ffffff');
+            $figureStyle = 'height:100%;display:flex;justify-content:' . $justify . ';align-items:' . $alignItems . ';background:' . $background . ';';
+            if ($fit === 'original') {
+                $imageStyle = 'display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;object-position:' . $posX . ' ' . $posY . ';';
+            } else {
+                $fitCss = $fit === 'stretch' ? 'fill' : $fit;
+                $objectPosition = $fit === 'cover'
+                    ? ((int) ($props['focalX'] ?? 50) . '% ' . (int) ($props['focalY'] ?? 50) . '%')
+                    : ($posX . ' ' . $posY);
+                $imageStyle = 'display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:' . $fitCss . ';object-position:' . $objectPosition . ';';
+            }
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '"><figure class="h18-clean-front-image" style="' . esc_attr($figureStyle) . '">' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
         }
 
         $background = sanitize_hex_color((string) ($props['background'] ?? '')) ?: 'transparent';

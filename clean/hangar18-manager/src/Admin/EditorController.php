@@ -14,10 +14,14 @@ final class EditorController
     private const MENU = 'h18-clean-editor';
     private const SAVE_ACTION = 'h18_clean_save';
     private const RESTORE_ACTION = 'h18_clean_restore';
+    private const RESTORE_COPY_ACTION = 'h18_clean_restore_copy';
     private const PREVIEW_ACTION = 'h18_clean_preview';
+    private const VERSION_PREVIEW_ACTION = 'h18_clean_version_preview';
     private const NONCE_SAVE = 'h18_clean_save';
     private const NONCE_RESTORE = 'h18_clean_restore';
+    private const NONCE_RESTORE_COPY = 'h18_clean_restore_copy';
     private const NONCE_PREVIEW = 'h18_clean_preview';
+    private const NONCE_VERSION_PREVIEW = 'h18_clean_version_preview';
 
     public static function register(): void
     {
@@ -25,7 +29,9 @@ final class EditorController
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
         add_action('admin_post_' . self::SAVE_ACTION, [self::class, 'save']);
         add_action('admin_post_' . self::RESTORE_ACTION, [self::class, 'restore']);
+        add_action('admin_post_' . self::RESTORE_COPY_ACTION, [self::class, 'restoreCopy']);
         add_action('admin_post_' . self::PREVIEW_ACTION, [self::class, 'preview']);
+        add_action('admin_post_' . self::VERSION_PREVIEW_ACTION, [self::class, 'previewVersion']);
     }
 
     public static function menu(): void
@@ -140,20 +146,27 @@ final class EditorController
         if (!$history) {
             echo '<p>Ingen gemte clean-versioner endnu.</p>';
         } else {
-            echo '<table class="widefat striped"><thead><tr><th>Version</th><th>Gemt</th><th>Note</th><th>Digest</th><th>Restore</th></tr></thead><tbody>';
+            echo '<p class="description">Hver Gem opretter en ny version. Gendan på original opretter også en ny version, så historikken aldrig overskrives.</p>';
+            echo '<table class="widefat striped"><thead><tr><th>Version</th><th>Gemt</th><th>Note</th><th>Digest</th><th>Handlinger</th></tr></thead><tbody>';
             foreach (array_slice($history, 0, 20) as $entry) {
                 $version = (int) ($entry['version'] ?? 0);
                 echo '<tr><td><strong>v' . esc_html((string) $version) . '</strong></td>';
                 echo '<td>' . esc_html((string) ($entry['savedUtc'] ?? '')) . '</td>';
                 echo '<td>' . esc_html((string) ($entry['note'] ?? '')) . '</td>';
-                echo '<td><code>' . esc_html(substr((string) ($entry['digest'] ?? ''), 0, 14)) . '…</code></td><td>';
-                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-clean-restore-form">';
+                echo '<td><code>' . esc_html(substr((string) ($entry['digest'] ?? ''), 0, 14)) . '…</code></td><td><div class="h18-clean-version-actions">';
+                echo '<form method="post" target="_blank" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                wp_nonce_field(self::NONCE_VERSION_PREVIEW);
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::VERSION_PREVIEW_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $postId) . '"><input type="hidden" name="version" value="' . esc_attr((string) $version) . '">';
+                echo '<button class="button" type="submit">Forhåndsvis</button></form>';
+                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
                 wp_nonce_field(self::NONCE_RESTORE);
-                echo '<input type="hidden" name="action" value="' . esc_attr(self::RESTORE_ACTION) . '">';
-                echo '<input type="hidden" name="post_id" value="' . esc_attr((string) $postId) . '">';
-                echo '<input type="hidden" name="version" value="' . esc_attr((string) $version) . '">';
-                echo '<button class="button" type="submit" onclick="return confirm(\'Restore clean version v' . esc_js((string) $version) . '? Den nuværende gemte version ligger fortsat i historikken.\');">Restore</button>';
-                echo '</form></td></tr>';
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::RESTORE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $postId) . '"><input type="hidden" name="version" value="' . esc_attr((string) $version) . '">';
+                echo '<button class="button" type="submit" onclick="return confirm(\'Gendan v' . esc_js((string) $version) . ' på original-siden? Den nuværende version bevares i historikken.\');">Gendan original</button></form>';
+                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                wp_nonce_field(self::NONCE_RESTORE_COPY);
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::RESTORE_COPY_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $postId) . '"><input type="hidden" name="version" value="' . esc_attr((string) $version) . '">';
+                echo '<button class="button" type="submit" onclick="return confirm(\'Opret en ny kladde som kopi af v' . esc_js((string) $version) . '? Original-siden ændres ikke.\');">Opret kopi</button></form>';
+                echo '</div></td></tr>';
             }
             echo '</tbody></table>';
         }
@@ -247,6 +260,83 @@ final class EditorController
         } catch (\Throwable $error) {
             DiagnosticStore::append($postId, 'preview_error', ['errorType' => get_class($error), 'message' => $error->getMessage()]);
             wp_die(esc_html('Forhåndsvisning fejlede: ' . $error->getMessage()));
+        }
+    }
+
+    public static function previewVersion(): void
+    {
+        if (!current_user_can('edit_pages')) {
+            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+        }
+        check_admin_referer(self::NONCE_VERSION_PREVIEW);
+        $postId = absint($_POST['post_id'] ?? 0);
+        $targetVersion = absint($_POST['version'] ?? 0);
+        if ($postId <= 0 || get_post_type($postId) !== 'page' || $targetVersion <= 0) {
+            wp_die(esc_html__('Ugyldig versionsanmodning.', 'hangar18-manager-clean'));
+        }
+        $target = LayoutModel::historyModel($postId, $targetVersion);
+        if ($target === null) {
+            wp_die(esc_html__('Den valgte clean-version findes ikke længere.', 'hangar18-manager-clean'));
+        }
+        $token = strtolower(wp_generate_password(24, false, false));
+        set_transient(Renderer::previewKey(get_current_user_id(), $postId, $token), $target, 10 * MINUTE_IN_SECONDS);
+        DiagnosticStore::append($postId, 'version_preview_open', ['targetVersion' => $targetVersion]);
+        $permalink = get_permalink($postId);
+        if (!is_string($permalink) || $permalink === '') {
+            wp_die(esc_html__('Siden har ingen gyldig permalink.', 'hangar18-manager-clean'));
+        }
+        wp_safe_redirect(add_query_arg([
+            'h18_clean_preview' => rawurlencode($token),
+            'h18_clean_preview_version' => $targetVersion,
+        ], $permalink));
+        exit;
+    }
+
+    public static function restoreCopy(): void
+    {
+        if (!current_user_can('edit_pages')) {
+            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+        }
+        check_admin_referer(self::NONCE_RESTORE_COPY);
+        $postId = absint($_POST['post_id'] ?? 0);
+        $targetVersion = absint($_POST['version'] ?? 0);
+        $source = get_post($postId);
+        if (!$source instanceof \WP_Post || $source->post_type !== 'page' || $targetVersion <= 0) {
+            self::redirect($postId, 'error', 'Ugyldig kopi-anmodning.');
+        }
+        try {
+            $target = LayoutModel::historyModel($postId, $targetVersion);
+            if ($target === null) {
+                throw new \RuntimeException('Den valgte clean-version findes ikke længere i historikken.');
+            }
+            $copyId = wp_insert_post([
+                'post_type' => 'page',
+                'post_status' => 'draft',
+                'post_title' => (string) $source->post_title . ' – kopi fra v' . $targetVersion,
+                'post_content' => (string) $source->post_content,
+                'post_excerpt' => (string) $source->post_excerpt,
+                'post_parent' => (int) $source->post_parent,
+                'menu_order' => (int) $source->menu_order,
+                'post_author' => get_current_user_id(),
+            ], true);
+            if (is_wp_error($copyId)) {
+                throw new \RuntimeException($copyId->get_error_message());
+            }
+            $copyId = (int) $copyId;
+            $template = get_page_template_slug($postId);
+            if (is_string($template) && $template !== '') {
+                update_post_meta($copyId, '_wp_page_template', $template);
+            }
+            $thumb = get_post_thumbnail_id($postId);
+            if ($thumb > 0) {
+                set_post_thumbnail($copyId, $thumb);
+            }
+            $copyVersion = LayoutModel::saveVersion($copyId, $target, get_current_user_id(), 'Kopi fra side ' . $postId . ' · v' . $targetVersion);
+            DiagnosticStore::append($postId, 'restore_copy_result', ['targetVersion' => $targetVersion, 'copyPostId' => $copyId, 'copyVersion' => $copyVersion]);
+            self::redirect($copyId, 'success', 'Kopi oprettet som kladde fra v' . $targetVersion . '. Kopien starter sin egen historik ved v' . $copyVersion . '.');
+        } catch (\Throwable $error) {
+            DiagnosticStore::append($postId, 'restore_copy_error', ['targetVersion' => $targetVersion, 'errorType' => get_class($error), 'message' => $error->getMessage()]);
+            self::redirect($postId, 'error', 'Kopi fejlede: ' . $error->getMessage());
         }
     }
 

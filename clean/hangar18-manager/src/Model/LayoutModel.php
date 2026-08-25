@@ -214,15 +214,27 @@ final class LayoutModel
             ], $border);
         }
         if ($type === 'image') {
-            $fit = strtolower((string) ($raw['fit'] ?? 'cover'));
-            if (!in_array($fit, ['cover', 'contain', 'stretch'], true)) {
-                $fit = 'cover';
+            $fit = strtolower((string) ($raw['fit'] ?? 'contain'));
+            if (!in_array($fit, ['cover', 'contain', 'original', 'stretch'], true)) {
+                $fit = 'contain';
+            }
+            $alignX = strtolower((string) ($raw['imageAlignX'] ?? 'center'));
+            if (!in_array($alignX, ['left', 'center', 'right'], true)) {
+                $alignX = 'center';
+            }
+            $alignY = strtolower((string) ($raw['imageAlignY'] ?? 'center'));
+            if (!in_array($alignY, ['top', 'center', 'bottom'], true)) {
+                $alignY = 'center';
             }
             return array_merge([
                 'mediaId' => absint($raw['mediaId'] ?? 0),
                 'url' => esc_url_raw((string) ($raw['url'] ?? '')),
                 'alt' => sanitize_text_field((string) ($raw['alt'] ?? '')),
                 'fit' => $fit,
+                'imageAlignX' => $alignX,
+                'imageAlignY' => $alignY,
+                'boxBackground' => sanitize_hex_color((string) ($raw['boxBackground'] ?? '#ffffff')) ?: '#ffffff',
+                'boxTransparent' => array_key_exists('boxTransparent', $raw) ? (bool) $raw['boxTransparent'] : true,
                 'focalX' => self::clamp($raw['focalX'] ?? 50, 0, 100, 50),
                 'focalY' => self::clamp($raw['focalY'] ?? 50, 0, 100, 50),
             ], $border);

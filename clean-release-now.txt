@@ -1,4 +1,4 @@
-v0.1.17
-triggered_utc=2026-08-25T17:31:00Z
-reason=Optional heading in Text element with H2-H6.
+v0.1.18
+triggered_utc=2026-08-25T17:50:00Z
+reason=Version restore preview/copy plus independent image-box controls.
 nonce=19

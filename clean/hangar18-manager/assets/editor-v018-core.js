@@ -62,12 +62,16 @@
             });
         }
         if (type === 'image') {
-            const fit = ['cover', 'contain', 'stretch'].includes(String(raw.fit || '').toLowerCase()) ? String(raw.fit).toLowerCase() : 'cover';
+            const fit = ['cover', 'contain', 'original', 'stretch'].includes(String(raw.fit || '').toLowerCase()) ? String(raw.fit).toLowerCase() : 'contain';
             return Object.assign(common, {
                 mediaId: parseInt(raw.mediaId || 0, 10) || 0,
                 url: String(raw.url || ''),
                 alt: String(raw.alt || ''),
                 fit: fit,
+                imageAlignX: ['left', 'center', 'right'].includes(String(raw.imageAlignX || '').toLowerCase()) ? String(raw.imageAlignX).toLowerCase() : 'center',
+                imageAlignY: ['top', 'center', 'bottom'].includes(String(raw.imageAlignY || '').toLowerCase()) ? String(raw.imageAlignY).toLowerCase() : 'center',
+                boxBackground: /^#[0-9a-f]{6}$/i.test(String(raw.boxBackground || '')) ? String(raw.boxBackground).toLowerCase() : '#ffffff',
+                boxTransparent: raw.boxTransparent !== false,
                 focalX: clamp(parseInt(raw.focalX || 50, 10) || 50, 0, 100),
                 focalY: clamp(parseInt(raw.focalY || 50, 10) || 50, 0, 100)
             });
@@ -719,12 +723,32 @@
             wrap.appendChild(body);
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
+            const alignX = ['left', 'center', 'right'].includes(node.props.imageAlignX) ? node.props.imageAlignX : 'center';
+            const alignY = ['top', 'center', 'bottom'].includes(node.props.imageAlignY) ? node.props.imageAlignY : 'center';
+            wrap.style.justifyContent = ({ left: 'flex-start', center: 'center', right: 'flex-end' })[alignX];
+            wrap.style.alignItems = ({ top: 'flex-start', center: 'center', bottom: 'flex-end' })[alignY];
+            wrap.style.backgroundColor = node.props.boxTransparent === false ? normalizeColor(node.props.boxBackground || '#ffffff') : 'transparent';
             if (node.props.url) {
                 const img = document.createElement('img');
                 img.src = node.props.url;
                 img.alt = node.props.alt || '';
-                img.style.objectFit = node.props.fit === 'stretch' ? 'fill' : node.props.fit;
-                img.style.objectPosition = node.props.focalX + '% ' + node.props.focalY + '%';
+                const fit = ['cover', 'contain', 'original', 'stretch'].includes(node.props.fit) ? node.props.fit : 'contain';
+                const posX = ({ left: '0%', center: '50%', right: '100%' })[alignX];
+                const posY = ({ top: '0%', center: '50%', bottom: '100%' })[alignY];
+                if (fit === 'original') {
+                    img.style.width = 'auto';
+                    img.style.height = 'auto';
+                    img.style.maxWidth = '100%';
+                    img.style.maxHeight = '100%';
+                    img.style.objectFit = 'contain';
+                } else {
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.maxWidth = 'none';
+                    img.style.maxHeight = 'none';
+                    img.style.objectFit = fit === 'stretch' ? 'fill' : fit;
+                }
+                img.style.objectPosition = fit === 'cover' ? (node.props.focalX + '% ' + node.props.focalY + '%') : (posX + ' ' + posY);
                 wrap.appendChild(img);
             } else {
                 wrap.textContent = 'Vælg billede i Inspector';
@@ -1032,8 +1056,12 @@
             html += '<label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label>';
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button>';
-            html += '<label>Tilpasning<select data-field="fit"><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld kassen · beskær automatisk</option><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet · behold proportioner</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Fri bredde/højde · tillad deformation</option></select></label>';
-            html += '<div class="h18-clean-field-grid"><label>Fokus X %<input data-field="focalX" type="number" min="0" max="100" value="' + node.props.focalX + '"></label><label>Fokus Y %<input data-field="focalY" type="number" min="0" max="100" value="' + node.props.focalY + '"></label></div>';
+            html += '<label>Billede i boksen<select data-field="fit"><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet</option><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld boksen · beskær</option><option value="original"' + (node.props.fit === 'original' ? ' selected' : '') + '>Original størrelse</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Stræk til boks</option></select></label>';
+            html += '<div class="h18-clean-field-grid"><label>Vandret placering<select data-field="imageAlignX"><option value="left"' + (node.props.imageAlignX === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.imageAlignX === 'center' ? ' selected' : '') + '>Center</option><option value="right"' + (node.props.imageAlignX === 'right' ? ' selected' : '') + '>Højre</option></select></label><label>Lodret placering<select data-field="imageAlignY"><option value="top"' + (node.props.imageAlignY === 'top' ? ' selected' : '') + '>Top</option><option value="center"' + (node.props.imageAlignY === 'center' ? ' selected' : '') + '>Center</option><option value="bottom"' + (node.props.imageAlignY === 'bottom' ? ' selected' : '') + '>Bund</option></select></label></div>';
+            html += '<label class="h18-clean-checkbox"><input data-field="boxTransparent" type="checkbox"' + (node.props.boxTransparent !== false ? ' checked' : '') + '> Gennemsigtig boksbaggrund</label>';
+            html += '<label>Boksbaggrund<input data-field="boxBackground" type="color" value="' + escapeAttr(node.props.boxBackground || '#ffffff') + '"></label>';
+            html += '<div class="h18-clean-field-grid"><label>Fokus X % <span class="description">(beskæring)</span><input data-field="focalX" type="number" min="0" max="100" value="' + node.props.focalX + '"></label><label>Fokus Y % <span class="description">(beskæring)</span><input data-field="focalY" type="number" min="0" max="100" value="' + node.props.focalY + '"></label></div>';
+            html += '<p class="description">De grønne resize-punkter ændrer kun billedboksen. Billedet følger indstillingen ovenfor.</p>';
             html += '<label>Alt-tekst<input data-field="alt" type="text" value="' + escapeAttr(node.props.alt || '') + '"></label>';
         } else {
             html += '<label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#ffffff') + '"></label>';
@@ -1065,7 +1093,11 @@
                 else if (field === 'headingLevel') { current.props.headingLevel = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(control.value) ? control.value : 'h2'; }
                 else if (field === 'text') { current.props.text = String(control.value || ''); }
                 else if (field === 'align') { current.props.align = ['left', 'center', 'right'].includes(control.value) ? control.value : 'left'; }
-                else if (field === 'fit') { current.props.fit = ['cover', 'contain', 'stretch'].includes(control.value) ? control.value : 'cover'; }
+                else if (field === 'fit') { current.props.fit = ['cover', 'contain', 'original', 'stretch'].includes(control.value) ? control.value : 'contain'; }
+                else if (field === 'imageAlignX') { current.props.imageAlignX = ['left', 'center', 'right'].includes(control.value) ? control.value : 'center'; }
+                else if (field === 'imageAlignY') { current.props.imageAlignY = ['top', 'center', 'bottom'].includes(control.value) ? control.value : 'center'; }
+                else if (field === 'boxTransparent') { current.props.boxTransparent = !!control.checked; }
+                else if (field === 'boxBackground') { current.props.boxBackground = normalizeColor(control.value || '#ffffff'); }
                 else if (field === 'focalX') { current.props.focalX = clamp(parseInt(control.value || 50, 10) || 50, 0, 100); }
                 else if (field === 'focalY') { current.props.focalY = clamp(parseInt(control.value || 50, 10) || 50, 0, 100); }
                 else if (field === 'alt') { current.props.alt = String(control.value || ''); }
