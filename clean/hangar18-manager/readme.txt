@@ -2,8 +2,17 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.6
+Version: 0.1.7
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.7 ==
+* Drag/drop har nu fire placeringer omkring et almindeligt element: Over, Under, Venstre og Højre.
+* Sektion/Kasse har desuden en central Ind i Kassen-zone.
+* Venstre/Højre lægger elementer i samme række og fordeler rækken automatisk over 120 units; 2 elementer bliver 60/60, 3 bliver 40/40/40 osv.
+* Over/Under opretter en selvstændig fuldbredde-række før/efter den række, der peges på.
+* Når et element flyttes ud af en række, fordeles de resterende elementer igen over rækken.
+* Drop-zoner vises fysisk under drag med aktiv zone tydeligt markeret.
+* Elementlabel og drag-håndtag forbliver editor-overlay og tæller ikke med i fysisk x/y/w/h.
 
 == 0.1.6 ==
 * Elementnavn og drag-håndtag er editor-overlay og tæller ikke med i elementets fysiske x/y/w/h.
