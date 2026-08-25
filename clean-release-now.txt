@@ -1,4 +1,4 @@
 v0.1.15
-triggered_utc=2026-08-25T17:10:00Z
+triggered_utc=2026-08-25T17:11:30Z
 reason=Green selection state, green resize handles, blue hover, red overlap.
-nonce=16
+nonce=17
