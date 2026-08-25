@@ -1,0 +1,190 @@
+/*
+Theme Name: Hangar18 Base Theme
+Theme URI: https://hangar18.dk/
+Author: Hangar18
+Description: Minimalt WordPress-basistema til Hangar18. Hangar18 Manager styrer header, menu, footer og de administrerede sider.
+Version: 1.2.0
+Requires at least: 6.4
+Requires PHP: 8.0
+Text Domain: hangar18-base
+*/
+
+/*
+ * Hangar18 Base Theme
+ * -------------------
+ * Formål: Et neutralt fundament uden Astra-header, banner, footer,
+ * sidebar eller automatiske sidetitler.
+ *
+ * Hangar18 Manager leverer det egentlige design inde i sideindholdet.
+ */
+
+:root {
+    --h18-base-olive: #30382a;
+    --h18-base-sand: #c3ae83;
+    --h18-base-steel: #525a5f;
+    --h18-base-offwhite: #f2f0e8;
+    --h18-base-rust: #8b4a2b;
+}
+
+html {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-width: 320px;
+    background: #ffffff;
+    color: #0b0620;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    font-size: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem);
+    font-weight: 400;
+    line-height: 1.6;
+    overflow-x: clip;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 0;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+h1 {
+    font-size: clamp(1.85rem, 1.85rem + ((1vw - 0.2rem) * 3.167), 3.75rem);
+    font-weight: 600;
+}
+
+h2 {
+    font-size: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);
+    font-weight: 600;
+}
+
+h3 {
+    font-size: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);
+    font-weight: 600;
+}
+
+h4 {
+    font-size: clamp(1.5rem, 1.5rem + ((1vw - 0.48rem) * 0.721), 1.875rem);
+    font-weight: 600;
+}
+
+h5 {
+    font-size: clamp(1.25rem, 1.25rem + ((1vw - 0.48rem) * 0.721), 1.5rem);
+    font-weight: 500;
+    line-height: 1.6;
+    text-transform: uppercase;
+}
+
+h6 {
+    font-size: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem);
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    line-height: 1.6;
+    text-transform: uppercase;
+}
+
+p {
+    margin: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+iframe {
+    max-width: 100%;
+}
+
+a {
+    color: inherit;
+}
+
+.wp-element-button,
+.wp-block-button__link {
+    border: 0;
+    border-radius: 2rem;
+    font-weight: 500;
+    line-height: inherit;
+    padding: calc(0.667em + 2px) calc(1.333em + 2px);
+    text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+#page,
+.h18-base-site,
+.h18-theme-main,
+.h18-theme-page,
+.h18-theme-entry-content,
+.entry-content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Temaet må ikke skabe en ekstra titel-/banner-række. */
+.h18-theme-page > .entry-header,
+.h18-theme-page > .entry-title,
+.page-header,
+.entry-header,
+.ast-single-entry-banner,
+.ast-page-title,
+.wp-block-post-title {
+    display: none !important;
+}
+
+/* WordPress adminbar + sticky Hangar18-header. */
+body.admin-bar .h18-site-header.h18-scroll-sticky {
+    top: 0 !important;
+}
+
+@media (max-width: 782px) {
+    body.admin-bar .h18-site-header.h18-scroll-sticky {
+        top: 0 !important;
+    }
+}
+
+/* Fallback hvis Hangar18 Manager midlertidigt er deaktiveret. */
+.h18-base-fallback {
+    width: min(1100px, calc(100% - 40px));
+    margin: 40px auto;
+}
+
+.h18-base-fallback h1 {
+    margin-top: 0;
+}
+
+@media (max-width: 700px) {
+    .h18-base-fallback {
+        width: min(100% - 24px, 1100px);
+        margin-top: 24px;
+    }
+}
