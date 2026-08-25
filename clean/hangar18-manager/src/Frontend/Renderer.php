@@ -55,7 +55,7 @@ final class Renderer
         echo '.h18-clean-front-text{overflow-wrap:anywhere}';
         echo '.h18-clean-front-text-heading{margin:0 0 8px;line-height:1.2}';
         echo '.h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box;height:100%}';
-        echo '.h18-clean-front-image img{display:block;width:100%;max-width:none;margin:0;box-sizing:border-box}';
+        echo '.h18-clean-front-image img{display:block;max-width:none;margin:0;box-sizing:border-box}';
         echo '</style>';
     }
 
@@ -138,7 +138,6 @@ final class Renderer
         if ($h > 0) {
             $style .= 'grid-row:' . ($y + 1) . '/span ' . $h . ';min-height:' . ($h * LayoutModel::ROW_PX) . 'px;';
         } elseif ($y !== 0) {
-            // Compatibility for pre-cell-split layouts where h=0 meant natural height.
             $style .= 'margin-top:' . ($y * LayoutModel::ROW_PX) . 'px;';
         }
 
@@ -147,14 +146,24 @@ final class Renderer
         $props = is_array($node['props'] ?? null) ? $node['props'] : [];
         $borderStyle = self::borderStyle($props);
         $spacingStyle = self::spacingStyle($props);
+        $radius = max(0, min(100, (int) ($props['radius'] ?? 0)));
+        $radiusStyle = 'border-radius:' . $radius . 'px;';
 
         if ($type === 'text') {
             $heading = trim((string) ($props['heading'] ?? ''));
             $headingLevel = in_array((string) ($props['headingLevel'] ?? 'h2'), ['h2', 'h3', 'h4', 'h5', 'h6'], true) ? (string) $props['headingLevel'] : 'h2';
+            $headingColor = sanitize_hex_color((string) ($props['headingColor'] ?? '#000000')) ?: '#000000';
+            $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#000000')) ?: '#000000';
+            $background = !empty($props['backgroundTransparent'])
+                ? 'transparent'
+                : (sanitize_hex_color((string) ($props['background'] ?? '#ffffff')) ?: '#ffffff');
+            $padding = max(0, min(120, (int) ($props['padding'] ?? 0)));
             $headingHtml = $heading !== ''
-                ? '<' . $headingLevel . ' class="h18-clean-front-text-heading">' . esc_html($heading) . '</' . $headingLevel . '>'
+                ? '<' . $headingLevel . ' class="h18-clean-front-text-heading" style="color:' . esc_attr($headingColor) . '">' . esc_html($heading) . '</' . $headingLevel . '>'
                 : '';
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($style . $borderStyle . $spacingStyle . 'text-align:' . (string) ($props['align'] ?? 'left') . ';') . '">' . $headingHtml . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
+            $textStyle = $style . $borderStyle . $spacingStyle . $radiusStyle
+                . 'background:' . $background . ';padding:' . $padding . 'px;color:' . $textColor . ';text-align:' . (string) ($props['align'] ?? 'left') . ';';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '">' . $headingHtml . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
         }
         if ($type === 'image') {
             $url = esc_url((string) ($props['url'] ?? ''));
@@ -162,7 +171,7 @@ final class Renderer
                 $url = esc_url((string) wp_get_attachment_image_url((int) $props['mediaId'], 'full'));
             }
             $fit = (string) ($props['fit'] ?? 'contain');
-            if (!in_array($fit, ['cover', 'contain', 'original', 'stretch'], true)) {
+            if (!in_array($fit, ['cover', 'contain', 'original', 'stretch', 'manual'], true)) {
                 $fit = 'contain';
             }
             $alignX = in_array((string) ($props['imageAlignX'] ?? 'center'), ['left', 'center', 'right'], true) ? (string) $props['imageAlignX'] : 'center';
@@ -172,21 +181,31 @@ final class Renderer
             $posX = ['left' => '0%', 'center' => '50%', 'right' => '100%'][$alignX];
             $posY = ['top' => '0%', 'center' => '50%', 'bottom' => '100%'][$alignY];
             $background = !empty($props['boxTransparent']) ? 'transparent' : (sanitize_hex_color((string) ($props['boxBackground'] ?? '#ffffff')) ?: '#ffffff');
-            $figureStyle = 'height:100%;display:flex;justify-content:' . $justify . ';align-items:' . $alignItems . ';background:' . $background . ';';
-            if ($fit === 'original') {
-                $imageStyle = 'display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;object-position:' . $posX . ' ' . $posY . ';';
+            $figureStyle = 'height:100%;background:' . $background . ';border-radius:inherit;overflow:hidden;';
+            if ($fit === 'manual') {
+                $manualX = max(-300, min(300, (int) ($props['manualX'] ?? 0)));
+                $manualY = max(-300, min(300, (int) ($props['manualY'] ?? 0)));
+                $manualW = max(1, min(600, (int) ($props['manualW'] ?? 100)));
+                $manualH = max(1, min(600, (int) ($props['manualH'] ?? 100)));
+                $figureStyle .= 'position:relative;display:block;';
+                $imageStyle = 'position:absolute;left:' . $manualX . '%;top:' . $manualY . '%;width:' . $manualW . '%;height:' . $manualH . '%;max-width:none;max-height:none;object-fit:fill;object-position:50% 50%;';
             } else {
-                $fitCss = $fit === 'stretch' ? 'fill' : $fit;
-                $objectPosition = $fit === 'cover'
-                    ? ((int) ($props['focalX'] ?? 50) . '% ' . (int) ($props['focalY'] ?? 50) . '%')
-                    : ($posX . ' ' . $posY);
-                $imageStyle = 'display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:' . $fitCss . ';object-position:' . $objectPosition . ';';
+                $figureStyle .= 'display:flex;justify-content:' . $justify . ';align-items:' . $alignItems . ';';
+                if ($fit === 'original') {
+                    $imageStyle = 'display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;object-position:' . $posX . ' ' . $posY . ';';
+                } else {
+                    $fitCss = $fit === 'stretch' ? 'fill' : $fit;
+                    $objectPosition = $fit === 'cover'
+                        ? ((int) ($props['focalX'] ?? 50) . '% ' . (int) ($props['focalY'] ?? 50) . '%')
+                        : ($posX . ' ' . $posY);
+                    $imageStyle = 'display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:' . $fitCss . ';object-position:' . $objectPosition . ';';
+                }
             }
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '"><figure class="h18-clean-front-image" style="' . esc_attr($figureStyle) . '">' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
+            $outerStyle = $style . $borderStyle . $spacingStyle . $radiusStyle;
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($outerStyle) . '"><figure class="h18-clean-front-image" style="' . esc_attr($figureStyle) . '">' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
         }
 
         $background = sanitize_hex_color((string) ($props['background'] ?? '')) ?: 'transparent';
-        $radius = max(0, min(100, (int) ($props['radius'] ?? 0)));
         $padding = max(0, min(120, (int) ($props['padding'] ?? 0)));
         $classes = $type === 'section' ? 'h18-clean-front-section' : 'h18-clean-front-container';
         $requiredHeight = self::requiredChildHeightPx((string) $node['id'], $byParent);
@@ -195,7 +214,7 @@ final class Renderer
         if ($minimumHeight > 0) {
             $style .= 'min-height:' . $minimumHeight . 'px;';
         }
-        $boxStyle = $style . $borderStyle . $spacingStyle . 'background:' . $background . ';border-radius:' . $radius . 'px;padding:' . $padding . 'px;';
+        $boxStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . 'background:' . $background . ';padding:' . $padding . 'px;';
         return '<section id="h18-clean-' . $id . '" class="h18-clean-front-node ' . esc_attr($classes) . '" style="' . esc_attr($boxStyle) . '">' . self::children((string) $node['id'], $byParent, $byId) . '</section>';
     }
 
