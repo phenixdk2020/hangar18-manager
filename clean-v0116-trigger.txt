@@ -1,0 +1,3 @@
+triggered_utc=2026-08-25T17:17:00Z
+reason=self-update activation state fix
+nonce=17
