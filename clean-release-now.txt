@@ -1,4 +1,4 @@
 v0.1.13
-triggered_utc=2026-08-25T16:58:00Z
+triggered_utc=2026-08-25T16:59:00Z
 reason=Preserve plugin activation across direct self-update and use 80px default text height.
-nonce=13
+nonce=14
