@@ -1,0 +1,41 @@
+name: Apply Clean v0.1.15 Patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'clean-v0115-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply and validate v0.1.15 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/apply-clean-v0115.py
+          php -l clean/hangar18-manager/hangar18-manager.php
+          test -s clean/hangar18-manager/assets/editor-v0114.css
+          grep -q "Version: 0.1.15" clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.15'" clean/hangar18-manager/hangar18-manager.php
+          grep -q "outline:2px solid #00a32a" clean/hangar18-manager/assets/editor-v0114.css
+
+      - name: Commit source and release trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager clean-release-notes.html
+          printf 'v0.1.15\ntriggered_utc=2026-08-25T17:10:00Z\nreason=Green selection state, green resize handles, blue hover, red overlap.\nnonce=16\n' > clean-release-now.txt
+          git add clean-release-now.txt
+          git commit -m 'Prepare clean v0.1.15 green selection state'
+          git push origin HEAD:main
