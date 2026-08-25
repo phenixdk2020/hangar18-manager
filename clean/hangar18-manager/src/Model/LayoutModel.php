@@ -69,6 +69,9 @@ final class LayoutModel
                 'geometry' => self::geometry(isset($nodeRaw['geometry']) && is_array($nodeRaw['geometry']) ? $nodeRaw['geometry'] : []),
                 'props' => self::props($type, isset($nodeRaw['props']) && is_array($nodeRaw['props']) ? $nodeRaw['props'] : []),
             ];
+            if (in_array($type, ['section', 'container'], true) && (!isset($nodeRaw['props']) || !is_array($nodeRaw['props']) || !array_key_exists('minHeightRows', $nodeRaw['props']))) {
+                $nodes[$id]['props']['minHeightRows'] = (int) $nodes[$id]['geometry']['desktop']['h'];
+            }
         }
 
         self::validateHierarchy($nodes);
@@ -246,6 +249,7 @@ final class LayoutModel
                 'background' => sanitize_hex_color((string) ($raw['background'] ?? '')) ?: '',
                 'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
                 'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
+                'minHeightRows' => self::clamp($raw['minHeightRows'] ?? 0, 0, 4000, 0),
             ], $border);
         }
         return $border;

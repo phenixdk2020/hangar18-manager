@@ -4,7 +4,7 @@
  * Plugin URI: https://hangar18.dk/
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.
- * Version: 0.1.9
+ * Version: 0.1.10
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.9');
+define('H18_CLEAN_VERSION', '0.1.10');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -62,8 +62,8 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     }
 
     /*
-     * 0.1.9 keeps the 0.1.8 cell-split editor runtime, now nested below the
-     * Clean Manager admin. Save/Restore and diagnostics contracts are unchanged.
+     * 0.1.10 reconciles natural element height into canonical 8 px rows and
+     * auto-grows nested containers while keeping the 0.1.8 cell-split model.
      */
     wp_dequeue_script('h18-clean-editor');
 
@@ -101,6 +101,12 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'h18-clean-editor-v018',
         H18_CLEAN_URL . 'assets/editor-v018.css',
         ['h18-clean-editor-v016'],
+        H18_CLEAN_VERSION
+    );
+    wp_enqueue_style(
+        'h18-clean-editor-v0110',
+        H18_CLEAN_URL . 'assets/editor-v0110.css',
+        ['h18-clean-editor-v018'],
         H18_CLEAN_VERSION
     );
     wp_enqueue_script(

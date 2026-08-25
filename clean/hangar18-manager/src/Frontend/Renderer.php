@@ -146,8 +146,17 @@ final class Renderer
             $g = isset($child['geometry']['desktop']) && is_array($child['geometry']['desktop']) ? $child['geometry']['desktop'] : [];
             $y = max(0, (int) ($g['y'] ?? 0));
             $h = max(0, (int) ($g['h'] ?? 0));
-            $childHeight = $h * LayoutModel::ROW_PX;
-            if (in_array((string) ($child['type'] ?? ''), ['section', 'container'], true)) {
+            $type = (string) ($child['type'] ?? '');
+            if ($h > 0) {
+                $childHeight = $h * LayoutModel::ROW_PX;
+            } elseif ($type === 'image') {
+                $childHeight = 10 * LayoutModel::ROW_PX;
+            } elseif ($type === 'text') {
+                $childHeight = 6 * LayoutModel::ROW_PX;
+            } else {
+                $childHeight = 8 * LayoutModel::ROW_PX;
+            }
+            if (in_array($type, ['section', 'container'], true)) {
                 $childHeight = max($childHeight, self::requiredChildHeightPx((string) ($child['id'] ?? ''), $byParent));
             }
             $required = max($required, ($y * LayoutModel::ROW_PX) + $childHeight);

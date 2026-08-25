@@ -2,8 +2,16 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.9
+Version: 0.1.10
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.10 ==
+* Elementer med naturlig h=0 materialiseres nu til deres faktiske højde i hele 8-px-rækker, så gridet reserverer den plads der faktisk tegnes.
+* Kasse/Sektion beregner effektiv højde rekursivt ud fra alle direkte børn og vokser automatisk efter drop, reparent, resize, delete og reload.
+* Manuel højde på Kasse/Sektion gemmes separat som minHeightRows og fungerer som minimum; indhold kan gøre kassen højere, og den kan krympe tilbage til minimum når indhold fjernes.
+* Kollisions-heal flytter kun elementer der kolliderer som følge af automatisk materialisering af tidligere h=0-geometri.
+* Bevidst/manuelt overlap er foreløbig stadig tilladt, men markeres tydeligt med OVERLAP-advarsel i editoren, så vi kan beslutte den endelige policy efter test.
+* Frontend har fallback-højder for ældre h=0-layouts, indtil de er gemt igen med canonical 0.1.10-geometri.
 
 == 0.1.9 ==
 * Nyt samlet Hangar18 Manager-adminmenu inspireret af 0.9.2: Dashboard, Designer, Køretøjer, Køretøjsfelter, Events, Billedgalleri, Data, Sider, Menu, Header/Footer, Backup, Opdateringer og Log.

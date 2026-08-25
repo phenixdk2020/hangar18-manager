@@ -72,7 +72,8 @@
             return Object.assign(common, {
                 background: String(raw.background || ''),
                 radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100),
-                padding: clamp(parseInt(raw.padding || 0, 10) || 0, 0, 120)
+                padding: clamp(parseInt(raw.padding || 0, 10) || 0, 0, 120),
+                minHeightRows: clamp(parseInt(raw.minHeightRows || 0, 10) || 0, 0, 4000)
             });
         }
         return common;
@@ -100,6 +101,10 @@
                 },
                 props: normalizeProps(type, item.props)
             });
+            const added = nodes[nodes.length - 1];
+            if (PARENT_TYPES.includes(type) && (!item.props || !Object.prototype.hasOwnProperty.call(item.props, 'minHeightRows'))) {
+                added.props.minHeightRows = added.geometry.desktop.h;
+            }
         });
         const map = {};
         nodes.forEach(function (node) { map[node.id] = node; });
@@ -221,6 +226,125 @@
             bottom = Math.max(bottom, g.y + (g.h > 0 ? g.h : MIN_SPLIT_H));
         });
         return bottom;
+    }
+
+    function nodeDepth(node) {
+        let depth = 0;
+        let cursor = node;
+        const seen = {};
+        while (cursor && cursor.parentId && !seen[cursor.id]) {
+            seen[cursor.id] = true;
+            depth += 1;
+            cursor = nodeById(cursor.parentId);
+        }
+        return depth;
+    }
+
+    function materializeNaturalLeafHeights() {
+        const changed = new Set();
+        document.querySelectorAll('.h18-clean-node[data-node-id]').forEach(function (card) {
+            const node = nodeById(card.getAttribute('data-node-id') || '');
+            if (!node || PARENT_TYPES.includes(node.type) || node.geometry.desktop.h > 0) { return; }
+            const rect = card.getBoundingClientRect();
+            const rows = Math.max(1, Math.ceil(Math.max(1, rect.height) / ROW_PX));
+            node.geometry.desktop.h = rows;
+            changed.add(node.id);
+        });
+        return changed;
+    }
+
+    function healMaterializationCollisions(materialized) {
+        if (!materialized || !materialized.size) { return false; }
+        let changed = false;
+        const parents = Array.from(new Set(state.nodes.map(function (node) { return node.parentId; })));
+        parents.forEach(function (parentId) {
+            const list = children(parentId).slice().sort(function (a, b) {
+                if (a.geometry.desktop.y !== b.geometry.desktop.y) { return a.geometry.desktop.y - b.geometry.desktop.y; }
+                return a.order - b.order;
+            });
+            const placed = [];
+            list.forEach(function (node) {
+                const g = node.geometry.desktop;
+                if (!materialized.has(node.id) && !placed.some(function (other) { return materialized.has(other.id); })) {
+                    placed.push(node);
+                    return;
+                }
+                let guard = 0;
+                while (guard++ < 100) {
+                    const current = { x: g.x, y: g.y, w: g.w, h: Math.max(1, g.h || MIN_SPLIT_H) };
+                    let nextY = current.y;
+                    placed.forEach(function (other) {
+                        const og = other.geometry.desktop;
+                        const otherRect = { x: og.x, y: og.y, w: og.w, h: Math.max(1, og.h || MIN_SPLIT_H) };
+                        if (rectsOverlap(current, otherRect)) { nextY = Math.max(nextY, otherRect.y + otherRect.h); }
+                    });
+                    if (nextY === current.y) { break; }
+                    g.y = nextY;
+                    changed = true;
+                }
+                placed.push(node);
+            });
+        });
+        return changed;
+    }
+
+    function syncContainerHeights() {
+        let changed = false;
+        const parents = state.nodes.filter(function (node) { return PARENT_TYPES.includes(node.type); });
+        parents.sort(function (a, b) { return nodeDepth(b) - nodeDepth(a); });
+        parents.forEach(function (parent) {
+            const kids = children(parent.id);
+            let required = kids.length ? 0 : MIN_SPLIT_H;
+            kids.forEach(function (child) {
+                const g = child.geometry.desktop;
+                required = Math.max(required, Math.max(0, g.y) + Math.max(1, g.h || MIN_SPLIT_H));
+            });
+            const p = parent.props || {};
+            const extraPx = (Math.max(0, parseInt(p.padding || 0, 10) || 0) * 2) + (Math.max(0, parseInt(p.borderWidth || 0, 10) || 0) * 2);
+            required += Math.ceil(extraPx / ROW_PX);
+            const manualMin = clamp(parseInt(p.minHeightRows || 0, 10) || 0, 0, 4000);
+            const next = clamp(Math.max(manualMin, required), 1, 4000);
+            if (parent.geometry.desktop.h !== next) {
+                parent.geometry.desktop.h = next;
+                changed = true;
+            }
+        });
+        return changed;
+    }
+
+    function markOverlapWarnings() {
+        document.querySelectorAll('.h18-clean-node.has-layout-overlap').forEach(function (card) { card.classList.remove('has-layout-overlap'); });
+        const parents = Array.from(new Set(state.nodes.map(function (node) { return node.parentId; })));
+        parents.forEach(function (parentId) {
+            const list = children(parentId);
+            for (let i = 0; i < list.length; i += 1) {
+                for (let j = i + 1; j < list.length; j += 1) {
+                    const a = list[i].geometry.desktop;
+                    const b = list[j].geometry.desktop;
+                    const ar = { x: a.x, y: a.y, w: a.w, h: Math.max(1, a.h || MIN_SPLIT_H) };
+                    const br = { x: b.x, y: b.y, w: b.w, h: Math.max(1, b.h || MIN_SPLIT_H) };
+                    if (!rectsOverlap(ar, br)) { continue; }
+                    [list[i].id, list[j].id].forEach(function (id) {
+                        document.querySelectorAll('.h18-clean-node[data-node-id="' + CSS.escape(id) + '"]').forEach(function (card) {
+                            card.classList.add('has-layout-overlap');
+                        });
+                    });
+                }
+            }
+        });
+    }
+
+    function reconcileLayoutAfterRender(canvas) {
+        const materialized = materializeNaturalLeafHeights();
+        const collisionHealed = healMaterializationCollisions(materialized);
+        const containersChanged = syncContainerHeights();
+        const changed = materialized.size > 0 || collisionHealed || containersChanged;
+        if (changed && canvas) {
+            renderSurface('', canvas);
+            if (undoStack.length) { undoStack[undoStack.length - 1].after = clone(state); }
+        }
+        markOverlapWarnings();
+        return changed;
     }
 
     function directDropTarget(event, parentId, movingId, surface) {
@@ -849,6 +973,10 @@
             render();
             return;
         }
+        const resizedNode = nodeById(current.id);
+        if (resizedNode && PARENT_TYPES.includes(resizedNode.type)) {
+            resizedNode.props.minHeightRows = resizedNode.geometry.desktop.h;
+        }
         commit(current.before, 'Resize ' + current.id);
         const node = nodeById(current.id);
         diag('resize_commit', { id: current.id, direction: current.direction, geometry: node ? clone(node.geometry.desktop) : null, state: structuralSummary() });
@@ -887,7 +1015,10 @@
                 if (field === 'gx') { current.geometry.desktop.x = clamp(parseInt(control.value || 0, 10) || 0, 0, UNITS - 1); current.geometry.desktop.w = Math.min(current.geometry.desktop.w, UNITS - current.geometry.desktop.x); }
                 else if (field === 'gw') { current.geometry.desktop.w = clamp(parseInt(control.value || 1, 10) || 1, 1, UNITS - current.geometry.desktop.x); }
                 else if (field === 'gy') { current.geometry.desktop.y = clamp(parseInt(control.value || 0, 10) || 0, -4000, 10000); }
-                else if (field === 'gh') { current.geometry.desktop.h = clamp(parseInt(control.value || 0, 10) || 0, 0, 4000); }
+                else if (field === 'gh') {
+                    current.geometry.desktop.h = clamp(parseInt(control.value || 0, 10) || 0, 0, 4000);
+                    if (PARENT_TYPES.includes(current.type)) { current.props.minHeightRows = current.geometry.desktop.h; }
+                }
                 else if (field === 'text') { current.props.text = String(control.value || ''); }
                 else if (field === 'align') { current.props.align = ['left', 'center', 'right'].includes(control.value) ? control.value : 'left'; }
                 else if (field === 'fit') { current.props.fit = ['cover', 'contain', 'stretch'].includes(control.value) ? control.value : 'cover'; }
@@ -937,7 +1068,10 @@
     function render() {
         state = normalizeModel(state);
         const canvas = document.getElementById('h18-clean-canvas');
-        if (canvas) { renderSurface('', canvas); }
+        if (canvas) {
+            renderSurface('', canvas);
+            reconcileLayoutAfterRender(canvas);
+        }
         renderInspector();
         updateHidden();
         updateHistoryUi();

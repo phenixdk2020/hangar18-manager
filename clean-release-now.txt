@@ -1,4 +1,4 @@
-v0.1.9
-triggered_utc=2026-08-25T13:48:00Z
-reason=Unified Clean Manager admin with nested Designer, page/content overview, backup, updates and diagnostics log.
+v0.1.10
+triggered_utc=2026-08-25T16:25:00Z
+reason=Canonical natural-height materialization, recursive container auto-grow and visible overlap diagnostics.
 nonce=10
