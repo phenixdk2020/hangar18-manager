@@ -1,0 +1,4 @@
+v0.1.11
+triggered_utc=2026-08-25T16:29:00Z
+reason=Native border and X/Y spacing plus in-manager updater.
+nonce=1
