@@ -167,13 +167,14 @@
             }
 
             const cardRect = card.getBoundingClientRect();
-            const innerRect = inner.getBoundingClientRect();
-            let required = Math.max(0, Math.ceil(innerRect.top - cardRect.top + inner.scrollHeight));
+            const computed = window.getComputedStyle ? window.getComputedStyle(inner) : null;
+            const paddingBottom = computed ? (parseFloat(computed.paddingBottom || '0') || 0) : 0;
+            let required = 0;
 
             Array.from(inner.children).forEach(function (child) {
                 if (!child.classList || !child.classList.contains('h18-clean-node')) { return; }
                 const rect = child.getBoundingClientRect();
-                required = Math.max(required, Math.ceil(rect.bottom - cardRect.top));
+                required = Math.max(required, Math.ceil(rect.bottom - cardRect.top + paddingBottom));
             });
 
             const border = decoration(card.getAttribute('data-node-id') || '').borderWidth * 2;
