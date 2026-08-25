@@ -211,11 +211,16 @@ final class LayoutModel
                 'headingLevel' => in_array((string) ($raw['headingLevel'] ?? 'h2'), ['h2', 'h3', 'h4', 'h5', 'h6'], true) ? (string) $raw['headingLevel'] : 'h2',
                 'text' => wp_kses_post((string) ($raw['text'] ?? 'Ny tekst')),
                 'align' => in_array((string) ($raw['align'] ?? 'left'), ['left', 'center', 'right'], true) ? (string) $raw['align'] : 'left',
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
+                'backgroundTransparent' => array_key_exists('backgroundTransparent', $raw) ? (bool) $raw['backgroundTransparent'] : true,
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#000000')) ?: '#000000',
+                'headingColor' => sanitize_hex_color((string) ($raw['headingColor'] ?? '#000000')) ?: '#000000',
+                'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
             ], $border);
         }
         if ($type === 'image') {
             $fit = strtolower((string) ($raw['fit'] ?? 'contain'));
-            if (!in_array($fit, ['cover', 'contain', 'original', 'stretch'], true)) {
+            if (!in_array($fit, ['cover', 'contain', 'original', 'stretch', 'manual'], true)) {
                 $fit = 'contain';
             }
             $alignX = strtolower((string) ($raw['imageAlignX'] ?? 'center'));
@@ -237,6 +242,11 @@ final class LayoutModel
                 'boxTransparent' => array_key_exists('boxTransparent', $raw) ? (bool) $raw['boxTransparent'] : true,
                 'focalX' => self::clamp($raw['focalX'] ?? 50, 0, 100, 50),
                 'focalY' => self::clamp($raw['focalY'] ?? 50, 0, 100, 50),
+                'manualX' => self::clamp($raw['manualX'] ?? 0, -300, 300, 0),
+                'manualY' => self::clamp($raw['manualY'] ?? 0, -300, 300, 0),
+                'manualW' => self::clamp($raw['manualW'] ?? 100, 1, 600, 100),
+                'manualH' => self::clamp($raw['manualH'] ?? 100, 1, 600, 100),
+                'lockAspect' => array_key_exists('lockAspect', $raw) ? (bool) $raw['lockAspect'] : true,
             ], $border);
         }
         if (in_array($type, ['section', 'container'], true)) {
@@ -256,6 +266,7 @@ final class LayoutModel
         return [
             'borderWidth' => self::clamp($raw['borderWidth'] ?? 0, 0, 20, 0),
             'borderColor' => sanitize_hex_color((string) ($raw['borderColor'] ?? '#000000')) ?: '#000000',
+            'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
             'gapX' => self::clamp($raw['gapX'] ?? 0, 0, 200, 0),
             'gapY' => self::clamp($raw['gapY'] ?? 0, 0, 200, 0),
         ];
