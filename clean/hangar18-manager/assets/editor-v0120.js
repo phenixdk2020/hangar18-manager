@@ -40,6 +40,11 @@
         return map;
     }
 
+    function currentNode(id) {
+        var map = nodeMap(readModel());
+        return map[String(id || '')] || initialNodes[String(id || '')] || null;
+    }
+
     function ensureExtra(id, type, liveProps) {
         id = String(id || '');
         if (extras[id]) { return extras[id]; }
@@ -61,10 +66,10 @@
                 radius: clamp(Math.round(num(props.radius, 0)), 0, 100),
                 manual: String(props.fit || '').toLowerCase() === 'manual',
                 fitOverride: '',
-                manualX: clamp(Math.round(num(props.manualX, 0)), -300, 300),
-                manualY: clamp(Math.round(num(props.manualY, 0)), -300, 300),
-                manualW: clamp(Math.round(num(props.manualW, 100)), 1, 600),
-                manualH: clamp(Math.round(num(props.manualH, 100)), 1, 600),
+                manualX: clamp(Math.round(num(props.manualX, 0)), -4000, 4000),
+                manualY: clamp(Math.round(num(props.manualY, 0)), -4000, 4000),
+                manualW: clamp(Math.round(num(props.manualW, 320)), 1, 4000),
+                manualH: clamp(Math.round(num(props.manualH, 240)), 1, 4000),
                 lockAspect: Object.prototype.hasOwnProperty.call(props, 'lockAspect') ? !!props.lockAspect : true
             };
         } else {
@@ -113,19 +118,18 @@
 
     window.H18CleanV0120 = { sync: syncHidden };
 
-    function currentNode(id) {
-        var map = nodeMap(readModel());
-        return map[String(id || '')] || initialNodes[String(id || '')] || null;
-    }
-
     function selectedCard() {
         return document.querySelector('.h18-clean-node.is-selected[data-node-id]');
+    }
+
+    function setCardRadius(card, radius) {
+        card.style.borderRadius = clamp(Math.round(num(radius, 0)), 0, 100) + 'px';
     }
 
     function applyText(card, node, e) {
         var preview = card.querySelector(':scope > .h18-clean-node-preview--text');
         if (!preview) { return; }
-        card.style.borderRadius = e.radius + 'px';
+        setCardRadius(card, e.radius);
         preview.style.boxSizing = 'border-box';
         preview.style.height = '100%';
         preview.style.borderRadius = e.radius + 'px';
@@ -139,10 +143,11 @@
     }
 
     function setManualGeometry(preview, img, frame, e) {
-        var left = e.manualX + '%';
-        var top = e.manualY + '%';
-        var width = e.manualW + '%';
-        var height = e.manualH + '%';
+        var left = e.manualX + 'px';
+        var top = e.manualY + 'px';
+        var width = e.manualW + 'px';
+        var height = e.manualH + 'px';
+        preview.style.position = 'relative';
         if (img) {
             img.style.position = 'absolute';
             img.style.left = left;
@@ -168,21 +173,22 @@
     function initializeManualGeometry(preview, img, e) {
         var box = preview.getBoundingClientRect();
         if (box.width <= 0 || box.height <= 0) { return; }
-        var naturalW = Math.max(1, Number(img.naturalWidth || 1));
-        var naturalH = Math.max(1, Number(img.naturalHeight || 1));
-        var imageRatio = naturalW / naturalH;
-        var boxRatio = box.width / box.height;
-        if (imageRatio >= boxRatio) {
-            e.manualW = 100;
-            e.manualH = clamp(Math.round(((box.width / imageRatio) / box.height) * 100), 1, 600);
-            e.manualX = 0;
-            e.manualY = Math.round((100 - e.manualH) / 2);
+        var naturalW = Math.max(1, Number(img.naturalWidth || img.width || 1));
+        var naturalH = Math.max(1, Number(img.naturalHeight || img.height || 1));
+        var ratio = naturalW / naturalH;
+        var width;
+        var height;
+        if ((box.width / box.height) >= ratio) {
+            height = box.height;
+            width = height * ratio;
         } else {
-            e.manualH = 100;
-            e.manualW = clamp(Math.round(((box.height * imageRatio) / box.width) * 100), 1, 600);
-            e.manualY = 0;
-            e.manualX = Math.round((100 - e.manualW) / 2);
+            width = box.width;
+            height = width / ratio;
         }
+        e.manualW = clamp(Math.round(width), 1, 4000);
+        e.manualH = clamp(Math.round(height), 1, 4000);
+        e.manualX = Math.round((box.width - width) / 2);
+        e.manualY = Math.round((box.height - height) / 2);
     }
 
     function enterManual(id, card) {
@@ -195,7 +201,6 @@
         if (!e.manual) { initializeManualGeometry(preview, img, e); }
         e.manual = true;
         e.fitOverride = '';
-        e.lockAspect = true;
         syncHidden();
         applyAll();
     }
@@ -237,7 +242,7 @@
         var preview = card.querySelector(':scope > .h18-clean-node-preview--image');
         if (!preview) { return; }
         var img = preview.querySelector('img');
-        card.style.borderRadius = e.radius + 'px';
+        setCardRadius(card, e.radius);
         preview.style.borderRadius = e.radius + 'px';
         preview.style.overflow = 'hidden';
         if (!img) { return; }
@@ -270,7 +275,6 @@
             return;
         }
 
-        preview.style.position = 'relative';
         preview.style.display = 'block';
         preview.style.justifyContent = '';
         preview.style.alignItems = '';
@@ -287,10 +291,13 @@
             var id = String(card.getAttribute('data-node-id') || '');
             var node = map[id] || initialNodes[id];
             if (!node) { return; }
-            if (node.type !== 'text' && node.type !== 'image') { return; }
-            var e = ensureExtra(id, node.type, node.props || {});
-            if (node.type === 'text') { applyText(card, node, e); }
-            else { applyImage(card, node, e); }
+            if (node.type === 'text') {
+                applyText(card, node, ensureExtra(id, 'text', node.props || {}));
+            } else if (node.type === 'image') {
+                applyImage(card, node, ensureExtra(id, 'image', node.props || {}));
+            } else {
+                setCardRadius(card, node.props && node.props.radius || 0);
+            }
         });
         injectInspector();
     }
@@ -300,13 +307,10 @@
         var node = currentNode(id);
         if (!node) { return; }
         var e = ensureExtra(id, 'image', node.props || {});
-        var box = preview.getBoundingClientRect();
-        if (box.width <= 0 || box.height <= 0) { return; }
         transform = {
             id: String(id), kind: kind, direction: direction,
             pointerId: event.pointerId, preview: preview, img: img, frame: frame,
             startX: event.clientX, startY: event.clientY,
-            boxW: box.width, boxH: box.height,
             start: clone(e)
         };
         try { frame.setPointerCapture(event.pointerId); } catch (ignore) {}
@@ -323,42 +327,35 @@
         var dy = event.clientY - transform.startY;
         var start = transform.start;
         if (transform.kind === 'move') {
-            e.manualX = clamp(Math.round(start.manualX + (dx / transform.boxW) * 100), -300, 300);
-            e.manualY = clamp(Math.round(start.manualY + (dy / transform.boxH) * 100), -300, 300);
+            e.manualX = clamp(Math.round(start.manualX + dx), -4000, 4000);
+            e.manualY = clamp(Math.round(start.manualY + dy), -4000, 4000);
         } else {
-            var startLeft = (start.manualX / 100) * transform.boxW;
-            var startTop = (start.manualY / 100) * transform.boxH;
-            var startW = Math.max(1, (start.manualW / 100) * transform.boxW);
-            var startH = Math.max(1, (start.manualH / 100) * transform.boxH);
-            var rawW = startW;
-            var rawH = startH;
             var dir = transform.direction;
-            if (dir.indexOf('e') !== -1) { rawW = startW + dx; }
-            if (dir.indexOf('w') !== -1) { rawW = startW - dx; }
-            if (dir.indexOf('s') !== -1) { rawH = startH + dy; }
-            if (dir.indexOf('n') !== -1) { rawH = startH - dy; }
-            rawW = clamp(rawW, 16, transform.boxW * 6);
-            rawH = clamp(rawH, 16, transform.boxH * 6);
+            var nextX = start.manualX;
+            var nextY = start.manualY;
+            var nextW = start.manualW;
+            var nextH = start.manualH;
+            if (dir.indexOf('e') !== -1) { nextW = start.manualW + dx; }
+            if (dir.indexOf('w') !== -1) { nextW = start.manualW - dx; }
+            if (dir.indexOf('s') !== -1) { nextH = start.manualH + dy; }
+            if (dir.indexOf('n') !== -1) { nextH = start.manualH - dy; }
+            nextW = clamp(Math.round(nextW), 16, 4000);
+            nextH = clamp(Math.round(nextH), 16, 4000);
 
-            var nextW = rawW;
-            var nextH = rawH;
             if (e.lockAspect) {
-                var scaleW = rawW / startW;
-                var scaleH = rawH / startH;
-                var scale = Math.abs(scaleW - 1) >= Math.abs(scaleH - 1) ? scaleW : scaleH;
-                scale = clamp(scale, 0.05, 6);
-                nextW = startW * scale;
-                nextH = startH * scale;
+                var ratio = Math.max(0.01, start.manualW / Math.max(1, start.manualH));
+                var changeW = Math.abs(nextW - start.manualW) / Math.max(1, start.manualW);
+                var changeH = Math.abs(nextH - start.manualH) / Math.max(1, start.manualH);
+                if (changeW >= changeH) { nextH = Math.max(16, Math.round(nextW / ratio)); }
+                else { nextW = Math.max(16, Math.round(nextH * ratio)); }
             }
+            if (dir.indexOf('w') !== -1) { nextX = start.manualX + start.manualW - nextW; }
+            if (dir.indexOf('n') !== -1) { nextY = start.manualY + start.manualH - nextH; }
 
-            var nextLeft = startLeft;
-            var nextTop = startTop;
-            if (dir.indexOf('w') !== -1) { nextLeft = startLeft + startW - nextW; }
-            if (dir.indexOf('n') !== -1) { nextTop = startTop + startH - nextH; }
-            e.manualX = clamp(Math.round((nextLeft / transform.boxW) * 100), -300, 300);
-            e.manualY = clamp(Math.round((nextTop / transform.boxH) * 100), -300, 300);
-            e.manualW = clamp(Math.round((nextW / transform.boxW) * 100), 1, 600);
-            e.manualH = clamp(Math.round((nextH / transform.boxH) * 100), 1, 600);
+            e.manualX = clamp(Math.round(nextX), -4000, 4000);
+            e.manualY = clamp(Math.round(nextY), -4000, 4000);
+            e.manualW = clamp(Math.round(nextW), 1, 4000);
+            e.manualH = clamp(Math.round(nextH), 1, 4000);
         }
         setManualGeometry(transform.preview, transform.img, transform.frame, e);
         event.preventDefault();
@@ -425,15 +422,15 @@
             if (e.manual) {
                 var manualGrid = document.createElement('div');
                 manualGrid.className = 'h18-clean-field-grid h18-clean-v0120-grid';
-                manualGrid.appendChild(makeField('Billede X %', 'manualX', 'number', e.manualX, -300, 300));
-                manualGrid.appendChild(makeField('Billede Y %', 'manualY', 'number', e.manualY, -300, 300));
-                manualGrid.appendChild(makeField('Billede bredde %', 'manualW', 'number', e.manualW, 1, 600));
-                manualGrid.appendChild(makeField('Billede højde %', 'manualH', 'number', e.manualH, 1, 600));
+                manualGrid.appendChild(makeField('Billede X px', 'manualX', 'number', e.manualX, -4000, 4000));
+                manualGrid.appendChild(makeField('Billede Y px', 'manualY', 'number', e.manualY, -4000, 4000));
+                manualGrid.appendChild(makeField('Billede bredde px', 'manualW', 'number', e.manualW, 1, 4000));
+                manualGrid.appendChild(makeField('Billede højde px', 'manualH', 'number', e.manualH, 1, 4000));
                 manualGrid.appendChild(makeField('Lås proportioner', 'lockAspect', 'checkbox', e.lockAspect));
                 panel.appendChild(manualGrid);
                 var help = document.createElement('p');
                 help.className = 'description';
-                help.textContent = 'Den grønne ramme styrer billedboksen. Den sandfarvede ramme styrer selve billedet. Træk i billedet for at flytte det, eller brug hjørnepunkterne for at skalere.';
+                help.textContent = 'Den grønne ramme styrer billedboksen. Den sandfarvede ramme styrer selve billedet. Billedets pixelmål ændres ikke, når du bagefter gør boksen større.';
                 panel.appendChild(help);
                 var reset = document.createElement('button');
                 reset.type = 'button';
@@ -451,7 +448,7 @@
             } else {
                 var hint = document.createElement('p');
                 hint.className = 'description';
-                hint.textContent = 'Du kan også dobbeltklikke på billedet på canvas for at gå i manuel billedtilstand.';
+                hint.textContent = 'Dobbeltklik på billedet eller brug knappen for at få et separat sandfarvet resize-lag til selve billedindholdet.';
                 panel.appendChild(hint);
             }
         }
@@ -466,10 +463,10 @@
             else if (field === 'headingColor') { e.headingColor = color(input.value, '#000000'); }
             else if (field === 'padding') { e.padding = clamp(Math.round(num(input.value, 0)), 0, 120); }
             else if (field === 'radius') { e.radius = clamp(Math.round(num(input.value, 0)), 0, 100); }
-            else if (field === 'manualX') { e.manualX = clamp(Math.round(num(input.value, 0)), -300, 300); }
-            else if (field === 'manualY') { e.manualY = clamp(Math.round(num(input.value, 0)), -300, 300); }
-            else if (field === 'manualW') { e.manualW = clamp(Math.round(num(input.value, 100)), 1, 600); }
-            else if (field === 'manualH') { e.manualH = clamp(Math.round(num(input.value, 100)), 1, 600); }
+            else if (field === 'manualX') { e.manualX = clamp(Math.round(num(input.value, 0)), -4000, 4000); }
+            else if (field === 'manualY') { e.manualY = clamp(Math.round(num(input.value, 0)), -4000, 4000); }
+            else if (field === 'manualW') { e.manualW = clamp(Math.round(num(input.value, 320)), 1, 4000); }
+            else if (field === 'manualH') { e.manualH = clamp(Math.round(num(input.value, 240)), 1, 4000); }
             else if (field === 'lockAspect') { e.lockAspect = !!input.checked; }
             syncHidden();
             applyAll();
@@ -491,16 +488,10 @@
     function install() {
         var canvas = document.getElementById('h18-clean-canvas');
         var inspector = document.getElementById('h18-clean-inspector');
-        if (canvas) {
-            new MutationObserver(scheduleApply).observe(canvas, { childList: true, subtree: true });
-        }
-        if (inspector) {
-            new MutationObserver(scheduleApply).observe(inspector, { childList: true, subtree: true });
-        }
+        if (canvas) { new MutationObserver(scheduleApply).observe(canvas, { childList: true, subtree: true }); }
+        if (inspector) { new MutationObserver(scheduleApply).observe(inspector, { childList: true, subtree: true }); }
         var form = document.getElementById('h18-clean-save-form');
-        if (form) {
-            form.addEventListener('submit', function () { syncHidden(); }, false);
-        }
+        if (form) { form.addEventListener('submit', function () { syncHidden(); }, false); }
         document.addEventListener('change', function (event) {
             var target = event.target;
             if (!target || target.getAttribute('data-field') !== 'fit') { return; }
