@@ -47,7 +47,8 @@ final class Autoload
 
         // Admin-only tooling. v0.9.x keeps one canonical layout model. The
         // physical canvas controller adds geometry/history/re-parenting after
-        // the canonical engine and merges geometry into the same page model.
+        // the canonical engine. v0.9.2 observes Save/Restore end-to-end without
+        // taking ownership of editor or restore mutations.
         if (
             function_exists('is_admin') &&
             function_exists('add_action') &&
@@ -62,6 +63,7 @@ final class Autoload
             \Hangar18\UltimateDesigner\Admin\BackupHealthAdminController::register();
             \Hangar18\UltimateDesigner\Admin\EditorLayoutEngineAdminController::register();
             \Hangar18\UltimateDesigner\Admin\EditorPhysicalCanvasAdminController::register();
+            \Hangar18\UltimateDesigner\Admin\SaveRestoreDiagnosticAdminController::register();
         }
     }
 }
