@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.20.zip",
-  "sha256": "4a9c69b71bebcff7c890096a06a5a1ea715b52d129159031beaae690066e29a8",
-  "source_commit": "7e893309066ab1a3227eb28cb0b29e4180634262",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.21.zip",
+  "sha256": "ec9104d013d63cb14226a88eb905cafb435d821d1d1a783a687a75aa69cc2662",
+  "source_commit": "6188f40f64787eb1702a90394486abb4ef399eb4",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.20</h4><ul><li>Hjørneradius er nu en fælles styling-egenskab på Sektion, Kasse, Tekst og Billede.</li><li>Tekst-elementer kan have gennemsigtig eller valgt baggrund, separat tekstfarve, separat overskriftsfarve og padding.</li><li>Billedboksen og selve billedindholdet kan redigeres uafhængigt.</li><li>Manuel billedtilstand viser en separat sandfarvet ramme med egne flytte- og resize-håndtag.</li><li>Manuelt billedindhold gemmer egne X/Y/bredde/højde i pixels, så billedets størrelse ikke automatisk følger en senere ændring af billedboksen.</li><li>Lås proportioner er aktiveret som standard ved manuel billedskalering.</li><li>Vis hele / Fyld / Original / Stræk bevares som hurtige billedtilstande, og manuel redigering kan nulstilles tilbage til Vis hele billedet.</li><li>Preview og frontend renderer de nye tekstfarver, baggrunde, hjørner og den manuelle billedgeometri.</li><li>Ændringsbeskrivelsen ved sidegemning skal være skrevet af brugeren og kan ikke længere erstattes lydløst af editorens interne sidste handling.</li></ul>"
+    "changelog": "<h4>0.1.21</h4><ul><li>Designeren har nu tre arbejdsvisninger: Desktop, Laptop og Mobil.</li><li>Canonical modellen understøtter separat <code>geometry.laptop</code> og <code>geometry.mobile</code> med arv, mens element-ID, indhold og hierarki fortsat er fælles.</li><li>Laptop arver Desktop som standard; Mobil arver det effektive Laptop/Desktop-layout indtil et lokalt override oprettes.</li><li>Flytning og resize i Laptop/Mobil ændrer kun den aktive responsive geometri og kan nulstilles til arv.</li><li>Frontend anvender responsive breakpoint-geometrier fra samme gemte model: Laptop op til 1180 px og Mobil op til 782 px.</li><li>Responsive parent-højder beregnes ud fra børnene, så mobile stack-layouts ikke skal overlappe efterfølgende indhold.</li><li>Elementer og Inspector kan foldes ind og ud uafhængigt for at give mere arbejdsplads på mindre skærme.</li><li>Ny <strong>⇔ Mere canvas</strong>-knap folder begge sidepaneler ind eller ud på én gang.</li><li>Paneltilstanden gemmes lokalt i browseren; almindelige laptop-bredder starter i en kompakt Designer-visning, hvis brugeren ikke allerede har valgt noget andet.</li><li>Workspace, toolbar og canvas er gjort mere kompakte på laptopskærme, uden at den canonical 120-unit model ændres.</li></ul>"
   }
 }
