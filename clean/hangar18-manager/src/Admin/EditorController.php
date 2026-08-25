@@ -6,6 +6,7 @@ namespace Hangar18\Clean\Admin;
 
 use Hangar18\Clean\Diagnostics\DiagnosticStore;
 use Hangar18\Clean\Model\LayoutModel;
+use Hangar18\Clean\Update\GitHubUpdater;
 
 final class EditorController
 {
@@ -83,7 +84,7 @@ final class EditorController
 
         echo '<div class="wrap h18-clean-admin">';
         echo '<h1>Hangar18 Designer · ' . esc_html((string) $post->post_title) . '</h1>';
-        echo '<p class="description">Clean editor 0.1.0 · 120 layout-units · modeldrevet Save/Reload · ingen legacy editor-runtime.</p>';
+        echo '<p class="description">Clean editor ' . esc_html(H18_CLEAN_VERSION) . ' · 120 layout-units · modeldrevet Save/Reload · ingen legacy editor-runtime.</p>';
         if ($message !== '') {
             echo '<div class="notice ' . ($status === 'error' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($message) . '</p></div>';
         }
@@ -92,6 +93,7 @@ final class EditorController
         echo '<a class="button" href="' . esc_url(admin_url('admin.php?page=' . self::MENU)) . '">← Vælg side</a>';
         echo '<a class="button" target="_blank" rel="noopener" href="' . esc_url(get_permalink($postId)) . '">Vis offentlig side</a>';
         echo '<button type="button" class="button" id="h18-clean-copy-diag" data-url="' . esc_attr(DiagnosticStore::supportUrl($postId)) . '">Kopiér diagnose-link</button>';
+        echo GitHubUpdater::checkButtonHtml();
         echo '</div>';
 
         echo '<form id="h18-clean-save-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
@@ -116,9 +118,9 @@ final class EditorController
             'text' => 'Tekst',
             'image' => 'Billede',
         ] as $type => $label) {
-            echo '<button type="button" class="button h18-clean-add" data-type="' . esc_attr($type) . '">+ ' . esc_html($label) . '</button>';
+            echo '<button type="button" draggable="true" class="button h18-clean-add" data-type="' . esc_attr($type) . '">+ ' . esc_html($label) . '</button>';
         }
-        echo '<p class="description">Nye elementer placeres på root. Træk derefter eksisterende elementer ind i eller ud af kasser.</p></aside>';
+        echo '<p class="description">Klik tilføjer på root. Træk et palette-element direkte til root, Sektion eller Kasse. Eksisterende elementer flyttes med ✥.</p></aside>';
 
         echo '<main class="h18-clean-canvas-column">';
         echo '<div id="h18-clean-canvas" class="h18-clean-surface h18-clean-root" data-parent-id=""></div>';

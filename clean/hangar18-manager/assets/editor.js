@@ -14,6 +14,7 @@
     let state = normalizeModel(CFG.initialModel || {});
     let selectedId = '';
     let dragId = '';
+    let dragPaletteType = '';
     let resize = null;
     let lastAction = '';
 
@@ -187,20 +188,24 @@
         const list = children(parentId);
         return list.length ? list[list.length - 1].order + 10 : 10;
     }
-    function addNode(type) {
+    function addNode(type, parentId, source) {
+        type = String(type || '').toLowerCase();
         if (!TYPES.includes(type)) { return; }
+        parentId = cleanId(parentId || '');
+        const parent = parentId ? nodeById(parentId) : null;
+        if (parentId && (!parent || !PARENT_TYPES.includes(parent.type))) { return; }
         const before = clone(state);
         const id = makeId(type);
-        const defaultW = type === 'section' ? 120 : (type === 'container' ? 60 : 60);
+        const defaultW = type === 'section' ? 120 : 60;
         state.nodes.push({
-            id: id, type: type, parentId: '', order: nextOrder(''),
+            id: id, type: type, parentId: parentId, order: nextOrder(parentId),
             geometry: { desktop: { x: 0, y: 0, w: defaultW, h: 0 }, tablet: { x: 0, y: 0, w: defaultW, h: 0, inheritDesktop: true }, mobile: { x: 0, y: 0, w: 120, h: 0, inheritDesktop: true } },
             props: normalizeProps(type, {})
         });
         selectedId = id;
-        commit(before, 'Tilføj ' + type);
+        commit(before, 'Tilføj ' + type + (parentId ? ' i ' + parent.type : ' på root'));
         render();
-        diag('add_node', { id: id, type: type, state: structuralSummary() });
+        diag('add_node', { id: id, type: type, parentId: parentId, source: String(source || 'click'), state: structuralSummary() });
     }
     function deleteSelected() {
         const node = nodeById(selectedId);
@@ -274,24 +279,65 @@
         }
         return wrap;
     }
+    function dataTransferValue(event, mime) {
+        try { return String(event && event.dataTransfer ? event.dataTransfer.getData(mime) || '' : ''); } catch (ignore) { return ''; }
+    }
+    function dragPayload(event) {
+        const paletteType = dragPaletteType || dataTransferValue(event, 'application/x-h18-clean-palette');
+        if (paletteType && TYPES.includes(String(paletteType).toLowerCase())) {
+            return { kind: 'palette', type: String(paletteType).toLowerCase() };
+        }
+        const nodeId = dragId || dataTransferValue(event, 'application/x-h18-clean-node');
+        if (nodeId && nodeById(nodeId)) { return { kind: 'node', id: cleanId(nodeId) }; }
+        const fallback = dataTransferValue(event, 'text/plain');
+        if (fallback.indexOf('h18-palette:') === 0) {
+            const type = String(fallback.slice(12)).toLowerCase();
+            if (TYPES.includes(type)) { return { kind: 'palette', type: type }; }
+        }
+        if (fallback.indexOf('h18-node:') === 0) {
+            const id = cleanId(fallback.slice(9));
+            if (nodeById(id)) { return { kind: 'node', id: id }; }
+        }
+        return null;
+    }
+    function clearDragState() {
+        dragId = '';
+        dragPaletteType = '';
+        document.querySelectorAll('.is-drop-target,.is-palette-dragging').forEach(function (el) {
+            el.classList.remove('is-drop-target', 'is-palette-dragging');
+        });
+    }
     function renderSurface(parentId, surface) {
         surface.innerHTML = '';
         surface.setAttribute('data-parent-id', parentId);
         surface.classList.add('h18-clean-surface');
         surface.addEventListener('dragover', function (event) {
-            if (!dragId) { return; }
+            const payload = dragPayload(event);
+            if (!payload) { return; }
             event.preventDefault();
             event.stopPropagation();
+            if (event.dataTransfer) { event.dataTransfer.dropEffect = payload.kind === 'node' ? 'move' : 'copy'; }
             surface.classList.add('is-drop-target');
         });
-        surface.addEventListener('dragleave', function () { surface.classList.remove('is-drop-target'); });
+        surface.addEventListener('dragleave', function (event) {
+            const related = event.relatedTarget;
+            if (!related || !surface.contains(related)) { surface.classList.remove('is-drop-target'); }
+        });
         surface.addEventListener('drop', function (event) {
-            if (!dragId) { return; }
+            const payload = dragPayload(event);
+            if (!payload) { return; }
             event.preventDefault();
             event.stopPropagation();
             surface.classList.remove('is-drop-target');
-            const moving = dragId;
-            dragId = '';
+            if (payload.kind === 'palette') {
+                const type = payload.type;
+                clearDragState();
+                addNode(type, parentId, 'palette_drop');
+                diag('palette_drop_commit', { type: type, parentId: parentId, state: structuralSummary() });
+                return;
+            }
+            const moving = payload.id;
+            clearDragState();
             reparent(moving, parentId);
         });
 
@@ -320,11 +366,16 @@
             move.textContent = '✥';
             move.addEventListener('dragstart', function (event) {
                 dragId = node.id;
-                try { event.dataTransfer.setData('text/plain', node.id); event.dataTransfer.effectAllowed = 'move'; } catch (ignore) {}
+                dragPaletteType = '';
+                try {
+                    event.dataTransfer.setData('application/x-h18-clean-node', node.id);
+                    event.dataTransfer.setData('text/plain', 'h18-node:' + node.id);
+                    event.dataTransfer.effectAllowed = 'move';
+                } catch (ignore) {}
                 card.classList.add('is-dragging');
                 diag('reparent_begin', { id: node.id, parentId: node.parentId });
             });
-            move.addEventListener('dragend', function () { dragId = ''; card.classList.remove('is-dragging'); document.querySelectorAll('.is-drop-target').forEach(function (el) { el.classList.remove('is-drop-target'); }); });
+            move.addEventListener('dragend', function () { card.classList.remove('is-dragging'); clearDragState(); });
             const title = document.createElement('strong');
             title.textContent = node.type.toUpperCase() + ' · ' + node.id.slice(-8);
             header.appendChild(move); header.appendChild(title); card.appendChild(header);
@@ -494,7 +545,27 @@
     }
     function install() {
         document.querySelectorAll('.h18-clean-add').forEach(function (button) {
-            button.addEventListener('click', function () { addNode(String(button.getAttribute('data-type') || 'text')); });
+            const type = String(button.getAttribute('data-type') || 'text').toLowerCase();
+            button.draggable = true;
+            button.setAttribute('aria-grabbed', 'false');
+            button.title = 'Klik: tilføj på root · Træk: slip direkte i root, Sektion eller Kasse';
+            button.addEventListener('click', function () { addNode(type, '', 'palette_click'); });
+            button.addEventListener('dragstart', function (event) {
+                dragPaletteType = type;
+                dragId = '';
+                button.classList.add('is-palette-dragging');
+                button.setAttribute('aria-grabbed', 'true');
+                try {
+                    event.dataTransfer.setData('application/x-h18-clean-palette', type);
+                    event.dataTransfer.setData('text/plain', 'h18-palette:' + type);
+                    event.dataTransfer.effectAllowed = 'copy';
+                } catch (ignore) {}
+                diag('palette_drag_begin', { type: type });
+            });
+            button.addEventListener('dragend', function () {
+                button.setAttribute('aria-grabbed', 'false');
+                clearDragState();
+            });
         });
         const undoButton = document.getElementById('h18-clean-undo');
         const redoButton = document.getElementById('h18-clean-redo');

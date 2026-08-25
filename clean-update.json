@@ -1,28 +1,15 @@
 {
-  "schema_version": "1.0",
-  "plugin": "hangar18-manager-clean",
-  "version": "0.1.0",
-  "channel": "clean-test",
-  "published_utc": "2026-08-25T07:11:07Z",
-  "package_path": "dist/hangar18-manager-clean.zip",
-  "package_sha256": "9d2ddd4a7ecf24577ec38315b74147392d3eef13b90e8eb430041a95b6787490",
-  "backlog_ids": [
-    "CLEAN-ARCH-001",
-    "CLEAN-CANVAS-002",
-    "CLEAN-HISTORY-003",
-    "CLEAN-REPARENT-004",
-    "CLEAN-IMAGE-005",
-    "CLEAN-SAVE-RESTORE-006",
-    "CLEAN-DIAG-007",
-    "CLEAN-FRONTEND-008"
-  ],
-  "changelog": [
-    "Ny selvstændig clean-plugin-kilde uden de gamle Ultimate Designer/editor-runtimes.",
-    "Én canonical JSON-model pr. WordPress-side med 120 layout-units og x/y/w/h-geometri.",
-    "8-vejs fysisk resize, Undo/Redo og modeldrevet flytning af eksisterende elementer ind i/ud af Sektion og Kasse.",
-    "Billeder følger elementkassen med Cover/beskær som standard, Contain eller fri Stretch samt focal X/Y.",
-    "Save opretter clean versionshistorik, og Restore gemmer den valgte ældre model som en ny sikker version.",
-    "Strukturelle diagnostics dækker editorinteraktioner, Save og Restore med privat read-only support-link.",
-    "Frontend renderes direkte fra samme canonical model; sider uden clean-model røres ikke."
-  ]
+  "name": "Hangar18 Manager Clean",
+  "slug": "hangar18-manager",
+  "version": "0.1.2",
+  "homepage": "https://hangar18.dk/",
+  "requires": "6.4",
+  "requires_php": "8.0",
+  "tested": "6.8",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.2.zip",
+  "sha256": "b3f0af167f621521807aeab5523c258b4aa8ec7fb9b9f6341df4cbefdaba812f",
+  "sections": {
+    "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
+    "changelog": "<h4>0.1.2</h4><ul><li>GitHub updater med WordPress Opdater nu.</li><li>Manuel Tjek GitHub-opdatering.</li><li>SHA-256-verificering af update-pakken.</li><li>Palette drag/drop direkte til root, Sektion eller Kasse.</li></ul>"
+  }
 }
