@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.7.zip",
-  "sha256": "5e51aadfe16b272b97504156b163e344dcd3fd02914b3cc725a94c15867f95d8",
-  "source_commit": "91fb74b9cafde2cfafe357951b5210f2eb52f232",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.8.zip",
+  "sha256": "0fbb5fbdae2532937151df35d4bee9b4b8398901cfff2c19ec6bf9d88c3cb375",
+  "source_commit": "99ca07e236a2c2917d79d333bf54f594fab3dca6",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.7</h4><ul><li>Drag/drop har nu Over, Under, Venstre og Højre omkring almindelige elementer samt Ind i Kassen på Sektion/Kasse.</li><li>Venstre/Højre bygger en fælles række og fordeler bredden automatisk over 120 units, f.eks. 2=60/60 og 3=40/40/40.</li><li>Over/Under opretter en separat fuldbredde-række før eller efter mål-rækken.</li><li>Når et element flyttes ud af en række, fordeles den resterende række igen.</li><li>Drop-zoner vises tydeligt under drag, mens elementlabels fortsat ligger uden for den fysiske geometri.</li></ul>"
+    "changelog": "<h4>0.1.8</h4><ul><li>Over/Under splitter nu kun den valgte celles højde i stedet for at oprette en fuldbredde-række.</li><li>Venstre/Højre splitter kun den valgte celles bredde.</li><li>Naboceller i samme bånd kan spænde over begge nye under-rækker, så f.eks. to celler til venstre kan dele højden med én høj celle til højre.</li><li>Canonical x/y/w/h renderes som eksplicit 120-kolonne/8-px grid i editor og frontend, når højden er materialiseret.</li><li>Kasse/Sektion beholder central Ind i Kassen-zone, mens kantzonerne splitter parentens egen celle.</li><li>Flytning ud af en celle bruger kun lokal sikker heal og omfordeler ikke længere hele rækken.</li><li>Label/type/ID/drag-håndtag er fortsat editor-overlay og tæller ikke med i fysisk geometri.</li></ul>"
   }
 }
