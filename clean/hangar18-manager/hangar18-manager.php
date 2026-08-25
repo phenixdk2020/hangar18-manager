@@ -106,4 +106,11 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         H18_CLEAN_VERSION,
         true
     );
+    wp_enqueue_script(
+        'h18-clean-editor-v017-edge-router',
+        H18_CLEAN_URL . 'assets/editor-v017-edge-router.js',
+        ['h18-clean-editor-v016'],
+        H18_CLEAN_VERSION,
+        true
+    );
 }, 20);
