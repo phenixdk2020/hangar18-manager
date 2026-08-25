@@ -31,8 +31,9 @@ final class Autoload
             \Hangar18\UltimateDesigner\Diagnostics\EditorDiagnosticRuntime::register();
         }
 
-        // Public runtimes. v0.9.1 adds physical 120-unit geometry parity while
-        // the existing 12-column runtime remains a compatibility fallback.
+        // Public runtimes. v0.9.1 owns physical 120-unit geometry; v0.9.3
+        // makes pure Image fitting follow that same physical box on frontend.
+        // Existing 12-column/image runtimes remain compatibility fallback.
         if (
             function_exists('is_admin') &&
             function_exists('add_filter') &&
@@ -43,12 +44,13 @@ final class Autoload
             \Hangar18\UltimateDesigner\Frontend\LegoStackFrontendRuntime::register();
             \Hangar18\UltimateDesigner\Frontend\ImageElementFrontendRuntime::register();
             \Hangar18\UltimateDesigner\Frontend\PhysicalCanvasFrontendRuntime::register();
+            \Hangar18\UltimateDesigner\Frontend\PhysicalImageFrontendRuntime::register();
         }
 
         // Admin-only tooling. v0.9.x keeps one canonical layout model. The
-        // physical canvas controller adds geometry/history/re-parenting after
-        // the canonical engine. v0.9.2 observes Save/Restore end-to-end without
-        // taking ownership of editor or restore mutations.
+        // physical canvas controller owns geometry/history/re-parenting;
+        // v0.9.3 adds Image fit metadata to that box. v0.9.2 observes
+        // Save/Restore end-to-end without taking mutation ownership.
         if (
             function_exists('is_admin') &&
             function_exists('add_action') &&
@@ -63,6 +65,7 @@ final class Autoload
             \Hangar18\UltimateDesigner\Admin\BackupHealthAdminController::register();
             \Hangar18\UltimateDesigner\Admin\EditorLayoutEngineAdminController::register();
             \Hangar18\UltimateDesigner\Admin\EditorPhysicalCanvasAdminController::register();
+            \Hangar18\UltimateDesigner\Admin\EditorPhysicalImageAdminController::register();
             \Hangar18\UltimateDesigner\Admin\SaveRestoreDiagnosticAdminController::register();
         }
     }
