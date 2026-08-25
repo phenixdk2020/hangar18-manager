@@ -26,9 +26,11 @@ final class EditorPhysicalImageAdminController
         }
         self::$registered = true;
 
-        // v0.9.0 canonical state = 4, v0.9.1 geometry = 5,
-        // v0.9.2 projected diagnostics = 6. Image metadata is merged at 7.
-        add_action('admin_post_h18_save_page_editor', [self::class, 'captureSave'], 7);
+        // v0.9.0 canonical state = 4. v0.9.1 geometry is registered first at
+        // priority 5; this v0.9.3 merge is registered afterwards at the same
+        // priority and therefore sees geometry, while v0.9.2 projected
+        // diagnostics at priority 6 sees both geometry and image-box metadata.
+        add_action('admin_post_h18_save_page_editor', [self::class, 'captureSave'], 5);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue'], 155);
     }
 
