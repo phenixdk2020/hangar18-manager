@@ -1,4 +1,4 @@
-v0.1.6
-triggered_utc=2026-08-25T12:32:00Z
-reason=Rebuild after auto-grow shrink correction; includes physical editor chrome, configurable borders and clearer left/right drop guidance.
-nonce=7
+v0.1.7
+triggered_utc=2026-08-25T13:05:00Z
+reason=Four-way row/column drop zones with parent inside routing, automatic row redistribution and physical labels outside geometry.
+nonce=8
