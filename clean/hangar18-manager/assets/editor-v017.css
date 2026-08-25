@@ -1,0 +1,19 @@
+.h18-clean-v017-drop-target{z-index:90!important;outline:3px solid #135e96!important;outline-offset:3px!important}
+.h18-clean-v017-drop-overlay{position:absolute;inset:0;z-index:1000;display:grid;box-sizing:border-box;pointer-events:none;background:rgba(255,255,255,.18)}
+.h18-clean-v017-drop-overlay.is-parent{grid-template-columns:22% 56% 22%;grid-template-rows:22% 56% 22%}
+.h18-clean-v017-drop-overlay.is-leaf{grid-template-columns:50% 50%;grid-template-rows:28% 44% 28%}
+.h18-clean-v017-drop-overlay .zone{display:flex;align-items:center;justify-content:center;box-sizing:border-box;border:2px dashed #2271b1;background:rgba(34,113,177,.10);color:#0a4b78;font-size:12px;font-weight:800;line-height:1.15;text-align:center;text-shadow:0 1px 0 #fff}
+.h18-clean-v017-drop-overlay .zone.is-active{border:4px solid #00a32a;background:rgba(0,163,42,.35);color:#063b15;font-size:14px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.75)}
+.h18-clean-v017-drop-overlay.is-parent .zone-above{grid-column:1/4;grid-row:1}
+.h18-clean-v017-drop-overlay.is-parent .zone-left{grid-column:1;grid-row:2}
+.h18-clean-v017-drop-overlay.is-parent .zone-inside{grid-column:2;grid-row:2;background:rgba(195,174,131,.22);color:#30382a}
+.h18-clean-v017-drop-overlay.is-parent .zone-right{grid-column:3;grid-row:2}
+.h18-clean-v017-drop-overlay.is-parent .zone-below{grid-column:1/4;grid-row:3}
+.h18-clean-v017-drop-overlay.is-leaf .zone-above{grid-column:1/3;grid-row:1}
+.h18-clean-v017-drop-overlay.is-leaf .zone-left{grid-column:1;grid-row:2}
+.h18-clean-v017-drop-overlay.is-leaf .zone-right{grid-column:2;grid-row:2}
+.h18-clean-v017-drop-overlay.is-leaf .zone-below{grid-column:1/3;grid-row:3}
+.h18-clean-v017-drop-inside>.h18-clean-v017-drop-overlay .zone-inside{border:4px solid #00a32a;background:rgba(0,163,42,.35);color:#063b15;font-size:14px}
+.h18-clean-v017-drop-status{position:fixed;z-index:100000;display:none;min-width:120px;max-width:220px;padding:7px 10px;border:2px solid #00a32a;border-radius:6px;background:#fff;color:#063b15;box-shadow:0 4px 14px rgba(0,0,0,.22);font-size:13px;font-weight:800;text-align:center;pointer-events:none}
+.h18-clean-v017-drop-status.is-visible{display:block}
+.h18-clean-node-header{pointer-events:auto}
