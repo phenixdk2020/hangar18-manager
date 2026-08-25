@@ -1,0 +1,90 @@
+name: Clean v0.1.2 GitHub Update Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'clean-v012-release-now.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply clean v0.1.2 source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check .github/patches/clean-v012-drag.patch
+          git apply .github/patches/clean-v012-drag.patch
+          rm .github/patches/clean-v012-drag.patch
+
+      - name: Verify clean source
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l clean/hangar18-manager/hangar18-manager.php
+          php -l clean/hangar18-manager/src/Model/LayoutModel.php
+          php -l clean/hangar18-manager/src/Diagnostics/DiagnosticStore.php
+          php -l clean/hangar18-manager/src/Admin/EditorController.php
+          php -l clean/hangar18-manager/src/Frontend/Renderer.php
+          php -l clean/hangar18-manager/src/Update/GitHubUpdater.php
+          node --check clean/hangar18-manager/assets/editor.js
+          grep -q 'Version: 0.1.2' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.2'" clean/hangar18-manager/hangar18-manager.php
+          grep -q 'palette_drag_begin' clean/hangar18-manager/assets/editor.js
+          grep -q 'GitHubUpdater::register' clean/hangar18-manager/hangar18-manager.php
+          if grep -R -n -E 'Hangar18\\UltimateDesigner|ultimate-designer-|EditorLego|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then
+            echo 'Legacy editor dependency found in clean plugin.' >&2
+            exit 1
+          fi
+
+      - name: Build versioned GitHub package and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          rm -f dist/hangar18-manager-clean-v0.1.2.zip dist/hangar18-manager-clean.zip
+          (cd clean && zip -qr ../dist/hangar18-manager-clean-v0.1.2.zip hangar18-manager)
+          cp dist/hangar18-manager-clean-v0.1.2.zip dist/hangar18-manager-clean.zip
+          unzip -tq dist/hangar18-manager-clean-v0.1.2.zip
+          SHA="$(sha256sum dist/hangar18-manager-clean-v0.1.2.zip | awk '{print $1}')"
+          python - "$SHA" <<'PY'
+          import json, sys
+          sha = sys.argv[1]
+          data = {
+              'name': 'Hangar18 Manager Clean',
+              'slug': 'hangar18-manager',
+              'version': '0.1.2',
+              'homepage': 'https://hangar18.dk/',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'tested': '6.8',
+              'package': 'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.2.zip',
+              'sha256': sha,
+              'sections': {
+                  'description': 'Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.',
+                  'changelog': '<h4>0.1.2</h4><ul><li>GitHub updater med WordPress Opdater nu.</li><li>Manuel Tjek GitHub-opdatering.</li><li>SHA-256-verificering af update-pakken.</li><li>Palette drag/drop direkte til root, Sektion eller Kasse.</li></ul>'
+              }
+          }
+          with open('clean-update.json', 'w', encoding='utf-8') as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          PY
+          echo "Package SHA256: $SHA"
+
+      - name: Commit verified release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager .github/patches/clean-v012-drag.patch dist/hangar18-manager-clean-v0.1.2.zip dist/hangar18-manager-clean.zip clean-update.json
+          git commit -m 'Release clean v0.1.2 with GitHub updater'
+          git push origin HEAD:main
