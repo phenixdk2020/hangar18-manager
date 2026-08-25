@@ -1,0 +1,162 @@
+name: Clean Plugin Test Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'clean-release-now.txt'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hangar18-clean-test-release
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read clean release config
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,re
+          c=json.load(open('clean-release-config.json',encoding='utf-8'))
+          v=str(c.get('version','')).strip()
+          assert re.fullmatch(r'\d+\.\d+\.\d+',v), v
+          assert c.get('channel') == 'clean-test'
+          print('Building clean release',v)
+          PY
+
+      - name: Lint clean source
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l clean/hangar18-manager/hangar18-manager.php
+          php -l clean/hangar18-manager/src/Model/LayoutModel.php
+          php -l clean/hangar18-manager/src/Diagnostics/DiagnosticStore.php
+          php -l clean/hangar18-manager/src/Admin/EditorController.php
+          php -l clean/hangar18-manager/src/Frontend/Renderer.php
+          node --check clean/hangar18-manager/assets/editor.js
+
+      - name: Assert hard legacy boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -n -E 'Hangar18\\UltimateDesigner|ultimate-designer-|EditorLego|hangar18_manager_pages_v1|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then
+            echo 'Legacy editor dependency found in clean plugin.' >&2
+            exit 1
+          fi
+          test ! -e clean/hangar18-manager/assets/admin.js
+          test ! -e clean/hangar18-manager/src/Autoload.php
+
+      - name: Apply clean version metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,re
+          v=str(json.load(open('clean-release-config.json',encoding='utf-8'))['version']).strip()
+          p=pathlib.Path('clean/hangar18-manager/hangar18-manager.php')
+          s=p.read_text(encoding='utf-8')
+          s,n1=re.subn(r'(?m)^ \* Version: \d+\.\d+\.\d+\s*$',f' * Version: {v}',s,count=1)
+          s,n2=re.subn(r"define\('H18_CLEAN_VERSION', '\d+\.\d+\.\d+'\);",f"define('H18_CLEAN_VERSION', '{v}');",s,count=1)
+          if n1!=1 or n2!=1: raise SystemExit('clean plugin version update failed')
+          p.write_text(s,encoding='utf-8')
+          r=pathlib.Path('clean/hangar18-manager/readme.txt')
+          x=r.read_text(encoding='utf-8')
+          x,n=re.subn(r'(?m)^Version: \d+\.\d+\.\d+\s*$',f'Version: {v}',x,count=1)
+          if n!=1: raise SystemExit('clean readme version update failed')
+          r.write_text(x,encoding='utf-8')
+          PY
+          php -l clean/hangar18-manager/hangar18-manager.php
+
+      - name: Build clean ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          rm -f dist/hangar18-manager-clean.zip
+          (cd clean && zip -qr ../dist/hangar18-manager-clean.zip hangar18-manager)
+          unzip -tq dist/hangar18-manager-clean.zip
+          test "$(unzip -Z1 dist/hangar18-manager-clean.zip | grep -c '^hangar18-manager/hangar18-manager.php$')" = '1'
+          if unzip -Z1 dist/hangar18-manager-clean.zip | grep -Eqi 'ultimate-designer|saved-layout|save-integrity|EditorLego|admin\.js$'; then
+            echo 'Legacy file leaked into clean ZIP.' >&2
+            exit 1
+          fi
+
+      - name: Write clean manifests
+        shell: bash
+        run: |
+          export CLEAN_SHA="$(sha256sum dist/hangar18-manager-clean.zip | awk '{print $1}')"
+          export SOURCE_COMMIT="${GITHUB_SHA}"
+          python3 - <<'PY'
+          import datetime,json,os,pathlib
+          cfg=json.load(open('clean-release-config.json',encoding='utf-8'))
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          update={
+            'schema_version':'1.0',
+            'plugin':'hangar18-manager-clean',
+            'version':cfg['version'],
+            'channel':'clean-test',
+            'published_utc':now,
+            'package_path':'dist/hangar18-manager-clean.zip',
+            'package_sha256':os.environ['CLEAN_SHA'],
+            'backlog_ids':cfg.get('backlog_ids',[]),
+            'changelog':cfg.get('changelog',[]),
+          }
+          manifest={
+            'schema_version':'1.0',
+            'version':cfg['version'],
+            'channel':'clean-test',
+            'source_commit':os.environ['SOURCE_COMMIT'],
+            'built_utc':now,
+            'package_path':'dist/hangar18-manager-clean.zip',
+            'package_sha256':os.environ['CLEAN_SHA'],
+            'qa':{
+              'php_lint':True,
+              'js_syntax':True,
+              'legacy_boundary':True,
+              'zip_tree_policy':True,
+            },
+          }
+          pathlib.Path('clean-update.json').write_text(json.dumps(update,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          pathlib.Path('clean-release-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Verify clean package contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(python3 -c "import json;print(json.load(open('clean-release-config.json'))['version'])")"
+          UPDATE_VERSION="$(python3 -c "import json;print(json.load(open('clean-update.json'))['version'])")"
+          MANIFEST_VERSION="$(python3 -c "import json;print(json.load(open('clean-release-manifest.json'))['version'])")"
+          SHA="$(python3 -c "import json;print(json.load(open('clean-update.json'))['package_sha256'])")"
+          test "$VERSION" = "$UPDATE_VERSION"
+          test "$VERSION" = "$MANIFEST_VERSION"
+          echo "$SHA  dist/hangar18-manager-clean.zip" | sha256sum -c -
+          test "$(unzip -p dist/hangar18-manager-clean.zip hangar18-manager/hangar18-manager.php | grep -c 'Plugin Name: Hangar18 Manager Clean')" = '1'
+          test "$(unzip -p dist/hangar18-manager-clean.zip hangar18-manager/src/Model/LayoutModel.php | grep -c 'public const UNITS = 120')" = '1'
+          test "$(unzip -p dist/hangar18-manager-clean.zip hangar18-manager/assets/editor.js | grep -c 'h18-clean-undo')" -ge '1'
+          test "$(unzip -p dist/hangar18-manager-clean.zip hangar18-manager/assets/editor.js | grep -c 'reparent_commit')" -ge '1'
+          test "$(unzip -p dist/hangar18-manager-clean.zip hangar18-manager/assets/editor.js | grep -c "\['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'\]")" -ge '1'
+          test "$(unzip -p dist/hangar18-manager-clean.zip hangar18-manager/src/Diagnostics/DiagnosticStore.php | grep -c 'REST_ROUTE')" -ge '1'
+
+      - name: Commit verified clean package
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(python3 -c "import json;print(json.load(open('clean-release-config.json'))['version'])")"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- dist/hangar18-manager-clean.zip clean-update.json clean-release-manifest.json clean/hangar18-manager/hangar18-manager.php clean/hangar18-manager/readme.txt
+          if git diff --cached --quiet; then
+            echo 'Clean package already matches main.'
+            exit 0
+          fi
+          git commit -m "Clean release v${VERSION} package"
+          git push
