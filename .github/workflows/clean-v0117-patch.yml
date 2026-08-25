@@ -1,0 +1,45 @@
+name: Apply Clean v0.1.17 Patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'clean-v0117-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply and validate v0.1.17 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/apply-clean-v0117.py
+          php -l clean/hangar18-manager/hangar18-manager.php
+          php -l clean/hangar18-manager/src/Model/LayoutModel.php
+          php -l clean/hangar18-manager/src/Frontend/Renderer.php
+          node --check clean/hangar18-manager/assets/editor-v018-core.js
+          test -s clean/hangar18-manager/assets/editor-v0117.css
+          grep -q "Version: 0.1.17" clean/hangar18-manager/hangar18-manager.php
+          grep -q "headingLevel" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -q "h18-clean-front-text-heading" clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q "data-field=\\\"heading\\\"" clean/hangar18-manager/assets/editor-v018-core.js
+
+      - name: Commit source and release trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager clean-release-notes.html
+          printf 'v0.1.17\ntriggered_utc=2026-08-25T17:30:00Z\nreason=Optional heading in Text element with H2-H6.\nnonce=18\n' > clean-release-now.txt
+          git add clean-release-now.txt
+          git commit -m 'Prepare clean v0.1.17 text headings'
+          git push origin HEAD:main
