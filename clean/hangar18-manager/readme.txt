@@ -2,8 +2,21 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.8
+Version: 0.1.9
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.9 ==
+* Nyt samlet Hangar18 Manager-adminmenu inspireret af 0.9.2: Dashboard, Designer, Køretøjer, Køretøjsfelter, Events, Billedgalleri, Data, Sider, Menu, Header/Footer, Backup, Opdateringer og Log.
+* Designer er flyttet ind som undermenu uden at ændre Clean-editorens canonical runtime.
+* Dashboard viser sideantal, Clean-sider, nodeantal og samlet versionshistorik med hurtige genveje.
+* Sider viser Clean-version, nodeantal, seneste gemning samt direkte links til Designer, WordPress og frontend.
+* Køretøjer, Events og Billedgalleri viser de eksisterende WordPress-hovedsider/undersider og deres Clean-status uden legacy dataruntime.
+* Menu viser klassiske WordPress-menuer og registrerede theme locations.
+* Header/Footer viser aktivt tema og holder global shell adskilt fra side-layoutversioner.
+* Backup kan downloade alle Clean-layouts og deres versionshistorik som én JSON-fil; diagnostics/tokens eksporteres ikke.
+* Opdateringer bruger fortsat den SHA-256-verificerede GitHub updater.
+* Log viser Clean diagnostics pr. side, support-link og mulighed for at rydde side-loggen.
+* Køretøjsfelter og custom Data er bevidst administrationspladser; gammel 0.9.x felt/data-runtime aktiveres ikke automatisk.
 
 == 0.1.8 ==
 * Over/Under deler nu kun den valgte celles højde i stedet for altid at oprette en fuldbredde-række.
