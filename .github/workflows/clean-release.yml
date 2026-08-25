@@ -40,6 +40,7 @@ jobs:
           node --check clean/hangar18-manager/assets/editor.js
           node --check clean/hangar18-manager/assets/editor-v016.js
           node --check clean/hangar18-manager/assets/editor-v017-core.js
+          node --check clean/hangar18-manager/assets/editor-v017-edge-router.js
           node --check clean/hangar18-manager/assets/drop-guides.js
           test -s clean/hangar18-manager/assets/editor-v016.css
           test -s clean/hangar18-manager/assets/editor-v017.css
@@ -63,6 +64,7 @@ jobs:
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v016.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v016.css$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v017-core.js$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v017-edge-router.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v017.css$')" = '1'
           SHA="$(sha256sum "$VERSIONED" | awk '{print $1}')"
           SOURCE_COMMIT="$(git rev-parse HEAD)"
