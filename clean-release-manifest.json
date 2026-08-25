@@ -2,10 +2,10 @@
   "schema_version": "1.0",
   "version": "0.1.0",
   "channel": "clean-test",
-  "source_commit": "ac0a5372a23d7895b65335bc280e64bd3cc5aa7d",
-  "built_utc": "2026-08-25T07:11:07Z",
+  "source_commit": "d6a96bf0a1c7385ab3a8756fb63d784ed383bb63",
+  "built_utc": "2026-08-25T11:36:28Z",
   "package_path": "dist/hangar18-manager-clean.zip",
-  "package_sha256": "9d2ddd4a7ecf24577ec38315b74147392d3eef13b90e8eb430041a95b6787490",
+  "package_sha256": "a8a9b358cb0c16464c8540adc01ea970e4b919fca941150d0109cbc14e912d8c",
   "qa": {
     "php_lint": true,
     "js_syntax": true,
