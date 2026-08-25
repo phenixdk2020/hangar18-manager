@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.5.zip",
-  "sha256": "3569822d190916adbcc6f6ddaff19897ebeded254b4ad80b4500585f2a39968c",
-  "source_commit": "568399a7de1c983b941259094bb0e47e6692718f",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.6.zip",
+  "sha256": "f8ace1166160d3dcb88ff34888c34a0249d3d90a99341c351119079a0703a983",
+  "source_commit": "a6dec5f4f087959e94159688c371cfaf5e7137bb",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.5</h4><ul><li>Sektioner og Kasser vokser automatisk med indholdet; valgt højde fungerer som minimum.</li><li>Samme auto-grow-regel gælder på offentlig frontend.</li><li>Drag viser nu tydelig venstre/højre halvside-guide direkte på nabo-elementet.</li><li>GitHub-updateren forbliver normal update-kanal.</li></ul>"
+    "changelog": "<h4>0.1.6</h4><ul><li>Editorlabel og drag-håndtag ligger nu uden for elementets fysiske x/y/w/h og ændrer ikke geometrien.</li><li>Alle elementer kan få ramme med valgfri farve og tykkelse 0-20 px; standard er 0 px.</li><li>Sektioner og Kasser vokser automatisk, så børn under hinanden fortsat er indeholdt.</li><li>Venstre/højre-drop viser begge valg samtidigt, fremhæver aktiv side tydeligt og viser en flydende drop-indikator ved markøren.</li></ul>"
   }
 }
