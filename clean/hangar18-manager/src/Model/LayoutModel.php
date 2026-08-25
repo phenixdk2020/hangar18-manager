@@ -137,30 +137,11 @@ final class LayoutModel
     public static function structuralDigest(array $model): string
     {
         $normalized = self::normalize($model);
-        $summary = [];
-        foreach ($normalized['nodes'] as $node) {
-            $row = [
-                'id' => $node['id'],
-                'type' => $node['type'],
-                'parentId' => $node['parentId'],
-                'order' => $node['order'],
-                'geometry' => $node['geometry'],
-                'border' => [
-                    'width' => (int) ($node['props']['borderWidth'] ?? 0),
-                    'color' => (string) ($node['props']['borderColor'] ?? '#000000'),
-                ],
-            ];
-            if ($node['type'] === 'image') {
-                $row['image'] = [
-                    'mediaId' => (int) ($node['props']['mediaId'] ?? 0),
-                    'fit' => (string) ($node['props']['fit'] ?? 'cover'),
-                    'focalX' => (int) ($node['props']['focalX'] ?? 50),
-                    'focalY' => (int) ($node['props']['focalY'] ?? 50),
-                ];
-            }
-            $summary[] = $row;
+        $json = wp_json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if (!is_string($json)) {
+            throw new \RuntimeException('Canonical layout kunne ikke serialiseres til digest.');
         }
-        return hash('sha256', (string) wp_json_encode($summary));
+        return hash('sha256', $json);
     }
 
     /** @param array<string,array<string,mixed>> $nodes */

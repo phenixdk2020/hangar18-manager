@@ -1,0 +1,7 @@
+/* Clean 0.1.14: contextual editor labels avoid parent/child label collisions. */
+.h18-clean-node>.h18-clean-node-header{display:none!important;z-index:85!important}
+.h18-clean-node.is-selected>.h18-clean-node-header,
+.h18-clean-node.is-dragging>.h18-clean-node-header,
+.h18-clean-node:hover>.h18-clean-node-header{display:flex!important}
+.h18-clean-node:hover:has(.h18-clean-node:hover)>.h18-clean-node-header,
+.h18-clean-node.is-selected:has(.h18-clean-node:hover)>.h18-clean-node-header{display:none!important}

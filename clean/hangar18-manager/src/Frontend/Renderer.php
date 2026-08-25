@@ -12,6 +12,7 @@ final class Renderer
     {
         add_filter('the_content', [self::class, 'content'], 20);
         add_action('wp_head', [self::class, 'css'], 1000);
+        add_action('wp_footer', [self::class, 'previewBadge'], 1000);
     }
 
     public static function content(string $content): string
@@ -20,7 +21,14 @@ final class Renderer
             return $content;
         }
         $postId = get_the_ID();
-        if ($postId <= 0 || !metadata_exists('post', $postId, LayoutModel::META)) {
+        if ($postId <= 0) {
+            return $content;
+        }
+        $preview = self::previewModel($postId);
+        if ($preview !== null) {
+            return self::renderModel($preview);
+        }
+        if (!metadata_exists('post', $postId, LayoutModel::META)) {
             return $content;
         }
         $model = LayoutModel::get($postId);
@@ -36,7 +44,7 @@ final class Renderer
             return;
         }
         $postId = get_queried_object_id();
-        if ($postId <= 0 || !metadata_exists('post', $postId, LayoutModel::META)) {
+        if ($postId <= 0 || (!metadata_exists('post', $postId, LayoutModel::META) && self::previewModel($postId) === null)) {
             return;
         }
         $rowPx = LayoutModel::ROW_PX;
@@ -48,6 +56,44 @@ final class Renderer
         echo '.h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box;height:100%}';
         echo '.h18-clean-front-image img{display:block;width:100%;max-width:none;margin:0;box-sizing:border-box}';
         echo '</style>';
+    }
+
+    public static function previewKey(int $userId, int $postId, string $token): string
+    {
+        return 'h18_clean_preview_' . max(0, $userId) . '_' . max(0, $postId) . '_' . sanitize_key($token);
+    }
+
+    public static function previewBadge(): void
+    {
+        if (!is_singular('page')) {
+            return;
+        }
+        $postId = get_queried_object_id();
+        if ($postId <= 0 || self::previewModel($postId) === null) {
+            return;
+        }
+        echo '<div style="position:fixed;right:16px;bottom:16px;z-index:2147483647;padding:8px 12px;border:1px solid #2271b1;border-radius:6px;background:#fff;color:#1d2327;box-shadow:0 4px 18px rgba(0,0,0,.2);font:600 13px/1.3 system-ui,sans-serif;pointer-events:none">Forhåndsvisning · ikke gemt</div>';
+    }
+
+    /** @return array<string,mixed>|null */
+    private static function previewModel(int $postId): ?array
+    {
+        if (!is_user_logged_in() || !current_user_can('edit_pages')) {
+            return null;
+        }
+        $token = isset($_GET['h18_clean_preview']) ? sanitize_key((string) wp_unslash($_GET['h18_clean_preview'])) : '';
+        if ($token === '' || !preg_match('/^[a-z0-9]{12,64}$/', $token)) {
+            return null;
+        }
+        $raw = get_transient(self::previewKey(get_current_user_id(), $postId, $token));
+        if (!is_array($raw)) {
+            return null;
+        }
+        try {
+            return LayoutModel::normalize($raw);
+        } catch (\Throwable $error) {
+            return null;
+        }
     }
 
     /** @param array<string,mixed> $model */

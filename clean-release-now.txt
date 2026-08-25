@@ -1,4 +1,4 @@
-v0.1.13
-triggered_utc=2026-08-25T16:59:00Z
-reason=Preserve plugin activation across direct self-update and use 80px default text height.
+v0.1.14
+triggered_utc=2026-08-25T17:05:00Z
+reason=Theme preview, verified save, save-and-view, contextual labels.
 nonce=14

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hangar18\Clean\Admin;
 
 use Hangar18\Clean\Diagnostics\DiagnosticStore;
+use Hangar18\Clean\Frontend\Renderer;
 use Hangar18\Clean\Model\LayoutModel;
 use Hangar18\Clean\Update\GitHubUpdater;
 
@@ -13,8 +14,10 @@ final class EditorController
     private const MENU = 'h18-clean-editor';
     private const SAVE_ACTION = 'h18_clean_save';
     private const RESTORE_ACTION = 'h18_clean_restore';
+    private const PREVIEW_ACTION = 'h18_clean_preview';
     private const NONCE_SAVE = 'h18_clean_save';
     private const NONCE_RESTORE = 'h18_clean_restore';
+    private const NONCE_PREVIEW = 'h18_clean_preview';
 
     public static function register(): void
     {
@@ -22,6 +25,7 @@ final class EditorController
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
         add_action('admin_post_' . self::SAVE_ACTION, [self::class, 'save']);
         add_action('admin_post_' . self::RESTORE_ACTION, [self::class, 'restore']);
+        add_action('admin_post_' . self::PREVIEW_ACTION, [self::class, 'preview']);
     }
 
     public static function menu(): void
@@ -107,6 +111,8 @@ final class EditorController
         echo '<button type="button" class="button" id="h18-clean-undo" disabled>↶ Fortryd</button>';
         echo '<button type="button" class="button" id="h18-clean-redo" disabled>↷ Gentag</button>';
         echo '<span class="h18-clean-grid-label">120 units · 8 px lodret snap</span>';
+        echo '<button type="button" class="button" id="h18-clean-preview" data-url="' . esc_attr(admin_url('admin-post.php')) . '" data-nonce="' . esc_attr(wp_create_nonce(self::NONCE_PREVIEW)) . '" data-post-id="' . esc_attr((string) $postId) . '">Forhåndsvis</button>';
+        echo '<button type="submit" class="button" name="after_save" value="preview" formtarget="_blank">Gem &amp; vis</button>';
         echo '<button type="submit" class="button button-primary h18-clean-save">Gem som ny version</button>';
         echo '</div>';
 
@@ -182,14 +188,65 @@ final class EditorController
             $note = isset($_POST['change_note']) ? sanitize_text_field((string) wp_unslash($_POST['change_note'])) : '';
             $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gem fra clean editor');
             $saved = LayoutModel::get($postId);
+            $incomingDigest = LayoutModel::structuralDigest($normalized);
+            $savedDigest = LayoutModel::structuralDigest($saved);
+            if (!hash_equals($incomingDigest, $savedDigest)) {
+                throw new \RuntimeException('Save-verifikation fejlede: den gemte canonical model matcher ikke den indsendte model.');
+            }
             DiagnosticStore::append($postId, 'save_result', [
                 'version' => $version,
+                'digest' => $savedDigest,
                 'saved' => DiagnosticStore::modelSummary($saved),
             ]);
-            self::redirect($postId, 'success', 'Clean layout gemt som version v' . $version . '.');
+            if (isset($_POST['after_save']) && sanitize_key((string) wp_unslash($_POST['after_save'])) === 'preview') {
+                $permalink = get_permalink($postId);
+                if (is_string($permalink) && $permalink !== '') {
+                    wp_safe_redirect($permalink);
+                    exit;
+                }
+            }
+            self::redirect($postId, 'success', 'Clean layout gemt og verificeret som version v' . $version . '.');
         } catch (\Throwable $error) {
             DiagnosticStore::append($postId, 'save_error', ['errorType' => get_class($error), 'message' => $error->getMessage()]);
             self::redirect($postId, 'error', 'Gem fejlede: ' . $error->getMessage());
+        }
+    }
+
+    public static function preview(): void
+    {
+        if (!current_user_can('edit_pages')) {
+            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+        }
+        check_admin_referer(self::NONCE_PREVIEW);
+        $postId = absint($_POST['post_id'] ?? 0);
+        if ($postId <= 0 || get_post_type($postId) !== 'page') {
+            wp_die(esc_html__('Ugyldig side.', 'hangar18-manager-clean'));
+        }
+        $rawJson = isset($_POST['model_json']) ? (string) wp_unslash($_POST['model_json']) : '';
+        if ($rawJson === '' || strlen($rawJson) > 2 * 1024 * 1024) {
+            wp_die(esc_html__('Preview-modellen mangler eller er for stor.', 'hangar18-manager-clean'));
+        }
+        $decoded = json_decode($rawJson, true);
+        if (!is_array($decoded)) {
+            wp_die(esc_html__('Preview-modellen er ikke gyldig JSON.', 'hangar18-manager-clean'));
+        }
+        try {
+            $normalized = LayoutModel::normalize($decoded);
+            $token = strtolower(wp_generate_password(24, false, false));
+            set_transient(Renderer::previewKey(get_current_user_id(), $postId, $token), $normalized, 10 * MINUTE_IN_SECONDS);
+            DiagnosticStore::append($postId, 'preview_open', [
+                'digest' => LayoutModel::structuralDigest($normalized),
+                'state' => DiagnosticStore::modelSummary($normalized),
+            ]);
+            $permalink = get_permalink($postId);
+            if (!is_string($permalink) || $permalink === '') {
+                throw new \RuntimeException('Siden har ingen gyldig permalink.');
+            }
+            wp_safe_redirect(add_query_arg('h18_clean_preview', rawurlencode($token), $permalink));
+            exit;
+        } catch (\Throwable $error) {
+            DiagnosticStore::append($postId, 'preview_error', ['errorType' => get_class($error), 'message' => $error->getMessage()]);
+            wp_die(esc_html('Forhåndsvisning fejlede: ' . $error->getMessage()));
         }
     }
 

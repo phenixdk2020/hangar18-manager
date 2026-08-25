@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.13
+Version: 0.1.14
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.14 ==
+* Kasse-/barn-labels kolliderer ikke længere: labels er kontekstuelle og ancestor-label skjules, når et barn er det direkte hover/valgte element.
+* Forhåndsvis åbner den aktuelle ikke-gemte canonical model i den rigtige frontend/theme via et 10-minutters brugerspecifikt preview-token.
+* Gem & vis gemmer en ny version og åbner den offentlige side i en ny fane.
+* Save læser canonical model tilbage og verificerer fuld digest før success.
+* Structural digest dækker nu hele den normaliserede model inkl. tekst, gaps og style props.
 
 == 0.1.13 ==
 * Direkte opdatering fra Hangar18 Manager husker om pluginet var aktivt eller netværksaktivt før opdateringen og genaktiverer/verificerer samme tilstand før redirect.
