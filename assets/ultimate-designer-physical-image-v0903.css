@@ -1,0 +1,39 @@
+/* v0.9.3: a pure Image follows the physical v0.9.1 element box. */
+html[data-h18-physical-image="0.9.3"] #h18-v0887-element-height-handle[data-h18-v0887-type="image"]{
+    display:none!important;
+    pointer-events:none!important;
+}
+.h18-v0901-physical-cell[data-h18-v0903-image-box="1"] .h18-editor-image{
+    box-sizing:border-box!important;
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    overflow:hidden!important;
+}
+.h18-v0901-physical-cell[data-h18-v0903-image-box="1"] .h18-editor-image img,
+.h18-v0901-physical-cell[data-h18-v0903-image-box="1"] img{
+    box-sizing:border-box!important;
+    display:block!important;
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    aspect-ratio:auto!important;
+    object-position:var(--h18-v0903-focal-x,50%) var(--h18-v0903-focal-y,50%)!important;
+}
+.h18-v0901-physical-cell[data-h18-v0903-box-height="explicit"] .h18-editor-image,
+.h18-v0901-physical-cell[data-h18-v0903-box-height="explicit"] .h18-editor-image img,
+.h18-v0901-physical-cell[data-h18-v0903-box-height="explicit"] img{
+    height:100%!important;
+}
+.h18-v0901-physical-cell[data-h18-v0903-fit="cover"] .h18-editor-image img,
+.h18-v0901-physical-cell[data-h18-v0903-fit="cover"] img{
+    object-fit:cover!important;
+}
+.h18-v0901-physical-cell[data-h18-v0903-fit="contain"] .h18-editor-image img,
+.h18-v0901-physical-cell[data-h18-v0903-fit="contain"] img{
+    object-fit:contain!important;
+}
+.h18-v0901-physical-cell[data-h18-v0903-fit="stretch"] .h18-editor-image img,
+.h18-v0901-physical-cell[data-h18-v0903-fit="stretch"] img{
+    object-fit:fill!important;
+}
