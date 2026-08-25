@@ -321,6 +321,8 @@
             const list = children(parentId);
             for (let i = 0; i < list.length; i += 1) {
                 for (let j = i + 1; j < list.length; j += 1) {
+                    // Kasse/Sektion are layout wrappers and do not participate in leaf overlap warnings.
+                    if (PARENT_TYPES.includes(list[i].type) || PARENT_TYPES.includes(list[j].type)) { continue; }
                     const a = list[i].geometry.desktop;
                     const b = list[j].geometry.desktop;
                     const ar = { x: a.x, y: a.y, w: a.w, h: Math.max(1, a.h || MIN_SPLIT_H) };
@@ -903,7 +905,7 @@
             });
             move.addEventListener('dragend', function () { card.classList.remove('is-dragging'); clearDragState(); });
             const title = document.createElement('strong');
-            title.textContent = node.type.toUpperCase() + ' · ' + node.id.slice(-8);
+            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
             header.appendChild(move);
             header.appendChild(title);
             card.appendChild(header);
@@ -1007,7 +1009,7 @@
         const node = nodeById(selectedId);
         if (!node) { host.innerHTML = '<p class="description">Vælg et element på canvas.</p>'; return; }
         const g = node.geometry.desktop;
-        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(node.type) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
+        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
         html += '<div class="h18-clean-field-grid"><label>X / 120<input data-field="gx" type="number" min="0" max="119" value="' + g.x + '"></label><label>Bredde / 120<input data-field="gw" type="number" min="1" max="120" value="' + g.w + '"></label><label>Y · 8px<input data-field="gy" type="number" value="' + g.y + '"></label><label>Højde · 8px<input data-field="gh" type="number" min="0" value="' + g.h + '"></label></div>';
         if (node.type === 'text') {
             html += '<label>Tekst<textarea data-field="text" rows="8">' + escapeHtml(node.props.text || '') + '</textarea></label>';
