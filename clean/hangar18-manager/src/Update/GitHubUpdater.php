@@ -221,24 +221,48 @@ final class GitHubUpdater
             ]);
         }
 
+        // Never execute the freshly replaced plugin again inside this request.
+        // Plugin_Upgrader may temporarily remove the active flag while replacing files.
+        // Restore the pre-update activation state directly, then let the redirect start
+        // a clean WordPress request that loads the new plugin normally.
+        wp_clean_plugins_cache(true);
+        $validation = validate_plugin(self::PLUGIN_FILE);
+        if (is_wp_error($validation)) {
+            wp_safe_redirect(add_query_arg([
+                'h18_clean_update_install' => 'plugin_invalid',
+                'h18_clean_update_version' => $latest,
+            ], admin_url('plugins.php')));
+            exit;
+        }
+
+        if ($wasNetworkActive) {
+            $networkPlugins = get_site_option('active_sitewide_plugins', []);
+            $networkPlugins = is_array($networkPlugins) ? $networkPlugins : [];
+            if (!isset($networkPlugins[self::PLUGIN_FILE])) {
+                $networkPlugins[self::PLUGIN_FILE] = time();
+                update_site_option('active_sitewide_plugins', $networkPlugins);
+            }
+        } elseif ($wasActive) {
+            $activePlugins = get_option('active_plugins', []);
+            $activePlugins = is_array($activePlugins) ? array_values($activePlugins) : [];
+            if (!in_array(self::PLUGIN_FILE, $activePlugins, true)) {
+                $activePlugins[] = self::PLUGIN_FILE;
+                sort($activePlugins, SORT_STRING);
+                update_option('active_plugins', $activePlugins);
+            }
+        }
+
         wp_clean_plugins_cache(true);
         if ($wasActive) {
             $stillActive = $wasNetworkActive
                 ? is_plugin_active_for_network(self::PLUGIN_FILE)
                 : is_plugin_active(self::PLUGIN_FILE);
             if (!$stillActive) {
-                $activation = activate_plugin(self::PLUGIN_FILE, '', $wasNetworkActive, true);
-                wp_clean_plugins_cache(true);
-                $stillActive = !is_wp_error($activation) && ($wasNetworkActive
-                    ? is_plugin_active_for_network(self::PLUGIN_FILE)
-                    : is_plugin_active(self::PLUGIN_FILE));
-                if (!$stillActive) {
-                    wp_safe_redirect(add_query_arg([
-                        'h18_clean_update_install' => 'activation_error',
-                        'h18_clean_update_version' => $latest,
-                    ], admin_url('plugins.php')));
-                    exit;
-                }
+                wp_safe_redirect(add_query_arg([
+                    'h18_clean_update_install' => 'activation_error',
+                    'h18_clean_update_version' => $latest,
+                ], admin_url('plugins.php')));
+                exit;
             }
         }
 
