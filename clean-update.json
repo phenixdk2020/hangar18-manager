@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.19.zip",
-  "sha256": "79a6cf087e924e2570928a9eeb742da7c0a4224abffe6075da52a05e47145a5a",
-  "source_commit": "56652a6a3ba1209b4c7079fabf5fc79fd468c879",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.20.zip",
+  "sha256": "4a9c69b71bebcff7c890096a06a5a1ea715b52d129159031beaae690066e29a8",
+  "source_commit": "7e893309066ab1a3227eb28cb0b29e4180634262",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.19</h4><ul><li>WordPress opretter automatisk en ZIP-programbackup af den installerede Hangar18 Manager Clean-mappe før pluginfilerne udskiftes ved opdatering.</li><li>Programbackup gælder både direkte opdatering fra Hangar18 Manager og normal plugin-opdatering gennem WordPress upgrader-flowet.</li><li>Opdateringen afbrydes, hvis programbackupen ikke kan oprettes eller verificeres med SHA-256.</li><li>De seneste otte programbackups bevares i en skjult, installationsspecifik mappe under wp-content med index/.htaccess-beskyttelse.</li><li>Opdateringssiden viser ændringerne i den nye version direkte før installation.</li><li>Gem som ny version og Gem &amp; vis kræver nu en kort ændringsbeskrivelse.</li><li>Versionshistorikkens Note-kolonne vises som Ændringer, så det fremgår hvad der blev ændret i hver sideversion.</li><li>Updater-notices er rettet, så backup- og installationsstatus også vises korrekt efter direkte self-update.</li></ul>"
+    "changelog": "<h4>0.1.20</h4><ul><li>Hjørneradius er nu en fælles styling-egenskab på Sektion, Kasse, Tekst og Billede.</li><li>Tekst-elementer kan have gennemsigtig eller valgt baggrund, separat tekstfarve, separat overskriftsfarve og padding.</li><li>Billedboksen og selve billedindholdet kan redigeres uafhængigt.</li><li>Manuel billedtilstand viser en separat sandfarvet ramme med egne flytte- og resize-håndtag.</li><li>Manuelt billedindhold gemmer egne X/Y/bredde/højde i pixels, så billedets størrelse ikke automatisk følger en senere ændring af billedboksen.</li><li>Lås proportioner er aktiveret som standard ved manuel billedskalering.</li><li>Vis hele / Fyld / Original / Stræk bevares som hurtige billedtilstande, og manuel redigering kan nulstilles tilbage til Vis hele billedet.</li><li>Preview og frontend renderer de nye tekstfarver, baggrunde, hjørner og den manuelle billedgeometri.</li><li>Ændringsbeskrivelsen ved sidegemning skal være skrevet af brugeren og kan ikke længere erstattes lydløst af editorens interne sidste handling.</li></ul>"
   }
 }
