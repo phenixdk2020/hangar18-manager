@@ -1,4 +1,4 @@
 v0.1.4
-triggered_utc=2026-08-25T11:34:00Z
-reason=Release reusable GitHub-updatable Clean Manager with Base Theme compatibility marker and spatial drag/drop.
-nonce=2
+triggered_utc=2026-08-25T11:39:00Z
+reason=Retrigger reusable GitHub-updatable Clean Manager release after race-safe workflow fix.
+nonce=3
