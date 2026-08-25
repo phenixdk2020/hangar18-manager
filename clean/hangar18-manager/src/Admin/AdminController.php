@@ -231,10 +231,19 @@ final class AdminController
     public static function updates(): void
     {
         self::guard();
-        self::open('Opdateringer', 'GitHub-baseret Clean update-kanal');
-        echo '<div class="h18-manager-card"><h2>Installeret version</h2><p class="h18-manager-big-version">' . esc_html(H18_CLEAN_VERSION) . '</p><p>Updateren verificerer downloadpakken mod SHA-256 fra Clean-manifestet før installation.</p><div class="h18-manager-toolbar">';
+        $status = GitHubUpdater::status();
+        self::open('Opdateringer', 'Tjek og installer Hangar18 Manager Clean direkte herfra');
+        echo '<div class="h18-manager-card"><h2>Version</h2><p class="h18-manager-big-version">' . esc_html(H18_CLEAN_VERSION) . '</p>';
+        if ($status['ok']) {
+            echo '<p>Seneste GitHub-version: <strong>' . esc_html($status['latest']) . '</strong></p>';
+            echo $status['available'] ? '<p><span class="h18-manager-badge is-progress">Opdatering tilgængelig</span></p>' : '<p><span class="h18-manager-badge is-ok">Du er opdateret</span></p>';
+        } else {
+            echo '<p><span class="h18-manager-badge">Manifest kunne ikke læses</span></p>';
+        }
+        echo '<p>Downloadpakken SHA-256-verificeres før WordPress installerer den. Du behøver ikke åbne Plugins-siden.</p><div class="h18-manager-toolbar">';
         echo GitHubUpdater::checkButtonHtml();
-        echo '<a class="button" href="' . esc_url(admin_url('plugins.php')) . '">Åbn Plugins</a></div></div>';
+        echo GitHubUpdater::installButtonHtml();
+        echo '</div></div>';
         self::close();
     }
 

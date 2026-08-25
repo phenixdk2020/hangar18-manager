@@ -261,6 +261,8 @@ final class LayoutModel
         return [
             'borderWidth' => self::clamp($raw['borderWidth'] ?? 0, 0, 20, 0),
             'borderColor' => sanitize_hex_color((string) ($raw['borderColor'] ?? '#000000')) ?: '#000000',
+            'gapX' => self::clamp($raw['gapX'] ?? 0, 0, 200, 0),
+            'gapY' => self::clamp($raw['gapY'] ?? 0, 0, 200, 0),
         ];
     }
 

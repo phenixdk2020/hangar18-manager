@@ -97,9 +97,10 @@ final class Renderer
         $type = (string) $node['type'];
         $props = is_array($node['props'] ?? null) ? $node['props'] : [];
         $borderStyle = self::borderStyle($props);
+        $spacingStyle = self::spacingStyle($props);
 
         if ($type === 'text') {
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($style . $borderStyle . 'text-align:' . (string) ($props['align'] ?? 'left') . ';') . '">' . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($style . $borderStyle . $spacingStyle . 'text-align:' . (string) ($props['align'] ?? 'left') . ';') . '">' . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
         }
         if ($type === 'image') {
             $url = esc_url((string) ($props['url'] ?? ''));
@@ -110,7 +111,7 @@ final class Renderer
             $fitCss = $fit === 'contain' ? 'contain' : ($fit === 'stretch' ? 'fill' : 'cover');
             $imageStyle = 'object-fit:' . $fitCss . ';object-position:' . (int) ($props['focalX'] ?? 50) . '% ' . (int) ($props['focalY'] ?? 50) . '%;';
             $imageStyle .= $h > 0 ? 'height:100%;' : 'height:auto;';
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle) . '"><figure class="h18-clean-front-image"' . ($h > 0 ? ' style="height:100%"' : '') . '>' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '"><figure class="h18-clean-front-image"' . ($h > 0 ? ' style="height:100%"' : '') . '>' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
         }
 
         $background = sanitize_hex_color((string) ($props['background'] ?? '')) ?: 'transparent';
@@ -123,7 +124,7 @@ final class Renderer
         if ($minimumHeight > 0) {
             $style .= 'min-height:' . $minimumHeight . 'px;';
         }
-        $boxStyle = $style . $borderStyle . 'background:' . $background . ';border-radius:' . $radius . 'px;padding:' . $padding . 'px;';
+        $boxStyle = $style . $borderStyle . $spacingStyle . 'background:' . $background . ';border-radius:' . $radius . 'px;padding:' . $padding . 'px;';
         return '<section id="h18-clean-' . $id . '" class="h18-clean-front-node ' . esc_attr($classes) . '" style="' . esc_attr($boxStyle) . '">' . self::children((string) $node['id'], $byParent, $byId) . '</section>';
     }
 
@@ -136,6 +137,14 @@ final class Renderer
         }
         $color = sanitize_hex_color((string) ($props['borderColor'] ?? '#000000')) ?: '#000000';
         return 'border:' . $width . 'px solid ' . $color . ';';
+    }
+
+    /** @param array<string,mixed> $props */
+    private static function spacingStyle(array $props): string
+    {
+        $gapX = max(0, min(200, (int) ($props['gapX'] ?? 0)));
+        $gapY = max(0, min(200, (int) ($props['gapY'] ?? 0)));
+        return 'margin-right:' . $gapX . 'px;margin-bottom:' . $gapY . 'px;';
     }
 
     /** @param array<string,array<int,array<string,mixed>>> $byParent */

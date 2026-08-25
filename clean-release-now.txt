@@ -1,4 +1,4 @@
-v0.1.10
-triggered_utc=2026-08-25T16:16:00Z
-reason=Canonical natural-height materialization, recursive container auto-grow and visible overlap diagnostics.
+v0.1.11
+triggered_utc=2026-08-25T16:29:00Z
+reason=Native border and X/Y element spacing plus in-manager self-update.
 nonce=11

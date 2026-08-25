@@ -44,7 +44,9 @@
     function commonProps(raw) {
         return {
             borderWidth: clamp(parseInt(raw.borderWidth || 0, 10) || 0, 0, 20),
-            borderColor: normalizeColor(raw.borderColor || '#000000')
+            borderColor: normalizeColor(raw.borderColor || '#000000'),
+            gapX: clamp(parseInt(raw.gapX || 0, 10) || 0, 0, 200),
+            gapY: clamp(parseInt(raw.gapY || 0, 10) || 0, 0, 200)
         };
     }
 
@@ -246,7 +248,7 @@
             const node = nodeById(card.getAttribute('data-node-id') || '');
             if (!node || PARENT_TYPES.includes(node.type) || node.geometry.desktop.h > 0) { return; }
             const rect = card.getBoundingClientRect();
-            const rows = Math.max(1, Math.ceil(Math.max(1, rect.height) / ROW_PX));
+            const rows = Math.max(1, Math.ceil((Math.max(1, rect.height) + Math.max(0, parseInt(node.props.gapY || 0, 10) || 0)) / ROW_PX));
             node.geometry.desktop.h = rows;
             changed.add(node.id);
         });
@@ -669,6 +671,21 @@
         card.setAttribute('data-geometry', [geometry.x, geometry.y, geometry.w, geometry.h].join(','));
     }
 
+    function applyVisualStyle(card, node) {
+        const props = node && node.props ? node.props : {};
+        const borderWidth = clamp(parseInt(props.borderWidth || 0, 10) || 0, 0, 20);
+        const gapX = clamp(parseInt(props.gapX || 0, 10) || 0, 0, 200);
+        const gapY = clamp(parseInt(props.gapY || 0, 10) || 0, 0, 200);
+        card.style.boxSizing = 'border-box';
+        card.style.borderStyle = borderWidth > 0 ? 'solid' : 'none';
+        card.style.borderWidth = borderWidth + 'px';
+        card.style.borderColor = normalizeColor(props.borderColor || '#000000');
+        card.style.marginRight = gapX + 'px';
+        card.style.marginBottom = gapY + 'px';
+        card.setAttribute('data-gap-x', String(gapX));
+        card.setAttribute('data-gap-y', String(gapY));
+    }
+
     function makeHandle(direction) {
         const handle = document.createElement('span');
         handle.className = 'h18-clean-resize h18-clean-resize--' + direction;
@@ -858,6 +875,7 @@
             card.className = 'h18-clean-node h18-clean-node--' + node.type + (selectedId === node.id ? ' is-selected' : '');
             card.setAttribute('data-node-id', node.id);
             applyCardGeometry(card, node, node.geometry.desktop);
+            applyVisualStyle(card, node);
 
             const header = document.createElement('div');
             header.className = 'h18-clean-node-header';
@@ -1003,6 +1021,12 @@
             html += '<label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#ffffff') + '"></label>';
             html += '<div class="h18-clean-field-grid"><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label><label>Padding px<input data-field="padding" type="number" min="0" max="120" value="' + (node.props.padding || 0) + '"></label></div>';
         }
+        html += '<div class="h18-clean-v0111-layout-style"><strong>Ramme og afstand</strong><div class="h18-clean-field-grid">';
+        html += '<label>Ramme px<input data-field="borderWidth" type="number" min="0" max="20" value="' + (node.props.borderWidth || 0) + '"></label>';
+        html += '<label>Rammefarve<input data-field="borderColor" type="color" value="' + escapeAttr(node.props.borderColor || '#000000') + '"></label>';
+        html += '<label>Afstand X px<input data-field="gapX" type="number" min="0" max="200" value="' + (node.props.gapX || 0) + '"></label>';
+        html += '<label>Afstand Y px<input data-field="gapY" type="number" min="0" max="200" value="' + (node.props.gapY || 0) + '"></label>';
+        html += '</div><p class="description">0 = ingen ramme/afstand. X er luft mod næste element til højre; Y er luft mod næste element under.</p></div>';
         html += '<button type="button" class="button button-link-delete" id="h18-clean-delete">Slet element' + (PARENT_TYPES.includes(node.type) ? ' + indhold' : '') + '</button>';
         host.innerHTML = html;
 
@@ -1028,6 +1052,19 @@
                 else if (field === 'background') { current.props.background = String(control.value || ''); }
                 else if (field === 'radius') { current.props.radius = clamp(parseInt(control.value || 0, 10) || 0, 0, 100); }
                 else if (field === 'padding') { current.props.padding = clamp(parseInt(control.value || 0, 10) || 0, 0, 120); }
+                else if (field === 'borderWidth') { current.props.borderWidth = clamp(parseInt(control.value || 0, 10) || 0, 0, 20); }
+                else if (field === 'borderColor') { current.props.borderColor = normalizeColor(control.value || '#000000'); }
+                else if (field === 'gapX') { current.props.gapX = clamp(parseInt(control.value || 0, 10) || 0, 0, 200); }
+                else if (field === 'gapY') {
+                    const oldGap = clamp(parseInt(current.props.gapY || 0, 10) || 0, 0, 200);
+                    const nextGap = clamp(parseInt(control.value || 0, 10) || 0, 0, 200);
+                    const oldRows = Math.ceil(oldGap / ROW_PX);
+                    const nextRows = Math.ceil(nextGap / ROW_PX);
+                    current.props.gapY = nextGap;
+                    if (current.geometry.desktop.h > 0) {
+                        current.geometry.desktop.h = clamp(current.geometry.desktop.h + (nextRows - oldRows), 1, 4000);
+                    }
+                }
                 commit(before, 'Ændr ' + field + ' på ' + current.type);
                 diag('inspector_change', { id: current.id, type: current.type, field: field, state: structuralSummary() });
                 render();

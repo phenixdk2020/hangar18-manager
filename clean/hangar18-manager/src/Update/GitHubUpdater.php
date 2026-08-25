@@ -10,6 +10,8 @@ final class GitHubUpdater
     private const CACHE_KEY = 'h18_clean_github_update_manifest_v1';
     private const CHECK_ACTION = 'h18_clean_check_update';
     private const CHECK_NONCE = 'h18_clean_check_update';
+    private const INSTALL_ACTION = 'h18_clean_install_update';
+    private const INSTALL_NONCE = 'h18_clean_install_update';
     private const SLUG = 'hangar18-manager';
     private const PLUGIN_FILE = 'hangar18-manager/hangar18-manager.php';
 
@@ -19,6 +21,7 @@ final class GitHubUpdater
         add_filter('plugins_api', [self::class, 'pluginInfo'], 20, 3);
         add_filter('upgrader_pre_download', [self::class, 'verifyDownload'], 20, 4);
         add_action('admin_post_' . self::CHECK_ACTION, [self::class, 'manualCheck']);
+        add_action('admin_post_' . self::INSTALL_ACTION, [self::class, 'installNow']);
         add_action('upgrader_process_complete', [self::class, 'clearCache'], 10, 2);
         add_action('admin_notices', [self::class, 'adminNotice']);
     }
@@ -131,13 +134,10 @@ final class GitHubUpdater
             $status = version_compare($version, H18_CLEAN_VERSION, '>') ? 'available' : 'current';
         }
 
-        $url = add_query_arg([
-            'page' => 'h18-clean-editor',
+        self::redirectToUpdates([
             'h18_clean_update_check' => $status,
             'h18_clean_update_version' => $version,
-        ], admin_url('admin.php'));
-        wp_safe_redirect($url);
-        exit;
+        ]);
     }
 
     public static function checkButtonHtml(): string
@@ -152,6 +152,77 @@ final class GitHubUpdater
             . '</form>';
     }
 
+    /** @return array{ok:bool,current:string,latest:string,available:bool} */
+    public static function status(bool $force = false): array
+    {
+        $manifest = self::manifest($force);
+        if ($manifest === null) {
+            return ['ok' => false, 'current' => H18_CLEAN_VERSION, 'latest' => '', 'available' => false];
+        }
+        $latest = (string) $manifest['version'];
+        return [
+            'ok' => true,
+            'current' => H18_CLEAN_VERSION,
+            'latest' => $latest,
+            'available' => version_compare($latest, H18_CLEAN_VERSION, '>'),
+        ];
+    }
+
+    public static function installButtonHtml(): string
+    {
+        if (!current_user_can('update_plugins')) {
+            return '';
+        }
+        $status = self::status();
+        if (!$status['ok'] || !$status['available']) {
+            return '';
+        }
+        return '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-clean-update-install">'
+            . '<input type="hidden" name="action" value="' . esc_attr(self::INSTALL_ACTION) . '">'
+            . '<input type="hidden" name="_wpnonce" value="' . esc_attr(wp_create_nonce(self::INSTALL_NONCE)) . '">'
+            . '<button type="submit" class="button button-primary" onclick="return confirm(\'Installer Hangar18 Manager Clean ' . esc_attr($status['latest']) . ' nu?\');">Opdater nu til ' . esc_html($status['latest']) . '</button>'
+            . '</form>';
+    }
+
+    public static function installNow(): void
+    {
+        if (!current_user_can('update_plugins')) {
+            wp_die(esc_html__('Ingen adgang til plugin-opdateringer.', 'hangar18-manager-clean'));
+        }
+        check_admin_referer(self::INSTALL_NONCE);
+
+        $manifest = self::manifest(true);
+        if ($manifest === null) {
+            self::redirectToUpdates(['h18_clean_update_install' => 'error']);
+        }
+        $latest = (string) $manifest['version'];
+        if (!version_compare($latest, H18_CLEAN_VERSION, '>')) {
+            self::redirectToUpdates(['h18_clean_update_install' => 'current']);
+        }
+
+        self::clearCache();
+        delete_site_transient('update_plugins');
+        wp_clean_plugins_cache(true);
+        require_once ABSPATH . 'wp-admin/includes/update.php';
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        wp_update_plugins();
+
+        $skin = new \Automatic_Upgrader_Skin();
+        $upgrader = new \Plugin_Upgrader($skin);
+        $result = $upgrader->upgrade(self::PLUGIN_FILE, ['clear_update_cache' => true]);
+        if (is_wp_error($result) || $result === false) {
+            self::redirectToUpdates([
+                'h18_clean_update_install' => 'error',
+                'h18_clean_update_version' => $latest,
+            ]);
+        }
+
+        self::redirectToUpdates([
+            'h18_clean_update_install' => 'success',
+            'h18_clean_update_version' => $latest,
+        ]);
+    }
+
     public static function adminNotice(): void
     {
         if (!current_user_can('update_plugins')) {
@@ -163,11 +234,24 @@ final class GitHubUpdater
         }
         $version = isset($_GET['h18_clean_update_version']) ? sanitize_text_field((string) wp_unslash($_GET['h18_clean_update_version'])) : '';
 
+        $install = isset($_GET['h18_clean_update_install']) ? sanitize_key((string) wp_unslash($_GET['h18_clean_update_install'])) : '';
+        if ($install === 'success') {
+            echo '<div class="notice notice-success is-dismissible"><p><strong>Hangar18 Manager Clean blev opdateret til ' . esc_html($version !== '' ? $version : H18_CLEAN_VERSION) . '.</strong></p></div>';
+            return;
+        }
+        if ($install === 'error') {
+            echo '<div class="notice notice-error is-dismissible"><p>Opdateringen kunne ikke installeres. Den eksisterende plugin-version er bevaret.</p></div>';
+            return;
+        }
+        if ($install === 'current') {
+            echo '<div class="notice notice-success is-dismissible"><p>Hangar18 Manager Clean er allerede opdateret.</p></div>';
+            return;
+        }
         if ($status === 'available' && $version !== '') {
-            echo '<div class="notice notice-info is-dismissible"><p><strong>Hangar18 Manager Clean ' . esc_html($version) . ' er tilgængelig fra GitHub.</strong> Åbn <a href="' . esc_url(admin_url('plugins.php')) . '">Plugins</a> og vælg Opdater nu.</p></div>';
+            echo '<div class="notice notice-info is-dismissible"><p><strong>Hangar18 Manager Clean ' . esc_html($version) . ' er tilgængelig.</strong> Den kan installeres direkte under <a href="' . esc_url(admin_url('admin.php?page=h18-clean-updates')) . '">Hangar18 Manager → Opdateringer</a>.</p></div>';
         } elseif ($status === 'current') {
             echo '<div class="notice notice-success is-dismissible"><p>Hangar18 Manager Clean ' . esc_html(H18_CLEAN_VERSION) . ' er den nyeste GitHub-version.</p></div>';
-        } else {
+        } elseif ($status !== '') {
             echo '<div class="notice notice-error is-dismissible"><p>GitHub update-manifestet kunne ikke læses. Den installerede plugin-version er ikke ændret.</p></div>';
         }
     }
@@ -175,6 +259,14 @@ final class GitHubUpdater
     public static function clearCache(mixed $upgrader = null, mixed $hookExtra = null): void
     {
         delete_site_transient(self::CACHE_KEY);
+    }
+
+    /** @param array<string,string> $args */
+    private static function redirectToUpdates(array $args = []): void
+    {
+        $url = add_query_arg(array_merge(['page' => 'h18-clean-updates'], $args), admin_url('admin.php'));
+        wp_safe_redirect($url);
+        exit;
     }
 
     private static function manifest(bool $force = false): ?array

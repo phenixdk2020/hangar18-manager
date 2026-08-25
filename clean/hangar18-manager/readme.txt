@@ -2,8 +2,16 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.10
+Version: 0.1.11
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.11 ==
+* Border er nu en native Clean-egenskab på Tekst, Billede, Kasse og Sektion: tykkelse 0-20 px, farve og standard 0 px.
+* Alle elementer har Afstand X og Afstand Y (0-200 px, standard 0) som trailing layoutafstand til næste element.
+* Afstand Y indgår i canonical højdematerialisering, så container auto-grow fortsat matcher editor og frontend.
+* Det gamle v0.1.6 border/autogrow-JS er pensioneret; Inspector og rendering bruger nu samme canonical props.
+* Hangar18 Manager > Opdateringer kan både tjekke GitHub og installere Opdater nu direkte uden at gå via WordPress Plugins.
+* Direkte update bruger WordPress Plugin_Upgrader og den eksisterende SHA-256-verifikation.
 
 == 0.1.10 ==
 * Elementer med naturlig h=0 materialiseres nu til deres faktiske højde i hele 8-px-rækker, så gridet reserverer den plads der faktisk tegnes.
