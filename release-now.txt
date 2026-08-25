@@ -1,4 +1,4 @@
-v0.9.1
-triggered_utc=2026-08-25T06:11:00Z
-reason=Build physical 120-unit canvas with Undo/Redo and existing-element re-parenting.
-nonce=10
+v0.9.2
+triggered_utc=2026-08-25T06:31:00Z
+reason=Build end-to-end Save/Restore diagnostics around canonical persistence and B1 restore.
+nonce=11
