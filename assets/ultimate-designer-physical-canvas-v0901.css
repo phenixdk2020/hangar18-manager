@@ -1,0 +1,58 @@
+/* Hangar18 v0.9.1 – physical canvas interaction layer.
+ * Geometry is persisted by EditorPhysicalCanvasAdminController; these styles
+ * only render the canonical interaction state. */
+
+.h18-v0901-history-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto}
+.h18-v0901-history-toolbar .button{min-height:32px}
+.h18-v0901-grid-badge{display:inline-flex;align-items:center;min-height:26px;padding:2px 8px;border:1px solid #c3c4c7;border-radius:999px;background:#fff;color:#50575e;font-size:10px;font-weight:700;white-space:nowrap}
+
+.h18-v0901-physical-cell{position:relative!important;box-sizing:border-box!important;transition:outline-color .12s ease,box-shadow .12s ease}
+.h18-v0901-physical-cell:hover{outline:1px dashed rgba(34,113,177,.58);outline-offset:-1px}
+.h18-v0901-physical-cell.is-v0901-resizing{outline:2px solid #2271b1!important;outline-offset:-2px;z-index:30}
+.h18-v0901-physical-cell.is-v0901-moving{opacity:.62;outline:2px dashed #2271b1!important;outline-offset:-2px}
+.h18-v0901-physical-cell.h18-v0901-drop-target{outline:3px solid #00a32a!important;outline-offset:-3px;box-shadow:0 0 0 4px rgba(0,163,42,.14)!important}
+
+/* 120 horizontal units. Column gaps become explicit empty units once a
+ * surface has been converted, so 120 unit positions remain deterministic. */
+.h18-v0900-layout--grid.h18-v0901-unit-surface{grid-template-columns:repeat(120,minmax(0,1fr))!important;column-gap:0!important;align-items:start!important}
+.h18-v0900-layout--grid.h18-v0901-unit-surface>.h18-v0901-geometry-explicit{box-sizing:border-box!important}
+
+.h18-v0901-geometry-explicit{max-width:none!important}
+.h18-v0901-geometry-explicit.h18-v0900-layout-column{align-self:start!important}
+.h18-v0901-geometry-explicit.h18-v0900-layout-column>.h18-v0900-layout-body{box-sizing:border-box;min-height:0}
+.h18-v0901-geometry-explicit.h18-v0900-layout-column[style*="height"]>.h18-v0900-layout-body{max-height:calc(100% - 38px);overflow:auto}
+
+.h18-v0901-move-handle{position:absolute;z-index:42;top:4px;left:4px;width:28px;height:28px;padding:0;border:1px solid #8c8f94;border-radius:6px;background:#fff;color:#1d2327;box-shadow:0 1px 4px rgba(0,0,0,.16);cursor:grab;font-size:16px;line-height:26px;text-align:center;touch-action:none}
+.h18-v0901-move-handle:hover,.h18-v0901-move-handle:focus{border-color:#2271b1;color:#135e96;outline:none;box-shadow:0 0 0 1px #2271b1}
+.h18-v0901-is-moving .h18-v0901-move-handle{cursor:grabbing}
+
+.h18-v0901-cell-handle{position:absolute;z-index:43;display:block;padding:0;border:1px solid #2271b1;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.16);touch-action:none;opacity:.18;transition:opacity .12s ease,background .12s ease}
+.h18-v0901-physical-cell:hover>.h18-v0901-cell-handle,
+.h18-v0901-physical-cell.is-v0901-resizing>.h18-v0901-cell-handle{opacity:1}
+.h18-v0901-cell-handle:hover,.h18-v0901-cell-handle:focus{opacity:1;background:#eaf4fb;outline:none}
+
+.h18-v0901-cell-handle--n,.h18-v0901-cell-handle--s{left:18px;right:18px;width:auto;height:8px;cursor:ns-resize}
+.h18-v0901-cell-handle--n{top:-4px}
+.h18-v0901-cell-handle--s{bottom:-4px}
+.h18-v0901-cell-handle--e,.h18-v0901-cell-handle--w{top:18px;bottom:18px;width:8px;height:auto;cursor:ew-resize}
+.h18-v0901-cell-handle--e{right:-4px}
+.h18-v0901-cell-handle--w{left:-4px}
+.h18-v0901-cell-handle--ne,.h18-v0901-cell-handle--se,.h18-v0901-cell-handle--sw,.h18-v0901-cell-handle--nw{width:12px;height:12px;border-radius:3px}
+.h18-v0901-cell-handle--ne{top:-6px;right:-6px;cursor:nesw-resize}
+.h18-v0901-cell-handle--se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.h18-v0901-cell-handle--sw{bottom:-6px;left:-6px;cursor:nesw-resize}
+.h18-v0901-cell-handle--nw{top:-6px;left:-6px;cursor:nwse-resize}
+
+.h18-v0901-root-drop-zone{display:none;position:sticky;z-index:55;top:8px;margin:8px 0;padding:12px 14px;border:2px dashed #2271b1;border-radius:8px;background:#eaf4fb;color:#0a4b78;font-weight:700;text-align:center;pointer-events:auto}
+.h18-v0901-root-drop-zone.is-active{display:block}
+#h18-page-sections-sortable.h18-v0901-root-target{outline:3px dashed #2271b1;outline-offset:4px;background:rgba(34,113,177,.045)}
+
+.h18-v0901-drag-ghost{position:fixed;z-index:100000;left:0;top:0;max-width:280px;padding:7px 10px;border:1px solid #2271b1;border-radius:6px;background:#fff;color:#1d2327;box-shadow:0 4px 18px rgba(0,0,0,.2);font-size:11px;font-weight:700;pointer-events:none}
+
+html.h18-v0901-is-resizing,html.h18-v0901-is-resizing *,html.h18-v0901-is-moving,html.h18-v0901-is-moving *{user-select:none!important}
+html[data-h18-physical-canvas="0.9.1"] .h18-builder-canvas:after{content:"Physical canvas 0.9.1 · 120 units · Undo/Redo";display:block;width:max-content;max-width:100%;margin:4px 0 0 auto;padding:3px 7px;border-radius:999px;background:#edfaef;color:#176b2c;font-size:10px;font-weight:700}
+
+@media(max-width:782px){
+    .h18-v0901-cell-handle,.h18-v0901-move-handle{display:none!important}
+    .h18-v0901-grid-badge{display:none}
+}
