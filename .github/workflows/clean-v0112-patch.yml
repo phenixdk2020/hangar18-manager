@@ -1,0 +1,35 @@
+name: Apply Clean v0.1.12 Patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'clean-v0112-patch-now.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply and validate UI patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/apply-clean-v0112.py
+          node --check clean/hangar18-manager/assets/editor-v018-core.js
+      - name: Commit patched editor core
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'hangar18-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/assets/editor-v018-core.js
+          git commit -m 'Fix Clean wrapper overlap and labels for v0.1.12'
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
