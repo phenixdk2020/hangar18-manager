@@ -1,4 +1,4 @@
-v0.1.19
-triggered_utc=2026-08-25T18:12:00Z
-reason=Pre-update program backup, visible changelog and mandatory page change notes.
-nonce=20-manual
+v0.1.20
+triggered_utc=2026-08-25T18:48:00Z
+reason=Common corner radius, text styling and independent manual image geometry.
+nonce=21-manual
