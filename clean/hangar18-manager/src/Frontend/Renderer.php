@@ -43,7 +43,7 @@ final class Renderer
 <style id="h18-clean-frontend-css">
 .h18-clean-page,.h18-clean-front-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));align-items:start;width:100%;box-sizing:border-box;min-width:0}
 .h18-clean-front-node{box-sizing:border-box;min-width:0;position:relative}
-.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));align-items:start;min-width:0;box-sizing:border-box}
+.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));align-items:start;min-width:0;box-sizing:border-box;height:auto!important}
 .h18-clean-front-text{overflow-wrap:anywhere}
 .h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box}
 .h18-clean-front-image img{display:block;width:100%;max-width:none;margin:0;box-sizing:border-box}
