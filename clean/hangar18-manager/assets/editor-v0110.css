@@ -1,0 +1,31 @@
+/* Clean 0.1.10: canonical row materialization + explicit overlap warning. */
+.h18-clean-inner-surface{
+    min-height:0;
+}
+.h18-clean-inner-surface>.h18-clean-empty-drop{
+    min-height:60px;
+}
+.h18-clean-node.has-layout-overlap{
+    outline:2px dashed #d63638!important;
+    outline-offset:2px;
+}
+.h18-clean-node.has-layout-overlap::after{
+    content:'⚠ OVERLAP';
+    position:absolute;
+    top:4px;
+    right:4px;
+    z-index:74;
+    display:block;
+    padding:2px 5px;
+    border:1px solid #d63638;
+    border-radius:4px;
+    background:#fff;
+    color:#8a2424;
+    font-size:10px;
+    font-weight:800;
+    line-height:1.2;
+    pointer-events:none;
+}
+.h18-clean-node.is-selected.has-layout-overlap{
+    outline-style:solid!important;
+}
