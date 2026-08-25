@@ -1,28 +1,27 @@
 {
-  "version": "0.9.0",
-  "title": "Editor Architecture Consolidation – canonical layout state",
+  "version": "0.9.1",
+  "title": "Physical Canvas – 120 units, Undo/Redo og re-parenting",
   "channel": "test",
   "backlog_ids": [
+    "CANVAS-PHYSICAL-GEOMETRY-111",
+    "CANVAS-REPARENT-112",
+    "CANVAS-HISTORY-113",
+    "FRONTEND-PHYSICAL-PARITY-114",
+    "DIAG-INTERACTION-115",
     "ARCH-CANONICAL-MODEL-107",
     "ARCH-SAVE-PROJECTION-108",
-    "ARCH-RENDER-OWNER-109",
-    "ARCH-LEGACY-ADAPTERS-110",
-    "DIAG-RELOAD-103",
-    "DIAG-LIVE-101",
-    "IMAGE-FIT-PARITY-100",
-    "VERTICAL-ELEMENT-RESIZE-099",
-    "FRONTEND-STACK-096",
-    "CANVAS-STACK-AUTOHEIGHT-097"
+    "ARCH-RENDER-OWNER-109"
   ],
   "changelog": [
-    "Introducerer én canonical v0.9.0 layout-model for editorens parent-hierarki, rækkefølge, Remove-state, responsive 12-kolonne-spans og stack-relationer.",
-    "Gem tager et canonical snapshot ved brugerens Save-intent og skriver modellen som én strukturel transaktion; modellen udledes af source rows og aldrig af visuelle proxy-kloner.",
-    "Serveren validerer model/schema, kræver nøjagtigt samme sektionsnøgler som den normale sections-POST og failer åbent til eksisterende data, hvis modellen er manglende eller ufuldstændig.",
-    "Den validerede model projiceres før de eksisterende save-handlers til sections, h18_lego_layout_span og h18_lego_stack_v0851, så de tre gamle persistence-lag modtager samme struktur under migrationen.",
-    "v0.8.90 generic saved-layout rebuild og v0.8.91 save-integrity guard er koblet ud af aktiv registrering; filerne beholdes kun til rollback og audit.",
-    "Generic Grid/Flex genopbygges nu af én modeldrevet v0.9.0 renderer med 12-kolonne-spans, stack-visning og direkte kolonne-resize gennem den canonical state-adapter.",
-    "Eksisterende drag/drop, Inspector, resize- og stack-runtimes fungerer midlertidigt som input-adaptere til v0.9.0-modellen; de migreres ud enkeltvis efter stabilitets-QA i stedet for at få flere patch-lag.",
-    "Offentlig frontend, Vehicle, Event og Gallery rendering ændres ikke i v0.9.0; arkitekturændringen er isoleret til sideeditorens layout-state og Gem/reload-flow.",
-    "Trace logger DIAG_LAYOUT_ENGINE_BOOT_V0900, DIAG_LAYOUT_MODEL_RECONCILE_V0900, DIAG_LAYOUT_MODEL_SAVE_INTENT_V0900 og DIAG_LAYOUT_MODEL_SAVE_V0900 som strukturelle diagnostics uden rå indholdstekst."
+    "Tilføjer et fysisk 120-unit canvas-lag til den kanoniske 0.9.x-editor; elementets synlige ramme kan nu have persistent bredde og højde i stedet for kun en administrativ proxy-størrelse.",
+    "Tilføjer otte resize-zoner pr. element: top, bund, venstre, højre og alle fire hjørner. Venstre/top-resize flytter origin samtidig, så den modsatte kant forbliver forankret.",
+    "Horisontal resize snapper til 120 layout-units, mens lodret resize snapper i 8-px units. En pointer-gesture bliver én historiktransaktion.",
+    "Tilføjer Fortryd/Gentag-knapper samt Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z og Ctrl+Y. Historikken gemmer kanonisk parent/order, fysisk geometri og redigerbare feltværdier for layout-/inspektørændringer.",
+    "Et allerede deployet element kan flyttes med et særskilt move-håndtag ind i container/grid/flex eller ud til root. Ugyldige self/descendant-drops afvises for at forhindre cycles.",
+    "Re-parenting skriver LayoutParentKey og Order tilbage til canonical source rows og lader v0.9.0-layout-engine validere stack/hierarki før Save.",
+    "Fysisk geometri gemmes efter den kanoniske v0.9.0-save i samme per-page layout option under Section Geometry; den er dermed persisted state og ikke editor-CSS alene.",
+    "Tilføjer frontend parity-runtime for gemt 120-unit bredde, signed vertical offset og eksplicit højde. Den eksisterende 12-kolonne frontend-runtime forbliver fallback for elementer uden fysisk geometri.",
+    "Tilføjer strukturelle diagnostics for resize begin/commit, re-parent begin/commit, Undo og Redo uden rå tekstindhold eller credentials.",
+    "Vehicle, Event og Gallery får ingen nye editor-hooks; v0.9.1-funktionerne enqueuees kun i den almindelige Hangar18 sideeditor og fysisk frontend-CSS genereres kun for sider med gemt geometry-state."
   ]
 }
