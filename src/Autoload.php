@@ -31,7 +31,8 @@ final class Autoload
             \Hangar18\UltimateDesigner\Diagnostics\EditorDiagnosticRuntime::register();
         }
 
-        // Public runtimes remain unchanged in v0.9.0.
+        // Public runtimes. v0.9.1 adds physical 120-unit geometry parity while
+        // the existing 12-column runtime remains a compatibility fallback.
         if (
             function_exists('is_admin') &&
             function_exists('add_filter') &&
@@ -41,12 +42,12 @@ final class Autoload
             \Hangar18\UltimateDesigner\Frontend\LegoLayoutFrontendRuntime::register();
             \Hangar18\UltimateDesigner\Frontend\LegoStackFrontendRuntime::register();
             \Hangar18\UltimateDesigner\Frontend\ImageElementFrontendRuntime::register();
+            \Hangar18\UltimateDesigner\Frontend\PhysicalCanvasFrontendRuntime::register();
         }
 
-        // Admin-only tooling. v0.9.0 makes one canonical layout engine the
-        // active generic Grid/Flex render/save owner. The v0.8.90 rebuild and
-        // v0.8.91 save guard stay in the package for rollback/audit only and
-        // are deliberately no longer registered here.
+        // Admin-only tooling. v0.9.x keeps one canonical layout model. The
+        // physical canvas controller adds geometry/history/re-parenting after
+        // the canonical engine and merges geometry into the same page model.
         if (
             function_exists('is_admin') &&
             function_exists('add_action') &&
@@ -60,6 +61,7 @@ final class Autoload
             \Hangar18\UltimateDesigner\Admin\LegacyStateBackupAdminController::register();
             \Hangar18\UltimateDesigner\Admin\BackupHealthAdminController::register();
             \Hangar18\UltimateDesigner\Admin\EditorLayoutEngineAdminController::register();
+            \Hangar18\UltimateDesigner\Admin\EditorPhysicalCanvasAdminController::register();
         }
     }
 }
