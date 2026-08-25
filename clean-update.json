@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.12.zip",
-  "sha256": "c789a8b06fe6fddd7ea256f1aa10e790d4b03ad7b261ace3500e512091aabc7b",
-  "source_commit": "3b36e6bbbab7d920518f1c2fc62cbf49d3c2241e",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.13.zip",
+  "sha256": "56d50ffb63e4fd9766e1e8b9b73c96d9ce8d61af6e171a877e0e09cf4b62ca3f",
+  "source_commit": "0ddff0b63b9b6f002cc886a5c38c7e801d8c7e50",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.12</h4><ul><li>Blå markering betyder valgt element; rød markering er kun overlap-diagnostik.</li><li>Kasse og Sektion er layout-wrappers og tæller ikke selv som OVERLAP.</li><li>Editorlabels vises som KASSE, SEKTION, TEKST og BILLEDE, mens canonical type keys er uændrede.</li><li>Label og drag-håndtag er fortsat editor-chrome og påvirker ikke fysisk x/y/w/h eller containerens auto-grow.</li></ul>"
+    "changelog": "<h4>0.1.13</h4><ul><li>Direkte self-update bevarer og verificerer pluginets aktive/netværksaktive tilstand før redirect.</li><li>Fallback går til Plugins hvis genaktivering mod forventning fejler, så administratoren ikke lander på en ikke-registreret Manager-side.</li><li>Nye Tekst-elementer starter med 80 px / 10 grid-rækker, samme standardhøjde som Billede.</li><li>Eksisterende layouts og cell-split-geometri ændres ikke automatisk.</li></ul>"
   }
 }
