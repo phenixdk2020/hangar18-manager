@@ -1,0 +1,45 @@
+name: Clean Plugin Download Artifact
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'clean-artifact-now.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify clean source
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l clean/hangar18-manager/hangar18-manager.php
+          php -l clean/hangar18-manager/src/Model/LayoutModel.php
+          php -l clean/hangar18-manager/src/Diagnostics/DiagnosticStore.php
+          php -l clean/hangar18-manager/src/Admin/EditorController.php
+          php -l clean/hangar18-manager/src/Frontend/Renderer.php
+          node --check clean/hangar18-manager/assets/editor.js
+          if grep -R -n -E 'Hangar18\\UltimateDesigner|ultimate-designer-|EditorLego|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then
+            echo 'Legacy editor dependency found in clean plugin.' >&2
+            exit 1
+          fi
+      - name: Build installable ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f hangar18-manager-clean-v0.1.0.zip
+          (cd clean && zip -qr ../hangar18-manager-clean-v0.1.0.zip hangar18-manager)
+          unzip -tq hangar18-manager-clean-v0.1.0.zip
+          sha256sum hangar18-manager-clean-v0.1.0.zip
+      - name: Upload installable ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: hangar18-manager-clean-v0.1.0
+          if-no-files-found: error
+          retention-days: 7
+          path: hangar18-manager-clean-v0.1.0.zip
