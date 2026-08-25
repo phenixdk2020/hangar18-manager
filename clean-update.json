@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.8.zip",
-  "sha256": "0fbb5fbdae2532937151df35d4bee9b4b8398901cfff2c19ec6bf9d88c3cb375",
-  "source_commit": "99ca07e236a2c2917d79d333bf54f594fab3dca6",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.9.zip",
+  "sha256": "5f81b58f33d699aedc1276fee36e173a2a37d4beafc2a2d02b2e54199f332d48",
+  "source_commit": "3ce748fc29ea6e5780805390ad72a5f169d30064",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.8</h4><ul><li>Over/Under splitter nu kun den valgte celles højde i stedet for at oprette en fuldbredde-række.</li><li>Venstre/Højre splitter kun den valgte celles bredde.</li><li>Naboceller i samme bånd kan spænde over begge nye under-rækker, så f.eks. to celler til venstre kan dele højden med én høj celle til højre.</li><li>Canonical x/y/w/h renderes som eksplicit 120-kolonne/8-px grid i editor og frontend, når højden er materialiseret.</li><li>Kasse/Sektion beholder central Ind i Kassen-zone, mens kantzonerne splitter parentens egen celle.</li><li>Flytning ud af en celle bruger kun lokal sikker heal og omfordeler ikke længere hele rækken.</li><li>Label/type/ID/drag-håndtag er fortsat editor-overlay og tæller ikke med i fysisk geometri.</li></ul>"
+    "changelog": "<h4>0.1.9</h4><ul><li>Nyt samlet Hangar18 Manager-adminmenu med Dashboard, Designer, Køretøjer, Køretøjsfelter, Events, Billedgalleri, Data, Sider, Menu, Header/Footer, Backup, Opdateringer og Log.</li><li>Designer er nu undermenu under Manager, mens 0.1.8 cell-split-runtime og canonical Save/Restore bevares.</li><li>Dashboard og Sider viser Clean-versioner, nodeantal og versionshistorik.</li><li>Køretøjer, Events og Billedgalleri giver Clean/WordPress-oversigt uden at genaktivere legacy dataruntime.</li><li>Backup eksporterer alle Clean-layouts og versionshistorik som JSON uden diagnostics, tokens eller credentials.</li><li>Log viser de strukturelle Clean diagnostics pr. side, support-link og sikker rydning af log.</li><li>Menu, Header/Footer og Opdateringer har egne administrationssider; GitHub updater bevarer SHA-256-verifikation.</li></ul>"
   }
 }
