@@ -94,10 +94,20 @@ jobs:
           git add clean-update.json "dist/hangar18-manager-clean-v${VERSION}.zip" dist/hangar18-manager-clean.zip
           if git diff --cached --quiet; then
             echo 'Release artifacts already current.'
-          else
-            git commit -m "Release clean v${VERSION}"
-            git push origin HEAD:main
+            exit 0
           fi
+          git commit -m "Release clean v${VERSION}"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push race on attempt ${attempt}; retrying..."
+            sleep 2
+          done
+          echo 'Unable to publish clean release after three attempts.' >&2
+          exit 1
 
       - name: Upload installable ZIP artifact
         uses: actions/upload-artifact@v4
