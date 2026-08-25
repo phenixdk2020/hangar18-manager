@@ -3,7 +3,6 @@ Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
 Version: 0.1.0
-
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 
 == 0.1.0 ==

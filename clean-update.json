@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "plugin": "hangar18-manager-clean",
+  "version": "0.1.0",
+  "channel": "clean-test",
+  "published_utc": "2026-08-25T07:11:07Z",
+  "package_path": "dist/hangar18-manager-clean.zip",
+  "package_sha256": "9d2ddd4a7ecf24577ec38315b74147392d3eef13b90e8eb430041a95b6787490",
+  "backlog_ids": [
+    "CLEAN-ARCH-001",
+    "CLEAN-CANVAS-002",
+    "CLEAN-HISTORY-003",
+    "CLEAN-REPARENT-004",
+    "CLEAN-IMAGE-005",
+    "CLEAN-SAVE-RESTORE-006",
+    "CLEAN-DIAG-007",
+    "CLEAN-FRONTEND-008"
+  ],
+  "changelog": [
+    "Ny selvstændig clean-plugin-kilde uden de gamle Ultimate Designer/editor-runtimes.",
+    "Én canonical JSON-model pr. WordPress-side med 120 layout-units og x/y/w/h-geometri.",
+    "8-vejs fysisk resize, Undo/Redo og modeldrevet flytning af eksisterende elementer ind i/ud af Sektion og Kasse.",
+    "Billeder følger elementkassen med Cover/beskær som standard, Contain eller fri Stretch samt focal X/Y.",
+    "Save opretter clean versionshistorik, og Restore gemmer den valgte ældre model som en ny sikker version.",
+    "Strukturelle diagnostics dækker editorinteraktioner, Save og Restore med privat read-only support-link.",
+    "Frontend renderes direkte fra samme canonical model; sider uden clean-model røres ikke."
+  ]
+}

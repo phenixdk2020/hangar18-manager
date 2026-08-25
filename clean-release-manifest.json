@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "version": "0.1.0",
+  "channel": "clean-test",
+  "source_commit": "ac0a5372a23d7895b65335bc280e64bd3cc5aa7d",
+  "built_utc": "2026-08-25T07:11:07Z",
+  "package_path": "dist/hangar18-manager-clean.zip",
+  "package_sha256": "9d2ddd4a7ecf24577ec38315b74147392d3eef13b90e8eb430041a95b6787490",
+  "qa": {
+    "php_lint": true,
+    "js_syntax": true,
+    "legacy_boundary": true,
+    "zip_tree_policy": true
+  }
+}
