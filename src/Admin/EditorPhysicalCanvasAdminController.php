@@ -192,7 +192,9 @@ final class EditorPhysicalCanvasAdminController
         $device = [
             'Explicit' => self::boolValue($raw['Explicit'] ?? false, false),
             'X' => $x,
-            'Y' => self::clamp($raw['Y'] ?? 0, 0, 10000, 0),
+            // Signed Y allows the north edge/corners to move upward while the
+            // opposite edge remains anchored during an Excel-like resize.
+            'Y' => self::clamp($raw['Y'] ?? 0, -4000, 10000, 0),
             'W' => max(1, $width),
             // H=0 means natural/auto height until the user performs a vertical resize.
             'H' => self::clamp($raw['H'] ?? 0, 0, 4000, 0),
