@@ -1,0 +1,138 @@
+.h18-clean-node{
+    border-width:0;
+    border-style:solid;
+    border-color:transparent;
+}
+.h18-clean-node:hover{
+    outline:1px solid #2271b1;
+    outline-offset:1px;
+}
+.h18-clean-node.is-selected{
+    outline:2px solid #2271b1;
+    outline-offset:2px;
+}
+
+/* Editor chrome must never consume the canonical x/y/w/h geometry. */
+.h18-clean-node-header{
+    position:absolute;
+    top:-29px;
+    left:-1px;
+    width:max-content;
+    max-width:100%;
+    height:26px;
+    z-index:80;
+    display:none;
+    padding:0 6px;
+    border:1px solid #2271b1;
+    border-radius:4px;
+    background:#f6f7f7;
+    box-shadow:0 1px 2px rgba(0,0,0,.12);
+    pointer-events:auto;
+}
+.h18-clean-node:hover>.h18-clean-node-header,
+.h18-clean-node.is-selected>.h18-clean-node-header,
+.h18-clean-node.is-dragging>.h18-clean-node-header,
+.h18-clean-node.is-resizing>.h18-clean-node-header{
+    display:flex;
+}
+.h18-clean-node-preview--image{
+    height:100%;
+    min-height:0;
+}
+.h18-clean-node--text>.h18-clean-node-preview{
+    min-height:0;
+}
+.h18-clean-node--section>.h18-clean-node-preview,
+.h18-clean-node--container>.h18-clean-node-preview{
+    display:none;
+}
+.h18-clean-inner-surface{
+    margin-top:0;
+}
+
+/* A container's selected height is a minimum; content may grow beyond it. */
+.h18-clean-node--section,
+.h18-clean-node--container{
+    height:auto!important;
+    overflow:visible;
+}
+
+/* Two-sided spatial guide: both choices remain visible, active side is strong. */
+.h18-clean-node.has-drop-choice{
+    z-index:70;
+    outline:3px solid #135e96;
+    outline-offset:2px;
+}
+.h18-clean-node.has-drop-choice::before,
+.h18-clean-node.has-drop-choice::after{
+    position:absolute;
+    top:0;
+    bottom:0;
+    z-index:75;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    border:2px dashed #2271b1;
+    background:rgba(34,113,177,.10);
+    color:#0a4b78;
+    font-size:12px;
+    font-weight:800;
+    line-height:1.2;
+    text-align:center;
+    pointer-events:none;
+    text-shadow:0 1px 0 #fff;
+}
+.h18-clean-node.has-drop-choice::before{
+    content:'← VENSTRE';
+    left:0;
+    right:50%;
+    border-radius:5px 0 0 5px;
+}
+.h18-clean-node.has-drop-choice::after{
+    content:'HØJRE →';
+    left:50%;
+    right:0;
+    border-radius:0 5px 5px 0;
+}
+.h18-clean-node.has-drop-choice.is-drop-left::before,
+.h18-clean-node.has-drop-choice.is-drop-right::after{
+    border:4px solid #00a32a;
+    background:rgba(0,163,42,.30);
+    color:#063b15;
+    font-size:14px;
+}
+.h18-clean-node.has-drop-choice.is-drop-left::after,
+.h18-clean-node.has-drop-choice.is-drop-right::before{
+    opacity:.42;
+}
+.h18-clean-drop-status{
+    position:fixed;
+    z-index:100000;
+    display:none;
+    max-width:320px;
+    padding:7px 10px;
+    border:2px solid #00a32a;
+    border-radius:6px;
+    background:#fff;
+    color:#063b15;
+    box-shadow:0 4px 14px rgba(0,0,0,.22);
+    font-size:13px;
+    font-weight:800;
+    pointer-events:none;
+}
+.h18-clean-drop-status.is-visible{
+    display:block;
+}
+
+.h18-clean-v016-border-controls{
+    margin:12px 0;
+    padding:10px;
+    border:1px solid #dcdcde;
+    border-radius:6px;
+    background:#f6f7f7;
+}
+.h18-clean-v016-border-controls>strong{
+    display:block;
+    margin-bottom:4px;
+}
