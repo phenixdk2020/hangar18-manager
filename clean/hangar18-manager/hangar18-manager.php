@@ -4,7 +4,7 @@
  * Plugin URI: https://hangar18.dk/
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.
- * Version: 0.1.20
+ * Version: 0.1.21
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.20');
+define('H18_CLEAN_VERSION', '0.1.21');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -45,6 +45,7 @@ require_once H18_CLEAN_DIR . 'src/Admin/EditorController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminMenuBridge.php';
 require_once H18_CLEAN_DIR . 'src/Frontend/Renderer.php';
+require_once H18_CLEAN_DIR . 'src/Frontend/ResponsiveRenderer.php';
 require_once H18_CLEAN_DIR . 'src/Update/GitHubUpdater.php';
 
 add_action('plugins_loaded', static function (): void {
@@ -53,6 +54,7 @@ add_action('plugins_loaded', static function (): void {
     \Hangar18\Clean\Admin\AdminController::register();
     \Hangar18\Clean\Admin\AdminMenuBridge::register();
     \Hangar18\Clean\Frontend\Renderer::register();
+    \Hangar18\Clean\Frontend\ResponsiveRenderer::register();
     \Hangar18\Clean\Update\GitHubUpdater::register();
 });
 
@@ -63,7 +65,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
 
     /*
      * Current Clean core provides theme-accurate preview, canonical grid layout,
-     * verified Save, independent image-box rendering and version-aware editor UI.
+     * verified Save, independent image-box rendering and responsive layout editing.
      */
     wp_dequeue_script('h18-clean-editor');
 
@@ -139,6 +141,13 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ['h18-clean-editor-v0118'],
         H18_CLEAN_VERSION
     );
+    wp_enqueue_style(
+        'h18-clean-editor-v0121',
+        H18_CLEAN_URL . 'assets/editor-v0121.css',
+        ['h18-clean-editor-v0120'],
+        H18_CLEAN_VERSION
+    );
+
     wp_enqueue_script(
         'h18-clean-editor-v0114',
         H18_CLEAN_URL . 'assets/editor-v0114.js',
@@ -150,6 +159,20 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'h18-clean-editor-v0120',
         H18_CLEAN_URL . 'assets/editor-v0120.js',
         ['h18-clean-editor-v0114'],
+        H18_CLEAN_VERSION,
+        true
+    );
+    wp_enqueue_script(
+        'h18-clean-editor-v0121',
+        H18_CLEAN_URL . 'assets/editor-v0121.js',
+        ['h18-clean-editor-v0120'],
+        H18_CLEAN_VERSION,
+        true
+    );
+    wp_enqueue_script(
+        'h18-clean-editor-v0121-panels',
+        H18_CLEAN_URL . 'assets/editor-v0121-panels.js',
+        ['h18-clean-editor-v0121'],
         H18_CLEAN_VERSION,
         true
     );
