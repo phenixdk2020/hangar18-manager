@@ -112,7 +112,7 @@ Den nuværende 0.1.x-model kan teknisk tillade flere kombinationer under udvikli
 | Baggrund | Ja | Ja |
 | Border | Ja | Ja |
 | Padding | Ja | Ja |
-| Hjørneradius | Muligt | Ja |
+| Hjørneradius | Ja | Ja |
 | Auto-grow | Ja | Ja |
 
 ### Sektion
@@ -151,6 +151,8 @@ Clean Designer bruger en modeldrevet geometri med:
 - `parentId` til hierarki;
 - `order` til stabil rækkefølge;
 - type-specifikke properties.
+
+Fra Responsive Designer gemmes geometrien som samme element på flere breakpoints, bl.a. `geometry.desktop`, `geometry.laptop` og `geometry.mobile`. Elementets ID, indhold, parent og order er fælles.
 
 Save, Undo, Redo, Preview og frontend skal alle arbejde ud fra samme canonical model.
 
@@ -217,6 +219,7 @@ Parent- og child-labels må ikke ligge oven i hinanden. Label-layoutet skal have
 - **Grøn** = valgt/aktivt element og resize-håndtag.
 - **Blå** = hover/drop-kontekst.
 - **Rød** = reel overlap/advarsel.
+- **Sand/guld** = særskilt redigering af billedindhold inde i billedboksen.
 
 Kasse/Sektion er layout-wrappers og må ikke få overlap-advarsel blot fordi deres børn ligger inde i dem.
 
@@ -230,12 +233,13 @@ Alle relevante elementer skal kunne have grundlæggende styling uden specialkode
 
 - Border thickness, standard `0 px`
 - Border color
+- Hjørneradius, standard `0 px`
 - Afstand X til næste element
 - Afstand Y til næste element
 - Baggrundsfarve, hvor det giver mening
 - Størrelse og placering
 
-Afstand X/Y skal indgå i layoutberegningen og ikke kun være kosmetisk CSS.
+Hjørneradius er en fælles egenskab for **Sektion, Kasse, Tekst og Billede**. Afstand X/Y skal indgå i layoutberegningen og ikke kun være kosmetisk CSS.
 
 ---
 
@@ -257,7 +261,9 @@ Tekst-elementet skal kunne styre:
 - Baggrundsfarve eller gennemsigtig
 - Brødtekstfarve
 - Overskriftsfarve
-- Border
+- Border og borderfarve
+- Hjørneradius
+- Padding
 - Afstand X/Y
 - Boksens bredde/højde
 
@@ -281,17 +287,17 @@ Boksens størrelse må ikke automatisk være identisk med billedets naturlige st
 Boksen styrer:
 
 - `x/y/w/h`
-- Border
-- Borderfarve
+- Border og borderfarve
+- Hjørneradius
 - Baggrundsfarve
 - Afstand X/Y
 - Resize
 
-De grønne resize-håndtag ændrer boksen, ikke billedfilens naturlige proportioner.
+De grønne resize-håndtag ændrer boksen, ikke billedets egen geometri.
 
 ### Billedet inde i boksen
 
-Billedet skal kunne vises som:
+Billedet kan vises som:
 
 | Tilstand | Funktion |
 |---|---|
@@ -299,31 +305,13 @@ Billedet skal kunne vises som:
 | Fyld boksen | Billedet fylder boksen og beskæres efter behov |
 | Original størrelse | Billedet beholder sin naturlige størrelse inde i boksen |
 | Stræk | Billedet følger boksens bredde/højde og kan deformeres |
+| Manuel | Billedet har egen X/Y/bredde/højde inde i boksen |
 
-Standard for nye billeder er:
+Standard for nye billeder er **Vis hele billedet**, vandret center og lodret center.
 
-- **Vis hele billedet**
-- vandret center
-- lodret center
+I Manuel-tilstand kan selve billedet flyttes og skaleres uafhængigt af billedboksen. Den manuelle geometri gemmes separat, og ændring af billedboksens størrelse må ikke automatisk ændre billedets egen bredde/højde. Lås proportioner er standard slået til ved manuel skalering.
 
-### Placering i boksen
-
-- Vandret: venstre / center / højre
-- Lodret: top / center / bund
-- Fokus X/Y bruges især ved beskæring i **Fyld boksen**.
-
-Eksempel:
-
-```text
-┌──────────────────────────────┐
-│                              │
-│       ┌──────────────┐       │
-│       │    BILLEDE   │       │
-│       └──────────────┘       │
-│                              │
-└──────────────────────────────┘
-         BILLEDBOKS
-```
+Hjørneradius på billedboksen skal klippe indholdet, så billedet ikke stikker uden for afrundede hjørner.
 
 ---
 
@@ -339,7 +327,7 @@ faktisk højde = max(valgt minimumshøjde, nødvendig indholdshøjde)
 
 Når et barn flyttes eller slettes, må containeren krympe igen, men aldrig under den manuelt valgte minimumshøjde.
 
-Border, padding og lodret afstand skal indgå i beregningen.
+Border, padding og lodret afstand skal indgå i beregningen. Responsive layouts skal beregne nødvendig parent-højde ud fra det aktive breakpoint, så fx mobil-stacking ikke overlapper efterfølgende indhold.
 
 ---
 
@@ -361,54 +349,21 @@ Hvis fri overlap senere gøres til en officiel funktion, bør det implementeres 
 
 Clean Designer skal være ikke-destruktiv.
 
-Hver rigtig **Gem** opretter en ny Clean-version.
+Hver rigtig **Gem** opretter en ny Clean-version og kræver en kort ændringsbeskrivelse.
 
-### Gemte versioner skal tilbyde
+Gemte versioner tilbyder **Forhåndsvis version**, **Gendan original** og **Opret kopi**.
 
-- **Forhåndsvis version**
-- **Gendan original**
-- **Opret kopi**
+Gendan original gemmer den valgte gamle model som en ny version, eksempelvis `v1 → v2 → v3 → Gendan v1 → v4`. Tidligere versioner bevares.
 
-### Gendan original
-
-Gendannelse til original-siden må ikke overskrive historikken destruktivt.
-
-En valgt gammel version gemmes som en **ny version** på den originale side.
-
-Eksempel:
-
-```text
-v1 → v2 → v3 → Gendan v1 → v4
-```
-
-v2 og v3 findes stadig i historikken.
-
-### Opret kopi
-
-En historisk version kan oprettes som en ny WordPress-side:
-
-- status: kladde;
-- original side ændres ikke;
-- kopien får sin egen Clean-historik;
-- den valgte model bliver kopiens `v1`.
+Opret kopi laver en ny WordPress-kladdeside, hvor den valgte historiske model bliver kopiens egen v1.
 
 ---
 
 ## 14. Forhåndsvisning og Save
 
-Der findes to forskellige preview-behov:
+Usavet Designer-state kan vises i den rigtige frontend/theme via en kortlivet brugerspecifik preview-model uden at ændre den offentlige side.
 
-### Usavet forhåndsvisning
-
-Den aktuelle Designer-model kan vises i den rigtige frontend/theme uden at gemme.
-
-Dette skal bruge en kortlivet, brugerspecifik preview-model og må ikke ændre den offentlige side.
-
-### Gem & vis
-
-- gemmer canonical model som ny version;
-- verificerer at den gemte model matcher input;
-- åbner den rigtige offentlige side efter gemning.
+**Gem & vis** gemmer canonical model som ny version, verificerer at den gemte model matcher input og åbner den offentlige side efter gemning.
 
 ---
 
@@ -423,8 +378,9 @@ Planlagte globale indstillinger:
 - Standard overskriftsfarve
 - Standard sidebaggrund
 - Godkendt Hangar18-farvepalette
-- Desktop-sidebredde, aktuelt designprincip 90 %
-- Mobil-sidebredde, aktuelt designprincip 100 %
+- Desktop-sidebredde
+- Laptop-sidebredde
+- Mobil-sidebredde
 - Standardafstande
 - Standard border/radius-regler
 
@@ -436,109 +392,76 @@ Lokale elementindstillinger må kunne overskrive globale defaults.
 
 Hangar18 Base Theme skal på sigt være et tyndt **runtime/shell-tema**.
 
-Temaets opgaver:
-
-- WordPress template lifecycle
-- hooks
-- nødvendige wrappers
-- menu- og WordPress-integration
-- indlæsning af Manager-renderet Header, Side og Footer
-- fallback hvis Manager ikke er tilgængelig
+Temaets opgaver er WordPress template lifecycle, hooks, nødvendige wrappers, menu-/WordPress-integration, indlæsning af Manager-renderet Header/Side/Footer og fallback hvis Manager ikke er tilgængelig.
 
 Temaet bør ikke indeholde parallelle designregler, som konkurrerer med Clean Designer.
-
-Den tekniske sandhed for visuelt design skal gradvist flyttes til Managerens globale designmodel og de gemte Designer-modeller.
 
 ---
 
 ## 17. Header Designer
 
-Header skal være et globalt design med sin egen model og versionshistorik.
+Header skal være et globalt design med sin egen model og versionshistorik og bruge samme LEGO-/grid-motor som Side Designer.
 
-Den skal kunne bruge samme LEGO-/grid-motor som Side Designer, men med header-specifikke elementer.
+Planlagte elementer: Logo, Navigation/Menu, Tekst, Knap, Kasse og eventuelt Ikon.
 
-Planlagte elementer:
-
-- Logo
-- Navigation/Menu
-- Tekst
-- Knap
-- Kasse
-- eventuelt ikon
-
-Header-indstillinger kan eksempelvis omfatte:
-
-- sticky / ikke sticky
-- højde
-- baggrund
-- tekst/menu-farve
-- mobilmenu
-- logo-størrelse
-- alignment
-
-Headeren ligger uden for almindelige sider og kan ikke slettes fra en side.
+Header-indstillinger omfatter bl.a. sticky/ikke sticky, højde, baggrund, tekst/menu-farve, mobilmenu, logo-størrelse og alignment. Headeren ligger uden for almindelige sider og kan ikke slettes fra en side.
 
 ---
 
 ## 18. Footer Designer
 
-Footer skal ligeledes være et globalt design med egen model og versionshistorik.
+Footer skal være et globalt design med egen model og versionshistorik.
 
-Planlagte elementer:
+Planlagte elementer: Tekst, Logo, Menu, Links, Kasser/kolonner og eventuelt kontaktoplysninger/sociale links.
 
-- Tekst
-- Logo
-- Menu
-- Links
-- Kasser/kolonner
-- eventuelt kontaktoplysninger/sociale links
-
-Footer følger global farvepalette, typografi og breddeprincip, men kan have egne lokale overrides.
-
-Footer kan ikke slettes fra en almindelig side.
+Footer følger global farvepalette, typografi og breddeprincip, men kan have egne lokale overrides og kan ikke slettes fra en almindelig side.
 
 ---
 
 ## 19. Flere elementtyper
 
-Flere elementtyper skal først bygges, når hierarki, styling, globalt design og Header/Footer-arkitektur er stabile.
-
-Planlagte elementer efter fundamentet:
+Efter fundamentet planlægges bl.a.:
 
 - Knap
 - Skillelinje
 - Spacer/Afstand
 - Ikon
+- **Tabel** – manuel og senere dynamisk datatabel
 - Galleri
 - Menu
 - Hero/Topbanner
-- Kort-række
-- Fremhævet tekst
+- Video
+- Accordion/FAQ
+- Tabs
+- Formular
 - Dynamisk Køretøj-element
 - Dynamisk Event-element
 - Dynamisk Billedgalleri-element
-- Formular
-- øvrige funktionsmoduler
 
-Nye elementer skal bruge samme canonical model, versionering og frontend-renderingsprincipper.
+Nye elementer skal bruge samme canonical model, versionering og frontend-renderingsprincipper. Card/Kort bør som udgangspunkt undersøges som Kasse-preset/komponent frem for endnu en hårdkodet layouttype.
 
 ---
 
 ## 20. Responsivt design
 
-Desktop og mobil skal ses som to visninger af samme model, ikke som to uafhængige sider.
+Desktop, Laptop og Mobil er **tre visninger af samme side og samme elementer**, ikke tre uafhængige sider.
 
-Målarkitekturen skal understøtte:
+Den aktive arkitektur understøtter:
 
-- Desktop-layout
-- Tablet-layout
-- Mobil-layout
-- arv fra desktop som standard
-- lokale overrides hvor nødvendigt
+- `geometry.desktop`
+- `geometry.laptop`
+- `geometry.mobile`
+- Laptop arver Desktop som standard
+- Mobil arver det effektive Laptop/Desktop-layout som standard
+- lokalt `x/y/w/h` override pr. breakpoint
+- nulstilling til arv
+- samme ID, indhold, parent og order på alle breakpoints
 
-Mobilbreakpoint fra den eksisterende designmanual er 782 px.
+`geometry.tablet` beholdes reserveret i modellen, så en særskilt Tablet-visning kan tilføjes senere uden at ændre de eksisterende Laptop-data.
 
-Der må ikke opstå vandret rulning på hele siden som følge af elementgeometri.
+Frontend anvender Laptop-layout op til ca. 1180 px og Mobil-layout op til 782 px. Der må ikke opstå vandret rulning på hele siden som følge af elementgeometri.
+
+Selve Designer-UI'et skal også være responsivt: **Elementer og Inspector kan foldes ind/ud**, canvas skal bruge den resterende skærmbredde, og almindelige laptopskærme skal kunne arbejde i en kompakt visning uden at ændre den canonical 120-unit model.
 
 ---
 
@@ -557,41 +480,41 @@ Følgende skal kontrolleres:
 
 ---
 
-## 22. Godkendt udviklingsrækkefølge
+## 22. Aktuel udviklingsrækkefølge
 
-Følgende rækkefølge er godkendt som den anbefalede fortsættelse efter Clean 0.1.18:
+Versionsnumre er planlægningsmål og kan flyttes ved nødvendige hotfixes.
 
-### Clean 0.1.19
+### Clean 0.1.19 – sikkerhed og sporbarhed
+- automatisk programbackup før update;
+- synlig changelog;
+- obligatorisk ændringsbeskrivelse i sideversioner.
 
-- lås forskellen mellem Sektion og Kasse;
-- Sektion kun på root i målarkitekturen;
-- baggrundsfarve/gennemsigtig baggrund på relevante elementer;
-- brødtekstfarve;
-- separat overskriftsfarve;
-- færdiggør grundlæggende element-styling.
+### Clean 0.1.20 – elementstyling og billedlag
+- fælles hjørneradius;
+- tekstbaggrund, tekst-/overskriftsfarve og padding;
+- billedboks og billedindhold som uafhængige lag;
+- manuel billedgeometri.
 
-### Clean 0.1.20
+### Clean 0.1.21 – Responsive Designer
+- Desktop / Laptop / Mobil;
+- canonical breakpoint-geometri og arv;
+- responsive frontend;
+- foldbare Elementer/Inspector-paneler og laptop-fit.
 
-- Globalt design;
-- forbindelse mellem Clean Manager og Hangar18 Base Theme;
-- globale defaults for farver, typografi, sidebaggrund og bredde.
-
-### Clean 0.1.21
-
-- Header Designer;
-- Footer Designer;
-- samme grid-/LEGO-motor;
-- separat global versionering.
+### Clean 0.1.22 – hierarki og layout-QA
+- Sektion kun på root;
+- Kasse nesting;
+- drop-regler;
+- overlap-policy;
+- auto-grow/celle-split regressionstest.
 
 ### Derefter
-
-- flere indholdselementer;
-- specialelementer;
-- dynamiske moduler;
-- avanceret responsive controls;
-- eventuel fri overlap/layer-mode.
-
-Versionsnumrene er planlægningsmål og kan ændres, hvis en nødvendig fejlrettelse eller QA-version indsættes.
+- Globalt design og theme-shell;
+- Header/Footer Designer;
+- flere generelle elementer inkl. Tabel;
+- fælles dataarkitektur;
+- Køretøjer, Events og Galleri;
+- konvertering/paritetstest af eksisterende sider.
 
 ---
 
@@ -604,15 +527,17 @@ Før en ny Clean-version godkendes, skal følgende kontrolleres:
 3. Preview matcher frontend-renderingen.
 4. Labels påvirker ikke fysisk elementgeometri.
 5. Kasse/Sektion auto-grow følger børn korrekt.
-6. Border og Afstand X/Y er konsistente i editor og frontend.
-7. Tekstoverskrift og brødtekst vises korrekt.
+6. Border, radius og Afstand X/Y er konsistente i editor og frontend.
+7. Tekstoverskrift, brødtekst, farver og baggrund vises korrekt.
 8. Billedboksen kan være større end selve billedet.
-9. Billedets fit/placering matcher Inspector-valget.
+9. Manuel billedgeometri forbliver uafhængig af billedboksens størrelse.
 10. Restore original bevarer historikken.
 11. Restore som kopi ændrer ikke original-siden.
-12. Plugin self-update efterlader Manager aktivt.
-13. Desktop og mobil får ikke utilsigtet vandret overflow.
-14. Header, side og footer må ikke overlappe hinanden.
+12. Plugin self-update efterlader Manager aktivt og har verificeret programbackup.
+13. Desktop, Laptop og Mobil får ikke utilsigtet vandret overflow.
+14. Responsive inheritance/override overlever Save/Reload.
+15. Elementer/Inspector kan foldes uden at ændre canonical sidegeometri.
+16. Header, side og footer må ikke overlappe hinanden.
 
 ---
 
