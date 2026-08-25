@@ -39,16 +39,15 @@ final class Renderer
         if ($postId <= 0 || !metadata_exists('post', $postId, LayoutModel::META)) {
             return;
         }
-        echo <<<'CSS'
-<style id="h18-clean-frontend-css">
-.h18-clean-page,.h18-clean-front-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));align-items:start;width:100%;box-sizing:border-box;min-width:0}
-.h18-clean-front-node{box-sizing:border-box;min-width:0;position:relative}
-.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));align-items:start;min-width:0;box-sizing:border-box;height:auto!important}
-.h18-clean-front-text{overflow-wrap:anywhere}
-.h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box}
-.h18-clean-front-image img{display:block;width:100%;max-width:none;margin:0;box-sizing:border-box}
-</style>
-CSS;
+        $rowPx = LayoutModel::ROW_PX;
+        echo '<style id="h18-clean-frontend-css">';
+        echo '.h18-clean-page,.h18-clean-front-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;width:100%;box-sizing:border-box;min-width:0}';
+        echo '.h18-clean-front-node{box-sizing:border-box;min-width:0;position:relative}';
+        echo '.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;min-width:0;box-sizing:border-box;height:auto!important}';
+        echo '.h18-clean-front-text{overflow-wrap:anywhere}';
+        echo '.h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box;height:100%}';
+        echo '.h18-clean-front-image img{display:block;width:100%;max-width:none;margin:0;box-sizing:border-box}';
+        echo '</style>';
     }
 
     /** @param array<string,mixed> $model */
@@ -84,14 +83,14 @@ CSS;
         $g = isset($node['geometry']['desktop']) && is_array($node['geometry']['desktop']) ? $node['geometry']['desktop'] : ['x' => 0, 'y' => 0, 'w' => 120, 'h' => 0];
         $x = max(0, min(119, (int) ($g['x'] ?? 0)));
         $w = max(1, min(120 - $x, (int) ($g['w'] ?? 120)));
-        $y = (int) ($g['y'] ?? 0);
+        $y = max(0, (int) ($g['y'] ?? 0));
         $h = max(0, (int) ($g['h'] ?? 0));
         $style = 'grid-column:' . ($x + 1) . '/span ' . $w . ';';
-        if ($y !== 0) {
-            $style .= 'margin-top:' . ($y * LayoutModel::ROW_PX) . 'px;';
-        }
         if ($h > 0) {
-            $style .= 'height:' . ($h * LayoutModel::ROW_PX) . 'px;min-height:' . ($h * LayoutModel::ROW_PX) . 'px;';
+            $style .= 'grid-row:' . ($y + 1) . '/span ' . $h . ';min-height:' . ($h * LayoutModel::ROW_PX) . 'px;';
+        } elseif ($y !== 0) {
+            // Compatibility for pre-cell-split layouts where h=0 meant natural height.
+            $style .= 'margin-top:' . ($y * LayoutModel::ROW_PX) . 'px;';
         }
 
         $id = esc_attr((string) $node['id']);
@@ -110,11 +109,7 @@ CSS;
             $fit = (string) ($props['fit'] ?? 'cover');
             $fitCss = $fit === 'contain' ? 'contain' : ($fit === 'stretch' ? 'fill' : 'cover');
             $imageStyle = 'object-fit:' . $fitCss . ';object-position:' . (int) ($props['focalX'] ?? 50) . '% ' . (int) ($props['focalY'] ?? 50) . '%;';
-            if ($h > 0) {
-                $imageStyle .= 'height:100%;';
-            } else {
-                $imageStyle .= 'height:auto;';
-            }
+            $imageStyle .= $h > 0 ? 'height:100%;' : 'height:auto;';
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle) . '"><figure class="h18-clean-front-image"' . ($h > 0 ? ' style="height:100%"' : '') . '>' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
         }
 
