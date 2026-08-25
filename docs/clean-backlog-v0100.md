@@ -1,4 +1,4 @@
-# Hangar18 Manager Clean v0.1.0 – canonical clean backlog
+# Hangar18 Manager Clean v0.1.x – canonical clean backlog
 
 **Statusdato:** 25. august 2026  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
@@ -34,6 +34,7 @@ Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent su
 - Elementet kan trækkes ud til root igen.
 - Self/descendant-drop afvises for at forhindre cycles.
 - Re-parent ændrer modellen først og renderer derefter canvas fra modellen.
+- Fra v0.1.1 kan nye palette-elementer trækkes direkte til root, Sektion eller Kasse.
 
 ### CLEAN-IMAGE-005 — IMPLEMENTERET / MANUEL QA
 - Billede vælges via WordPress Media Library.
@@ -50,7 +51,7 @@ Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent su
 - Save/Restore bruger nonce og `edit_pages` capability.
 
 ### CLEAN-DIAG-007 — IMPLEMENTERET / MANUEL QA
-- Strukturelle klientevents: boot, add, delete, resize begin/commit, re-parent begin/commit, Undo/Redo, Inspector, image select, Save-intent og Restore-intent.
+- Strukturelle klientevents: boot, add, delete, resize begin/commit, re-parent begin/commit, palette drag/drop, Undo/Redo, Inspector, image select, Save-intent og Restore-intent.
 - Serverevents: Save begin/result/error og Restore begin/result/error.
 - Logs indeholder IDs/type/parent/order/geometry/image-fit, men ikke rå tekstindhold, credentials, nonce eller tokens.
 - Privat 256-bit read-only support-link via REST for den valgte side.
@@ -61,6 +62,14 @@ Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent su
 - Text, Image, Section og Container renderes rekursivt.
 - Fysisk width/height og image fit/focal følger modellen.
 - Sider uden clean-model røres ikke.
+
+### CLEAN-UPDATE-015 — IMPLEMENTERET / MANUEL QA
+- Fra v0.1.2 anvendes GitHub som update-kilde via `clean-update.json`.
+- WordPress' normale plugin-update-system viser nyere clean-versioner og bruger `Opdater nu`.
+- Hangar18 Designer har `Tjek GitHub-opdatering`, som rydder update-cache og laver et nyt check med det samme.
+- GitHub-manifestet peger på en versionslåst ZIP i `dist/`.
+- Update-pakken SHA-256-verificeres mod manifestet før WordPress får lov at installere den.
+- Plugin-headeren bruger `Update URI`, så clean-pluginet ikke kan kollidere med en eventuel WordPress.org-plugin med samme slug.
 
 ## Næste backlog
 
@@ -97,22 +106,24 @@ Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent su
 - Ingen gammel side overskrives automatisk.
 - Vehicle/Event/Gallery migreres først efter de generelle sider.
 
-## QA-gate for v0.1.0
+## QA-gate for clean v0.1.x
 
 1. Opret en tom WordPress-side og åbn Hangar18 Designer.
 2. Tilføj Sektion, Kasse, to Tekst-elementer og ét Billede.
-3. Resize alle elementtyper fra E/W/N/S og mindst to hjørner.
-4. Træk eksisterende Tekst ind i Kasse og ud til root igen.
-5. Træk Billede ind i Kasse.
-6. Test Cover, Contain og Stretch samt focal X/Y.
-7. Undo/Redo både resize, re-parent, image-fit og Inspectorændring.
-8. Gem som v1, reload editor og verificér identisk model/geometri.
-9. Lav ændringer og gem som v2/v3.
-10. Restore v1; resultatet skal blive en ny version og v3 skal stadig ligge i historikken.
-11. Åbn offentlig side og sammenlign Text/Image/Container-geometri med editor.
-12. Kopiér diagnose-link og verificér Save/Restore/re-parent/resize events uden rå tekst eller secrets.
-13. Side uden clean-model skal fortsat vises fra normal WordPress content.
+3. Træk mindst ét nyt palette-element direkte ind i Kasse uden først at oprette det på root.
+4. Resize alle elementtyper fra E/W/N/S og mindst to hjørner.
+5. Træk eksisterende Tekst ind i Kasse og ud til root igen.
+6. Træk Billede ind i Kasse.
+7. Test Cover, Contain og Stretch samt focal X/Y.
+8. Undo/Redo både resize, re-parent, palette-drop, image-fit og Inspectorændring.
+9. Gem som v1, reload editor og verificér identisk model/geometri.
+10. Lav ændringer og gem som v2/v3.
+11. Restore v1; resultatet skal blive en ny version og v3 skal stadig ligge i historikken.
+12. Åbn offentlig side og sammenlign Text/Image/Container-geometri med editor.
+13. Kopiér diagnose-link og verificér Save/Restore/re-parent/resize/palette events uden rå tekst eller secrets.
+14. Tryk `Tjek GitHub-opdatering`; v0.1.2 skal rapportere at den er aktuel. Når en nyere testversion publiceres, skal WordPress vise `Opdater nu`, hente GitHub-ZIP'en og bestå SHA-256-kontrollen.
+15. Side uden clean-model skal fortsat vises fra normal WordPress content.
 
 ## Definition of Done
 
-v0.1.0 må først markeres PASS efter QA-gaten på det nye rene subdomæne. Først derefter implementeres responsive overrides og senere migratoren til de gamle webpages.
+Clean v0.1.x må først markeres PASS efter QA-gaten på det nye rene subdomæne. Først derefter implementeres responsive overrides og senere migratoren til de gamle webpages.
