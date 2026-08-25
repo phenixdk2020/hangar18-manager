@@ -26,8 +26,7 @@ final class DiagnosticStore
         if ($postId <= 0) {
             return;
         }
-        $entries = get_post_meta($postId, self::META, true);
-        $entries = is_array($entries) ? array_values(array_filter($entries, 'is_array')) : [];
+        $entries = self::entries($postId);
         $entries[] = [
             'time' => gmdate('c'),
             'type' => sanitize_key($type),
@@ -38,6 +37,23 @@ final class DiagnosticStore
             $entries = array_slice($entries, -self::MAX_ENTRIES);
         }
         update_post_meta($postId, self::META, $entries);
+    }
+
+    /** @return array<int,array<string,mixed>> */
+    public static function entries(int $postId): array
+    {
+        if ($postId <= 0) {
+            return [];
+        }
+        $entries = get_post_meta($postId, self::META, true);
+        return is_array($entries) ? array_values(array_filter($entries, 'is_array')) : [];
+    }
+
+    public static function clear(int $postId): void
+    {
+        if ($postId > 0) {
+            delete_post_meta($postId, self::META);
+        }
     }
 
     /** @param array<string,mixed> $model @return array<string,mixed> */
@@ -113,8 +129,7 @@ final class DiagnosticStore
             return new \WP_REST_Response(['error' => 'not_found'], 404);
         }
         $tail = max(1, min(600, absint($request->get_param('tail')) ?: 300));
-        $entries = get_post_meta($postId, self::META, true);
-        $entries = is_array($entries) ? array_values(array_filter($entries, 'is_array')) : [];
+        $entries = self::entries($postId);
         $response = new \WP_REST_Response([
             'product' => 'Hangar18 Manager Clean diagnostics',
             'schemaVersion' => 1,
