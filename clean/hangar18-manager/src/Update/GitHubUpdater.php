@@ -12,16 +12,25 @@ final class GitHubUpdater
     private const CHECK_NONCE = 'h18_clean_check_update';
     private const INSTALL_ACTION = 'h18_clean_install_update';
     private const INSTALL_NONCE = 'h18_clean_install_update';
+    private const SAVE_ACTION = 'h18_clean_save';
+    private const SAVE_NONCE = 'h18_clean_save';
     private const SLUG = 'hangar18-manager';
     private const PLUGIN_FILE = 'hangar18-manager/hangar18-manager.php';
+    private const BACKUP_OPTION = 'h18_clean_program_backups_v1';
+    private const LAST_BACKUP_TRANSIENT_PREFIX = 'h18_clean_last_program_backup_';
+    private const MAX_BACKUPS = 8;
+
+    private static bool $backupCreatedThisRequest = false;
 
     public static function register(): void
     {
         add_filter('pre_set_site_transient_update_plugins', [self::class, 'injectUpdate']);
         add_filter('plugins_api', [self::class, 'pluginInfo'], 20, 3);
         add_filter('upgrader_pre_download', [self::class, 'verifyDownload'], 20, 4);
+        add_filter('upgrader_pre_install', [self::class, 'backupBeforeInstall'], 20, 2);
         add_action('admin_post_' . self::CHECK_ACTION, [self::class, 'manualCheck']);
         add_action('admin_post_' . self::INSTALL_ACTION, [self::class, 'installNow']);
+        add_action('admin_post_' . self::SAVE_ACTION, [self::class, 'requireChangeNote'], 1);
         add_action('upgrader_process_complete', [self::class, 'clearCache'], 10, 2);
         add_action('admin_notices', [self::class, 'adminNotice']);
     }
@@ -113,6 +122,62 @@ final class GitHubUpdater
         return $file;
     }
 
+    public static function backupBeforeInstall(mixed $response, array $hookExtra = []): mixed
+    {
+        if (is_wp_error($response) || self::$backupCreatedThisRequest) {
+            return $response;
+        }
+        $plugin = (string) ($hookExtra['plugin'] ?? '');
+        $plugins = is_array($hookExtra['plugins'] ?? null) ? $hookExtra['plugins'] : [];
+        if ($plugin !== self::PLUGIN_FILE && !in_array(self::PLUGIN_FILE, $plugins, true)) {
+            return $response;
+        }
+
+        $manifest = self::manifest();
+        $targetVersion = is_array($manifest) ? (string) ($manifest['version'] ?? '') : '';
+        $backup = self::createProgramBackup($targetVersion);
+        if (is_wp_error($backup)) {
+            return new \WP_Error(
+                'h18_clean_program_backup_failed',
+                'Hangar18-opdateringen blev stoppet, fordi programbackup ikke kunne oprettes: ' . $backup->get_error_message()
+            );
+        }
+
+        self::$backupCreatedThisRequest = true;
+        $userId = get_current_user_id();
+        if ($userId > 0) {
+            set_transient(self::LAST_BACKUP_TRANSIENT_PREFIX . $userId, $backup, HOUR_IN_SECONDS);
+        }
+        return $response;
+    }
+
+    public static function requireChangeNote(): void
+    {
+        if (!current_user_can('edit_pages')) {
+            return;
+        }
+        $nonce = isset($_POST['_wpnonce']) ? (string) wp_unslash($_POST['_wpnonce']) : '';
+        if ($nonce === '' || !wp_verify_nonce($nonce, self::SAVE_NONCE)) {
+            return;
+        }
+        $note = isset($_POST['change_note']) ? trim(sanitize_text_field((string) wp_unslash($_POST['change_note']))) : '';
+        if ($note !== '') {
+            return;
+        }
+
+        $postId = absint($_POST['post_id'] ?? 0);
+        $url = admin_url('admin.php?page=h18-clean-editor');
+        if ($postId > 0) {
+            $url = add_query_arg('post', $postId, $url);
+        }
+        $url = add_query_arg([
+            'h18_clean_status' => 'error',
+            'h18_clean_message' => 'Skriv en kort ændringsbeskrivelse før siden gemmes som en ny version.',
+        ], $url);
+        wp_safe_redirect($url);
+        exit;
+    }
+
     public static function manualCheck(): void
     {
         if (!current_user_can('update_plugins')) {
@@ -177,11 +242,25 @@ final class GitHubUpdater
         if (!$status['ok'] || !$status['available']) {
             return '';
         }
-        return '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-clean-update-install">'
+
+        $manifest = self::manifest();
+        $changelog = '';
+        if (is_array($manifest) && is_array($manifest['sections'] ?? null)) {
+            $changelog = (string) ($manifest['sections']['changelog'] ?? '');
+        }
+
+        $html = '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-clean-update-install">'
             . '<input type="hidden" name="action" value="' . esc_attr(self::INSTALL_ACTION) . '">'
             . '<input type="hidden" name="_wpnonce" value="' . esc_attr(wp_create_nonce(self::INSTALL_NONCE)) . '">'
-            . '<button type="submit" class="button button-primary" onclick="return confirm(\'Installer Hangar18 Manager Clean ' . esc_attr($status['latest']) . ' nu?\');">Opdater nu til ' . esc_html($status['latest']) . '</button>'
+            . '<button type="submit" class="button button-primary" onclick="return confirm(\'Der tages automatisk programbackup før installationen. Installer Hangar18 Manager Clean ' . esc_attr($status['latest']) . ' nu?\');">Opdater nu til ' . esc_html($status['latest']) . '</button>'
             . '</form>';
+        $html .= '<div class="h18-clean-update-details">'
+            . '<p><strong>Automatisk sikkerhed:</strong> Før WordPress udskifter pluginfilerne, gemmes en ZIP-backup af den installerede Hangar18 Manager Clean-version. Opdateringen afbrydes, hvis backupen ikke kan oprettes.</p>';
+        if ($changelog !== '') {
+            $html .= '<details open><summary><strong>Ændringer i version ' . esc_html($status['latest']) . '</strong></summary><div class="h18-clean-update-changelog">' . wp_kses_post($changelog) . '</div></details>';
+        }
+        $html .= '</div>';
+        return $html;
     }
 
     public static function installNow(): void
@@ -277,27 +356,38 @@ final class GitHubUpdater
         if (!current_user_can('update_plugins')) {
             return;
         }
-        $status = isset($_GET['h18_clean_update_check']) ? sanitize_key((string) wp_unslash($_GET['h18_clean_update_check'])) : '';
-        if ($status === '') {
-            return;
-        }
-        $version = isset($_GET['h18_clean_update_version']) ? sanitize_text_field((string) wp_unslash($_GET['h18_clean_update_version'])) : '';
 
+        $version = isset($_GET['h18_clean_update_version']) ? sanitize_text_field((string) wp_unslash($_GET['h18_clean_update_version'])) : '';
         $install = isset($_GET['h18_clean_update_install']) ? sanitize_key((string) wp_unslash($_GET['h18_clean_update_install'])) : '';
         if ($install === 'success') {
             echo '<div class="notice notice-success is-dismissible"><p><strong>Hangar18 Manager Clean blev opdateret til ' . esc_html($version !== '' ? $version : H18_CLEAN_VERSION) . '.</strong></p></div>';
-            return;
-        }
-        if ($install === 'error') {
-            echo '<div class="notice notice-error is-dismissible"><p>Opdateringen kunne ikke installeres. Den eksisterende plugin-version er bevaret.</p></div>';
-            return;
-        }
-        if ($install === 'current') {
+        } elseif ($install === 'error') {
+            echo '<div class="notice notice-error is-dismissible"><p>Opdateringen kunne ikke installeres. Programbackupen og den eksisterende plugin-version er bevaret.</p></div>';
+        } elseif ($install === 'current') {
             echo '<div class="notice notice-success is-dismissible"><p>Hangar18 Manager Clean er allerede opdateret.</p></div>';
-            return;
+        } elseif ($install === 'plugin_invalid') {
+            echo '<div class="notice notice-error is-dismissible"><p>Den installerede pluginpakke kunne ikke valideres efter opdateringen. Programbackupen er bevaret.</p></div>';
+        } elseif ($install === 'activation_error') {
+            echo '<div class="notice notice-error is-dismissible"><p>Pluginet kunne ikke bekræftes aktivt efter opdateringen. Programbackupen er bevaret.</p></div>';
         }
+
+        $userId = get_current_user_id();
+        if ($userId > 0) {
+            $backup = get_transient(self::LAST_BACKUP_TRANSIENT_PREFIX . $userId);
+            if (is_array($backup)) {
+                delete_transient(self::LAST_BACKUP_TRANSIENT_PREFIX . $userId);
+                $size = isset($backup['size']) ? size_format((int) $backup['size']) : '';
+                echo '<div class="notice notice-info is-dismissible"><p><strong>Programbackup oprettet før opdatering:</strong> ' . esc_html((string) ($backup['file'] ?? 'backup'));
+                if ($size !== '') {
+                    echo ' · ' . esc_html($size);
+                }
+                echo ' · SHA-256 <code>' . esc_html(substr((string) ($backup['sha256'] ?? ''), 0, 16)) . '…</code></p></div>';
+            }
+        }
+
+        $status = isset($_GET['h18_clean_update_check']) ? sanitize_key((string) wp_unslash($_GET['h18_clean_update_check'])) : '';
         if ($status === 'available' && $version !== '') {
-            echo '<div class="notice notice-info is-dismissible"><p><strong>Hangar18 Manager Clean ' . esc_html($version) . ' er tilgængelig.</strong> Den kan installeres direkte under <a href="' . esc_url(admin_url('admin.php?page=h18-clean-updates')) . '">Hangar18 Manager → Opdateringer</a>.</p></div>';
+            echo '<div class="notice notice-info is-dismissible"><p><strong>Hangar18 Manager Clean ' . esc_html($version) . ' er tilgængelig.</strong> Ændringerne vises under <a href="' . esc_url(admin_url('admin.php?page=h18-clean-updates')) . '">Hangar18 Manager → Opdateringer</a>.</p></div>';
         } elseif ($status === 'current') {
             echo '<div class="notice notice-success is-dismissible"><p>Hangar18 Manager Clean ' . esc_html(H18_CLEAN_VERSION) . ' er den nyeste GitHub-version.</p></div>';
         } elseif ($status !== '') {
@@ -356,6 +446,119 @@ final class GitHubUpdater
             return false;
         }
         return str_starts_with($package, 'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/');
+    }
+
+    /** @return array<string,mixed>|\WP_Error */
+    private static function createProgramBackup(string $targetVersion): array|\WP_Error
+    {
+        $source = untrailingslashit(H18_CLEAN_DIR);
+        if (!is_dir($source)) {
+            return new \WP_Error('h18_clean_backup_source_missing', 'Den installerede pluginmappe blev ikke fundet.');
+        }
+
+        $directory = self::backupDirectory();
+        if (!is_dir($directory) && !wp_mkdir_p($directory)) {
+            return new \WP_Error('h18_clean_backup_dir_failed', 'Backupmappen kunne ikke oprettes i wp-content.');
+        }
+        self::protectBackupDirectory($directory);
+
+        $safeCurrent = preg_replace('/[^0-9A-Za-z._-]/', '-', H18_CLEAN_VERSION) ?: 'unknown';
+        $safeTarget = preg_replace('/[^0-9A-Za-z._-]/', '-', $targetVersion) ?: 'unknown';
+        $filename = 'hangar18-manager-clean-v' . $safeCurrent . '-before-v' . $safeTarget . '-' . gmdate('Ymd-His') . '.zip';
+        $path = trailingslashit($directory) . $filename;
+
+        if (class_exists('ZipArchive')) {
+            $zip = new \ZipArchive();
+            $opened = $zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+            if ($opened !== true) {
+                return new \WP_Error('h18_clean_backup_zip_open', 'ZIP-arkivet kunne ikke oprettes.');
+            }
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+            foreach ($iterator as $fileInfo) {
+                if (!$fileInfo instanceof \SplFileInfo || !$fileInfo->isFile() || $fileInfo->isLink()) {
+                    continue;
+                }
+                $fullPath = $fileInfo->getPathname();
+                $relative = ltrim(substr($fullPath, strlen($source)), '/\\');
+                if ($relative === '') {
+                    continue;
+                }
+                if (!$zip->addFile($fullPath, 'hangar18-manager/' . str_replace('\\', '/', $relative))) {
+                    $zip->close();
+                    @unlink($path);
+                    return new \WP_Error('h18_clean_backup_zip_add', 'En pluginfil kunne ikke tilføjes til programbackupen.');
+                }
+            }
+            if (!$zip->close()) {
+                @unlink($path);
+                return new \WP_Error('h18_clean_backup_zip_close', 'ZIP-arkivet kunne ikke afsluttes.');
+            }
+        } else {
+            require_once ABSPATH . WPINC . '/class-pclzip.php';
+            $archive = new \PclZip($path);
+            $result = $archive->create($source, PCLZIP_OPT_REMOVE_PATH, dirname($source));
+            if ($result === 0) {
+                @unlink($path);
+                return new \WP_Error('h18_clean_backup_pclzip', 'PclZip kunne ikke oprette programbackupen: ' . $archive->errorInfo(true));
+            }
+        }
+
+        if (!is_file($path) || (int) filesize($path) <= 0) {
+            @unlink($path);
+            return new \WP_Error('h18_clean_backup_empty', 'Programbackupen blev tom eller mangler efter oprettelsen.');
+        }
+
+        $sha256 = strtolower((string) hash_file('sha256', $path));
+        if (!preg_match('/^[a-f0-9]{64}$/', $sha256)) {
+            @unlink($path);
+            return new \WP_Error('h18_clean_backup_hash', 'Programbackupens SHA-256 kunne ikke beregnes.');
+        }
+
+        $entry = [
+            'id' => substr(hash('sha256', $filename . '|' . $sha256), 0, 20),
+            'file' => $filename,
+            'version' => H18_CLEAN_VERSION,
+            'targetVersion' => $targetVersion,
+            'createdUtc' => gmdate('c'),
+            'sha256' => $sha256,
+            'size' => (int) filesize($path),
+        ];
+
+        $history = get_option(self::BACKUP_OPTION, []);
+        $history = is_array($history) ? array_values(array_filter($history, 'is_array')) : [];
+        $history[] = $entry;
+        while (count($history) > self::MAX_BACKUPS) {
+            $old = array_shift($history);
+            if (is_array($old)) {
+                $oldFile = basename((string) ($old['file'] ?? ''));
+                if ($oldFile !== '') {
+                    @unlink(trailingslashit($directory) . $oldFile);
+                }
+            }
+        }
+        update_option(self::BACKUP_OPTION, $history, false);
+        return $entry;
+    }
+
+    private static function backupDirectory(): string
+    {
+        $secret = substr(hash_hmac('sha256', 'hangar18-clean-program-backups', wp_salt('auth')), 0, 16);
+        return trailingslashit(WP_CONTENT_DIR) . 'h18-clean-program-backups-' . $secret;
+    }
+
+    private static function protectBackupDirectory(string $directory): void
+    {
+        $index = trailingslashit($directory) . 'index.php';
+        if (!file_exists($index)) {
+            @file_put_contents($index, "<?php\nhttp_response_code(404);\nexit;\n");
+        }
+        $htaccess = trailingslashit($directory) . '.htaccess';
+        if (!file_exists($htaccess)) {
+            @file_put_contents($htaccess, "Require all denied\nDeny from all\n");
+        }
     }
 
     private static function updateObject(array $manifest): \stdClass
