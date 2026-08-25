@@ -1,4 +1,4 @@
-v0.1.18
-triggered_utc=2026-08-25T17:55:00Z
-reason=Version restore preview/copy plus independent image-box controls.
-nonce=19-manual
+v0.1.19
+triggered_utc=2026-08-25T18:12:00Z
+reason=Pre-update program backup, visible changelog and mandatory page change notes.
+nonce=20-manual
