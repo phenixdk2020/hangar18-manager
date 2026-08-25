@@ -1,4 +1,4 @@
-v0.1.0
-triggered_utc=2026-08-25T06:52:00Z
-reason=Build standalone clean Hangar18 Manager without legacy editor runtime.
-nonce=1
+v0.1.4
+triggered_utc=2026-08-25T11:34:00Z
+reason=Release reusable GitHub-updatable Clean Manager with Base Theme compatibility marker and spatial drag/drop.
+nonce=2
