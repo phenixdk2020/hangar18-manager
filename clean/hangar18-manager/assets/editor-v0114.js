@@ -55,6 +55,9 @@
         var model = document.getElementById('h18-clean-model-json');
         if (!button || !model) { return; }
         button.addEventListener('click', function () {
+            if (window.H18CleanV0120 && typeof window.H18CleanV0120.sync === 'function') {
+                window.H18CleanV0120.sync();
+            }
             var form = document.createElement('form');
             form.method = 'post';
             form.action = button.getAttribute('data-url') || '';
