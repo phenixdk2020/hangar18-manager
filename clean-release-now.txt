@@ -1,4 +1,4 @@
-v0.1.16
-triggered_utc=2026-08-25T17:20:00Z
-reason=Robust self-update activation-state preservation.
+v0.1.17
+triggered_utc=2026-08-25T17:30:00Z
+reason=Optional heading in Text element with H2-H6.
 nonce=18

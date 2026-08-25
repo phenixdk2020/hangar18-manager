@@ -53,6 +53,7 @@ final class Renderer
         echo '.h18-clean-front-node{box-sizing:border-box;min-width:0;position:relative}';
         echo '.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;min-width:0;box-sizing:border-box;height:auto!important}';
         echo '.h18-clean-front-text{overflow-wrap:anywhere}';
+        echo '.h18-clean-front-text-heading{margin:0 0 8px;line-height:1.2}';
         echo '.h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box;height:100%}';
         echo '.h18-clean-front-image img{display:block;width:100%;max-width:none;margin:0;box-sizing:border-box}';
         echo '</style>';
@@ -146,7 +147,12 @@ final class Renderer
         $spacingStyle = self::spacingStyle($props);
 
         if ($type === 'text') {
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($style . $borderStyle . $spacingStyle . 'text-align:' . (string) ($props['align'] ?? 'left') . ';') . '">' . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
+            $heading = trim((string) ($props['heading'] ?? ''));
+            $headingLevel = in_array((string) ($props['headingLevel'] ?? 'h2'), ['h2', 'h3', 'h4', 'h5', 'h6'], true) ? (string) $props['headingLevel'] : 'h2';
+            $headingHtml = $heading !== ''
+                ? '<' . $headingLevel . ' class="h18-clean-front-text-heading">' . esc_html($heading) . '</' . $headingLevel . '>'
+                : '';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($style . $borderStyle . $spacingStyle . 'text-align:' . (string) ($props['align'] ?? 'left') . ';') . '">' . $headingHtml . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
         }
         if ($type === 'image') {
             $url = esc_url((string) ($props['url'] ?? ''));

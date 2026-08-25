@@ -207,6 +207,8 @@ final class LayoutModel
         $border = self::borderProps($raw);
         if ($type === 'text') {
             return array_merge([
+                'heading' => sanitize_text_field((string) ($raw['heading'] ?? '')),
+                'headingLevel' => in_array((string) ($raw['headingLevel'] ?? 'h2'), ['h2', 'h3', 'h4', 'h5', 'h6'], true) ? (string) $raw['headingLevel'] : 'h2',
                 'text' => wp_kses_post((string) ($raw['text'] ?? 'Ny tekst')),
                 'align' => in_array((string) ($raw['align'] ?? 'left'), ['left', 'center', 'right'], true) ? (string) $raw['align'] : 'left',
             ], $border);

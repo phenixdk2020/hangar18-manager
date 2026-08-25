@@ -55,6 +55,8 @@
         const common = commonProps(raw);
         if (type === 'text') {
             return Object.assign(common, {
+                heading: String(raw.heading || ''),
+                headingLevel: ['h2', 'h3', 'h4', 'h5', 'h6'].includes(String(raw.headingLevel || '').toLowerCase()) ? String(raw.headingLevel).toLowerCase() : 'h2',
                 text: String(raw.text || 'Ny tekst'),
                 align: ['left', 'center', 'right'].includes(raw.align) ? raw.align : 'left'
             });
@@ -703,7 +705,18 @@
         if (node.type === 'text') {
             wrap.classList.add('h18-clean-node-preview--text');
             wrap.style.textAlign = node.props.align || 'left';
-            wrap.textContent = String(node.props.text || 'Ny tekst').replace(/<[^>]+>/g, '').slice(0, 220) || 'Tekst';
+            const heading = String(node.props.heading || '').trim();
+            if (heading) {
+                const headingLevel = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(node.props.headingLevel) ? node.props.headingLevel : 'h2';
+                const title = document.createElement(headingLevel);
+                title.className = 'h18-clean-text-heading';
+                title.textContent = heading;
+                wrap.appendChild(title);
+            }
+            const body = document.createElement('div');
+            body.className = 'h18-clean-text-body';
+            body.textContent = String(node.props.text || 'Ny tekst').replace(/<[^>]+>/g, '').slice(0, 220) || 'Tekst';
+            wrap.appendChild(body);
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
             if (node.props.url) {
@@ -1013,6 +1026,8 @@
         let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
         html += '<div class="h18-clean-field-grid"><label>X / 120<input data-field="gx" type="number" min="0" max="119" value="' + g.x + '"></label><label>Bredde / 120<input data-field="gw" type="number" min="1" max="120" value="' + g.w + '"></label><label>Y · 8px<input data-field="gy" type="number" value="' + g.y + '"></label><label>Højde · 8px<input data-field="gh" type="number" min="0" value="' + g.h + '"></label></div>';
         if (node.type === 'text') {
+            html += '<label>Overskrift <span class="description">(valgfri)</span><input data-field="heading" type="text" value="' + escapeAttr(node.props.heading || '') + '"></label>';
+            html += '<label>Overskrifttype<select data-field="headingLevel"><option value="h2"' + (node.props.headingLevel === 'h2' ? ' selected' : '') + '>H2</option><option value="h3"' + (node.props.headingLevel === 'h3' ? ' selected' : '') + '>H3</option><option value="h4"' + (node.props.headingLevel === 'h4' ? ' selected' : '') + '>H4</option><option value="h5"' + (node.props.headingLevel === 'h5' ? ' selected' : '') + '>H5</option><option value="h6"' + (node.props.headingLevel === 'h6' ? ' selected' : '') + '>H6</option></select></label>';
             html += '<label>Tekst<textarea data-field="text" rows="8">' + escapeHtml(node.props.text || '') + '</textarea></label>';
             html += '<label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label>';
         } else if (node.type === 'image') {
@@ -1046,6 +1061,8 @@
                     current.geometry.desktop.h = clamp(parseInt(control.value || 0, 10) || 0, 0, 4000);
                     if (PARENT_TYPES.includes(current.type)) { current.props.minHeightRows = current.geometry.desktop.h; }
                 }
+                else if (field === 'heading') { current.props.heading = String(control.value || ''); }
+                else if (field === 'headingLevel') { current.props.headingLevel = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(control.value) ? control.value : 'h2'; }
                 else if (field === 'text') { current.props.text = String(control.value || ''); }
                 else if (field === 'align') { current.props.align = ['left', 'center', 'right'].includes(control.value) ? control.value : 'left'; }
                 else if (field === 'fit') { current.props.fit = ['cover', 'contain', 'stretch'].includes(control.value) ? control.value : 'cover'; }
