@@ -26,3 +26,8 @@ Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 * Billeder følger elementkassen med Cover, Contain eller Stretch og focal X/Y.
 * Save som versionshistorik og Restore som ny sikker version.
 * Strukturelle diagnostics med privat read-only support-link.
+
+== 0.1.3 ==
+* Drop placeres fysisk venstre/højre efter pointer og nabo.
+* Eksisterende element kan omplaceres inden for samme Kasse.
+* Root/surface drop-handlers bindes kun én gang og duplikerer ikke elementer efter Undo/Redo.
