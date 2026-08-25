@@ -142,6 +142,10 @@ final class LayoutModel
                 'parentId' => $node['parentId'],
                 'order' => $node['order'],
                 'geometry' => $node['geometry'],
+                'border' => [
+                    'width' => (int) ($node['props']['borderWidth'] ?? 0),
+                    'color' => (string) ($node['props']['borderColor'] ?? '#000000'),
+                ],
             ];
             if ($node['type'] === 'image') {
                 $row['image'] = [
@@ -216,34 +220,44 @@ final class LayoutModel
     /** @param array<string,mixed> $raw @return array<string,mixed> */
     private static function props(string $type, array $raw): array
     {
+        $border = self::borderProps($raw);
         if ($type === 'text') {
-            return [
+            return array_merge([
                 'text' => wp_kses_post((string) ($raw['text'] ?? 'Ny tekst')),
                 'align' => in_array((string) ($raw['align'] ?? 'left'), ['left', 'center', 'right'], true) ? (string) $raw['align'] : 'left',
-            ];
+            ], $border);
         }
         if ($type === 'image') {
             $fit = strtolower((string) ($raw['fit'] ?? 'cover'));
             if (!in_array($fit, ['cover', 'contain', 'stretch'], true)) {
                 $fit = 'cover';
             }
-            return [
+            return array_merge([
                 'mediaId' => absint($raw['mediaId'] ?? 0),
                 'url' => esc_url_raw((string) ($raw['url'] ?? '')),
                 'alt' => sanitize_text_field((string) ($raw['alt'] ?? '')),
                 'fit' => $fit,
                 'focalX' => self::clamp($raw['focalX'] ?? 50, 0, 100, 50),
                 'focalY' => self::clamp($raw['focalY'] ?? 50, 0, 100, 50),
-            ];
+            ], $border);
         }
         if (in_array($type, ['section', 'container'], true)) {
-            return [
+            return array_merge([
                 'background' => sanitize_hex_color((string) ($raw['background'] ?? '')) ?: '',
                 'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
                 'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
-            ];
+            ], $border);
         }
-        return [];
+        return $border;
+    }
+
+    /** @param array<string,mixed> $raw @return array<string,mixed> */
+    private static function borderProps(array $raw): array
+    {
+        return [
+            'borderWidth' => self::clamp($raw['borderWidth'] ?? 0, 0, 20, 0),
+            'borderColor' => sanitize_hex_color((string) ($raw['borderColor'] ?? '#000000')) ?: '#000000',
+        ];
     }
 
     /** @param mixed $value */
