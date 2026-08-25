@@ -1,4 +1,4 @@
 v0.1.4
-triggered_utc=2026-08-25T11:39:00Z
-reason=Retrigger reusable GitHub-updatable Clean Manager release after race-safe workflow fix.
-nonce=3
+triggered_utc=2026-08-25T11:41:00Z
+reason=Final clean v0.1.4 release after disabling legacy clean-test release workflow.
+nonce=4
