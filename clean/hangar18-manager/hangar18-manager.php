@@ -4,7 +4,7 @@
  * Plugin URI: https://hangar18.dk/
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.
- * Version: 0.1.8
+ * Version: 0.1.9
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.8');
+define('H18_CLEAN_VERSION', '0.1.9');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -42,24 +42,28 @@ if (!class_exists('Hangar18_Manager', false)) {
 require_once H18_CLEAN_DIR . 'src/Model/LayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Diagnostics/DiagnosticStore.php';
 require_once H18_CLEAN_DIR . 'src/Admin/EditorController.php';
+require_once H18_CLEAN_DIR . 'src/Admin/AdminController.php';
+require_once H18_CLEAN_DIR . 'src/Admin/AdminMenuBridge.php';
 require_once H18_CLEAN_DIR . 'src/Frontend/Renderer.php';
 require_once H18_CLEAN_DIR . 'src/Update/GitHubUpdater.php';
 
 add_action('plugins_loaded', static function (): void {
     \Hangar18\Clean\Diagnostics\DiagnosticStore::register();
     \Hangar18\Clean\Admin\EditorController::register();
+    \Hangar18\Clean\Admin\AdminController::register();
+    \Hangar18\Clean\Admin\AdminMenuBridge::register();
     \Hangar18\Clean\Frontend\Renderer::register();
     \Hangar18\Clean\Update\GitHubUpdater::register();
 });
 
 add_action('admin_enqueue_scripts', static function (string $hook): void {
-    if ($hook !== 'toplevel_page_h18-clean-editor' || !current_user_can('edit_pages')) {
+    if (strpos($hook, 'h18-clean-editor') === false || !current_user_can('edit_pages')) {
         return;
     }
 
     /*
-     * v0.1.8 replaces only the clean editor client runtime. The server model,
-     * Save/Restore, version history and diagnostics contracts remain unchanged.
+     * 0.1.9 keeps the 0.1.8 cell-split editor runtime, now nested below the
+     * Clean Manager admin. Save/Restore and diagnostics contracts are unchanged.
      */
     wp_dequeue_script('h18-clean-editor');
 
