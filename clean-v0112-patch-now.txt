@@ -1,0 +1,4 @@
+v0.1.12
+triggered_utc=2026-08-25T16:41:00Z
+reason=Wrapper overlap diagnostics, Danish labels and selection clarity.
+nonce=12
