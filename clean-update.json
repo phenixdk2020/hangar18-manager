@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.10.zip",
-  "sha256": "0cc4ddd9f5dc6e2cb8ca97f217e47f620788c8ba14659b8dd70749ab5af0f7b1",
-  "source_commit": "526737dccc74b5ce9b299c8f867d7f4123b115cf",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.11.zip",
+  "sha256": "87d9998da38414c7dc8b16dbc673cd4c0f133fb2d1ca76158786698e40c2b21d",
+  "source_commit": "f748e67a0f37da55a6d0b3dc36c288101166ad9a",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.10</h4><ul><li>Naturlige h=0-elementer materialiseres til faktiske 8-px grid-rækker, så visuel højde og canonical geometri matcher.</li><li>Kasse/Sektion auto-grow beregnes rekursivt fra børn; manuelt valgt højde bevares som minimum og kassen kan krympe tilbage til minimum.</li><li>Automatiske h=0-kollisioner heales, mens manuelt overlap foreløbig stadig er muligt og markeres tydeligt med OVERLAP-advarsel.</li><li>Frontend har kompatibilitetsfallback for ældre h=0-layouts.</li></ul>"
+    "changelog": "<h4>0.1.11</h4><ul><li>Border er nu native Clean-layoutdata på alle elementer med tykkelse, farve og standard 0 px.</li><li>Afstand X og Afstand Y kan sættes pr. element (standard 0) og renderes ens i editor/frontend.</li><li>Afstand Y indgår i canonical højde og container auto-grow.</li><li>Opdateringer-siden kan nu både tjekke og installere en ny GitHub-version direkte uden at åbne Plugins.</li><li>Direkte installation bruger WordPress Plugin_Upgrader og bevarer SHA-256-verifikation af pakken.</li></ul>"
   }
 }
