@@ -1,4 +1,4 @@
-v0.1.7
-triggered_utc=2026-08-25T13:05:00Z
-reason=Four-way row/column drop zones with parent inside routing, automatic row redistribution and physical labels outside geometry.
-nonce=8
+v0.1.8
+triggered_utc=2026-08-25T13:26:00Z
+reason=Cell-split grid: local horizontal/vertical cell division with sibling row-span preservation and canonical grid-row rendering.
+nonce=9
