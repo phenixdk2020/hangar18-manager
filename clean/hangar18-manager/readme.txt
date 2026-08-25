@@ -2,8 +2,14 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.11
+Version: 0.1.12
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.12 ==
+* Blå markering betyder valgt/aktivt element; overlap-advarsel er en separat rød diagnostisk markering.
+* Kasse og Sektion er layout-wrappers og tæller ikke selv som OVERLAP.
+* Editorlabels vises på dansk som KASSE, SEKTION, TEKST og BILLEDE; canonical type keys ændres ikke.
+* Elementlabel og drag-håndtag er fortsat editor-chrome og tæller aldrig med i fysisk x/y/w/h eller containerens auto-grow.
 
 == 0.1.11 ==
 * Border er nu en native Clean-egenskab på Tekst, Billede, Kasse og Sektion: tykkelse 0-20 px, farve og standard 0 px.
