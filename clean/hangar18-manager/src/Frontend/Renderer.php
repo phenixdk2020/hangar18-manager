@@ -165,6 +165,7 @@ final class Renderer
                 . 'background:' . $background . ';padding:' . $padding . 'px;color:' . $textColor . ';text-align:' . (string) ($props['align'] ?? 'left') . ';';
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '">' . $headingHtml . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
         }
+
         if ($type === 'image') {
             $url = esc_url((string) ($props['url'] ?? ''));
             if ($url === '' && !empty($props['mediaId'])) {
@@ -182,13 +183,14 @@ final class Renderer
             $posY = ['top' => '0%', 'center' => '50%', 'bottom' => '100%'][$alignY];
             $background = !empty($props['boxTransparent']) ? 'transparent' : (sanitize_hex_color((string) ($props['boxBackground'] ?? '#ffffff')) ?: '#ffffff');
             $figureStyle = 'height:100%;background:' . $background . ';border-radius:inherit;overflow:hidden;';
+
             if ($fit === 'manual') {
-                $manualX = max(-300, min(300, (int) ($props['manualX'] ?? 0)));
-                $manualY = max(-300, min(300, (int) ($props['manualY'] ?? 0)));
-                $manualW = max(1, min(600, (int) ($props['manualW'] ?? 100)));
-                $manualH = max(1, min(600, (int) ($props['manualH'] ?? 100)));
+                $manualX = max(-4000, min(4000, (int) ($props['manualX'] ?? 0)));
+                $manualY = max(-4000, min(4000, (int) ($props['manualY'] ?? 0)));
+                $manualW = max(1, min(4000, (int) ($props['manualW'] ?? 320)));
+                $manualH = max(1, min(4000, (int) ($props['manualH'] ?? 240)));
                 $figureStyle .= 'position:relative;display:block;';
-                $imageStyle = 'position:absolute;left:' . $manualX . '%;top:' . $manualY . '%;width:' . $manualW . '%;height:' . $manualH . '%;max-width:none;max-height:none;object-fit:fill;object-position:50% 50%;';
+                $imageStyle = 'position:absolute;left:' . $manualX . 'px;top:' . $manualY . 'px;width:' . $manualW . 'px;height:' . $manualH . 'px;max-width:none;max-height:none;object-fit:fill;object-position:50% 50%;';
             } else {
                 $figureStyle .= 'display:flex;justify-content:' . $justify . ';align-items:' . $alignItems . ';';
                 if ($fit === 'original') {
@@ -201,6 +203,7 @@ final class Renderer
                     $imageStyle = 'display:block;width:100%;height:100%;max-width:none;max-height:none;object-fit:' . $fitCss . ';object-position:' . $objectPosition . ';';
                 }
             }
+
             $outerStyle = $style . $borderStyle . $spacingStyle . $radiusStyle;
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($outerStyle) . '"><figure class="h18-clean-front-image" style="' . esc_attr($figureStyle) . '">' . ($url !== '' ? '<img src="' . $url . '" alt="' . esc_attr((string) ($props['alt'] ?? '')) . '" style="' . esc_attr($imageStyle) . '">' : '') . '</figure></div>';
         }
@@ -251,7 +254,7 @@ final class Renderer
             } elseif ($type === 'image') {
                 $childHeight = 10 * LayoutModel::ROW_PX;
             } elseif ($type === 'text') {
-                $childHeight = 6 * LayoutModel::ROW_PX;
+                $childHeight = 10 * LayoutModel::ROW_PX;
             } else {
                 $childHeight = 8 * LayoutModel::ROW_PX;
             }
