@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.5
+Version: 0.1.6
 Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+
+== 0.1.6 ==
+* Elementnavn og drag-håndtag er editor-overlay og tæller ikke med i elementets fysiske x/y/w/h.
+* Alle elementer kan få ramme med valgfri farve og tykkelse 0-20 px. Standard er 0 px.
+* Sektioner og Kasser auto-grow synkroniseres mod deres faktiske børneindhold.
+* Frontend bruger samme minimumsprincip for containerhøjde.
+* Venstre/højre-drop viser begge halvdele, fremhæver den aktive side og viser en tydelig flydende drop-tekst.
 
 == 0.1.5 ==
 * Sektioner og Kasser bruger deres valgte højde som minimum og vokser automatisk, når børn kræver mere plads.
@@ -40,4 +47,4 @@ Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 * Eksisterende elementer kan trækkes ind i/ud af Sektion/Kasse.
 * Billeder følger elementkassen med Cover, Contain eller Stretch og focal X/Y.
 * Save som versionshistorik og Restore som ny sikker version.
-* Strukturelle diagnostics med privat read-only support-link.
+* Strukturelle diagnostics med read-only support-link.
