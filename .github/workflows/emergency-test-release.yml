@@ -53,10 +53,12 @@ jobs:
           php -l src/Admin/EditorUnsavedPreviewAdminController.php
           php -l src/Admin/EditorGenericLayoutRebuildAdminController.php
           php -l src/Admin/EditorLayoutEngineAdminController.php
+          php -l src/Admin/EditorPhysicalCanvasAdminController.php
           php -l src/Diagnostics/EditorDiagnosticRuntime.php
           php -l src/Frontend/LegoLayoutFrontendRuntime.php
           php -l src/Frontend/LegoStackFrontendRuntime.php
           php -l src/Frontend/ImageElementFrontendRuntime.php
+          php -l src/Frontend/PhysicalCanvasFrontendRuntime.php
           node --check assets/admin.js
           node --check assets/ultimate-designer-lego-inspector-only-v0847.js
           node --check assets/ultimate-designer-unsaved-preview.js
@@ -66,6 +68,7 @@ jobs:
           node --check assets/ultimate-designer-live-diagnostics-reload-v0889.js
           node --check assets/ultimate-designer-saved-layout-rebuild-v0890.js
           node --check assets/ultimate-designer-layout-engine-v0900.js
+          node --check assets/ultimate-designer-physical-canvas-v0901.js
           node --check assets/ultimate-designer-trace-v0876.js
           node --check assets/ultimate-designer-trace-tools-v0879.js
           node --check assets/updater-support-v0879.js
@@ -149,13 +152,19 @@ jobs:
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Diagnostics/EditorDiagnosticRuntime.php | grep -c 'class EditorDiagnosticRuntime')" = "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Admin/EditorGenericLayoutRebuildAdminController.php | grep -c 'class EditorGenericLayoutRebuildAdminController')" = "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Admin/EditorLayoutEngineAdminController.php | grep -c 'class EditorLayoutEngineAdminController')" = "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Admin/EditorPhysicalCanvasAdminController.php | grep -c 'class EditorPhysicalCanvasAdminController')" = "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Frontend/PhysicalCanvasFrontendRuntime.php | grep -c 'class PhysicalCanvasFrontendRuntime')" = "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Autoload.php | grep -c 'EditorLayoutEngineAdminController::register')" = "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Autoload.php | grep -c 'EditorPhysicalCanvasAdminController::register')" = "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Autoload.php | grep -c 'PhysicalCanvasFrontendRuntime::register')" = "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/src/Autoload.php | grep -c 'EditorGenericLayoutRebuildAdminController::register')" = "0"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-live-diagnostics-v0888.js | grep -c '__h18LiveDiagnosticsV0888')" -ge "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-live-diagnostics-reload-v0889.js | grep -c '__h18LiveDiagnosticsReloadV0889')" -ge "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-saved-layout-rebuild-v0890.js | grep -c '__h18SavedLayoutRebuildV0890')" -ge "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-layout-engine-v0900.js | grep -c '__h18LayoutEngineV0900')" -ge "1"
           test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-layout-engine-v0900.css | grep -c 'data-h18-v0900-layout-ready')" -ge "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-physical-canvas-v0901.js | grep -c '__h18PhysicalCanvasV0901')" -ge "1"
+          test "$(unzip -p dist/hangar18-manager.zip hangar18-manager/assets/ultimate-designer-physical-canvas-v0901.css | grep -c 'h18-v0901-cell-handle')" -ge "1"
           if unzip -Z1 dist/hangar18-manager.zip | grep -Eqi 'NoWhatIfAdminController|hangar18-no-whatif'; then
             echo 'Legacy WhatIf shim leaked into ZIP' >&2; exit 1
           fi
