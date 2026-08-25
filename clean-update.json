@@ -3,9 +3,9 @@
   "plugin": "hangar18-manager-clean",
   "version": "0.1.0",
   "channel": "clean-test",
-  "published_utc": "2026-08-25T11:36:28Z",
+  "published_utc": "2026-08-25T11:37:55Z",
   "package_path": "dist/hangar18-manager-clean.zip",
-  "package_sha256": "a8a9b358cb0c16464c8540adc01ea970e4b919fca941150d0109cbc14e912d8c",
+  "package_sha256": "071c73b70ee76f9b9f77d688a94e13785f3bfa42545147198461c8af4cfdaf47",
   "backlog_ids": [
     "CLEAN-ARCH-001",
     "CLEAN-CANVAS-002",
