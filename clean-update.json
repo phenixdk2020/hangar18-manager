@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.16.zip",
-  "sha256": "c448789da1cc3d13274f9c07bbc80b3290360c2fac3ddffa809d0f7f1b165cb8",
-  "source_commit": "049d02b7fa3f57cf453085cf0e03c7fd1f4b3de4",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.17.zip",
+  "sha256": "ecd84dd47fb3bb1cbd3e16967b19b7e381b673ee6be716b51e09ab3d09f20d4a",
+  "source_commit": "16bb0efa4aad5b889dc25b58149466fe4f1800d7",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.16</h4><ul><li>Self-update bevarer nu pluginets aktive status uden at gen-eksekvere den nye pluginfil i samme request.</li><li>Single-site active_plugins og multisite active_sitewide_plugins gendannes direkte til status før opdateringen.</li><li>Den installerede pluginfil valideres efter udpakning, og aktiv status verificeres før redirect til Manager.</li><li>Hvis filen eller aktiv status ikke kan verificeres, lander administratoren sikkert på Plugins i stedet for en uregistreret Manager-side.</li></ul>"
+    "changelog": "<h4>0.1.17</h4><ul><li>Tekst-elementet har nu en valgfri Overskrift i samme element.</li><li>Overskrifttype kan vælges som H2-H6; standard er H2.</li><li>Tom Overskrift giver kun brødtekst og ændrer ikke eksisterende layouts.</li><li>Overskrift vises både på canvas, i usavet forhåndsvisning og på gemt frontend.</li><li>Border, Afstand X/Y, resize og canonical geometri gælder fortsat for hele Tekst-elementet.</li></ul>"
   }
 }
