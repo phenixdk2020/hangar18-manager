@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.6.zip",
-  "sha256": "f49b42922e8949dbab574b541d7289e26c745949dbbad2207a61b95ba94867c8",
-  "source_commit": "a1fbf8ad0ddf8284dc8f35b502b174b56c0f1b51",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.7.zip",
+  "sha256": "5e51aadfe16b272b97504156b163e344dcd3fd02914b3cc725a94c15867f95d8",
+  "source_commit": "91fb74b9cafde2cfafe357951b5210f2eb52f232",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.6</h4><ul><li>Editorlabel og drag-håndtag ligger nu uden for elementets fysiske x/y/w/h og ændrer ikke geometrien.</li><li>Alle elementer kan få ramme med valgfri farve og tykkelse 0-20 px; standard er 0 px.</li><li>Sektioner og Kasser vokser automatisk, så børn under hinanden fortsat er indeholdt.</li><li>Venstre/højre-drop viser begge valg samtidigt, fremhæver aktiv side tydeligt og viser en flydende drop-indikator ved markøren.</li></ul>"
+    "changelog": "<h4>0.1.7</h4><ul><li>Drag/drop har nu Over, Under, Venstre og Højre omkring almindelige elementer samt Ind i Kassen på Sektion/Kasse.</li><li>Venstre/Højre bygger en fælles række og fordeler bredden automatisk over 120 units, f.eks. 2=60/60 og 3=40/40/40.</li><li>Over/Under opretter en separat fuldbredde-række før eller efter mål-rækken.</li><li>Når et element flyttes ud af en række, fordeles den resterende række igen.</li><li>Drop-zoner vises tydeligt under drag, mens elementlabels fortsat ligger uden for den fysiske geometri.</li></ul>"
   }
 }
