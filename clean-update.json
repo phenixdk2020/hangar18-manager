@@ -1,16 +1,16 @@
 {
   "name": "Hangar18 Manager Clean",
   "slug": "hangar18-manager",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "homepage": "https://hangar18.dk/",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.4.zip",
-  "sha256": "fd59ba9349381c301b5409e6beee0c8b338044086a8ee92ce0c29971bda070c9",
-  "source_commit": "9fe1f3123f7a98d759cb9ca5a38b28fff11d2a22",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.5.zip",
+  "sha256": "3569822d190916adbcc6f6ddaff19897ebeded254b4ad80b4500585f2a39968c",
+  "source_commit": "568399a7de1c983b941259094bb0e47e6692718f",
   "sections": {
     "description": "Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.",
-    "changelog": "<h4>0.1.4</h4><ul><li>Base Theme 1.2.x genkender Clean Manager som aktiv uden at legacy-editoren indlæses.</li><li>Indeholder v0.1.3 spatial drag/drop: venstre/højre placering i 120-grid.</li><li>Undo/Redo kan ikke længere ophobe duplikerede drop-handlers.</li><li>GitHub-updateren forbliver den normale update-kanal.</li></ul>"
+    "changelog": "<h4>0.1.5</h4><ul><li>Sektioner og Kasser vokser automatisk med indholdet; valgt højde fungerer som minimum.</li><li>Samme auto-grow-regel gælder på offentlig frontend.</li><li>Drag viser nu tydelig venstre/højre halvside-guide direkte på nabo-elementet.</li><li>GitHub-updateren forbliver normal update-kanal.</li></ul>"
   }
 }
