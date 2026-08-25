@@ -35,6 +35,8 @@ jobs:
           php -l clean/hangar18-manager/src/Model/LayoutModel.php
           php -l clean/hangar18-manager/src/Diagnostics/DiagnosticStore.php
           php -l clean/hangar18-manager/src/Admin/EditorController.php
+          php -l clean/hangar18-manager/src/Admin/AdminController.php
+          php -l clean/hangar18-manager/src/Admin/AdminMenuBridge.php
           php -l clean/hangar18-manager/src/Frontend/Renderer.php
           php -l clean/hangar18-manager/src/Update/GitHubUpdater.php
           node --check clean/hangar18-manager/assets/editor.js
@@ -46,6 +48,7 @@ jobs:
           test -s clean/hangar18-manager/assets/editor-v016.css
           test -s clean/hangar18-manager/assets/editor-v017.css
           test -s clean/hangar18-manager/assets/editor-v018.css
+          test -s clean/hangar18-manager/assets/admin-v019.css
           if grep -R -n -E 'Hangar18\\\\UltimateDesigner|ultimate-designer-|EditorLego|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then
             echo 'Legacy editor runtime dependency found in clean plugin.' >&2
             exit 1
@@ -70,6 +73,9 @@ jobs:
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v017.css$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v018-core.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v018.css$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/admin-v019.css$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Admin/AdminController.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Admin/AdminMenuBridge.php$')" = '1'
           SHA="$(sha256sum "$VERSIONED" | awk '{print $1}')"
           SOURCE_COMMIT="$(git rev-parse HEAD)"
           python - "$VERSION" "$SHA" "$SOURCE_COMMIT" <<'PY'
