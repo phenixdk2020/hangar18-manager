@@ -1,4 +1,4 @@
-v0.1.4
-triggered_utc=2026-08-25T11:41:00Z
-reason=Final clean v0.1.4 release after disabling legacy clean-test release workflow.
-nonce=4
+v0.1.5
+triggered_utc=2026-08-25T12:06:00Z
+reason=Auto-grow parent boxes and visible left/right spatial drop guides.
+nonce=5
