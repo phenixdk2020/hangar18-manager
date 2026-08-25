@@ -1,4 +1,4 @@
 v0.1.16
-triggered_utc=2026-08-25T17:18:00Z
+triggered_utc=2026-08-25T17:20:00Z
 reason=Robust self-update activation-state preservation.
-nonce=17
+nonce=18
