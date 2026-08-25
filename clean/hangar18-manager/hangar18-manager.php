@@ -4,7 +4,7 @@
  * Plugin URI: https://hangar18.dk/
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.
- * Version: 0.1.18
+ * Version: 0.1.19
  * Author: Hangar18
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.18');
+define('H18_CLEAN_VERSION', '0.1.19');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -62,8 +62,8 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     }
 
     /*
-     * 0.1.14 adds theme-accurate unsaved preview, verified Save and collision-free
-     * contextual labels while preserving canonical element geometry.
+     * Current Clean core provides theme-accurate preview, canonical grid layout,
+     * verified Save, independent image-box rendering and version-aware editor UI.
      */
     wp_dequeue_script('h18-clean-editor');
 
