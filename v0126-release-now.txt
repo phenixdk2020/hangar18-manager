@@ -1,2 +1,2 @@
-Prepare and release Visual Designer Manager 0.1.26 after successful hotfix QA.
-retry=2
+Prepare and release Visual Designer Manager 0.1.27 canvas recovery hotfix.
+nonce=20260826-1945
