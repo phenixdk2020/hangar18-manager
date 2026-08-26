@@ -1,4 +1,4 @@
-v0.1.27
-triggered_utc=2026-08-26T17:44:00Z
-reason=Release canvas recovery hotfix after blank Designer regression in 0.1.26.
-nonce=27-canvas-recovery-manual-release
+v0.1.28
+triggered_utc=2026-08-26T17:55:00Z
+reason=Release critical Designer startup TDZ fix for existing Text elements.
+nonce=28-tdz-fix-action

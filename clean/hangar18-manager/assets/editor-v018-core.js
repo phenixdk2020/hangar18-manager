@@ -11,6 +11,7 @@
     const redoStack = [];
     const HISTORY_LIMIT = 100;
     const MIN_SPLIT_H = 8;
+    const FONT_TOKENS = ['system','arial','verdana','tahoma','trebuchet','georgia','times','courier'];
 
     let state = normalizeModel(CFG.initialModel || {});
     let selectedId = '';
@@ -25,7 +26,6 @@
     function cleanId(value) { return String(value || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 100); }
     function makeId(type) { return cleanId(type + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8)); }
     function normalizeColor(value) { return /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value).toLowerCase() : '#000000'; }
-    const FONT_TOKENS = ['system','arial','verdana','tahoma','trebuchet','georgia','times','courier'];
     function normalizeFontToken(value, heading) {
         const token = String(value || '').toLowerCase();
         if (heading && token === 'body') { return 'body'; }

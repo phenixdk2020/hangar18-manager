@@ -2,8 +2,14 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.27
+Version: 0.1.28
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.28 ==
+* Kritisk canvas-fix: typografi-konstanten FONT_TOKENS initialiseres nu før den første canonical model-normalisering.
+* Eksisterende sider med Tekst-elementer kan derfor starte editor-runtime uden JavaScript TDZ/ReferenceError.
+* 0.1.27 canvas-recovery og alle 0.1.26 WYSIWYG-, typografi-, Inspector-, billed- og Knap-rettelser bevares.
+* Release-QA kontrollerer eksplicit initialiseringsrækkefølgen, så denne regression ikke kan pakkes igen.
 
 == 0.1.27 ==
 * Canvas-recovery: en runtime-fejl i ét barn-element må ikke længere blanke hele Sektion/Kasse eller hele Designer-canvas.
