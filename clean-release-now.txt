@@ -1,4 +1,4 @@
-v0.1.21
-triggered_utc=2026-08-25T19:23:00Z
-reason=Responsive Desktop Laptop Mobile Designer with collapsible Elementer and Inspector panels.
-nonce=22-manual
+v0.1.22
+triggered_utc=2026-08-26T07:30:00Z
+reason=Release hierarchy enforcement, safe model normalization, Visual Designer naming, Menu/Navigation, Export and Theme/Shell administration.
+nonce=23-manual
