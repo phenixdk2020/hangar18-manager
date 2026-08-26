@@ -1,4 +1,4 @@
-name: Clean v0.1.2 GitHub Update Release
+name: Visual Designer Manager v0.1.2 GitHub Update Release
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply clean v0.1.2 source patch
+      - name: Apply v0.1.2 source patch
         shell: bash
         run: |
           set -euo pipefail
@@ -25,7 +25,7 @@ jobs:
           git apply .github/patches/clean-v012-drag.patch
           rm .github/patches/clean-v012-drag.patch
 
-      - name: Verify clean source
+      - name: Verify v0.1.2 source
         shell: bash
         run: |
           set -euo pipefail
@@ -41,7 +41,7 @@ jobs:
           grep -q 'palette_drag_begin' clean/hangar18-manager/assets/editor.js
           grep -q 'GitHubUpdater::register' clean/hangar18-manager/hangar18-manager.php
           if grep -R -n -E 'Hangar18\\UltimateDesigner|ultimate-designer-|EditorLego|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then
-            echo 'Legacy editor dependency found in clean plugin.' >&2
+            echo 'Legacy editor dependency found in Visual Designer Manager.' >&2
             exit 1
           fi
 
@@ -59,17 +59,17 @@ jobs:
           import json, sys
           sha = sys.argv[1]
           data = {
-              'name': 'Hangar18 Manager Clean',
+              'name': 'Visual Designer Manager',
               'slug': 'hangar18-manager',
               'version': '0.1.2',
-              'homepage': 'https://hangar18.dk/',
+              'homepage': 'https://github.com/phenixdk2020/hangar18-manager',
               'requires': '6.4',
               'requires_php': '8.0',
               'tested': '6.8',
               'package': 'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.2.zip',
               'sha256': sha,
               'sections': {
-                  'description': 'Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.',
+                  'description': 'Modeldrevet visuel WordPress-designer uden legacy editor-runtime.',
                   'changelog': '<h4>0.1.2</h4><ul><li>GitHub updater med WordPress Opdater nu.</li><li>Manuel Tjek GitHub-opdatering.</li><li>SHA-256-verificering af update-pakken.</li><li>Palette drag/drop direkte til root, Sektion eller Kasse.</li></ul>'
               }
           }
@@ -83,8 +83,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'hangar18-release-bot'
+          git config user.name 'visual-designer-release-bot'
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
           git add clean/hangar18-manager .github/patches/clean-v012-drag.patch dist/hangar18-manager-clean-v0.1.2.zip dist/hangar18-manager-clean.zip clean-update.json
-          git commit -m 'Release clean v0.1.2 with GitHub updater'
+          git commit -m 'Release Visual Designer Manager v0.1.2 with GitHub updater'
           git push origin HEAD:main
