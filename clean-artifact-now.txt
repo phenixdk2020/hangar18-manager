@@ -1,4 +1,4 @@
 v0.1.21-dev
-triggered_utc=2026-08-26T06:55:00Z
-reason=QA canonical LayoutModel hierarchy migration and current forward source.
-nonce=6
+triggered_utc=2026-08-26T07:35:00Z
+reason=Full QA after Visual Designer / Visual Designer Manager public naming migration, hierarchy work and parallel Manager modules.
+nonce=7
