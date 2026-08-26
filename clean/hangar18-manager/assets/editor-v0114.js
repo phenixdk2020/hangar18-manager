@@ -48,8 +48,88 @@
         });
     }
 
+    function setupInspectorScrollPreservation() {
+        var panel = document.querySelector('.h18-clean-inspector');
+        var host = document.getElementById('h18-clean-inspector');
+        if (!panel || !host || panel.dataset.vdScrollGuard === '1') { return; }
+        panel.dataset.vdScrollGuard = '1';
+
+        var pending = null;
+        var restoreScheduled = false;
+
+        function fieldKey(element) {
+            if (!element || !host.contains(element)) { return null; }
+            var attrs = ['id', 'name', 'data-field', 'data-prop', 'data-responsive-field', 'data-v0120-field', 'data-border-field'];
+            for (var i = 0; i < attrs.length; i += 1) {
+                var value = element.getAttribute && element.getAttribute(attrs[i]);
+                if (value) { return { attr: attrs[i], value: value, tag: String(element.tagName || '').toLowerCase() }; }
+            }
+            var label = element.closest && element.closest('label');
+            if (label) {
+                var labels = Array.prototype.slice.call(host.querySelectorAll('label'));
+                var index = labels.indexOf(label);
+                if (index >= 0) { return { labelIndex: index, tag: String(element.tagName || '').toLowerCase() }; }
+            }
+            return null;
+        }
+
+        function capture(event) {
+            var target = event && event.target;
+            if (!target || !host.contains(target) || !target.matches('input,select,textarea,button')) { return; }
+            pending = {
+                scrollTop: panel.scrollTop,
+                key: fieldKey(target)
+            };
+        }
+
+        function findField(key) {
+            if (!key) { return null; }
+            if (key.attr && key.value) {
+                var candidates = host.querySelectorAll(key.tag || 'input,select,textarea,button');
+                for (var i = 0; i < candidates.length; i += 1) {
+                    if (candidates[i].getAttribute(key.attr) === key.value) { return candidates[i]; }
+                }
+            }
+            if (typeof key.labelIndex === 'number') {
+                var labels = host.querySelectorAll('label');
+                var label = labels[key.labelIndex];
+                if (label) { return label.querySelector(key.tag || 'input,select,textarea,button'); }
+            }
+            return null;
+        }
+
+        function scheduleRestore() {
+            if (!pending || restoreScheduled) { return; }
+            restoreScheduled = true;
+            window.requestAnimationFrame(function () {
+                window.requestAnimationFrame(function () {
+                    restoreScheduled = false;
+                    if (!pending) { return; }
+                    var state = pending;
+                    pending = null;
+                    panel.scrollTop = state.scrollTop;
+                    var replacement = findField(state.key);
+                    if (replacement && typeof replacement.focus === 'function') {
+                        try { replacement.focus({ preventScroll: true }); }
+                        catch (ignore) { replacement.focus(); panel.scrollTop = state.scrollTop; }
+                    }
+                    panel.scrollTop = state.scrollTop;
+                });
+            });
+        }
+
+        host.addEventListener('input', capture, true);
+        host.addEventListener('change', capture, true);
+        host.addEventListener('click', capture, true);
+
+        new MutationObserver(function () {
+            if (pending) { scheduleRestore(); }
+        }).observe(host, { childList: true, subtree: true });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         setupChangeNote();
+        setupInspectorScrollPreservation();
 
         var button = document.getElementById('h18-clean-preview');
         var model = document.getElementById('h18-clean-model-json');
