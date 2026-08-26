@@ -69,6 +69,10 @@ jobs:
             exit 0
           fi
           git commit -m 'Implement Visual Designer Manager 0.1.25 feature scope'
+          # The deterministic repair step intentionally modifies the patch script
+          # only inside the runner. Do not let that temporary tooling change block
+          # rebasing/publishing the already-QA'd product source.
+          git checkout -- .github/scripts/apply_v0125.py
           for attempt in 1 2 3; do
             git fetch origin main
             git rebase origin/main
