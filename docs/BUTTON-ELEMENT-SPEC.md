@@ -94,6 +94,13 @@ Inspector skal mindst kunne styre:
 
 Teksten skal som standard være centreret både vandret og lodret i knappen.
 
+Der skal kunne vælges mellem:
+
+- **Normal i layout** – Knap deltager i det almindelige grid/cellelayout.
+- **Flydende i Sektion/Kasse** – Knap bruger sin X/Y/W/H-geometri som fri, parent-relativ placering og må overlappe andre elementer i samme Sektion/Kasse.
+
+Flydende betyder **ikke** `position:fixed` til browser-vinduet. Knappen følger sin Sektion/Kasse og siden under scroll. Flydende Knap skal have et Lag/z-index, så rækkefølgen ved overlap er entydig.
+
 Der skal senere kunne vælges venstre/center/højre, især hvis knappen kombineres med ikon.
 
 ## Tilstande

@@ -58,8 +58,11 @@ final class ResponsiveRenderer
             $laptopRows = self::effectiveRows($id, 'laptop', $byId, $byParent, []);
             $mobileRows = self::effectiveRows($id, 'mobile', $byId, $byParent, []);
             $selector = '#h18-clean-' . self::cssId($id);
-            $laptop .= self::geometryCss($selector, $lg, $laptopRows);
-            $mobile .= self::geometryCss($selector, $mg, $mobileRows);
+            $props = is_array($node['props'] ?? null) ? $node['props'] : [];
+            $floating = (string) ($node['type'] ?? '') === 'button' && (string) ($node['parentId'] ?? '') !== '' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';
+            $zIndex = max(1, min(200, (int) ($props['zIndex'] ?? 20)));
+            $laptop .= self::geometryCss($selector, $lg, $laptopRows, $floating, $zIndex);
+            $mobile .= self::geometryCss($selector, $mg, $mobileRows, $floating, $zIndex);
         }
 
         echo '<style id="h18-clean-responsive-css">';
@@ -167,6 +170,8 @@ final class ResponsiveRenderer
 
         $required = 0;
         foreach ($byParent[$id] ?? [] as $child) {
+            $childProps = is_array($child['props'] ?? null) ? $child['props'] : [];
+            if ((string) ($child['type'] ?? '') === 'button' && (string) ($child['parentId'] ?? '') !== '' && (string) ($childProps['placementMode'] ?? 'normal') === 'overlay') { continue; }
             $childId = (string) ($child['id'] ?? '');
             if ($childId === '') {
                 continue;
@@ -182,10 +187,17 @@ final class ResponsiveRenderer
     }
 
     /** @param array{x:int,y:int,w:int,h:int} $g */
-    private static function geometryCss(string $selector, array $g, int $rows): string
+    private static function geometryCss(string $selector, array $g, int $rows, bool $floating = false, int $zIndex = 20): string
     {
-        $row = max(0, $g['y']) + 1;
         $rows = max(1, $rows);
+        if ($floating) {
+            $left = ($g['x'] / LayoutModel::UNITS) * 100;
+            $width = ($g['w'] / LayoutModel::UNITS) * 100;
+            return $selector . '{position:absolute!important;left:' . $left . '%!important;top:' . (max(0, $g['y']) * LayoutModel::ROW_PX) . 'px!important;'
+                . 'width:' . $width . '%!important;height:' . ($rows * LayoutModel::ROW_PX) . 'px!important;min-height:' . ($rows * LayoutModel::ROW_PX) . 'px!important;'
+                . 'z-index:' . max(1, min(200, $zIndex)) . '!important;grid-column:auto!important;grid-row:auto!important;margin-top:0!important;}';
+        }
+        $row = max(0, $g['y']) + 1;
         return $selector . '{grid-column:' . ($g['x'] + 1) . '/span ' . $g['w'] . '!important;'
             . 'grid-row:' . $row . '/span ' . $rows . '!important;'
             . 'min-height:' . ($rows * LayoutModel::ROW_PX) . 'px!important;'

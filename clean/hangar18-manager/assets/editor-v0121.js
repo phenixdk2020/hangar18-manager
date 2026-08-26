@@ -119,6 +119,7 @@
     }
     window.H18CleanResponsive = { sync: mergeResponsive, device: function () { return activeDevice; } };
 
+    function isFloatingButton(node) { return !!(node && node.type === 'button' && node.parentId && node.props && node.props.placementMode === 'overlay'); }
     function children(parentId, map) {
         return Object.keys(map).map(function (id) { return map[id]; }).filter(function (node) {
             return String(node.parentId || '') === String(parentId || '');
@@ -134,6 +135,7 @@
         if (type !== 'section' && type !== 'container') { return Math.max(1, base); }
         var required = 0;
         children(id, map).forEach(function (child) {
+            if (isFloatingButton(child)) { return; }
             var cg = effective(child, device);
             required = Math.max(required, Math.max(0, cg.y) + rowsFor(String(child.id), device, map, seen));
         });
@@ -141,10 +143,28 @@
         required += Math.ceil(((Math.max(0, n(props.padding, 0)) * 2) + (Math.max(0, n(props.borderWidth, 0)) * 2)) / ROW_PX);
         return Math.max(1, base, required);
     }
-    function applyGeometry(card, g, rows) {
-        card.style.gridColumn = String(g.x + 1) + ' / span ' + String(g.w);
-        card.style.gridRow = String(Math.max(0, g.y) + 1) + ' / span ' + String(Math.max(1, rows));
-        card.style.minHeight = String(Math.max(1, rows) * ROW_PX) + 'px';
+    function applyGeometry(card, g, rows, node) {
+        if (isFloatingButton(node)) {
+            card.style.position = 'absolute';
+            card.style.gridColumn = 'auto';
+            card.style.gridRow = 'auto';
+            card.style.left = ((g.x / UNITS) * 100) + '%';
+            card.style.top = String(Math.max(0, g.y) * ROW_PX) + 'px';
+            card.style.width = ((g.w / UNITS) * 100) + '%';
+            card.style.height = String(Math.max(1, rows) * ROW_PX) + 'px';
+            card.style.minHeight = String(Math.max(1, rows) * ROW_PX) + 'px';
+            card.style.zIndex = String(clamp(n(node.props && node.props.zIndex, 20), 1, 200));
+        } else {
+            card.style.position = 'relative';
+            card.style.left = '';
+            card.style.top = '';
+            card.style.width = '';
+            card.style.height = '';
+            card.style.zIndex = '';
+            card.style.gridColumn = String(g.x + 1) + ' / span ' + String(g.w);
+            card.style.gridRow = String(Math.max(0, g.y) + 1) + ' / span ' + String(Math.max(1, rows));
+            card.style.minHeight = String(Math.max(1, rows) * ROW_PX) + 'px';
+        }
         card.style.marginTop = '0px';
         card.setAttribute('data-h18-active-geometry', [g.x, g.y, g.w, g.h].join(','));
     }
@@ -159,7 +179,7 @@
             var id = String(card.getAttribute('data-node-id') || '');
             var node = map[id];
             if (!node) { return; }
-            applyGeometry(card, effective(node, activeDevice), rowsFor(id, activeDevice, map, {}));
+            applyGeometry(card, effective(node, activeDevice), rowsFor(id, activeDevice, map, {}), node);
             var move = card.querySelector(':scope > .h18-clean-node-header .h18-clean-move');
             if (move) {
                 move.draggable = activeDevice === 'desktop';

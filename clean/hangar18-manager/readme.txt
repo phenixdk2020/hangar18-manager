@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.28
+Version: 0.1.29
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.29 ==
+* Knap kan vælges som Normal eller Flydende i sin egen Sektion/Kasse.
+* Flydende Knap bruger canonical X/Y/W/H og kan overlappe Tekst, Billede og andre elementer uden at ændre det normale grid-flow.
+* Flydende Knap kan flyttes med drag-håndtaget eller X/Y og har Lag (z-index) 1-200.
+* Desktop/Laptop/Mobil bruger samme responsive geometrimodel; floating er aldrig position:fixed og bindes ikke til browser-vinduet.
+* 0.1.28 canvas-fix samt alle 0.1.26 WYSIWYG-, typografi-, Inspector-, billed-persistence- og Knap-auto-size rettelser bevares.
 
 == 0.1.28 ==
 * Kritisk canvas-fix: typografi-konstanten FONT_TOKENS initialiseres nu før den første canonical model-normalisering.

@@ -259,6 +259,8 @@ final class LayoutModel
                 'paddingX' => self::clamp($raw['paddingX'] ?? 20, 0, 120, 20),
                 'paddingY' => self::clamp($raw['paddingY'] ?? 10, 0, 120, 10),
                 'autoSize' => array_key_exists('autoSize', $raw) ? (bool) $raw['autoSize'] : true,
+                'placementMode' => strtolower((string) ($raw['placementMode'] ?? 'normal')) === 'overlay' ? 'overlay' : 'normal',
+                'zIndex' => self::clamp($raw['zIndex'] ?? 20, 1, 200, 20),
             ], $border);
         }
         if ($type === 'image') {

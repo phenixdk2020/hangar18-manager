@@ -48,7 +48,8 @@
         return ({h2:32,h3:28,h4:24,h5:20,h6:18})[String(props.headingLevel || 'h2')] || 32;
     }
     function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap'})[String(type || '')] || String(type || 'Element'); }
-    function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',fontFamily:'skrifttype',fontSize:'skriftstørrelse',fontWeight:'skrifttykkelse',lineHeight:'linjeafstand',letterSpacing:'bogstavafstand',headingFontFamily:'overskriftsskrifttype',headingFontSize:'overskriftsstørrelse',headingFontWeight:'overskriftstykkelse',headingLineHeight:'overskriftens linjeafstand',headingLetterSpacing:'overskriftens bogstavafstand',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding',autoSize:'automatisk størrelse'})[String(field || '')] || String(field || 'felt'); }
+    function isFloatingButton(node) { return !!(node && node.type === 'button' && node.parentId && node.props && node.props.placementMode === 'overlay'); }
+    function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',fontFamily:'skrifttype',fontSize:'skriftstørrelse',fontWeight:'skrifttykkelse',lineHeight:'linjeafstand',letterSpacing:'bogstavafstand',headingFontFamily:'overskriftsskrifttype',headingFontSize:'overskriftsstørrelse',headingFontWeight:'overskriftstykkelse',headingLineHeight:'overskriftens linjeafstand',headingLetterSpacing:'overskriftens bogstavafstand',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding',autoSize:'automatisk størrelse',placementMode:'placering',zIndex:'lag'})[String(field || '')] || String(field || 'felt'); }
     function richPreviewHtml(value) {
         const raw = String(value || '');
         const tpl = document.createElement('template');
@@ -139,7 +140,9 @@
                 paddingX: clamp(parseInt(raw.paddingX || 20, 10) || 20, 0, 120),
                 paddingY: clamp(parseInt(raw.paddingY || 10, 10) || 10, 0, 120),
                 radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100),
-                autoSize: raw.autoSize !== false
+                autoSize: raw.autoSize !== false,
+                placementMode: String(raw.placementMode || 'normal').toLowerCase() === 'overlay' ? 'overlay' : 'normal',
+                zIndex: clamp(parseInt(raw.zIndex || 20, 10) || 20, 1, 200)
             });
         }
         if (type === 'image') {
@@ -317,6 +320,7 @@
     function nextFreeY(parentId) {
         let bottom = 0;
         children(parentId).forEach(function (node) {
+            if (isFloatingButton(node)) { return; }
             const g = node.geometry.desktop;
             bottom = Math.max(bottom, g.y + (g.h > 0 ? g.h : MIN_SPLIT_H));
         });
@@ -353,7 +357,7 @@
         let changed = false;
         const parents = Array.from(new Set(state.nodes.map(function (node) { return node.parentId; })));
         parents.forEach(function (parentId) {
-            const list = children(parentId).slice().sort(function (a, b) {
+            const list = children(parentId).filter(function (node) { return !isFloatingButton(node); }).slice().sort(function (a, b) {
                 if (a.geometry.desktop.y !== b.geometry.desktop.y) { return a.geometry.desktop.y - b.geometry.desktop.y; }
                 return a.order - b.order;
             });
@@ -388,7 +392,7 @@
         const parents = state.nodes.filter(function (node) { return PARENT_TYPES.includes(node.type); });
         parents.sort(function (a, b) { return nodeDepth(b) - nodeDepth(a); });
         parents.forEach(function (parent) {
-            const kids = children(parent.id);
+            const kids = children(parent.id).filter(function (child) { return !isFloatingButton(child); });
             let required = kids.length ? 0 : MIN_SPLIT_H;
             kids.forEach(function (child) {
                 const g = child.geometry.desktop;
@@ -416,6 +420,7 @@
                 for (let j = i + 1; j < list.length; j += 1) {
                     // Kasse/Sektion are layout wrappers and do not participate in leaf overlap warnings.
                     if (PARENT_TYPES.includes(list[i].type) || PARENT_TYPES.includes(list[j].type)) { continue; }
+                    if (isFloatingButton(list[i]) || isFloatingButton(list[j])) { continue; }
                     const a = list[i].geometry.desktop;
                     const b = list[j].geometry.desktop;
                     const ar = { x: a.x, y: a.y, w: a.w, h: Math.max(1, a.h || MIN_SPLIT_H) };
@@ -456,7 +461,7 @@
     function reconcileLayoutAfterRender(canvas) {
         const autoButtons = autoFitButtons();
         const materialized = materializeNaturalLeafHeights();
-        autoButtons.forEach(function (id) { materialized.add(id); });
+        autoButtons.forEach(function (id) { const node = nodeById(id); if (!isFloatingButton(node)) { materialized.add(id); } });
         const collisionHealed = healMaterializationCollisions(materialized);
         const containersChanged = syncContainerHeights();
         const changed = materialized.size > 0 || collisionHealed || containersChanged;
@@ -540,6 +545,17 @@
             bandH: MIN_SPLIT_H,
             targetGeometry: null
         };
+        const movingNode = movingId ? nodeById(movingId) : null;
+        if (isFloatingButton(movingNode)) {
+            const pointerRow = clamp(Math.round((event.clientY - rect.top) / ROW_PX), 0, 10000);
+            const movingH = Math.max(1, movingNode.geometry.desktop.h || MIN_SPLIT_H);
+            placement.y = Math.max(0, pointerRow - Math.floor(movingH / 2));
+            placement.targetId = '';
+            placement.zone = 'overlay';
+            placement.bandIds = [];
+            placement.targetGeometry = null;
+            return placement;
+        }
         const target = directDropTarget(event, parentId, movingId, surface);
         if (!target) {
             if (parentId) { placement.x = 0; placement.w = UNITS; }
@@ -769,7 +785,7 @@
         const sourceSnapshot = dragSource ? clone(dragSource) : null;
         node.parentId = parentId;
         node.order = nextOrder(parentId);
-        if (sourceSnapshot) { healSourceCell(sourceSnapshot, id); }
+        if (sourceSnapshot && !isFloatingButton(node)) { healSourceCell(sourceSnapshot, id); }
         reorderForPlacement(id, parentId, placement);
         applyDestinationGeometry(id, placement);
         node.geometry.desktop.w = Math.min(UNITS, Math.max(1, node.geometry.desktop.w));
@@ -779,6 +795,28 @@
     }
 
     function applyCardGeometry(card, node, geometry) {
+        if (isFloatingButton(node)) {
+            card.style.position = 'absolute';
+            card.style.gridColumn = 'auto';
+            card.style.gridRow = 'auto';
+            card.style.left = ((geometry.x / UNITS) * 100) + '%';
+            card.style.top = String(Math.max(0, geometry.y) * ROW_PX) + 'px';
+            card.style.width = ((geometry.w / UNITS) * 100) + '%';
+            card.style.height = geometry.h > 0 ? String(geometry.h * ROW_PX) + 'px' : 'auto';
+            card.style.minHeight = geometry.h > 0 ? String(geometry.h * ROW_PX) + 'px' : '';
+            card.style.zIndex = String(clamp(parseInt(node.props.zIndex || 20, 10) || 20, 1, 200));
+            card.style.marginTop = '0px';
+            card.setAttribute('data-h18-floating', '1');
+            card.setAttribute('data-h18-explicit-grid', '1');
+            card.setAttribute('data-geometry', [geometry.x, geometry.y, geometry.w, geometry.h].join(','));
+            return;
+        }
+        card.style.position = 'relative';
+        card.style.left = '';
+        card.style.top = '';
+        card.style.width = '';
+        card.style.zIndex = '';
+        card.removeAttribute('data-h18-floating');
         card.style.gridColumn = String(geometry.x + 1) + ' / span ' + String(geometry.w);
         card.style.marginTop = '0px';
         if (geometry.h > 0) {
@@ -933,7 +971,7 @@
     }
 
     function zoneLabel(zone) {
-        return ({ above: '↑ DEL CELLEN OVER', below: '↓ DEL CELLEN UNDER', left: '← DEL CELLEN VENSTRE', right: 'DEL CELLEN HØJRE →', inside: 'IND I KASSEN', 'inside-empty': 'IND I KASSEN', free: 'FRI PLACERING' })[zone] || zone;
+        return ({ above: '↑ DEL CELLEN OVER', below: '↓ DEL CELLEN UNDER', left: '← DEL CELLEN VENSTRE', right: 'DEL CELLEN HØJRE →', inside: 'IND I KASSEN', 'inside-empty': 'IND I KASSEN', free: 'FRI PLACERING', overlay: 'FLYDENDE · FRI PLACERING' })[zone] || zone;
     }
 
     function statusBubble(event, placement) {
@@ -1053,7 +1091,7 @@
 
         list.forEach(function (node) {
             const card = document.createElement('div');
-            card.className = 'h18-clean-node h18-clean-node--' + node.type + (selectedId === node.id ? ' is-selected' : '');
+            card.className = 'h18-clean-node h18-clean-node--' + node.type + (isFloatingButton(node) ? ' is-floating' : '') + (selectedId === node.id ? ' is-selected' : '');
             card.setAttribute('data-node-id', node.id);
             applyCardGeometry(card, node, node.geometry.desktop);
             applyVisualStyle(card, node);
@@ -1223,6 +1261,8 @@
                 html += '<label>' + linkLabel + '<input data-field="url" type="text" value="' + escapeAttr(node.props.url || '') + '"></label>';
             }
             html += '<label class="h18-clean-checkbox"><input data-field="targetBlank" type="checkbox"' + (node.props.targetBlank ? ' checked' : '') + '> Åbn i ny fane</label>';
+            html += '<label>Placering<select data-field="placementMode"><option value="normal"' + (node.props.placementMode !== 'overlay' ? ' selected' : '') + '>Normal i layout</option><option value="overlay"' + (node.props.placementMode === 'overlay' ? ' selected' : '') + '>Flydende i Sektion/Kasse</option></select></label>';
+            if (node.props.placementMode === 'overlay') { html += '<label>Lag<input data-field="zIndex" type="number" min="1" max="200" value="' + (node.props.zIndex || 20) + '"><span class="description">Højere lag ligger foran andre elementer. Flyt knappen med ✥ eller X/Y.</span></label>'; }
             html += '<label class="h18-clean-checkbox"><input data-field="autoSize" type="checkbox"' + (node.props.autoSize !== false ? ' checked' : '') + '> Automatisk størrelse efter tekst og padding</label>';
             html += '<div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#30382a') + '"></label><label>Tekstfarve<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#ffffff') + '"></label><label>Hover baggrund<input data-field="hoverBackground" type="color" value="' + escapeAttr(node.props.hoverBackground || '#525a5f') + '"></label><label>Hover tekst<input data-field="hoverTextColor" type="color" value="' + escapeAttr(node.props.hoverTextColor || '#ffffff') + '"></label><label>Focus-farve<input data-field="focusColor" type="color" value="' + escapeAttr(node.props.focusColor || '#c3ae83') + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label><label>Padding X<input data-field="paddingX" type="number" min="0" max="120" value="' + (node.props.paddingX || 20) + '"></label><label>Padding Y<input data-field="paddingY" type="number" min="0" max="120" value="' + (node.props.paddingY || 10) + '"></label></div>';
         } else if (node.type === 'image') {
@@ -1280,6 +1320,8 @@
                 else if (field === 'url') { current.props.url = String(control.value || ''); }
                 else if (field === 'targetBlank') { current.props.targetBlank = !!control.checked; }
                 else if (field === 'autoSize') { current.props.autoSize = !!control.checked; }
+                else if (field === 'placementMode') { current.props.placementMode = control.value === 'overlay' && current.parentId ? 'overlay' : 'normal'; }
+                else if (field === 'zIndex') { current.props.zIndex = clamp(parseInt(control.value || 20, 10) || 20, 1, 200); }
                 else if (field === 'textColor') { current.props.textColor = normalizeColor(control.value || '#ffffff'); }
                 else if (field === 'hoverBackground') { current.props.hoverBackground = normalizeColor(control.value || '#525a5f'); }
                 else if (field === 'hoverTextColor') { current.props.hoverTextColor = normalizeColor(control.value || '#ffffff'); }
