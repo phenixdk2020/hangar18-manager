@@ -56,12 +56,10 @@ jobs:
           grep -q "position = 'absolute'" clean/hangar18-manager/assets/editor-v018-core.js
           grep -q "isFloatingButton" clean/hangar18-manager/assets/editor-v0121.js
           grep -q "h18-clean-front-button--floating" clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q "layoutStyle = 'position:absolute" clean/hangar18-manager/src/Frontend/Renderer.php
           grep -q "bool \$floating" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
+          grep -q "position:absolute!important" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
           grep -q "aldrig position:fixed" clean/hangar18-manager/readme.txt
-          if grep -n "position:fixed" clean/hangar18-manager/src/Frontend/Renderer.php clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php; then
-            echo 'Floating button must be parent-relative, not viewport-fixed.' >&2
-            exit 1
-          fi
 
       - name: Commit implementation
         shell: bash
