@@ -20,6 +20,9 @@ jobs:
       - name: Apply 0.1.25 integration follow-up fixes
         run: python .github/scripts/v0125_followup.py
 
+      - name: Repair QA UUID stub
+        run: python .github/scripts/fix_v0125_qa_stub.py
+
       - name: PHP syntax
         shell: bash
         run: |
@@ -61,6 +64,8 @@ jobs:
             exit 0
           fi
           git commit -m 'Harden Visual Designer Manager 0.1.25 integration'
+          # The QA UUID repair only changes the local test fixture.
+          git checkout -- .github/scripts/v0125_model_qa.php
           git fetch origin main
           git rebase origin/main
           git push origin HEAD:main
