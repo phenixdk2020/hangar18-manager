@@ -18,12 +18,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          php -l clean/hangar18-manager/hangar18-manager.php
-          php -l clean/hangar18-manager/src/Model/LayoutModel.php
-          php -l clean/hangar18-manager/src/Diagnostics/DiagnosticStore.php
-          php -l clean/hangar18-manager/src/Admin/EditorController.php
-          php -l clean/hangar18-manager/src/Frontend/Renderer.php
-          node --check clean/hangar18-manager/assets/editor.js
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           if grep -R -n -E 'Hangar18\\UltimateDesigner|ultimate-designer-|EditorLego|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then
             echo 'Legacy editor dependency found in clean plugin.' >&2
             exit 1
@@ -32,14 +28,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f hangar18-manager-clean-v0.1.0.zip
-          (cd clean && zip -qr ../hangar18-manager-clean-v0.1.0.zip hangar18-manager)
-          unzip -tq hangar18-manager-clean-v0.1.0.zip
-          sha256sum hangar18-manager-clean-v0.1.0.zip
+          VERSION="$(php -r '$s=file_get_contents("clean/hangar18-manager/hangar18-manager.php"); if (!preg_match("/Version:\\s*([0-9.]+)/", $s, $m)) { exit(1); } echo $m[1];')"
+          ZIP="visual-designer-manager-dev-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd clean && zip -qr "../$ZIP" hangar18-manager)
+          unzip -tq "$ZIP"
+          sha256sum "$ZIP"
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
       - name: Upload installable ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: hangar18-manager-clean-v0.1.0
+          name: visual-designer-manager-dev
           if-no-files-found: error
           retention-days: 7
-          path: hangar18-manager-clean-v0.1.0.zip
+          path: ${{ env.ZIP }}
