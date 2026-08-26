@@ -1,4 +1,4 @@
-/* Visual Designer Manager 0.1.23 status markers. */
+/* Visual Designer Manager status markers. */
 .vd-manager-status{
     display:inline-block;
     margin-left:7px;
@@ -15,11 +15,15 @@
     color:#176b2c;
     border:1px solid #9fd3aa;
 }
-.vd-manager-status--partial,
-.vd-manager-status--planned{
+.vd-manager-status--partial{
     background:#fff3bf;
     color:#6f5700;
     border:1px solid #e3c85d;
+}
+.vd-manager-status--planned{
+    background:#fce8e8;
+    color:#8a1f1f;
+    border:1px solid #dba0a0;
 }
 #toplevel_page_h18-clean-manager .wp-submenu a{
     display:flex;
