@@ -1,2 +1,3 @@
 Prepare and release Visual Designer Manager 0.1.27 canvas recovery hotfix.
-nonce=20260826-1945
+nonce=20260826-1947
+retry=2
