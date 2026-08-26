@@ -51,42 +51,24 @@ final class NavigationController
 
         echo '<div class="wrap h18-manager-admin">';
         echo '<h1>Menu / Navigation</h1>';
-        echo '<p class="h18-manager-description">Administrér navigationens struktur uafhængigt af Visual Designer. Udseende, responsiv hamburger-menu og placering styres senere af Menu-elementet i Header/Footer Designer.</p>';
-
-        if (isset($_GET['h18_nav_notice'])) {
-            $notice = sanitize_text_field((string) wp_unslash($_GET['h18_nav_notice']));
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($notice) . '</p></div>';
-        }
+        echo '<p class="h18-manager-description">Administrér navigationens struktur uafhængigt af Visual Designer. Menuens udseende, responsive hamburger-menu og placering hører senere til Menu-elementet i Header/Footer Designer.</p>';
+        self::notice();
 
         echo '<div class="h18-manager-two-col">';
-        echo '<section class="h18-manager-card"><h2>Menuer</h2>';
-        if (!$menus) {
-            echo '<p>Der er endnu ingen klassiske WordPress-menuer.</p>';
-        } else {
-            echo '<table class="widefat striped"><thead><tr><th>Navn</th><th>Elementer</th><th></th></tr></thead><tbody>';
-            foreach ($menus as $menu) {
-                $items = wp_get_nav_menu_items((int) $menu->term_id);
-                echo '<tr><td><strong>' . esc_html((string) $menu->name) . '</strong></td><td>' . esc_html((string) count(is_array($items) ? $items : [])) . '</td><td><a class="button' . ((int) $menu->term_id === $selectedId ? ' button-primary' : '') . '" href="' . esc_url(self::url((int) $menu->term_id)) . '">Redigér</a></td></tr>';
-            }
-            echo '</tbody></table>';
-        }
-        echo '<h3>Ny menu</h3>';
-        self::formStart(self::ACTION_CREATE, 'create');
-        echo '<label><strong>Navn</strong><br><input class="regular-text" name="menu_name" required></label> ';
-        echo '<button class="button button-primary" type="submit">Opret menu</button>';
-        echo '</form></section>';
-
+        self::renderMenuList($menus, $selectedId);
         echo '<section class="h18-manager-card"><h2>Theme locations</h2>';
         self::renderLocations($menus);
-        echo '<p class="description">Theme-location er kun koblingen mellem en navigation og temaets runtime. Det visuelle menu-design skal ikke ligge i temaet.</p>';
-        echo '</section></div>';
+        echo '<p class="description">En theme-location kobler navigationens data til temaets runtime. Det visuelle menu-design skal ikke ligge i temaet.</p></section>';
+        echo '</div>';
 
-        if ($selected) {
-            self::renderSelectedMenu($selectedId, (string) $selected->name);
+        if ($selected instanceof \WP_Term) {
+            self::renderSelectedMenu((int) $selected->term_id, (string) $selected->name);
         }
 
-        echo '<section class="h18-manager-card"><h2>Versionssikkerhed</h2><p>Før Manageren ændrer navigation eller theme-location, gemmes automatisk et strukturelt snapshot. Der er aktuelt <strong>' . esc_html((string) $historyCount) . '</strong> snapshots; maksimalt ' . esc_html((string) self::MAX_HISTORY) . ' bevares.</p><p class="description">Restore-UI til disse snapshots tilføjes som næste navigationstrin. Den eksisterende WordPress Menu-editor kan fortsat bruges parallelt, men ændringer foretaget direkte dér bliver ikke automatisk snapshot'et af Visual Designer Manager.</p></section>';
-        echo '</div>';
+        echo '<section class="h18-manager-card"><h2>Versionssikkerhed</h2>';
+        echo '<p>Før Visual Designer Manager ændrer navigation eller theme-location, gemmes automatisk et strukturelt snapshot. Der er aktuelt <strong>' . esc_html((string) $historyCount) . '</strong> snapshots; maksimalt ' . esc_html((string) self::MAX_HISTORY) . ' bevares.</p>';
+        echo '<p class="description">Restore-UI til snapshots tilføjes senere. Ændringer foretaget direkte i WordPress Menu-editoren bliver ikke automatisk gemt som snapshot af Visual Designer Manager.</p>';
+        echo '</section></div>';
     }
 
     public static function createMenu(): void
@@ -151,8 +133,20 @@ final class NavigationController
         $menuId = absint($_POST['menu_id'] ?? 0);
         check_admin_referer('h18_clean_nav_save_' . $menuId);
         $menu = self::requireMenu($menuId);
-        self::snapshot('Før ændring af menu ' . (string) $menu->name);
 
+        $items = wp_get_nav_menu_items($menuId, ['post_status' => 'any']);
+        $items = is_array($items) ? $items : [];
+        $titles = self::postedArray('item_title');
+        $parents = self::postedArray('item_parent');
+        $orders = self::postedArray('item_order');
+        $parentMap = [];
+        foreach ($items as $item) {
+            $id = (int) $item->ID;
+            $parentMap[$id] = absint($parents[$id] ?? $item->menu_item_parent);
+        }
+        self::validateParentMap($parentMap);
+
+        self::snapshot('Før ændring af menu ' . (string) $menu->name);
         $newName = sanitize_text_field((string) wp_unslash($_POST['menu_name'] ?? ''));
         if ($newName !== '' && $newName !== (string) $menu->name) {
             $renamed = wp_update_nav_menu_object($menuId, ['menu-name' => $newName]);
@@ -161,22 +155,12 @@ final class NavigationController
             }
         }
 
-        $items = wp_get_nav_menu_items($menuId, ['post_status' => 'any']);
-        $titles = isset($_POST['item_title']) && is_array($_POST['item_title']) ? $_POST['item_title'] : [];
-        $parents = isset($_POST['item_parent']) && is_array($_POST['item_parent']) ? $_POST['item_parent'] : [];
-        $orders = isset($_POST['item_order']) && is_array($_POST['item_order']) ? $_POST['item_order'] : [];
-        foreach (is_array($items) ? $items : [] as $item) {
+        foreach ($items as $item) {
             $id = (int) $item->ID;
-            $title = sanitize_text_field((string) wp_unslash($titles[$id] ?? $item->title));
-            $parent = absint($parents[$id] ?? $item->menu_item_parent);
-            if ($parent === $id) {
-                $parent = 0;
-            }
-            $position = max(1, absint($orders[$id] ?? $item->menu_order));
             $args = [
-                'menu-item-title' => $title,
-                'menu-item-parent-id' => $parent,
-                'menu-item-position' => $position,
+                'menu-item-title' => sanitize_text_field((string) wp_unslash($titles[$id] ?? $item->title)),
+                'menu-item-parent-id' => (int) ($parentMap[$id] ?? 0),
+                'menu-item-position' => max(1, absint($orders[$id] ?? $item->menu_order)),
                 'menu-item-status' => 'publish',
                 'menu-item-type' => (string) $item->type,
                 'menu-item-object' => (string) $item->object,
@@ -216,7 +200,7 @@ final class NavigationController
         check_admin_referer('h18_clean_nav_locations');
         self::snapshot('Før ændring af theme locations');
         $registered = get_registered_nav_menus();
-        $posted = isset($_POST['locations']) && is_array($_POST['locations']) ? $_POST['locations'] : [];
+        $posted = self::postedArray('locations');
         $locations = get_nav_menu_locations();
         foreach ($registered as $key => $label) {
             $locations[$key] = absint($posted[$key] ?? 0);
@@ -225,34 +209,57 @@ final class NavigationController
         self::redirect(0, 'Theme locations gemt.');
     }
 
+    /** @param array<int,\WP_Term> $menus */
+    private static function renderMenuList(array $menus, int $selectedId): void
+    {
+        echo '<section class="h18-manager-card"><h2>Menuer</h2>';
+        if (!$menus) {
+            echo '<p>Der er endnu ingen klassiske WordPress-menuer.</p>';
+        } else {
+            echo '<table class="widefat striped"><thead><tr><th>Navn</th><th>Elementer</th><th></th></tr></thead><tbody>';
+            foreach ($menus as $menu) {
+                $items = wp_get_nav_menu_items((int) $menu->term_id);
+                $active = (int) $menu->term_id === $selectedId ? ' button-primary' : '';
+                echo '<tr><td><strong>' . esc_html((string) $menu->name) . '</strong></td><td>' . esc_html((string) count(is_array($items) ? $items : [])) . '</td><td><a class="button' . esc_attr($active) . '" href="' . esc_url(self::url((int) $menu->term_id)) . '">Redigér</a></td></tr>';
+            }
+            echo '</tbody></table>';
+        }
+        echo '<h3>Ny menu</h3><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+        echo '<input type="hidden" name="action" value="' . esc_attr(self::ACTION_CREATE) . '">';
+        wp_nonce_field('h18_clean_nav_create');
+        echo '<label><strong>Navn</strong><br><input class="regular-text" name="menu_name" required></label> ';
+        echo '<button class="button button-primary" type="submit">Opret menu</button></form></section>';
+    }
+
     private static function renderSelectedMenu(int $menuId, string $menuName): void
     {
         $items = wp_get_nav_menu_items($menuId, ['post_status' => 'any']);
         $items = is_array($items) ? $items : [];
         echo '<section class="h18-manager-card"><h2>Redigér: ' . esc_html($menuName) . '</h2>';
-        self::formStart(self::ACTION_SAVE, 'save_' . $menuId);
-        echo '<input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '">';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_SAVE) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '">';
         wp_nonce_field('h18_clean_nav_save_' . $menuId);
         echo '<p><label><strong>Menunavn</strong><br><input class="regular-text" name="menu_name" value="' . esc_attr($menuName) . '"></label></p>';
-        if (!$items) {
-            echo '<p>Menuen har ingen punkter endnu.</p>';
-        } else {
-            echo '<table class="widefat striped h18-manager-table"><thead><tr><th>Titel</th><th>Type</th><th>Parent</th><th>Position</th><th>URL</th><th></th></tr></thead><tbody>';
+        if ($items) {
+            echo '<table class="widefat striped h18-manager-table"><thead><tr><th>Titel</th><th>Type</th><th>Parent</th><th>Position</th><th>URL</th></tr></thead><tbody>';
             foreach ($items as $item) {
                 $id = (int) $item->ID;
-                echo '<tr><td><input name="item_title[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->title) . '"></td>';
-                echo '<td><code>' . esc_html((string) $item->type) . '</code></td><td><select name="item_parent[' . esc_attr((string) $id) . ']"><option value="0">— root —</option>';
-                foreach ($items as $parent) {
-                    if ((int) $parent->ID === $id) { continue; }
-                    echo '<option value="' . esc_attr((string) $parent->ID) . '"' . selected((int) $item->menu_item_parent, (int) $parent->ID, false) . '>' . esc_html((string) $parent->title) . '</option>';
+                echo '<tr><td><input name="item_title[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->title) . '"></td><td><code>' . esc_html((string) $item->type) . '</code></td>';
+                echo '<td><select name="item_parent[' . esc_attr((string) $id) . ']"><option value="0">— root —</option>';
+                foreach ($items as $candidate) {
+                    if ((int) $candidate->ID === $id) {
+                        continue;
+                    }
+                    echo '<option value="' . esc_attr((string) $candidate->ID) . '"' . selected((int) $item->menu_item_parent, (int) $candidate->ID, false) . '>' . esc_html((string) $candidate->title) . '</option>';
                 }
-                echo '</select></td><td><input type="number" min="1" style="width:75px" name="item_order[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->menu_order) . '"></td>';
-                echo '<td><small>' . esc_html((string) $item->url) . '</small></td><td></td></tr>';
+                echo '</select></td><td><input type="number" min="1" style="width:75px" name="item_order[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->menu_order) . '"></td><td><small>' . esc_html((string) $item->url) . '</small></td></tr>';
             }
             echo '</tbody></table>';
+        } else {
+            echo '<p>Menuen har ingen punkter endnu.</p>';
         }
         echo '<p><button class="button button-primary" type="submit">Gem menu</button> <a class="button" href="' . esc_url(admin_url('nav-menus.php?action=edit&menu=' . $menuId)) . '">Åbn WordPress Menu-editor</a></p></form>';
 
+        self::renderAddItems($menuId);
         if ($items) {
             echo '<h3>Slet menupunkt</h3><div class="h18-manager-actions">';
             foreach ($items as $item) {
@@ -262,24 +269,22 @@ final class NavigationController
             }
             echo '</div>';
         }
+        echo '</section>';
+    }
 
-        echo '<hr><h3>Tilføj menupunkt</h3><div class="h18-manager-two-col">';
-        echo '<div><h4>WordPress-side</h4>';
-        self::formStart(self::ACTION_ADD, 'add_page_' . $menuId);
-        echo '<input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="page">';
+    private static function renderAddItems(int $menuId): void
+    {
+        echo '<hr><h3>Tilføj menupunkt</h3><div class="h18-manager-two-col"><div><h4>WordPress-side</h4>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_ADD) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="page">';
         wp_nonce_field('h18_clean_nav_add_' . $menuId);
         echo '<select name="page_id" required><option value="">Vælg side…</option>';
-        foreach (get_pages(['sort_column' => 'post_title', 'post_status' => ['publish', 'draft', 'private']]) as $page) {
+        foreach (get_pages(['sort_column' => 'post_title']) as $page) {
             echo '<option value="' . esc_attr((string) $page->ID) . '">' . esc_html((string) $page->post_title) . '</option>';
         }
         echo '</select> <button class="button" type="submit">Tilføj side</button></form></div>';
-
-        echo '<div><h4>Custom link</h4>';
-        self::formStart(self::ACTION_ADD, 'add_custom_' . $menuId);
-        echo '<input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="custom">';
+        echo '<div><h4>Custom link</h4><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_ADD) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="custom">';
         wp_nonce_field('h18_clean_nav_add_' . $menuId);
-        echo '<p><input name="custom_title" placeholder="Titel" required></p><p><input class="regular-text" type="url" name="custom_url" placeholder="https://…" required></p><button class="button" type="submit">Tilføj link</button></form></div>';
-        echo '</div></section>';
+        echo '<p><input name="custom_title" placeholder="Titel" required></p><p><input class="regular-text" type="url" name="custom_url" placeholder="https://…" required></p><button class="button" type="submit">Tilføj link</button></form></div></div>';
     }
 
     /** @param array<int,\WP_Term> $menus */
@@ -288,10 +293,10 @@ final class NavigationController
         $registered = get_registered_nav_menus();
         $locations = get_nav_menu_locations();
         if (!$registered) {
-            echo '<p>Det aktive tema registrerer ingen klassiske menu-locations. Det forhindrer ikke senere brug af et Visual Designer Menu-element, som kan vælge en menu direkte.</p>';
+            echo '<p>Det aktive tema registrerer ingen klassiske menu-locations. Et senere Visual Designer Menu-element kan stadig vælge en menu direkte.</p>';
             return;
         }
-        self::formStart(self::ACTION_LOCATIONS, 'locations');
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_LOCATIONS) . '">';
         wp_nonce_field('h18_clean_nav_locations');
         echo '<table class="widefat striped"><thead><tr><th>Location</th><th>Menu</th></tr></thead><tbody>';
         foreach ($registered as $key => $label) {
@@ -346,6 +351,35 @@ final class NavigationController
         update_option(self::HISTORY_OPTION, $history, false);
     }
 
+    /** @param array<int,int> $parentMap */
+    private static function validateParentMap(array &$parentMap): void
+    {
+        foreach ($parentMap as $id => &$parent) {
+            if ($parent === $id || ($parent !== 0 && !isset($parentMap[$parent]))) {
+                $parent = 0;
+            }
+        }
+        unset($parent);
+        foreach (array_keys($parentMap) as $start) {
+            $seen = [];
+            $cursor = $start;
+            while ($cursor !== 0 && isset($parentMap[$cursor])) {
+                if (isset($seen[$cursor])) {
+                    $parentMap[$start] = 0;
+                    break;
+                }
+                $seen[$cursor] = true;
+                $cursor = (int) $parentMap[$cursor];
+            }
+        }
+    }
+
+    /** @return array<mixed> */
+    private static function postedArray(string $key): array
+    {
+        return isset($_POST[$key]) && is_array($_POST[$key]) ? wp_unslash($_POST[$key]) : [];
+    }
+
     /** @return \WP_Term */
     private static function requireMenu(int $menuId)
     {
@@ -356,9 +390,13 @@ final class NavigationController
         return $menu;
     }
 
-    private static function formStart(string $action, string $suffix): void
+    private static function notice(): void
     {
-        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr($action) . '">';
+        if (!isset($_GET['h18_nav_notice'])) {
+            return;
+        }
+        $notice = sanitize_text_field((string) wp_unslash($_GET['h18_nav_notice']));
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($notice) . '</p></div>';
     }
 
     private static function url(int $menuId = 0): string
@@ -369,8 +407,7 @@ final class NavigationController
 
     private static function redirect(int $menuId, string $notice): void
     {
-        $url = self::url($menuId);
-        wp_safe_redirect(add_query_arg('h18_nav_notice', rawurlencode($notice), $url));
+        wp_safe_redirect(add_query_arg('h18_nav_notice', rawurlencode($notice), self::url($menuId)));
         exit;
     }
 
