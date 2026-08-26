@@ -1,0 +1,60 @@
+name: Apply Visual Designer Manager 0.1.28 TDZ fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'v0128-tdz-fix-now.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic 0.1.28 fix
+        run: python .github/scripts/apply_v0128_tdz_fix.py
+
+      - name: Verify source and startup ordering
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check clean/hangar18-manager/assets/editor-v018-core.js
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('clean/hangar18-manager/assets/editor-v018-core.js')
+          s = p.read_text(encoding='utf-8')
+          font = "const FONT_TOKENS ="
+          state = "let state = normalizeModel(CFG.initialModel || {});"
+          assert s.count(font) == 1, 'FONT_TOKENS declaration count is invalid'
+          assert s.count(state) == 1, 'state initialization count is invalid'
+          assert s.index(font) < s.index(state), 'TDZ regression: FONT_TOKENS initializes after normalizeModel'
+          print('Startup-order QA PASS')
+          PY
+          grep -q 'Version: 0.1.28' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.28'" clean/hangar18-manager/hangar18-manager.php
+          grep -q '<h4>0.1.28</h4>' clean-release-notes.html
+
+      - name: Commit fixed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/assets/editor-v018-core.js clean/hangar18-manager/hangar18-manager.php clean/hangar18-manager/readme.txt clean-release-notes.html clean-release-now.txt
+          git commit -m 'Fix Visual Designer startup TDZ regression in 0.1.28'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
