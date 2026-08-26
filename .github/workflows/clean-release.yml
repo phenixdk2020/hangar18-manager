@@ -35,6 +35,21 @@ jobs:
           find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           php .github/scripts/hierarchy_normalizer_qa.php
           php .github/scripts/v0125_model_qa.php
+          # 0.1.26 WYSIWYG / typography / persistence release gates.
+          grep -q "headingFontFamily" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -q "headingFontSize" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "rememberSelection" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "manualW" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "manualH" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "autoSize" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "autoFitButtons" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "nl2br" clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q "editor labels are chrome" clean/hangar18-manager/assets/editor-v0123-ux.css
+          grep -q "overscroll-behavior:contain" clean/hangar18-manager/assets/editor-v0123-ux.css
+          if grep -n "Gem clean layout" clean/hangar18-manager/assets/editor-v018-core.js clean/hangar18-manager/assets/editor-v0123-ux.js clean/hangar18-manager/assets/editor-v0125.js; then
+            echo 'Obsolete generic Clean save note remains in active editor runtime.' >&2
+            exit 1
+          fi
           test -s clean/hangar18-manager/assets/admin-v019.css
           test -s clean/hangar18-manager/assets/editor-v0125.js
           test -s clean/hangar18-manager/assets/editor-v0125.css
