@@ -1,4 +1,4 @@
-v0.1.24
-triggered_utc=2026-08-26T09:40:00Z
-reason=Release browser-test fixes for optional save notes, Manager status colors and complete green selection frame.
-nonce=25-manual
+v0.1.25
+triggered_utc=2026-08-26T12:37:00Z
+reason=Release rich text, Button element, multi-template Header/Footer, page assignments, automatic version-note hardening and Inspector stability after integration QA.
+nonce=26-manual
