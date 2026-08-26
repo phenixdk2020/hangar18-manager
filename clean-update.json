@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.23.zip",
-  "sha256": "e86d38dfb953a48f3d71180d81ab2fd6eff9c48b3c74663a8450fab65fcf81da",
-  "source_commit": "26251c5407638eb227d4f1b2561ae2e889b770c8",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.24.zip",
+  "sha256": "fb20e398030a7d65add43380a5801e1245a1b902a9f68209a7d1f3c7ef8f9e23",
+  "source_commit": "b52b6ec2b2d96601af4eea90d6ca8971f4efb841",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.23</h4><ul><li>Ny global <strong>Header / Footer Designer</strong> med separate canonical modeller og separate ikke-destruktive versionshistorikker for Header og Footer.</li><li>Header/Footer genbruger den samme 120-unit / 8-px Visual Designer-layoutmotor samt Desktop/Laptop/Mobil som almindelige sider. Fase 1 bruger Sektion, Kasse, Tekst og Billede; Menu/Knap/Ikon kommer efter Header/Footer-layout-QA.</li><li>Header/Footer kan gemme klargøringsindstillinger som sticky Header, overlay og content width, men 0.1.23 overtager bevidst ikke temaets offentlige Header/Footer endnu for at undgå dobbelt shell før Theme-integration.</li><li>Managerens moduler får visuel status: grøn <strong>Klar</strong> og gul <strong>Under udvikling / Ikke færdig</strong>, så det er tydeligt hvilke områder der kan bruges.</li><li>Menu-redesign er bevidst udskudt, til Menu-elementet kan bygges direkte ind i Header/Footer Designer.</li><li>Nye Sektioner, Kasser, Tekst- og Billede-elementer starter med større, mere brugbare højder. Ny Tekst får 12 px standard-padding.</li><li>Den grønne selection-markering er tykkere og tydeligere.</li><li>Ændringsbeskrivelsen ved Gem er nu valgfri. Hvis feltet er tomt, genererer Visual Designer automatisk en kort ændringsbeskrivelse til versionshistorikken.</li><li>Tekst-preview i Designer viser hele teksten og bevarer linjeskift og tomme linjer.</li><li>Manuel billedredigering er tydeliggjort som separat billedindhold, og <strong>Tilbage til Vis hele billedet</strong> rydder nu den manuelle billedramme og inline-positionering korrekt.</li><li>Hierarki, responsive geometri, Export, Tema/Shell, programbackup og SHA-verificeret updater fra 0.1.22 er bevaret og regressions-testet.</li></ul>"
+    "changelog": "<h4>0.1.24</h4><ul><li><strong>Ændringer ved Gem er nu reelt valgfri:</strong> den ældre JavaScript-validering, som stadig krævede en manuel ændringsbeskrivelse, er fjernet. Hvis feltet er tomt, genererer Visual Designer automatisk versionsnoten.</li><li>Manager-status er præciseret visuelt: <strong>grøn = Klar</strong>, <strong>gul = Under udvikling</strong> og <strong>rød = Ikke færdig / ikke påbegyndt</strong>.</li><li>Visual Designer og øvrige delvist implementerede Manager-moduler står nu gule i stedet for fejlagtigt at blive markeret Klar.</li><li>Den grønne selection-ramme tegnes nu inden for elementets canonical boks og med højere editor-z-index, så alle fire sider — især bundlinjen på tætte/øverste elementer — forbliver synlige.</li><li>0.1.23 Header/Footer Designer fase 1, billedindholdsredigering, tekst-linjeskift, større standardelementer, hierarki og responsive layouts er bevaret.</li></ul>"
   }
 }
