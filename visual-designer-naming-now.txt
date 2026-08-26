@@ -1,3 +1,3 @@
-triggered_utc=2026-08-26T07:24:00Z
-reason=Fix technical filename references after Visual Designer public naming migration and re-run QA.
-nonce=4
+triggered_utc=2026-08-26T07:27:00Z
+reason=Finalize Visual Designer naming and repair technical documentation references.
+nonce=5
