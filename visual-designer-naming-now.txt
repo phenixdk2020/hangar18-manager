@@ -1,3 +1,3 @@
-triggered_utc=2026-08-26T07:16:00Z
-reason=Re-run approved Visual Designer / Visual Designer Manager public naming after expanding legacy label coverage.
-nonce=2
+triggered_utc=2026-08-26T07:20:00Z
+reason=Apply approved Visual Designer naming while workflow files are handled separately through GitHub.
+nonce=3
