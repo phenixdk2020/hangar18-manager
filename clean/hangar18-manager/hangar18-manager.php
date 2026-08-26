@@ -44,6 +44,7 @@ require_once H18_CLEAN_DIR . 'src/Diagnostics/DiagnosticStore.php';
 require_once H18_CLEAN_DIR . 'src/Admin/EditorController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminMenuBridge.php';
+require_once H18_CLEAN_DIR . 'src/Admin/ExportController.php';
 require_once H18_CLEAN_DIR . 'src/Frontend/Renderer.php';
 require_once H18_CLEAN_DIR . 'src/Frontend/ResponsiveRenderer.php';
 require_once H18_CLEAN_DIR . 'src/Update/GitHubUpdater.php';
@@ -53,6 +54,7 @@ add_action('plugins_loaded', static function (): void {
     \Hangar18\Clean\Admin\EditorController::register();
     \Hangar18\Clean\Admin\AdminController::register();
     \Hangar18\Clean\Admin\AdminMenuBridge::register();
+    \Hangar18\Clean\Admin\ExportController::register();
     \Hangar18\Clean\Frontend\Renderer::register();
     \Hangar18\Clean\Frontend\ResponsiveRenderer::register();
     \Hangar18\Clean\Update\GitHubUpdater::register();
