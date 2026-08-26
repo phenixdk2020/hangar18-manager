@@ -168,7 +168,7 @@ final class EditorController
                 echo '<tr><td><strong>v' . esc_html((string) $version) . '</strong></td>';
                 echo '<td>' . esc_html((string) ($entry['savedUtc'] ?? '')) . '</td>';
                 echo '<td>' . esc_html((string) ($entry['note'] ?? '')) . '</td>';
-                echo '<td><code>' . esc_html(substr((string) ($entry['digest'] ?? ''), 0, 14)) . '…</code></td><td><div class="h18-Visual Designer-version-actions">';
+                echo '<td><code>' . esc_html(substr((string) ($entry['digest'] ?? ''), 0, 14)) . '…</code></td><td><div class="h18-clean-version-actions">';
                 echo '<form method="post" target="_blank" action="' . esc_url(admin_url('admin-post.php')) . '">';
                 wp_nonce_field(self::NONCE_VERSION_PREVIEW);
                 echo '<input type="hidden" name="action" value="' . esc_attr(self::VERSION_PREVIEW_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $postId) . '"><input type="hidden" name="version" value="' . esc_attr((string) $version) . '">';

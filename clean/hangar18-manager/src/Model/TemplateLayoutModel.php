@@ -395,7 +395,7 @@ final class TemplateLayoutModel
     private static function name(string $name, string $fallback): string
     {
         $name = trim(sanitize_text_field($name));
-        return $name !== '' ? mb_substr($name, 0, 120) : $fallback;
+        return $name !== '' ? (function_exists('mb_substr') ? mb_substr($name, 0, 120) : substr($name, 0, 120)) : $fallback;
     }
 
     private static function modelOption(string $id): string { return 'h18_clean_tpl_' . self::id($id) . '_model_v1'; }

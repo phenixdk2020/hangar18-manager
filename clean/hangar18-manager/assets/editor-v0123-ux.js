@@ -111,7 +111,7 @@
             if ((input.value || '').trim() === '') {
                 input.value = automaticChangeNote();
                 var userEntered = form.querySelector('[name="change_note_user_entered"]');
-                if (userEntered) { userEntered.value = '1'; }
+                if (userEntered) { userEntered.value = '0'; }
             }
         }, true);
     }

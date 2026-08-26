@@ -178,6 +178,8 @@
     function augmentAutomaticNote() {
         var input = document.getElementById('h18-clean-change-note');
         if (!input) { return; }
+        var userEntered = document.querySelector('[name="change_note_user_entered"]');
+        if (userEntered && String(userEntered.value || '') === '1') { return; }
 
         var coreLabels = window.H18CleanHistory && typeof window.H18CleanHistory.labels === 'function'
             ? window.H18CleanHistory.labels()
@@ -206,7 +208,7 @@
         if (form) {
             form.addEventListener('submit', function () {
                 sync();
-                window.setTimeout(augmentAutomaticNote, 0);
+                augmentAutomaticNote();
             }, true);
         }
     }
