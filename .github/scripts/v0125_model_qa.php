@@ -48,7 +48,8 @@ if (!function_exists('update_post_meta')) {
 if (!function_exists('wp_generate_uuid4')) {
     function wp_generate_uuid4(): string {
         $GLOBALS['vd_uuid_counter']++;
-        return sprintf('00000000-0000-4000-8000-%012d', $GLOBALS['vd_uuid_counter']);
+        $counter = (int) $GLOBALS['vd_uuid_counter'];
+        return sprintf('%08x-%04x-4000-8000-%012x', $counter, $counter & 0xffff, $counter);
     }
 }
 
