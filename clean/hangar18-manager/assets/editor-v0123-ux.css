@@ -1,0 +1,52 @@
+/* Visual Designer 0.1.23: clearer selection and faithful text preview. */
+.h18-clean-node.is-selected{
+    outline-width:3px!important;
+    outline-color:#00a32a!important;
+    outline-style:solid!important;
+}
+.h18-clean-node.is-selected.has-layout-overlap{
+    outline-width:3px!important;
+    outline-color:#00a32a!important;
+    outline-style:solid!important;
+}
+
+/* Preserve line breaks and blank lines in Designer just like authored text. */
+.h18-clean-node-preview--text .h18-clean-text-body{
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+}
+
+/* Make image-box vs image-content editing explicit in Inspector. */
+.h18-vd-image-controls{
+    margin-top:12px;
+    padding:12px;
+    border:1px solid #c3ae83;
+    border-radius:7px;
+    background:#fffdf7;
+}
+.h18-vd-image-controls>strong:first-child{
+    display:block;
+    margin-bottom:8px;
+}
+.h18-vd-image-content-heading{
+    display:block;
+    margin:14px 0 7px;
+    padding-top:10px;
+    border-top:1px solid #ded4bd;
+}
+.h18-vd-image-controls .h18-clean-v0120-manual-button{
+    width:100%;
+    min-height:38px;
+    white-space:normal;
+    font-weight:600;
+}
+.h18-vd-image-controls.is-manual .h18-clean-v0120-manual-button{
+    border-color:#c3ae83;
+    background:#f6f0e2;
+    color:#3c3424;
+}
+
+/* Change note is optional in 0.1.23. */
+.h18-clean-change-note-wrap input:optional{
+    border-style:solid;
+}
