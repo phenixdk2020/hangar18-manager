@@ -1,4 +1,4 @@
 v0.1.28
 triggered_utc=2026-08-26T17:55:00Z
 reason=Release critical Designer startup TDZ fix for existing Text elements.
-nonce=28-tdz-fix-action
+nonce=28-tdz-fix-manual-release
