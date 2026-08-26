@@ -1,4 +1,4 @@
 v0.1.21-dev
-triggered_utc=2026-08-26T05:48:00Z
-reason=QA Export, Navigation and Theme shell modules without publishing a release.
-nonce=2
+triggered_utc=2026-08-26T05:55:00Z
+reason=QA current Export, Navigation and Theme shell modules after navigation syntax fix.
+nonce=3
