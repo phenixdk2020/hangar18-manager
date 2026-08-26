@@ -1,4 +1,4 @@
-v0.1.22
-triggered_utc=2026-08-26T07:30:00Z
-reason=Release hierarchy enforcement, safe model normalization, Visual Designer naming, Menu/Navigation, Export and Theme/Shell administration.
-nonce=23-manual
+v0.1.23
+triggered_utc=2026-08-26T09:25:00Z
+reason=Release Header/Footer Global Designer phase 1, Manager status markers, larger element defaults, optional automatic save notes, text linebreak fidelity and image reset UX fixes.
+nonce=24-manual
