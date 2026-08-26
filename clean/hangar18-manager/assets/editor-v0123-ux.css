@@ -1,13 +1,18 @@
-/* Visual Designer 0.1.23: clearer selection and faithful text preview. */
+/* Visual Designer: clearer selection and faithful text preview. */
 .h18-clean-node.is-selected{
     outline-width:3px!important;
     outline-color:#00a32a!important;
     outline-style:solid!important;
+    /* Draw editor chrome inside the canonical box so adjacent grid items cannot cover an edge. */
+    outline-offset:-3px!important;
+    z-index:65!important;
 }
 .h18-clean-node.is-selected.has-layout-overlap{
     outline-width:3px!important;
     outline-color:#00a32a!important;
     outline-style:solid!important;
+    outline-offset:-3px!important;
+    z-index:65!important;
 }
 
 /* Preserve line breaks and blank lines in Designer just like authored text. */
@@ -46,7 +51,7 @@
     color:#3c3424;
 }
 
-/* Change note is optional in 0.1.23. */
+/* Change note is optional. */
 .h18-clean-change-note-wrap input:optional{
     border-style:solid;
 }
