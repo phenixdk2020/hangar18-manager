@@ -738,3 +738,13 @@ Hvis problemet fortsætter, brug **Kopiér diagnose-link** og tag et screenshot 
 - `README.md` – overordnet repository-/projektinformation.
 
 Når nye brugerfunktioner bliver frigivet, skal denne brugermanual opdateres sammen med den relevante Visual Designer-version.
+
+## 0.1.23 – Header/Footer Designer og UX-rettelser
+
+- **Header / Footer** i Manager åbner nu en global Visual Designer med fanerne Header og Footer.
+- Header og Footer har hver sin canonical model, indstillinger og versionshistorik og ændrer ikke sideversionerne.
+- Fase 1 bruger Sektion, Kasse, Tekst og Billede samt Desktop/Laptop/Mobil. Menu/Knap/Ikon kommer efter layout-QA.
+- Manager-menuen viser **Klar** (grøn) og **Under udvikling / Ikke færdig** (gul).
+- Menu-redigeringen er ikke redesignet endnu; den afventer Header/Footer og det kommende Menu-element.
+- Nye elementer starter større; ny Tekst får 12 px padding.
+- Grøn selection er tykkere, Gem-note er valgfri/automatisk, tekst-preview bevarer linjeskift, og billed-reset rydder manuel billedramme korrekt.

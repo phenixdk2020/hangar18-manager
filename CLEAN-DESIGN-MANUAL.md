@@ -552,3 +552,12 @@ Når et nyt Visual Designer-designvalg godkendes:
 5. Byg en verificeret GitHub-releasepakke.
 
 `CLEAN-DESIGN-MANUAL.md` er fremover den autoritative arkitekturbeskrivelse for den nye Visual Designer. Den ældre `DESIGN-MANUAL.md` bevares som reference for eksisterende designstandarder og legacy 0.4.x-adfærd, indtil de relevante regler er migreret til Clean.
+
+## 0.1.23 – Global Header/Footer Designer
+
+- Header og Footer er globale Visual Designer-modeller i separat storage og med separat ikke-destruktiv versionshistorik.
+- De genbruger Side Designer-layoutmotoren; der må ikke opstå en parallel Header/Footer-layoutmotor.
+- 0.1.23 overtager ikke endnu temaets runtime Header/Footer. Indstillingen kan klargøres, men frontend-aktivering venter på Theme-shell integration for at undgå dobbelt Header/Footer.
+- Menu-data bevares separat. Visuelt Menu-element bygges først efter Header/Footer-canvas og indsættes derefter som et normalt globalt element.
+- Manager-moduler viser modenhedsstatus; gul betyder ikke færdig.
+- Versionsnote er valgfri og kan systemgenereres.

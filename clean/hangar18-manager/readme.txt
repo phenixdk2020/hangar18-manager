@@ -2,8 +2,20 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.15
+Version: 0.1.23
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.23 ==
+* Første globale Header/Footer Designer med separat canonical model og versionshistorik.
+* Header og Footer bruger samme 120-unit / 8-px layoutmotor og Desktop/Laptop/Mobil-model som Side Designer.
+* Manager-menuen viser modulstatus visuelt: grøn = klar, gul = under udvikling/ikke færdig.
+* Menu-redesign er bevidst udskudt, til Menu-elementet bygges ind i Header/Footer.
+* Nye Sektion/Kasse/Tekst/Billede starter større; ny Tekst får 12 px standard-padding.
+* Grøn selection-outline er tykkere.
+* Ændringsbeskrivelsen ved Gem er valgfri og genereres automatisk, hvis feltet er tomt.
+* Tekst-preview bevarer hele teksten, linjeskift og tomme linjer.
+* Manuel billedredigering er tydeligere, og reset til Vis hele billedet rydder manuel UI-state korrekt.
+
 
 == 0.1.15 ==
 * Valgt/aktivt element markeres grønt i stedet for blåt.

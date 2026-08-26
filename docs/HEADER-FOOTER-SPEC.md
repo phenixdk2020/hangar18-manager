@@ -298,13 +298,12 @@ Før Header/Footer implementeres produktionsklart, skal den fælles Side Designe
 Anbefalet rækkefølge:
 
 1. 0.1.22 – hierarki og layout-QA;
-2. Global Design-model;
-3. Theme-shell-kontrakt;
-4. Menu-data-/Menu-element-kontrakt;
-5. Header Designer;
-6. Footer Designer;
-7. mobilmenu og accessibility-QA;
-8. parity-test mod eksisterende site;
-9. Export/Import integration.
+2. 0.1.23 – global Header/Footer-model og fælles Designer-canvas;
+3. Header/Footer layout-QA med Sektion/Kasse/Tekst/Billede;
+4. Global Design-model og Theme-shell-kontrakt;
+5. Menu-element oven på eksisterende Menu-data;
+6. mobilmenu og accessibility-QA;
+7. parity-test mod eksisterende site;
+8. Export/Import integration.
 
 Denne fil er den autoritative detaljespecifikation for grænsen mellem Header, Footer, Menu og Theme.

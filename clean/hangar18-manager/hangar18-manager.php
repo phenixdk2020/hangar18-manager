@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.22
+ * Version: 0.1.23
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.22');
+define('H18_CLEAN_VERSION', '0.1.23');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -41,6 +41,7 @@ if (!class_exists('Hangar18_Manager', false)) {
 
 require_once H18_CLEAN_DIR . 'src/Model/HierarchyNormalizer.php';
 require_once H18_CLEAN_DIR . 'src/Model/LayoutModel.php';
+require_once H18_CLEAN_DIR . 'src/Model/GlobalLayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Diagnostics/DiagnosticStore.php';
 require_once H18_CLEAN_DIR . 'src/Admin/EditorController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminController.php';
@@ -48,6 +49,7 @@ require_once H18_CLEAN_DIR . 'src/Admin/AdminMenuBridge.php';
 require_once H18_CLEAN_DIR . 'src/Admin/ExportController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/NavigationController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/ThemeController.php';
+require_once H18_CLEAN_DIR . 'src/Admin/GlobalDesignerController.php';
 require_once H18_CLEAN_DIR . 'src/Frontend/Renderer.php';
 require_once H18_CLEAN_DIR . 'src/Frontend/ResponsiveRenderer.php';
 require_once H18_CLEAN_DIR . 'src/Update/GitHubUpdater.php';
@@ -60,13 +62,16 @@ add_action('plugins_loaded', static function (): void {
     \Hangar18\Clean\Admin\ExportController::register();
     \Hangar18\Clean\Admin\NavigationController::register();
     \Hangar18\Clean\Admin\ThemeController::register();
+    \Hangar18\Clean\Admin\GlobalDesignerController::register();
     \Hangar18\Clean\Frontend\Renderer::register();
     \Hangar18\Clean\Frontend\ResponsiveRenderer::register();
     \Hangar18\Clean\Update\GitHubUpdater::register();
 });
 
 add_action('admin_enqueue_scripts', static function (string $hook): void {
-    if (strpos($hook, 'h18-clean-editor') === false || !current_user_can('edit_pages')) {
+    $isPageDesigner = strpos($hook, 'h18-clean-editor') !== false;
+    $isGlobalDesigner = strpos($hook, 'h18-clean-header-footer') !== false;
+    if ((!$isPageDesigner && !$isGlobalDesigner) || !current_user_can('edit_pages')) {
         return;
     }
 
@@ -77,9 +82,15 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     wp_dequeue_script('h18-clean-editor');
 
     $postId = isset($_GET['post']) ? absint($_GET['post']) : 0;
-    $model = $postId > 0 && get_post_type($postId) === 'page'
-        ? \Hangar18\Clean\Model\LayoutModel::get($postId)
-        : \Hangar18\Clean\Model\LayoutModel::empty();
+    if ($isGlobalDesigner) {
+        $part = isset($_GET['part']) && sanitize_key((string) $_GET['part']) === 'footer' ? 'footer' : 'header';
+        $postId = 0;
+        $model = \Hangar18\Clean\Model\GlobalLayoutModel::get($part);
+    } else {
+        $model = $postId > 0 && get_post_type($postId) === 'page'
+            ? \Hangar18\Clean\Model\LayoutModel::get($postId)
+            : \Hangar18\Clean\Model\LayoutModel::empty();
+    }
 
     wp_enqueue_script(
         'h18-clean-editor-v018-core',
@@ -160,6 +171,12 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ['h18-clean-editor-v0121'],
         H18_CLEAN_VERSION
     );
+    wp_enqueue_style(
+        'h18-clean-editor-v0123-ux',
+        H18_CLEAN_URL . 'assets/editor-v0123-ux.css',
+        ['h18-clean-editor-v0122-hierarchy'],
+        H18_CLEAN_VERSION
+    );
 
     wp_enqueue_script(
         'h18-clean-editor-v0114',
@@ -193,6 +210,13 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'h18-clean-editor-v0122-hierarchy',
         H18_CLEAN_URL . 'assets/editor-v0122-hierarchy.js',
         ['h18-clean-editor-v0121-panels'],
+        H18_CLEAN_VERSION,
+        true
+    );
+    wp_enqueue_script(
+        'h18-clean-editor-v0123-ux',
+        H18_CLEAN_URL . 'assets/editor-v0123-ux.js',
+        ['h18-clean-editor-v0122-hierarchy'],
         H18_CLEAN_VERSION,
         true
     );

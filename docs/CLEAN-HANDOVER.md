@@ -640,3 +640,7 @@ En ny chat skal kunne starte med følgende:
 7. Opdatér dokumentation + release-notes sammen med kodeændringer.
 
 Hvis disse trin følges, skal en ny chat ikke være afhængig af den tidligere samtale for at forstå projektets retning.
+
+## 0.1.23 – Header/Footer før Menu
+
+Brugerbeslutning 26-08-2026: Visuelt Menu-arbejde skal vente, til Header/Footer Designer findes. 0.1.23 prioriterer derfor global Header/Footer-model, fælles Designer-canvas og versionering samt UX-rettelser fra 0.1.22-testen. Menu-data må fortsat eksistere, men Menu UI/element må ikke færdigdesignes før Header/Footer-layoutet er testet.

@@ -65,6 +65,8 @@ final class AdminController
             return;
         }
         wp_enqueue_style('h18-clean-manager-admin', H18_CLEAN_URL . 'assets/admin-v019.css', [], H18_CLEAN_VERSION);
+        wp_enqueue_style('h18-clean-manager-v0123', H18_CLEAN_URL . 'assets/admin-v0123.css', ['h18-clean-manager-admin'], H18_CLEAN_VERSION);
+        wp_enqueue_script('h18-clean-manager-v0123', H18_CLEAN_URL . 'assets/admin-v0123.js', [], H18_CLEAN_VERSION, true);
     }
 
     public static function dashboard(): void

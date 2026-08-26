@@ -606,7 +606,11 @@
         const id = makeId(type);
         const defaultW = defaultWidth(type, parentId);
         const p = placement || { parentId: parentId, x: 0, y: nextFreeY(parentId), w: defaultW, targetId: '', zone: 'free', bandIds: [], bandH: MIN_SPLIT_H };
-        const defaultH = (type === 'text' || type === 'image') ? Math.max(1, Math.ceil(80 / ROW_PX)) : 0;
+        const defaultRows = { section: 20, container: 16, text: 14, image: 20 };
+        const defaultH = Math.max(MIN_SPLIT_H, parseInt(defaultRows[type] || MIN_SPLIT_H, 10) || MIN_SPLIT_H);
+        const newProps = normalizeProps(type, {});
+        if (PARENT_TYPES.includes(type)) { newProps.minHeightRows = defaultH; }
+        if (type === 'text') { newProps.padding = 12; }
         const desktop = normalizeDevice({ x: p.x, y: p.y, w: p.w || defaultW, h: defaultH }, false);
         state.nodes.push({
             id: id,
@@ -618,7 +622,7 @@
                 tablet: Object.assign({}, desktop, { inheritDesktop: true }),
                 mobile: { x: 0, y: 0, w: 120, h: defaultH, inheritDesktop: true }
             },
-            props: normalizeProps(type, {})
+            props: newProps
         });
         reorderForPlacement(id, parentId, p);
         applyDestinationGeometry(id, p);
@@ -719,7 +723,7 @@
             }
             const body = document.createElement('div');
             body.className = 'h18-clean-text-body';
-            body.textContent = String(node.props.text || 'Ny tekst').replace(/<[^>]+>/g, '').slice(0, 220) || 'Tekst';
+            body.textContent = String(node.props.text || 'Ny tekst').replace(/<[^>]+>/g, '') || 'Tekst';
             wrap.appendChild(body);
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
