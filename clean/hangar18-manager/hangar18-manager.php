@@ -39,6 +39,7 @@ if (!class_exists('Hangar18_Manager', false)) {
     }
 }
 
+require_once H18_CLEAN_DIR . 'src/Model/HierarchyNormalizer.php';
 require_once H18_CLEAN_DIR . 'src/Model/LayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Diagnostics/DiagnosticStore.php';
 require_once H18_CLEAN_DIR . 'src/Admin/EditorController.php';
@@ -153,6 +154,12 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ['h18-clean-editor-v0120'],
         H18_CLEAN_VERSION
     );
+    wp_enqueue_style(
+        'h18-clean-editor-v0122-hierarchy',
+        H18_CLEAN_URL . 'assets/editor-v0122-hierarchy.css',
+        ['h18-clean-editor-v0121'],
+        H18_CLEAN_VERSION
+    );
 
     wp_enqueue_script(
         'h18-clean-editor-v0114',
@@ -179,6 +186,13 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'h18-clean-editor-v0121-panels',
         H18_CLEAN_URL . 'assets/editor-v0121-panels.js',
         ['h18-clean-editor-v0121'],
+        H18_CLEAN_VERSION,
+        true
+    );
+    wp_enqueue_script(
+        'h18-clean-editor-v0122-hierarchy',
+        H18_CLEAN_URL . 'assets/editor-v0122-hierarchy.js',
+        ['h18-clean-editor-v0121-panels'],
         H18_CLEAN_VERSION,
         true
     );
