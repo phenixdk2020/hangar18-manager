@@ -1,14 +1,20 @@
 (function () {
     'use strict';
 
+    /*
+     * Status rule:
+     * ready   = the agreed backlog / Definition of Done for this module is complete.
+     * partial = usable work exists, but the agreed module scope is not complete.
+     * planned = placeholder / not yet implemented to a usable level.
+     */
     var STATUS = {
-        'h18-clean-manager': ['Klar', 'ready'],
-        'h18-clean-editor': ['Klar', 'ready'],
-        'h18-clean-pages': ['Klar', 'ready'],
-        'h18-clean-backup': ['Klar', 'ready'],
+        'h18-clean-manager': ['Under udvikling', 'partial'],
+        'h18-clean-editor': ['Under udvikling', 'partial'],
+        'h18-clean-pages': ['Under udvikling', 'partial'],
+        'h18-clean-backup': ['Under udvikling', 'partial'],
         'h18-clean-updates': ['Klar', 'ready'],
-        'h18-clean-log': ['Klar', 'ready'],
-        'h18-clean-export': ['Klar', 'ready'],
+        'h18-clean-log': ['Under udvikling', 'partial'],
+        'h18-clean-export': ['Under udvikling', 'partial'],
         'h18-clean-menu': ['Under udvikling', 'partial'],
         'h18-clean-theme': ['Under udvikling', 'partial'],
         'h18-clean-header-footer': ['Under udvikling', 'partial'],
