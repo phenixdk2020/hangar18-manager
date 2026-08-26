@@ -1,0 +1,2 @@
+triggered_utc=2026-08-26T17:26:00Z
+reason=Recover blank Designer canvas after 0.1.26 runtime regression.
