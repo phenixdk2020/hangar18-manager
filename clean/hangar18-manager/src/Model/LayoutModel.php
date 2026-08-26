@@ -75,6 +75,8 @@ final class LayoutModel
         }
 
         self::validateHierarchy($nodes);
+        HierarchyNormalizer::normalize($nodes);
+        self::validateHierarchy($nodes);
         uasort($nodes, static function (array $a, array $b): int {
             $parent = strcmp((string) $a['parentId'], (string) $b['parentId']);
             return $parent !== 0 ? $parent : ((int) $a['order'] <=> (int) $b['order']);
