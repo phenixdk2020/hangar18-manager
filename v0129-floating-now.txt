@@ -1,0 +1,1 @@
+Apply the parent-relative floating button implementation for Visual Designer Manager 0.1.29.
