@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -34,6 +35,23 @@ for rel in FILES:
     if text != original:
         path.write_text(text, encoding='utf-8')
         print(f'fixed technical references: {rel}')
+
+# The installed WordPress readme is user-facing. Rebrand prose while retaining
+# compatibility filenames such as clean-update.json and historical site-specific
+# Hangar18 Base Theme references.
+readme = ROOT / 'clean/hangar18-manager/readme.txt'
+if readme.exists():
+    text = readme.read_text(encoding='utf-8')
+    original = text
+    text = text.replace('=== Hangar18 Manager Clean ===', '=== Visual Designer Manager ===')
+    text = text.replace('Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.', 'Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.')
+    text = text.replace('Hangar18 Manager', 'Visual Designer Manager')
+    text = text.replace('Hangar18 Designer', 'Visual Designer')
+    text = re.sub(r'\bClean\b', 'Visual Designer', text)
+    text = text.replace('nyere clean-version', 'nyere Visual Designer-version')
+    if text != original:
+        readme.write_text(text, encoding='utf-8')
+        print('updated public plugin readme naming')
 
 # Hard gate: these names are not files and must never appear after the public rename.
 for rel in FILES:
