@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.27.zip",
-  "sha256": "1f0a62c198e2772945ff350052fba48b0b458067840a42ab9203c22e21443268",
-  "source_commit": "bce4016fdf17babc019e7faa474671e786cc3fa6",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.28.zip",
+  "sha256": "2bf4a300df6ef0bd91d3f95e1a2ba5bedc3aeaeea0899bf6a0d8762af7abaae9",
+  "source_commit": "37105061c9e3d7d56309e74193037571c28f7f17",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.27</h4><ul><li><strong>Canvas-recovery:</strong> en renderfejl i ét element kan ikke længere få hele den overordnede Sektion/Kasse eller hele Designer-canvas til at forsvinde.</li><li><strong>Browser-hardening:</strong> rich-text sanitizer bruger en mere Firefox-/browser-robust node-unwrapping.</li><li><strong>Synlig fejlhåndtering:</strong> hvis et konkret element stadig ikke kan renderes, vises en fejl-placeholder på det element, mens canonical layoutdata bevares.</li><li><strong>Redigering bevares:</strong> resten af canvas og drag/drop forbliver tilgængeligt, selv ved en lokal renderfejl.</li><li><strong>Regression:</strong> alle 0.1.26 WYSIWYG-, typografi-, Inspector-scroll-, billed-persistence- og Knap-auto-size rettelser er bevaret.</li></ul>"
+    "changelog": "<h4>0.1.28</h4><ul><li><strong>Kritisk canvas-fix:</strong> <code>FONT_TOKENS</code> initialiseres før <code>normalizeModel()</code> kaldes første gang. Sider med eksisterende Tekst-elementer stopper derfor ikke længere editor-runtime med en TDZ/ReferenceError.</li><li><strong>Data bevares:</strong> rettelsen ændrer ikke canonical layoutdata eller versionshistorik.</li><li><strong>Regression:</strong> 0.1.27 canvas-recovery samt 0.1.26 WYSIWYG, typografi, Inspector-scroll, billed-persistence og Knap-auto-size bevares.</li><li><strong>QA:</strong> releaseforløbet validerer eksplicit, at typografi-konstanter initialiseres før første modelnormalisering.</li></ul>"
   }
 }
