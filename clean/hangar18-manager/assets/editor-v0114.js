@@ -17,11 +17,12 @@
         if (!form || !input || !toolbar) { return; }
 
         input.type = 'text';
-        input.required = true;
+        input.required = false;
+        input.removeAttribute('required');
         input.maxLength = 180;
         input.autocomplete = 'off';
-        input.placeholder = 'Fx: Flyttet billede og rettet overskrift';
-        input.setAttribute('aria-label', 'Ændringer i denne version');
+        input.placeholder = 'Valgfri – ellers beskriver systemet automatisk ændringen';
+        input.setAttribute('aria-label', 'Ændringer i denne version, valgfri');
 
         var userEntered = hidden(form, 'change_note_user_entered', '0');
         input.addEventListener('input', function () {
@@ -31,22 +32,13 @@
         var wrapper = document.createElement('label');
         wrapper.className = 'h18-clean-change-note-wrap';
         var caption = document.createElement('span');
-        caption.textContent = 'Ændringer:';
+        caption.textContent = 'Ændringer (valgfri):';
         caption.className = 'h18-clean-change-note-label';
         wrapper.appendChild(caption);
         wrapper.appendChild(input);
 
         var firstSave = toolbar.querySelector('.h18-clean-save') || toolbar.lastElementChild;
         toolbar.insertBefore(wrapper, firstSave || null);
-
-        form.addEventListener('submit', function (event) {
-            if (userEntered.value === '1' && (input.value || '').trim() !== '') { return; }
-            event.preventDefault();
-            input.value = '';
-            userEntered.value = '0';
-            window.alert('Skriv en kort ændringsbeskrivelse før siden gemmes som en ny version.');
-            input.focus();
-        });
 
         var historyHeaders = document.querySelectorAll('.h18-clean-history th');
         historyHeaders.forEach(function (header) {
