@@ -1,3 +1,3 @@
-triggered_utc=2026-08-26T07:08:00Z
-reason=Apply approved Visual Designer / Visual Designer Manager public naming for 0.1.22 forward-development.
-nonce=1
+triggered_utc=2026-08-26T07:16:00Z
+reason=Re-run approved Visual Designer / Visual Designer Manager public naming after expanding legacy label coverage.
+nonce=2
