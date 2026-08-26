@@ -1,4 +1,4 @@
-v0.1.0
-triggered_utc=2026-08-25T09:11:00Z
-reason=Create directly downloadable clean plugin artifact for manual WordPress install.
-nonce=1
+v0.1.21-dev
+triggered_utc=2026-08-26T05:48:00Z
+reason=QA Export, Navigation and Theme shell modules without publishing a release.
+nonce=2
