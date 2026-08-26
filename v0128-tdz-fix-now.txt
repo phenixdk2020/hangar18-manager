@@ -1,0 +1,2 @@
+triggered_utc=2026-08-26T17:56:00Z
+reason=Fix critical Visual Designer startup TDZ regression on layouts containing Text elements.
