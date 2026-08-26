@@ -1,4 +1,4 @@
 v0.1.26
-triggered_utc=2026-08-26T13:42:00Z
+triggered_utc=2026-08-26T14:09:00Z
 reason=Release WYSIWYG, typography, rich-text selection, image persistence, Inspector scroll and Button auto-size hotfix after source QA.
-nonce=26-v0126-release
+nonce=26-v0126-release-direct
