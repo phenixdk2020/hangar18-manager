@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.24.zip",
-  "sha256": "fb20e398030a7d65add43380a5801e1245a1b902a9f68209a7d1f3c7ef8f9e23",
-  "source_commit": "b52b6ec2b2d96601af4eea90d6ca8971f4efb841",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.25.zip",
+  "sha256": "d37ad6888f91ec68fbaafc3be3018004bc98a983427730714e605247c915730c",
+  "source_commit": "ddbac65f7ff05911af636ac003e694d6cb3486a4",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.24</h4><ul><li><strong>Ændringer ved Gem er nu reelt valgfri:</strong> den ældre JavaScript-validering, som stadig krævede en manuel ændringsbeskrivelse, er fjernet. Hvis feltet er tomt, genererer Visual Designer automatisk versionsnoten.</li><li>Manager-status er præciseret visuelt: <strong>grøn = Klar</strong>, <strong>gul = Under udvikling</strong> og <strong>rød = Ikke færdig / ikke påbegyndt</strong>.</li><li>Visual Designer og øvrige delvist implementerede Manager-moduler står nu gule i stedet for fejlagtigt at blive markeret Klar.</li><li>Den grønne selection-ramme tegnes nu inden for elementets canonical boks og med højere editor-z-index, så alle fire sider — især bundlinjen på tætte/øverste elementer — forbliver synlige.</li><li>0.1.23 Header/Footer Designer fase 1, billedindholdsredigering, tekst-linjeskift, større standardelementer, hierarki og responsive layouts er bevaret.</li></ul>"
+    "changelog": "<h4>0.1.25</h4><ul><li><strong>Rich text i Tekst-elementet:</strong> fed, kursiv, understregning, punktliste, nummereret liste, links og fjern formatering med sikker HTML-rensning.</li><li><strong>Nyt Knap-element:</strong> intern side, ekstern URL, anker, e-mail og telefon samt mål, farver, hover/focus, padding og radius.</li><li><strong>Flere Header- og Footer-templates:</strong> opret, omdøb og duplikér templates, vælg separate standarder for Header og Footer, og bevar egen versionshistorik pr. template.</li><li><strong>Sidevalg af Header/Footer:</strong> hver side kan bruge automatisk standard, en bestemt aktiv template eller ingen Header/Footer. Frontend-shell-overtagelse aktiveres fortsat først i Theme-shell-fasen.</li><li><strong>Sikker migration:</strong> eksisterende globale Header/Footer-layouts fra fase 1 migreres til standard-templates uden at miste model, settings eller historik.</li><li><strong>Bedre versionsnoter:</strong> automatiske ændringsbeskrivelser bygger videre på Undo-transaktioner og suppleres med responsive ændringer samt Header/Footer-valg; en manuel note har fortsat førsteprioritet.</li><li><strong>Inspector-stabilitet og naming-hardening:</strong> scroll/fokus bevares bedre ved Inspector-opdateringer, synlige produktnavne er Visual Designer / Visual Designer Manager, og interne kompatibilitetsidentifiers forbliver teknisk uændrede.</li><li>0.1.24 statusfarver, selection-ramme, valgfri ændringsnote og alle tidligere responsive/hierarki-funktioner er bevaret.</li></ul>"
   }
 }
