@@ -31,25 +31,25 @@ edit('clean/hangar18-manager/hangar18-manager.php', [
 
 # Visual Designer UI.
 edit('clean/hangar18-manager/src/Admin/EditorController.php', [
-    ("'Hangar18 Designer'", "'Visual Designer'"),
-    ('<h1>Hangar18 Designer · ', '<h1>Visual Designer · '),
+    ('Hangar18 Designer', 'Visual Designer'),
     ('Clean editor ', 'Visual Designer '),
     ('Ingen gemte clean-versioner endnu.', 'Ingen gemte Visual Designer-versioner endnu.'),
-    ("'Gem fra clean editor'", "'Gem fra Visual Designer'"),
-    ("'Clean layout gemt og verificeret som version v'", "'Visual Designer-layout gemt og verificeret som version v'"),
+    ('Gem fra clean editor', 'Gem fra Visual Designer'),
+    ('Clean layout gemt og verificeret som version v', 'Visual Designer-layout gemt og verificeret som version v'),
     ('Clean-version', 'Visual Designer-version'),
     ('clean-version', 'Visual Designer-version'),
 ])
 
 # Manager UI. Site name is runtime data, not product branding.
 edit('clean/hangar18-manager/src/Admin/AdminController.php', [
+    ('Hangar18 Manager Clean', 'Visual Designer Manager'),
     ("'Hangar18 Manager',\n            'Hangar18 Manager',", "'Visual Designer Manager',\n            'Visual Designer Manager',"),
     ("self::open('Hangar18 Manager', 'Clean administration · v'", "self::open('Visual Designer Manager', 'Administration · v'"),
     ('<span class="h18-manager-kicker">Clean Manager v', '<span class="h18-manager-kicker">Visual Designer Manager v'),
     ("echo '<h2>Aalborg Kaserners Veteran Panser- og Køretøjsforening</h2>';", "echo '<h2>' . esc_html((string) get_bloginfo('name')) . '</h2>';"),
     ('Clean bruger kun den nye canonical layoutmodel.', 'Visual Designer bruger den canonical layoutmodel.'),
-    ("self::stat('Clean-sider',", "self::stat('Visual Designer-sider',"),
-    ("'Sider med Clean-state'", "'Sider med Visual Designer-layout'"),
+    ('Clean-sider', 'Visual Designer-sider'),
+    ('Sider med Clean-state', 'Sider med Visual Designer-layout'),
     ('Se Clean-status, nodeantal og seneste version', 'Se Visual Designer-status, nodeantal og seneste version'),
     ('Clean-layouts', 'Visual Designer-layouts'),
     ('Clean-logs', 'Visual Designer-logs'),
@@ -59,23 +59,31 @@ edit('clean/hangar18-manager/src/Admin/AdminController.php', [
     ('Clean Data-modul', 'Visual Designer Data-modul'),
     ('Clean-modelstatus', 'Visual Designer-modelstatus'),
     ('Clean-status', 'Visual Designer-status'),
-    ('<span class="h18-manager-badge is-ok">Clean v', '<span class="h18-manager-badge is-ok">Designer v'),
-    ('<span class="h18-manager-badge">Ikke Clean</span>', '<span class="h18-manager-badge">Ikke Visual Designer</span>'),
-    ('<h2>Clean-princip</h2>', '<h2>Visual Designer-princip</h2>'),
+    ('>Clean v', '>Designer v'),
+    ('Ikke Clean', 'Ikke Visual Designer'),
+    ('Clean-princip', 'Visual Designer-princip'),
     ('Clean Designer styrer', 'Visual Designer styrer'),
     ('Clean-backup', 'Visual Designer-backup'),
+    ('Hangar18 Manager', 'Visual Designer Manager'),
 ])
 
 edit('clean/hangar18-manager/src/Admin/AdminMenuBridge.php', [
     ("'Designer',\n            'Designer',", "'Visual Designer',\n            'Visual Designer',"),
 ])
 
+# Diagnostics may identify the product in support payload headings, but its
+# internal keys and namespace remain unchanged.
+edit('clean/hangar18-manager/src/Diagnostics/DiagnosticStore.php', [
+    ('Hangar18 Manager Clean', 'Visual Designer Manager'),
+    ('Hangar18 Designer', 'Visual Designer'),
+])
+
 # Updater/plugin-information visible metadata and messages.
 edit('clean/hangar18-manager/src/Update/GitHubUpdater.php', [
-    ("'Hangar18 Manager Clean'", "'Visual Designer Manager'"),
-    ("'<a href=\"https://hangar18.dk/\">Hangar18</a>'", "'<a href=\"https://github.com/phenixdk2020/hangar18-manager\">Visual Designer Manager</a>'"),
-    ("'https://hangar18.dk/'", "'https://github.com/phenixdk2020/hangar18-manager'"),
-    ("'Hangar18 Clean Designer.'", "'Visual Designer Manager.'"),
+    ('Hangar18 Manager Clean', 'Visual Designer Manager'),
+    ('<a href="https://hangar18.dk/">Hangar18</a>', '<a href="https://github.com/phenixdk2020/hangar18-manager">Visual Designer Manager</a>'),
+    ('https://hangar18.dk/', 'https://github.com/phenixdk2020/hangar18-manager'),
+    ('Hangar18 Clean Designer.', 'Visual Designer Manager.'),
     ('Hangar18 update-pakken', 'Visual Designer Manager-updatepakken'),
     ('Hangar18-opdateringen', 'Visual Designer Manager-opdateringen'),
 ])
@@ -98,6 +106,26 @@ edit('.github/workflows/clean-release.yml', [
     ('git commit -m "Release clean v${VERSION}"', 'git commit -m "Release Visual Designer Manager v${VERSION}"'),
     ("echo 'Unable to publish clean release after three attempts.'", "echo 'Unable to publish Visual Designer Manager release after three attempts.'"),
 ])
+
+# Older 0.1.x release workflows may still be visible in Actions. Rebrand their
+# display/product metadata without changing package paths or technical slugs.
+for workflow in [
+    '.github/workflows/clean-v012-release.yml',
+    '.github/workflows/clean-v013-release.yml',
+]:
+    p = ROOT / workflow
+    if not p.exists():
+        continue
+    text = p.read_text(encoding='utf-8')
+    original = text
+    text = text.replace('Hangar18 Manager Clean', 'Visual Designer Manager')
+    text = text.replace('Hangar18 Clean Designer', 'Visual Designer')
+    text = text.replace('Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.', 'Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.')
+    text = text.replace('https://hangar18.dk/', 'https://github.com/phenixdk2020/hangar18-manager')
+    text = text.replace('Clean GitHub Release', 'Visual Designer Manager Release')
+    if text != original:
+        p.write_text(text, encoding='utf-8')
+        print(f'updated {workflow}')
 
 # Current authoritative/user-facing documentation. Filenames and CLEAN-* task IDs
 # are intentionally retained as stable technical references.
