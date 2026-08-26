@@ -1,9 +1,9 @@
-=== Hangar18 Manager Clean ===
+=== Visual Designer Manager ===
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
 Version: 0.1.15
-Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
+Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
 
 == 0.1.15 ==
 * Valgt/aktivt element markeres grønt i stedet for blåt.
@@ -19,7 +19,7 @@ Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 * Structural digest dækker nu hele den normaliserede model inkl. tekst, gaps og style props.
 
 == 0.1.13 ==
-* Direkte opdatering fra Hangar18 Manager husker om pluginet var aktivt eller netværksaktivt før opdateringen og genaktiverer/verificerer samme tilstand før redirect.
+* Direkte opdatering fra Visual Designer Manager husker om pluginet var aktivt eller netværksaktivt før opdateringen og genaktiverer/verificerer samme tilstand før redirect.
 * Hvis genaktivering mod forventning fejler, sendes administratoren sikkert til Plugins i stedet for en ikke-registreret Manager-side.
 * Nye Tekst-elementer starter med 80 px / 10 grid-rækker, samme grundhøjde som Billede.
 * Celle-split kan stadig ændre højden efterfølgende, og eksisterende elementer ændres ikke automatisk.
@@ -31,11 +31,11 @@ Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 * Elementlabel og drag-håndtag er fortsat editor-chrome og tæller aldrig med i fysisk x/y/w/h eller containerens auto-grow.
 
 == 0.1.11 ==
-* Border er nu en native Clean-egenskab på Tekst, Billede, Kasse og Sektion: tykkelse 0-20 px, farve og standard 0 px.
+* Border er nu en native Visual Designer-egenskab på Tekst, Billede, Kasse og Sektion: tykkelse 0-20 px, farve og standard 0 px.
 * Alle elementer har Afstand X og Afstand Y (0-200 px, standard 0) som trailing layoutafstand til næste element.
 * Afstand Y indgår i canonical højdematerialisering, så container auto-grow fortsat matcher editor og frontend.
 * Det gamle v0.1.6 border/autogrow-JS er pensioneret; Inspector og rendering bruger nu samme canonical props.
-* Hangar18 Manager > Opdateringer kan både tjekke GitHub og installere Opdater nu direkte uden at gå via WordPress Plugins.
+* Visual Designer Manager > Opdateringer kan både tjekke GitHub og installere Opdater nu direkte uden at gå via WordPress Plugins.
 * Direkte update bruger WordPress Plugin_Upgrader og den eksisterende SHA-256-verifikation.
 
 == 0.1.10 ==
@@ -47,16 +47,16 @@ Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 * Frontend har fallback-højder for ældre h=0-layouts, indtil de er gemt igen med canonical 0.1.10-geometri.
 
 == 0.1.9 ==
-* Nyt samlet Hangar18 Manager-adminmenu inspireret af 0.9.2: Dashboard, Designer, Køretøjer, Køretøjsfelter, Events, Billedgalleri, Data, Sider, Menu, Header/Footer, Backup, Opdateringer og Log.
-* Designer er flyttet ind som undermenu uden at ændre Clean-editorens canonical runtime.
-* Dashboard viser sideantal, Clean-sider, nodeantal og samlet versionshistorik med hurtige genveje.
-* Sider viser Clean-version, nodeantal, seneste gemning samt direkte links til Designer, WordPress og frontend.
-* Køretøjer, Events og Billedgalleri viser de eksisterende WordPress-hovedsider/undersider og deres Clean-status uden legacy dataruntime.
+* Nyt samlet Visual Designer Manager-adminmenu inspireret af 0.9.2: Dashboard, Designer, Køretøjer, Køretøjsfelter, Events, Billedgalleri, Data, Sider, Menu, Header/Footer, Backup, Opdateringer og Log.
+* Designer er flyttet ind som undermenu uden at ændre Visual Designer-editorens canonical runtime.
+* Dashboard viser sideantal, Visual Designer-sider, nodeantal og samlet versionshistorik med hurtige genveje.
+* Sider viser Visual Designer-version, nodeantal, seneste gemning samt direkte links til Designer, WordPress og frontend.
+* Køretøjer, Events og Billedgalleri viser de eksisterende WordPress-hovedsider/undersider og deres Visual Designer-status uden legacy dataruntime.
 * Menu viser klassiske WordPress-menuer og registrerede theme locations.
 * Header/Footer viser aktivt tema og holder global shell adskilt fra side-layoutversioner.
-* Backup kan downloade alle Clean-layouts og deres versionshistorik som én JSON-fil; diagnostics/tokens eksporteres ikke.
+* Backup kan downloade alle Visual Designer-layouts og deres versionshistorik som én JSON-fil; diagnostics/tokens eksporteres ikke.
 * Opdateringer bruger fortsat den SHA-256-verificerede GitHub updater.
-* Log viser Clean diagnostics pr. side, support-link og mulighed for at rydde side-loggen.
+* Log viser Visual Designer diagnostics pr. side, support-link og mulighed for at rydde side-loggen.
 * Køretøjsfelter og custom Data er bevidst administrationspladser; gammel 0.9.x felt/data-runtime aktiveres ikke automatisk.
 
 == 0.1.8 ==
@@ -92,7 +92,7 @@ Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 * GitHub-updateren er fortsat normal update-kanal.
 
 == 0.1.4 ==
-* Hangar18 Base Theme 1.2.x genkender Clean Manager som aktiv via en isoleret kompatibilitetsmarkør.
+* Hangar18 Base Theme 1.2.x genkender Visual Designer Manager som aktiv via en isoleret kompatibilitetsmarkør.
 * Indeholder spatial drag/drop og fix mod duplikerede drop-handlers.
 
 == 0.1.3 ==
@@ -102,8 +102,8 @@ Ren 120-unit sidebygger til Hangar18 uden legacy editor-runtime.
 
 == 0.1.2 ==
 * GitHub-baseret WordPress updater via clean-update.json.
-* Normal "Opdater nu" i WordPress Plugins, når en nyere clean-version ligger på GitHub.
-* Manuel "Tjek GitHub-opdatering" i Hangar18 Designer.
+* Normal "Opdater nu" i WordPress Plugins, når en nyere Visual Designer-version ligger på GitHub.
+* Manuel "Tjek GitHub-opdatering" i Visual Designer.
 * Update-pakken SHA-256-verificeres mod manifestet før installation.
 * Indeholder palette drag/drop-fix fra 0.1.1.
 

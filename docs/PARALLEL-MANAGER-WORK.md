@@ -113,7 +113,7 @@ Seneste QA efter Menu restore/history og udvidet Export:
 
 Tidligere QA fandt en PHP-parsefejl i NavigationController. Fejlen blev rettet før ovenstående PASS. Dette er et eksempel på, at dev-artifact-gaten skal køres efter hver parallel kodeændring.
 
-Dette er udviklings-QA og **ikke** en offentlig release. `Visual Designer-update.json` afgør fortsat seneste frigivne version.
+Dette er udviklings-QA og **ikke** en offentlig release. `clean-update.json` afgør fortsat seneste frigivne version.
 
 ## Runtime-QA der stadig mangler før offentlig release
 

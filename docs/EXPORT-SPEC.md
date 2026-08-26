@@ -32,7 +32,7 @@ Allerede implementeret i source:
 - child-theme export inkluderer parent-theme når det findes;
 - Webpages inkluderer canonical Visual Designer-model/versioner og kendte media source IDs.
 
-Dette er endnu ikke en offentlig release. Seneste offentlige version afgøres altid af `Visual Designer-update.json`.
+Dette er endnu ikke en offentlig release. Seneste offentlige version afgøres altid af `clean-update.json`.
 
 ## Manager-menu
 
