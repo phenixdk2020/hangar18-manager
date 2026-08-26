@@ -1,16 +1,38 @@
 # Visual Designer Manager – Export-specifikation
 
-**Statusdato:** 25. august 2026  
-**Status:** Godkendt backlog/specifikation  
+**Statusdato:** 26. august 2026  
+**Status:** Godkendt specifikation + delvist implementeret som forward-development  
 **Produktnavn:** Visual Designer Manager
 
 ## Formål
 
-Visual Designer Manager skal have et selvstændigt hovedmenupunkt i WordPress med navnet **Export**.
+Visual Designer Manager skal have et selvstændigt menupunkt i WordPress med navnet **Export**.
 
-Export skal gøre det muligt at tage kontrollerede, verificerbare eksportpakker af program, tema, sider og uploadede mediefiler uden at være afhængig af hostingens filmanager.
+Export skal gøre det muligt at tage kontrollerede, verificerbare eksportpakker af program, tema, sider, navigation og uploadede mediefiler uden at være afhængig af hostingens filmanager.
 
-Export er adskilt fra den automatiske programbackup før update. Backup beskytter en ændring; Export bruges til bevidst download, arkivering, flytning og senere import/restore.
+Export er adskilt fra den automatiske programbackup før update. Backup beskytter en ændring; Export bruges til bevidst download, arkivering, flytning og senere Import/Restore.
+
+## Aktuel implementationsstatus
+
+Forward-development findes i `clean/hangar18-manager/src/Admin/ExportController.php`.
+
+Allerede implementeret i source:
+
+- **Export Plugin**;
+- **Export Tema**;
+- **Export Webpages**;
+- **Export Navigation**;
+- **Export Billeder**;
+- **Export Dokumenter**;
+- **Export Video**;
+- **Export Alle medier**;
+- manifest med SHA-256 pr. fil og samlet content-digest;
+- ZIP-download med package SHA-256 i HTTP-header;
+- sikkerhedsfilter mod kendte secret-filer og filer uden for tilladt root;
+- child-theme export inkluderer parent-theme når det findes;
+- Webpages inkluderer canonical Visual Designer-model/versioner og kendte media source IDs.
+
+Dette er endnu ikke en offentlig release. Seneste offentlige version afgøres altid af `clean-update.json`.
 
 ## Manager-menu
 
@@ -20,6 +42,7 @@ Visual Designer Manager
 ├── Globalt design
 ├── Header / Footer
 ├── Sider
+├── Menu / Navigation
 ├── Data / site-moduler
 ├── Backup
 ├── Export
@@ -34,10 +57,12 @@ Export-siden skal som minimum have disse handlinger:
 1. **Export Plugin**
 2. **Export Tema**
 3. **Export Webpages**
-4. **Export Medier**
-5. **Export hele sitet** – senere samlet pakke
-
-Hver eksport skal vise hvad der inkluderes, forventet størrelse hvis muligt, dato/tid og resultat af verifikation.
+4. **Export Navigation**
+5. **Export Billeder**
+6. **Export Dokumenter**
+7. **Export Video**
+8. **Export Alle medier**
+9. **Export hele sitet** – senere samlet pakke
 
 ---
 
@@ -45,108 +70,127 @@ Hver eksport skal vise hvad der inkluderes, forventet størrelse hvis muligt, da
 
 Eksporter den installerede Visual Designer Manager-pluginmappe som ZIP.
 
-Pakken skal indeholde:
+Pakken indeholder:
 - pluginfiler;
-- versionsnummer;
+- produkt-/intern versionsmetadata;
 - filmanifest;
-- SHA-256 for ZIP-pakken;
-- eksportdato/-tid;
-- WordPress/PHP compatibility metadata hvor relevant.
+- SHA-256 pr. fil;
+- samlet content-digest;
+- eksportdato/-tid og miljømetadata i manifestet.
 
-Må ikke eksportere:
-- credentials;
-- nonces;
-- auth cookies;
-- server-secrets;
-- midlertidige cachefiler.
-
-Standard filnavn, eksempel:
-
-`visual-designer-manager-plugin-v0.1.22-20260825-223000.zip`
+Eksporten må ikke følge symlinks eller realpaths uden for pluginroden og skal springe kendte secret-/udviklingsfiler over.
 
 ---
 
 ## 2. Export Tema
 
-Eksporter det aktive tema eller et valgt installeret tema som ZIP.
+Eksporter det aktive tema som transportabel ZIP.
+
+Hvis det aktive tema er et child-theme, inkluderes også parent-theme, fordi child-theme ellers ikke nødvendigvis kan installeres/fungere på et nyt site.
 
 Pakken skal indeholde:
-- temafiler;
-- theme-version;
-- manifest;
-- SHA-256;
-- eksportdato/-tid.
+- aktive temafiler;
+- parent-theme filer når relevant;
+- theme-navn/version/stylesheet/template;
+- theme mods;
+- aktuelle menu-location references;
+- manifest/checksums.
 
-Hvis Visual Designer Manager senere styrer globale theme-/shell-indstillinger, skal disse kunne vælges som separat JSON ved siden af selve temafilerne.
-
-Standard filnavn, eksempel:
-
-`visual-designer-theme-1.2.0-20260825-223000.zip`
+Theme-export må ikke være den visuelle source of truth for fremtidigt Global Design/Header/Footer. Den transporterer theme-shell og eksisterende theme-indstillinger.
 
 ---
 
 ## 3. Export Webpages
 
-Webpages skal eksporteres som strukturerede data, ikke kun som rendered HTML.
+Webpages eksporteres som strukturerede data, ikke kun rendered HTML.
 
-Valgmuligheder:
+Aktuel export indeholder for hver side:
+- WordPress page ID som `sourceId`;
+- parent source ID;
+- titel;
+- slug;
+- status;
+- dato/ændringsdato;
+- WordPress content/excerpt;
+- menu order;
+- template;
+- featured image source ID;
+- kendte media source IDs;
+- canonical Visual Designer-model når den findes;
+- aktuel Designer-version;
+- strukturel digest;
+- Designer-versionshistorik.
+
+Kendte mediereferencer omfatter aktuelt:
+- featured image;
+- Visual Designer image-nodes;
+- `wp-image-ID` references i WordPress-content;
+- kendte WordPress gallery IDs.
+
+Sidepakken indeholder også source IDs for WordPress front page/posts page, så en senere Import kan remappe dem.
+
+Fremtidige valgmuligheder:
 - alle sider;
 - udvalgte sider;
 - kun publicerede;
 - kladder;
-- evt. historiske Designer-versioner.
-
-En sideexport skal kunne indeholde:
-- WordPress page ID som kilde-reference;
-- titel;
-- slug;
-- status;
-- parent/menu-relationer hvor relevant;
-- canonical Visual Designer-model;
-- Designer-versionshistorik hvis valgt;
-- ændringsbeskrivelser;
-- references til medier;
-- references til globale komponenter/datamoduler;
-- strukturel digest/checksum.
-
-Eksportformat bør være JSON i en ZIP med manifest, så senere Import kan lave dry-run, ID-remapping og konfliktkontrol.
-
-Rendered HTML kan eventuelt tilbydes som ekstra eksportformat, men må ikke erstatte den canonical model.
+- med/uden historiske Designer-versioner.
 
 ---
 
-## 4. Export Medier
+## 4. Export Navigation
+
+Navigation eksporteres separat fra det visuelle Menu-element.
+
+Pakken indeholder:
+- alle WordPress-menuer;
+- menu source ID/navn/slug;
+- menupunkter;
+- titel/URL/type/object/objectId;
+- parent source ID;
+- rækkefølge;
+- target/classes/attr title/description/XFN;
+- registrerede theme-locations;
+- aktuelle location → menu source ID relationer.
+
+Dette format skal kunne bruges af senere Import til at oprette menuer med nye WordPress IDs og remappe parent/location-relationer.
+
+---
+
+## 5. Export Medier
 
 Medieexport omfatter WordPress Media Library-filer, herunder:
 - billeder;
-- dokumenter, fx PDF/DOCX;
+- dokumenter, fx PDF/DOCX/XLSX/TXT/CSV;
 - video;
 - øvrige uploadede filer.
 
-Valgmuligheder bør mindst omfatte:
-- alle medier;
+Aktuelle separate exports:
 - kun billeder;
 - kun dokumenter;
 - kun video;
+- alle medier.
+
+Hver attachment-record indeholder bl.a.:
+- source attachment ID;
+- titel/slug;
+- MIME type;
+- dato/ændringsdato;
+- caption/description/alt;
+- `_wp_attached_file`;
+- WordPress attachment metadata;
+- liste over de konkrete archive-filer, der hører til attachmentet.
+
+For billeder inkluderes også registrerede WordPress size-filer/original-image, når de findes under uploads-roden.
+
+Fremtidige valgmuligheder:
 - udvalgte filer;
 - medier brugt af udvalgte sider;
-- medier brugt af et bestemt datamodul/event/køretøj når relationerne findes.
-
-ZIP-pakken skal bevare nok metadata til senere import:
-- originalt filnavn;
-- relativ uploads-path;
-- MIME type;
-- WordPress attachment ID som kilde-reference;
-- titel/caption/alt-tekst hvor relevant;
-- filstørrelse;
-- SHA-256 pr. fil;
-- references fra Designer/dataobjekter hvis valgt.
-
-Export må ikke antage, at kun billeder findes i Media Library.
+- medier brugt af et bestemt datamodul/event/køretøj.
 
 ---
 
-## 5. Samlet site-export
+## 6. Samlet site-export
 
 Senere skal Export kunne lave én transportabel pakke med valgbare dele:
 
@@ -158,11 +202,11 @@ SITE EXPORT
 ├── Header / Footer
 ├── Webpages + versionshistorik
 ├── Komponenter / presets
+├── Navigation/menuer
 ├── Data-moduler
 │   ├── Køretøjer (hvis modulet findes)
 │   ├── Events (hvis modulet findes)
 │   └── Galleri-data (hvis modulet findes)
-├── Navigation/menuer
 └── Medier
 ```
 
@@ -172,68 +216,76 @@ Dette skal være modulært, så et website uden Hangar18-specifikke moduler stad
 
 ## Manifest og integritet
 
-Alle ZIP-exports skal have et maskinlæsbart manifest, fx `visual-designer-export.json`, med:
+Alle ZIP-exports indeholder `visual-designer-export.json` med mindst:
 - export schema version;
-- export type;
+- export type/label;
 - produktversion;
-- WordPress version;
-- PHP version hvor relevant;
-- source site URL/identifier uden secrets;
-- created UTC/local timestamp;
-- included modules;
-- filer og checksums;
-- package checksum.
+- WordPress/PHP-version;
+- source site navn/URL uden secrets;
+- created UTC;
+- record count;
+- filantal;
+- hver fil med path, størrelse og SHA-256;
+- samlet `contentSha256` beregnet over det sorterede filmanifest.
 
-SHA-256 skal bruges til integritetskontrol.
+### Package SHA-256
+
+Den færdige ZIPs SHA-256 kan ikke ligge inde i selve ZIP-manifestet uden at skabe en cirkulær checksum-afhængighed. Derfor sendes package SHA-256 ved download som:
+
+`X-Visual-Designer-SHA256`
+
+En senere download-log/UI kan gemme og vise denne værdi sammen med eksporttidspunkt og filnavn.
 
 ---
 
 ## Sikkerhed
 
-- Kun autoriserede administratorer må eksportere plugin/tema/hele sitet.
-- Side-/medieexport skal følge relevante WordPress capabilities.
-- Export må aldrig inkludere `wp-config.php`, databasecredentials, API-secrets, auth keys, nonces, sessioncookies eller andre credentials.
-- Store exports skal fejle kontrolleret med tydelig status og må ikke efterlade halvfærdige offentligt tilgængelige ZIP-filer.
-- Midlertidige exportfiler skal ligge i et beskyttet område og slettes efter download/udløb.
+- Kun administratorer med `manage_options` må køre de aktuelle exports.
+- Midlertidige ZIP-filer oprettes via WordPress temp-mekanisme og slettes efter download/failure.
+- Export må ikke inkludere `wp-config.php`, databasecredentials, auth cookies eller andre secrets.
+- Plugin/theme filesystem-export kontrollerer realpath mod tilladt root, så eksterne symlink-targets ikke eksporteres.
+- Kendte secret-filer som `.env*`, `auth.json`, `credentials.json`, `secrets.json`, private key-navne m.fl. springes over.
+- Store exports skal senere få tydelig size/progress/error-håndtering frem for ukontrolleret timeout.
 
 ---
 
 ## Forhold til Import/Restore
 
-Export-formatet skal designes, så en senere **Import** kan bruge samme schema.
+Export-formatet designes med Import for øje.
 
 Import skal senere have:
 - dry-run;
 - checksum-verifikation;
-- versions/schema-check;
+- schema/version-check;
 - ID-remapping;
 - slug-konflikter;
 - media deduplication via checksum;
-- reference-rewrite mellem sider, medier, komponenter og dataobjekter;
+- reference-rewrite mellem sider, medier, navigation, komponenter og dataobjekter;
 - mulighed for at importere enkelte dele af en samlet export.
 
 Export udvikles først; Import må ikke improvisere et inkompatibelt format senere.
 
 ---
 
-## QA
+## QA-gate
 
-Før Export markeres PASS:
+Før Export markeres produktionsklar/PASS:
 
-1. Plugin-export kan pakkes ud og matcher manifestet.
-2. Tema-export kan pakkes ud og matcher manifestet.
-3. Sideexport kan round-trip gennem en test-import uden tab af canonical Designer-model.
-4. Medieexport indeholder billeder, dokumenter og video med korrekte checksums.
-5. References mellem sider og medier kan rekonstrueres.
-6. Ingen secrets findes i exportpakken.
-7. SHA-256-verifikation opdager en ændret/korrupt fil.
-8. Store eksportjob giver kontrolleret fejl/status.
-9. Export fungerer også på et site uden Hangar18-specifikke moduler.
-
----
+1. Plugin-export kan downloades, pakkes ud og matcher manifestet.
+2. Tema-export kan downloades og inkluderer parent-theme korrekt ved child-theme.
+3. Webpages-export indeholder canonical Designer-model og historik uden tab.
+4. Navigation-export indeholder korrekt menu-/parent-/location-data.
+5. Medieexport indeholder billeder, dokumenter og video med korrekte checksums.
+6. References mellem sider og medier kan rekonstrueres.
+7. Ingen kendte secrets eller realpath-filer uden for tilladte roots findes i pakkerne.
+8. Content-digest opdager ændringer i filmanifestet.
+9. Package SHA-256 kan verificeres efter download.
+10. Store eksportjob giver kontrolleret status/fejl.
+11. Export fungerer på et site uden Hangar18-specifikke moduler.
+12. Senere test-import kan round-trip canonical layouts og navigation med ID-remapping.
 
 ## Produktarkitektur
 
 Export er en del af den generiske **Visual Designer Manager Core** og må ikke være Hangar18-specifik.
 
-Hangar18 er et website/projekt og kan have ekstra export-adapters til site-specifikke datamoduler, men Core Export skal fungere på ethvert kompatibelt WordPress-site.
+Site-specifikke datamoduler kan senere registrere egne export-adapters, men Core Export skal fungere på ethvert kompatibelt WordPress-site.
