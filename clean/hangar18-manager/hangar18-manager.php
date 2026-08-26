@@ -42,6 +42,7 @@ if (!class_exists('Hangar18_Manager', false)) {
 require_once H18_CLEAN_DIR . 'src/Model/HierarchyNormalizer.php';
 require_once H18_CLEAN_DIR . 'src/Model/LayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Model/GlobalLayoutModel.php';
+require_once H18_CLEAN_DIR . 'src/Model/TemplateLayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Diagnostics/DiagnosticStore.php';
 require_once H18_CLEAN_DIR . 'src/Admin/EditorController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminController.php';
@@ -85,7 +86,10 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     if ($isGlobalDesigner) {
         $part = isset($_GET['part']) && sanitize_key((string) $_GET['part']) === 'footer' ? 'footer' : 'header';
         $postId = 0;
-        $model = \Hangar18\Clean\Model\GlobalLayoutModel::get($part);
+        \Hangar18\Clean\Model\TemplateLayoutModel::ensureMigrated();
+        $templateId = isset($_GET['template']) ? sanitize_key((string) $_GET['template']) : '';
+        if ($templateId === '' || !\Hangar18\Clean\Model\TemplateLayoutModel::exists($templateId, $part)) { $templateId = \Hangar18\Clean\Model\TemplateLayoutModel::defaultId($part); }
+        $model = $templateId !== '' ? \Hangar18\Clean\Model\TemplateLayoutModel::model($templateId) : \Hangar18\Clean\Model\LayoutModel::empty();
     } else {
         $model = $postId > 0 && get_post_type($postId) === 'page'
             ? \Hangar18\Clean\Model\LayoutModel::get($postId)
@@ -106,6 +110,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'rowPx' => \Hangar18\Clean\Model\LayoutModel::ROW_PX,
         'postId' => $postId,
         'initialModel' => $model,
+        'pages' => array_values(array_map(static function ($page): array { return ['id' => (int) $page->ID, 'title' => (string) $page->post_title]; }, get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC']))),
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'diagAction' => 'h18_clean_diag_append',
         'diagNonce' => wp_create_nonce('h18_clean_diag_append'),
@@ -177,6 +182,12 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ['h18-clean-editor-v0122-hierarchy'],
         H18_CLEAN_VERSION
     );
+    wp_enqueue_style(
+        'h18-clean-editor-v0125',
+        H18_CLEAN_URL . 'assets/editor-v0125.css',
+        ['h18-clean-editor-v0123-ux'],
+        H18_CLEAN_VERSION
+    );
 
     wp_enqueue_script(
         'h18-clean-editor-v0114',
@@ -217,6 +228,13 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'h18-clean-editor-v0123-ux',
         H18_CLEAN_URL . 'assets/editor-v0123-ux.js',
         ['h18-clean-editor-v0122-hierarchy'],
+        H18_CLEAN_VERSION,
+        true
+    );
+    wp_enqueue_script(
+        'h18-clean-editor-v0125',
+        H18_CLEAN_URL . 'assets/editor-v0125.js',
+        ['h18-clean-editor-v0123-ux'],
         H18_CLEAN_VERSION,
         true
     );

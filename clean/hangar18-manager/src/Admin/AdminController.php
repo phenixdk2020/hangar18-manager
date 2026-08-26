@@ -116,7 +116,7 @@ final class AdminController
     public static function vehicleFields(): void
     {
         self::guard();
-        self::open('Køretøjsfelter', 'Adminpladsen svarer til den gamle Manager, men legacy-feltmotoren er ikke indlæst i Clean.');
+        self::open('Køretøjsfelter', 'Adminpladsen svarer til den gamle Manager, men legacy-feltmotoren er ikke indlæst i Visual Designer Manager.');
         self::moduleNotice('Køretøjsfelter', 'Visual Designer Manager-administrationen er klar. Selve dynamiske køretøjsfelter porteres som et selvstændigt Visual Designer-datamodul, så vi ikke blander 0.9.x-runtime ind i den nye editor.');
         echo '<p><a class="button" href="' . esc_url(self::url('h18-clean-vehicles')) . '">← Køretøjer</a></p>';
         self::close();
@@ -140,7 +140,7 @@ final class AdminController
             echo '</td></tr>';
         }
         echo '</tbody></table></div>';
-        self::moduleNotice('Visual Designer Data-modul', 'Den gamle Managers custom data types bliver ikke automatisk aktiveret. Denne side er administrationsindgangen til den kommende modeldrevne Clean-datafunktion.');
+        self::moduleNotice('Visual Designer Data-modul', 'Den gamle Managers custom data types bliver ikke automatisk aktiveret. Denne side er administrationsindgangen til den kommende modeldrevne Visual Designer-datafunktion.');
         self::close();
     }
 
@@ -259,7 +259,7 @@ final class AdminController
                 if (metadata_exists('post', $candidate->ID, LayoutModel::META)) { $postId = $candidate->ID; break; }
             }
         }
-        self::open('Log', 'Clean diagnostics pr. side');
+        self::open('Log', 'Visual Designer-diagnostics pr. side');
         echo '<form method="get" class="h18-manager-toolbar"><input type="hidden" name="page" value="h18-clean-log"><label for="h18-log-post"><strong>Side:</strong></label><select id="h18-log-post" name="post">';
         foreach ($pages as $page) {
             echo '<option value="' . esc_attr((string) $page->ID) . '"' . selected($postId, $page->ID, false) . '>' . esc_html((string) $page->post_title) . ' · ' . esc_html((string) $page->post_name) . '</option>';
@@ -341,7 +341,7 @@ final class AdminController
         $cfg = self::COLLECTIONS[$key] ?? null;
         if (!$cfg) { return; }
         $parent = get_page_by_path($cfg['slug'], OBJECT, 'page');
-        self::open($cfg['title'], 'Indholdsoversigt med direkte adgang til WordPress og Clean Designer');
+        self::open($cfg['title'], 'Indholdsoversigt med direkte adgang til WordPress og Visual Designer');
         echo '<div class="h18-manager-toolbar"><a class="button button-primary" href="' . esc_url(admin_url('post-new.php?post_type=page')) . '">+ Ny side</a>';
         if ($parent instanceof \WP_Post) { echo '<a class="button" href="' . esc_url(self::designerUrl($parent->ID)) . '">Designer: ' . esc_html((string) $parent->post_title) . '</a>'; }
         echo '</div>';
@@ -352,7 +352,7 @@ final class AdminController
         }
         $children = get_pages(['parent' => $parent->ID, 'sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC']);
         echo '<div class="h18-manager-card"><h2>' . esc_html((string) $parent->post_title) . '</h2><p><code>/' . esc_html((string) $parent->post_name) . '/</code> · ' . esc_html((string) count($children)) . ' undersider</p>';
-        echo '<table class="widefat striped"><thead><tr><th>Side</th><th>Clean</th><th>Nodes</th><th>Handlinger</th></tr></thead><tbody>';
+        echo '<table class="widefat striped"><thead><tr><th>Side</th><th>Designer</th><th>Nodes</th><th>Handlinger</th></tr></thead><tbody>';
         if (!$children) { echo '<tr><td colspan="4">Ingen undersider fundet.</td></tr>'; }
         foreach ($children as $child) {
             if (!$child instanceof \WP_Post) { continue; }
@@ -403,7 +403,7 @@ final class AdminController
 
     private static function moduleNotice(string $title, string $text): void
     {
-        echo '<div class="h18-manager-card h18-manager-module"><h2>' . esc_html($title) . '</h2><p>' . esc_html($text) . '</p><span class="h18-manager-badge is-progress">Clean admin klar</span></div>';
+        echo '<div class="h18-manager-card h18-manager-module"><h2>' . esc_html($title) . '</h2><p>' . esc_html($text) . '</p><span class="h18-manager-badge is-progress">Admin-grundlag klar</span></div>';
     }
 
     private static function url(string $page, array $args = []): string

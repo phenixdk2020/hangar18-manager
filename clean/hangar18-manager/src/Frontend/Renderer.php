@@ -53,6 +53,10 @@ final class Renderer
         echo '.h18-clean-front-node{box-sizing:border-box;min-width:0;position:relative}';
         echo '.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;min-width:0;box-sizing:border-box;height:auto!important}';
         echo '.h18-clean-front-text{overflow-wrap:anywhere}';
+        echo '.h18-clean-front-text>p:first-of-type{margin-top:0}.h18-clean-front-text>p:last-child{margin-bottom:0}';
+        echo '.h18-clean-front-button-link{display:flex;width:100%;height:100%;box-sizing:border-box;align-items:center;justify-content:center;text-decoration:none;background:var(--h18-btn-bg);color:var(--h18-btn-color);transition:background-color .15s ease,color .15s ease,border-color .15s ease}';
+        echo '.h18-clean-front-button-link:hover{background:var(--h18-btn-hover-bg);color:var(--h18-btn-hover-color)}';
+        echo '.h18-clean-front-button-link:focus-visible{outline:3px solid var(--h18-btn-focus);outline-offset:2px}';
         echo '.h18-clean-front-text-heading{margin:0 0 8px;line-height:1.2}';
         echo '.h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box;height:100%}';
         echo '.h18-clean-front-image img{display:block;max-width:none;margin:0;box-sizing:border-box}';
@@ -164,6 +168,40 @@ final class Renderer
             $textStyle = $style . $borderStyle . $spacingStyle . $radiusStyle
                 . 'background:' . $background . ';padding:' . $padding . 'px;color:' . $textColor . ';text-align:' . (string) ($props['align'] ?? 'left') . ';';
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '">' . $headingHtml . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
+        }
+
+        if ($type === 'button') {
+            $linkType = in_array((string) ($props['linkType'] ?? 'url'), ['page', 'url', 'anchor', 'email', 'phone'], true) ? (string) $props['linkType'] : 'url';
+            $href = '';
+            if ($linkType === 'page') {
+                $pageId = absint($props['pageId'] ?? 0);
+                $permalink = $pageId > 0 ? get_permalink($pageId) : false;
+                $href = is_string($permalink) ? $permalink : '';
+            } elseif ($linkType === 'anchor') {
+                $anchor = trim((string) ($props['url'] ?? ''));
+                $href = preg_match('/^#[A-Za-z][A-Za-z0-9_\-:.]*$/', $anchor) ? $anchor : '';
+            } elseif ($linkType === 'email') {
+                $mail = sanitize_email((string) ($props['url'] ?? ''));
+                $href = $mail !== '' ? 'mailto:' . $mail : '';
+            } elseif ($linkType === 'phone') {
+                $phone = preg_replace('/[^0-9+() .\-]/', '', (string) ($props['url'] ?? ''));
+                $href = is_string($phone) && trim($phone) !== '' ? 'tel:' . preg_replace('/[() .\-]/', '', $phone) : '';
+            } else {
+                $href = esc_url_raw((string) ($props['url'] ?? ''));
+            }
+            if ($href === '') { $href = '#'; }
+            $background = sanitize_hex_color((string) ($props['background'] ?? '#30382a')) ?: '#30382a';
+            $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#ffffff')) ?: '#ffffff';
+            $hoverBackground = sanitize_hex_color((string) ($props['hoverBackground'] ?? '#525a5f')) ?: '#525a5f';
+            $hoverTextColor = sanitize_hex_color((string) ($props['hoverTextColor'] ?? '#ffffff')) ?: '#ffffff';
+            $focusColor = sanitize_hex_color((string) ($props['focusColor'] ?? '#c3ae83')) ?: '#c3ae83';
+            $paddingX = max(0, min(120, (int) ($props['paddingX'] ?? 20)));
+            $paddingY = max(0, min(120, (int) ($props['paddingY'] ?? 10)));
+            $buttonStyle = $style . $borderStyle . $spacingStyle . $radiusStyle
+                . '--h18-btn-bg:' . $background . ';--h18-btn-color:' . $textColor . ';--h18-btn-hover-bg:' . $hoverBackground . ';--h18-btn-hover-color:' . $hoverTextColor . ';--h18-btn-focus:' . $focusColor . ';padding:0;overflow:visible;';
+            $linkStyle = 'border-radius:' . $radius . 'px;padding:' . $paddingY . 'px ' . $paddingX . 'px;';
+            $target = !empty($props['targetBlank']) ? ' target="_blank" rel="noopener"' : '';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-button" style="' . esc_attr($buttonStyle) . '"><a class="h18-clean-front-button-link" href="' . esc_url($href) . '"' . $target . ' style="' . esc_attr($linkStyle) . '">' . esc_html((string) ($props['text'] ?? 'Knap')) . '</a></div>';
         }
 
         if ($type === 'image') {

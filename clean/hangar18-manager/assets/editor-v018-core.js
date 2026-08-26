@@ -5,7 +5,7 @@
     const UNITS = Math.max(12, parseInt(CFG.units || 120, 10) || 120);
     const ROW_PX = Math.max(2, parseInt(CFG.rowPx || 8, 10) || 8);
     const POST_ID = parseInt(CFG.postId || 0, 10) || 0;
-    const TYPES = ['section', 'container', 'text', 'image'];
+    const TYPES = ['section', 'container', 'text', 'image', 'button'];
     const PARENT_TYPES = ['section', 'container'];
     const undoStack = [];
     const redoStack = [];
@@ -25,6 +25,26 @@
     function cleanId(value) { return String(value || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 100); }
     function makeId(type) { return cleanId(type + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8)); }
     function normalizeColor(value) { return /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value).toLowerCase() : '#000000'; }
+    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap'})[String(type || '')] || String(type || 'Element'); }
+    function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding'})[String(field || '')] || String(field || 'felt'); }
+    function richPreviewHtml(value) {
+        const raw = String(value || '');
+        const tpl = document.createElement('template');
+        tpl.innerHTML = raw.indexOf('<') === -1 ? raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r?\n/g, '<br>') : raw;
+        const allowed = new Set(['P','BR','STRONG','B','EM','I','U','S','UL','OL','LI','A']);
+        Array.from(tpl.content.querySelectorAll('*')).forEach(function (el) {
+            if (!allowed.has(el.tagName)) { el.replaceWith(...Array.from(el.childNodes)); return; }
+            Array.from(el.attributes).forEach(function (attr) {
+                const ok = el.tagName === 'A' && ['href','target','rel'].includes(attr.name.toLowerCase());
+                if (!ok) { el.removeAttribute(attr.name); }
+            });
+            if (el.tagName === 'A') {
+                const href = String(el.getAttribute('href') || '');
+                if (/^javascript:/i.test(href)) { el.removeAttribute('href'); }
+            }
+        });
+        return tpl.innerHTML;
+    }
 
     function normalizeDevice(raw, responsive) {
         raw = raw && typeof raw === 'object' ? raw : {};
@@ -59,6 +79,24 @@
                 headingLevel: ['h2', 'h3', 'h4', 'h5', 'h6'].includes(String(raw.headingLevel || '').toLowerCase()) ? String(raw.headingLevel).toLowerCase() : 'h2',
                 text: String(raw.text || 'Ny tekst'),
                 align: ['left', 'center', 'right'].includes(raw.align) ? raw.align : 'left'
+            });
+        }
+        if (type === 'button') {
+            const linkType = ['page', 'url', 'anchor', 'email', 'phone'].includes(String(raw.linkType || '').toLowerCase()) ? String(raw.linkType).toLowerCase() : 'url';
+            return Object.assign(common, {
+                text: String(raw.text || 'Knap'),
+                linkType: linkType,
+                pageId: parseInt(raw.pageId || 0, 10) || 0,
+                url: String(raw.url || ''),
+                targetBlank: !!raw.targetBlank,
+                background: /^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#30382a',
+                textColor: /^#[0-9a-f]{6}$/i.test(String(raw.textColor || '')) ? String(raw.textColor).toLowerCase() : '#ffffff',
+                hoverBackground: /^#[0-9a-f]{6}$/i.test(String(raw.hoverBackground || '')) ? String(raw.hoverBackground).toLowerCase() : '#525a5f',
+                hoverTextColor: /^#[0-9a-f]{6}$/i.test(String(raw.hoverTextColor || '')) ? String(raw.hoverTextColor).toLowerCase() : '#ffffff',
+                focusColor: /^#[0-9a-f]{6}$/i.test(String(raw.focusColor || '')) ? String(raw.focusColor).toLowerCase() : '#c3ae83',
+                paddingX: clamp(parseInt(raw.paddingX || 20, 10) || 20, 0, 120),
+                paddingY: clamp(parseInt(raw.paddingY || 10, 10) || 10, 0, 120),
+                radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100)
             });
         }
         if (type === 'image') {
@@ -198,6 +236,7 @@
         updateHistoryUi();
         updateHidden();
     }
+    window.H18CleanHistory = { labels: function () { return undoStack.map(function (entry) { return entry.label; }); } };
     function undo() {
         if (!undoStack.length || resize) { return; }
         const entry = undoStack.pop();
@@ -606,7 +645,7 @@
         const id = makeId(type);
         const defaultW = defaultWidth(type, parentId);
         const p = placement || { parentId: parentId, x: 0, y: nextFreeY(parentId), w: defaultW, targetId: '', zone: 'free', bandIds: [], bandH: MIN_SPLIT_H };
-        const defaultRows = { section: 20, container: 16, text: 14, image: 20 };
+        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8 };
         const defaultH = Math.max(MIN_SPLIT_H, parseInt(defaultRows[type] || MIN_SPLIT_H, 10) || MIN_SPLIT_H);
         const newProps = normalizeProps(type, {});
         if (PARENT_TYPES.includes(type)) { newProps.minHeightRows = defaultH; }
@@ -627,7 +666,7 @@
         reorderForPlacement(id, parentId, p);
         applyDestinationGeometry(id, p);
         selectedId = id;
-        commit(before, 'Tilføj ' + type + ' · ' + p.zone);
+        commit(before, 'Tilføj ' + typeLabel(type) + ' · ' + p.zone);
         render();
         diag('cell_drop_commit', { id: id, type: type, operation: 'add', parentId: parentId, dropZone: p.zone, targetId: p.targetId || '', placement: clone(p), state: structuralSummary() });
     }
@@ -639,7 +678,7 @@
         const remove = new Set([node.id].concat(descendants(node.id)));
         state.nodes = state.nodes.filter(function (candidate) { return !remove.has(candidate.id); });
         selectedId = '';
-        commit(before, 'Slet ' + node.type);
+        commit(before, 'Slet ' + typeLabel(node.type));
         render();
         diag('delete_node', { id: node.id, type: node.type, removedCount: remove.size, state: structuralSummary() });
     }
@@ -662,7 +701,7 @@
         reorderForPlacement(id, parentId, placement);
         applyDestinationGeometry(id, placement);
         node.geometry.desktop.w = Math.min(UNITS, Math.max(1, node.geometry.desktop.w));
-        commit(before, 'Flyt ' + node.type + ' · ' + placement.zone);
+        commit(before, 'Flyt ' + typeLabel(node.type) + ' · ' + placement.zone);
         render();
         diag('cell_drop_commit', { id: id, type: node.type, operation: 'move', fromParentId: from, toParentId: parentId, dropZone: placement.zone, targetId: placement.targetId || '', placement: clone(placement), state: structuralSummary() });
     }
@@ -723,8 +762,24 @@
             }
             const body = document.createElement('div');
             body.className = 'h18-clean-text-body';
-            body.textContent = String(node.props.text || 'Ny tekst').replace(/<[^>]+>/g, '') || 'Tekst';
+            body.innerHTML = richPreviewHtml(String(node.props.text || 'Ny tekst')) || 'Tekst';
             wrap.appendChild(body);
+        } else if (node.type === 'button') {
+            wrap.classList.add('h18-clean-node-preview--button');
+            const button = document.createElement('span');
+            button.className = 'h18-clean-button-preview';
+            button.textContent = String(node.props.text || 'Knap');
+            button.style.display = 'flex';
+            button.style.alignItems = 'center';
+            button.style.justifyContent = 'center';
+            button.style.width = '100%';
+            button.style.height = '100%';
+            button.style.boxSizing = 'border-box';
+            button.style.background = node.props.background || '#30382a';
+            button.style.color = node.props.textColor || '#ffffff';
+            button.style.borderRadius = String(node.props.radius || 0) + 'px';
+            button.style.padding = String(node.props.paddingY || 10) + 'px ' + String(node.props.paddingX || 20) + 'px';
+            wrap.appendChild(button);
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
             const alignX = ['left', 'center', 'right'].includes(node.props.imageAlignX) ? node.props.imageAlignX : 'center';
@@ -947,7 +1002,7 @@
             });
             move.addEventListener('dragend', function () { card.classList.remove('is-dragging'); clearDragState(); });
             const title = document.createElement('strong');
-            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
+            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
             header.appendChild(move);
             header.appendChild(title);
             card.appendChild(header);
@@ -1039,7 +1094,7 @@
         if (resizedNode && PARENT_TYPES.includes(resizedNode.type)) {
             resizedNode.props.minHeightRows = resizedNode.geometry.desktop.h;
         }
-        commit(current.before, 'Resize ' + current.id);
+        commit(current.before, 'Ændr størrelse på ' + typeLabel((nodeById(current.id) || {}).type));
         const node = nodeById(current.id);
         diag('resize_commit', { id: current.id, direction: current.direction, geometry: node ? clone(node.geometry.desktop) : null, state: structuralSummary() });
         render();
@@ -1051,13 +1106,24 @@
         const node = nodeById(selectedId);
         if (!node) { host.innerHTML = '<p class="description">Vælg et element på canvas.</p>'; return; }
         const g = node.geometry.desktop;
-        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
+        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
         html += '<div class="h18-clean-field-grid"><label>X / 120<input data-field="gx" type="number" min="0" max="119" value="' + g.x + '"></label><label>Bredde / 120<input data-field="gw" type="number" min="1" max="120" value="' + g.w + '"></label><label>Y · 8px<input data-field="gy" type="number" value="' + g.y + '"></label><label>Højde · 8px<input data-field="gh" type="number" min="0" value="' + g.h + '"></label></div>';
         if (node.type === 'text') {
             html += '<label>Overskrift <span class="description">(valgfri)</span><input data-field="heading" type="text" value="' + escapeAttr(node.props.heading || '') + '"></label>';
             html += '<label>Overskrifttype<select data-field="headingLevel"><option value="h2"' + (node.props.headingLevel === 'h2' ? ' selected' : '') + '>H2</option><option value="h3"' + (node.props.headingLevel === 'h3' ? ' selected' : '') + '>H3</option><option value="h4"' + (node.props.headingLevel === 'h4' ? ' selected' : '') + '>H4</option><option value="h5"' + (node.props.headingLevel === 'h5' ? ' selected' : '') + '>H5</option><option value="h6"' + (node.props.headingLevel === 'h6' ? ' selected' : '') + '>H6</option></select></label>';
             html += '<label>Tekst<textarea data-field="text" rows="8">' + escapeHtml(node.props.text || '') + '</textarea></label>';
             html += '<label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label>';
+        } else if (node.type === 'button') {
+            html += '<label>Knaptekst<input data-field="buttonText" type="text" value="' + escapeAttr(node.props.text || 'Knap') + '"></label>';
+            html += '<label>Linktype<select data-field="linkType"><option value="page"' + (node.props.linkType === 'page' ? ' selected' : '') + '>Intern side</option><option value="url"' + (node.props.linkType === 'url' ? ' selected' : '') + '>Ekstern URL</option><option value="anchor"' + (node.props.linkType === 'anchor' ? ' selected' : '') + '>Anker</option><option value="email"' + (node.props.linkType === 'email' ? ' selected' : '') + '>E-mail</option><option value="phone"' + (node.props.linkType === 'phone' ? ' selected' : '') + '>Telefon</option></select></label>';
+            if (node.props.linkType === 'page') {
+                html += '<label>Intern side<select data-field="pageId"><option value="0">Vælg side…</option>' + (Array.isArray(CFG.pages) ? CFG.pages.map(function (page) { const id = parseInt(page.id || 0, 10) || 0; return '<option value="' + id + '"' + (parseInt(node.props.pageId || 0, 10) === id ? ' selected' : '') + '>' + escapeHtml(String(page.title || ('Side ' + id))) + '</option>'; }).join('') : '') + '</select></label>';
+            } else {
+                const linkLabel = ({url:'URL',anchor:'Anker, fx #kontakt',email:'E-mailadresse',phone:'Telefonnummer'})[node.props.linkType] || 'Destination';
+                html += '<label>' + linkLabel + '<input data-field="url" type="text" value="' + escapeAttr(node.props.url || '') + '"></label>';
+            }
+            html += '<label class="h18-clean-checkbox"><input data-field="targetBlank" type="checkbox"' + (node.props.targetBlank ? ' checked' : '') + '> Åbn i ny fane</label>';
+            html += '<div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#30382a') + '"></label><label>Tekstfarve<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#ffffff') + '"></label><label>Hover baggrund<input data-field="hoverBackground" type="color" value="' + escapeAttr(node.props.hoverBackground || '#525a5f') + '"></label><label>Hover tekst<input data-field="hoverTextColor" type="color" value="' + escapeAttr(node.props.hoverTextColor || '#ffffff') + '"></label><label>Focus-farve<input data-field="focusColor" type="color" value="' + escapeAttr(node.props.focusColor || '#c3ae83') + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label><label>Padding X<input data-field="paddingX" type="number" min="0" max="120" value="' + (node.props.paddingX || 20) + '"></label><label>Padding Y<input data-field="paddingY" type="number" min="0" max="120" value="' + (node.props.paddingY || 10) + '"></label></div>';
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button>';
             html += '<label>Billede i boksen<select data-field="fit"><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet</option><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld boksen · beskær</option><option value="original"' + (node.props.fit === 'original' ? ' selected' : '') + '>Original størrelse</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Stræk til boks</option></select></label>';
@@ -1097,6 +1163,17 @@
                 else if (field === 'headingLevel') { current.props.headingLevel = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(control.value) ? control.value : 'h2'; }
                 else if (field === 'text') { current.props.text = String(control.value || ''); }
                 else if (field === 'align') { current.props.align = ['left', 'center', 'right'].includes(control.value) ? control.value : 'left'; }
+                else if (field === 'buttonText') { current.props.text = String(control.value || 'Knap'); }
+                else if (field === 'linkType') { current.props.linkType = ['page', 'url', 'anchor', 'email', 'phone'].includes(control.value) ? control.value : 'url'; }
+                else if (field === 'pageId') { current.props.pageId = parseInt(control.value || 0, 10) || 0; }
+                else if (field === 'url') { current.props.url = String(control.value || ''); }
+                else if (field === 'targetBlank') { current.props.targetBlank = !!control.checked; }
+                else if (field === 'textColor') { current.props.textColor = normalizeColor(control.value || '#ffffff'); }
+                else if (field === 'hoverBackground') { current.props.hoverBackground = normalizeColor(control.value || '#525a5f'); }
+                else if (field === 'hoverTextColor') { current.props.hoverTextColor = normalizeColor(control.value || '#ffffff'); }
+                else if (field === 'focusColor') { current.props.focusColor = normalizeColor(control.value || '#c3ae83'); }
+                else if (field === 'paddingX') { current.props.paddingX = clamp(parseInt(control.value || 20, 10) || 20, 0, 120); }
+                else if (field === 'paddingY') { current.props.paddingY = clamp(parseInt(control.value || 10, 10) || 10, 0, 120); }
                 else if (field === 'fit') { current.props.fit = ['cover', 'contain', 'original', 'stretch'].includes(control.value) ? control.value : 'contain'; }
                 else if (field === 'imageAlignX') { current.props.imageAlignX = ['left', 'center', 'right'].includes(control.value) ? control.value : 'center'; }
                 else if (field === 'imageAlignY') { current.props.imageAlignY = ['top', 'center', 'bottom'].includes(control.value) ? control.value : 'center'; }
@@ -1121,7 +1198,7 @@
                         current.geometry.desktop.h = clamp(current.geometry.desktop.h + (nextRows - oldRows), 1, 4000);
                     }
                 }
-                commit(before, 'Ændr ' + field + ' på ' + current.type);
+                commit(before, 'Ændr ' + fieldLabel(field) + ' på ' + typeLabel(current.type));
                 diag('inspector_change', { id: current.id, type: current.type, field: field, state: structuralSummary() });
                 render();
             });

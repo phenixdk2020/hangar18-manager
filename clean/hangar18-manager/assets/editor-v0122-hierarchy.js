@@ -1,12 +1,13 @@
 (function () {
     'use strict';
 
-    const TYPES = ['section', 'container', 'text', 'image'];
+    const TYPES = ['section', 'container', 'text', 'image', 'button'];
     const LABELS = {
         section: 'Sektion',
         container: 'Kasse',
         text: 'Tekst',
-        image: 'Billede'
+        image: 'Billede',
+        button: 'Knap'
     };
     let activeDrag = null;
     let toastTimer = 0;

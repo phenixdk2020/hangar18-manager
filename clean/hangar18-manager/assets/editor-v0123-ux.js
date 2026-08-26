@@ -43,6 +43,9 @@
     }
 
     function automaticChangeNote() {
+        var labels = window.H18CleanHistory && typeof window.H18CleanHistory.labels === 'function' ? window.H18CleanHistory.labels() : [];
+        labels = Array.isArray(labels) ? labels.filter(Boolean) : [];
+        if (labels.length) { return labels.slice(-12).join(' · ').slice(0, 240); }
         var before = mapNodes(clone(CFG.initialModel || { nodes: [] }));
         var afterModel = readCurrentModel();
         var after = mapNodes(afterModel);
@@ -101,6 +104,7 @@
         if (label) { label.textContent = 'Ændringer (valgfri):'; }
 
         form.addEventListener('submit', function () {
+            if (window.H18RichTextV0125 && typeof window.H18RichTextV0125.sync === 'function') { window.H18RichTextV0125.sync(); }
             if (window.H18CleanV0120 && typeof window.H18CleanV0120.sync === 'function') {
                 window.H18CleanV0120.sync();
             }

@@ -7,6 +7,7 @@ namespace Hangar18\Clean\Admin;
 use Hangar18\Clean\Diagnostics\DiagnosticStore;
 use Hangar18\Clean\Frontend\Renderer;
 use Hangar18\Clean\Model\LayoutModel;
+use Hangar18\Clean\Model\TemplateLayoutModel;
 use Hangar18\Clean\Update\GitHubUpdater;
 
 final class EditorController
@@ -87,7 +88,12 @@ final class EditorController
             self::renderPagePicker();
             return;
         }
+        TemplateLayoutModel::ensureMigrated();
         $model = LayoutModel::get($postId);
+        $headerTemplates = TemplateLayoutModel::all('header');
+        $footerTemplates = TemplateLayoutModel::all('footer');
+        $headerChoice = TemplateLayoutModel::pageChoice($postId, 'header');
+        $footerChoice = TemplateLayoutModel::pageChoice($postId, 'footer');
         $history = array_reverse(LayoutModel::history($postId));
         $status = isset($_GET['h18_clean_status']) ? sanitize_key((string) wp_unslash($_GET['h18_clean_status'])) : '';
         $message = isset($_GET['h18_clean_message']) ? sanitize_text_field((string) wp_unslash($_GET['h18_clean_message'])) : '';
@@ -113,6 +119,14 @@ final class EditorController
         echo '<input type="hidden" id="h18-clean-model-json" name="model_json" value="' . esc_attr((string) wp_json_encode($model)) . '">';
         echo '<input type="hidden" id="h18-clean-change-note" name="change_note" value="">';
 
+        echo '<section class="h18-clean-page-shell"><strong>Header / Footer på denne side</strong><label>Header <select name="header_template_choice">';
+        echo '<option value="auto"' . selected($headerChoice, 'auto', false) . '>Automatisk / standard</option><option value="none"' . selected($headerChoice, 'none', false) . '>Ingen Header</option>';
+        foreach ($headerTemplates as $template) { if (!empty($template['active'])) { echo '<option value="' . esc_attr((string) $template['id']) . '"' . selected($headerChoice, (string) $template['id'], false) . '>' . esc_html((string) $template['name']) . '</option>'; } }
+        echo '</select></label><label>Footer <select name="footer_template_choice">';
+        echo '<option value="auto"' . selected($footerChoice, 'auto', false) . '>Automatisk / standard</option><option value="none"' . selected($footerChoice, 'none', false) . '>Ingen Footer</option>';
+        foreach ($footerTemplates as $template) { if (!empty($template['active'])) { echo '<option value="' . esc_attr((string) $template['id']) . '"' . selected($footerChoice, (string) $template['id'], false) . '>' . esc_html((string) $template['name']) . '</option>'; } }
+        echo '</select></label><span class="description">Header og Footer vælges uafhængigt. Frontend-overtagelse aktiveres først med Theme-shell.</span></section>';
+
         echo '<div class="h18-clean-toolbar">';
         echo '<button type="button" class="button" id="h18-clean-undo" disabled>↶ Fortryd</button>';
         echo '<button type="button" class="button" id="h18-clean-redo" disabled>↷ Gentag</button>';
@@ -129,6 +143,7 @@ final class EditorController
             'container' => 'Kasse',
             'text' => 'Tekst',
             'image' => 'Billede',
+            'button' => 'Knap',
         ] as $type => $label) {
             echo '<button type="button" draggable="true" class="button h18-clean-add" data-type="' . esc_attr($type) . '">+ ' . esc_html($label) . '</button>';
         }
@@ -199,7 +214,10 @@ final class EditorController
                 'incoming' => DiagnosticStore::modelSummary($normalized),
             ]);
             $note = isset($_POST['change_note']) ? sanitize_text_field((string) wp_unslash($_POST['change_note'])) : '';
-            $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gem fra Visual Designer');
+            $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gemt Visual Designer-layout');
+            TemplateLayoutModel::ensureMigrated();
+            TemplateLayoutModel::setPageChoice($postId, 'header', sanitize_key((string) wp_unslash($_POST['header_template_choice'] ?? 'auto')));
+            TemplateLayoutModel::setPageChoice($postId, 'footer', sanitize_key((string) wp_unslash($_POST['footer_template_choice'] ?? 'auto')));
             $saved = LayoutModel::get($postId);
             $incomingDigest = LayoutModel::structuralDigest($normalized);
             $savedDigest = LayoutModel::structuralDigest($saved);
@@ -385,7 +403,7 @@ final class EditorController
     {
         $pages = get_pages(['sort_column' => 'post_title', 'sort_order' => 'ASC']);
         echo '<div class="wrap"><h1>Visual Designer</h1><p>Vælg en WordPress-side. Der importeres intet gammelt editor-state automatisk.</p>';
-        echo '<table class="widefat striped"><thead><tr><th>Side</th><th>Slug</th><th>Clean version</th><th></th></tr></thead><tbody>';
+        echo '<table class="widefat striped"><thead><tr><th>Side</th><th>Slug</th><th>Designer-version</th><th></th></tr></thead><tbody>';
         foreach ($pages as $page) {
             if (!$page instanceof \WP_Post) {
                 continue;

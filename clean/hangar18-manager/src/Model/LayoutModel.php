@@ -58,7 +58,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -227,6 +227,26 @@ final class LayoutModel
                 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#000000')) ?: '#000000',
                 'headingColor' => sanitize_hex_color((string) ($raw['headingColor'] ?? '#000000')) ?: '#000000',
                 'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
+            ], $border);
+        }
+        if ($type === 'button') {
+            $linkType = strtolower((string) ($raw['linkType'] ?? 'url'));
+            if (!in_array($linkType, ['page', 'url', 'anchor', 'email', 'phone'], true)) {
+                $linkType = 'url';
+            }
+            return array_merge([
+                'text' => sanitize_text_field((string) ($raw['text'] ?? 'Knap')),
+                'linkType' => $linkType,
+                'pageId' => absint($raw['pageId'] ?? 0),
+                'url' => sanitize_text_field((string) ($raw['url'] ?? '')),
+                'targetBlank' => !empty($raw['targetBlank']),
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#30382a')) ?: '#30382a',
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#ffffff')) ?: '#ffffff',
+                'hoverBackground' => sanitize_hex_color((string) ($raw['hoverBackground'] ?? '#525a5f')) ?: '#525a5f',
+                'hoverTextColor' => sanitize_hex_color((string) ($raw['hoverTextColor'] ?? '#ffffff')) ?: '#ffffff',
+                'focusColor' => sanitize_hex_color((string) ($raw['focusColor'] ?? '#c3ae83')) ?: '#c3ae83',
+                'paddingX' => self::clamp($raw['paddingX'] ?? 20, 0, 120, 20),
+                'paddingY' => self::clamp($raw['paddingY'] ?? 10, 0, 120, 10),
             ], $border);
         }
         if ($type === 'image') {
