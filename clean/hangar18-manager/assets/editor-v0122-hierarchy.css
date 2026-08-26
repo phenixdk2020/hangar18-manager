@@ -1,0 +1,23 @@
+.h18-clean-hierarchy-invalid{
+    outline:3px dashed #b32d2e!important;
+    outline-offset:-3px;
+    cursor:not-allowed!important;
+}
+.h18-clean-hierarchy-toast{
+    position:fixed;
+    z-index:1000000;
+    display:none;
+    max-width:310px;
+    box-sizing:border-box;
+    padding:10px 12px;
+    border:1px solid #b32d2e;
+    border-radius:7px;
+    background:#fff;
+    box-shadow:0 4px 18px rgba(0,0,0,.18);
+    color:#8a2424;
+    font-size:13px;
+    font-weight:600;
+    line-height:1.35;
+    pointer-events:none;
+}
+.h18-clean-hierarchy-toast.is-visible{display:block}
