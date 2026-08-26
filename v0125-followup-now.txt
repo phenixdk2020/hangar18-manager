@@ -1,0 +1,4 @@
+v0.1.25
+triggered_utc=2026-08-26T12:40:00Z
+reason=Run integration hardening and model QA after initial 0.1.25 source implementation.
+nonce=1
