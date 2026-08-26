@@ -1,1 +1,1 @@
-Re-run Visual Designer Manager 0.1.29 floating buttons after canonical model and event-handler target repairs.
+Re-run Visual Designer Manager 0.1.29 floating buttons after narrowing the verifier to the actual button renderer.
