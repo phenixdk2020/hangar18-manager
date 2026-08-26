@@ -55,7 +55,11 @@
         tpl.innerHTML = raw.indexOf('<') === -1 ? raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r?\n/g, '<br>') : raw;
         const allowed = new Set(['P','BR','STRONG','B','EM','I','U','S','UL','OL','LI','A']);
         Array.from(tpl.content.querySelectorAll('*')).forEach(function (el) {
-            if (!allowed.has(el.tagName)) { el.replaceWith(...Array.from(el.childNodes)); return; }
+            if (!allowed.has(el.tagName)) {
+                const parent = el.parentNode;
+                if (parent) { while (el.firstChild) { parent.insertBefore(el.firstChild, el); } parent.removeChild(el); }
+                return;
+            }
             Array.from(el.attributes).forEach(function (attr) {
                 const ok = el.tagName === 'A' && ['href','target','rel'].includes(attr.name.toLowerCase());
                 if (!ok) { el.removeAttribute(attr.name); }
@@ -1084,7 +1088,15 @@
             header.appendChild(move);
             header.appendChild(title);
             card.appendChild(header);
-            card.appendChild(cardContent(node));
+            try {
+                card.appendChild(cardContent(node));
+            } catch (error) {
+                const failed = document.createElement('div');
+                failed.className = 'h18-clean-render-error';
+                failed.textContent = 'Elementet kunne ikke vises: ' + (error && error.message ? error.message : 'ukendt render-fejl');
+                card.appendChild(failed);
+                diag('node_render_error', { id: node.id, type: node.type, message: String(error && error.message || error || 'unknown') });
+            }
 
             if (PARENT_TYPES.includes(node.type)) {
                 const inner = document.createElement('div');
@@ -1093,7 +1105,15 @@
                 inner.style.background = p.background || 'transparent';
                 inner.style.borderRadius = (p.radius || 0) + 'px';
                 inner.style.padding = (p.padding || 0) + 'px';
-                renderSurface(node.id, inner);
+                try {
+                    renderSurface(node.id, inner);
+                } catch (error) {
+                    const failed = document.createElement('div');
+                    failed.className = 'h18-clean-render-error';
+                    failed.textContent = 'Indholdet i denne ' + typeLabel(node.type) + ' kunne ikke vises fuldt: ' + (error && error.message ? error.message : 'ukendt render-fejl');
+                    inner.appendChild(failed);
+                    diag('surface_render_error', { id: node.id, type: node.type, message: String(error && error.message || error || 'unknown') });
+                }
                 card.appendChild(inner);
             }
 
@@ -1331,8 +1351,20 @@
         state = normalizeModel(state);
         const canvas = document.getElementById('h18-clean-canvas');
         if (canvas) {
-            renderSurface('', canvas);
-            reconcileLayoutAfterRender(canvas);
+            try {
+                renderSurface('', canvas);
+                reconcileLayoutAfterRender(canvas);
+                canvas.removeAttribute('data-render-failed');
+            } catch (error) {
+                canvas.setAttribute('data-render-failed', '1');
+                if (!canvas.querySelector('.h18-clean-root-render-error')) {
+                    const failed = document.createElement('div');
+                    failed.className = 'h18-clean-root-render-error';
+                    failed.textContent = 'Designer-rendering fejlede, men layoutdata er bevaret: ' + (error && error.message ? error.message : 'ukendt fejl');
+                    canvas.appendChild(failed);
+                }
+                diag('root_render_error', { message: String(error && error.message || error || 'unknown'), state: structuralSummary() });
+            }
         }
         renderInspector();
         updateHidden();
