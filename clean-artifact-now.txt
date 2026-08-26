@@ -1,4 +1,4 @@
-v0.1.21-dev
-triggered_utc=2026-08-26T07:35:00Z
-reason=Full QA after Visual Designer / Visual Designer Manager public naming migration, hierarchy work and parallel Manager modules.
-nonce=7
+v0.1.23-dev
+triggered_utc=2026-08-26T09:24:00Z
+reason=Full QA after Header/Footer Global Designer, Manager status markers and UX fixes from 0.1.22 browser testing.
+nonce=8
