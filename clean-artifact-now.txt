@@ -1,4 +1,4 @@
-v0.1.24-dev
-triggered_utc=2026-08-26T09:35:00Z
-reason=QA optional change note, Manager status colors and complete green selection frame after 0.1.23 browser testing.
-nonce=9
+v0.1.25-dev
+triggered_utc=2026-08-26T09:45:00Z
+reason=QA Inspector scroll and focus preservation during live field updates.
+nonce=10
