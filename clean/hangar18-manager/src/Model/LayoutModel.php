@@ -209,11 +209,19 @@ final class LayoutModel
     {
         $border = self::borderProps($raw);
         if ($type === 'text') {
+            $headingLevel = strtolower((string) ($raw['headingLevel'] ?? 'h2'));
+            if (!in_array($headingLevel, ['h2', 'h3', 'h4', 'h5', 'h6'], true)) {
+                $headingLevel = 'h2';
+            }
+            $align = strtolower((string) ($raw['align'] ?? 'left'));
+            if (!in_array($align, ['left', 'center', 'right'], true)) {
+                $align = 'left';
+            }
             return array_merge([
                 'heading' => sanitize_text_field((string) ($raw['heading'] ?? '')),
-                'headingLevel' => in_array((string) ($raw['headingLevel'] ?? 'h2'), ['h2', 'h3', 'h4', 'h5', 'h6'], true) ? (string) $raw['headingLevel'] : 'h2',
+                'headingLevel' => $headingLevel,
                 'text' => wp_kses_post((string) ($raw['text'] ?? 'Ny tekst')),
-                'align' => in_array((string) ($raw['align'] ?? 'left'), ['left', 'center', 'right'], true) ? (string) $raw['align'] : 'left',
+                'align' => $align,
                 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
                 'backgroundTransparent' => array_key_exists('backgroundTransparent', $raw) ? (bool) $raw['backgroundTransparent'] : true,
                 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#000000')) ?: '#000000',
