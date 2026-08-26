@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.25.zip",
-  "sha256": "d37ad6888f91ec68fbaafc3be3018004bc98a983427730714e605247c915730c",
-  "source_commit": "ddbac65f7ff05911af636ac003e694d6cb3486a4",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.26.zip",
+  "sha256": "9480898095684df1d53205d0e717baada32150ec812682a0c72f058adc270a1e",
+  "source_commit": "d4436ed580dee476de74f27841a9c7a1d86612fb",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.25</h4><ul><li><strong>Rich text i Tekst-elementet:</strong> fed, kursiv, understregning, punktliste, nummereret liste, links og fjern formatering med sikker HTML-rensning.</li><li><strong>Nyt Knap-element:</strong> intern side, ekstern URL, anker, e-mail og telefon samt mål, farver, hover/focus, padding og radius.</li><li><strong>Flere Header- og Footer-templates:</strong> opret, omdøb og duplikér templates, vælg separate standarder for Header og Footer, og bevar egen versionshistorik pr. template.</li><li><strong>Sidevalg af Header/Footer:</strong> hver side kan bruge automatisk standard, en bestemt aktiv template eller ingen Header/Footer. Frontend-shell-overtagelse aktiveres fortsat først i Theme-shell-fasen.</li><li><strong>Sikker migration:</strong> eksisterende globale Header/Footer-layouts fra fase 1 migreres til standard-templates uden at miste model, settings eller historik.</li><li><strong>Bedre versionsnoter:</strong> automatiske ændringsbeskrivelser bygger videre på Undo-transaktioner og suppleres med responsive ændringer samt Header/Footer-valg; en manuel note har fortsat førsteprioritet.</li><li><strong>Inspector-stabilitet og naming-hardening:</strong> scroll/fokus bevares bedre ved Inspector-opdateringer, synlige produktnavne er Visual Designer / Visual Designer Manager, og interne kompatibilitetsidentifiers forbliver teknisk uændrede.</li><li>0.1.24 statusfarver, selection-ramme, valgfri ændringsnote og alle tidligere responsive/hierarki-funktioner er bevaret.</li></ul>"
+    "changelog": "<h4>0.1.26</h4><ul><li><strong>WYSIWYG-hardening:</strong> editor-label/type/ID er nu ren editor-chrome og påvirker ikke længere canonical elementgeometri.</li><li><strong>Linjeskift:</strong> almindelige linjeskift og blanke linjer bevares ens i Designer, Forhåndsvisning og frontend.</li><li><strong>Rich text:</strong> tekstmarkeringen bevares ved Fed, Kursiv, Understregning og øvrige toolbar-handlinger, så formatering kan udføres uden at selection forsvinder.</li><li><strong>Typografi:</strong> brødtekst og overskrift har separate indstillinger for skrifttype, skriftstørrelse, tykkelse, linjeafstand og bogstavafstand; overskrift kan arve brødtekstens skrifttype.</li><li><strong>Manuel billedredigering:</strong> billedets X/Y/bredde/højde og manuel tilstand gemmes i canonical modellen og overlever Gem, reload og frontend-rendering.</li><li><strong>Inspector:</strong> egen lodret scroll på desktop/laptop samt bedre bevarelse af scroll-position og fokus ved re-render.</li><li><strong>Knap auto-size:</strong> Automatisk størrelse følger som standard tekst og Padding X/Y; manuel resize kan fortsat gøre knappen større og slå auto-size fra.</li><li><strong>Regression:</strong> 0.1.25 multi-template Header/Footer, Knap-element, rich text, responsive layouts, hierarchy og versionshistorik er bevaret og køres gennem release-QA.</li></ul>"
   }
 }
