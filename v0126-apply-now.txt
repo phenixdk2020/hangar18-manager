@@ -1,0 +1,1 @@
+Apply the deterministic 0.1.26 WYSIWYG, typography, rich-text, image persistence, Inspector scroll and button auto-size hotfix.
