@@ -1,0 +1,3 @@
+Apply Visual Designer Manager 0.1.23 Header/Footer + UX patch
+Requested after 0.1.22 browser testing.
+Menu redesign intentionally deferred until Header/Footer Designer exists.
