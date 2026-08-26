@@ -1,4 +1,4 @@
 v0.1.21-dev
-triggered_utc=2026-08-26T06:33:00Z
-reason=QA navigation restore history and expanded export packages.
-nonce=4
+triggered_utc=2026-08-26T06:45:00Z
+reason=QA 0.1.22 hierarchy migration guard plus current Manager modules.
+nonce=5
