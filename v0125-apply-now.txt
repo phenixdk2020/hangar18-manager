@@ -1,4 +1,4 @@
 v0.1.25
-triggered_utc=2026-08-26T12:26:00Z
-reason=Retry approved 0.1.25 scope after resolving both canonical type-label mappings.
-nonce=3
+triggered_utc=2026-08-26T12:31:00Z
+reason=Publish QA-passed 0.1.25 source after cleaning temporary patch-script workspace changes.
+nonce=4
