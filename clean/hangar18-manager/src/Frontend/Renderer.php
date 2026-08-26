@@ -162,12 +162,26 @@ final class Renderer
                 ? 'transparent'
                 : (sanitize_hex_color((string) ($props['background'] ?? '#ffffff')) ?: '#ffffff');
             $padding = max(0, min(120, (int) ($props['padding'] ?? 0)));
+            $bodyFamily = self::fontCss((string) ($props['fontFamily'] ?? 'system'));
+            $headingFamilyToken = (string) ($props['headingFontFamily'] ?? 'body');
+            $headingFamily = $headingFamilyToken === 'body' ? $bodyFamily : self::fontCss($headingFamilyToken);
+            $fontSize = max(8, min(120, (int) ($props['fontSize'] ?? 16)));
+            $fontWeight = max(100, min(900, (int) ($props['fontWeight'] ?? 400)));
+            $lineHeight = max(0.8, min(3.0, (float) ($props['lineHeight'] ?? 1.5)));
+            $letterSpacing = max(-10.0, min(30.0, (float) ($props['letterSpacing'] ?? 0)));
+            $headingSize = max(0, min(160, (int) ($props['headingFontSize'] ?? 0)));
+            if ($headingSize === 0) { $headingSize = ['h2' => 32, 'h3' => 28, 'h4' => 24, 'h5' => 20, 'h6' => 18][$headingLevel] ?? 32; }
+            $headingWeight = max(100, min(900, (int) ($props['headingFontWeight'] ?? 700)));
+            $headingLineHeight = max(0.8, min(3.0, (float) ($props['headingLineHeight'] ?? 1.2)));
+            $headingLetterSpacing = max(-10.0, min(30.0, (float) ($props['headingLetterSpacing'] ?? 0)));
             $headingHtml = $heading !== ''
-                ? '<' . $headingLevel . ' class="h18-clean-front-text-heading" style="color:' . esc_attr($headingColor) . '">' . esc_html($heading) . '</' . $headingLevel . '>'
+                ? '<' . $headingLevel . ' class="h18-clean-front-text-heading" style="color:' . esc_attr($headingColor) . ';font-family:' . esc_attr($headingFamily) . ';font-size:' . esc_attr((string) $headingSize) . 'px;font-weight:' . esc_attr((string) $headingWeight) . ';line-height:' . esc_attr((string) $headingLineHeight) . ';letter-spacing:' . esc_attr((string) $headingLetterSpacing) . 'px">' . esc_html($heading) . '</' . $headingLevel . '>'
                 : '';
             $textStyle = $style . $borderStyle . $spacingStyle . $radiusStyle
-                . 'background:' . $background . ';padding:' . $padding . 'px;color:' . $textColor . ';text-align:' . (string) ($props['align'] ?? 'left') . ';';
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '">' . $headingHtml . wpautop(wp_kses_post((string) ($props['text'] ?? ''))) . '</div>';
+                . 'background:' . $background . ';padding:' . $padding . 'px;color:' . $textColor . ';text-align:' . (string) ($props['align'] ?? 'left') . ';font-family:' . $bodyFamily . ';font-size:' . $fontSize . 'px;font-weight:' . $fontWeight . ';line-height:' . $lineHeight . ';letter-spacing:' . $letterSpacing . 'px;';
+            $rawText = (string) ($props['text'] ?? '');
+            $bodyHtml = strpos($rawText, '<') === false ? nl2br(esc_html($rawText), false) : wp_kses_post($rawText);
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '">' . $headingHtml . $bodyHtml . '</div>';
         }
 
         if ($type === 'button') {
@@ -257,6 +271,20 @@ final class Renderer
         }
         $boxStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . 'background:' . $background . ';padding:' . $padding . 'px;';
         return '<section id="h18-clean-' . $id . '" class="h18-clean-front-node ' . esc_attr($classes) . '" style="' . esc_attr($boxStyle) . '">' . self::children((string) $node['id'], $byParent, $byId) . '</section>';
+    }
+
+    private static function fontCss(string $token): string
+    {
+        return [
+            'arial' => 'Arial,sans-serif',
+            'verdana' => 'Verdana,sans-serif',
+            'tahoma' => 'Tahoma,sans-serif',
+            'trebuchet' => '"Trebuchet MS",sans-serif',
+            'georgia' => 'Georgia,serif',
+            'times' => '"Times New Roman",serif',
+            'courier' => '"Courier New",monospace',
+            'system' => 'system-ui,-apple-system,"Segoe UI",sans-serif',
+        ][$token] ?? 'system-ui,-apple-system,"Segoe UI",sans-serif';
     }
 
     /** @param array<string,mixed> $props */

@@ -25,8 +25,30 @@
     function cleanId(value) { return String(value || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 100); }
     function makeId(type) { return cleanId(type + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8)); }
     function normalizeColor(value) { return /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value).toLowerCase() : '#000000'; }
+    const FONT_TOKENS = ['system','arial','verdana','tahoma','trebuchet','georgia','times','courier'];
+    function normalizeFontToken(value, heading) {
+        const token = String(value || '').toLowerCase();
+        if (heading && token === 'body') { return 'body'; }
+        return FONT_TOKENS.includes(token) ? token : 'system';
+    }
+    function fontCss(token, bodyToken) {
+        token = normalizeFontToken(token, true);
+        if (token === 'body') { token = normalizeFontToken(bodyToken, false); }
+        return ({system:'system-ui,-apple-system,\"Segoe UI\",sans-serif',arial:'Arial,sans-serif',verdana:'Verdana,sans-serif',tahoma:'Tahoma,sans-serif',trebuchet:'\"Trebuchet MS\",sans-serif',georgia:'Georgia,serif',times:'\"Times New Roman\",serif',courier:'\"Courier New\",monospace'})[token] || 'system-ui,-apple-system,\"Segoe UI\",sans-serif';
+    }
+    function fontOptions(selected, allowBody) {
+        const options = [];
+        if (allowBody) { options.push(['body','Samme som brødtekst']); }
+        options.push(['system','System / Segoe UI'],['arial','Arial'],['verdana','Verdana'],['tahoma','Tahoma'],['trebuchet','Trebuchet MS'],['georgia','Georgia'],['times','Times New Roman'],['courier','Courier New']);
+        return options.map(function (item) { return '<option value=\"' + item[0] + '\"' + (selected === item[0] ? ' selected' : '') + '>' + item[1] + '</option>'; }).join('');
+    }
+    function headingPx(props) {
+        const explicit = clamp(parseInt(props.headingFontSize || 0, 10) || 0, 0, 160);
+        if (explicit > 0) { return explicit; }
+        return ({h2:32,h3:28,h4:24,h5:20,h6:18})[String(props.headingLevel || 'h2')] || 32;
+    }
     function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap'})[String(type || '')] || String(type || 'Element'); }
-    function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding'})[String(field || '')] || String(field || 'felt'); }
+    function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',fontFamily:'skrifttype',fontSize:'skriftstørrelse',fontWeight:'skrifttykkelse',lineHeight:'linjeafstand',letterSpacing:'bogstavafstand',headingFontFamily:'overskriftsskrifttype',headingFontSize:'overskriftsstørrelse',headingFontWeight:'overskriftstykkelse',headingLineHeight:'overskriftens linjeafstand',headingLetterSpacing:'overskriftens bogstavafstand',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding',autoSize:'automatisk størrelse'})[String(field || '')] || String(field || 'felt'); }
     function richPreviewHtml(value) {
         const raw = String(value || '');
         const tpl = document.createElement('template');
@@ -78,7 +100,23 @@
                 heading: String(raw.heading || ''),
                 headingLevel: ['h2', 'h3', 'h4', 'h5', 'h6'].includes(String(raw.headingLevel || '').toLowerCase()) ? String(raw.headingLevel).toLowerCase() : 'h2',
                 text: String(raw.text || 'Ny tekst'),
-                align: ['left', 'center', 'right'].includes(raw.align) ? raw.align : 'left'
+                align: ['left', 'center', 'right'].includes(raw.align) ? raw.align : 'left',
+                background: /^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#ffffff',
+                backgroundTransparent: raw.backgroundTransparent !== false,
+                textColor: /^#[0-9a-f]{6}$/i.test(String(raw.textColor || '')) ? String(raw.textColor).toLowerCase() : '#000000',
+                headingColor: /^#[0-9a-f]{6}$/i.test(String(raw.headingColor || '')) ? String(raw.headingColor).toLowerCase() : '#000000',
+                padding: clamp(parseInt(raw.padding || 0, 10) || 0, 0, 120),
+                radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100),
+                fontFamily: normalizeFontToken(raw.fontFamily || 'system', false),
+                fontSize: clamp(parseInt(raw.fontSize || 16, 10) || 16, 8, 120),
+                fontWeight: clamp(parseInt(raw.fontWeight || 400, 10) || 400, 100, 900),
+                lineHeight: Math.max(0.8, Math.min(3, parseFloat(raw.lineHeight || 1.5) || 1.5)),
+                letterSpacing: Math.max(-10, Math.min(30, parseFloat(raw.letterSpacing || 0) || 0)),
+                headingFontFamily: normalizeFontToken(raw.headingFontFamily || 'body', true),
+                headingFontSize: clamp(parseInt(raw.headingFontSize || 0, 10) || 0, 0, 160),
+                headingFontWeight: clamp(parseInt(raw.headingFontWeight || 700, 10) || 700, 100, 900),
+                headingLineHeight: Math.max(0.8, Math.min(3, parseFloat(raw.headingLineHeight || 1.2) || 1.2)),
+                headingLetterSpacing: Math.max(-10, Math.min(30, parseFloat(raw.headingLetterSpacing || 0) || 0))
             });
         }
         if (type === 'button') {
@@ -96,11 +134,12 @@
                 focusColor: /^#[0-9a-f]{6}$/i.test(String(raw.focusColor || '')) ? String(raw.focusColor).toLowerCase() : '#c3ae83',
                 paddingX: clamp(parseInt(raw.paddingX || 20, 10) || 20, 0, 120),
                 paddingY: clamp(parseInt(raw.paddingY || 10, 10) || 10, 0, 120),
-                radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100)
+                radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100),
+                autoSize: raw.autoSize !== false
             });
         }
         if (type === 'image') {
-            const fit = ['cover', 'contain', 'original', 'stretch'].includes(String(raw.fit || '').toLowerCase()) ? String(raw.fit).toLowerCase() : 'contain';
+            const fit = ['cover', 'contain', 'original', 'stretch', 'manual'].includes(String(raw.fit || '').toLowerCase()) ? String(raw.fit).toLowerCase() : 'contain';
             return Object.assign(common, {
                 mediaId: parseInt(raw.mediaId || 0, 10) || 0,
                 url: String(raw.url || ''),
@@ -111,7 +150,12 @@
                 boxBackground: /^#[0-9a-f]{6}$/i.test(String(raw.boxBackground || '')) ? String(raw.boxBackground).toLowerCase() : '#ffffff',
                 boxTransparent: raw.boxTransparent !== false,
                 focalX: clamp(parseInt(raw.focalX || 50, 10) || 50, 0, 100),
-                focalY: clamp(parseInt(raw.focalY || 50, 10) || 50, 0, 100)
+                focalY: clamp(parseInt(raw.focalY || 50, 10) || 50, 0, 100),
+                manualX: clamp(parseInt(raw.manualX || 0, 10) || 0, -4000, 4000),
+                manualY: clamp(parseInt(raw.manualY || 0, 10) || 0, -4000, 4000),
+                manualW: clamp(parseInt(raw.manualW || 320, 10) || 320, 1, 4000),
+                manualH: clamp(parseInt(raw.manualH || 240, 10) || 240, 1, 4000),
+                lockAspect: raw.lockAspect !== false
             });
         }
         if (PARENT_TYPES.includes(type)) {
@@ -383,8 +427,32 @@
         });
     }
 
+    function autoFitButtons() {
+        const changed = new Set();
+        document.querySelectorAll('.h18-clean-node--button[data-node-id]').forEach(function (card) {
+            const node = nodeById(card.getAttribute('data-node-id') || '');
+            if (!node || node.type !== 'button' || node.props.autoSize === false) { return; }
+            const button = card.querySelector(':scope > .h18-clean-node-preview--button .h18-clean-button-preview');
+            const surface = card.parentElement;
+            if (!button || !surface) { return; }
+            const surfaceWidth = Math.max(1, surface.getBoundingClientRect().width);
+            const unitPx = Math.max(0.1, surfaceWidth / UNITS);
+            const rect = button.getBoundingClientRect();
+            const nextW = clamp(Math.ceil(Math.max(1, rect.width) / unitPx), 1, UNITS - node.geometry.desktop.x);
+            const nextH = clamp(Math.ceil(Math.max(1, rect.height) / ROW_PX), 1, 4000);
+            if (node.geometry.desktop.w !== nextW || node.geometry.desktop.h !== nextH) {
+                node.geometry.desktop.w = nextW;
+                node.geometry.desktop.h = nextH;
+                changed.add(node.id);
+            }
+        });
+        return changed;
+    }
+
     function reconcileLayoutAfterRender(canvas) {
+        const autoButtons = autoFitButtons();
         const materialized = materializeNaturalLeafHeights();
+        autoButtons.forEach(function (id) { materialized.add(id); });
         const collisionHealed = healMaterializationCollisions(materialized);
         const containersChanged = syncContainerHeights();
         const changed = materialized.size > 0 || collisionHealed || containersChanged;
@@ -752,12 +820,22 @@
         if (node.type === 'text') {
             wrap.classList.add('h18-clean-node-preview--text');
             wrap.style.textAlign = node.props.align || 'left';
+            wrap.style.fontFamily = fontCss(node.props.fontFamily || 'system');
+            wrap.style.fontSize = String(node.props.fontSize || 16) + 'px';
+            wrap.style.fontWeight = String(node.props.fontWeight || 400);
+            wrap.style.lineHeight = String(node.props.lineHeight || 1.5);
+            wrap.style.letterSpacing = String(node.props.letterSpacing || 0) + 'px';
             const heading = String(node.props.heading || '').trim();
             if (heading) {
                 const headingLevel = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(node.props.headingLevel) ? node.props.headingLevel : 'h2';
                 const title = document.createElement(headingLevel);
                 title.className = 'h18-clean-text-heading';
                 title.textContent = heading;
+                title.style.fontFamily = fontCss(node.props.headingFontFamily || 'body', node.props.fontFamily || 'system');
+                title.style.fontSize = headingPx(node.props) + 'px';
+                title.style.fontWeight = String(node.props.headingFontWeight || 700);
+                title.style.lineHeight = String(node.props.headingLineHeight || 1.2);
+                title.style.letterSpacing = String(node.props.headingLetterSpacing || 0) + 'px';
                 wrap.appendChild(title);
             }
             const body = document.createElement('div');
@@ -772,8 +850,8 @@
             button.style.display = 'flex';
             button.style.alignItems = 'center';
             button.style.justifyContent = 'center';
-            button.style.width = '100%';
-            button.style.height = '100%';
+            button.style.width = node.props.autoSize === false ? '100%' : 'max-content';
+            button.style.height = node.props.autoSize === false ? '100%' : 'auto';
             button.style.boxSizing = 'border-box';
             button.style.background = node.props.background || '#30382a';
             button.style.color = node.props.textColor || '#ffffff';
@@ -1094,6 +1172,7 @@
         if (resizedNode && PARENT_TYPES.includes(resizedNode.type)) {
             resizedNode.props.minHeightRows = resizedNode.geometry.desktop.h;
         }
+        if (resizedNode && resizedNode.type === 'button') { resizedNode.props.autoSize = false; }
         commit(current.before, 'Ændr størrelse på ' + typeLabel((nodeById(current.id) || {}).type));
         const node = nodeById(current.id);
         diag('resize_commit', { id: current.id, direction: current.direction, geometry: node ? clone(node.geometry.desktop) : null, state: structuralSummary() });
@@ -1113,6 +1192,7 @@
             html += '<label>Overskrifttype<select data-field="headingLevel"><option value="h2"' + (node.props.headingLevel === 'h2' ? ' selected' : '') + '>H2</option><option value="h3"' + (node.props.headingLevel === 'h3' ? ' selected' : '') + '>H3</option><option value="h4"' + (node.props.headingLevel === 'h4' ? ' selected' : '') + '>H4</option><option value="h5"' + (node.props.headingLevel === 'h5' ? ' selected' : '') + '>H5</option><option value="h6"' + (node.props.headingLevel === 'h6' ? ' selected' : '') + '>H6</option></select></label>';
             html += '<label>Tekst<textarea data-field="text" rows="8">' + escapeHtml(node.props.text || '') + '</textarea></label>';
             html += '<label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label>';
+            html += '<div class="h18-vd-typography"><strong>Typografi · brødtekst</strong><div class="h18-clean-field-grid"><label>Skrifttype<select data-field="fontFamily">' + fontOptions(node.props.fontFamily || 'system', false) + '</select></label><label>Størrelse px<input data-field="fontSize" type="number" min="8" max="120" value="' + (node.props.fontSize || 16) + '"></label><label>Tykkelse<select data-field="fontWeight">' + [300,400,500,600,700,800,900].map(function (v) { return '<option value="' + v + '"' + (parseInt(node.props.fontWeight || 400, 10) === v ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></label><label>Linjeafstand<input data-field="lineHeight" type="number" step="0.1" min="0.8" max="3" value="' + (node.props.lineHeight || 1.5) + '"></label><label>Bogstavafstand px<input data-field="letterSpacing" type="number" step="0.1" min="-10" max="30" value="' + (node.props.letterSpacing || 0) + '"></label></div><strong>Typografi · overskrift</strong><div class="h18-clean-field-grid"><label>Skrifttype<select data-field="headingFontFamily">' + fontOptions(node.props.headingFontFamily || 'body', true) + '</select></label><label>Størrelse px <span class="description">(0 = automatisk)</span><input data-field="headingFontSize" type="number" min="0" max="160" value="' + (node.props.headingFontSize || 0) + '"></label><label>Tykkelse<select data-field="headingFontWeight">' + [300,400,500,600,700,800,900].map(function (v) { return '<option value="' + v + '"' + (parseInt(node.props.headingFontWeight || 700, 10) === v ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></label><label>Linjeafstand<input data-field="headingLineHeight" type="number" step="0.1" min="0.8" max="3" value="' + (node.props.headingLineHeight || 1.2) + '"></label><label>Bogstavafstand px<input data-field="headingLetterSpacing" type="number" step="0.1" min="-10" max="30" value="' + (node.props.headingLetterSpacing || 0) + '"></label></div></div>';
         } else if (node.type === 'button') {
             html += '<label>Knaptekst<input data-field="buttonText" type="text" value="' + escapeAttr(node.props.text || 'Knap') + '"></label>';
             html += '<label>Linktype<select data-field="linkType"><option value="page"' + (node.props.linkType === 'page' ? ' selected' : '') + '>Intern side</option><option value="url"' + (node.props.linkType === 'url' ? ' selected' : '') + '>Ekstern URL</option><option value="anchor"' + (node.props.linkType === 'anchor' ? ' selected' : '') + '>Anker</option><option value="email"' + (node.props.linkType === 'email' ? ' selected' : '') + '>E-mail</option><option value="phone"' + (node.props.linkType === 'phone' ? ' selected' : '') + '>Telefon</option></select></label>';
@@ -1123,6 +1203,7 @@
                 html += '<label>' + linkLabel + '<input data-field="url" type="text" value="' + escapeAttr(node.props.url || '') + '"></label>';
             }
             html += '<label class="h18-clean-checkbox"><input data-field="targetBlank" type="checkbox"' + (node.props.targetBlank ? ' checked' : '') + '> Åbn i ny fane</label>';
+            html += '<label class="h18-clean-checkbox"><input data-field="autoSize" type="checkbox"' + (node.props.autoSize !== false ? ' checked' : '') + '> Automatisk størrelse efter tekst og padding</label>';
             html += '<div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#30382a') + '"></label><label>Tekstfarve<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#ffffff') + '"></label><label>Hover baggrund<input data-field="hoverBackground" type="color" value="' + escapeAttr(node.props.hoverBackground || '#525a5f') + '"></label><label>Hover tekst<input data-field="hoverTextColor" type="color" value="' + escapeAttr(node.props.hoverTextColor || '#ffffff') + '"></label><label>Focus-farve<input data-field="focusColor" type="color" value="' + escapeAttr(node.props.focusColor || '#c3ae83') + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label><label>Padding X<input data-field="paddingX" type="number" min="0" max="120" value="' + (node.props.paddingX || 20) + '"></label><label>Padding Y<input data-field="paddingY" type="number" min="0" max="120" value="' + (node.props.paddingY || 10) + '"></label></div>';
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button>';
@@ -1163,11 +1244,22 @@
                 else if (field === 'headingLevel') { current.props.headingLevel = ['h2', 'h3', 'h4', 'h5', 'h6'].includes(control.value) ? control.value : 'h2'; }
                 else if (field === 'text') { current.props.text = String(control.value || ''); }
                 else if (field === 'align') { current.props.align = ['left', 'center', 'right'].includes(control.value) ? control.value : 'left'; }
+                else if (field === 'fontFamily') { current.props.fontFamily = normalizeFontToken(control.value, false); }
+                else if (field === 'fontSize') { current.props.fontSize = clamp(parseInt(control.value || 16, 10) || 16, 8, 120); }
+                else if (field === 'fontWeight') { current.props.fontWeight = clamp(parseInt(control.value || 400, 10) || 400, 100, 900); }
+                else if (field === 'lineHeight') { current.props.lineHeight = Math.max(0.8, Math.min(3, parseFloat(control.value || 1.5) || 1.5)); }
+                else if (field === 'letterSpacing') { current.props.letterSpacing = Math.max(-10, Math.min(30, parseFloat(control.value || 0) || 0)); }
+                else if (field === 'headingFontFamily') { current.props.headingFontFamily = normalizeFontToken(control.value, true); }
+                else if (field === 'headingFontSize') { current.props.headingFontSize = clamp(parseInt(control.value || 0, 10) || 0, 0, 160); }
+                else if (field === 'headingFontWeight') { current.props.headingFontWeight = clamp(parseInt(control.value || 700, 10) || 700, 100, 900); }
+                else if (field === 'headingLineHeight') { current.props.headingLineHeight = Math.max(0.8, Math.min(3, parseFloat(control.value || 1.2) || 1.2)); }
+                else if (field === 'headingLetterSpacing') { current.props.headingLetterSpacing = Math.max(-10, Math.min(30, parseFloat(control.value || 0) || 0)); }
                 else if (field === 'buttonText') { current.props.text = String(control.value || 'Knap'); }
                 else if (field === 'linkType') { current.props.linkType = ['page', 'url', 'anchor', 'email', 'phone'].includes(control.value) ? control.value : 'url'; }
                 else if (field === 'pageId') { current.props.pageId = parseInt(control.value || 0, 10) || 0; }
                 else if (field === 'url') { current.props.url = String(control.value || ''); }
                 else if (field === 'targetBlank') { current.props.targetBlank = !!control.checked; }
+                else if (field === 'autoSize') { current.props.autoSize = !!control.checked; }
                 else if (field === 'textColor') { current.props.textColor = normalizeColor(control.value || '#ffffff'); }
                 else if (field === 'hoverBackground') { current.props.hoverBackground = normalizeColor(control.value || '#525a5f'); }
                 else if (field === 'hoverTextColor') { current.props.hoverTextColor = normalizeColor(control.value || '#ffffff'); }
@@ -1294,7 +1386,11 @@
             form.addEventListener('submit', function () {
                 updateHidden();
                 const note = document.getElementById('h18-clean-change-note');
-                if (note && !note.value) { note.value = lastAction || 'Gem clean layout'; }
+                if (note && !note.value) {
+                    const labels = window.H18CleanHistory && typeof window.H18CleanHistory.labels === 'function' ? window.H18CleanHistory.labels() : [];
+                    const compact = Array.isArray(labels) ? labels.filter(function (value, index, all) { return value && all.indexOf(value) === index; }).slice(-6) : [];
+                    note.value = compact.length ? compact.join(' · ') : (lastAction || 'Gemt Visual Designer-layout');
+                }
                 diag('save_client_intent', { state: structuralSummary(), lastAction: lastAction });
             }, true);
         }

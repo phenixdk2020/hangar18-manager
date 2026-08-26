@@ -227,6 +227,17 @@ final class LayoutModel
                 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#000000')) ?: '#000000',
                 'headingColor' => sanitize_hex_color((string) ($raw['headingColor'] ?? '#000000')) ?: '#000000',
                 'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
+                'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
+                'fontFamily' => self::fontToken($raw['fontFamily'] ?? 'system', false),
+                'fontSize' => self::clamp($raw['fontSize'] ?? 16, 8, 120, 16),
+                'fontWeight' => self::clamp($raw['fontWeight'] ?? 400, 100, 900, 400),
+                'lineHeight' => self::clampFloat($raw['lineHeight'] ?? 1.5, 0.8, 3.0, 1.5),
+                'letterSpacing' => self::clampFloat($raw['letterSpacing'] ?? 0, -10.0, 30.0, 0.0),
+                'headingFontFamily' => self::fontToken($raw['headingFontFamily'] ?? 'body', true),
+                'headingFontSize' => self::clamp($raw['headingFontSize'] ?? 0, 0, 160, 0),
+                'headingFontWeight' => self::clamp($raw['headingFontWeight'] ?? 700, 100, 900, 700),
+                'headingLineHeight' => self::clampFloat($raw['headingLineHeight'] ?? 1.2, 0.8, 3.0, 1.2),
+                'headingLetterSpacing' => self::clampFloat($raw['headingLetterSpacing'] ?? 0, -10.0, 30.0, 0.0),
             ], $border);
         }
         if ($type === 'button') {
@@ -247,6 +258,7 @@ final class LayoutModel
                 'focusColor' => sanitize_hex_color((string) ($raw['focusColor'] ?? '#c3ae83')) ?: '#c3ae83',
                 'paddingX' => self::clamp($raw['paddingX'] ?? 20, 0, 120, 20),
                 'paddingY' => self::clamp($raw['paddingY'] ?? 10, 0, 120, 10),
+                'autoSize' => array_key_exists('autoSize', $raw) ? (bool) $raw['autoSize'] : true,
             ], $border);
         }
         if ($type === 'image') {
@@ -309,6 +321,25 @@ final class LayoutModel
         $id = strtolower(trim((string) $value));
         $id = preg_replace('/[^a-z0-9._-]/', '', $id);
         return is_string($id) ? substr($id, 0, 100) : '';
+    }
+
+    /** @param mixed $value */
+    private static function fontToken($value, bool $heading): string
+    {
+        $token = sanitize_key((string) $value);
+        if ($heading && $token === 'body') {
+            return 'body';
+        }
+        return in_array($token, ['system', 'arial', 'verdana', 'tahoma', 'trebuchet', 'georgia', 'times', 'courier'], true) ? $token : 'system';
+    }
+
+    /** @param mixed $value */
+    private static function clampFloat($value, float $min, float $max, float $fallback): float
+    {
+        if (!is_numeric($value)) {
+            return $fallback;
+        }
+        return max($min, min($max, (float) $value));
     }
 
     /** @param mixed $value */

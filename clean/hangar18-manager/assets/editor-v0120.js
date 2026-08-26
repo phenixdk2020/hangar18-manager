@@ -430,7 +430,7 @@
                 panel.appendChild(manualGrid);
                 var help = document.createElement('p');
                 help.className = 'description';
-                help.textContent = 'Den grønne ramme styrer billedboksen. Den sandfarvede ramme styrer selve billedet. Billedets pixelmål ændres ikke, når du bagefter gør boksen større.';
+                help.textContent = 'Grøn ramme = billedboks. Sand ramme = selve billedindholdet.';
                 panel.appendChild(help);
                 var reset = document.createElement('button');
                 reset.type = 'button';
@@ -439,16 +439,24 @@
                 reset.addEventListener('click', function () {
                     e.manual = false;
                     e.fitOverride = 'contain';
-                    syncHidden();
-                    applyAll();
-                    panel.remove();
+                    var staleFrame = card.querySelector('.h18-clean-image-edit-frame');
+                    if (staleFrame) { staleFrame.remove(); }
+                    var fitSelect = host.querySelector('[data-field="fit"]');
+                    if (fitSelect) {
+                        fitSelect.value = 'contain';
+                        fitSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    } else {
+                        syncHidden();
+                        applyAll();
+                    }
+                    if (panel.isConnected) { panel.remove(); }
                     injectInspector();
                 });
                 panel.appendChild(reset);
             } else {
                 var hint = document.createElement('p');
                 hint.className = 'description';
-                hint.textContent = 'Dobbeltklik på billedet eller brug knappen for at få et separat sandfarvet resize-lag til selve billedindholdet.';
+                hint.textContent = 'Brug knappen for at flytte eller skalere billedet inde i billedboksen.';
                 panel.appendChild(hint);
             }
         }
