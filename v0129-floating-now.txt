@@ -1,1 +1,1 @@
-Re-run the parent-relative floating button implementation for Visual Designer Manager 0.1.29 after deterministic target repair.
+Re-run Visual Designer Manager 0.1.29 floating buttons after canonical model and event-handler target repairs.
