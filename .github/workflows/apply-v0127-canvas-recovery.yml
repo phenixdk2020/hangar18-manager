@@ -1,0 +1,45 @@
+name: Apply Visual Designer 0.1.27 canvas recovery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'v0127-canvas-recovery-now.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply canvas recovery
+        run: python .github/scripts/apply_v0127_canvas_recovery.py
+      - name: Verify source
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check clean/hangar18-manager/assets/editor-v018-core.js
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          grep -q 'h18-clean-root-render-error' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q 'node_render_error' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q 'surface_render_error' clean/hangar18-manager/assets/editor-v018-core.js
+      - name: Commit recovery source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/assets/editor-v018-core.js clean/hangar18-manager/assets/editor-v0123-ux.css
+          git commit -m 'Recover Visual Designer canvas rendering for 0.1.27'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
