@@ -17,12 +17,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply public naming migration
-        run: |
-          python .github/scripts/apply_visual_designer_naming.py
-          python .github/scripts/fix_visual_designer_technical_refs.py
+      - name: Repair technical documentation references
+        run: python .github/scripts/fix_visual_designer_technical_refs.py
 
-      - name: Verify PHP, JavaScript and documentation refs
+      - name: Verify Visual Designer Manager source and documentation
         shell: bash
         run: |
           set -euo pipefail
@@ -30,22 +28,23 @@ jobs:
           find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           php .github/scripts/hierarchy_normalizer_qa.php
           python .github/scripts/fix_visual_designer_technical_refs.py
+          if grep -R -n -E 'Hangar18 Manager Clean|Hangar18 Designer|Clean Manager v|Clean editor |Clean layout gemt|Clean-sider|Ikke Clean' clean/hangar18-manager; then
+            echo 'Obsolete public product naming found in Visual Designer Manager source.' >&2
+            exit 1
+          fi
 
-      - name: Commit naming migration
+      - name: Commit documentation repair
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'visual-designer-migration-bot'
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
-          # GitHub App tokens used by Actions may not update workflow files.
-          # Those are updated separately through the GitHub connector.
-          git restore --source=HEAD -- .github/workflows
           git add -A
           if git diff --cached --quiet; then
-            echo 'Naming already current.'
+            echo 'Naming and technical references already current.'
             exit 0
           fi
-          git commit -m 'Apply Visual Designer product naming'
+          git commit -m 'Finalize Visual Designer naming references'
           for attempt in 1 2 3; do
             git fetch origin main
             git rebase origin/main
@@ -54,5 +53,5 @@ jobs:
             fi
             sleep 2
           done
-          echo 'Unable to publish naming migration.' >&2
+          echo 'Unable to publish naming reference repair.' >&2
           exit 1
