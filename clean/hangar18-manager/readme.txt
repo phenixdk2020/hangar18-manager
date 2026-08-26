@@ -2,8 +2,18 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.23
+Version: 0.1.26
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.26 ==
+* WYSIWYG-hardening: editor-label/type/ID er ren editor-chrome og påvirker ikke længere elementets canonical geometri.
+* Tekstlinjeskift og blanke linjer bevares ens i Designer, Forhåndsvisning og frontend.
+* Rich-text selection bevares ved Fed/Kursiv/Understregning m.v., så markeringen ikke forsvinder under toolbar-opdatering.
+* Brødtekst og overskrift har separate typografiindstillinger: skrifttype, størrelse, tykkelse, linjeafstand og bogstavafstand; overskrift kan arve brødtekstens skrifttype.
+* Manuel billedstørrelse og -placering gemmes canonical med fit=manual samt X/Y/bredde/højde og overlever Gem + reload + frontend-rendering.
+* Inspector har egen lodret scroll på desktop/laptop og bevarer scroll/fokus bedre ved re-render.
+* Knap har Automatisk størrelse som standard, så tekst og Padding X/Y bestemmer minimumsstørrelsen; manuel resize kan fortsat bruges.
+* Generiske synlige Clean-save-noter er fjernet fra den aktive editor-runtime; automatiske versionsnoter bruger konkrete ændringer.
 
 == 0.1.23 ==
 * Første globale Header/Footer Designer med separat canonical model og versionshistorik.
