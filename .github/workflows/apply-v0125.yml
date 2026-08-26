@@ -1,0 +1,78 @@
+name: Apply Visual Designer Manager 0.1.25
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'v0125-apply-now.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.25 implementation patch
+        run: python .github/scripts/apply_v0125.py
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Hierarchy normalizer QA
+        run: php .github/scripts/hierarchy_normalizer_qa.php
+
+      - name: Verify 0.1.25 source scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f clean/hangar18-manager/src/Model/TemplateLayoutModel.php
+          test -f clean/hangar18-manager/assets/editor-v0125.js
+          test -f clean/hangar18-manager/assets/editor-v0125.css
+          grep -q "'button'" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -q "button:'Knap'" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q 'H18CleanHistory' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q 'H18RichTextV0125' clean/hangar18-manager/assets/editor-v0125.js
+          grep -q 'TemplateLayoutModel' clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -q 'header_template_choice' clean/hangar18-manager/src/Admin/EditorController.php
+          grep -q 'h18-clean-front-button-link' clean/hangar18-manager/src/Frontend/Renderer.php
+          if grep -R -n -E 'Clean diagnostics pr\. side|Clean Designer|<th>Clean</th>|Clean admin klar|Clean-datafunktion' clean/hangar18-manager/src/Admin; then
+            echo 'Obsolete public Clean naming remains in Manager UI.' >&2
+            exit 1
+          fi
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager
+          if git diff --cached --quiet; then
+            echo '0.1.25 implementation already applied.'
+            exit 0
+          fi
+          git commit -m 'Implement Visual Designer Manager 0.1.25 feature scope'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'Unable to publish 0.1.25 implementation.' >&2
+          exit 1
