@@ -1,7 +1,9 @@
 (function () {
     'use strict';
 
+    var CFG = window.H18CleanEditor || {};
     var active = null;
+    var initialShellChoices = null;
 
     function cleanHtml(html) {
         var tpl = document.createElement('template');
@@ -114,13 +116,99 @@
         shell.appendChild(textarea);
     }
 
+    function readModel() {
+        var field = document.getElementById('h18-clean-model-json');
+        if (!field) { return { nodes: [] }; }
+        try {
+            var model = JSON.parse(field.value || '{}');
+            return model && typeof model === 'object' ? model : { nodes: [] };
+        } catch (ignore) { return { nodes: [] }; }
+    }
+
+    function mapNodes(model) {
+        var map = Object.create(null);
+        (Array.isArray(model && model.nodes) ? model.nodes : []).forEach(function (node) {
+            if (node && node.id) { map[String(node.id)] = node; }
+        });
+        return map;
+    }
+
+    function stable(value) {
+        if (Array.isArray(value)) { return value.map(stable); }
+        if (!value || typeof value !== 'object') { return value; }
+        var result = {};
+        Object.keys(value).sort().forEach(function (key) { result[key] = stable(value[key]); });
+        return result;
+    }
+
+    function same(a, b) {
+        return JSON.stringify(stable(a)) === JSON.stringify(stable(b));
+    }
+
+    function responsiveChangedCount() {
+        var before = mapNodes(CFG.initialModel || { nodes: [] });
+        var after = mapNodes(readModel());
+        var count = 0;
+        Object.keys(after).forEach(function (id) {
+            if (!before[id]) { return; }
+            var bg = before[id].geometry || {};
+            var ag = after[id].geometry || {};
+            if (!same(bg.laptop || {}, ag.laptop || {}) || !same(bg.mobile || {}, ag.mobile || {})) { count += 1; }
+        });
+        return count;
+    }
+
+    function currentShellChoices() {
+        var header = document.querySelector('select[name="header_template_choice"]');
+        var footer = document.querySelector('select[name="footer_template_choice"]');
+        return {
+            header: header ? String(header.value || 'auto') : null,
+            footer: footer ? String(footer.value || 'auto') : null
+        };
+    }
+
+    function appendNote(input, part) {
+        if (!input || !part) { return; }
+        var current = String(input.value || '').trim();
+        if (current.indexOf(part) !== -1) { return; }
+        input.value = (current ? current + ' · ' : '') + part;
+        if (input.value.length > 240) { input.value = input.value.slice(0, 240); }
+    }
+
+    function augmentAutomaticNote() {
+        var input = document.getElementById('h18-clean-change-note');
+        if (!input) { return; }
+
+        var coreLabels = window.H18CleanHistory && typeof window.H18CleanHistory.labels === 'function'
+            ? window.H18CleanHistory.labels()
+            : [];
+        if (Array.isArray(coreLabels) && coreLabels.length) {
+            var responsiveCount = responsiveChangedCount();
+            if (responsiveCount > 0) {
+                appendNote(input, responsiveCount === 1 ? 'Ændret responsivt layout' : 'Ændret responsivt layout for ' + responsiveCount + ' elementer');
+            }
+        }
+
+        if (initialShellChoices) {
+            var now = currentShellChoices();
+            if (now.header !== null && now.header !== initialShellChoices.header) { appendNote(input, 'Ændret Header-valg'); }
+            if (now.footer !== null && now.footer !== initialShellChoices.footer) { appendNote(input, 'Ændret Footer-valg'); }
+        }
+    }
+
     function install() {
         var inspector = document.getElementById('h18-clean-inspector');
         if (!inspector) { return; }
+        initialShellChoices = currentShellChoices();
         enhance();
         new MutationObserver(function () { enhance(); }).observe(inspector, { childList: true, subtree: true });
         var form = document.getElementById('h18-clean-save-form');
-        if (form) { form.addEventListener('submit', sync, true); }
+        if (form) {
+            form.addEventListener('submit', function () {
+                sync();
+                window.setTimeout(augmentAutomaticNote, 0);
+            }, true);
+        }
     }
 
     window.H18RichTextV0125 = { sync: sync };
