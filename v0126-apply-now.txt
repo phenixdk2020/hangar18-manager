@@ -1,2 +1,2 @@
-Apply the deterministic 0.1.26 WYSIWYG, typography, rich-text, image persistence, Inspector scroll and button auto-size hotfix.
-Re-run after active-runtime gate correction.
+Apply Visual Designer 0.1.27 canvas recovery after blank-canvas regression in 0.1.26.
+nonce=20260826-1938
