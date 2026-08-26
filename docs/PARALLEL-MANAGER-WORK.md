@@ -107,13 +107,13 @@ Seneste QA efter Menu restore/history og udvidet Export:
 
 - workflow run `32938880719`;
 - head `60d7fef0ff6d679f4ce0cb78e50ca1c05af973e4`;
-- Verify clean source: **PASS**;
+- Verify Visual Designer source: **PASS**;
 - Build installable ZIP: **PASS**;
 - Upload development artifact: **PASS**.
 
 Tidligere QA fandt en PHP-parsefejl i NavigationController. Fejlen blev rettet før ovenstående PASS. Dette er et eksempel på, at dev-artifact-gaten skal køres efter hver parallel kodeændring.
 
-Dette er udviklings-QA og **ikke** en offentlig release. `clean-update.json` afgør fortsat seneste frigivne version.
+Dette er udviklings-QA og **ikke** en offentlig release. `Visual Designer-update.json` afgør fortsat seneste frigivne version.
 
 ## Runtime-QA der stadig mangler før offentlig release
 

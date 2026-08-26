@@ -36,8 +36,8 @@ final class AdminController
     {
         $cap = 'edit_pages';
         add_menu_page(
-            'Hangar18 Manager',
-            'Hangar18 Manager',
+            'Visual Designer Manager',
+            'Visual Designer Manager',
             $cap,
             self::MENU,
             [self::class, 'dashboard'],
@@ -83,26 +83,26 @@ final class AdminController
             }
         }
 
-        self::open('Hangar18 Manager', 'Clean administration · v' . H18_CLEAN_VERSION);
-        echo '<section class="h18-manager-hero"><div><span class="h18-manager-kicker">Clean Manager v' . esc_html(H18_CLEAN_VERSION) . '</span>';
-        echo '<h2>Aalborg Kaserners Veteran Panser- og Køretøjsforening</h2>';
-        echo '<p>Samlet administration af sider, designer, indholdsoversigter, navigation, backup, opdateringer og diagnostics. Clean bruger kun den nye canonical layoutmodel.</p></div>';
+        self::open('Visual Designer Manager', 'Administration · v' . H18_CLEAN_VERSION);
+        echo '<section class="h18-manager-hero"><div><span class="h18-manager-kicker">Visual Designer Manager v' . esc_html(H18_CLEAN_VERSION) . '</span>';
+        echo '<h2>' . esc_html((string) get_bloginfo('name')) . '</h2>';
+        echo '<p>Samlet administration af sider, designer, indholdsoversigter, navigation, backup, opdateringer og diagnostics. Visual Designer bruger den canonical layoutmodel.</p></div>';
         echo '<div class="h18-manager-hero-actions"><a class="button button-primary button-hero" href="' . esc_url(self::designerUrl()) . '">Åbn Designer</a><a class="button" href="' . esc_url(self::url('h18-clean-pages')) . '">Administrer sider</a></div></section>';
 
         echo '<div class="h18-manager-stats">';
         self::stat('WordPress-sider', count($pages), 'Alle registrerede sider');
-        self::stat('Clean-sider', $cleanPages, 'Sider med Clean-state');
+        self::stat('Visual Designer-sider', $cleanPages, 'Sider med Visual Designer-layout');
         self::stat('Elementer', $nodes, 'Canonical nodes i alt');
         self::stat('Gemte versioner', $versions, 'Versionshistorik i alt');
         echo '</div>';
 
         echo '<div class="h18-manager-card-grid">';
         self::card('Designer', 'Byg sider med 120-unit / 8-px grid, Undo/Redo og versionshistorik.', self::designerUrl(), 'Åbn Designer');
-        self::card('Sider', 'Se Clean-status, nodeantal og seneste version for alle WordPress-sider.', self::url('h18-clean-pages'), 'Vis sider');
-        self::card('Backup', 'Download én samlet JSON-backup af alle Clean-layouts og deres versionshistorik.', self::url('h18-clean-backup'), 'Åbn Backup');
-        self::card('Log / diagnostics', 'Læs de strukturelle Clean-logs pr. side og kopiér diagnose-link.', self::url('h18-clean-log'), 'Åbn Log');
+        self::card('Sider', 'Se Visual Designer-status, nodeantal og seneste version for alle WordPress-sider.', self::url('h18-clean-pages'), 'Vis sider');
+        self::card('Backup', 'Download én samlet JSON-backup af alle Visual Designer-layouts og deres versionshistorik.', self::url('h18-clean-backup'), 'Åbn Backup');
+        self::card('Log / diagnostics', 'Læs de strukturelle Visual Designer-logs pr. side og kopiér diagnose-link.', self::url('h18-clean-log'), 'Åbn Log');
         self::card('Opdateringer', 'Brug den SHA-256-verificerede GitHub-opdateringskanal.', self::url('h18-clean-updates'), 'Tjek version');
-        self::card('Menu', 'Se WordPress-navigation og aktive menulocations uden at ændre Clean-layoutdata.', self::url('h18-clean-menu'), 'Vis menu');
+        self::card('Menu', 'Se WordPress-navigation og aktive menulocations uden at ændre Visual Designer-layoutdata.', self::url('h18-clean-menu'), 'Vis menu');
         echo '</div>';
         self::close();
     }
@@ -115,7 +115,7 @@ final class AdminController
     {
         self::guard();
         self::open('Køretøjsfelter', 'Adminpladsen svarer til den gamle Manager, men legacy-feltmotoren er ikke indlæst i Clean.');
-        self::moduleNotice('Køretøjsfelter', 'Clean-adminstrukturen er klar. Selve dynamiske køretøjsfelter porteres som et selvstændigt Clean-datamodul, så vi ikke blander 0.9.x-runtime ind i den nye editor.');
+        self::moduleNotice('Køretøjsfelter', 'Visual Designer Manager-administrationen er klar. Selve dynamiske køretøjsfelter porteres som et selvstændigt Visual Designer-datamodul, så vi ikke blander 0.9.x-runtime ind i den nye editor.');
         echo '<p><a class="button" href="' . esc_url(self::url('h18-clean-vehicles')) . '">← Køretøjer</a></p>';
         self::close();
     }
@@ -123,7 +123,7 @@ final class AdminController
     public static function data(): void
     {
         self::guard();
-        self::open('Data', 'WordPress-data og Clean-modelstatus');
+        self::open('Data', 'WordPress-data og Visual Designer-modelstatus');
         $postTypes = get_post_types(['public' => true], 'objects');
         echo '<div class="h18-manager-card"><h2>Offentlige indholdstyper</h2><table class="widefat striped"><thead><tr><th>Type</th><th>Slug</th><th>Antal</th><th></th></tr></thead><tbody>';
         foreach ($postTypes as $type) {
@@ -138,7 +138,7 @@ final class AdminController
             echo '</td></tr>';
         }
         echo '</tbody></table></div>';
-        self::moduleNotice('Clean Data-modul', 'Den gamle Managers custom data types bliver ikke automatisk aktiveret. Denne side er administrationsindgangen til den kommende modeldrevne Clean-datafunktion.');
+        self::moduleNotice('Visual Designer Data-modul', 'Den gamle Managers custom data types bliver ikke automatisk aktiveret. Denne side er administrationsindgangen til den kommende modeldrevne Clean-datafunktion.');
         self::close();
     }
 
@@ -146,7 +146,7 @@ final class AdminController
     {
         self::guard();
         $pages = self::allPages();
-        self::open('Sider', 'Alle WordPress-sider med Clean-status');
+        self::open('Sider', 'Alle WordPress-sider med Visual Designer-status');
         echo '<div class="h18-manager-toolbar"><a class="button button-primary" href="' . esc_url(admin_url('post-new.php?post_type=page')) . '">+ Ny WordPress-side</a><a class="button" href="' . esc_url(self::designerUrl()) . '">Åbn Designer</a></div>';
         echo '<table class="widefat striped h18-manager-table"><thead><tr><th>Side</th><th>Slug</th><th>Status</th><th>Nodes</th><th>Senest gemt</th><th>Handlinger</th></tr></thead><tbody>';
         foreach ($pages as $page) {
@@ -154,7 +154,7 @@ final class AdminController
             $model = LayoutModel::get($page->ID);
             $history = LayoutModel::history($page->ID);
             $last = $history ? $history[count($history) - 1] : [];
-            $status = $version > 0 ? '<span class="h18-manager-badge is-ok">Clean v' . esc_html((string) $version) . '</span>' : '<span class="h18-manager-badge">Ikke Clean</span>';
+            $status = $version > 0 ? '<span class="h18-manager-badge is-ok">Designer v' . esc_html((string) $version) . '</span>' : '<span class="h18-manager-badge">Ikke Visual Designer</span>';
             echo '<tr><td><strong>' . esc_html((string) $page->post_title) . '</strong><br><small>ID ' . esc_html((string) $page->ID) . '</small></td>';
             echo '<td><code>' . esc_html((string) $page->post_name) . '</code></td><td>' . $status . '</td><td>' . esc_html((string) count($model['nodes'])) . '</td><td>' . esc_html(self::prettyDate((string) ($last['savedUtc'] ?? ''))) . '</td><td class="h18-manager-actions">';
             echo '<a class="button button-primary" href="' . esc_url(self::designerUrl($page->ID)) . '">Designer</a>';
@@ -210,7 +210,7 @@ final class AdminController
         echo '<p><a class="button" href="' . esc_url(admin_url('themes.php')) . '">Temaer</a>';
         if (current_user_can('edit_theme_options')) { echo ' <a class="button" href="' . esc_url(admin_url('customize.php')) . '">Tilpas</a>'; }
         echo '</p></div>';
-        echo '<div class="h18-manager-card"><h2>Clean-princip</h2><p>Clean Designer styrer sideindholdets canonical layout. Header, footer og global navigation holdes adskilt fra side-layoutet, så en sideversion ikke utilsigtet ændrer hele sitet.</p><p class="description">Når den globale design-editor porteres, placeres den her frem for at genaktivere den gamle 0.9.x shell-runtime.</p></div></div>';
+        echo '<div class="h18-manager-card"><h2>Visual Designer-princip</h2><p>Visual Designer styrer sideindholdets canonical layout. Header, footer og global navigation holdes adskilt fra side-layoutet, så en sideversion ikke utilsigtet ændrer hele sitet.</p><p class="description">Når den globale design-editor porteres, placeres den her frem for at genaktivere den gamle 0.9.x shell-runtime.</p></div></div>';
         self::close();
     }
 
@@ -219,11 +219,11 @@ final class AdminController
         self::guard();
         $clean = self::cleanPages();
         self::open('Backup', 'Eksport af Clean-layout og versionshistorik');
-        echo '<div class="h18-manager-card"><h2>Fuld Clean-backup</h2><p>Downloader én JSON-fil med alle sider, der har Clean-state, inklusive nuværende canonical model og gemt versionshistorik.</p>';
-        echo '<p><strong>' . esc_html((string) count($clean)) . '</strong> Clean-sider medtages.</p>';
+        echo '<div class="h18-manager-card"><h2>Fuld Visual Designer-backup</h2><p>Downloader én JSON-fil med alle sider, der har Clean-state, inklusive nuværende canonical model og gemt versionshistorik.</p>';
+        echo '<p><strong>' . esc_html((string) count($clean)) . '</strong> Visual Designer-sider medtages.</p>';
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field(self::EXPORT_NONCE);
-        echo '<input type="hidden" name="action" value="' . esc_attr(self::EXPORT_ACTION) . '"><button class="button button-primary" type="submit">Download fuld Clean-backup</button></form></div>';
+        echo '<input type="hidden" name="action" value="' . esc_attr(self::EXPORT_ACTION) . '"><button class="button button-primary" type="submit">Download fuld Visual Designer-backup</button></form></div>';
         echo '<div class="h18-manager-card"><h2>Hvad backupen indeholder</h2><ul class="h18-manager-list"><li>Side-ID, titel og slug</li><li>Aktuel Clean-version</li><li>Canonical layoutmodel</li><li>Versionshistorik med model og digest</li><li>Plugin/schema/grid-version</li></ul><p class="description">Diagnostics/logs, nonces, tokens og credentials eksporteres ikke.</p></div>';
         self::close();
     }
@@ -232,7 +232,7 @@ final class AdminController
     {
         self::guard();
         $status = GitHubUpdater::status();
-        self::open('Opdateringer', 'Tjek og installer Hangar18 Manager Clean direkte herfra');
+        self::open('Opdateringer', 'Tjek og installer Visual Designer Manager direkte herfra');
         echo '<div class="h18-manager-card"><h2>Version</h2><p class="h18-manager-big-version">' . esc_html(H18_CLEAN_VERSION) . '</p>';
         if ($status['ok']) {
             echo '<p>Seneste GitHub-version: <strong>' . esc_html($status['latest']) . '</strong></p>';
@@ -293,7 +293,7 @@ final class AdminController
         self::guard();
         check_admin_referer(self::EXPORT_NONCE);
         $payload = [
-            'product' => 'Hangar18 Manager Clean backup',
+            'product' => 'Visual Designer Manager backup',
             'pluginVersion' => H18_CLEAN_VERSION,
             'schemaVersion' => LayoutModel::SCHEMA,
             'units' => LayoutModel::UNITS,
@@ -355,7 +355,7 @@ final class AdminController
         foreach ($children as $child) {
             if (!$child instanceof \WP_Post) { continue; }
             $version = (int) get_post_meta($child->ID, LayoutModel::VERSION_META, true);
-            echo '<tr><td><strong>' . esc_html((string) $child->post_title) . '</strong><br><code>' . esc_html((string) $child->post_name) . '</code></td><td>' . esc_html($version > 0 ? 'v' . $version : 'Ikke Clean') . '</td><td>' . esc_html((string) count(LayoutModel::get($child->ID)['nodes'])) . '</td><td class="h18-manager-actions"><a class="button button-primary" href="' . esc_url(self::designerUrl($child->ID)) . '">Designer</a><a class="button" href="' . esc_url(get_edit_post_link($child->ID, 'raw') ?: '#') . '">WordPress</a></td></tr>';
+            echo '<tr><td><strong>' . esc_html((string) $child->post_title) . '</strong><br><code>' . esc_html((string) $child->post_name) . '</code></td><td>' . esc_html($version > 0 ? 'v' . $version : 'Ikke Visual Designer') . '</td><td>' . esc_html((string) count(LayoutModel::get($child->ID)['nodes'])) . '</td><td class="h18-manager-actions"><a class="button button-primary" href="' . esc_url(self::designerUrl($child->ID)) . '">Designer</a><a class="button" href="' . esc_url(get_edit_post_link($child->ID, 'raw') ?: '#') . '">WordPress</a></td></tr>';
         }
         echo '</tbody></table></div>';
         self::close();

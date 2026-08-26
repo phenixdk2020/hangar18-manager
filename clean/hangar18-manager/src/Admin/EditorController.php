@@ -37,8 +37,8 @@ final class EditorController
     public static function menu(): void
     {
         add_menu_page(
-            'Hangar18 Designer',
-            'Hangar18 Designer',
+            'Visual Designer',
+            'Visual Designer',
             'edit_pages',
             self::MENU,
             [self::class, 'render'],
@@ -93,8 +93,8 @@ final class EditorController
         $message = isset($_GET['h18_clean_message']) ? sanitize_text_field((string) wp_unslash($_GET['h18_clean_message'])) : '';
 
         echo '<div class="wrap h18-clean-admin">';
-        echo '<h1>Hangar18 Designer · ' . esc_html((string) $post->post_title) . '</h1>';
-        echo '<p class="description">Clean editor ' . esc_html(H18_CLEAN_VERSION) . ' · 120 layout-units · modeldrevet Save/Reload · ingen legacy editor-runtime.</p>';
+        echo '<h1>Visual Designer · ' . esc_html((string) $post->post_title) . '</h1>';
+        echo '<p class="description">Visual Designer ' . esc_html(H18_CLEAN_VERSION) . ' · 120 layout-units · modeldrevet Save/Reload · ingen legacy editor-runtime.</p>';
         if ($message !== '') {
             echo '<div class="notice ' . ($status === 'error' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($message) . '</p></div>';
         }
@@ -144,7 +144,7 @@ final class EditorController
 
         echo '<section class="h18-clean-history"><h2>Gemte versioner</h2>';
         if (!$history) {
-            echo '<p>Ingen gemte clean-versioner endnu.</p>';
+            echo '<p>Ingen gemte Visual Designer-versioner endnu.</p>';
         } else {
             echo '<p class="description">Hver Gem opretter en ny version. Gendan på original opretter også en ny version, så historikken aldrig overskrives.</p>';
             echo '<table class="widefat striped"><thead><tr><th>Version</th><th>Gemt</th><th>Note</th><th>Digest</th><th>Handlinger</th></tr></thead><tbody>';
@@ -153,7 +153,7 @@ final class EditorController
                 echo '<tr><td><strong>v' . esc_html((string) $version) . '</strong></td>';
                 echo '<td>' . esc_html((string) ($entry['savedUtc'] ?? '')) . '</td>';
                 echo '<td>' . esc_html((string) ($entry['note'] ?? '')) . '</td>';
-                echo '<td><code>' . esc_html(substr((string) ($entry['digest'] ?? ''), 0, 14)) . '…</code></td><td><div class="h18-clean-version-actions">';
+                echo '<td><code>' . esc_html(substr((string) ($entry['digest'] ?? ''), 0, 14)) . '…</code></td><td><div class="h18-Visual Designer-version-actions">';
                 echo '<form method="post" target="_blank" action="' . esc_url(admin_url('admin-post.php')) . '">';
                 wp_nonce_field(self::NONCE_VERSION_PREVIEW);
                 echo '<input type="hidden" name="action" value="' . esc_attr(self::VERSION_PREVIEW_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $postId) . '"><input type="hidden" name="version" value="' . esc_attr((string) $version) . '">';
@@ -199,7 +199,7 @@ final class EditorController
                 'incoming' => DiagnosticStore::modelSummary($normalized),
             ]);
             $note = isset($_POST['change_note']) ? sanitize_text_field((string) wp_unslash($_POST['change_note'])) : '';
-            $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gem fra clean editor');
+            $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gem fra Visual Designer');
             $saved = LayoutModel::get($postId);
             $incomingDigest = LayoutModel::structuralDigest($normalized);
             $savedDigest = LayoutModel::structuralDigest($saved);
@@ -218,7 +218,7 @@ final class EditorController
                     exit;
                 }
             }
-            self::redirect($postId, 'success', 'Clean layout gemt og verificeret som version v' . $version . '.');
+            self::redirect($postId, 'success', 'Visual Designer-layout gemt og verificeret som version v' . $version . '.');
         } catch (\Throwable $error) {
             DiagnosticStore::append($postId, 'save_error', ['errorType' => get_class($error), 'message' => $error->getMessage()]);
             self::redirect($postId, 'error', 'Gem fejlede: ' . $error->getMessage());
@@ -276,7 +276,7 @@ final class EditorController
         }
         $target = LayoutModel::historyModel($postId, $targetVersion);
         if ($target === null) {
-            wp_die(esc_html__('Den valgte clean-version findes ikke længere.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Den valgte Visual Designer-version findes ikke længere.', 'hangar18-manager-clean'));
         }
         $token = strtolower(wp_generate_password(24, false, false));
         set_transient(Renderer::previewKey(get_current_user_id(), $postId, $token), $target, 10 * MINUTE_IN_SECONDS);
@@ -307,7 +307,7 @@ final class EditorController
         try {
             $target = LayoutModel::historyModel($postId, $targetVersion);
             if ($target === null) {
-                throw new \RuntimeException('Den valgte clean-version findes ikke længere i historikken.');
+                throw new \RuntimeException('Den valgte Visual Designer-version findes ikke længere i historikken.');
             }
             $copyId = wp_insert_post([
                 'post_type' => 'page',
@@ -355,7 +355,7 @@ final class EditorController
         try {
             $target = LayoutModel::historyModel($postId, $targetVersion);
             if ($target === null) {
-                throw new \RuntimeException('Den valgte clean-version findes ikke længere i historikken.');
+                throw new \RuntimeException('Den valgte Visual Designer-version findes ikke længere i historikken.');
             }
             $before = LayoutModel::get($postId);
             DiagnosticStore::append($postId, 'restore_begin', [
@@ -384,7 +384,7 @@ final class EditorController
     private static function renderPagePicker(): void
     {
         $pages = get_pages(['sort_column' => 'post_title', 'sort_order' => 'ASC']);
-        echo '<div class="wrap"><h1>Hangar18 Designer</h1><p>Vælg en WordPress-side. Der importeres intet gammelt editor-state automatisk.</p>';
+        echo '<div class="wrap"><h1>Visual Designer</h1><p>Vælg en WordPress-side. Der importeres intet gammelt editor-state automatisk.</p>';
         echo '<table class="widefat striped"><thead><tr><th>Side</th><th>Slug</th><th>Clean version</th><th></th></tr></thead><tbody>';
         foreach ($pages as $page) {
             if (!$page instanceof \WP_Post) {

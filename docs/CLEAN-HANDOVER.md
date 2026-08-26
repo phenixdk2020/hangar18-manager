@@ -1,8 +1,8 @@
-# Hangar18 Manager Clean – Projekt-overdragelse
+# Visual Designer Manager – Projekt-overdragelse
 
 **Statusdato:** 25. august 2026  
 **Aktuel frigivet version:** 0.1.21  
-**Formål:** Denne fil er startpunktet for en ny ChatGPT-session eller udvikler, der skal overtage Hangar18 Manager Clean uden at kende den tidligere samtale.
+**Formål:** Denne fil er startpunktet for en ny ChatGPT-session eller udvikler, der skal overtage Visual Designer Manager uden at kende den tidligere samtale.
 
 ---
 
@@ -10,32 +10,32 @@
 
 1. `docs/CLEAN-HANDOVER.md` – denne fil; aktuel status, aftaler, næste opgave og ikke-forhandlingsbare regler.
 2. `CLEAN-DESIGN-MANUAL.md` – autoritativ design- og arkitekturmålmodel.
-3. `docs/clean-backlog-v0120.md` – operativ backlog. Filnavnet siger v0.1.20, men den indeholder også senere godkendte forslag og skal læses sammen med denne handover.
-4. `clean-update.json` – sandheden om senest frigivne version, package, SHA-256 og seneste changelog.
-5. `clean-release-notes.html` – release-noter for den version, der er under opbygning/frigivelse.
+3. `docs/Visual Designer-backlog-v0120.md` – operativ backlog. Filnavnet siger v0.1.20, men den indeholder også senere godkendte forslag og skal læses sammen med denne handover.
+4. `Visual Designer-update.json` – sandheden om senest frigivne version, package, SHA-256 og seneste changelog.
+5. `Visual Designer-release-notes.html` – release-noter for den version, der er under opbygning/frigivelse.
 6. `CLEAN-USER-MANUAL.md` – brugermanual/arbejdsbeskrivelse. Den er nyttig, men implementationsstatus i den kan være ældre end den aktuelle release. Brug ikke denne fil alene til at afgøre, hvad der er implementeret.
 7. `DESIGN-MANUAL.md` – legacy/reference for historisk Hangar18-udseende og gamle designstandarder. Den gamle editor-runtime må ikke genindføres.
 
 ### Kildehierarki ved konflikt
 
-1. Aktuel kode + `clean-update.json` afgør hvad der faktisk er implementeret.
+1. Aktuel kode + `Visual Designer-update.json` afgør hvad der faktisk er implementeret.
 2. `CLEAN-DESIGN-MANUAL.md` afgør godkendt målarkitektur.
-3. `docs/clean-backlog-v0120.md` + denne handover afgør godkendte kommende funktioner og rækkefølge.
+3. `docs/Visual Designer-backlog-v0120.md` + denne handover afgør godkendte kommende funktioner og rækkefølge.
 4. `CLEAN-USER-MANUAL.md` beskriver brugerflow, men kan være versionsmæssigt bagefter.
-5. `DESIGN-MANUAL.md` er legacy/reference, ikke Clean canonical runtime.
+5. `DESIGN-MANUAL.md` er legacy/reference, ikke Visual Designer canonical runtime.
 
 ---
 
 ## 2. Projektets hovedmål
 
-Hangar18 Manager Clean skal være en modeldrevet, LEGO-lignende WordPress Designer, hvor sider bygges visuelt af sektioner, kasser og indholdselementer.
+Visual Designer Manager skal være en modeldrevet, LEGO-lignende WordPress Designer, hvor sider bygges visuelt af sektioner, kasser og indholdselementer.
 
-Målet er, at de eksisterende Hangar18-sider på sigt kan bygges 100 % med Clean Designer uden at indsætte gammel editor-HTML eller aktivere legacy runtime.
+Målet er, at de eksisterende Hangar18-sider på sigt kan bygges 100 % med Visual Designer uden at indsætte gammel editor-HTML eller aktivere legacy runtime.
 
 De gamle sider bruges derfor som en konkret **paritetstest**:
 
-- Hvis en gammel side kan bygges korrekt med native Clean-elementer, er den del af Designerens kapacitet god nok.
-- Hvis en gammel side kræver noget Clean ikke kan udtrykke, oprettes den manglende funktion/element i backloggen.
+- Hvis en gammel side kan bygges korrekt med native Visual Designer-elementer, er den del af Designerens kapacitet god nok.
+- Hvis en gammel side kræver noget Visual Designer ikke kan udtrykke, oprettes den manglende funktion/element i backloggen.
 - Gamle live-sider må ikke overskrives automatisk. Konvertering skal først ske som kladde/kopi og sammenlignes visuelt.
 
 ---
@@ -151,7 +151,7 @@ Implementeret:
 - historikken viser ændringen pr. version;
 - Forhåndsvis historisk version;
 - Gendan original opretter en ny version og sletter ikke historik;
-- Opret kopi laver en ny WordPress-kladdeside med egen Clean-historik.
+- Opret kopi laver en ny WordPress-kladdeside med egen Visual Designer-historik.
 
 ### Programupdate og backup
 
@@ -193,7 +193,7 @@ Principper:
 - arbejdsfladen er kompakteret på laptop;
 - canonical 120-unit model ændres ikke af den visuelle fit-to-screen-opførsel.
 
-Aktuel release skal verificeres i `clean-update.json` før videre arbejde.
+Aktuel release skal verificeres i `Visual Designer-update.json` før videre arbejde.
 
 ---
 
@@ -540,7 +540,7 @@ Mangler som UI/backlog:
 - automatisk ny backup før rollback;
 - rollback skal efterlade plugin aktivt.
 
-Clean/site-backup skal senere understøtte Restore/import med dry-run og konflikthåndtering.
+Visual Designer/site-backup skal senere understøtte Restore/import med dry-run og konflikthåndtering.
 
 ---
 
@@ -552,10 +552,10 @@ Strategien er ændret fra kun at vente til alt er færdigt til også at bruge de
 
 1. Gør den aktuelle Designer-milepæl færdig.
 2. Tag en gammel side read-only.
-3. Forsøg at beskrive/rebygge den med native Clean-elementer.
+3. Forsøg at beskrive/rebygge den med native Visual Designer-elementer.
 4. Hvis noget ikke kan bygges, registreres det som et konkret hul i Designer/backlog.
 5. Byg manglende generelle funktioner fremfor side-specifik hacks.
-6. Lav Clean-versionen som kopi/kladde.
+6. Lav Visual Designer-versionen som kopi/kladde.
 7. Sammenlign visuelt Desktop/Laptop/Mobil.
 8. Overskriv aldrig den gamle live-side automatisk.
 
@@ -564,7 +564,7 @@ Første generelle kandidater er Hjem, Om, Kontakt og Bliv medlem. Køretøjer, E
 ### Forbudt migrationsgenvej
 
 - Ingen gammel editor-runtime.
-- Ingen stor `Imported HTML`-blok som permanent løsning, hvis siden burde kunne bygges af native Clean-elementer.
+- Ingen stor `Imported HTML`-blok som permanent løsning, hvis siden burde kunne bygges af native Visual Designer-elementer.
 - Ingen side-specifik CSS som skjuler et hul i den generelle Designer, medmindre det eksplicit klassificeres som midlertidig migrationsteknik.
 
 ---
@@ -593,12 +593,12 @@ Efter 0.1.22 fortsætter den planlagte rækkefølge med Globalt design, theme-sh
 
 ## 18. Release-procedure
 
-- Bump pluginversion i Clean source.
+- Bump pluginversion i Visual Designer source.
 - Opdatér release-notes/changelog.
-- Brug eksisterende releaseworkflow/trigger (`clean-release-now.txt`).
-- Workflow skal bestå `Verify clean source`.
+- Brug eksisterende releaseworkflow/trigger (`Visual Designer-release-now.txt`).
+- Workflow skal bestå `Verify Visual Designer source`.
 - Workflow bygger versioneret ZIP.
-- `clean-update.json` skal efter release vise korrekt version, package, source commit og SHA-256.
+- `Visual Designer-update.json` skal efter release vise korrekt version, package, source commit og SHA-256.
 - En version må ikke omtales som frigivet før workflow er `success` og manifestet er verificeret.
 - Self-update skal testes med den automatiske programbackup.
 
@@ -612,7 +612,7 @@ Efter 0.1.22 fortsætter den planlagte rækkefølge med Globalt design, theme-sh
 - Kopiér ikke dynamiske Køretøj/Event-data ind i sidedesign-versionen.
 - Lav ikke destruktiv Restore der sletter historik.
 - Omgå ikke update SHA-256 eller programbackup.
-- Antag ikke at en version er frigivet uden at kontrollere `clean-update.json` og workflow.
+- Antag ikke at en version er frigivet uden at kontrollere `Visual Designer-update.json` og workflow.
 - Konverter ikke gamle live-sider direkte uden kopi/preview/paritetstest.
 - Løs ikke et generelt Designer-hul med en permanent side-specifik hack, hvis en generel funktion er den rigtige løsning.
 
@@ -622,7 +622,7 @@ Efter 0.1.22 fortsætter den planlagte rækkefølge med Globalt design, theme-sh
 
 - `CLEAN-USER-MANUAL.md` er en brugermanual, men står stadig med ældre versionsstatus og skal opdateres efter de seneste 0.1.20/0.1.21-funktioner.
 - En Word-brugermanual med tabeller/illustrationer er tidligere genereret i samtalen. Den er ikke den tekniske source of truth og bør regenereres/opdateres fra Markdown-dokumentationen, når næste manualrevision laves.
-- `docs/clean-backlog-v0120.md` er den operative backlog, selv om filnavnet indeholder 0.1.20.
+- `docs/Visual Designer-backlog-v0120.md` er den operative backlog, selv om filnavnet indeholder 0.1.20.
 - Denne handover skal opdateres, når en større arkitektur-, data- eller procesbeslutning godkendes.
 
 ---
@@ -633,8 +633,8 @@ En ny chat skal kunne starte med følgende:
 
 1. Læs denne fil.
 2. Læs `CLEAN-DESIGN-MANUAL.md`.
-3. Læs `docs/clean-backlog-v0120.md`.
-4. Læs `clean-update.json` og bekræft seneste release.
+3. Læs `docs/Visual Designer-backlog-v0120.md`.
+4. Læs `Visual Designer-update.json` og bekræft seneste release.
 5. Fetch de aktuelle sourcefiler før enhver ændring.
 6. Fortsæt fra `Næste konkrete opgave` ovenfor.
 7. Opdatér dokumentation + release-notes sammen med kodeændringer.

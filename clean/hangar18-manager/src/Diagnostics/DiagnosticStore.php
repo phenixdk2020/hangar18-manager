@@ -131,7 +131,7 @@ final class DiagnosticStore
         $tail = max(1, min(600, absint($request->get_param('tail')) ?: 300));
         $entries = self::entries($postId);
         $response = new \WP_REST_Response([
-            'product' => 'Hangar18 Manager Clean diagnostics',
+            'product' => 'Visual Designer Manager diagnostics',
             'schemaVersion' => 1,
             'postId' => $postId,
             'pageSlug' => (string) get_post_field('post_name', $postId),

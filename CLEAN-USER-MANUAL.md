@@ -1,16 +1,16 @@
-# Hangar18 Manager Clean – Brugermanual
+# Visual Designer Manager – Brugermanual
 
 Senest opdateret: 25. august 2026  
-Gælder fra: Hangar18 Manager Clean 0.1.18  
+Gælder fra: Visual Designer Manager 0.1.18  
 Målgruppe: Redaktører og administratorer, der bygger og vedligeholder sider i WordPress
 
-> Denne manual beskriver **hvordan Hangar18 Manager Clean bruges i praksis**. Den tekniske arkitektur er beskrevet separat i `CLEAN-DESIGN-MANUAL.md`.
+> Denne manual beskriver **hvordan Visual Designer Manager bruges i praksis**. Den tekniske arkitektur er beskrevet separat i `CLEAN-DESIGN-MANUAL.md`.
 
 ---
 
-## 1. Hvad er Hangar18 Manager Clean?
+## 1. Hvad er Visual Designer Manager?
 
-Hangar18 Manager Clean er en visuel sidebygger til WordPress. Ideen er, at en side bygges som LEGO-klodser:
+Visual Designer Manager er en visuel sidebygger til WordPress. Ideen er, at en side bygges som LEGO-klodser:
 
 - **Sektioner** opdeler siden i større områder.
 - **Kasser** bruges til lokale grupper og kolonner.
@@ -19,41 +19,41 @@ Hangar18 Manager Clean er en visuel sidebygger til WordPress. Ideen er, at en si
 
 Elementer kan flyttes med drag-and-drop, placeres over/under/venstre/højre for hinanden og lægges ind i Kasser og Sektioner.
 
-Clean gemmer siden i sin egen model og ændrer først den offentlige Clean-side, når du vælger **Gem som ny version**.
+Visual Designer gemmer siden i sin egen model og ændrer først den offentlige Visual Designer-side, når du vælger **Gem som ny version**.
 
 ---
 
 ## 2. Hvor findes funktionerne?
 
-Når pluginet **Hangar18 Manager Clean** er aktivt, findes hovedmenuen:
+Når pluginet **Visual Designer Manager** er aktivt, findes hovedmenuen:
 
-**WordPress → Hangar18 Manager**
+**WordPress → Visual Designer Manager**
 
 Her findes bl.a.:
 
 | Menupunkt | Formål |
 |---|---|
-| Dashboard | Samlet status for Clean-sider og Manager |
+| Dashboard | Samlet status for Visual Designer-sider og Manager |
 | Designer | Åbn den visuelle sidebygger |
 | Køretøjer | Administration af køretøjsindhold |
 | Køretøjsfelter | Feltopsætning for køretøjsdata |
 | Events | Administration af events |
 | Billedgalleri | Administration af galleri/album |
 | Data | Datafunktioner og fremtidige datamoduler |
-| Sider | Oversigt over WordPress-sider og Clean-status |
+| Sider | Oversigt over WordPress-sider og Visual Designer-status |
 | Menu | WordPress-menuer og menuplaceringer |
 | Header / Footer | Global header/footer-administration |
-| Backup | Backup af Clean-layouts og versionshistorik |
+| Backup | Backup af Visual Designer-layouts og versionshistorik |
 | Opdateringer | Tjek og installer nye Manager-versioner |
 | Log | Diagnose- og fejllog |
 
-Nogle af de specialiserede adminområder udbygges fortsat i Clean-serien.
+Nogle af de specialiserede adminområder udbygges fortsat i Visual Designer-serien.
 
 ---
 
 ## 3. Åbn en side i Designer
 
-1. Gå til **Hangar18 Manager → Designer**.
+1. Gå til **Visual Designer Manager → Designer**.
 2. Find den WordPress-side, du vil redigere.
 3. Klik **Åbn designer**.
 
@@ -230,7 +230,7 @@ Du kan trække i sider eller hjørner for at ændre:
 - højde;
 - placering i forhold til gridet.
 
-Clean bruger:
+Visual Designer bruger:
 
 - **120 vandrette units**;
 - **8 px lodret snap/grid**.
@@ -285,13 +285,13 @@ Tekst-elementet skal desuden kunne styre:
 - brødtekstfarve;
 - separat overskriftsfarve.
 
-Disse stylingfelter er godkendt som næste Clean-udvidelse.
+Disse stylingfelter er godkendt som næste Visual Designer-udvidelse.
 
 ---
 
 ## 12. Billede-element
 
-I Clean 0.1.18 er **billedboksen** og **selve billedet** adskilt.
+I Visual Designer 0.1.18 er **billedboksen** og **selve billedet** adskilt.
 
 Det betyder, at boksen godt kan være større end selve billedet.
 
@@ -367,7 +367,7 @@ Lodret luft mod næste element nedenunder.
 
 Standard er `0`.
 
-Afstanden er en del af Clean-layoutet og indgår derfor også i auto-grow og Save/Reload.
+Afstanden er en del af Visual Designer-layoutet og indgår derfor også i auto-grow og Save/Reload.
 
 ---
 
@@ -415,7 +415,7 @@ Når du er tilfreds med layoutet, klik:
 
 **Gem som ny version**
 
-Clean:
+Visual Designer:
 
 1. normaliserer layoutmodellen;
 2. gemmer en ny versionspost;
@@ -423,7 +423,7 @@ Clean:
 4. verificerer at den gemte model matcher det indsendte layout;
 5. beholder tidligere versioner i historikken.
 
-Den offentlige Clean-side bruger den senest gemte version.
+Den offentlige Visual Designer-side bruger den senest gemte version.
 
 ---
 
@@ -431,7 +431,7 @@ Den offentlige Clean-side bruger den senest gemte version.
 
 **Gem & vis** gør to ting:
 
-1. gemmer siden som ny Clean-version;
+1. gemmer siden som ny Visual Designer-version;
 2. åbner den rigtige offentlige side.
 
 Brug denne funktion, når du både vil gemme og straks kontrollere frontend-resultatet.
@@ -442,7 +442,7 @@ Brug denne funktion, når du både vil gemme og straks kontrollere frontend-resu
 
 Nederst i Designer findes området **Gemte versioner**.
 
-Fra Clean 0.1.18 kan en tidligere version bruges på tre måder.
+Fra Visual Designer 0.1.18 kan en tidligere version bruges på tre måder.
 
 ### Forhåndsvis version
 
@@ -465,24 +465,24 @@ Opretter en ny WordPress-side som kladde ud fra den valgte version.
 Kopien:
 
 - ændrer ikke originalsiden;
-- får sin egen Clean-model;
-- starter sin egen Clean-historik ved v1;
+- får sin egen Visual Designer-model;
+- starter sin egen Visual Designer-historik ved v1;
 - kan åbnes separat i Designer.
 
 Dette er nyttigt, hvis du vil eksperimentere med et gammelt layout uden risiko for den aktive side.
 
 ---
 
-## 21. Opdater Hangar18 Manager
+## 21. Opdater Visual Designer Manager
 
 Gå til:
 
-**Hangar18 Manager → Opdateringer**
+**Visual Designer Manager → Opdateringer**
 
 Her kan du:
 
 1. klikke **Tjek for opdatering**;
-2. se om en nyere Clean-version findes;
+2. se om en nyere Visual Designer-version findes;
 3. vælge **Opdater nu**.
 
 Updateren verificerer den versionerede pakke og SHA-256-kontrolsummen.
@@ -495,9 +495,9 @@ Fra 0.1.16 er updateren desuden ændret, så pluginets aktive WordPress-status s
 
 Under:
 
-**Hangar18 Manager → Backup**
+**Visual Designer Manager → Backup**
 
-kan Clean-layouts og versionshistorik eksporteres som backup.
+kan Visual Designer-layouts og versionshistorik eksporteres som backup.
 
 Backup bør bruges før større ændringer af:
 
@@ -529,7 +529,7 @@ Loggen kan bl.a. indeholde hændelser som:
 - restore;
 - billedevalg.
 
-Under **Hangar18 Manager → Log** kan diagnoseoplysninger ses og ryddes.
+Under **Visual Designer Manager → Log** kan diagnoseoplysninger ses og ryddes.
 
 Ved fejl er det nyttigt at notere:
 
@@ -543,7 +543,7 @@ Ved fejl er det nyttigt at notere:
 
 ## 24. Globalt design – planlagt næste lag
 
-Clean skal have et globalt designområde, så de samme grundværdier ikke skal sættes manuelt på hver side.
+Visual Designer skal have et globalt designområde, så de samme grundværdier ikke skal sættes manuelt på hver side.
 
 Planlagte globale indstillinger omfatter:
 
@@ -599,7 +599,7 @@ Det betyder:
 - WordPress står fortsat for sider, URL'er, templates og frontend-hook;
 - Manageren står for det visuelle design;
 - Header/Footer og globale designvalg styres fra Manager;
-- almindelige sider bygges i Clean Designer.
+- almindelige sider bygges i Visual Designer.
 
 Header og Footer ligger uden for en almindelig sides model og kan derfor ikke slettes ved at redigere en side.
 
@@ -727,7 +727,7 @@ Hvis problemet fortsætter, brug **Kopiér diagnose-link** og tag et screenshot 
 
 | Manualversion | Ændring |
 |---|---|
-| 1.0 | Første Clean-brugermanual baseret på funktionerne gennem 0.1.18 og den godkendte målarkitektur. |
+| 1.0 | Første Visual Designer-brugermanual baseret på funktionerne gennem 0.1.18 og den godkendte målarkitektur. |
 
 ---
 
@@ -737,4 +737,4 @@ Hvis problemet fortsætter, brug **Kopiér diagnose-link** og tag et screenshot 
 - `DESIGN-MANUAL.md` – historisk/visuel manual fra den tidligere 0.4.x Manager-serie.
 - `README.md` – overordnet repository-/projektinformation.
 
-Når nye brugerfunktioner bliver frigivet, skal denne brugermanual opdateres sammen med den relevante Clean-version.
+Når nye brugerfunktioner bliver frigivet, skal denne brugermanual opdateres sammen med den relevante Visual Designer-version.

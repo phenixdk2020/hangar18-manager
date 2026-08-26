@@ -19,8 +19,8 @@ final class AdminMenuBridge
     {
         add_submenu_page(
             AdminController::MENU,
-            'Designer',
-            'Designer',
+            'Visual Designer',
+            'Visual Designer',
             'edit_pages',
             'h18-clean-editor',
             [EditorController::class, 'render']

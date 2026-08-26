@@ -1,7 +1,7 @@
 # Visual Designer – navnestandard
 
 **Statusdato:** 25. august 2026  
-**Status:** Godkendt navnestandard fra og med planlagt release 0.1.22
+**Status:** Implementeret i 0.1.22 forward-development; offentlig release følger QA-gaten
 
 ## Officielle synlige navne
 
@@ -56,6 +56,12 @@ Når konteksten kun handler om editoren, kan der stå:
 ## Hangar18 er site/projekt – ikke produktnavn
 
 Hangar18 er det første website/projekt, som Visual Designer Manager udvikles og testes imod. Hangar18-navnet må derfor bruges i site-specifik konfiguration, datamoduler, migreringsnoter og parity-test, men ikke som permanent produktprefix.
+
+### Implementationsstatus 0.1.22
+
+Fra 0.1.22 forward-development bruger plugin-header, WordPress-menuer, editor, Manager, updater-info, release-workflow og aktuelle brugerrettede dokumenter navnene **Visual Designer** / **Visual Designer Manager**.
+
+Interne kompatibilitetsidentifiers med `Hangar18`/`Clean` er bevidst ikke omdøbt endnu.
 
 ## Clean er kun intern teknisk generationsbetegnelse
 

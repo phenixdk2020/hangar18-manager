@@ -1,16 +1,16 @@
-# Hangar18 Manager Clean – Design- og arkitekturmanual
+# Visual Designer Manager – Design- og arkitekturmanual
 
 Senest opdateret: 25. august 2026  
-Gælder for: Hangar18 Manager Clean 0.1.x og nyere  
-Status: Autoritativ målarkitektur for Clean Designer
+Gælder for: Visual Designer Manager 0.1.x og nyere  
+Status: Autoritativ målarkitektur for Visual Designer
 
 ## 1. Formål
 
-Denne manual beskriver den godkendte arkitektur og de visuelle regler for **Hangar18 Manager Clean**. Den supplerer den eksisterende `DESIGN-MANUAL.md`, som fortsat dokumenterer den tidligere 0.4.x-løsning og de historiske designvalg for hjemmesiden.
+Denne manual beskriver den godkendte arkitektur og de visuelle regler for **Visual Designer Manager**. Den supplerer den eksisterende `DESIGN-MANUAL.md`, som fortsat dokumenterer den tidligere 0.4.x-løsning og de historiske designvalg for hjemmesiden.
 
-Clean-manualen skal bruges som teknisk og funktionel reference, når den nye Designer videreudvikles. Nye funktioner må ikke indføres på en måde, der bryder hierarkiet, versionsmodellen, frontend-renderingen eller adskillelsen mellem globalt design og sideindhold.
+Visual Designer-manualen skal bruges som teknisk og funktionel reference, når den nye Designer videreudvikles. Nye funktioner må ikke indføres på en måde, der bryder hierarkiet, versionsmodellen, frontend-renderingen eller adskillelsen mellem globalt design og sideindhold.
 
-Hovedprincippet er, at Clean Designer skal fungere som en **LEGO-lignende, modeldrevet sidebygger**, hvor brugeren kan kombinere Sektioner, Kasser og indholdselementer visuelt uden at miste en entydig canonical model.
+Hovedprincippet er, at Visual Designer skal fungere som en **LEGO-lignende, modeldrevet sidebygger**, hvor brugeren kan kombinere Sektioner, Kasser og indholdselementer visuelt uden at miste en entydig canonical model.
 
 ---
 
@@ -19,7 +19,7 @@ Hovedprincippet er, at Clean Designer skal fungere som en **LEGO-lignende, model
 Den godkendte struktur er:
 
 ```text
-HANGAR18 DESIGN
+VISUAL DESIGNER
 │
 ├── Globalt design
 │   ├── Farvepalette
@@ -55,7 +55,7 @@ HANGAR18 DESIGN
     └── Kasser/layout
 ```
 
-Temaet skal på sigt fungere som **WordPress-shell/runtime**, mens Hangar18 Manager styrer det faktiske visuelle design.
+Temaet skal på sigt fungere som **WordPress-shell/runtime**, mens Visual Designer Manager styrer det faktiske visuelle design.
 
 Header og Footer er globale designs og skal **ikke** være almindelige elementer, der kopieres ind på hver side.
 
@@ -63,7 +63,7 @@ Header og Footer er globale designs og skal **ikke** være almindelige elementer
 
 ## 3. Sidehierarki
 
-En almindelig Clean-side skal følge dette hierarki:
+En almindelig Visual Designer-side skal følge dette hierarki:
 
 ```text
 SIDE
@@ -94,7 +94,7 @@ SIDE
 - Kasser må kunne indeholde andre Kasser.
 - Sektioner må ikke bruges som almindelige nested Kasser.
 
-Den nuværende 0.1.x-model kan teknisk tillade flere kombinationer under udvikling. Når hierarkireglen låses i Clean, skal ovenstående være den autoritative struktur.
+Den nuværende 0.1.x-model kan teknisk tillade flere kombinationer under udvikling. Når hierarkireglen låses i Visual Designer, skal ovenstående være den autoritative struktur.
 
 ---
 
@@ -143,7 +143,7 @@ Kassen skal automatisk vokse, når dens indhold kræver mere højde. En manuelt 
 
 ## 5. Canonical layoutmodel
 
-Clean Designer bruger en modeldrevet geometri med:
+Visual Designer bruger en modeldrevet geometri med:
 
 - 120 vandrette units;
 - 8 px lodret grid/snap;
@@ -162,7 +162,7 @@ Visuelle CSS-tricks må ikke være eneste kilde til en layoutændring. Hvis en e
 
 ## 6. Drag-and-drop og celle-split
 
-Clean Designer skal understøtte fysisk drag-and-drop med tydelige drop-zoner.
+Visual Designer skal understøtte fysisk drag-and-drop med tydelige drop-zoner.
 
 ### Almindelige elementer
 
@@ -347,9 +347,9 @@ Hvis fri overlap senere gøres til en officiel funktion, bør det implementeres 
 
 ## 13. Versionering af sider
 
-Clean Designer skal være ikke-destruktiv.
+Visual Designer skal være ikke-destruktiv.
 
-Hver rigtig **Gem** opretter en ny Clean-version og kræver en kort ændringsbeskrivelse.
+Hver rigtig **Gem** opretter en ny Visual Designer-version og kræver en kort ændringsbeskrivelse.
 
 Gemte versioner tilbyder **Forhåndsvis version**, **Gendan original** og **Opret kopi**.
 
@@ -394,7 +394,7 @@ Hangar18 Base Theme skal på sigt være et tyndt **runtime/shell-tema**.
 
 Temaets opgaver er WordPress template lifecycle, hooks, nødvendige wrappers, menu-/WordPress-integration, indlæsning af Manager-renderet Header/Side/Footer og fallback hvis Manager ikke er tilgængelig.
 
-Temaet bør ikke indeholde parallelle designregler, som konkurrerer med Clean Designer.
+Temaet bør ikke indeholde parallelle designregler, som konkurrerer med Visual Designer.
 
 ---
 
@@ -484,24 +484,24 @@ Følgende skal kontrolleres:
 
 Versionsnumre er planlægningsmål og kan flyttes ved nødvendige hotfixes.
 
-### Clean 0.1.19 – sikkerhed og sporbarhed
+### Visual Designer 0.1.19 – sikkerhed og sporbarhed
 - automatisk programbackup før update;
 - synlig changelog;
 - obligatorisk ændringsbeskrivelse i sideversioner.
 
-### Clean 0.1.20 – elementstyling og billedlag
+### Visual Designer 0.1.20 – elementstyling og billedlag
 - fælles hjørneradius;
 - tekstbaggrund, tekst-/overskriftsfarve og padding;
 - billedboks og billedindhold som uafhængige lag;
 - manuel billedgeometri.
 
-### Clean 0.1.21 – Responsive Designer
+### Visual Designer 0.1.21 – Responsive Designer
 - Desktop / Laptop / Mobil;
 - canonical breakpoint-geometri og arv;
 - responsive frontend;
 - foldbare Elementer/Inspector-paneler og laptop-fit.
 
-### Clean 0.1.22 – hierarki og layout-QA
+### Visual Designer 0.1.22 – hierarki og layout-QA
 - Sektion kun på root;
 - Kasse nesting;
 - drop-regler;
@@ -518,9 +518,9 @@ Versionsnumre er planlægningsmål og kan flyttes ved nødvendige hotfixes.
 
 ---
 
-## 23. QA-regler for Clean Designer
+## 23. QA-regler for Visual Designer
 
-Før en ny Clean-version godkendes, skal følgende kontrolleres:
+Før en ny Visual Designer-version godkendes, skal følgende kontrolleres:
 
 1. Save/Reload giver samme canonical layout.
 2. Undo/Redo ændrer samme model, som bliver gemt.
@@ -543,12 +543,12 @@ Før en ny Clean-version godkendes, skal følgende kontrolleres:
 
 ## 24. Dokumentationsregel
 
-Når et nyt Clean-designvalg godkendes:
+Når et nyt Visual Designer-designvalg godkendes:
 
-1. Opdatér den canonical Clean-model eller relevante globale indstilling.
+1. Opdatér den canonical Visual Designer-model eller relevante globale indstilling.
 2. Opdatér denne manual.
 3. Tilføj ændringen til release-notes/changelog.
 4. Kør QA på editor, Save/Reload, Preview og frontend.
 5. Byg en verificeret GitHub-releasepakke.
 
-`CLEAN-DESIGN-MANUAL.md` er fremover den autoritative arkitekturbeskrivelse for den nye Clean Designer. Den ældre `DESIGN-MANUAL.md` bevares som reference for eksisterende designstandarder og legacy 0.4.x-adfærd, indtil de relevante regler er migreret til Clean.
+`CLEAN-DESIGN-MANUAL.md` er fremover den autoritative arkitekturbeskrivelse for den nye Visual Designer. Den ældre `DESIGN-MANUAL.md` bevares som reference for eksisterende designstandarder og legacy 0.4.x-adfærd, indtil de relevante regler er migreret til Clean.

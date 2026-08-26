@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Hangar18 Manager Clean
- * Plugin URI: https://hangar18.dk/
+ * Plugin Name: Visual Designer Manager
+ * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
- * Description: Ren Hangar18 120-unit sidebygger uden legacy editor-runtime.
+ * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
  * Version: 0.1.21
- * Author: Hangar18
+ * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
  * Text Domain: hangar18-manager-clean

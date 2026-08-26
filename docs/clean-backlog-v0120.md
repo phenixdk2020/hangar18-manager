@@ -1,4 +1,4 @@
-# Hangar18 Manager Clean – Backlog fra v0.1.20
+# Visual Designer Manager – Backlog fra v0.1.20
 
 **Statusdato:** 25. august 2026  
 **Aktuel frigivet version:** 0.1.20  
@@ -8,9 +8,9 @@
 
 ## Formål
 
-Denne backlog erstatter den praktiske plan i `clean-backlog-v0100.md` som arbejdsplan fra Clean 0.1.20 og frem. Den gamle backlog bevares som historik.
+Denne backlog erstatter den praktiske plan i `Visual Designer-backlog-v0100.md` som arbejdsplan fra Visual Designer 0.1.20 og frem. Den gamle backlog bevares som historik.
 
-Målet er først at gøre den generelle Clean Designer komplet, responsiv, sikker og theme-integreret. Derefter bygges Header/Footer, flere elementtyper, dynamiske datamoduler og migrering af eksisterende sider.
+Målet er først at gøre den generelle Visual Designer komplet, responsiv, sikker og theme-integreret. Derefter bygges Header/Footer, flere elementtyper, dynamiske datamoduler og migrering af eksisterende sider.
 
 ---
 
@@ -69,7 +69,7 @@ Målet er først at gøre den generelle Clean Designer komplet, responsiv, sikke
 ## A6. Update og sikkerhed
 - GitHub update-manifest.
 - SHA-256-verifikation af releasepakke.
-- Direkte update fra Hangar18 Manager.
+- Direkte update fra Visual Designer Manager.
 - Aktiv plugin-status bevares gennem self-update.
 - Automatisk ZIP-backup af programmet før update.
 - Update afbrydes hvis backup ikke kan verificeres.
@@ -254,7 +254,7 @@ Tabel skal rendere semantisk HTML med `<table>`, `<thead>`, `<tbody>`, `<th>` og
 - Desktop og mobil præsentation.
 
 ## CLEAN-ELEMENT-FORM-036
-- Kontaktformular som native Clean-element/modul.
+- Kontaktformular som native Visual Designer-element/modul.
 - Spam-/nonce-beskyttelse.
 - Feltdefinition og mailrouting.
 
@@ -298,8 +298,8 @@ Tabel skal rendere semantisk HTML med `<table>`, `<thead>`, `<tbody>`, `<th>` og
 - Rollback må bevare plugin aktivt.
 
 ## CLEAN-SITE-BACKUP-040
-- Eksisterende JSON Clean-backup beholdes.
-- Tilføj Restore/import af Clean-backup.
+- Eksisterende JSON Visual Designer-backup beholdes.
+- Tilføj Restore/import af Visual Designer-backup.
 - Dry-run før restore.
 - Side-ID/slug konflikthåndtering.
 - Global design/Header/Footer inkluderes når de findes.
@@ -354,7 +354,7 @@ Siden gemmer ikke hele M113-/Centurion-posten.
 ## CLEAN-VEHICLES-044
 **Prioritet: P2**
 
-Rigtig Clean datamodel for køretøjer.
+Rigtig Visual Designer datamodel for køretøjer.
 
 ### Faste basisfelter
 - Navn.
@@ -395,7 +395,7 @@ Hvert felt skal kunne definere:
 - eventuel formattering.
 
 ## CLEAN-VEHICLE-FIELDS-045
-- Portér den ønskede funktionalitet fra den gamle Manager som en ny Clean-model.
+- Portér den ønskede funktionalitet fra den gamle Manager som en ny Visual Designer-model.
 - Ingen legacy runtime må genaktiveres.
 - Ændring af feltdefinition må ikke kræve ny plugin-version.
 - Felt-ID skal være stabilt, selv hvis label omdøbes.
@@ -495,14 +495,14 @@ Eventliste-Inspector skal mindst kunne styre:
 **Blokeret indtil responsive + theme + QA er PASS**
 
 - Læs gamle sider read-only.
-- Konverter til Clean som kladde/kopi.
-- Sammenlign gammel side og Clean-side side om side.
+- Konverter til Visual Designer som kladde/kopi.
+- Sammenlign gammel side og Visual Designer-side side om side.
 - Ingen automatisk overskrivning.
 - Start med Hjem, Om, Kontakt og Bliv medlem.
 - Derefter Køretøjer, Events og Galleri.
 
 ## CLEAN-VISUAL-PARITY-049
-- Screenshot-/målebaseret sammenligning gammel ↔ Clean.
+- Screenshot-/målebaseret sammenligning gammel ↔ Visual Designer.
 - Desktop, Laptop og Mobil.
 - Header/banner/menu/content/footer.
 - Accepterede tolerancer dokumenteres.
@@ -540,9 +540,9 @@ Eventliste-Inspector skal mindst kunne styre:
 
 ---
 
-# M. Tværgående QA før første egentlige Clean-live
+# M. Tværgående QA før første egentlige Visual Designer-live
 
-Følgende skal være PASS før Clean bruges som primær sidebygger på det rigtige site:
+Følgende skal være PASS før Visual Designer bruges som primær sidebygger på det rigtige site:
 
 1. Save/Reload giver samme canonical model.
 2. Undo/Redo virker for Desktop, Laptop og Mobil.
@@ -559,7 +559,7 @@ Følgende skal være PASS før Clean bruges som primær sidebygger på det rigti
 13. Global design og tema-shell giver samme visuelle resultat efter reload.
 14. Header/side/footer overlapper ikke.
 15. Keyboard/focus/kontrast/alt-tekst kontrolleres.
-16. Side uden Clean-model fungerer fortsat via WordPress fallback.
+16. Side uden Visual Designer-model fungerer fortsat via WordPress fallback.
 17. Manuel tabel bevarer rækker/kolonner/cellestyles efter Save/Reload.
 18. Dynamisk tabel viser aktuelle data uden at kopiere dataposter ind i sideversionen.
 19. Mobil tabelstrategi giver ingen utilsigtet side-overflow.
@@ -588,7 +588,7 @@ Følgende skal være PASS før Clean bruges som primær sidebygger på det rigti
 - Global design-versionering.
 
 ## 0.1.24 – Theme shell integration
-- Hangar18 Base Theme kobles til globale Clean-designværdier.
+- Hangar18 Base Theme kobles til globale Visual Designer-designværdier.
 - Desktop/Laptop/Mobil frontend-paritet.
 
 ## 0.1.25 – Header Designer
@@ -603,14 +603,14 @@ Følgende skal være PASS før Clean bruges som primær sidebygger på det rigti
 
 ## 0.1.28 – Backup/rollback/import
 - Programbackup-oversigt + rollback.
-- Clean JSON restore/import.
+- Visual Designer JSON restore/import.
 
 ## 0.1.29 – Gallery/Hero/Menu
 - Galleri, Hero og Menu-element.
 
-## 0.1.30 – General Clean QA / MVP gate
+## 0.1.30 – General Visual Designer QA / MVP gate
 - Samlet QA af editor, responsive, versionsstyring, theme, Header/Footer og frontend.
-- Kandidat til første generelle Clean-sidekonvertering.
+- Kandidat til første generelle Visual Designer-sidekonvertering.
 
 ## 0.2.0 – Fælles dataarkitektur
 - Data/design-adskillelse.
@@ -653,4 +653,4 @@ Følgende skal være PASS før Clean bruges som primær sidebygger på det rigti
 5. Implementér Tabel som del af 0.1.27, først manuel og derefter dynamisk datakilde efter 0.2.0.
 6. Byg Køretøjer/Events mod den fælles dataarkitektur i stedet for at hardkode dataposter i sideelementerne.
 
-Denne fil er den operative backlog fra Clean 0.1.20 og frem. `clean-backlog-v0100.md` bevares som historik over den oprindelige Clean-opbygning.
+Denne fil er den operative backlog fra Visual Designer 0.1.20 og frem. `Visual Designer-backlog-v0100.md` bevares som historik over den oprindelige Visual Designer-opbygning.
