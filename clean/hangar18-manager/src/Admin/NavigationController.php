@@ -13,6 +13,7 @@ final class NavigationController
     private const ACTION_SAVE = 'h18_clean_nav_save';
     private const ACTION_DELETE_ITEM = 'h18_clean_nav_delete_item';
     private const ACTION_LOCATIONS = 'h18_clean_nav_locations';
+    private const ACTION_RESTORE = 'h18_clean_nav_restore';
 
     public static function register(): void
     {
@@ -22,6 +23,7 @@ final class NavigationController
         add_action('admin_post_' . self::ACTION_SAVE, [self::class, 'saveMenu']);
         add_action('admin_post_' . self::ACTION_DELETE_ITEM, [self::class, 'deleteItem']);
         add_action('admin_post_' . self::ACTION_LOCATIONS, [self::class, 'saveLocations']);
+        add_action('admin_post_' . self::ACTION_RESTORE, [self::class, 'restoreSnapshot']);
     }
 
     public static function menu(): void
@@ -46,8 +48,8 @@ final class NavigationController
             $selectedId = (int) $menus[0]->term_id;
         }
         $selected = $selectedId > 0 ? wp_get_nav_menu_object($selectedId) : false;
-        $history = get_option(self::HISTORY_OPTION, []);
-        $historyCount = is_array($history) ? count($history) : 0;
+        $history = self::history();
+        $selectedSnapshot = sanitize_text_field((string) wp_unslash($_GET['snapshot'] ?? ''));
 
         echo '<div class="wrap h18-manager-admin">';
         echo '<h1>Menu / Navigation</h1>';
@@ -65,10 +67,8 @@ final class NavigationController
             self::renderSelectedMenu((int) $selected->term_id, (string) $selected->name);
         }
 
-        echo '<section class="h18-manager-card"><h2>Versionssikkerhed</h2>';
-        echo '<p>Før Visual Designer Manager ændrer navigation eller theme-location, gemmes automatisk et strukturelt snapshot. Der er aktuelt <strong>' . esc_html((string) $historyCount) . '</strong> snapshots; maksimalt ' . esc_html((string) self::MAX_HISTORY) . ' bevares.</p>';
-        echo '<p class="description">Restore-UI til snapshots tilføjes senere. Ændringer foretaget direkte i WordPress Menu-editoren bliver ikke automatisk gemt som snapshot af Visual Designer Manager.</p>';
-        echo '</section></div>';
+        self::renderHistory($history, $selectedSnapshot);
+        echo '</div>';
     }
 
     public static function createMenu(): void
@@ -209,6 +209,31 @@ final class NavigationController
         self::redirect(0, 'Theme locations gemt.');
     }
 
+    public static function restoreSnapshot(): void
+    {
+        self::guard();
+        $fingerprint = sanitize_text_field((string) wp_unslash($_POST['snapshot'] ?? ''));
+        if ($fingerprint === '') {
+            wp_die(esc_html__('Snapshot mangler.', 'hangar18-manager-clean'));
+        }
+        check_admin_referer('h18_clean_nav_restore_' . $fingerprint);
+        $entry = self::findSnapshot($fingerprint);
+        if ($entry === null) {
+            wp_die(esc_html__('Snapshot findes ikke længere.', 'hangar18-manager-clean'));
+        }
+
+        self::validateSnapshot($entry);
+        self::snapshot('Sikkerhedskopi før gendannelse af navigation');
+
+        try {
+            self::applySnapshot($entry);
+        } catch (\Throwable $error) {
+            wp_die(esc_html('Gendannelse fejlede: ' . $error->getMessage() . ' En sikkerhedskopi af navigationen før forsøget er gemt.'));
+        }
+
+        self::redirect(0, 'Navigation gendannet fra snapshot ' . self::formatSaved((string) ($entry['savedUtc'] ?? '')) . '.');
+    }
+
     /** @param array<int,\WP_Term> $menus */
     private static function renderMenuList(array $menus, int $selectedId): void
     {
@@ -309,10 +334,99 @@ final class NavigationController
         echo '</tbody></table><p><button class="button button-primary" type="submit">Gem locations</button></p></form>';
     }
 
+    /** @param array<int,array<string,mixed>> $history */
+    private static function renderHistory(array $history, string $selectedFingerprint): void
+    {
+        echo '<section class="h18-manager-card"><h2>Navigationens versionshistorik</h2>';
+        echo '<p>Før Manageren ændrer navigation eller theme-location, gemmes et komplet snapshot. Gendannelse er ikke-destruktiv i historikken: den aktuelle navigation gemmes automatisk som et nyt sikkerhedssnapshot, før et ældre snapshot anvendes.</p>';
+
+        if (!$history) {
+            echo '<p>Der er endnu ingen snapshots.</p></section>';
+            return;
+        }
+
+        echo '<table class="widefat striped h18-manager-table"><thead><tr><th>Dato</th><th>Årsag</th><th>Menuer</th><th>Punkter</th><th>Bruger</th><th></th></tr></thead><tbody>';
+        foreach (array_reverse($history) as $entry) {
+            $fingerprint = self::fingerprint($entry);
+            $menuCount = isset($entry['menus']) && is_array($entry['menus']) ? count($entry['menus']) : 0;
+            $itemCount = self::snapshotItemCount($entry);
+            $user = get_userdata(absint($entry['userId'] ?? 0));
+            echo '<tr><td>' . esc_html(self::formatSaved((string) ($entry['savedUtc'] ?? ''))) . '</td><td>' . esc_html((string) ($entry['reason'] ?? 'Snapshot')) . '</td>';
+            echo '<td>' . esc_html((string) $menuCount) . '</td><td>' . esc_html((string) $itemCount) . '</td><td>' . esc_html($user ? (string) $user->display_name : '—') . '</td>';
+            echo '<td><a class="button' . ($fingerprint === $selectedFingerprint ? ' button-primary' : '') . '" href="' . esc_url(add_query_arg('snapshot', $fingerprint, self::url())) . '">Detaljer</a></td></tr>';
+        }
+        echo '</tbody></table>';
+
+        if ($selectedFingerprint !== '') {
+            $entry = self::findSnapshot($selectedFingerprint);
+            if ($entry !== null) {
+                self::renderSnapshotDetails($entry, $selectedFingerprint);
+            } else {
+                echo '<div class="notice notice-warning inline"><p>Det valgte snapshot findes ikke længere i de seneste ' . esc_html((string) self::MAX_HISTORY) . ' versioner.</p></div>';
+            }
+        }
+        echo '</section>';
+    }
+
+    /** @param array<string,mixed> $entry */
+    private static function renderSnapshotDetails(array $entry, string $fingerprint): void
+    {
+        echo '<div class="h18-clean-update-details"><h3>Snapshot ' . esc_html(self::formatSaved((string) ($entry['savedUtc'] ?? ''))) . '</h3>';
+        echo '<p><strong>Årsag:</strong> ' . esc_html((string) ($entry['reason'] ?? 'Snapshot')) . '<br><strong>Fingerprint:</strong> <code>' . esc_html($fingerprint) . '</code></p>';
+
+        $menus = isset($entry['menus']) && is_array($entry['menus']) ? $entry['menus'] : [];
+        if (!$menus) {
+            echo '<p>Snapshot indeholder ingen menuer.</p>';
+        } else {
+            foreach ($menus as $menu) {
+                if (!is_array($menu)) {
+                    continue;
+                }
+                $items = isset($menu['items']) && is_array($menu['items']) ? $menu['items'] : [];
+                echo '<details><summary><strong>' . esc_html((string) ($menu['name'] ?? 'Menu')) . '</strong> · ' . esc_html((string) count($items)) . ' punkter</summary>';
+                if ($items) {
+                    echo '<table class="widefat striped"><thead><tr><th>Position</th><th>Titel</th><th>Type</th><th>Parent-ID</th><th>URL</th></tr></thead><tbody>';
+                    foreach ($items as $item) {
+                        if (!is_array($item)) {
+                            continue;
+                        }
+                        echo '<tr><td>' . esc_html((string) absint($item['order'] ?? 0)) . '</td><td>' . esc_html((string) ($item['title'] ?? '')) . '</td><td><code>' . esc_html((string) ($item['type'] ?? '')) . '</code></td><td>' . esc_html((string) absint($item['parentSourceId'] ?? 0)) . '</td><td><small>' . esc_html((string) ($item['url'] ?? '')) . '</small></td></tr>';
+                    }
+                    echo '</tbody></table>';
+                }
+                echo '</details>';
+            }
+        }
+
+        $locations = isset($entry['locations']) && is_array($entry['locations']) ? $entry['locations'] : [];
+        if ($locations) {
+            echo '<h4>Theme locations</h4><table class="widefat striped"><thead><tr><th>Location</th><th>Menu source-ID</th></tr></thead><tbody>';
+            foreach ($locations as $location => $menuId) {
+                echo '<tr><td><code>' . esc_html((string) $location) . '</code></td><td>' . esc_html((string) absint($menuId)) . '</td></tr>';
+            }
+            echo '</tbody></table>';
+        }
+
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'Gendan hele navigationen til dette snapshot? Nuværende menuer og theme-locations bliver først gemt som et nyt sikkerhedssnapshot.\');">';
+        echo '<input type="hidden" name="action" value="' . esc_attr(self::ACTION_RESTORE) . '"><input type="hidden" name="snapshot" value="' . esc_attr($fingerprint) . '">';
+        wp_nonce_field('h18_clean_nav_restore_' . $fingerprint);
+        echo '<p><button class="button button-primary" type="submit">Gendan dette snapshot</button></p></form></div>';
+    }
+
     private static function snapshot(string $reason): void
     {
-        $history = get_option(self::HISTORY_OPTION, []);
-        $history = is_array($history) ? array_values(array_filter($history, 'is_array')) : [];
+        $history = self::history();
+        $entry = self::captureSnapshot($reason);
+        $history[] = $entry;
+        if (count($history) > self::MAX_HISTORY) {
+            $history = array_slice($history, -self::MAX_HISTORY);
+        }
+        update_option(self::HISTORY_OPTION, $history, false);
+    }
+
+    /** @return array<string,mixed> */
+    private static function captureSnapshot(string $reason): array
+    {
         $menusOut = [];
         foreach (wp_get_nav_menus() as $menu) {
             $itemsOut = [];
@@ -329,6 +443,9 @@ final class NavigationController
                     'order' => (int) $item->menu_order,
                     'target' => (string) $item->target,
                     'classes' => is_array($item->classes) ? array_values($item->classes) : [],
+                    'attrTitle' => (string) $item->attr_title,
+                    'description' => (string) $item->description,
+                    'xfn' => (string) $item->xfn,
                 ];
             }
             $menusOut[] = [
@@ -338,17 +455,257 @@ final class NavigationController
                 'items' => $itemsOut,
             ];
         }
-        $history[] = [
+
+        return [
+            'schemaVersion' => 1,
             'savedUtc' => gmdate('c'),
             'userId' => get_current_user_id(),
             'reason' => sanitize_text_field($reason),
             'locations' => get_nav_menu_locations(),
             'menus' => $menusOut,
         ];
-        if (count($history) > self::MAX_HISTORY) {
-            $history = array_slice($history, -self::MAX_HISTORY);
+    }
+
+    /** @return array<int,array<string,mixed>> */
+    private static function history(): array
+    {
+        $history = get_option(self::HISTORY_OPTION, []);
+        return is_array($history) ? array_values(array_filter($history, 'is_array')) : [];
+    }
+
+    /** @param array<string,mixed> $entry */
+    private static function fingerprint(array $entry): string
+    {
+        $payload = wp_json_encode([
+            'savedUtc' => (string) ($entry['savedUtc'] ?? ''),
+            'userId' => absint($entry['userId'] ?? 0),
+            'reason' => (string) ($entry['reason'] ?? ''),
+            'locations' => isset($entry['locations']) && is_array($entry['locations']) ? $entry['locations'] : [],
+            'menus' => isset($entry['menus']) && is_array($entry['menus']) ? $entry['menus'] : [],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if (!is_string($payload)) {
+            $payload = serialize($entry);
         }
-        update_option(self::HISTORY_OPTION, $history, false);
+        return substr(hash('sha256', $payload), 0, 24);
+    }
+
+    /** @return array<string,mixed>|null */
+    private static function findSnapshot(string $fingerprint): ?array
+    {
+        foreach (self::history() as $entry) {
+            if (hash_equals(self::fingerprint($entry), $fingerprint)) {
+                return $entry;
+            }
+        }
+        return null;
+    }
+
+    /** @param array<string,mixed> $entry */
+    private static function validateSnapshot(array $entry): void
+    {
+        if (!isset($entry['menus']) || !is_array($entry['menus']) || !isset($entry['locations']) || !is_array($entry['locations'])) {
+            throw new \RuntimeException('Snapshotformatet er ugyldigt.');
+        }
+        $menuIds = [];
+        foreach ($entry['menus'] as $menu) {
+            if (!is_array($menu)) {
+                throw new \RuntimeException('Snapshot indeholder en ugyldig menu.');
+            }
+            $sourceId = absint($menu['sourceId'] ?? 0);
+            if ($sourceId <= 0 || isset($menuIds[$sourceId])) {
+                throw new \RuntimeException('Snapshot har manglende eller dublerede menu-IDer.');
+            }
+            $menuIds[$sourceId] = true;
+            $items = isset($menu['items']) && is_array($menu['items']) ? $menu['items'] : [];
+            $itemIds = [];
+            foreach ($items as $item) {
+                if (!is_array($item)) {
+                    throw new \RuntimeException('Snapshot indeholder et ugyldigt menupunkt.');
+                }
+                $itemId = absint($item['sourceId'] ?? 0);
+                if ($itemId <= 0 || isset($itemIds[$itemId])) {
+                    throw new \RuntimeException('Snapshot har manglende eller dublerede menupunkt-IDer.');
+                }
+                $itemIds[$itemId] = true;
+            }
+        }
+    }
+
+    /** @param array<string,mixed> $entry */
+    private static function applySnapshot(array $entry): void
+    {
+        $snapshotMenus = isset($entry['menus']) && is_array($entry['menus']) ? $entry['menus'] : [];
+        $menuMap = [];
+        $keepMenuIds = [];
+
+        foreach ($snapshotMenus as $menuData) {
+            if (!is_array($menuData)) {
+                continue;
+            }
+            $sourceId = absint($menuData['sourceId'] ?? 0);
+            $menu = $sourceId > 0 ? wp_get_nav_menu_object($sourceId) : false;
+            if (!$menu instanceof \WP_Term) {
+                $slug = sanitize_title((string) ($menuData['slug'] ?? ''));
+                $menu = $slug !== '' ? get_term_by('slug', $slug, 'nav_menu') : false;
+            }
+            if (!$menu instanceof \WP_Term) {
+                $name = sanitize_text_field((string) ($menuData['name'] ?? 'Gendannet menu'));
+                $created = wp_create_nav_menu($name !== '' ? $name : 'Gendannet menu');
+                if (is_wp_error($created)) {
+                    throw new \RuntimeException($created->get_error_message());
+                }
+                $menu = wp_get_nav_menu_object((int) $created);
+            }
+            if (!$menu instanceof \WP_Term) {
+                throw new \RuntimeException('En menu kunne ikke genskabes.');
+            }
+
+            $desiredName = sanitize_text_field((string) ($menuData['name'] ?? ''));
+            if ($desiredName !== '' && $desiredName !== (string) $menu->name) {
+                $renamed = wp_update_nav_menu_object((int) $menu->term_id, ['menu-name' => $desiredName]);
+                if (is_wp_error($renamed)) {
+                    throw new \RuntimeException($renamed->get_error_message());
+                }
+            }
+
+            $menuMap[$sourceId] = (int) $menu->term_id;
+            $keepMenuIds[(int) $menu->term_id] = true;
+        }
+
+        foreach (wp_get_nav_menus() as $currentMenu) {
+            $currentId = (int) $currentMenu->term_id;
+            if (!isset($keepMenuIds[$currentId])) {
+                $deleted = wp_delete_nav_menu($currentId);
+                if (is_wp_error($deleted)) {
+                    throw new \RuntimeException($deleted->get_error_message());
+                }
+            }
+        }
+
+        foreach ($snapshotMenus as $menuData) {
+            if (!is_array($menuData)) {
+                continue;
+            }
+            $sourceMenuId = absint($menuData['sourceId'] ?? 0);
+            $currentMenuId = (int) ($menuMap[$sourceMenuId] ?? 0);
+            if ($currentMenuId <= 0) {
+                continue;
+            }
+
+            $existingItems = wp_get_nav_menu_items($currentMenuId, ['post_status' => 'any']);
+            foreach (is_array($existingItems) ? $existingItems : [] as $existingItem) {
+                wp_delete_post((int) $existingItem->ID, true);
+            }
+
+            $items = isset($menuData['items']) && is_array($menuData['items']) ? array_values($menuData['items']) : [];
+            usort($items, static function ($a, $b): int {
+                $aOrder = is_array($a) ? absint($a['order'] ?? 0) : 0;
+                $bOrder = is_array($b) ? absint($b['order'] ?? 0) : 0;
+                return $aOrder <=> $bOrder;
+            });
+
+            $parentMap = [];
+            foreach ($items as $itemData) {
+                if (!is_array($itemData)) {
+                    continue;
+                }
+                $sourceItemId = absint($itemData['sourceId'] ?? 0);
+                $parentMap[$sourceItemId] = absint($itemData['parentSourceId'] ?? 0);
+            }
+            self::validateParentMap($parentMap);
+
+            $itemMap = [];
+            foreach ($items as $itemData) {
+                if (!is_array($itemData)) {
+                    continue;
+                }
+                $sourceItemId = absint($itemData['sourceId'] ?? 0);
+                $created = wp_update_nav_menu_item($currentMenuId, 0, self::snapshotItemArgs($itemData, 0));
+                if (is_wp_error($created)) {
+                    $fallback = self::snapshotItemArgs($itemData, 0, true);
+                    $created = wp_update_nav_menu_item($currentMenuId, 0, $fallback);
+                }
+                if (is_wp_error($created)) {
+                    throw new \RuntimeException($created->get_error_message());
+                }
+                $itemMap[$sourceItemId] = (int) $created;
+            }
+
+            foreach ($items as $itemData) {
+                if (!is_array($itemData)) {
+                    continue;
+                }
+                $sourceItemId = absint($itemData['sourceId'] ?? 0);
+                $currentItemId = (int) ($itemMap[$sourceItemId] ?? 0);
+                if ($currentItemId <= 0) {
+                    continue;
+                }
+                $sourceParentId = (int) ($parentMap[$sourceItemId] ?? 0);
+                $currentParentId = $sourceParentId > 0 ? (int) ($itemMap[$sourceParentId] ?? 0) : 0;
+                $updated = wp_update_nav_menu_item($currentMenuId, $currentItemId, self::snapshotItemArgs($itemData, $currentParentId));
+                if (is_wp_error($updated)) {
+                    $updated = wp_update_nav_menu_item($currentMenuId, $currentItemId, self::snapshotItemArgs($itemData, $currentParentId, true));
+                }
+                if (is_wp_error($updated)) {
+                    throw new \RuntimeException($updated->get_error_message());
+                }
+            }
+        }
+
+        $registered = get_registered_nav_menus();
+        $sourceLocations = isset($entry['locations']) && is_array($entry['locations']) ? $entry['locations'] : [];
+        $restoredLocations = [];
+        foreach ($registered as $location => $label) {
+            $sourceMenuId = absint($sourceLocations[$location] ?? 0);
+            $restoredLocations[$location] = $sourceMenuId > 0 ? (int) ($menuMap[$sourceMenuId] ?? 0) : 0;
+        }
+        set_theme_mod('nav_menu_locations', $restoredLocations);
+    }
+
+    /** @param array<string,mixed> $item */
+    private static function snapshotItemArgs(array $item, int $parentId, bool $forceCustom = false): array
+    {
+        $type = sanitize_key((string) ($item['type'] ?? 'custom'));
+        $url = esc_url_raw((string) ($item['url'] ?? ''));
+        if ($forceCustom) {
+            $type = 'custom';
+        }
+
+        $args = [
+            'menu-item-title' => sanitize_text_field((string) ($item['title'] ?? '')),
+            'menu-item-parent-id' => max(0, $parentId),
+            'menu-item-position' => max(1, absint($item['order'] ?? 1)),
+            'menu-item-status' => 'publish',
+            'menu-item-target' => sanitize_key((string) ($item['target'] ?? '')),
+            'menu-item-classes' => isset($item['classes']) && is_array($item['classes']) ? array_map('sanitize_html_class', $item['classes']) : [],
+            'menu-item-attr-title' => sanitize_text_field((string) ($item['attrTitle'] ?? '')),
+            'menu-item-description' => sanitize_textarea_field((string) ($item['description'] ?? '')),
+            'menu-item-xfn' => sanitize_text_field((string) ($item['xfn'] ?? '')),
+        ];
+
+        if ($type === 'custom') {
+            $args['menu-item-type'] = 'custom';
+            $args['menu-item-url'] = $url !== '' ? $url : home_url('/');
+            return $args;
+        }
+
+        $args['menu-item-type'] = $type;
+        $args['menu-item-object'] = sanitize_key((string) ($item['object'] ?? ''));
+        $args['menu-item-object-id'] = absint($item['objectId'] ?? 0);
+        return $args;
+    }
+
+    /** @param array<string,mixed> $entry */
+    private static function snapshotItemCount(array $entry): int
+    {
+        $count = 0;
+        $menus = isset($entry['menus']) && is_array($entry['menus']) ? $entry['menus'] : [];
+        foreach ($menus as $menu) {
+            if (is_array($menu) && isset($menu['items']) && is_array($menu['items'])) {
+                $count += count($menu['items']);
+            }
+        }
+        return $count;
     }
 
     /** @param array<int,int> $parentMap */
@@ -397,6 +754,15 @@ final class NavigationController
         }
         $notice = sanitize_text_field((string) wp_unslash($_GET['h18_nav_notice']));
         echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($notice) . '</p></div>';
+    }
+
+    private static function formatSaved(string $savedUtc): string
+    {
+        $timestamp = $savedUtc !== '' ? strtotime($savedUtc) : false;
+        if ($timestamp === false) {
+            return $savedUtc !== '' ? $savedUtc : 'Ukendt tidspunkt';
+        }
+        return wp_date('d-m-Y H:i', $timestamp);
     }
 
     private static function url(int $menuId = 0): string
