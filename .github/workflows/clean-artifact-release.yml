@@ -1,4 +1,4 @@
-name: Clean Plugin Download Artifact
+name: Visual Designer Manager Dev Artifact
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify clean source
+      - name: Verify Visual Designer Manager source
         shell: bash
         run: |
           set -euo pipefail
@@ -22,7 +22,7 @@ jobs:
           find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           php .github/scripts/hierarchy_normalizer_qa.php
           if grep -R -n -E 'Hangar18\\UltimateDesigner|ultimate-designer-|EditorLego|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then
-            echo 'Legacy editor dependency found in clean plugin.' >&2
+            echo 'Legacy editor dependency found in Visual Designer Manager.' >&2
             exit 1
           fi
       - name: Build installable ZIP
