@@ -17,6 +17,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Repair deterministic patch target
+        run: python .github/scripts/fix_v0129_patch_target.py
+
       - name: Apply deterministic 0.1.29 patch
         run: python .github/scripts/apply_v0129_floating_buttons.py
 
@@ -72,6 +75,7 @@ jobs:
             exit 0
           fi
           git commit -m 'Implement parent-relative floating buttons for 0.1.29'
+          git checkout -- .github/scripts/apply_v0129_floating_buttons.py
           for attempt in 1 2 3; do
             git fetch origin main
             git rebase origin/main
