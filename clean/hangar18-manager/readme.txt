@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.26
+Version: 0.1.27
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.27 ==
+* Canvas-recovery: en runtime-fejl i ét barn-element må ikke længere blanke hele Sektion/Kasse eller hele Designer-canvas.
+* Rich-text sanitizer bruger en mere browser-/Firefox-robust unwrap-metode.
+* Konkrete render-fejl vises på det berørte element eller root-canvas, mens canonical layoutdata bevares.
+* Drag/drop og øvrige elementer kan fortsætte, selv hvis ét element ikke kan renderes.
+* Alle 0.1.26 WYSIWYG-, typografi-, Inspector-, billed-persistence- og Knap-auto-size rettelser er bevaret.
 
 == 0.1.26 ==
 * WYSIWYG-hardening: editor-label/type/ID er ren editor-chrome og påvirker ikke længere elementets canonical geometri.
