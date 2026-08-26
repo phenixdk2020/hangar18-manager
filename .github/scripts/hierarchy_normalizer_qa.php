@@ -5,6 +5,54 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/HierarchyNormalizer.php';
 
 use Hangar18\Clean\Model\HierarchyNormalizer;
+use Hangar18\Clean\Model\LayoutModel;
+
+/* Minimal WordPress function stubs required by LayoutModel::normalize(). */
+if (!function_exists('sanitize_key')) {
+    function sanitize_key($value): string
+    {
+        return strtolower((string) preg_replace('/[^a-z0-9_\-]/i', '', (string) $value));
+    }
+}
+if (!function_exists('sanitize_text_field')) {
+    function sanitize_text_field($value): string
+    {
+        return trim(strip_tags((string) $value));
+    }
+}
+if (!function_exists('wp_kses_post')) {
+    function wp_kses_post($value): string
+    {
+        return (string) $value;
+    }
+}
+if (!function_exists('sanitize_hex_color')) {
+    function sanitize_hex_color($value)
+    {
+        $value = (string) $value;
+        return preg_match('/^#[0-9a-f]{6}$/i', $value) ? strtolower($value) : null;
+    }
+}
+if (!function_exists('absint')) {
+    function absint($value): int
+    {
+        return abs((int) $value);
+    }
+}
+if (!function_exists('esc_url_raw')) {
+    function esc_url_raw($value): string
+    {
+        return (string) $value;
+    }
+}
+if (!function_exists('wp_json_encode')) {
+    function wp_json_encode($value, int $flags = 0, int $depth = 512)
+    {
+        return json_encode($value, $flags, $depth);
+    }
+}
+
+require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/LayoutModel.php';
 
 function failQa(string $message): void
 {
@@ -143,4 +191,71 @@ HierarchyNormalizer::normalize($nodes);
 $twice = serialize($nodes);
 assertQa($once === $twice, 'Hierarchy normalization is not idempotent.');
 
-echo "HierarchyNormalizer QA PASS\n";
+/* Verify the real canonical LayoutModel pipeline, not only the helper class. */
+$rawModel = [
+    'schemaVersion' => 1,
+    'units' => 120,
+    'rowPx' => 8,
+    'nodes' => [
+        [
+            'id' => 'legacy-leaf',
+            'type' => 'text',
+            'parentId' => '',
+            'order' => 10,
+            'geometry' => geometry(23, 14, 71, 9),
+            'props' => [
+                'heading' => 'Test',
+                'text' => 'Legacy root text',
+                'gapX' => 5,
+                'gapY' => 13,
+            ],
+        ],
+        [
+            'id' => 'root-sec',
+            'type' => 'section',
+            'parentId' => '',
+            'order' => 20,
+            'geometry' => geometry(0, 30, 120, 20),
+            'props' => props(),
+        ],
+        [
+            'id' => 'nested-sec',
+            'type' => 'section',
+            'parentId' => 'root-sec',
+            'order' => 10,
+            'geometry' => geometry(0, 0, 120, 12),
+            'props' => props(),
+        ],
+    ],
+];
+
+$canonical = LayoutModel::normalize($rawModel);
+$canonicalMap = [];
+foreach ($canonical['nodes'] as $node) {
+    $canonicalMap[$node['id']] = $node;
+    if (($node['parentId'] ?? '') === '') {
+        assertQa($node['type'] === 'section', 'LayoutModel pipeline left a non-Section at root.');
+    }
+    if ($node['type'] === 'section') {
+        assertQa(($node['parentId'] ?? '') === '', 'LayoutModel pipeline left a nested Section.');
+    }
+}
+assertQa(isset($canonicalMap['legacy-leaf']), 'LayoutModel pipeline lost legacy leaf content.');
+assertQa($canonicalMap['nested-sec']['type'] === 'container', 'LayoutModel pipeline did not convert nested Section to Kasse.');
+$wrapperId = (string) $canonicalMap['legacy-leaf']['parentId'];
+assertQa($wrapperId !== '' && isset($canonicalMap[$wrapperId]), 'LayoutModel pipeline did not create legacy wrapper Section.');
+assertQa($canonicalMap[$wrapperId]['geometry']['desktop']['x'] === 23, 'LayoutModel wrapper lost desktop X geometry.');
+assertQa($canonicalMap['legacy-leaf']['geometry']['desktop']['x'] === 0, 'LayoutModel legacy leaf was not localized.');
+assertQa($canonicalMap[$wrapperId]['props']['gapY'] === 13, 'LayoutModel wrapper did not inherit root gapY.');
+
+$canonicalAgain = LayoutModel::normalize($canonical);
+assertQa(
+    wp_json_encode($canonical, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) === wp_json_encode($canonicalAgain, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    'LayoutModel canonical normalization is not idempotent.'
+);
+assertQa(
+    LayoutModel::structuralDigest($canonical) === LayoutModel::structuralDigest($canonicalAgain),
+    'LayoutModel structural digest changes after idempotent normalization.'
+);
+
+echo "HierarchyNormalizer + LayoutModel QA PASS\n";
