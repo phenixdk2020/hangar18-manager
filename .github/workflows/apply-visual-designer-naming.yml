@@ -18,15 +18,18 @@ jobs:
           fetch-depth: 0
 
       - name: Apply public naming migration
-        run: python .github/scripts/apply_visual_designer_naming.py
+        run: |
+          python .github/scripts/apply_visual_designer_naming.py
+          python .github/scripts/fix_visual_designer_technical_refs.py
 
-      - name: Verify PHP and JavaScript
+      - name: Verify PHP, JavaScript and documentation refs
         shell: bash
         run: |
           set -euo pipefail
           find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
           find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           php .github/scripts/hierarchy_normalizer_qa.php
+          python .github/scripts/fix_visual_designer_technical_refs.py
 
       - name: Commit naming migration
         shell: bash
