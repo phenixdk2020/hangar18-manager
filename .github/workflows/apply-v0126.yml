@@ -52,8 +52,8 @@ jobs:
           grep -q "nl2br" clean/hangar18-manager/src/Frontend/Renderer.php
           grep -q "editor labels are chrome" clean/hangar18-manager/assets/editor-v0123-ux.css
           grep -q "overscroll-behavior:contain" clean/hangar18-manager/assets/editor-v0123-ux.css
-          if grep -R -n "Gem clean layout" clean/hangar18-manager/assets; then
-            echo 'Obsolete generic Clean save note remains.' >&2
+          if grep -n "Gem clean layout" clean/hangar18-manager/assets/editor-v018-core.js clean/hangar18-manager/assets/editor-v0120.js clean/hangar18-manager/assets/editor-v0121.js clean/hangar18-manager/assets/editor-v0122-hierarchy.js clean/hangar18-manager/assets/editor-v0123-ux.js clean/hangar18-manager/assets/editor-v0125.js; then
+            echo 'Obsolete generic Clean save note remains in an active runtime asset.' >&2
             exit 1
           fi
 
