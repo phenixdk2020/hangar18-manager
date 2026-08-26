@@ -17,6 +17,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Repair deterministic patch targeting
+        run: python .github/scripts/fix_v0125_patch_script.py
+
       - name: Apply 0.1.25 implementation patch
         run: python .github/scripts/apply_v0125.py
 
