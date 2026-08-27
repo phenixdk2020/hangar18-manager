@@ -1,0 +1,89 @@
+[
+  {
+    "version": "0.1.30",
+    "date": "2026-08-27",
+    "items": [
+      "Inspector er viewport-bundet og kan rulles helt til bunden uden at rulle browservinduet.",
+      "Rich-text-editoren arver ikke længere Inspectors label-vægt; almindelig tekst forbliver normal, mens Fed kun gælder markeret tekst.",
+      "Flydende Knap er et ægte overlay i sit aktuelle område og kan også være flydende på Side-root, ikke kun i Sektion/Kasse.",
+      "Automatisk update-checkpoint gemmer både plugin-ZIP og Designer-data før en opdatering.",
+      "Opdateringssiden viser gemte update-checkpoints og versionshistorik med punkterne for hver release."
+    ]
+  },
+  {
+    "version": "0.1.29",
+    "date": "2026-08-26",
+    "items": [
+      "Flydende Knap kan skifte mellem Normal og Flydende placering.",
+      "Flydende Knap må overlappe Tekst/Billede uden at skubbe det normale grid-layout.",
+      "Lag (z-index 1–200) kan styres i Inspector.",
+      "Responsive Desktop/Laptop/Mobil-geometrier bevares; floating er aldrig position:fixed."
+    ]
+  },
+  {
+    "version": "0.1.28",
+    "date": "2026-08-26",
+    "items": [
+      "Kritisk canvas-fix: typografi-konstanter initialiseres før første modelnormalisering.",
+      "Eksisterende Tekst-elementer kan igen åbne uden TDZ/ReferenceError.",
+      "Canonical layoutdata og versionshistorik ændres ikke af rettelsen."
+    ]
+  },
+  {
+    "version": "0.1.27",
+    "date": "2026-08-26",
+    "items": [
+      "Canvas-recovery isolerer renderfejl til det enkelte element.",
+      "Rich-text sanitizer er hardened for Firefox og andre browsere.",
+      "Fejl-placeholder vises uden at canonical layoutdata mistes.",
+      "Resten af canvas og drag/drop forbliver tilgængeligt ved lokal renderfejl."
+    ]
+  },
+  {
+    "version": "0.1.26",
+    "date": "2026-08-26",
+    "items": [
+      "WYSIWYG-hardening: editor-labels påvirker ikke canonical geometri.",
+      "Linjeskift og blanke linjer bevares i Designer, Forhåndsvisning og frontend.",
+      "Rich-text selection bevares ved Fed, Kursiv, Understregning m.m.",
+      "Separat typografi for brødtekst og overskrift.",
+      "Manuel billed-X/Y/bredde/højde overlever Gem og reload.",
+      "Inspector har egen scroll og bevarer scroll/fokus bedre.",
+      "Knap får automatisk størrelse efter tekst og padding."
+    ]
+  },
+  {
+    "version": "0.1.25",
+    "date": "2026-08-26",
+    "items": [
+      "Rich text i Tekst-elementet med fed, kursiv, understregning, lister, links og fjern formatering.",
+      "Nyt Knap-element med interne/eksterne links, anker, e-mail og telefon.",
+      "Flere Header- og Footer-templates med egne versionshistorikker.",
+      "Sidevalg: automatisk standard, bestemt template eller ingen Header/Footer.",
+      "Sikker migration fra de tidligere globale Header/Footer-layouts.",
+      "Bedre automatiske versionsnoter baseret på Undo-transaktioner."
+    ]
+  },
+  {
+    "version": "0.1.24",
+    "date": "2026-08-26",
+    "items": [
+      "Ændringsbeskrivelse ved Gem er reelt valgfri og kan genereres automatisk.",
+      "Manager-status: grøn Klar, gul Under udvikling, rød Ikke færdig.",
+      "Ufærdige moduler markeres ikke længere fejlagtigt som Klar.",
+      "Selection-rammen tegnes inden for elementets canonical boks og forbliver synlig."
+    ]
+  },
+  {
+    "version": "0.1.23",
+    "date": "2026-08-26",
+    "items": [
+      "Header / Footer Designer fase 1 med egne canonical modeller og versionshistorik.",
+      "Header/Footer genbruger 120-unit / 8-px grid og Desktop/Laptop/Mobil.",
+      "Større standardhøjder for nye elementer og 12 px standard-padding på Tekst.",
+      "Valgfri ændringsbeskrivelse med automatisk versionsnote.",
+      "Tekst-preview bevarer linjeskift og tomme linjer.",
+      "Manuel billedredigering og reset er tydeliggjort."
+    ]
+  }
+]
