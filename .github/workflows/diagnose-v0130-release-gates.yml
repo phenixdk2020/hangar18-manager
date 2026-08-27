@@ -1,0 +1,52 @@
+name: Diagnose Visual Designer Manager 0.1.30 release gates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-v0130-release-gates.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check old release gates one by one
+        shell: bash
+        run: |
+          set +e
+          FAIL=0
+          check_grep(){
+            label="$1"; pattern="$2"; file="$3"
+            if grep -q "$pattern" "$file"; then echo "PASS $label"; else echo "FAIL $label :: $pattern :: $file"; FAIL=1; fi
+          }
+          check_grep headingFontFamily 'headingFontFamily' clean/hangar18-manager/src/Model/LayoutModel.php
+          check_grep headingFontSize 'headingFontSize' clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep rememberSelection 'rememberSelection' clean/hangar18-manager/assets/editor-v0125.js
+          check_grep manualW 'manualW' clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep manualH 'manualH' clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep autoSize 'autoSize' clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep autoFitButtons 'autoFitButtons' clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep nl2br 'nl2br' clean/hangar18-manager/src/Frontend/Renderer.php
+          check_grep chrome 'editor labels are chrome' clean/hangar18-manager/assets/editor-v0123-ux.css
+          check_grep inspector-scroll 'overscroll-behavior:contain' clean/hangar18-manager/assets/editor-v0123-ux.css
+          check_grep placementMode 'placementMode' clean/hangar18-manager/src/Model/LayoutModel.php
+          check_grep zIndex 'zIndex' clean/hangar18-manager/src/Model/LayoutModel.php
+          check_grep floating-core 'isFloatingButton' clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep floating-label 'Flydende i Sektion/Kasse' clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep overlay-zone "zone = 'overlay'" clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep absolute-editor "position = 'absolute'" clean/hangar18-manager/assets/editor-v018-core.js
+          check_grep responsive-floating 'isFloatingButton' clean/hangar18-manager/assets/editor-v0121.js
+          check_grep frontend-floating-class 'h18-clean-front-button--floating' clean/hangar18-manager/src/Frontend/Renderer.php
+          check_grep frontend-absolute "layoutStyle = 'position:absolute" clean/hangar18-manager/src/Frontend/Renderer.php
+          check_grep responsive-bool 'bool \$floating' clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
+          check_grep responsive-absolute 'position:absolute!important' clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
+          check_grep readme-fixed 'aldrig position:fixed' clean/hangar18-manager/readme.txt
+          if grep -n 'Gem clean layout' clean/hangar18-manager/assets/editor-v018-core.js clean/hangar18-manager/assets/editor-v0123-ux.js clean/hangar18-manager/assets/editor-v0125.js; then echo 'FAIL obsolete save note'; FAIL=1; else echo 'PASS obsolete save note absent'; fi
+          for f in clean/hangar18-manager/assets/admin-v019.css clean/hangar18-manager/assets/editor-v0125.js clean/hangar18-manager/assets/editor-v0125.css clean/hangar18-manager/src/Model/TemplateLayoutModel.php; do if test -s "$f"; then echo "PASS nonempty $f"; else echo "FAIL nonempty $f"; FAIL=1; fi; done
+          if grep -R -n -E 'Hangar18\\UltimateDesigner|ultimate-designer-|EditorLego|save-integrity|saved-layout-rebuild|lego-fixes-v0|lego-resize-v0' clean/hangar18-manager; then echo 'FAIL legacy runtime'; FAIL=1; else echo 'PASS legacy runtime absent'; fi
+          if grep -R -n -E 'Hangar18 Manager Clean|Hangar18 Designer|Clean Manager v|Clean editor |Clean layout gemt|Clean-sider|Ikke Clean|h18-Visual Designer-' clean/hangar18-manager; then echo 'FAIL public naming'; FAIL=1; else echo 'PASS public naming'; fi
+          exit "$FAIL"
