@@ -547,10 +547,11 @@ Når et nyt Visual Designer-designvalg godkendes:
 
 1. Opdatér den canonical Visual Designer-model eller relevante globale indstilling.
 2. Opdatér denne design- og arkitekturmanual.
-3. Opdatér `CLEAN-USER-MANUAL.md`, når ændringen er synlig eller relevant for en redaktør/administrator.
-4. Tilføj ændringen til release-notes/changelog.
-5. Kør QA på editor, Save/Reload, Preview og frontend.
-6. Byg først en verificeret GitHub-releasepakke, når den aftalte release skal publiceres.
+3. Opdatér `CLEAN-TECHNICAL-MANUAL.md`, når beslutningen påvirker en konkret UX-kontrakt, teknisk adfærd eller implementeringsregel.
+4. Opdatér `CLEAN-USER-MANUAL.md`, når ændringen er synlig eller relevant for en redaktør/administrator.
+5. Tilføj ændringen til release-notes/changelog.
+6. Kør QA på editor, Save/Reload, Preview og frontend.
+7. Byg først en verificeret GitHub-releasepakke, når den aftalte release skal publiceres.
 
 ### 24.1 Krav til brugermanualens grafiske dokumentation
 

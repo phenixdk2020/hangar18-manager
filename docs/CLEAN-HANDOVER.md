@@ -10,19 +10,21 @@
 
 1. `docs/CLEAN-HANDOVER.md` – denne fil; aktuel status, aftaler, næste opgave og ikke-forhandlingsbare regler.
 2. `CLEAN-DESIGN-MANUAL.md` – autoritativ design- og arkitekturmålmodel.
-3. `docs/clean-backlog-v0120.md` – operativ backlog. Filnavnet siger v0.1.20, men den indeholder også senere godkendte forslag og skal læses sammen med denne handover.
-4. `clean-update.json` – sandheden om senest frigivne version, package, SHA-256 og seneste changelog.
-5. `clean-release-notes.html` – release-noter for den version, der er under opbygning/frigivelse.
-6. `CLEAN-USER-MANUAL.md` – brugermanual/arbejdsbeskrivelse. Den er nyttig, men implementationsstatus i den kan være ældre end den aktuelle release. Brug ikke denne fil alene til at afgøre, hvad der er implementeret.
-7. `DESIGN-MANUAL.md` – legacy/reference for historisk Hangar18-udseende og gamle designstandarder. Den gamle editor-runtime må ikke genindføres.
+3. `CLEAN-TECHNICAL-MANUAL.md` – autoritativ reference for konkrete UX-kontrakter, tekniske adfærdsregler og godkendte implementeringsvalg.
+4. `docs/clean-backlog-v0120.md` – operativ backlog. Filnavnet siger v0.1.20, men den indeholder også senere godkendte forslag og skal læses sammen med denne handover.
+5. `clean-update.json` – sandheden om senest frigivne version, package, SHA-256 og seneste changelog.
+6. `clean-release-notes.html` – release-noter for den version, der er under opbygning/frigivelse.
+7. `CLEAN-USER-MANUAL.md` – brugermanual/arbejdsbeskrivelse. Den er nyttig, men implementationsstatus i den kan være ældre end den aktuelle release. Brug ikke denne fil alene til at afgøre, hvad der er implementeret.
+8. `DESIGN-MANUAL.md` – legacy/reference for historisk Hangar18-udseende og gamle designstandarder. Den gamle editor-runtime må ikke genindføres.
 
 ### Kildehierarki ved konflikt
 
 1. Aktuel kode + `clean-update.json` afgør hvad der faktisk er implementeret.
 2. `CLEAN-DESIGN-MANUAL.md` afgør godkendt målarkitektur.
-3. `docs/clean-backlog-v0120.md` + denne handover afgør godkendte kommende funktioner og rækkefølge.
-4. `CLEAN-USER-MANUAL.md` beskriver brugerflow, men kan være versionsmæssigt bagefter.
-5. `DESIGN-MANUAL.md` er legacy/reference, ikke Visual Designer canonical runtime.
+3. `CLEAN-TECHNICAL-MANUAL.md` afgør konkrete godkendte UX-kontrakter, tekniske adfærdsregler og implementeringsvalg. Hvis et nyt ønske strider mod en fast kontrakt, skal konflikten afklares før implementering.
+4. `docs/clean-backlog-v0120.md` + denne handover afgør godkendte kommende funktioner og rækkefølge.
+5. `CLEAN-USER-MANUAL.md` beskriver brugerflow, men kan være versionsmæssigt bagefter.
+6. `DESIGN-MANUAL.md` er legacy/reference, ikke Visual Designer canonical runtime.
 
 ---
 

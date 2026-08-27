@@ -984,6 +984,7 @@ Hvis problemet fortsætter, brug **Kopiér diagnose-link** og tag et screenshot 
 ## 34. Relaterede dokumenter
 
 - `CLEAN-DESIGN-MANUAL.md` – teknisk design- og arkitekturmanual for Clean.
+- `CLEAN-TECHNICAL-MANUAL.md` – konkrete UX-kontrakter, tekniske adfærdsregler, beslutningsregister og reviewforslag.
 - `DESIGN-MANUAL.md` – historisk/visuel manual fra den tidligere 0.4.x Manager-serie.
 - `README.md` – overordnet repository-/projektinformation.
 
