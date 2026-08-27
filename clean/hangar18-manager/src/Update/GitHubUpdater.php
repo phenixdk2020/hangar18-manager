@@ -255,7 +255,7 @@ final class GitHubUpdater
             . '<button type="submit" class="button button-primary" onclick="return confirm(\'Der tages automatisk programbackup før installationen. Installer Visual Designer Manager ' . esc_attr($status['latest']) . ' nu?\');">Opdater nu til ' . esc_html($status['latest']) . '</button>'
             . '</form>';
         $html .= '<div class="h18-clean-update-details">'
-            . '<p><strong>Automatisk sikkerhed:</strong> Før WordPress udskifter pluginfilerne, gemmes en ZIP-backup af den installerede Visual Designer Manager-version. Opdateringen afbrydes, hvis backupen ikke kan oprettes.</p>';
+            . '<p><strong>Automatisk sikkerhed:</strong> Før WordPress udskifter pluginfilerne, gemmes både en ZIP-backup af den installerede version og et Designer-data-checkpoint. Opdateringen afbrydes, hvis checkpointet ikke kan oprettes.</p>';
         if ($changelog !== '') {
             $html .= '<details open><summary><strong>Ændringer i version ' . esc_html($status['latest']) . '</strong></summary><div class="h18-clean-update-changelog">' . wp_kses_post($changelog) . '</div></details>';
         }

@@ -61,6 +61,7 @@
     function command(name, value) {
         if (!active || !active.editor) { return; }
         restoreSelection();
+        try { document.execCommand('styleWithCSS', false, false); } catch (ignoreStyleMode) {}
         try { document.execCommand(name, false, value || null); } catch (ignore) {}
         rememberSelection();
         active.dirty = true;

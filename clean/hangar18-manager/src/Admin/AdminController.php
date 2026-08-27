@@ -220,13 +220,13 @@ final class AdminController
     {
         self::guard();
         $clean = self::cleanPages();
-        self::open('Backup', 'Eksport af Clean-layout og versionshistorik');
-        echo '<div class="h18-manager-card"><h2>Fuld Visual Designer-backup</h2><p>Downloader én JSON-fil med alle sider, der har Clean-state, inklusive nuværende canonical model og gemt versionshistorik.</p>';
+        self::open('Backup', 'Eksport af Visual Designer-layout og versionshistorik');
+        echo '<div class="h18-manager-card"><h2>Fuld Visual Designer-backup</h2><p>Downloader én JSON-fil med alle sider, der har Visual Designer-data, inklusive nuværende canonical model og gemt versionshistorik.</p>';
         echo '<p><strong>' . esc_html((string) count($clean)) . '</strong> Visual Designer-sider medtages.</p>';
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field(self::EXPORT_NONCE);
         echo '<input type="hidden" name="action" value="' . esc_attr(self::EXPORT_ACTION) . '"><button class="button button-primary" type="submit">Download fuld Visual Designer-backup</button></form></div>';
-        echo '<div class="h18-manager-card"><h2>Hvad backupen indeholder</h2><ul class="h18-manager-list"><li>Side-ID, titel og slug</li><li>Aktuel Clean-version</li><li>Canonical layoutmodel</li><li>Versionshistorik med model og digest</li><li>Plugin/schema/grid-version</li></ul><p class="description">Diagnostics/logs, nonces, tokens og credentials eksporteres ikke.</p></div>';
+        echo '<div class="h18-manager-card"><h2>Hvad backupen indeholder</h2><ul class="h18-manager-list"><li>Side-ID, titel og slug</li><li>Aktuel Designer-version</li><li>Canonical layoutmodel</li><li>Versionshistorik med model og digest</li><li>Plugin/schema/grid-version</li></ul><p class="description">Diagnostics/logs, nonces, tokens og credentials eksporteres ikke.</p></div>';
         self::close();
     }
 

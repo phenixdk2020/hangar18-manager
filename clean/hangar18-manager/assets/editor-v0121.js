@@ -119,7 +119,7 @@
     }
     window.H18CleanResponsive = { sync: mergeResponsive, device: function () { return activeDevice; } };
 
-    function isFloatingButton(node) { return !!(node && node.type === 'button' && node.parentId && node.props && node.props.placementMode === 'overlay'); }
+    function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }
     function children(parentId, map) {
         return Object.keys(map).map(function (id) { return map[id]; }).filter(function (node) {
             return String(node.parentId || '') === String(parentId || '');

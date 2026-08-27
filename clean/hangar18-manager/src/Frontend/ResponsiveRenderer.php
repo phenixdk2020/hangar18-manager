@@ -59,7 +59,7 @@ final class ResponsiveRenderer
             $mobileRows = self::effectiveRows($id, 'mobile', $byId, $byParent, []);
             $selector = '#h18-clean-' . self::cssId($id);
             $props = is_array($node['props'] ?? null) ? $node['props'] : [];
-            $floating = (string) ($node['type'] ?? '') === 'button' && (string) ($node['parentId'] ?? '') !== '' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';
+            $floating = (string) ($node['type'] ?? '') === 'button' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';
             $zIndex = max(1, min(200, (int) ($props['zIndex'] ?? 20)));
             $laptop .= self::geometryCss($selector, $lg, $laptopRows, $floating, $zIndex);
             $mobile .= self::geometryCss($selector, $mg, $mobileRows, $floating, $zIndex);
