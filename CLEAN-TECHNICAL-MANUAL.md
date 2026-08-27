@@ -574,33 +574,27 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ---
 
-## 21. Aktuelle kendte kontraktbrud / fejl til næste release
+## 21. Kontraktstatus for 0.1.32
 
-Disse er registreret som bugs, fordi den observerede adfærd bryder en allerede aftalt kontrakt:
+### VD-FLOAT-001 – Flydende Knap
 
-### BUG-01 – Floating Knap
+**IMPLEMENTERET / regressionstestet.** 0.1.31 indførte det parent-relative overlay-flow. 0.1.32 fastholder kontrakten: ingen normal grid-række/celle-split, ingen parent auto-grow alene på grund af floating-position og aldrig `position:fixed`.
 
-Observeret: Knap kan stadig opføre sig som almindeligt LEGO/grid-element.
+### VD-TEXT-SEL-001 – Rich-text selection
 
-Kontrakt: sektion 6.3.
+**IMPLEMENTERET i 0.1.32.** Selection gendannes ud fra logiske tekst-offsets i flere browser-tidspunkter efter toolbar-kommandoen, så Fed, Kursiv og Understregning kan kædes på samme markering.
 
-### BUG-02 – Rich-text selection
+Hvis browser-/DOM-adfærd senere igen bryder markeringen, genåbnes dette som BUG mod samme FAST-kontrakt.
 
-Observeret: selection forsvinder fortsat efter Fed, Kursiv og Understregning.
+### VD-BUTTON-TYPE-001 – Knap er Knap
 
-Kontrakt: sektion 4.1–4.3.
+**IMPLEMENTERET / præciseret i 0.1.32.** Core opretter palette-elementet Knap som canonical `type=button`. Den observerede `TEKST`-situation kunne opstå, når hierarchy-reglen afviste et root-drop, hvorefter det tidligere valgte Tekst-element fortsat stod markeret. 0.1.32 gør den afvisning eksplicit og verificerer efter palette-drop, at en ny Knap enten er oprettet som `button`, eller at brugeren får besked om, at den ikke blev oprettet.
 
-### BUG-03 – Knap oprettes/behandles som Tekst
+Hierarkireglen ændres ikke: leaf-elementer som Knap skal ligge i Sektion eller Kasse.
 
-Observeret: Knap kan få `TEKST`-label og behandles som teksttype.
+### VD-INSPECTOR-SCROLL-001 – Inspector bund-buffer
 
-Kontrakt: sektion 3.2 og 6.1.
-
-### UI-04 – Inspector scroll-buffer
-
-Godkendt ændring: ekstra tom scroll-plads nederst, så nederste Inspector-felter kan løftes højere op i viewporten.
-
-Kontrakt: sektion 10.2.
+**IMPLEMENTERET i 0.1.32.** Inspector får ca. 360 px editor-only scroll-buffer efter sidste kontrol. Bufferen påvirker ikke canonical model, Preview eller frontend.
 
 ---
 

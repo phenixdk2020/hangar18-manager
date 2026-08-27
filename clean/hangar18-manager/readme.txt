@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.31
+Version: 0.1.32
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.32 ==
+* Rich-text selection er hardenet: samme markerede tekst gendannes efter Fed, Kursiv og Understregning og bevares til kædede toolbar-kommandoer.
+* Knap-typekontrakten er synliggjort: palette-Knap er canonical type=button; hvis hierarchy-reglen afviser et root-drop, vises tydeligt at Knap ikke blev oprettet og skal slippes i en Sektion eller Kasse.
+* Inspector har 360 px ekstra usynlig scroll-buffer efter sidste kontrol, så nederste felter kan rulles fri af viewport-kanten.
+* Flydende Knap bevarer parent-relativ overlay-adfærd, springer normal celle-split/autogrow over og er fortsat aldrig position:fixed.
+* Teknisk manual og brugermanual er synkroniseret med 0.1.32-kontrakterne.
 
 == 0.1.31 ==
 * Flydende Knap flyttes med et separat parent-relativt overlay-flow og går ikke gennem normal celle-split drag/drop.

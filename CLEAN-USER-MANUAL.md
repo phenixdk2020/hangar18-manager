@@ -1,7 +1,7 @@
 # Visual Designer Manager – Brugermanual
 
 Senest opdateret: 27. august 2026  
-Gælder for: Visual Designer Manager 0.1.31 og nyere; planlagte funktioner er mærket **Planlagt**  
+Gælder for: Visual Designer Manager 0.1.32 og nyere; planlagte funktioner er mærket **Planlagt**  
 Målgruppe: Redaktører og administratorer, der bygger og vedligeholder sider i WordPress
 
 > Denne manual beskriver **hvordan Visual Designer Manager bruges i praksis**. Den tekniske arkitektur er beskrevet separat i `CLEAN-DESIGN-MANUAL.md`.
@@ -978,6 +978,7 @@ Hvis problemet fortsætter, brug **Kopiér diagnose-link** og tag et screenshot 
 |---|---|
 | 1.0 | Første Visual Designer-brugermanual baseret på funktionerne gennem 0.1.18 og den godkendte målarkitektur. |
 | 1.1 | Nyt kapitel om websides anatomi, Header/Footer kontra Hero, elementoversigt samt grafiske illustrationer og tydelig markering af planlagt funktionalitet. |
+| 1.2 | Opdateret til Visual Designer Manager 0.1.32 med rich-text selection-kontrakt, tydelig Knap-drop-feedback og ekstra Inspector-scrollplads. |
 
 ---
 
@@ -999,3 +1000,11 @@ Når nye brugerfunktioner bliver frigivet, skal denne brugermanual opdateres sam
 - Menu-redigeringen er ikke redesignet endnu; den afventer Header/Footer og det kommende Menu-element.
 - Nye elementer starter større; ny Tekst får 12 px padding.
 - Grøn selection er tykkere, Gem-note er valgfri/automatisk, tekst-preview bevarer linjeskift, og billed-reset rydder manuel billedramme korrekt.
+
+## 0.1.32 – Rich text, Knap-drop og Inspector
+
+- Markeret rich text skal forblive markeret efter **Fed**, **Kursiv** og **Understregning**, så flere formatteringer kan anvendes uden ny markering.
+- **Knap** er et selvstændigt canonical element. Hvis Knap forsøges sluppet direkte på root, oprettes den ikke; Designer viser tydeligt, at den skal trækkes ind i en **Sektion eller Kasse**.
+- Inspector har ekstra tom scrollplads nederst, så sidste kontrol kan rulles komfortabelt op fra vinduets nederste kant.
+- Flydende Knap forbliver et parent-relativt overlay og påvirker ikke normal grid-autogrow alene på grund af floating-position.
+

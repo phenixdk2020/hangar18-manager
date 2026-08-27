@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.32",
+    "date": "2026-08-27",
+    "items": [
+      "Rich-text selection gendannes robust efter Fed, Kursiv og Understregning, så samme markering kan bruges til flere formatteringer i træk.",
+      "Knap fra paletten forbliver canonical type=button; afviste root-drops forklares tydeligt, så en eksisterende valgt Tekst ikke kan forveksles med en ny Knap.",
+      "Inspector har en 360 px editor-only scroll-buffer efter sidste kontrol, så nederste felter kan rulles komfortabelt op i viewporten.",
+      "Flydende Knap-reglerne regression-sikres: parent-relativ overlay, ingen normal grid-række/celle-split, ingen autogrow alene pga. floating-position.",
+      "Bruger- og teknisk dokumentation er synkroniseret med 0.1.32."
+    ]
+  },
+  {
     "version": "0.1.31",
     "date": "2026-08-27",
     "items": [
