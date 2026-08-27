@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.30
-Trigger: external release 2026-08-27
+Release Visual Designer Manager v0.1.31
+Trigger: floating-selection-theme-shell 2026-08-27
