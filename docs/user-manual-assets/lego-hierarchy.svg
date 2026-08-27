@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Visual Designer LEGO-hierarki</title>
+  <desc id="desc">Illustration af Side, Sektion, Kasse og indholdselementer i Visual Designer.</desc>
+  <rect width="1200" height="760" fill="#ffffff"/>
+  <text x="600" y="55" text-anchor="middle" font-family="Arial,sans-serif" font-size="32" font-weight="700" fill="#1d2327">LEGO-princippet</text>
+  <rect x="430" y="90" width="340" height="80" rx="12" fill="#eef4fb" stroke="#2271b1" stroke-width="3"/>
+  <text x="600" y="140" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" font-weight="700" fill="#1d2327">SIDE</text>
+  <line x1="600" y1="170" x2="600" y2="220" stroke="#646970" stroke-width="3"/>
+
+  <rect x="250" y="220" width="700" height="100" rx="12" fill="#f6f0e2" stroke="#9a7b36" stroke-width="3"/>
+  <text x="600" y="278" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" font-weight="700" fill="#1d2327">SEKTION</text>
+  <text x="600" y="305" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#646970">Primært vandret hovedområde – direkte på siden</text>
+  <line x1="600" y1="320" x2="600" y2="365" stroke="#646970" stroke-width="3"/>
+
+  <rect x="120" y="365" width="450" height="120" rx="12" fill="#f6f7f7" stroke="#50575e" stroke-width="3"/>
+  <text x="345" y="420" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#1d2327">KASSE</text>
+  <text x="345" y="452" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#646970">Kan indeholde Kasser og indhold</text>
+
+  <rect x="630" y="365" width="450" height="120" rx="12" fill="#f6f7f7" stroke="#50575e" stroke-width="3"/>
+  <text x="855" y="420" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#1d2327">INDHOLD DIREKTE</text>
+  <text x="855" y="452" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#646970">Tekst · Billede · Knap · Tabel ...</text>
+
+  <line x1="345" y1="485" x2="345" y2="530" stroke="#646970" stroke-width="3"/>
+  <line x1="855" y1="485" x2="855" y2="530" stroke="#646970" stroke-width="3"/>
+
+  <rect x="70" y="530" width="250" height="85" rx="10" fill="#ffffff" stroke="#8c8f94" stroke-width="2"/>
+  <text x="195" y="582" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" fill="#1d2327">Billede</text>
+  <rect x="340" y="530" width="250" height="85" rx="10" fill="#ffffff" stroke="#8c8f94" stroke-width="2"/>
+  <text x="465" y="582" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" fill="#1d2327">Tekst</text>
+  <rect x="610" y="530" width="250" height="85" rx="10" fill="#ffffff" stroke="#8c8f94" stroke-width="2"/>
+  <text x="735" y="582" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" fill="#1d2327">Knap / Icon</text>
+  <rect x="880" y="530" width="250" height="85" rx="10" fill="#ffffff" stroke="#8c8f94" stroke-width="2"/>
+  <text x="1005" y="582" text-anchor="middle" font-family="Arial,sans-serif" font-size="21" fill="#1d2327">Tabel / Galleri</text>
+
+  <rect x="235" y="655" width="730" height="65" rx="10" fill="#fcf0f1" stroke="#d63638" stroke-width="2"/>
+  <text x="600" y="695" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#8a2424">Sektion må ikke nestes som en almindelig Kasse. Kasse må gerne indeholde Kasse.</text>
+</svg>
