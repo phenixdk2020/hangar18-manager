@@ -234,7 +234,9 @@ final class AdminController
     {
         self::guard();
         $status = GitHubUpdater::status();
-        self::open('Opdateringer', 'Tjek og installer Visual Designer Manager direkte herfra');
+        $backups = GitHubUpdater::programBackups();
+        $versions = GitHubUpdater::releaseHistory();
+        self::open('Opdateringer', 'Tjek, installer og se update-checkpoints for Visual Designer Manager');
         echo '<div class="h18-manager-card"><h2>Version</h2><p class="h18-manager-big-version">' . esc_html(H18_CLEAN_VERSION) . '</p>';
         if ($status['ok']) {
             echo '<p>Seneste GitHub-version: <strong>' . esc_html($status['latest']) . '</strong></p>';
@@ -242,10 +244,50 @@ final class AdminController
         } else {
             echo '<p><span class="h18-manager-badge">Manifest kunne ikke læses</span></p>';
         }
-        echo '<p>Downloadpakken SHA-256-verificeres før WordPress installerer den. Du behøver ikke åbne Plugins-siden.</p><div class="h18-manager-toolbar">';
+        echo '<p>Downloadpakken SHA-256-verificeres. Før installation gemmes både program-ZIP og et Designer-data-checkpoint; opdateringen stoppes hvis checkpointet fejler.</p><div class="h18-manager-toolbar">';
         echo GitHubUpdater::checkButtonHtml();
         echo GitHubUpdater::installButtonHtml();
         echo '</div></div>';
+
+        echo '<div class="h18-manager-card"><h2>Update-checkpoints</h2><p>De seneste automatiske checkpoints før plugin-opdateringer. Der beholdes op til 12.</p>';
+        if (!$backups) {
+            echo '<p>Ingen lokale update-checkpoints er registreret endnu.</p>';
+        } else {
+            echo '<table class="widefat striped"><thead><tr><th>Fra</th><th>Til</th><th>Dato</th><th>Program</th><th>Designer-data</th></tr></thead><tbody>';
+            foreach ($backups as $backup) {
+                $created = (string) ($backup['createdUtc'] ?? '');
+                $programSize = isset($backup['size']) ? size_format((int) $backup['size']) : '—';
+                $dataSize = isset($backup['dataSize']) && (int) $backup['dataSize'] > 0 ? size_format((int) $backup['dataSize']) : '—';
+                echo '<tr><td><strong>' . esc_html((string) ($backup['version'] ?? '—')) . '</strong></td><td>' . esc_html((string) ($backup['targetVersion'] ?? '—')) . '</td><td>' . esc_html(self::prettyDate($created)) . '</td>';
+                echo '<td><code>' . esc_html((string) ($backup['file'] ?? '—')) . '</code><br><small>' . esc_html($programSize) . '</small></td>';
+                echo '<td>';
+                if (!empty($backup['dataFile'])) {
+                    echo '<code>' . esc_html((string) $backup['dataFile']) . '</code><br><small>' . esc_html($dataSize) . '</small>';
+                } else {
+                    echo '<span class="description">Ældre checkpoint · kun program-ZIP</span>';
+                }
+                echo '</td></tr>';
+            }
+            echo '</tbody></table>';
+        }
+        echo '</div>';
+
+        echo '<div class="h18-manager-card"><h2>Versionshistorik</h2><p>Hvad de enkelte Visual Designer Manager-versioner indeholder.</p>';
+        if (!$versions) {
+            echo '<p>Versionshistorikken kunne ikke læses.</p>';
+        } else {
+            foreach ($versions as $row) {
+                $version = (string) ($row['version'] ?? '');
+                $current = $version === H18_CLEAN_VERSION ? ' <span class="h18-manager-badge is-ok">Installeret</span>' : '';
+                echo '<details' . ($version === H18_CLEAN_VERSION ? ' open' : '') . '><summary><strong>v' . esc_html($version) . '</strong>' . $current . ' <span class="description">' . esc_html((string) ($row['date'] ?? '')) . '</span></summary>';
+                echo '<ul class="h18-manager-list">';
+                foreach (is_array($row['items'] ?? null) ? $row['items'] : [] as $item) {
+                    echo '<li>' . esc_html((string) $item) . '</li>';
+                }
+                echo '</ul></details>';
+            }
+        }
+        echo '</div>';
         self::close();
     }
 

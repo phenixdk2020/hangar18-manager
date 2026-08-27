@@ -18,7 +18,7 @@ final class GitHubUpdater
     private const PLUGIN_FILE = 'hangar18-manager/hangar18-manager.php';
     private const BACKUP_OPTION = 'h18_clean_program_backups_v1';
     private const LAST_BACKUP_TRANSIENT_PREFIX = 'h18_clean_last_program_backup_';
-    private const MAX_BACKUPS = 8;
+    private const MAX_BACKUPS = 12;
 
     private static bool $backupCreatedThisRequest = false;
 
@@ -261,6 +261,54 @@ final class GitHubUpdater
         }
         $html .= '</div>';
         return $html;
+    }
+
+    /** @return array<int,array<string,mixed>> */
+    public static function programBackups(): array
+    {
+        $history = get_option(self::BACKUP_OPTION, []);
+        if (!is_array($history)) {
+            return [];
+        }
+        $rows = array_values(array_filter($history, static fn($row): bool => is_array($row) && (string) ($row['file'] ?? '') !== ''));
+        return array_reverse($rows);
+    }
+
+    /** @return array<int,array{version:string,date:string,items:array<int,string>}> */
+    public static function releaseHistory(): array
+    {
+        $path = H18_CLEAN_DIR . 'release-history.json';
+        if (!is_file($path)) {
+            return [];
+        }
+        $decoded = json_decode((string) file_get_contents($path), true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $rows = [];
+        foreach ($decoded as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $version = sanitize_text_field((string) ($row['version'] ?? ''));
+            if (!preg_match('/^\d+\.\d+\.\d+$/', $version)) {
+                continue;
+            }
+            $items = [];
+            foreach (is_array($row['items'] ?? null) ? $row['items'] : [] as $item) {
+                $text = sanitize_text_field((string) $item);
+                if ($text !== '') {
+                    $items[] = $text;
+                }
+            }
+            $rows[] = [
+                'version' => $version,
+                'date' => sanitize_text_field((string) ($row['date'] ?? '')),
+                'items' => $items,
+            ];
+        }
+        usort($rows, static fn(array $a, array $b): int => version_compare($b['version'], $a['version']));
+        return $rows;
     }
 
     public static function installNow(): void
@@ -517,6 +565,12 @@ final class GitHubUpdater
             return new \WP_Error('h18_clean_backup_hash', 'Programbackupens SHA-256 kunne ikke beregnes.');
         }
 
+        $checkpoint = self::createDesignerCheckpoint($directory, pathinfo($filename, PATHINFO_FILENAME), $targetVersion);
+        if (is_wp_error($checkpoint)) {
+            @unlink($path);
+            return $checkpoint;
+        }
+
         $entry = [
             'id' => substr(hash('sha256', $filename . '|' . $sha256), 0, 20),
             'file' => $filename,
@@ -525,6 +579,9 @@ final class GitHubUpdater
             'createdUtc' => gmdate('c'),
             'sha256' => $sha256,
             'size' => (int) filesize($path),
+            'dataFile' => (string) ($checkpoint['file'] ?? ''),
+            'dataSha256' => (string) ($checkpoint['sha256'] ?? ''),
+            'dataSize' => (int) ($checkpoint['size'] ?? 0),
         ];
 
         $history = get_option(self::BACKUP_OPTION, []);
@@ -537,10 +594,102 @@ final class GitHubUpdater
                 if ($oldFile !== '') {
                     @unlink(trailingslashit($directory) . $oldFile);
                 }
+                $oldDataFile = basename((string) ($old['dataFile'] ?? ''));
+                if ($oldDataFile !== '') {
+                    @unlink(trailingslashit($directory) . $oldDataFile);
+                }
             }
         }
         update_option(self::BACKUP_OPTION, $history, false);
         return $entry;
+    }
+
+    /** @return array{file:string,sha256:string,size:int}|\WP_Error */
+    private static function createDesignerCheckpoint(string $directory, string $baseName, string $targetVersion): array|\WP_Error
+    {
+        try {
+            \Hangar18\Clean\Model\TemplateLayoutModel::ensureMigrated();
+            $payload = [
+                'product' => 'Visual Designer Manager update checkpoint',
+                'schemaVersion' => \Hangar18\Clean\Model\LayoutModel::SCHEMA,
+                'currentVersion' => H18_CLEAN_VERSION,
+                'targetVersion' => $targetVersion,
+                'generatedUtc' => gmdate('c'),
+                'pages' => [],
+                'templates' => [],
+            ];
+
+            $pages = get_posts([
+                'post_type' => 'page',
+                'post_status' => 'any',
+                'numberposts' => -1,
+                'orderby' => 'ID',
+                'order' => 'ASC',
+            ]);
+            foreach ($pages as $page) {
+                if (!$page instanceof \WP_Post) {
+                    continue;
+                }
+                $postId = (int) $page->ID;
+                $headerChoice = \Hangar18\Clean\Model\TemplateLayoutModel::pageChoice($postId, 'header');
+                $footerChoice = \Hangar18\Clean\Model\TemplateLayoutModel::pageChoice($postId, 'footer');
+                $hasLayout = metadata_exists('post', $postId, \Hangar18\Clean\Model\LayoutModel::META)
+                    || (int) get_post_meta($postId, \Hangar18\Clean\Model\LayoutModel::VERSION_META, true) > 0;
+                if (!$hasLayout && $headerChoice === 'auto' && $footerChoice === 'auto') {
+                    continue;
+                }
+                $payload['pages'][] = [
+                    'postId' => $postId,
+                    'title' => (string) $page->post_title,
+                    'slug' => (string) $page->post_name,
+                    'status' => (string) $page->post_status,
+                    'version' => (int) get_post_meta($postId, \Hangar18\Clean\Model\LayoutModel::VERSION_META, true),
+                    'model' => \Hangar18\Clean\Model\LayoutModel::get($postId),
+                    'history' => \Hangar18\Clean\Model\LayoutModel::history($postId),
+                    'headerChoice' => $headerChoice,
+                    'footerChoice' => $footerChoice,
+                ];
+            }
+
+            foreach (['header', 'footer'] as $type) {
+                foreach (\Hangar18\Clean\Model\TemplateLayoutModel::all($type) as $row) {
+                    $id = (string) ($row['id'] ?? '');
+                    if ($id === '') {
+                        continue;
+                    }
+                    $payload['templates'][] = [
+                        'id' => $id,
+                        'type' => $type,
+                        'name' => (string) ($row['name'] ?? ''),
+                        'active' => !empty($row['active']),
+                        'isDefault' => !empty($row['isDefault']),
+                        'version' => \Hangar18\Clean\Model\TemplateLayoutModel::version($id),
+                        'model' => \Hangar18\Clean\Model\TemplateLayoutModel::model($id),
+                        'settings' => \Hangar18\Clean\Model\TemplateLayoutModel::settings($id),
+                        'history' => \Hangar18\Clean\Model\TemplateLayoutModel::history($id),
+                    ];
+                }
+            }
+
+            $json = wp_json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if (!is_string($json)) {
+                return new \WP_Error('h18_clean_checkpoint_json', 'Designer-data kunne ikke serialiseres til update-checkpoint.');
+            }
+            $filename = sanitize_file_name($baseName . '-designer-data.json');
+            $path = trailingslashit($directory) . $filename;
+            if (@file_put_contents($path, $json . "\n") === false || !is_file($path) || (int) filesize($path) <= 0) {
+                @unlink($path);
+                return new \WP_Error('h18_clean_checkpoint_write', 'Designer-data-checkpoint kunne ikke gemmes.');
+            }
+            $sha256 = strtolower((string) hash_file('sha256', $path));
+            if (!preg_match('/^[a-f0-9]{64}$/', $sha256)) {
+                @unlink($path);
+                return new \WP_Error('h18_clean_checkpoint_hash', 'Designer-data-checkpointets SHA-256 kunne ikke beregnes.');
+            }
+            return ['file' => $filename, 'sha256' => $sha256, 'size' => (int) filesize($path)];
+        } catch (\Throwable $error) {
+            return new \WP_Error('h18_clean_checkpoint_exception', 'Designer-data-checkpoint fejlede: ' . $error->getMessage());
+        }
     }
 
     private static function backupDirectory(): string
