@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.31",
+  "version": "0.1.32",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.31.zip",
-  "sha256": "bce9b7f7358acd1485869edb9b8a6cb97f68469221c3739e666b87edbdb3bbfc",
-  "source_commit": "25a14a555b52ed7ed81bca3b54d9815061a3c6a4",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.32.zip",
+  "sha256": "b469491157925afc9f636f1cbe272941a27631196435f46ca85967c52d7564cb",
+  "source_commit": "2652d55d2c31e9a68eceb9a29e3e98ef3e74ca5c",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.31</h4><ul><li><strong>Flydende Knap:</strong> flyttehåndtaget bruger nu et separat parent-relativt overlay-flow og går ikke gennem det normale Over/Under/Venstre/Højre celle-split. Knappen reserverer ingen grid-række og påvirker ikke parent auto-grow.</li><li><strong>Rich text selection:</strong> Fed og Kursiv bevarer nu den markerede tekst efter formattering. Selection gendannes ud fra tekst-offsets, så DOM-wrapping med strong/em ikke kollapser markeringen; samme mekanisme bruges for toolbaren generelt.</li><li><strong>Theme Shell:</strong> første runtime-kontrakt til konvertering af Hangar18 Base Theme er tilføjet. Cutover er eksplicit slået fra som standard, så den nuværende frontend ikke ændres før parity-QA.</li><li><strong>Header/Footer migration:</strong> eksisterende globale Visual Designer Header/Footer-modeller kobles til Theme Shell-resolution som fundament for senere 1:1-konvertering af den eksisterende Hangar18 header/footer.</li><li><strong>Sikker baseline:</strong> Hangar18 Base Theme 1.2.0 forbliver fallback og visuel reference, indtil Desktop/Laptop/Mobil parity er godkendt.</li></ul>"
+    "changelog": "<h4>0.1.32</h4><ul><li><strong>Rich text selection:</strong> markeringen gendannes efter Fed, Kursiv og Understregning og bevares til flere formatteringer i træk.</li><li><strong>Knap-type og drop-feedback:</strong> Knap er fortsat canonical type <code>button</code>. Hvis hierarchy-reglen afviser et drop på root, får brugeren nu tydelig besked om, at Knap ikke blev oprettet og skal placeres i en Sektion eller Kasse.</li><li><strong>Inspector:</strong> 360 px ekstra usynlig scroll-buffer efter sidste kontrol gør de nederste felter lettere at arbejde med.</li><li><strong>Floating regression:</strong> Flydende Knap forbliver parent-relativ overlay, reserverer ingen normal grid-række og påvirker ikke autogrow alene på grund af sin position.</li><li><strong>Dokumentation:</strong> teknisk manual og brugermanual er opdateret til 0.1.32-kontrakterne.</li></ul>"
   }
 }
