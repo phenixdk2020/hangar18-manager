@@ -6,7 +6,7 @@
       "Inspector er viewport-bundet og kan rulles helt til bunden uden at rulle browservinduet.",
       "Rich-text-editoren arver ikke længere Inspectors label-vægt; almindelig tekst forbliver normal, mens Fed kun gælder markeret tekst.",
       "Flydende Knap er et ægte overlay i sit aktuelle område og kan også være flydende på Side-root, ikke kun i Sektion/Kasse.",
-      "Automatisk update-checkpoint gemmer både plugin-ZIP og Designer-data før en opdatering.",
+      "Automatisk update-checkpoint gemmer både plugin-ZIP og Designer-data før hver opdatering.",
       "Opdateringssiden viser gemte update-checkpoints og versionshistorik med punkterne for hver release."
     ]
   },
