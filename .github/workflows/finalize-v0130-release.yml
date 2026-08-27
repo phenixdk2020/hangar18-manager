@@ -1,0 +1,98 @@
+name: Finalize Visual Designer Manager 0.1.30
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/finalize-v0130-release.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply final source changes
+        shell: python
+        run: |
+          from pathlib import Path
+
+          plugin = Path('clean/hangar18-manager/hangar18-manager.php')
+          s = plugin.read_text(encoding='utf-8')
+          if 'Version: 0.1.29' in s:
+              s = s.replace('Version: 0.1.29', 'Version: 0.1.30', 1)
+          if "H18_CLEAN_VERSION', '0.1.29'" in s:
+              s = s.replace("H18_CLEAN_VERSION', '0.1.29'", "H18_CLEAN_VERSION', '0.1.30'", 1)
+          if 'Version: 0.1.30' not in s or "H18_CLEAN_VERSION', '0.1.30'" not in s:
+              raise SystemExit('Could not establish plugin version 0.1.30')
+          plugin.write_text(s, encoding='utf-8')
+
+          p = Path('clean/hangar18-manager/assets/editor-v0121.js')
+          s = p.read_text(encoding='utf-8')
+          old = "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.parentId && node.props && node.props.placementMode === 'overlay'); }"
+          new = "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }"
+          if old in s: s = s.replace(old, new, 1)
+          if new not in s: raise SystemExit('Responsive editor floating predicate missing')
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php')
+          s = p.read_text(encoding='utf-8')
+          old = "$floating = (string) ($node['type'] ?? '') === 'button' && (string) ($node['parentId'] ?? '') !== '' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';"
+          new = "$floating = (string) ($node['type'] ?? '') === 'button' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';"
+          if old in s: s = s.replace(old, new, 1)
+          if new not in s: raise SystemExit('Responsive frontend floating predicate missing')
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('clean/hangar18-manager/src/Admin/AdminController.php')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace("self::open('Backup', 'Eksport af Clean-layout og versionshistorik');", "self::open('Backup', 'Eksport af Visual Designer-layout og versionshistorik');")
+          s = s.replace('sider, der har Clean-state', 'sider, der har Visual Designer-data')
+          s = s.replace('<li>Aktuel Clean-version</li>', '<li>Aktuel Designer-version</li>')
+          p.write_text(s, encoding='utf-8')
+
+          Path('clean-release-notes.html').write_text('''<h4>0.1.30</h4><ul><li><strong>Inspector-scroll:</strong> Inspector er viewport-bundet med egen scrollbar, så nederste felter kan nås uden at rulle hele browservinduet.</li><li><strong>Rich text / Fed:</strong> rich-text-editoren arver ikke længere Inspectors label-vægt; normal tekst forbliver normal, mens Fed gælder den markerede tekst.</li><li><strong>Ægte Flydende Knap:</strong> Floating er et overlay i det aktuelle område og kan også bruges på Side-root. Desktop, Laptop, Mobil og frontend følger samme princip; den er aldrig fastgjort til browser-vinduet.</li><li><strong>Update-checkpoint:</strong> før hver opdatering gemmes både program-ZIP og Designer-data med sidelayouts, historik, Header/Footer-valg og templates.</li><li><strong>Backupoversigt:</strong> Opdateringer viser de seneste automatiske update-checkpoints; der beholdes op til 12.</li><li><strong>Versionshistorik:</strong> Opdateringer viser indholdspunkterne for 0.1.23–0.1.30.</li><li><strong>Naming:</strong> synlige Clean-rester på Backup-siden er rettet til Visual Designer.</li></ul>''', encoding='utf-8')
+          Path('clean-release-now.txt').write_text('Release Visual Designer Manager v0.1.30\n', encoding='utf-8')
+
+      - name: Source and integration QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          grep -q 'Version: 0.1.30' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.30'" clean/hangar18-manager/hangar18-manager.php
+          grep -q 'createDesignerCheckpoint' clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q 'programBackups' clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q 'releaseHistory' clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q 'Update-checkpoints' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'Versionshistorik' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'font-weight:400' clean/hangar18-manager/assets/editor-v0125.css
+          grep -q 'height:calc(100dvh - 102px)' clean/hangar18-manager/assets/editor-v0123-ux.css
+          grep -q "function isFloatingButton(node).*node.props.*placementMode.*overlay" clean/hangar18-manager/assets/editor-v0121.js
+          grep -q "placementMode.*overlay" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
+          grep -q 'display:grid;position:relative' clean/hangar18-manager/src/Frontend/Renderer.php
+          test -s clean/hangar18-manager/release-history.json
+          grep -q '"version": "0.1.30"' clean/hangar18-manager/release-history.json
+
+      - name: Commit release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-release'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php clean/hangar18-manager/assets/editor-v0121.js clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php clean/hangar18-manager/src/Admin/AdminController.php clean-release-notes.html clean-release-now.txt
+          git commit -m 'Prepare Visual Designer Manager v0.1.30 release'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
