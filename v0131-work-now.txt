@@ -1,0 +1,2 @@
+Visual Designer Manager 0.1.31 work package started.
+Scope: floating button overlay fix, rich-text selection preservation, Header/Footer conversion groundwork, Theme shell groundwork.
