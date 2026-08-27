@@ -1,0 +1,66 @@
+name: Apply Visual Designer Manager 0.1.30 overlay root fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0130-overlay-root.yml'
+      - '.github/scripts/v0130_overlay_root_patch.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic patch
+        run: python .github/scripts/v0130_overlay_root_patch.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.30 behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq "current.props.placementMode = control.value === 'overlay' ? 'overlay' : 'normal';" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq '>Flydende i område</option>' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq '$floating = $placementMode === '\''overlay'\'';' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -Fq '.h18-clean-page,.h18-clean-front-surface{display:grid;position:relative;' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -Fq '.h18-vd-rich-shell{display:block;margin-top:4px;font-weight:400}' clean/hangar18-manager/assets/editor-v0125.css
+          grep -Fq 'background:#fff;color:#1d2327;font-weight:400;line-height:1.45;' clean/hangar18-manager/assets/editor-v0125.css
+          grep -Fq '0.1.30 Inspector viewport fix' clean/hangar18-manager/assets/editor-v0123-ux.css
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-ci-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/assets/editor-v018-core.js clean/hangar18-manager/src/Frontend/Renderer.php clean/hangar18-manager/assets/editor-v0125.css
+          if git diff --cached --quiet; then
+            echo 'Implementation already present.'
+            exit 0
+          fi
+          git commit -m 'Fix floating buttons as true parent overlays for 0.1.30'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
