@@ -1,0 +1,58 @@
+name: Apply Visual Designer Manager 0.1.30 update checkpoint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0130_update_checkpoint.py'
+      - 'clean/hangar18-manager/release-history.json'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply patch
+        run: python .github/scripts/apply_v0130_update_checkpoint.py
+      - name: QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          grep -q 'createDesignerCheckpoint' clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q 'programBackups' clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q 'releaseHistory' clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q 'Update-checkpoints' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'Versionshistorik' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q '0.1.30' clean/hangar18-manager/release-history.json
+          grep -q 'font-weight:400' clean/hangar18-manager/assets/editor-v0125.css
+          grep -q 'height:calc(100dvh - 102px)' clean/hangar18-manager/assets/editor-v0123-ux.css
+          grep -q "node.props.placementMode === 'overlay'" clean/hangar18-manager/assets/editor-v018-core.js
+      - name: Commit product changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-ci'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/src/Update/GitHubUpdater.php clean/hangar18-manager/src/Admin/AdminController.php
+          if git diff --cached --quiet; then
+            echo 'No product changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Add update checkpoints and release history UI for 0.1.30'
+          git restore .github/scripts/apply_v0130_update_checkpoint.py || true
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
