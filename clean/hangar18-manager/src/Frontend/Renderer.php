@@ -49,7 +49,7 @@ final class Renderer
         }
         $rowPx = LayoutModel::ROW_PX;
         echo '<style id="h18-clean-frontend-css">';
-        echo '.h18-clean-page,.h18-clean-front-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;width:100%;box-sizing:border-box;min-width:0}';
+        echo '.h18-clean-page,.h18-clean-front-surface{display:grid;position:relative;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;width:100%;box-sizing:border-box;min-width:0}';
         echo '.h18-clean-front-node{box-sizing:border-box;min-width:0;position:relative}';
         echo '.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;min-width:0;box-sizing:border-box;height:auto!important}';
         echo '.h18-clean-front-text{overflow-wrap:anywhere}';
@@ -212,7 +212,7 @@ final class Renderer
             $paddingX = max(0, min(120, (int) ($props['paddingX'] ?? 20)));
             $paddingY = max(0, min(120, (int) ($props['paddingY'] ?? 10)));
             $placementMode = (string) ($props['placementMode'] ?? 'normal');
-            $floating = $placementMode === 'overlay' && (string) ($node['parentId'] ?? '') !== '';
+            $floating = $placementMode === 'overlay';
             $layoutStyle = $style;
             if ($floating) {
                 $leftPct = ($x / LayoutModel::UNITS) * 100;
