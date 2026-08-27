@@ -1,0 +1,120 @@
+name: Prepare Visual Designer Manager 0.1.30 release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prepare-v0130-release.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply final 0.1.30 release hardening
+        shell: python
+        run: |
+          from pathlib import Path
+
+          plugin = Path('clean/hangar18-manager/hangar18-manager.php')
+          text = plugin.read_text(encoding='utf-8')
+          if 'Version: 0.1.29' not in text or "H18_CLEAN_VERSION', '0.1.29'" not in text:
+              raise SystemExit('Expected 0.1.29 plugin version not found')
+          text = text.replace('Version: 0.1.29', 'Version: 0.1.30', 1)
+          text = text.replace("H18_CLEAN_VERSION', '0.1.29'", "H18_CLEAN_VERSION', '0.1.30'", 1)
+          plugin.write_text(text, encoding='utf-8')
+
+          # Root-floating must remain floating in Laptop/Mobile editor geometry too.
+          responsive_js = Path('clean/hangar18-manager/assets/editor-v0121.js')
+          text = responsive_js.read_text(encoding='utf-8')
+          old = "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.parentId && node.props && node.props.placementMode === 'overlay'); }"
+          new = "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }"
+          if old not in text:
+              raise SystemExit('Responsive editor floating predicate marker missing')
+          responsive_js.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          responsive_php = Path('clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php')
+          text = responsive_php.read_text(encoding='utf-8')
+          old = "$floating = (string) ($node['type'] ?? '') === 'button' && (string) ($node['parentId'] ?? '') !== '' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';"
+          new = "$floating = (string) ($node['type'] ?? '') === 'button' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';"
+          if old not in text:
+              raise SystemExit('Responsive frontend floating predicate marker missing')
+          responsive_php.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          renderer = Path('clean/hangar18-manager/src/Frontend/Renderer.php')
+          text = renderer.read_text(encoding='utf-8')
+          old = "echo '.h18-clean-page,.h18-clean-front-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;width:100%;box-sizing:border-box;min-width:0}';"
+          new = "echo '.h18-clean-page,.h18-clean-front-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;width:100%;box-sizing:border-box;min-width:0;position:relative}';"
+          if old not in text:
+              raise SystemExit('Frontend root surface CSS marker missing')
+          renderer.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          admin = Path('clean/hangar18-manager/src/Admin/AdminController.php')
+          text = admin.read_text(encoding='utf-8')
+          text = text.replace("self::open('Backup', 'Eksport af Clean-layout og versionshistorik');", "self::open('Backup', 'Eksport af Visual Designer-layout og versionshistorik');")
+          text = text.replace('sider, der har Clean-state', 'sider, der har Visual Designer-data')
+          text = text.replace('<li>Aktuel Clean-version</li>', '<li>Aktuel Designer-version</li>')
+          admin.write_text(text, encoding='utf-8')
+
+          updater = Path('clean/hangar18-manager/src/Update/GitHubUpdater.php')
+          text = updater.read_text(encoding='utf-8')
+          text = text.replace(
+              'Før WordPress udskifter pluginfilerne, gemmes en ZIP-backup af den installerede Visual Designer Manager-version. Opdateringen afbrydes, hvis backupen ikke kan oprettes.',
+              'Før WordPress udskifter pluginfilerne, gemmes både en ZIP-backup af den installerede version og et Designer-data-checkpoint. Opdateringen afbrydes, hvis checkpointet ikke kan oprettes.'
+          )
+          updater.write_text(text, encoding='utf-8')
+
+          Path('clean-release-notes.html').write_text('''<h4>0.1.30</h4><ul><li><strong>Inspector-scroll:</strong> Inspector er nu bundet til den synlige viewport med egen scrollbar og korrekt box-sizing, så nederste felter kan nås uden at rulle hele browservinduet.</li><li><strong>Rich text / Fed:</strong> rich-text-editoren arver ikke længere Inspectors label-vægt. Normal tekst forbliver normal, og Fed/Kursiv-formatering overlever re-render mere forudsigeligt.</li><li><strong>Ægte Flydende Knap:</strong> Floating er et parent-relativt overlay og kan også bruges på Side-root. Desktop, Laptop, Mobil, Forhåndsvisning og frontend bruger samme floating-princip; den er aldrig position:fixed til browseren.</li><li><strong>Update-checkpoint:</strong> før hver plugin-opdatering gemmes både program-ZIP og Designer-data med sidelayouts, sidehistorik, Header/Footer-valg, templates, template-settings og template-historik. Opdateringen stoppes hvis checkpointet fejler.</li><li><strong>Backupoversigt:</strong> Opdateringer viser de seneste lokale update-checkpoints; der beholdes op til 12.</li><li><strong>Versionshistorik:</strong> Opdateringer viser punkterne for 0.1.23–0.1.30 fra den bundled release-historik.</li><li><strong>Naming:</strong> resterende synlige Clean-tekster på Backup-siden er rettet til Visual Designer.</li></ul>''', encoding='utf-8')
+
+          release = Path('.github/workflows/clean-release.yml')
+          text = release.read_text(encoding='utf-8')
+          marker = "          # 0.1.29 parent-relative floating Button release gates.\n"
+          if marker not in text:
+              raise SystemExit('Release workflow gate marker missing')
+          gates = """          # 0.1.30 update checkpoint / Inspector / root-floating gates.\n          grep -q \"createDesignerCheckpoint\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"programBackups\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"releaseHistory\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"Update-checkpoints\" clean/hangar18-manager/src/Admin/AdminController.php\n          grep -q \"Versionshistorik\" clean/hangar18-manager/src/Admin/AdminController.php\n          grep -q \"font-weight:400\" clean/hangar18-manager/assets/editor-v0125.css\n          grep -q \"height:calc(100dvh - 102px)\" clean/hangar18-manager/assets/editor-v0123-ux.css\n          grep -q \"node.props.placementMode === 'overlay'\" clean/hangar18-manager/assets/editor-v0121.js\n          grep -q \"\\$floating = (string) (\\$node\\['type'\\] ?? '') === 'button' && (string) (\\$props\\['placementMode'\\] ?? 'normal') === 'overlay'\" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php\n          grep -q \"position:relative\" clean/hangar18-manager/src/Frontend/Renderer.php\n          test -s clean/hangar18-manager/release-history.json\n          grep -q '\"version\": \"0.1.30\"' clean/hangar18-manager/release-history.json\n"""
+          if '# 0.1.30 update checkpoint / Inspector / root-floating gates.' not in text:
+              text = text.replace(marker, gates + marker, 1)
+          package_marker = "          test \"$(unzip -Z1 \"$VERSIONED\" | grep -c '^hangar18-manager/assets/editor-v0125.css$')\" = '1'\n"
+          package_gate = package_marker + "          test \"$(unzip -Z1 \"$VERSIONED\" | grep -c '^hangar18-manager/release-history.json$')\" = '1'\n"
+          if "release-history.json$')\" = '1'" not in text:
+              if package_marker not in text:
+                  raise SystemExit('Release package marker missing')
+              text = text.replace(package_marker, package_gate, 1)
+          release.write_text(text, encoding='utf-8')
+
+          Path('clean-release-now.txt').write_text('Release Visual Designer Manager v0.1.30\n', encoding='utf-8')
+      - name: Final source QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          grep -q 'Version: 0.1.30' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.30'" clean/hangar18-manager/hangar18-manager.php
+          grep -q 'createDesignerCheckpoint' clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q 'font-weight:400' clean/hangar18-manager/assets/editor-v0125.css
+          grep -q 'height:calc(100dvh - 102px)' clean/hangar18-manager/assets/editor-v0123-ux.css
+          grep -q "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props" clean/hangar18-manager/assets/editor-v0121.js
+          test -s clean/hangar18-manager/release-history.json
+      - name: Commit and trigger release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-release-prep'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php clean/hangar18-manager/assets/editor-v0121.js clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php clean/hangar18-manager/src/Frontend/Renderer.php clean/hangar18-manager/src/Admin/AdminController.php clean/hangar18-manager/src/Update/GitHubUpdater.php clean-release-notes.html clean-release-now.txt .github/workflows/clean-release.yml
+          git commit -m 'Prepare Visual Designer Manager v0.1.30 release'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
