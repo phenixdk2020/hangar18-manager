@@ -1,3 +1,1 @@
-v0.1.30
-reason=Release Inspector scrolling, rich-text Bold hardening, true floating Button overlays, update checkpoints and version history.
-nonce=30-release-20260827-r2
+Release Visual Designer Manager v0.1.30
