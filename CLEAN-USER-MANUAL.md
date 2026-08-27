@@ -1,7 +1,7 @@
 # Visual Designer Manager – Brugermanual
 
-Senest opdateret: 25. august 2026  
-Gælder fra: Visual Designer Manager 0.1.18  
+Senest opdateret: 27. august 2026  
+Gælder for: Visual Designer Manager 0.1.31 og nyere; planlagte funktioner er mærket **Planlagt**  
 Målgruppe: Redaktører og administratorer, der bygger og vedligeholder sider i WordPress
 
 > Denne manual beskriver **hvordan Visual Designer Manager bruges i praksis**. Den tekniske arkitektur er beskrevet separat i `CLEAN-DESIGN-MANUAL.md`.
@@ -23,7 +23,256 @@ Visual Designer gemmer siden i sin egen model og ændrer først den offentlige V
 
 ---
 
-## 2. Hvor findes funktionerne?
+## 2. Sådan er en webside bygget op
+
+Visual Designer bygger en webside som LEGO. Nogle elementer skaber **struktur**, mens andre er **indhold**. Header og Footer er globale, mens den enkelte sides indhold bygges af Sektioner, Kasser og indholdselementer.
+
+![Grafisk oversigt over Header, Hero, sideindhold og Footer](docs/user-manual-assets/page-anatomy.svg)
+
+*Figur 1 – En typisk Visual Designer-side. Header og Footer er globale. Hero/Topbanner og resten af indholdet tilhører selve siden.*
+
+### 2.1 Det overordnede princip
+
+```text
+WORDPRESS
+└── TEMA / SHELL
+    ├── GLOBAL HEADER
+    │   ├── Logo
+    │   ├── Menu
+    │   ├── Knap
+    │   └── Icon/Tekst
+    │
+    ├── SIDE
+    │   ├── Hero / Topbanner
+    │   ├── Sektion
+    │   │   ├── Kasse
+    │   │   │   ├── Billede
+    │   │   │   └── Tekst
+    │   │   └── Kasse
+    │   │       ├── Tekst
+    │   │       └── Knap
+    │   ├── Divider
+    │   ├── Sektion → Tabel
+    │   ├── Sektion → Galleri
+    │   └── Sektion → Formular / FAQ
+    │
+    └── GLOBAL FOOTER
+        ├── Logo
+        ├── Menu / Links
+        ├── Kontakt
+        ├── Icons
+        └── Copyright
+```
+
+### 2.2 Tema / Shell
+
+Temaet er den tekniske WordPress-ramme omkring Visual Designer. Det skal primært håndtere WordPress-lifecycle, hooks, `wp_head()`, `wp_footer()`, nødvendige wrappers, integration og fallback. Det visuelle design skal ligge i Visual Designer frem for i parallelle theme-regler.
+
+**Status:** Theme Shell-konverteringen er under udvikling. Hangar18 Base Theme bruges fortsat som fallback/baseline, indtil visuel parity er godkendt.
+
+### 2.3 Header
+
+Header er et **globalt design** over den enkelte side. Den kan indeholde Logo, Menu, Tekst, Knap og Icon og har sin egen globale model og versionshistorik.
+
+```text
+┌──────────────────────────────────────────────────────┐
+│ [LOGO]   Hjem  Køretøjer  Events  Galleri  [Kontakt]│
+└──────────────────────────────────────────────────────┘
+```
+
+### 2.4 Menu
+
+Menu skal være et selvstændigt visuelt element, som kan bruge en WordPress-menu som datakilde, mens Visual Designer styrer fx skrifttype, størrelse, farve, afstand, hover, aktiv side og mobil/hamburger-visning.
+
+**Status: Planlagt som native Visual Designer-element.** WordPress-menuadministration findes allerede separat i Manageren.
+
+### 2.5 Hero / Topbanner
+
+Hero/Topbanner er normalt den første store **Sektion inde i selve siden** og er derfor ikke det samme som Headeren. Hero er typisk stor og markant; Topbanner er samme idé i en lavere variant.
+
+```text
+GLOBAL HEADER
+────────────────────────
+HERO / TOPBANNER
+  Baggrundsbillede
+  Overskrift
+  Undertekst
+  [ Knap ]
+────────────────────────
+RESTEN AF SIDEN
+────────────────────────
+GLOBAL FOOTER
+```
+
+Hero/Topbanner bør være en Sektion-preset/specialisering med fx baggrundsbillede, focal point, overlay, højde og responsive overrides – ikke en separat layoutmotor.
+
+**Status: Planlagt.**
+
+### 2.6 Sektion, Kasse og LEGO-hierarkiet
+
+![Grafisk illustration af Side, Sektion, Kasse og indholdselementer](docs/user-manual-assets/lego-hierarchy.svg)
+
+*Figur 2 – Sektion er sidens hovedblok. Kasse er den fleksible lokale container. Kasser kan indeholde Kasser, men Sektioner nestes ikke som almindelige Kasser.*
+
+```text
+SIDE
+└── SEKTION
+    ├── KASSE
+    │   ├── Billede
+    │   └── Tekst
+    └── KASSE
+        ├── Tekst
+        └── Knap
+```
+
+**Huskeregel:** Sektion = stort område. Kasse = lokal LEGO-klods.
+
+### 2.7 Tekst
+
+Tekst bruges til overskrift, brødtekst, lister og links. Et Tekst-element kan have H2-H6 og brødtekst i samme fysiske boks og kan styles med typografi, farver, alignment, baggrund, padding, ramme, radius og Afstand X/Y.
+
+### 2.8 Billede
+
+Billede består af **billedboksen** og **selve billedet**. Billedet kan fx vises som Contain, Cover, Original, Stretch eller Manuel inde i boksen.
+
+Billede skal også kunne fungere som link med samme fælles linkmodel som Knap og Icon: Ingen, Intern side, Ekstern URL, Anker, E-mail eller Telefon samt *Åbn i ny fane* hvor relevant.
+
+**Status for billede som link: Planlagt udvidelse.**
+
+### 2.9 Knap
+
+Knap er et selvstændigt element og skal ikke behandles som Tekst. En normal Knap deltager i LEGO-layoutet. En **Flydende Knap** er et parent-relativt overlay, som kan ligge over andet indhold uden at reservere en normal grid-celle.
+
+### 2.10 Icon
+
+Icon bruges fx til telefon, mail, lokation, sociale medier, pil, download eller information og skal kunne styles og eventuelt fungere som link.
+
+**Status: Planlagt.**
+
+### 2.11 Divider
+
+Divider er en visuel skillelinje med fx bredde, tykkelse, farve, alignment, afstand og solid/dashed/dotted streg.
+
+**Status: Planlagt.**
+
+### 2.12 Spacer
+
+Spacer er en bevidst tom layoutblok. Den bruges kun, når fysisk tom plads skal være et selvstændigt element; normal afstand styres ellers med Afstand X/Y.
+
+**Status: Planlagt.**
+
+### 2.13 Tabel
+
+Tabel bruges til strukturerede data med rækker, kolonner, overskriftsrække, kolonnebredder, tekst, links, farver, padding og alignment.
+
+![Grafisk eksempel på cellemarkering og Excel-lignende tabelrammer](docs/user-manual-assets/table-borders.svg)
+
+*Figur 3 – Planlagt Tabel-element. En eller flere celler kan markeres, hvorefter rammer vælges på samme måde som i et regneark.*
+
+Rammer skal kunne vælges som **Ydre, Indre, Vandret, Lodret, Top, Bund, Venstre, Højre, Alle eller Ingen**. For valgte rammer skal tykkelse, farve og senere stregtype kunne styres. Flere celler skal kunne markeres samtidig. På mobil skal relevante strategier som vandret scroll, skjulte kolonner eller stablet label/værdi-visning kunne vælges.
+
+**Status: Planlagt.**
+
+### 2.14 Galleri
+
+Galleri kan senere tilbyde Grid, Masonry, Slider/Carousel og Lightbox og kan efter fælles dataarkitektur kobles til Managerens galleri-data.
+
+**Status: Native Visual Designer-element er planlagt.**
+
+### 2.15 Video
+
+Video kan bruges til fx YouTube, Vimeo eller lokal video med URL, controls, autoplay/mute, poster og aspect ratio.
+
+**Status: Planlagt.**
+
+### 2.16 Accordion / FAQ
+
+Accordion/FAQ bruges til indhold, der åbnes og lukkes efter behov, fx ofte stillede spørgsmål.
+
+**Status: Planlagt.**
+
+### 2.17 Tabs
+
+Tabs opdeler beslægtet indhold i faner, fx *Tekniske data*, *Historie* og *Billeder*.
+
+**Status: Planlagt.**
+
+### 2.18 Formular
+
+Formular bruges til fx Kontakt, Bliv medlem og eventtilmelding og kan bestå af tekst-, e-mail-, telefon-, textarea-, valg- og submit-felter.
+
+**Status: Planlagt.**
+
+### 2.19 Dynamiske elementer
+
+Dynamiske elementer kombinerer Manager-data med Visual Designer-layout. Planlagte typer omfatter Køretøj, Event og dynamisk Billedgalleri.
+
+**Status: Planlagt efter fælles dataarkitektur.**
+
+### 2.20 Footer
+
+Footer er ligesom Header et **globalt design** uden for den enkelte sides model. Den kan indeholde Logo, Tekst, Menu/Links, Kasser, Icons, kontaktinformation og copyright og har sin egen versionshistorik.
+
+```text
+┌────────────────────────────────────────────────────────┐
+│ [LOGO]     LINKS             KONTAKT                   │
+│             Hjem              Telefon                  │
+│ Foreningen  Køretøjer         E-mail                   │
+│             Events            Sociale ikoner           │
+│                                                        │
+│ © Foreningen                                           │
+└────────────────────────────────────────────────────────┘
+```
+
+### 2.21 Et komplet sideeksempel
+
+```text
+GLOBAL HEADER
+├── Logo
+├── Menu
+└── Knap "Bliv medlem"
+
+SIDE: Køretøjer og materiel
+├── HERO / TOPBANNER
+│   ├── Baggrundsbillede
+│   ├── Tekst "Køretøjer og materiel"
+│   └── Knap "Se samlingen"
+├── SEKTION
+│   ├── Kasse → Billede som link
+│   └── Kasse → Tekst + Knap
+├── Divider
+├── SEKTION → Tekst + Tabel
+├── Spacer
+├── SEKTION → Tekst + Galleri
+├── SEKTION → Accordion / FAQ
+└── SEKTION → Formular
+
+GLOBAL FOOTER
+├── Logo
+├── Menu / Links
+├── Kontakt
+├── Icons
+└── Copyright
+```
+
+### 2.22 Globalt kontra sideindhold
+
+| Del | Global | Del af den enkelte side |
+|---|---:|---:|
+| Tema/Shell | Ja, teknisk ramme | Nej |
+| Header | Ja | Nej |
+| Menu i Header/Footer | Global placering | Nej |
+| Hero/Topbanner | Nej | Ja |
+| Sektion | Nej | Ja |
+| Kasse | Nej | Ja |
+| Tekst/Billede/Knap | Normalt nej | Ja |
+| Footer | Ja | Nej |
+
+**Den vigtigste regel:** Header og Footer er globale. Selve siden består af Sektioner. Sektioner indeholder Kasser og indholdselementer. Kasser kan igen indeholde andre Kasser og elementer. Hero/Topbanner er en særlig Sektion øverst på selve siden.
+
+---
+
+## 3. Hvor findes funktionerne?
 
 Når pluginet **Visual Designer Manager** er aktivt, findes hovedmenuen:
 
@@ -51,7 +300,7 @@ Nogle af de specialiserede adminområder udbygges fortsat i Visual Designer-seri
 
 ---
 
-## 3. Åbn en side i Designer
+## 4. Åbn en side i Designer
 
 1. Gå til **Visual Designer Manager → Designer**.
 2. Find den WordPress-side, du vil redigere.
@@ -84,7 +333,7 @@ Her ændres egenskaberne for det valgte element.
 
 ---
 
-## 4. Forstå Sektion og Kasse
+## 5. Forstå Sektion og Kasse
 
 ### Sektion
 
@@ -132,7 +381,7 @@ Kasser er især nyttige til:
 
 ---
 
-## 5. Tilføj et element
+## 6. Tilføj et element
 
 Et element kan tilføjes på to måder.
 
@@ -148,7 +397,7 @@ Det anbefales at bruge drag-and-drop, når du vil placere elementet direkte i en
 
 ---
 
-## 6. Flyt elementer
+## 7. Flyt elementer
 
 Eksisterende elementer flyttes ved at trække i elementets **✥ flyttehåndtag**.
 
@@ -184,7 +433,7 @@ Elementet til højre kan altså spænde over begge rækker.
 
 ---
 
-## 7. Farverne i Designer
+## 8. Farverne i Designer
 
 Designer bruger farver til at vise status.
 
@@ -198,7 +447,7 @@ En Kasse eller Sektion tæller ikke som overlap blot fordi dens egne børn ligge
 
 ---
 
-## 8. Labels over elementerne
+## 9. Labels over elementerne
 
 Elementer kan have labels som:
 
@@ -220,7 +469,7 @@ Det betyder, at den offentlige side ikke får ekstra højde på grund af editor-
 
 ---
 
-## 9. Ændr størrelse på et element
+## 10. Ændr størrelse på et element
 
 Når et element er valgt, vises grønne resize-punkter.
 
@@ -239,7 +488,7 @@ Inspector viser de tilsvarende værdier for X, Y, bredde og højde.
 
 ---
 
-## 10. Kasse og Sektion vokser med indholdet
+## 11. Kasse og Sektion vokser med indholdet
 
 Kasse og Sektion har **auto-grow**.
 
@@ -260,7 +509,7 @@ Kassen skal automatisk være høj nok til alle tre elementer.
 
 ---
 
-## 11. Tekst-element
+## 12. Tekst-element
 
 Et Tekst-element kan indeholde både overskrift og brødtekst.
 
@@ -289,7 +538,7 @@ Disse stylingfelter er godkendt som næste Visual Designer-udvidelse.
 
 ---
 
-## 12. Billede-element
+## 13. Billede-element
 
 I Visual Designer 0.1.18 er **billedboksen** og **selve billedet** adskilt.
 
@@ -338,7 +587,7 @@ Ved beskæring kan fokus desuden styres med Fokus X/Y.
 
 ---
 
-## 13. Border / ramme
+## 14. Border / ramme
 
 Alle relevante elementer kan have en ramme.
 
@@ -353,7 +602,7 @@ Rammen følger selve elementets fysiske boks og vises også på frontend.
 
 ---
 
-## 14. Afstand X og Afstand Y
+## 15. Afstand X og Afstand Y
 
 Elementer kan have individuel afstand til næste element.
 
@@ -371,7 +620,7 @@ Afstanden er en del af Visual Designer-layoutet og indgår derfor også i auto-g
 
 ---
 
-## 15. Overlap
+## 16. Overlap
 
 Hvis to indholdselementer fysisk ligger oven i hinanden, viser Designer en rød **OVERLAP**-advarsel.
 
@@ -381,7 +630,7 @@ Hvis overlap senere skal bruges bevidst til fx lag, badges eller grafiske overla
 
 ---
 
-## 16. Fortryd og Gentag
+## 17. Fortryd og Gentag
 
 Designer har:
 
@@ -394,7 +643,7 @@ Fortryd/Gentag erstatter ikke de gemte versionshistorikker. Når siden gemmes, b
 
 ---
 
-## 17. Forhåndsvis uden at gemme
+## 18. Forhåndsvis uden at gemme
 
 Klik **Forhåndsvis** for at se den aktuelle usavede Designer-model i den rigtige frontend med tema/header/footer.
 
@@ -409,7 +658,7 @@ Brug den, før du gemmer større ændringer.
 
 ---
 
-## 18. Gem som ny version
+## 19. Gem som ny version
 
 Når du er tilfreds med layoutet, klik:
 
@@ -427,7 +676,7 @@ Den offentlige Visual Designer-side bruger den senest gemte version.
 
 ---
 
-## 19. Gem & vis
+## 20. Gem & vis
 
 **Gem & vis** gør to ting:
 
@@ -438,7 +687,7 @@ Brug denne funktion, når du både vil gemme og straks kontrollere frontend-resu
 
 ---
 
-## 20. Gemte versioner
+## 21. Gemte versioner
 
 Nederst i Designer findes området **Gemte versioner**.
 
@@ -473,7 +722,7 @@ Dette er nyttigt, hvis du vil eksperimentere med et gammelt layout uden risiko f
 
 ---
 
-## 21. Opdater Visual Designer Manager
+## 22. Opdater Visual Designer Manager
 
 Gå til:
 
@@ -491,7 +740,7 @@ Fra 0.1.16 er updateren desuden ændret, så pluginets aktive WordPress-status s
 
 ---
 
-## 22. Backup
+## 23. Backup
 
 Under:
 
@@ -508,7 +757,7 @@ Backup bør bruges før større ændringer af:
 
 ---
 
-## 23. Diagnose og Log
+## 24. Diagnose og Log
 
 Hvis noget opfører sig forkert, kan Designerens diagnosefunktion bruges.
 
@@ -541,7 +790,7 @@ Ved fejl er det nyttigt at notere:
 
 ---
 
-## 24. Globalt design – planlagt næste lag
+## 25. Globalt design – planlagt næste lag
 
 Visual Designer skal have et globalt designområde, så de samme grundværdier ikke skal sættes manuelt på hver side.
 
@@ -560,7 +809,7 @@ Et element kan senere enten **arve global stil** eller **overskrive den lokalt**
 
 ---
 
-## 25. Header og Footer – planlagt Designer
+## 26. Header og Footer – planlagt Designer
 
 Header og Footer skal ikke være almindelige elementer på hver side.
 
@@ -590,7 +839,7 @@ Header/Footer får deres egen versionshistorik og skal bruge samme grundlæggend
 
 ---
 
-## 26. Temaets rolle
+## 27. Temaets rolle
 
 På sigt skal **Hangar18 Base Theme** primært fungere som WordPress-shell/runtime.
 
@@ -605,7 +854,7 @@ Header og Footer ligger uden for en almindelig sides model og kan derfor ikke sl
 
 ---
 
-## 27. Kommende elementtyper
+## 28. Kommende elementtyper
 
 Når det nuværende layout-, styling- og tema-fundament er låst, kan Designer udvides med flere LEGO-klodser.
 
@@ -635,7 +884,7 @@ Målet er, at alle nye elementer bruger de samme grundprincipper for:
 
 ---
 
-## 28. Anbefalet arbejdsgang
+## 29. Anbefalet arbejdsgang
 
 Ved almindelig sideredigering anbefales:
 
@@ -654,7 +903,7 @@ Ved større ændringer anbefales desuden at tage en Backup først.
 
 ---
 
-## 29. Hurtigt eksempel – byg en sektion med billede og tekst
+## 30. Hurtigt eksempel – byg en sektion med billede og tekst
 
 ### Målet
 
@@ -681,7 +930,7 @@ SEKTION
 
 ---
 
-## 30. Hurtigt eksempel – to rækker til venstre og ét højt element til højre
+## 31. Hurtigt eksempel – to rækker til venstre og ét højt element til højre
 
 Start med:
 
@@ -707,7 +956,7 @@ Her deles kun venstre celle. Højre Tekst-element fortsætter over begge rækker
 
 ---
 
-## 31. Hvis noget ser forkert ud
+## 32. Hvis noget ser forkert ud
 
 Kontrollér først:
 
@@ -723,15 +972,16 @@ Hvis problemet fortsætter, brug **Kopiér diagnose-link** og tag et screenshot 
 
 ---
 
-## 32. Versionshistorik for denne manual
+## 33. Versionshistorik for denne manual
 
 | Manualversion | Ændring |
 |---|---|
 | 1.0 | Første Visual Designer-brugermanual baseret på funktionerne gennem 0.1.18 og den godkendte målarkitektur. |
+| 1.1 | Nyt kapitel om websides anatomi, Header/Footer kontra Hero, elementoversigt samt grafiske illustrationer og tydelig markering af planlagt funktionalitet. |
 
 ---
 
-## 33. Relaterede dokumenter
+## 34. Relaterede dokumenter
 
 - `CLEAN-DESIGN-MANUAL.md` – teknisk design- og arkitekturmanual for Clean.
 - `DESIGN-MANUAL.md` – historisk/visuel manual fra den tidligere 0.4.x Manager-serie.

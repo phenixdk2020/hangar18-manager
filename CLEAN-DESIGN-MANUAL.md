@@ -1,6 +1,6 @@
 # Visual Designer Manager – Design- og arkitekturmanual
 
-Senest opdateret: 25. august 2026  
+Senest opdateret: 27. august 2026  
 Gælder for: Visual Designer Manager 0.1.x og nyere  
 Status: Autoritativ målarkitektur for Visual Designer
 
@@ -546,10 +546,41 @@ Før en ny Visual Designer-version godkendes, skal følgende kontrolleres:
 Når et nyt Visual Designer-designvalg godkendes:
 
 1. Opdatér den canonical Visual Designer-model eller relevante globale indstilling.
-2. Opdatér denne manual.
-3. Tilføj ændringen til release-notes/changelog.
-4. Kør QA på editor, Save/Reload, Preview og frontend.
-5. Byg en verificeret GitHub-releasepakke.
+2. Opdatér denne design- og arkitekturmanual.
+3. Opdatér `CLEAN-USER-MANUAL.md`, når ændringen er synlig eller relevant for en redaktør/administrator.
+4. Tilføj ændringen til release-notes/changelog.
+5. Kør QA på editor, Save/Reload, Preview og frontend.
+6. Byg først en verificeret GitHub-releasepakke, når den aftalte release skal publiceres.
+
+### 24.1 Krav til brugermanualens grafiske dokumentation
+
+Brugermanualen må ikke kun beskrive Visual Designer med tekst. Når et begreb, en arbejdsgang eller et layout forstås bedre visuelt, skal manualen suppleres med **grafiske eksempler og illustrationer**.
+
+Som minimum skal følgende områder dokumenteres visuelt:
+
+- en komplet websides anatomi med **Tema/Shell → Header → Side → Footer**;
+- forskellen mellem **Header/Footer** og en sides **Hero/Topbanner**;
+- LEGO-hierarkiet **Side → Sektion → Kasse → indholdselement**;
+- typiske kolonne-, celle-split- og nested-Kasse-layouts;
+- drag-and-drop med Over/Under/Venstre/Højre/Ind i;
+- Desktop/Laptop/Mobil og responsive overrides;
+- billedboks kontra selve billedet;
+- normal kontra flydende Knap;
+- Tabel, herunder cellemarkering og Excel-lignende rammevalg;
+- Menu, Galleri, Formular og andre større elementtyper, når de frigives.
+
+Grafiske eksempler skal følge disse regler:
+
+- Illustrationer lagres som vedligeholdelige dokumentationsassets, fortrinsvis SVG til diagrammer og PNG/JPG til relevante screenshots.
+- Hver illustration skal have en kort forklaring/caption og meningsfuld alt-tekst.
+- Diagrammer skal vise det samme hierarki og de samme begreber som den canonical model; de må ikke introducere en alternativ layoutlogik.
+- Screenshots og UI-illustrationer skal opdateres, hvis Designerens brugerflade ændres væsentligt.
+- En illustration af en planlagt funktion skal tydeligt mærkes **Planlagt** og må ikke præsenteres som allerede frigivet funktionalitet.
+- Før/efter-illustrationer anvendes, når de gør drag/drop, responsive ændringer, formattering eller migration lettere at forstå.
+- Grafikken skal være læsbar både på almindelig desktop og ved nedskalering i dokumentation.
+- Visuelle eksempler skal, hvor relevant, vise realistiske kombinationer af flere elementer frem for kun isolerede kontrolfelter.
+
+Dokumentationen skal derfor forklare både **hvad et element er**, **hvor det kan ligge**, **hvordan det kombineres med andre elementer**, og **hvordan resultatet ser ud i en rigtig sideopbygning**.
 
 `CLEAN-DESIGN-MANUAL.md` er fremover den autoritative arkitekturbeskrivelse for den nye Visual Designer. Den ældre `DESIGN-MANUAL.md` bevares som reference for eksisterende designstandarder og legacy 0.4.x-adfærd, indtil de relevante regler er migreret til Clean.
 
