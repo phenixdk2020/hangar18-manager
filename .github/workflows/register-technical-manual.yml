@@ -1,0 +1,46 @@
+name: Register Visual Designer technical manual
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/register-technical-manual.yml'
+      - '.github/scripts/register_technical_manual.py'
+
+permissions:
+  contents: write
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Register technical manual references
+        run: python .github/scripts/register_technical_manual.py
+
+      - name: Verify references
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'CLEAN-TECHNICAL-MANUAL.md' docs/CLEAN-HANDOVER.md
+          grep -q 'CLEAN-TECHNICAL-MANUAL.md' CLEAN-DESIGN-MANUAL.md
+          grep -q 'CLEAN-TECHNICAL-MANUAL.md' CLEAN-USER-MANUAL.md
+          grep -q 'Selection skal bevares ved formattering' CLEAN-TECHNICAL-MANUAL.md
+          grep -q 'Knap er en selvstændig elementtype' CLEAN-TECHNICAL-MANUAL.md
+
+      - name: Commit documentation hierarchy update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-docs-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add docs/CLEAN-HANDOVER.md CLEAN-DESIGN-MANUAL.md CLEAN-USER-MANUAL.md
+          if git diff --cached --quiet; then
+            echo 'References already current.'
+            exit 0
+          fi
+          git commit -m 'Register technical manual as authoritative project reference'
+          git push origin HEAD:main
