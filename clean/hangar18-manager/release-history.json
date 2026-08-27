@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.31",
+    "date": "2026-08-27",
+    "items": [
+      "Flydende Knap bruger nu et separat direkte flytteflow i sin aktuelle Side/Sektion/Kasse og går ikke gennem det normale celle-split drag/drop-flow.",
+      "Flydende Knap reserverer fortsat ingen grid-række, påvirker ikke parent auto-grow og kan flyttes parent-relativt via drag eller canonical X/Y.",
+      "Rich-text Fed og Kursiv bevarer den markerede tekst efter formattering ved at gendanne selection ud fra logiske tekst-offsets; samme mekanisme dækker hele toolbaren.",
+      "Theme Shell-fundament er tilføjet til Visual Designer-runtime med eksplicit cutover-kontrol, som er slået fra som standard.",
+      "Eksisterende Hangar18 Base Theme 1.2.0 forbliver visuel fallback/baseline, mens native globale Header/Footer-modeller forberedes til senere parity-godkendt cutover."
+    ]
+  },
+  {
     "version": "0.1.30",
     "date": "2026-08-27",
     "items": [
