@@ -1,0 +1,25 @@
+/* Visual Designer Manager 0.1.31 */
+
+/* Floating Button is editor overlay chrome, never a grid participant. */
+.h18-clean-node--button.is-floating[data-h18-floating="1"]{
+    position:absolute!important;
+    margin:0!important;
+    align-self:auto!important;
+}
+.h18-clean-node--button.is-floating[data-h18-floating="1"]>.h18-clean-node-header .h18-clean-move{
+    cursor:move;
+}
+.h18-clean-node--button.is-floating[data-h18-floating="1"]>.h18-clean-node-header strong::after{
+    content:' · FLYDENDE';
+    font-weight:700;
+}
+.h18-clean-node--button.is-floating.h18-v0131-floating-drag{
+    z-index:1000!important;
+    box-shadow:0 0 0 3px rgba(34,113,177,.35),0 8px 24px rgba(0,0,0,.18);
+    user-select:none;
+}
+
+/* Toolbar formatting must not visually steal the text selection/focus state. */
+.h18-vd-rich-toolbar .h18-vd-rich-button:focus{
+    box-shadow:none;
+}
