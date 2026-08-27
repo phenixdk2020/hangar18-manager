@@ -34,25 +34,36 @@ jobs:
           text = responsive_js.read_text(encoding='utf-8')
           old = "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.parentId && node.props && node.props.placementMode === 'overlay'); }"
           new = "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }"
-          if old not in text:
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
               raise SystemExit('Responsive editor floating predicate marker missing')
-          responsive_js.write_text(text.replace(old, new, 1), encoding='utf-8')
+          responsive_js.write_text(text, encoding='utf-8')
 
           responsive_php = Path('clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php')
           text = responsive_php.read_text(encoding='utf-8')
           old = "$floating = (string) ($node['type'] ?? '') === 'button' && (string) ($node['parentId'] ?? '') !== '' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';"
           new = "$floating = (string) ($node['type'] ?? '') === 'button' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';"
-          if old not in text:
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
               raise SystemExit('Responsive frontend floating predicate marker missing')
-          responsive_php.write_text(text.replace(old, new, 1), encoding='utf-8')
+          responsive_php.write_text(text, encoding='utf-8')
 
+          # Root already has position:relative on current main. Only add it if absent.
           renderer = Path('clean/hangar18-manager/src/Frontend/Renderer.php')
           text = renderer.read_text(encoding='utf-8')
-          old = "echo '.h18-clean-page,.h18-clean-front-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;width:100%;box-sizing:border-box;min-width:0}';"
-          new = "echo '.h18-clean-page,.h18-clean-front-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;width:100%;box-sizing:border-box;min-width:0;position:relative}';"
-          if old not in text:
+          surface_prefix = "echo '.h18-clean-page,.h18-clean-front-surface{display:grid;"
+          if surface_prefix not in text:
               raise SystemExit('Frontend root surface CSS marker missing')
-          renderer.write_text(text.replace(old, new, 1), encoding='utf-8')
+          surface_line = next((line for line in text.splitlines() if surface_prefix in line), '')
+          if 'position:relative' not in surface_line:
+              text = text.replace(
+                  "echo '.h18-clean-page,.h18-clean-front-surface{display:grid;",
+                  "echo '.h18-clean-page,.h18-clean-front-surface{display:grid;position:relative;",
+                  1
+              )
+          renderer.write_text(text, encoding='utf-8')
 
           admin = Path('clean/hangar18-manager/src/Admin/AdminController.php')
           text = admin.read_text(encoding='utf-8')
@@ -76,7 +87,7 @@ jobs:
           marker = "          # 0.1.29 parent-relative floating Button release gates.\n"
           if marker not in text:
               raise SystemExit('Release workflow gate marker missing')
-          gates = """          # 0.1.30 update checkpoint / Inspector / root-floating gates.\n          grep -q \"createDesignerCheckpoint\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"programBackups\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"releaseHistory\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"Update-checkpoints\" clean/hangar18-manager/src/Admin/AdminController.php\n          grep -q \"Versionshistorik\" clean/hangar18-manager/src/Admin/AdminController.php\n          grep -q \"font-weight:400\" clean/hangar18-manager/assets/editor-v0125.css\n          grep -q \"height:calc(100dvh - 102px)\" clean/hangar18-manager/assets/editor-v0123-ux.css\n          grep -q \"node.props.placementMode === 'overlay'\" clean/hangar18-manager/assets/editor-v0121.js\n          grep -q \"\\$floating = (string) (\\$node\\['type'\\] ?? '') === 'button' && (string) (\\$props\\['placementMode'\\] ?? 'normal') === 'overlay'\" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php\n          grep -q \"position:relative\" clean/hangar18-manager/src/Frontend/Renderer.php\n          test -s clean/hangar18-manager/release-history.json\n          grep -q '\"version\": \"0.1.30\"' clean/hangar18-manager/release-history.json\n"""
+          gates = """          # 0.1.30 update checkpoint / Inspector / root-floating gates.\n          grep -q \"createDesignerCheckpoint\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"programBackups\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"releaseHistory\" clean/hangar18-manager/src/Update/GitHubUpdater.php\n          grep -q \"Update-checkpoints\" clean/hangar18-manager/src/Admin/AdminController.php\n          grep -q \"Versionshistorik\" clean/hangar18-manager/src/Admin/AdminController.php\n          grep -q \"font-weight:400\" clean/hangar18-manager/assets/editor-v0125.css\n          grep -q \"height:calc(100dvh - 102px)\" clean/hangar18-manager/assets/editor-v0123-ux.css\n          grep -q \"node.props.placementMode === 'overlay'\" clean/hangar18-manager/assets/editor-v0121.js\n          grep -Fq \"\\$floating = (string) (\\$node['type'] ?? '') === 'button' && (string) (\\$props['placementMode'] ?? 'normal') === 'overlay';\" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php\n          grep -q \"position:relative\" clean/hangar18-manager/src/Frontend/Renderer.php\n          test -s clean/hangar18-manager/release-history.json\n          grep -q '\"version\": \"0.1.30\"' clean/hangar18-manager/release-history.json\n"""
           if '# 0.1.30 update checkpoint / Inspector / root-floating gates.' not in text:
               text = text.replace(marker, gates + marker, 1)
           package_marker = "          test \"$(unzip -Z1 \"$VERSIONED\" | grep -c '^hangar18-manager/assets/editor-v0125.css$')\" = '1'\n"
@@ -102,6 +113,7 @@ jobs:
           grep -q 'font-weight:400' clean/hangar18-manager/assets/editor-v0125.css
           grep -q 'height:calc(100dvh - 102px)' clean/hangar18-manager/assets/editor-v0123-ux.css
           grep -q "function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props" clean/hangar18-manager/assets/editor-v0121.js
+          grep -Fq "$floating = (string) ($node['type'] ?? '') === 'button' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
           test -s clean/hangar18-manager/release-history.json
       - name: Commit and trigger release
         shell: bash
