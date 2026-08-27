@@ -46,19 +46,31 @@ jobs:
           grep -q "nl2br" clean/hangar18-manager/src/Frontend/Renderer.php
           grep -q "editor labels are chrome" clean/hangar18-manager/assets/editor-v0123-ux.css
           grep -q "overscroll-behavior:contain" clean/hangar18-manager/assets/editor-v0123-ux.css
-          # 0.1.29 parent-relative floating Button release gates.
+          # 0.1.29/0.1.30 parent-relative floating Button release gates.
           grep -q "placementMode" clean/hangar18-manager/src/Model/LayoutModel.php
           grep -q "zIndex" clean/hangar18-manager/src/Model/LayoutModel.php
-          grep -q "isFloatingButton" clean/hangar18-manager/assets/editor-v018-core.js
-          grep -q "Flydende i Sektion/Kasse" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "function isFloatingButton(node).*node.props.*placementMode.*overlay" clean/hangar18-manager/assets/editor-v018-core.js
           grep -q "zone = 'overlay'" clean/hangar18-manager/assets/editor-v018-core.js
           grep -q "position = 'absolute'" clean/hangar18-manager/assets/editor-v018-core.js
-          grep -q "isFloatingButton" clean/hangar18-manager/assets/editor-v0121.js
+          grep -q "function isFloatingButton(node).*node.props.*placementMode.*overlay" clean/hangar18-manager/assets/editor-v0121.js
           grep -q "h18-clean-front-button--floating" clean/hangar18-manager/src/Frontend/Renderer.php
           grep -q "layoutStyle = 'position:absolute" clean/hangar18-manager/src/Frontend/Renderer.php
           grep -q "bool \$floating" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
+          grep -q "=== 'button'.*placementMode.*overlay" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
           grep -q "position:absolute!important" clean/hangar18-manager/src/Frontend/ResponsiveRenderer.php
+          grep -q "position:relative" clean/hangar18-manager/src/Frontend/Renderer.php
           grep -q "aldrig position:fixed" clean/hangar18-manager/readme.txt
+          # 0.1.30 Inspector / rich text / update-checkpoint gates.
+          grep -q "height:calc(100dvh - 102px)" clean/hangar18-manager/assets/editor-v0123-ux.css
+          grep -q "font-weight:400" clean/hangar18-manager/assets/editor-v0125.css
+          grep -q "styleWithCSS" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "createDesignerCheckpoint" clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q "programBackups" clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q "releaseHistory" clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q "Update-checkpoints" clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q "Versionshistorik" clean/hangar18-manager/src/Admin/AdminController.php
+          test -s clean/hangar18-manager/release-history.json
+          grep -q '"version": "0.1.30"' clean/hangar18-manager/release-history.json
           if grep -n "Gem clean layout" clean/hangar18-manager/assets/editor-v018-core.js clean/hangar18-manager/assets/editor-v0123-ux.js clean/hangar18-manager/assets/editor-v0125.js; then
             echo 'Obsolete generic Clean save note remains in active editor runtime.' >&2
             exit 1
@@ -103,6 +115,7 @@ jobs:
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0121-panels.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0125.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0125.css$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/release-history.json$')" = '1'
           SHA="$(sha256sum "$VERSIONED" | awk '{print $1}')"
           SOURCE_COMMIT="$(git rev-parse HEAD)"
           python - "$VERSION" "$SHA" "$SOURCE_COMMIT" <<'PY'
