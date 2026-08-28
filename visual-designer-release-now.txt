@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.41
-Trigger: legacy-header-conversion-and-auto-slug 2026-08-28
+Release Visual Designer Manager v0.1.42
+Trigger: observable-header-reference-fallback 2026-08-28
