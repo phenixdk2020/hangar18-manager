@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.39
-Trigger: native-pages-header-menu 2026-08-28
+Release Visual Designer Manager v0.1.40
+Trigger: bug09-draft-page-visibility 2026-08-28
