@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.41",
+  "version": "0.1.42",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.41.zip",
-  "sha256": "34e6b7b67a6e23641797bb0841c088a2e9e7303bd182e8a2b0be2d10ed2ce7c2",
-  "source_commit": "96821a54f6585b24211f8b4e6a18d43095ac102b",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.42.zip",
+  "sha256": "83b0f1d9c61dda67a6f1d5e2e57383e1563fb78e18c513b804efbb586aebdfbc",
+  "source_commit": "a4a638ac7f2c25aa4b6086f1b7c62c94e8a2fc96",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.41</h4><ul><li><strong>BUG-10:</strong> tomt Slug-felt genererer nu automatisk en unik slug fra sidetitlen, også for kladder.</li><li><strong>Repair:</strong> eksisterende sider med tom slug fra 0.1.39/0.1.40 repareres én gang.</li><li><strong>Header-konvertering:</strong> legacy Hangar18 HeaderDesign og Header-blok konverteres automatisk til det redigerbare <em>Header – Standard</em>.</li><li><strong>Menu:</strong> den aktive WordPress-menu kobles til det konverterede Menu-element som datakilde.</li><li><strong>Non-destruktiv:</strong> tidligere Visual Designer Header bevares i template-historikken.</li><li><strong>Sikkerhed:</strong> Theme Shell-cutover forbliver OFF, indtil Desktop/Laptop/Mobil parity er bruger-QA PASS.</li></ul>"
+    "changelog": "<h4>0.1.42</h4><ul><li><strong>BUG-11:</strong> Header-konvertering er nu observerbar og fejler ikke længere tavst.</li><li><strong>Konvertér igen:</strong> Header/Footer har en eksplicit knap til non-destruktiv genkonvertering.</li><li><strong>Diagnose:</strong> viser legacy HeaderDesign, Header-blok, WordPress-menu, logo-kilde, nodeantal og seneste resultat.</li><li><strong>Desktop-reference:</strong> hvis legacy-data mangler, bygges Header – Standard efter den godkendte 28-08-2026-reference: 90% centreret, ca. 120 px, #30382A, logo/brand venstre og menu højre.</li><li><strong>Logo fallback:</strong> legacy-logo, WordPress Custom Logo og Site Icon undersøges i den rækkefølge.</li><li><strong>Sikkerhed:</strong> Theme Shell-cutover forbliver OFF indtil parity-QA.</li></ul>"
   }
 }
