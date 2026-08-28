@@ -1,0 +1,85 @@
+name: Apply Visual Designer Manager 0.1.40 BUG-09
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0140-bug09.yml'
+      - '.github/scripts/apply_v0140_bug09.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply BUG-09 patch
+        run: python .github/scripts/apply_v0140_bug09.py
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.40 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'Version: 0.1.40' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.40'" clean/hangar18-manager/hangar18-manager.php
+          grep -q "'post_status' => \['publish', 'draft', 'pending', 'private', 'future'\]" clean/hangar18-manager/src/Admin/EditorController.php
+          grep -q "'post_status' => \['publish', 'draft', 'pending', 'private', 'future'\]" clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q "'post_status' => \['publish', 'draft', 'pending', 'private', 'future'\]" clean/hangar18-manager/hangar18-manager.php
+          grep -q 'WordPress-status' clean/hangar18-manager/src/Admin/EditorController.php
+          grep -q 'get_post_status_object' clean/hangar18-manager/src/Admin/EditorController.php
+          grep -q 'get_post_status_object' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q '"version": "0.1.40"' clean/hangar18-manager/release-history.json
+          grep -q 'BUG-09' clean-release-notes.html
+          test -s docs/v0140-status.md
+          grep -q "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "'menu' => 'Menu'" clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Admin/AdminController.php \
+            clean/hangar18-manager/src/Admin/EditorController.php \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            docs/v0140-status.md
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Fix draft page visibility in v0.1.40'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
