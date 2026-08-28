@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.36
-Trigger: boundary-selection-color-popover-public-naming 2026-08-28
+Release Visual Designer Manager v0.1.37
+Trigger: bug02-single-selection-owner 2026-08-28
