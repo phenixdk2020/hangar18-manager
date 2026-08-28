@@ -1,0 +1,98 @@
+name: Apply Visual Designer Manager 0.1.35 stabilization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0135-stabilization.yml'
+      - '.github/scripts/apply_v0135_richtext.py'
+      - '.github/scripts/apply_v0135_release_meta.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.35 patches
+        run: |
+          python .github/scripts/apply_v0135_richtext.py
+          python .github/scripts/apply_v0135_release_meta.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.35 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'Version: 0.1.35' clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "H18_CLEAN_VERSION', '0.1.35'" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "assets/editor-v0135.js" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "assets/editor-v0135.css" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "var INLINE_FORMAT_TAGS = { bold: 'STRONG', italic: 'EM', underline: 'U' }" clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq 'function applyInlineFormat' clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq "selectionOwner: 'v0135'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq "event.preventDefault();" clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq "input.type = 'text'" clean/hangar18-manager/assets/editor-v0135.js
+          grep -Fq 'input.dispatchEvent(new Event' clean/hangar18-manager/assets/editor-v0135.js
+          grep -Fq 'h18-vd-color-sv' clean/hangar18-manager/assets/editor-v0135.css
+          grep -Fq 'h18-vd-color-hex' clean/hangar18-manager/assets/editor-v0135.css
+          grep -Fq '"version": "0.1.35"' clean/hangar18-manager/release-history.json
+          grep -Fq '== 0.1.35 ==' clean/hangar18-manager/readme.txt
+          grep -Fq '<h4>0.1.35</h4>' clean-release-notes.html
+          grep -Fq 'Visual Designer Manager 0.1.35 og nyere' CLEAN-USER-MANUAL.md
+          grep -Fq 'VD-COLOR-001' CLEAN-TECHNICAL-MANUAL.md
+          test -s docs/v0135-status.md
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('clean/hangar18-manager/assets/editor-v0125.js').read_text()
+          inline = s[s.index('function applyInlineFormat'):s.index('function command', s.index('function applyInlineFormat'))]
+          assert 'execCommand' not in inline, 'inline formatter must not use execCommand'
+          command = s[s.index('function command'):s.index('function updateCanvasPreview', s.index('function command'))]
+          assert 'applyInlineFormat(name, logicalSelection)' in command
+          c = Path('clean/hangar18-manager/assets/editor-v0135.js').read_text()
+          assert "input.type = 'text'" in c and "input.hidden = true" in c
+          assert 'stateHex(p)' in c and 'rgbToHsv' in c and 'hsvToRgb' in c
+          print('0.1.35 source contracts PASS')
+          PY
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-ci-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/assets/editor-v0125.js \
+                  clean/hangar18-manager/hangar18-manager.php \
+                  clean/hangar18-manager/release-history.json \
+                  clean/hangar18-manager/readme.txt \
+                  clean-release-notes.html \
+                  CLEAN-USER-MANUAL.md \
+                  CLEAN-TECHNICAL-MANUAL.md \
+                  docs/v0135-status.md
+          if git diff --cached --quiet; then
+            echo 'Implementation already present.'
+            exit 0
+          fi
+          git commit -m 'Apply Visual Designer Manager 0.1.35 stabilization'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
