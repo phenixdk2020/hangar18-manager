@@ -401,15 +401,17 @@ final class EditorController
 
     private static function renderPagePicker(): void
     {
-        $pages = get_pages(['sort_column' => 'post_title', 'sort_order' => 'ASC']);
+        $pages = get_pages(['sort_column' => 'post_title', 'sort_order' => 'ASC', 'post_status' => ['publish', 'draft', 'pending', 'private', 'future']]);
         echo '<div class="wrap"><h1>Visual Designer</h1><p>Vælg en WordPress-side. Der importeres intet gammelt editor-state automatisk.</p>';
-        echo '<table class="widefat striped"><thead><tr><th>Side</th><th>Slug</th><th>Designer-version</th><th></th></tr></thead><tbody>';
+        echo '<table class="widefat striped"><thead><tr><th>Side</th><th>Slug</th><th>WordPress-status</th><th>Designer-version</th><th></th></tr></thead><tbody>';
         foreach ($pages as $page) {
             if (!$page instanceof \WP_Post) {
                 continue;
             }
             $version = (int) get_post_meta($page->ID, LayoutModel::VERSION_META, true);
-            echo '<tr><td>' . esc_html((string) $page->post_title) . '</td><td><code>' . esc_html((string) $page->post_name) . '</code></td><td>' . esc_html($version > 0 ? 'v' . $version : 'Ikke clean endnu') . '</td><td><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=' . self::MENU . '&post=' . $page->ID)) . '">Åbn designer</a></td></tr>';
+            $statusObject = get_post_status_object((string) $page->post_status);
+            $statusLabel = $statusObject ? (string) $statusObject->label : (string) $page->post_status;
+            echo '<tr><td>' . esc_html((string) $page->post_title) . '</td><td><code>' . esc_html((string) $page->post_name) . '</code></td><td>' . esc_html($statusLabel) . '</td><td>' . esc_html($version > 0 ? 'v' . $version : 'Ikke gemt endnu') . '</td><td><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=' . self::MENU . '&post=' . $page->ID)) . '">Åbn designer</a></td></tr>';
         }
         echo '</tbody></table></div>';
     }

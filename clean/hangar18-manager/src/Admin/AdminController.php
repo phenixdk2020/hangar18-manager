@@ -173,9 +173,11 @@ final class AdminController
             $model = LayoutModel::get($page->ID);
             $history = LayoutModel::history($page->ID);
             $last = $history ? $history[count($history) - 1] : [];
-            $status = $version > 0 ? '<span class="h18-manager-badge is-ok">Designer v' . esc_html((string) $version) . '</span>' : '<span class="h18-manager-badge">Ikke Visual Designer</span>';
+            $designerStatus = $version > 0 ? '<span class="h18-manager-badge is-ok">Designer v' . esc_html((string) $version) . '</span>' : '<span class="h18-manager-badge">Ikke Visual Designer</span>';
+            $wpStatusObject = get_post_status_object((string) $page->post_status);
+            $wpStatusLabel = $wpStatusObject ? (string) $wpStatusObject->label : (string) $page->post_status;
             echo '<tr><td><strong>' . esc_html((string) $page->post_title) . '</strong><br><small>ID ' . esc_html((string) $page->ID) . '</small></td>';
-            echo '<td><code>' . esc_html((string) $page->post_name) . '</code></td><td>' . $status . '</td><td>' . esc_html((string) count($model['nodes'])) . '</td><td>' . esc_html(self::prettyDate((string) ($last['savedUtc'] ?? ''))) . '</td><td class="h18-manager-actions">';
+            echo '<td><code>' . esc_html((string) $page->post_name) . '</code></td><td><strong>' . esc_html($wpStatusLabel) . '</strong><br>' . $designerStatus . '</td><td>' . esc_html((string) count($model['nodes'])) . '</td><td>' . esc_html(self::prettyDate((string) ($last['savedUtc'] ?? ''))) . '</td><td class="h18-manager-actions">';
             echo '<a class="button button-primary" href="' . esc_url(self::designerUrl($page->ID)) . '">Designer</a>';
             echo '<a class="button" href="' . esc_url(get_edit_post_link($page->ID, 'raw') ?: '#') . '">WordPress</a>';
             $permalink = get_permalink($page->ID);
@@ -468,7 +470,7 @@ final class AdminController
     /** @return array<int,\WP_Post> */
     private static function allPages(): array
     {
-        return array_values(array_filter(get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC']), static fn($page): bool => $page instanceof \WP_Post));
+        return array_values(array_filter(get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC', 'post_status' => ['publish', 'draft', 'pending', 'private', 'future']]), static fn($page): bool => $page instanceof \WP_Post));
     }
 
     /** @return array<int,\WP_Post> */

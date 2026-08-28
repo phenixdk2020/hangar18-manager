@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.40",
+    "date": "2026-08-28",
+    "items": [
+      "BUG-09 rettet: Visual Designer-sidevælgeren viser nu Publiceret, Kladde, Afventer, Privat og Planlagt.",
+      "Managerens Sider-oversigt bruger samme statusfilter, så nyoprettede kladder ikke forsvinder fra oversigten.",
+      "WordPress-status vises tydeligt ved siden af Designer-versionen.",
+      "Interne sidevalg i Designer inkluderer samme redigerbare sidestatusser.",
+      "Header/Menu-funktionerne fra 0.1.39 og BUG-02 selection-kontrakten er uændrede."
+    ]
+  },
+  {
     "version": "0.1.39",
     "date": "2026-08-28",
     "items": [
