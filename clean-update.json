@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.39",
+  "version": "0.1.40",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.39.zip",
-  "sha256": "e8ce999de84fa67c7f525589ac67305117f105dd488589e235b92c340bc27b7c",
-  "source_commit": "6d994af0fda519aae53e84e574f18bdf57d63945",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.40.zip",
+  "sha256": "f4b1ce25ca4b374536c10059f5b839a7d685764f9c7be5403a8d87d86d60f4a3",
+  "source_commit": "712f03f855d5abb8fb0a3e638dc5d8bb003b474c",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.39</h4><ul><li><strong>Ny side:</strong> opret WordPress-sider direkte fra Visual Designer Manager og åbn dem straks i Designer.</li><li><strong>Header Menu:</strong> nyt canonical Menu-element med eksisterende WordPress-menu som datakilde.</li><li><strong>Menu design:</strong> retning, alignment, mobilvisning, farver, typografi, afstand, padding og baggrund styres i Inspector.</li><li><strong>Mobil:</strong> Hamburger, Lodret og Ombryd er tilgængelige menu-strategier.</li><li><strong>BUG-02:</strong> rich-text selection er bruger-QA PASS på 0.1.38; cold-start/single-owner-kontrakten bevares.</li><li><strong>Sikkerhed:</strong> Theme Shell-cutover forbliver slået fra indtil 1:1 Header-parity er godkendt.</li></ul>"
+    "changelog": "<h4>0.1.40</h4><ul><li><strong>BUG-09:</strong> kladder og andre ikke-publicerede sider vises nu i Visual Designer.</li><li><strong>Sidevælger:</strong> Publiceret, Kladde, Afventer, Privat og Planlagt understøttes og WordPress-status vises tydeligt.</li><li><strong>Manager → Sider:</strong> samme statusfilter bruges, så en ny kladde ikke forsvinder efter oprettelse.</li><li><strong>Interne links:</strong> Designerens sidevalg bruger samme redigerbare sidestatusser.</li><li><strong>Regression:</strong> Header/Menu fra 0.1.39 og BUG-02 fra 0.1.38 ændres ikke.</li></ul>"
   }
 }
