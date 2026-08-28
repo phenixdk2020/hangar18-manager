@@ -1,0 +1,131 @@
+name: Visual Designer Manager Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'visual-designer-release-now.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(php -r '$s=file_get_contents("clean/hangar18-manager/hangar18-manager.php"); if (!preg_match("/Version:\\s*([0-9]+\\.[0-9]+\\.[0-9]+)/", $s, $m)) exit(2); echo $m[1];')"
+          grep -q "H18_CLEAN_VERSION', '$VERSION'" clean/hangar18-manager/hangar18-manager.php
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Visual Designer Manager version: $VERSION"
+
+      - name: Verify Visual Designer Manager source
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          grep -q "data-vd-selection-boundary" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "function restoreMarkerSelection" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "boundary-markers-v0136" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "document.body.appendChild(panel)" clean/hangar18-manager/assets/editor-v0135.js
+          grep -q "function positionPanel" clean/hangar18-manager/assets/editor-v0135.js
+          grep -q "position:fixed" clean/hangar18-manager/assets/editor-v0135.css
+          grep -q "visual-designer-manager-v" clean/hangar18-manager/src/Update/GitHubUpdater.php
+          grep -q "24.2 Produktnavn og synlige filnavne" CLEAN-DESIGN-MANUAL.md
+          grep -q "VD-COLOR-POPOVER-001" CLEAN-TECHNICAL-MANUAL.md
+          test -s docs/v0136-status.md
+          test -s clean/hangar18-manager/release-history.json
+          if grep -R -n -E 'Hangar18 Manager Clean|Hangar18 Designer|Clean Manager v|Clean editor |Clean layout gemt|Clean-sider|Ikke Clean|h18-Visual Designer-' clean/hangar18-manager; then
+            echo 'Obsolete public product naming found in Visual Designer Manager source.' >&2
+            exit 1
+          fi
+
+      - name: Build package and manifest
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          VERSIONED="dist/visual-designer-manager-v${VERSION}.zip"
+          LATEST="dist/visual-designer-manager.zip"
+          rm -f "$VERSIONED" "$LATEST"
+          (cd clean && zip -qr "../$VERSIONED" hangar18-manager)
+          cp "$VERSIONED" "$LATEST"
+          unzip -tq "$VERSIONED"
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/hangar18-manager.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Admin/AdminController.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Model/LayoutModel.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Frontend/Renderer.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0125.js$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0135.js$')" = '1'
+          SHA="$(sha256sum "$VERSIONED" | awk '{print $1}')"
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          python - "$VERSION" "$SHA" "$SOURCE_COMMIT" <<'PY'
+          import json, sys
+          from pathlib import Path
+          version, sha, source_commit = sys.argv[1:4]
+          notes_path = Path('clean-release-notes.html')
+          notes = notes_path.read_text(encoding='utf-8').strip() if notes_path.exists() else f'<h4>{version}</h4><p>Visual Designer Manager release.</p>'
+          data = {
+              'name': 'Visual Designer Manager',
+              'slug': 'hangar18-manager',
+              'version': version,
+              'homepage': 'https://github.com/phenixdk2020/hangar18-manager',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'tested': '6.8',
+              'package': f'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v{version}.zip',
+              'sha256': sha,
+              'source_commit': source_commit,
+              'sections': {
+                  'description': 'Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.',
+                  'changelog': notes,
+              },
+          }
+          Path('clean-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          echo "Package SHA256: $SHA"
+
+      - name: Commit verified release
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean-update.json "dist/visual-designer-manager-v${VERSION}.zip" dist/visual-designer-manager.zip
+          git rm -f --ignore-unmatch dist/hangar18-manager-clean.zip || true
+          if git diff --cached --quiet; then
+            echo 'Release artifacts already current.'
+            exit 0
+          fi
+          git commit -m "Release Visual Designer Manager v${VERSION}"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          echo 'Unable to publish Visual Designer Manager release after three attempts.' >&2
+          exit 1
+
+      - name: Upload installable ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v${{ steps.version.outputs.version }}
+          if-no-files-found: error
+          retention-days: 14
+          path: dist/visual-designer-manager-v${{ steps.version.outputs.version }}.zip
