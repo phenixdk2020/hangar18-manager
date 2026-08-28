@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.36",
+    "date": "2026-08-28",
+    "items": [
+      "Rich-text selection bruger vedvarende start/slut-boundary-markører, så Fed, Kursiv og Understregning kan genvælge præcis samme tekst efter DOM-ændringer.",
+      "Toolbar-click forhindrer default fokusflytning; logiske tekst-offsets er fallback frem for primær selection-ejer.",
+      "Farvevælgeren er en global body-level popover for alle Inspector-farvefelter og kan ikke længere klippes af Inspector overflow.",
+      "Farvepopover positioneres efter Inspector/viewport og genplaceres ved scroll/resize.",
+      "Brugersynlige backupnavne skifter til visual-designer-manager; Clean bevares kun i nødvendige interne kompatibilitets-id’er."
+    ]
+  },
+  {
     "version": "0.1.35",
     "date": "2026-08-28",
     "items": [

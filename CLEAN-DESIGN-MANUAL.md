@@ -1,6 +1,6 @@
 # Visual Designer Manager – Design- og arkitekturmanual
 
-Senest opdateret: 27. august 2026  
+Senest opdateret: 28. august 2026  
 Gælder for: Visual Designer Manager 0.1.x og nyere  
 Status: Autoritativ målarkitektur for Visual Designer
 
@@ -583,7 +583,22 @@ Grafiske eksempler skal følge disse regler:
 
 Dokumentationen skal derfor forklare både **hvad et element er**, **hvor det kan ligge**, **hvordan det kombineres med andre elementer**, og **hvordan resultatet ser ud i en rigtig sideopbygning**.
 
-`CLEAN-DESIGN-MANUAL.md` er fremover den autoritative arkitekturbeskrivelse for den nye Visual Designer. Den ældre `DESIGN-MANUAL.md` bevares som reference for eksisterende designstandarder og legacy 0.4.x-adfærd, indtil de relevante regler er migreret til Clean.
+### 24.2 Produktnavn og synlige filnavne
+
+Det officielle produktnavn er **Visual Designer Manager**. Den tidligere udviklingsbetegnelse **Clean** må ikke bruges i nye brugersynlige navne.
+
+Følgende er en FAST navngivningsregel:
+
+- nye releasepakker navngives `visual-designer-manager-v<version>.zip`;
+- automatiske programbackups navngives `visual-designer-manager-v<fra-version>-before-v<til-version>-YYYYMMDD-HHMMSS.zip`;
+- nye brugersynlige eksport-, backup-, checkpoint-, dokument- og downloadnavne skal bruge **Visual Designer Manager** eller `visual-designer-manager`;
+- `Clean`, `hangar18-manager-clean` og tilsvarende gamle produktbetegnelser må ikke introduceres i nye brugersynlige filnavne, UI-tekster eller dokumenttitler;
+- historiske filer/releases omdøbes ikke automatisk;
+- interne kompatibilitetsidentifikatorer som eksisterende PHP namespace, `h18_clean_*`, WordPress pluginmappe/slug og text-domain må bevares midlertidigt, når en ændring ellers kan bryde opdatering, data eller WordPress-kompatibilitet. De må ikke præsenteres som produktnavn for brugeren.
+
+En senere intern namespace/slug-migration skal behandles som en særskilt kompatibilitetsændring og må ikke blandes sammen med den brugersynlige navngivning.
+
+`CLEAN-DESIGN-MANUAL.md` er fremover den autoritative arkitekturbeskrivelse for den nye Visual Designer. Den ældre `DESIGN-MANUAL.md` bevares som reference for eksisterende designstandarder og legacy 0.4.x-adfærd, indtil de relevante regler er migreret til Visual Designer Manager.
 
 ## 0.1.23 – Global Header/Footer Designer
 

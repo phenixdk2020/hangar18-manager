@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.35
+Version: 0.1.36
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.36 ==
+* Rich-text selection er boundary-marker-baseret: samme markerede tekst fastholdes mellem stabile start/slut-markører gennem Fed, Kursiv og Understregning.
+* Toolbar-knapper flytter ikke fokus som default; logiske offsets er fallback.
+* Visual Designer-farvevælgeren flyttes til body, mens den er åben, og positioneres/clampes til Inspector og viewport for alle elementtyper.
+* Farvepopover genplaceres ved scroll/resize og klippes ikke af Inspectorens overflow.
+* Nye programbackups bruger synligt filnavn visual-designer-manager-v... i stedet for hangar18-manager-clean-v....
 
 == 0.1.35 ==
 * Fed, Kursiv og Understregning bruger deterministisk DOM-formatteringsmotor og bruger ikke længere browser execCommand for de tre inline-formater.

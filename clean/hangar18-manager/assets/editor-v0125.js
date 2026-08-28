@@ -143,6 +143,100 @@
         if (window.requestAnimationFrame) { window.requestAnimationFrame(restore); }
     }
 
+    /*
+     * VD-TEXT-SEL-001 / 0.1.36
+     *
+     * Firefox may replace or split text nodes differently for STRONG and EM.
+     * Logical offsets remain useful as a fallback, but toolbar chaining now
+     * owns two persistent empty boundary elements around the selected content.
+     * Formatting happens between those boundaries and the native Range is
+     * rebuilt from the same DOM anchors after every command.
+     */
+    function markerSelectionValid() {
+        return !!(active && active.editor && active.markerStart && active.markerEnd &&
+            active.markerStart.isConnected && active.markerEnd.isConnected &&
+            active.editor.contains(active.markerStart) && active.editor.contains(active.markerEnd));
+    }
+
+    function clearSelectionMarkers() {
+        if (!active) { return; }
+        [active.markerStart, active.markerEnd].forEach(function (marker) {
+            if (marker && marker.parentNode) { marker.parentNode.removeChild(marker); }
+        });
+        active.markerStart = null;
+        active.markerEnd = null;
+    }
+
+    function boundaryMarker(kind) {
+        var marker = document.createElement('span');
+        marker.setAttribute('data-vd-selection-boundary', kind);
+        marker.setAttribute('aria-hidden', 'true');
+        marker.contentEditable = 'false';
+        marker.style.fontSize = '0';
+        marker.style.lineHeight = '0';
+        marker.style.pointerEvents = 'none';
+        return marker;
+    }
+
+    function restoreMarkerSelection() {
+        if (!markerSelectionValid() || !window.getSelection) { return false; }
+        try {
+            var range = document.createRange();
+            range.setStartAfter(active.markerStart);
+            range.setEndBefore(active.markerEnd);
+            if (range.collapsed) { return false; }
+            try { active.editor.focus({ preventScroll: true }); } catch (ignoreFocus) { active.editor.focus(); }
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            active.savedRange = range.cloneRange();
+            return true;
+        } catch (ignore) { return false; }
+    }
+
+    function installSelectionMarkers() {
+        if (!active || !active.editor || !window.getSelection) { return false; }
+        var logical = captureLogicalSelection(active.editor) || active.savedLogical;
+        if (!logical) { return false; }
+        clearSelectionMarkers();
+        if (!restoreLogicalSelection(logical)) { return false; }
+        var selection = window.getSelection();
+        if (!selection || !selection.rangeCount || selection.getRangeAt(0).collapsed) { return false; }
+        var range = selection.getRangeAt(0);
+        try {
+            var end = boundaryMarker('end');
+            var endRange = range.cloneRange();
+            endRange.collapse(false);
+            endRange.insertNode(end);
+            var start = boundaryMarker('start');
+            var startRange = range.cloneRange();
+            startRange.collapse(true);
+            startRange.insertNode(start);
+            active.markerStart = start;
+            active.markerEnd = end;
+            active.savedLogical = logical;
+            return restoreMarkerSelection();
+        } catch (ignore) {
+            clearSelectionMarkers();
+            return false;
+        }
+    }
+
+    function reinforceMarkerSelection() {
+        if (!markerSelectionValid()) { return; }
+        var generation = ++selectionGeneration;
+        var restore = function () {
+            if (generation !== selectionGeneration || !markerSelectionValid()) { return; }
+            restoreMarkerSelection();
+        };
+        restore();
+        if (window.queueMicrotask) { window.queueMicrotask(restore); }
+        else if (window.Promise) { Promise.resolve().then(restore); }
+        window.setTimeout(restore, 0);
+        window.setTimeout(restore, 24);
+        if (window.requestAnimationFrame) { window.requestAnimationFrame(restore); }
+    }
+
     var INLINE_FORMAT_TAGS = { bold: 'STRONG', italic: 'EM', underline: 'U' };
 
     function formatAncestor(node, tagName, editor) {
@@ -219,7 +313,9 @@
 
     function applyInlineFormat(name, snapshot) {
         var tagName = INLINE_FORMAT_TAGS[String(name || '').toLowerCase()] || '';
-        if (!tagName || !snapshot || !restoreLogicalSelection(snapshot) || !window.getSelection) { return false; }
+        if (!tagName || !snapshot || !window.getSelection) { return false; }
+        if (markerSelectionValid()) { restoreMarkerSelection(); }
+        else if (!restoreLogicalSelection(snapshot)) { return false; }
         var selection = window.getSelection();
         if (!selection || !selection.rangeCount) { return false; }
         var range = selection.getRangeAt(0);
@@ -256,14 +352,16 @@
 
         removeMarker(marker);
         try { snapshot.editor.normalize(); } catch (ignoreNormalize) {}
-        restoreLogicalSelection(snapshot);
+        if (markerSelectionValid()) { restoreMarkerSelection(); }
+        else { restoreLogicalSelection(snapshot); }
         return true;
     }
 
     function command(name, value) {
         if (!active || !active.editor) { return; }
         var logicalSelection = active.savedLogical || captureLogicalSelection(active.editor);
-        if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
+        if (markerSelectionValid()) { restoreMarkerSelection(); }
+        else if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
         else { restoreSelection(); }
 
         active.formatting = true;
@@ -274,16 +372,18 @@
                 try { document.execCommand('styleWithCSS', false, 'false'); } catch (ignoreStyleMode) {}
                 try { document.execCommand(name, false, value || null); } catch (ignoreCommand) {}
                 try { active.editor.normalize(); } catch (ignoreNormalize) {}
-                if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
+                if (markerSelectionValid()) { restoreMarkerSelection(); }
+                else if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
                 else { rememberSelection(); }
             }
         } finally { active.formatting = false; }
 
-        if (logicalSelection) { active.savedLogical = logicalSelection; }
+        if (logicalSelection) { active.savedLogical = captureLogicalSelection(active.editor) || logicalSelection; }
         active.dirty = true;
         active.textarea.value = cleanHtml(active.editor.innerHTML);
         updateCanvasPreview(active.textarea.value);
-        reinforceLogicalSelection(logicalSelection);
+        if (markerSelectionValid()) { reinforceMarkerSelection(); }
+        else { reinforceLogicalSelection(logicalSelection); }
     }
 
     function updateCanvasPreview(html) {
@@ -304,9 +404,14 @@
 
     function captureToolbarSelection() {
         if (!active || !active.editor) { return; }
+        if (markerSelectionValid()) {
+            restoreMarkerSelection();
+            return;
+        }
         var logical = captureLogicalSelection(active.editor);
         if (logical) { active.savedLogical = logical; }
         rememberSelection();
+        installSelectionMarkers();
     }
 
     function toolbarButton(label, title, handler) {
@@ -315,11 +420,15 @@
         button.className = 'button h18-vd-rich-button';
         button.innerHTML = label;
         button.title = title;
-        // Capture already on pointerdown, before a browser can move focus.
-        // mousedown prevents the toolbar button from becoming the editing focus.
-        button.addEventListener('pointerdown', function (event) { captureToolbarSelection(); event.preventDefault(); });
-        button.addEventListener('mousedown', function (event) { captureToolbarSelection(); event.preventDefault(); });
-        button.addEventListener('click', handler);
+        button.addEventListener('pointerdown', function (event) {
+            captureToolbarSelection();
+            event.preventDefault();
+        });
+        button.addEventListener('mousedown', function (event) { event.preventDefault(); });
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            handler(event);
+        });
         return button;
     }
 
@@ -340,7 +449,7 @@
         editor.setAttribute('aria-multiline', 'true');
         editor.innerHTML = plainToHtml(textarea.value || '');
 
-        active = { textarea: textarea, editor: editor, dirty: false, savedRange: null, savedLogical: null, formatting: false };
+        active = { textarea: textarea, editor: editor, dirty: false, savedRange: null, savedLogical: null, formatting: false, markerStart: null, markerEnd: null };
 
         toolbar.appendChild(toolbarButton('<strong>B</strong>', 'Fed', function () { command('bold'); }));
         toolbar.appendChild(toolbarButton('<em>I</em>', 'Kursiv', function () { command('italic'); }));
@@ -353,12 +462,17 @@
         }));
         toolbar.appendChild(toolbarButton('× format', 'Fjern formatering', function () { command('removeFormat'); }));
 
-        ['mouseup','keyup','focus'].forEach(function (eventName) {
+        ['mouseup','keyup'].forEach(function (eventName) {
             editor.addEventListener(eventName, function () {
                 if (!active || active.editor !== editor || active.formatting) { return; }
+                clearSelectionMarkers();
                 selectionGeneration += 1;
                 rememberSelection();
             });
+        });
+        editor.addEventListener('focus', function () {
+            if (!active || active.editor !== editor || active.formatting || markerSelectionValid()) { return; }
+            rememberSelection();
         });
         editor.addEventListener('input', function () {
             if (!active || active.editor !== editor) { return; }
@@ -366,6 +480,7 @@
             textarea.value = cleanHtml(editor.innerHTML);
             updateCanvasPreview(textarea.value);
             if (!active.formatting) {
+                clearSelectionMarkers();
                 selectionGeneration += 1;
                 rememberSelection();
             }
@@ -483,8 +598,10 @@
     window.H18RichTextV0125 = {
         sync: sync,
         selectionOwner: 'v0135',
+        selectionMode: 'boundary-markers-v0136',
         restoreSelection: function () {
             if (!active) { return false; }
+            if (markerSelectionValid()) { return restoreMarkerSelection(); }
             return active.savedLogical ? restoreLogicalSelection(active.savedLogical) : restoreSelection();
         }
     };

@@ -65,7 +65,47 @@
         if (!p) { return; }
         p.panel.hidden = true;
         p.button.setAttribute('aria-expanded', 'false');
+        if (p.control && p.control.isConnected) { p.control.appendChild(p.panel); }
+        else if (p.panel && p.panel.parentNode) { p.panel.parentNode.removeChild(p.panel); }
         if (openPicker === p) { openPicker = null; }
+    }
+
+    function positionPanel(p) {
+        if (!p || !p.panel || p.panel.hidden || !p.button || !p.button.isConnected) { return; }
+        var margin = 8, gap = 6;
+        var vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+        var vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+        var buttonRect = p.button.getBoundingClientRect();
+        var inspectorRect = inspector && inspector.getBoundingClientRect ? inspector.getBoundingClientRect() : { left: margin, right: vw - margin, width: vw - (margin * 2) };
+        p.panel.style.left = '0px';
+        p.panel.style.top = '0px';
+        var panelRect = p.panel.getBoundingClientRect();
+        var width = Math.min(panelRect.width, Math.max(1, vw - (margin * 2)));
+        var height = Math.min(panelRect.height, Math.max(1, vh - (margin * 2)));
+
+        var inspectorMin = Math.max(margin, inspectorRect.left + 4);
+        var inspectorMax = Math.min(vw - margin - width, inspectorRect.right - width - 4);
+        var x;
+        if (inspectorMax >= inspectorMin) {
+            x = clamp(buttonRect.left, inspectorMin, inspectorMax);
+        } else if (buttonRect.right + gap + width <= vw - margin) {
+            x = buttonRect.right + gap;
+        } else if (buttonRect.left - gap - width >= margin) {
+            x = buttonRect.left - gap - width;
+        } else {
+            x = clamp(buttonRect.left, margin, Math.max(margin, vw - margin - width));
+        }
+
+        var y;
+        if (buttonRect.bottom + gap + height <= vh - margin) {
+            y = buttonRect.bottom + gap;
+        } else if (buttonRect.top - gap - height >= margin) {
+            y = buttonRect.top - gap - height;
+        } else {
+            y = clamp(buttonRect.top, margin, Math.max(margin, vh - margin - height));
+        }
+        p.panel.style.left = Math.round(x) + 'px';
+        p.panel.style.top = Math.round(y) + 'px';
     }
     function svPointer(p, event) {
         var r = p.sv.getBoundingClientRect();
@@ -110,7 +150,7 @@
         var apply = document.createElement('button'); apply.type = 'button'; apply.className = 'button button-primary'; apply.textContent = 'Anvend';
         actions.appendChild(cancel); actions.appendChild(apply);
         panel.appendChild(sv); panel.appendChild(hue); panel.appendChild(values); panel.appendChild(palette); panel.appendChild(actions);
-        control.appendChild(button); control.appendChild(panel); input.parentNode.insertBefore(control, input.nextSibling);
+        control.appendChild(button); input.parentNode.insertBefore(control, input.nextSibling);
 
         var start = rgbToHsv(rgbFromHex(initial));
         var p = { input: input, button: button, swatch: swatch, value: value, panel: panel, sv: sv, marker: marker, hue: hue, hex: hexInput, preview: preview, palette: palette, state: start, dragging: false, control: control };
@@ -125,7 +165,12 @@
             e.preventDefault(); e.stopPropagation();
             if (openPicker && openPicker !== p) { close(openPicker); }
             if (!panel.hidden) { close(p); return; }
-            setHex(p, input.value || initial); panel.hidden = false; button.setAttribute('aria-expanded', 'true'); openPicker = p;
+            setHex(p, input.value || initial);
+            document.body.appendChild(panel);
+            panel.hidden = false;
+            button.setAttribute('aria-expanded', 'true');
+            openPicker = p;
+            positionPanel(p);
         });
         sv.addEventListener('pointerdown', function (e) { e.preventDefault(); p.dragging = true; try { sv.setPointerCapture(e.pointerId); } catch (ignore) {} svPointer(p, e); });
         sv.addEventListener('pointermove', function (e) { if (p.dragging) { e.preventDefault(); svPointer(p, e); } });
@@ -142,6 +187,7 @@
     function enhanceAll() {
         if (!inspector) { inspector = document.getElementById('h18-clean-inspector'); }
         if (!inspector) { return; }
+        if (openPicker && (!openPicker.control || !openPicker.control.isConnected)) { close(openPicker); }
         inspector.querySelectorAll('input[type="color"][data-field]').forEach(enhance);
     }
     function install() {
@@ -149,10 +195,12 @@
         if (!inspector) { return; }
         enhanceAll();
         if (window.MutationObserver) { new MutationObserver(enhanceAll).observe(inspector, { childList: true, subtree: true }); }
-        document.addEventListener('pointerdown', function (e) { if (openPicker && !openPicker.control.contains(e.target)) { close(openPicker); } });
+        document.addEventListener('pointerdown', function (e) { if (openPicker && !openPicker.control.contains(e.target) && !openPicker.panel.contains(e.target)) { close(openPicker); } });
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && openPicker) { close(openPicker); } });
+        window.addEventListener('resize', function () { if (openPicker) { positionPanel(openPicker); } });
+        window.addEventListener('scroll', function () { if (openPicker) { positionPanel(openPicker); } }, true);
     }
 
-    window.H18ColorPickerV0135 = { enhance: enhanceAll, normalizeHex: hex, rgbToHsv: rgbToHsv, hsvToRgb: hsvToRgb };
+    window.H18ColorPickerV0135 = { enhance: enhanceAll, normalizeHex: hex, rgbToHsv: rgbToHsv, hsvToRgb: hsvToRgb, positionOpenPicker: function () { if (openPicker) { positionPanel(openPicker); } } };
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install, { once: true }); } else { install(); }
 }());

@@ -579,7 +579,7 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ---
 
-## 21. Kontraktstatus for 0.1.35
+## 21. Kontraktstatus for 0.1.36
 
 ### VD-FLOAT-001 – Flydende Knap
 
@@ -587,7 +587,7 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ### VD-TEXT-SEL-001 – Rich-text selection
 
-**BUGFIX i 0.1.35 – afventer bruger-QA.** 0.1.34 løste ikke Fed/Kursiv stabilt. I 0.1.35 bruger Fed, Kursiv og Understregning ikke længere browserens `execCommand()` til selve inline-formatet. De tre udføres som deterministiske DOM-transaktioner, og selection rekonstrueres fra logiske tekst-offsets.
+**BUGFIX i 0.1.36 – afventer bruger-QA.** Bruger-QA af 0.1.35 viste fortsat, at Understregning bevarer selection, mens Fed/Kursiv kan miste den. 0.1.36 gør derfor selection uafhængig af Firefox' genopbygning af `STRONG`/`EM`: to vedvarende, tomme editor-boundary-markører placeres omkring den valgte tekst ved toolbar-pointerdown. Fed, Kursiv og Understregning formatterer mellem de samme markører, og Range rekonstrueres fra markørerne efter hver kommando. Logiske tekst-offsets er kun fallback.
 
 Godkendelsestest: 20/20 gentagelser for Fed, Kursiv og Understregning samt kæderne Fed → Kursiv → Understregning og Kursiv → Fed → Understregning uden ny markering.
 
@@ -604,6 +604,11 @@ Godkendelsestest: 20/20 gentagelser for Fed, Kursiv og Understregning samt kæde
 **IMPLEMENTERET i 0.1.35 – afventer bruger-QA.** Inspector bruger sin egen farvevælger og må ikke afhænge af operativsystemets native `type=color`-dialog. UI har saturation/brightness-felt, hue-slider, HEX-input, preview og farvechips. Canonical værdi er fortsat `#RRGGBB`.
 
 Godkendelsestest: vælg en tydelig grøn farve, klik **Anvend**, og verificér samme HEX i Inspector, canvas og efter Save/Reload uden at tidligere sort/lav luminans hænger ved.
+
+
+### VD-COLOR-POPOVER-001 – Global farvevælgerplacering
+
+**BUGFIX i 0.1.36 – afventer bruger-QA.** Farvevælgeren er én fælles Inspector-popover for alle elementtyper og alle `type=color`-felter. Mens den er åben, flyttes panelet til `document.body`, positioneres som viewport-relativ editor-chrome og clamped til den synlige viewport. Den forsøger først at holde hele panelet inden for Inspectorens vandrette område og vælger derefter en viewport-fallback. Inspector `overflow` må aldrig klippe farvevælgeren. Scroll og resize genberegner placeringen.
 
 ### VD-INSPECTOR-SCROLL-001 – Inspector bund-buffer
 

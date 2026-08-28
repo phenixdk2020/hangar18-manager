@@ -512,7 +512,7 @@ final class GitHubUpdater
 
         $safeCurrent = preg_replace('/[^0-9A-Za-z._-]/', '-', H18_CLEAN_VERSION) ?: 'unknown';
         $safeTarget = preg_replace('/[^0-9A-Za-z._-]/', '-', $targetVersion) ?: 'unknown';
-        $filename = 'hangar18-manager-clean-v' . $safeCurrent . '-before-v' . $safeTarget . '-' . gmdate('Ymd-His') . '.zip';
+        $filename = 'visual-designer-manager-v' . $safeCurrent . '-before-v' . $safeTarget . '-' . gmdate('Ymd-His') . '.zip';
         $path = trailingslashit($directory) . $filename;
 
         if (class_exists('ZipArchive')) {
