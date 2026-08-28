@@ -14,8 +14,10 @@ final class AdminController
 
     private const EXPORT_ACTION = 'h18_clean_export_backup';
     private const CLEAR_LOG_ACTION = 'h18_clean_clear_diagnostics';
+    private const CREATE_PAGE_ACTION = 'h18_clean_create_page';
     private const EXPORT_NONCE = 'h18_clean_export_backup';
     private const CLEAR_LOG_NONCE = 'h18_clean_clear_diagnostics';
+    private const CREATE_PAGE_NONCE = 'h18_clean_create_page';
 
     /** @var array<string,array{title:string,slug:string}> */
     private const COLLECTIONS = [
@@ -30,6 +32,7 @@ final class AdminController
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
         add_action('admin_post_' . self::EXPORT_ACTION, [self::class, 'exportBackup']);
         add_action('admin_post_' . self::CLEAR_LOG_ACTION, [self::class, 'clearDiagnostics']);
+        add_action('admin_post_' . self::CREATE_PAGE_ACTION, [self::class, 'createPage']);
     }
 
     public static function menu(): void
@@ -148,8 +151,22 @@ final class AdminController
     {
         self::guard();
         $pages = self::allPages();
+        $status = sanitize_key((string) ($_GET['vd_status'] ?? ''));
+        $message = sanitize_text_field((string) wp_unslash($_GET['vd_message'] ?? ''));
         self::open('Sider', 'Alle WordPress-sider med Visual Designer-status');
-        echo '<div class="h18-manager-toolbar"><a class="button button-primary" href="' . esc_url(admin_url('post-new.php?post_type=page')) . '">+ Ny WordPress-side</a><a class="button" href="' . esc_url(self::designerUrl()) . '">Åbn Designer</a></div>';
+        if ($message !== '') { echo '<div class="notice ' . ($status === 'error' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($message) . '</p></div>'; }
+        echo '<div class="h18-manager-card h18-manager-create-page"><h2>Ny side</h2><p class="description">Opret siden direkte i Visual Designer Manager. Efter oprettelse åbnes den i Designer.</p>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-manager-page-create-form">';
+        wp_nonce_field(self::CREATE_PAGE_NONCE);
+        echo '<input type="hidden" name="action" value="' . esc_attr(self::CREATE_PAGE_ACTION) . '">';
+        echo '<label><strong>Titel</strong><input type="text" name="page_title" required placeholder="Ny side"></label>';
+        echo '<label><strong>Slug</strong><input type="text" name="page_slug" placeholder="automatisk-fra-titel"></label>';
+        echo '<label><strong>Overordnet side</strong><select name="page_parent"><option value="0">Ingen · topniveau</option>';
+        foreach ($pages as $parentPage) { echo '<option value="' . esc_attr((string) $parentPage->ID) . '">' . esc_html((string) $parentPage->post_title) . '</option>'; }
+        echo '</select></label>';
+        echo '<label><strong>Status</strong><select name="page_status"><option value="draft">Kladde</option>' . (current_user_can('publish_pages') ? '<option value="publish">Publiceret</option>' : '') . '</select></label>';
+        echo '<button class="button button-primary" type="submit">Opret og åbn Designer</button></form></div>';
+        echo '<div class="h18-manager-toolbar"><a class="button" href="' . esc_url(admin_url('post-new.php?post_type=page')) . '">WordPress-editor</a><a class="button" href="' . esc_url(self::designerUrl()) . '">Åbn Designer</a></div>';
         echo '<table class="widefat striped h18-manager-table"><thead><tr><th>Side</th><th>Slug</th><th>Status</th><th>Nodes</th><th>Senest gemt</th><th>Handlinger</th></tr></thead><tbody>';
         foreach ($pages as $page) {
             $version = (int) get_post_meta($page->ID, LayoutModel::VERSION_META, true);
@@ -330,6 +347,49 @@ final class AdminController
             echo '</div>';
         }
         self::close();
+    }
+
+
+    public static function createPage(): void
+    {
+        self::guard();
+        check_admin_referer(self::CREATE_PAGE_NONCE);
+
+        $title = sanitize_text_field((string) wp_unslash($_POST['page_title'] ?? ''));
+        if ($title === '') {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Sidetitel mangler.']));
+            exit;
+        }
+
+        $slug = sanitize_title((string) wp_unslash($_POST['page_slug'] ?? ''));
+        $parent = absint($_POST['page_parent'] ?? 0);
+        if ($parent > 0 && get_post_type($parent) !== 'page') { $parent = 0; }
+
+        $status = sanitize_key((string) ($_POST['page_status'] ?? 'draft'));
+        if ($status !== 'publish' || !current_user_can('publish_pages')) { $status = 'draft'; }
+
+        $postId = wp_insert_post([
+            'post_type' => 'page',
+            'post_title' => $title,
+            'post_name' => $slug,
+            'post_parent' => $parent,
+            'post_status' => $status,
+            'post_content' => '',
+        ], true);
+
+        if (is_wp_error($postId)) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden kunne ikke oprettes: ' . $postId->get_error_message()]));
+            exit;
+        }
+
+        $postId = (int) $postId;
+        if ($postId <= 0) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'WordPress returnerede ikke et gyldigt side-ID.']));
+            exit;
+        }
+
+        wp_safe_redirect(self::designerUrl($postId));
+        exit;
     }
 
     public static function exportBackup(): void

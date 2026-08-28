@@ -587,13 +587,17 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ### VD-TEXT-SEL-001 – Rich-text selection
 
-**BUGFIX i 0.1.38 – afventer bruger-QA.** Bruger-QA af 0.1.37 viste et tydeligt cold-start-mønster: de første 2–3 formatteringer kunne miste selection, hvorefter samme editor-session blev stabil. 0.1.38 flytter derfor oprettelsen af boundary-marker-sessionen fra toolbar-pointerdown til afslutningen af selve tekstmarkeringen (`mouseup`/`keyup`). Når brugeren klikker Fed, Kursiv eller Understregning første gang, skal selection-sessionen allerede være etableret. Toolbar-pointerdown er kun fallback. Single-owner-kontrakten fra 0.1.37 bevares uændret.
+**PASS i bruger-QA på 0.1.38 / regressionsbeskyttet i 0.1.39.** Cold-start selection-sessionen etableres ved afsluttet tekstmarkering, før første toolbar-klik. `v0125` er eneste autoritative selection-ejer, og legacy-lag må ikke aktivere egne restore-loops. Bruger-QA bekræftede, at Fed/Kursiv/Understregning nu bevarer markeringen som krævet.
 
-Godkendelsestest: 20/20 gentagelser for Fed, Kursiv og Understregning samt kæderne Fed → Kursiv → Understregning og Kursiv → Fed → Understregning uden ny markering.
+**FAST owner-regel:** Legacy rich-text-filer må aldrig afgøre delegation ud fra et konkret release-nummer. Hvis `H18RichTextV0125.selectionOwner` er sat, er v0125 den eneste selection-ejer.
 
-**Cold-start-test er obligatorisk:** efter frisk reload vælges et Tekst-element, tekst markeres én gang, og første klik på Fed/Kursiv/Understregning skal både formatere og bevare samme selection. Testen gentages efter frisk reload i mindst Firefox og Chrome, før BUG-02 kan lukkes.
+### VD-PAGES-001 – Opret side fra Manager
 
-**FAST owner-regel:** Legacy rich-text-filer må aldrig afgøre delegation ud fra et konkret release-nummer. Hvis `H18RichTextV0125.selectionOwner` er sat, er v0125 den eneste selection-ejer, og ældre capture/restore-loops skal returnere uden handling.
+**IMPLEMENTERET i 0.1.39.** Sider kan oprettes direkte fra Managerens Sider-modul med titel, valgfri slug, overordnet side og status. Efter oprettelse åbnes siden direkte i Visual Designer. Oprettelse af en side opretter ikke automatisk en Visual Designer-version; første rigtige Gem opretter v1.
+
+### VD-MENU-001 – WordPress-menu som visuelt element
+
+**IMPLEMENTERET i 0.1.39 for Header/Footer Designer.** Canonical `type=menu` gemmer reference til en eksisterende WordPress-menu og designindstillinger, men ikke en kopi af menupunkterne. Menu Inspector styrer retning, alignment, mobilstrategi, farver, typografi, afstand, padding og baggrund. Mobilstrategier er Hamburger, Lodret og Ombryd. Theme Shell-cutover er fortsat separat og OFF, indtil parity er godkendt.
 
 ### VD-BUTTON-TYPE-001 – Knap er Knap
 

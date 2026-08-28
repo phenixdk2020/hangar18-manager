@@ -58,7 +58,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image', 'button'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -261,6 +261,31 @@ final class LayoutModel
                 'autoSize' => array_key_exists('autoSize', $raw) ? (bool) $raw['autoSize'] : true,
                 'placementMode' => strtolower((string) ($raw['placementMode'] ?? 'normal')) === 'overlay' ? 'overlay' : 'normal',
                 'zIndex' => self::clamp($raw['zIndex'] ?? 20, 1, 200, 20),
+            ], $border);
+        }
+        if ($type === 'menu') {
+            $orientation = strtolower((string) ($raw['orientation'] ?? 'horizontal'));
+            if (!in_array($orientation, ['horizontal', 'vertical'], true)) { $orientation = 'horizontal'; }
+            $align = strtolower((string) ($raw['align'] ?? 'right'));
+            if (!in_array($align, ['left', 'center', 'right'], true)) { $align = 'right'; }
+            $mobileMode = strtolower((string) ($raw['mobileMode'] ?? 'hamburger'));
+            if (!in_array($mobileMode, ['hamburger', 'vertical', 'wrap'], true)) { $mobileMode = 'hamburger'; }
+            return array_merge([
+                'menuId' => absint($raw['menuId'] ?? 0),
+                'orientation' => $orientation,
+                'align' => $align,
+                'mobileMode' => $mobileMode,
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#ffffff')) ?: '#ffffff',
+                'hoverTextColor' => sanitize_hex_color((string) ($raw['hoverTextColor'] ?? '#c3ae83')) ?: '#c3ae83',
+                'activeTextColor' => sanitize_hex_color((string) ($raw['activeTextColor'] ?? '#c3ae83')) ?: '#c3ae83',
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#30382a')) ?: '#30382a',
+                'backgroundTransparent' => array_key_exists('backgroundTransparent', $raw) ? (bool) $raw['backgroundTransparent'] : true,
+                'fontSize' => self::clamp($raw['fontSize'] ?? 16, 8, 64, 16),
+                'fontWeight' => self::clamp($raw['fontWeight'] ?? 600, 100, 900, 600),
+                'menuGap' => self::clamp($raw['menuGap'] ?? 24, 0, 120, 24),
+                'paddingX' => self::clamp($raw['paddingX'] ?? 8, 0, 120, 8),
+                'paddingY' => self::clamp($raw['paddingY'] ?? 8, 0, 120, 8),
+                'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
             ], $border);
         }
         if ($type === 'image') {

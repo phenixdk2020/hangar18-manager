@@ -13,6 +13,7 @@ final class Renderer
         add_filter('the_content', [self::class, 'content'], 20);
         add_action('wp_head', [self::class, 'css'], 1000);
         add_action('wp_footer', [self::class, 'previewBadge'], 1000);
+        add_action('wp_footer', [self::class, 'menuScript'], 1001);
     }
 
     public static function content(string $content): string
@@ -57,10 +58,18 @@ final class Renderer
         echo '.h18-clean-front-button-link{display:flex;width:100%;height:100%;box-sizing:border-box;align-items:center;justify-content:center;text-decoration:none;background:var(--h18-btn-bg);color:var(--h18-btn-color);transition:background-color .15s ease,color .15s ease,border-color .15s ease}';
         echo '.h18-clean-front-button-link:hover{background:var(--h18-btn-hover-bg);color:var(--h18-btn-hover-color)}';
         echo '.h18-clean-front-button-link:focus-visible{outline:3px solid var(--h18-btn-focus);outline-offset:2px}';
+        echo '.h18-clean-front-menu{display:flex;align-items:center;box-sizing:border-box}.h18-clean-front-menu-list{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:var(--h18-menu-gap);font-size:var(--h18-menu-size);font-weight:var(--h18-menu-weight);justify-content:var(--h18-menu-justify);width:100%}.h18-clean-front-menu--vertical .h18-clean-front-menu-list{flex-direction:column;align-items:var(--h18-menu-items-align)}.h18-clean-front-menu-list li{margin:0;padding:0}.h18-clean-front-menu-list a{color:var(--h18-menu-color);text-decoration:none;white-space:nowrap}.h18-clean-front-menu-list a:hover,.h18-clean-front-menu-list a:focus-visible{color:var(--h18-menu-hover)}.h18-clean-front-menu-list .current-menu-item>a,.h18-clean-front-menu-list .current_page_item>a{color:var(--h18-menu-active)}.h18-clean-front-menu-toggle{display:none;margin-left:auto;background:transparent;color:var(--h18-menu-color);border:1px solid currentColor;border-radius:4px;padding:6px 10px;font:inherit}.h18-clean-front-menu .sub-menu{list-style:none;margin:4px 0 0;padding:0 0 0 14px}.h18-clean-front-menu--horizontal .sub-menu{display:none;position:absolute;background:inherit;padding:8px}.h18-clean-front-menu--horizontal li:hover>.sub-menu,.h18-clean-front-menu--horizontal li:focus-within>.sub-menu{display:block}@media(max-width:782px){.h18-clean-front-menu[data-mobile-mode="vertical"] .h18-clean-front-menu-list{flex-direction:column;align-items:flex-start}.h18-clean-front-menu[data-mobile-mode="wrap"] .h18-clean-front-menu-list{flex-wrap:wrap}.h18-clean-front-menu[data-mobile-mode="hamburger"] .h18-clean-front-menu-toggle{display:block}.h18-clean-front-menu[data-mobile-mode="hamburger"] .h18-clean-front-menu-list{display:none;flex-direction:column;align-items:flex-start;padding-top:8px}.h18-clean-front-menu[data-mobile-mode="hamburger"].is-open{flex-wrap:wrap}.h18-clean-front-menu[data-mobile-mode="hamburger"].is-open .h18-clean-front-menu-list{display:flex;flex-basis:100%}}';
         echo '.h18-clean-front-text-heading{margin:0 0 8px;line-height:1.2}';
         echo '.h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box;height:100%}';
         echo '.h18-clean-front-image img{display:block;max-width:none;margin:0;box-sizing:border-box}';
         echo '</style>';
+    }
+
+
+    public static function menuScript(): void
+    {
+        if (!is_singular('page')) { return; }
+        echo '<script id="h18-clean-menu-js">document.addEventListener("click",function(e){var b=e.target.closest(".h18-clean-front-menu-toggle");if(!b)return;var n=b.closest(".h18-clean-front-menu");if(!n)return;var open=!n.classList.contains("is-open");n.classList.toggle("is-open",open);b.setAttribute("aria-expanded",open?"true":"false");});</script>';
     }
 
     public static function previewKey(int $userId, int $postId, string $token): string
@@ -182,6 +191,43 @@ final class Renderer
             $rawText = (string) ($props['text'] ?? '');
             $bodyHtml = strpos($rawText, '<') === false ? nl2br(esc_html($rawText), false) : wp_kses_post($rawText);
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '">' . $headingHtml . $bodyHtml . '</div>';
+        }
+
+        if ($type === 'menu') {
+            $menuId = absint($props['menuId'] ?? 0);
+            $orientation = (string) ($props['orientation'] ?? 'horizontal') === 'vertical' ? 'vertical' : 'horizontal';
+            $align = in_array((string) ($props['align'] ?? 'right'), ['left', 'center', 'right'], true) ? (string) $props['align'] : 'right';
+            $mobileMode = in_array((string) ($props['mobileMode'] ?? 'hamburger'), ['hamburger', 'vertical', 'wrap'], true) ? (string) $props['mobileMode'] : 'hamburger';
+            $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#ffffff')) ?: '#ffffff';
+            $hoverColor = sanitize_hex_color((string) ($props['hoverTextColor'] ?? '#c3ae83')) ?: '#c3ae83';
+            $activeColor = sanitize_hex_color((string) ($props['activeTextColor'] ?? '#c3ae83')) ?: '#c3ae83';
+            $background = !empty($props['backgroundTransparent']) ? 'transparent' : (sanitize_hex_color((string) ($props['background'] ?? '#30382a')) ?: '#30382a');
+            $fontSize = max(8, min(64, (int) ($props['fontSize'] ?? 16)));
+            $fontWeight = max(100, min(900, (int) ($props['fontWeight'] ?? 600)));
+            $gap = max(0, min(120, (int) ($props['menuGap'] ?? 24)));
+            $paddingX = max(0, min(120, (int) ($props['paddingX'] ?? 8)));
+            $paddingY = max(0, min(120, (int) ($props['paddingY'] ?? 8)));
+            $justify = ['left' => 'flex-start', 'center' => 'center', 'right' => 'flex-end'][$align];
+            $itemsAlign = ['left' => 'flex-start', 'center' => 'center', 'right' => 'flex-end'][$align];
+            $rendered = '';
+            if ($menuId > 0) {
+                $candidate = wp_nav_menu([
+                    'menu' => $menuId,
+                    'container' => false,
+                    'echo' => false,
+                    'fallback_cb' => false,
+                    'menu_class' => 'h18-clean-front-menu-list',
+                    'depth' => 2,
+                ]);
+                $rendered = is_string($candidate) ? $candidate : '';
+            }
+            if ($rendered === '') {
+                $rendered = '<ul class="h18-clean-front-menu-list"><li><span>Vælg menu i Visual Designer</span></li></ul>';
+            }
+            $menuStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . 'background:' . $background . ';padding:' . $paddingY . 'px ' . $paddingX . 'px;'
+                . '--h18-menu-color:' . $textColor . ';--h18-menu-hover:' . $hoverColor . ';--h18-menu-active:' . $activeColor . ';--h18-menu-gap:' . $gap . 'px;'
+                . '--h18-menu-size:' . $fontSize . 'px;--h18-menu-weight:' . $fontWeight . ';--h18-menu-justify:' . $justify . ';--h18-menu-items-align:' . $itemsAlign . ';';
+            return '<nav id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-menu h18-clean-front-menu--' . esc_attr($orientation) . '" data-mobile-mode="' . esc_attr($mobileMode) . '" aria-label="Navigation" style="' . esc_attr($menuStyle) . '"><button type="button" class="h18-clean-front-menu-toggle" aria-expanded="false">☰ Menu</button>' . $rendered . '</nav>';
         }
 
         if ($type === 'button') {

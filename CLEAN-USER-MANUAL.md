@@ -1,7 +1,7 @@
 # Visual Designer Manager – Brugermanual
 
 Senest opdateret: 28. august 2026  
-Gælder for: Visual Designer Manager 0.1.35 og nyere; planlagte funktioner er mærket **Planlagt**  
+Gælder for: Visual Designer Manager 0.1.39 og nyere; planlagte funktioner er mærket **Planlagt**  
 Målgruppe: Redaktører og administratorer, der bygger og vedligeholder sider i WordPress
 
 > Denne manual beskriver **hvordan Visual Designer Manager bruges i praksis**. Den tekniske arkitektur er beskrevet separat i `CLEAN-DESIGN-MANUAL.md`.
@@ -20,6 +20,12 @@ Visual Designer Manager er en visuel sidebygger til WordPress. Ideen er, at en s
 Elementer kan flyttes med drag-and-drop, placeres over/under/venstre/højre for hinanden og lægges ind i Kasser og Sektioner.
 
 Visual Designer gemmer siden i sin egen model og ændrer først den offentlige Visual Designer-side, når du vælger **Gem som ny version**.
+
+### 1.1 Opret en ny side direkte i Manageren
+
+Åbn **Visual Designer Manager → Sider**. Under **Ny side** kan du angive titel, valgfri slug, overordnet side og om siden skal starte som Kladde eller Publiceret. Vælg **Opret og åbn Designer**; WordPress-siden oprettes, og Visual Designer åbner den med et tomt layout. Første **Gem som ny version** opretter Visual Designer-version v1.
+
+Du kan gentage dette for alle de sider, du skal bygge. Eksisterende WordPress-sider bliver fortsat vist i samme Sider-oversigt og kan åbnes i Designer.
 
 ---
 
@@ -82,9 +88,11 @@ Header er et **globalt design** over den enkelte side. Den kan indeholde Logo, M
 
 ### 2.4 Menu
 
-Menu skal være et selvstændigt visuelt element, som kan bruge en WordPress-menu som datakilde, mens Visual Designer styrer fx skrifttype, størrelse, farve, afstand, hover, aktiv side og mobil/hamburger-visning.
+Menu er fra 0.1.39 et selvstændigt visuelt element i Header/Footer Designer. Vælg **+ Menu**, placer elementet i en Sektion/Kasse og vælg derefter en eksisterende WordPress-menu i Inspector. Menupunkterne vedligeholdes fortsat centralt i WordPress; Visual Designer gemmer kun menuens ID og præsentationen.
 
-**Status: Planlagt som native Visual Designer-element.** WordPress-menuadministration findes allerede separat i Manageren.
+I Inspector kan du styre vandret/lodret retning, venstre/center/højre alignment, tekst-, hover- og aktiv-farve, baggrund, typografi, afstand mellem punkter, padding og mobilvisning. Mobilvisning kan være **Hamburger**, **Lodret menu** eller **Ombryd menupunkter**.
+
+Header/Footer-preview kan bruges uden at Theme Shell overtager den offentlige side. Live cutover sker først, når Headeren er godkendt 1:1 på Desktop, Laptop og Mobil.
 
 ### 2.5 Hero / Topbanner
 

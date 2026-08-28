@@ -5,7 +5,7 @@
     const UNITS = Math.max(12, parseInt(CFG.units || 120, 10) || 120);
     const ROW_PX = Math.max(2, parseInt(CFG.rowPx || 8, 10) || 8);
     const POST_ID = parseInt(CFG.postId || 0, 10) || 0;
-    const TYPES = ['section', 'container', 'text', 'image', 'button'];
+    const TYPES = ['section', 'container', 'text', 'image', 'button', 'menu'];
     const PARENT_TYPES = ['section', 'container'];
     const undoStack = [];
     const redoStack = [];
@@ -47,9 +47,9 @@
         if (explicit > 0) { return explicit; }
         return ({h2:32,h3:28,h4:24,h5:20,h6:18})[String(props.headingLevel || 'h2')] || 32;
     }
-    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap'})[String(type || '')] || String(type || 'Element'); }
+    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap',menu:'Menu'})[String(type || '')] || String(type || 'Element'); }
     function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }
-    function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',fontFamily:'skrifttype',fontSize:'skriftstørrelse',fontWeight:'skrifttykkelse',lineHeight:'linjeafstand',letterSpacing:'bogstavafstand',headingFontFamily:'overskriftsskrifttype',headingFontSize:'overskriftsstørrelse',headingFontWeight:'overskriftstykkelse',headingLineHeight:'overskriftens linjeafstand',headingLetterSpacing:'overskriftens bogstavafstand',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding',autoSize:'automatisk størrelse',placementMode:'placering',zIndex:'lag'})[String(field || '')] || String(field || 'felt'); }
+    function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',fontFamily:'skrifttype',fontSize:'skriftstørrelse',fontWeight:'skrifttykkelse',lineHeight:'linjeafstand',letterSpacing:'bogstavafstand',headingFontFamily:'overskriftsskrifttype',headingFontSize:'overskriftsstørrelse',headingFontWeight:'overskriftstykkelse',headingLineHeight:'overskriftens linjeafstand',headingLetterSpacing:'overskriftens bogstavafstand',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding',autoSize:'automatisk størrelse',placementMode:'placering',zIndex:'lag',menuId:'WordPress-menu',orientation:'menuretning',mobileMode:'mobilmenu',activeTextColor:'aktiv menufarve',backgroundTransparent:'gennemsigtig baggrund',menuGap:'menuafstand'})[String(field || '')] || String(field || 'felt'); }
     function richPreviewHtml(value) {
         const raw = String(value || '');
         const tpl = document.createElement('template');
@@ -143,6 +143,25 @@
                 autoSize: raw.autoSize !== false,
                 placementMode: String(raw.placementMode || 'normal').toLowerCase() === 'overlay' ? 'overlay' : 'normal',
                 zIndex: clamp(parseInt(raw.zIndex || 20, 10) || 20, 1, 200)
+            });
+        }
+        if (type === 'menu') {
+            return Object.assign(common, {
+                menuId: parseInt(raw.menuId || 0, 10) || 0,
+                orientation: ['horizontal', 'vertical'].includes(String(raw.orientation || '').toLowerCase()) ? String(raw.orientation).toLowerCase() : 'horizontal',
+                align: ['left', 'center', 'right'].includes(String(raw.align || '').toLowerCase()) ? String(raw.align).toLowerCase() : 'right',
+                mobileMode: ['hamburger', 'vertical', 'wrap'].includes(String(raw.mobileMode || '').toLowerCase()) ? String(raw.mobileMode).toLowerCase() : 'hamburger',
+                textColor: /^#[0-9a-f]{6}$/i.test(String(raw.textColor || '')) ? String(raw.textColor).toLowerCase() : '#ffffff',
+                hoverTextColor: /^#[0-9a-f]{6}$/i.test(String(raw.hoverTextColor || '')) ? String(raw.hoverTextColor).toLowerCase() : '#c3ae83',
+                activeTextColor: /^#[0-9a-f]{6}$/i.test(String(raw.activeTextColor || '')) ? String(raw.activeTextColor).toLowerCase() : '#c3ae83',
+                background: /^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#30382a',
+                backgroundTransparent: raw.backgroundTransparent !== false,
+                fontSize: clamp(parseInt(raw.fontSize || 16, 10) || 16, 8, 64),
+                fontWeight: clamp(parseInt(raw.fontWeight || 600, 10) || 600, 100, 900),
+                menuGap: clamp(parseInt(raw.menuGap || 24, 10) || 24, 0, 120),
+                paddingX: clamp(parseInt(raw.paddingX || 8, 10) || 8, 0, 120),
+                paddingY: clamp(parseInt(raw.paddingY || 8, 10) || 8, 0, 120),
+                radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100)
             });
         }
         if (type === 'image') {
@@ -737,7 +756,7 @@
         const id = makeId(type);
         const defaultW = defaultWidth(type, parentId);
         const p = placement || { parentId: parentId, x: 0, y: nextFreeY(parentId), w: defaultW, targetId: '', zone: 'free', bandIds: [], bandH: MIN_SPLIT_H };
-        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8 };
+        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10 };
         const defaultH = Math.max(MIN_SPLIT_H, parseInt(defaultRows[type] || MIN_SPLIT_H, 10) || MIN_SPLIT_H);
         const newProps = normalizeProps(type, {});
         if (type === 'button' && p.zone === 'overlay') { newProps.placementMode = 'overlay'; }
@@ -905,6 +924,44 @@
             button.style.borderRadius = String(node.props.radius || 0) + 'px';
             button.style.padding = String(node.props.paddingY || 10) + 'px ' + String(node.props.paddingX || 20) + 'px';
             wrap.appendChild(button);
+        } else if (node.type === 'menu') {
+            wrap.classList.add('h18-clean-node-preview--menu');
+            const menus = Array.isArray(CFG.menus) ? CFG.menus : [];
+            const menuDef = menus.find(function (entry) { return parseInt(entry.id || 0, 10) === parseInt(node.props.menuId || 0, 10); }) || null;
+            wrap.style.display = 'flex';
+            wrap.style.alignItems = 'center';
+            wrap.style.boxSizing = 'border-box';
+            wrap.style.padding = String(node.props.paddingY || 8) + 'px ' + String(node.props.paddingX || 8) + 'px';
+            wrap.style.borderRadius = String(node.props.radius || 0) + 'px';
+            wrap.style.background = node.props.backgroundTransparent === false ? (node.props.background || '#30382a') : 'transparent';
+            if (!menuDef) {
+                wrap.textContent = 'Vælg WordPress-menu i Inspector';
+            } else {
+                const nav = document.createElement('div');
+                nav.className = 'h18-clean-menu-preview';
+                nav.style.display = 'flex';
+                nav.style.width = '100%';
+                nav.style.flexDirection = node.props.orientation === 'vertical' ? 'column' : 'row';
+                nav.style.flexWrap = node.props.mobileMode === 'wrap' ? 'wrap' : 'nowrap';
+                nav.style.justifyContent = ({left:'flex-start',center:'center',right:'flex-end'})[node.props.align] || 'flex-end';
+                nav.style.alignItems = node.props.orientation === 'vertical' ? ({left:'flex-start',center:'center',right:'flex-end'})[node.props.align] || 'flex-start' : 'center';
+                nav.style.gap = String(node.props.menuGap || 24) + 'px';
+                nav.style.fontSize = String(node.props.fontSize || 16) + 'px';
+                nav.style.fontWeight = String(node.props.fontWeight || 600);
+                const items = Array.isArray(menuDef.items) ? menuDef.items.filter(function (item) { return parseInt(item.parent || 0, 10) === 0; }) : [];
+                if (!items.length) {
+                    nav.textContent = menuDef.name || 'Tom menu';
+                } else {
+                    items.forEach(function (item) {
+                        const label = document.createElement('span');
+                        label.textContent = String(item.title || 'Menupunkt');
+                        label.style.color = node.props.textColor || '#ffffff';
+                        label.style.whiteSpace = 'nowrap';
+                        nav.appendChild(label);
+                    });
+                }
+                wrap.appendChild(nav);
+            }
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
             const alignX = ['left', 'center', 'right'].includes(node.props.imageAlignX) ? node.props.imageAlignX : 'center';
@@ -1127,7 +1184,7 @@
             });
             move.addEventListener('dragend', function () { card.classList.remove('is-dragging'); clearDragState(); });
             const title = document.createElement('strong');
-            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
+            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
             header.appendChild(move);
             header.appendChild(title);
             card.appendChild(header);
@@ -1248,7 +1305,7 @@
         const node = nodeById(selectedId);
         if (!node) { host.innerHTML = '<p class="description">Vælg et element på canvas.</p>'; return; }
         const g = node.geometry.desktop;
-        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
+        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
         html += '<div class="h18-clean-field-grid"><label>X / 120<input data-field="gx" type="number" min="0" max="119" value="' + g.x + '"></label><label>Bredde / 120<input data-field="gw" type="number" min="1" max="120" value="' + g.w + '"></label><label>Y · 8px<input data-field="gy" type="number" value="' + g.y + '"></label><label>Højde · 8px<input data-field="gh" type="number" min="0" value="' + g.h + '"></label></div>';
         if (node.type === 'text') {
             html += '<label>Overskrift <span class="description">(valgfri)</span><input data-field="heading" type="text" value="' + escapeAttr(node.props.heading || '') + '"></label>';
@@ -1270,6 +1327,13 @@
             if (node.props.placementMode === 'overlay') { html += '<label>Lag<input data-field="zIndex" type="number" min="1" max="200" value="' + (node.props.zIndex || 20) + '"><span class="description">Højere lag ligger foran andre elementer. Knappen flyder frit i sin aktuelle Side/Sektion/Kasse og flyttes med ✥ eller X/Y.</span></label>'; }
             html += '<label class="h18-clean-checkbox"><input data-field="autoSize" type="checkbox"' + (node.props.autoSize !== false ? ' checked' : '') + '> Automatisk størrelse efter tekst og padding</label>';
             html += '<div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#30382a') + '"></label><label>Tekstfarve<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#ffffff') + '"></label><label>Hover baggrund<input data-field="hoverBackground" type="color" value="' + escapeAttr(node.props.hoverBackground || '#525a5f') + '"></label><label>Hover tekst<input data-field="hoverTextColor" type="color" value="' + escapeAttr(node.props.hoverTextColor || '#ffffff') + '"></label><label>Focus-farve<input data-field="focusColor" type="color" value="' + escapeAttr(node.props.focusColor || '#c3ae83') + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label><label>Padding X<input data-field="paddingX" type="number" min="0" max="120" value="' + (node.props.paddingX || 20) + '"></label><label>Padding Y<input data-field="paddingY" type="number" min="0" max="120" value="' + (node.props.paddingY || 10) + '"></label></div>';
+        } else if (node.type === 'menu') {
+            html += '<label>WordPress-menu<select data-field="menuId"><option value="0">Vælg menu…</option>' + (Array.isArray(CFG.menus) ? CFG.menus.map(function (menu) { const id = parseInt(menu.id || 0, 10) || 0; return '<option value="' + id + '"' + (parseInt(node.props.menuId || 0, 10) === id ? ' selected' : '') + '>' + escapeHtml(String(menu.name || ('Menu ' + id))) + '</option>'; }).join('') : '') + '</select></label>';
+            html += '<div class="h18-clean-field-grid"><label>Retning<select data-field="orientation"><option value="horizontal"' + (node.props.orientation !== 'vertical' ? ' selected' : '') + '>Vandret</option><option value="vertical"' + (node.props.orientation === 'vertical' ? ' selected' : '') + '>Lodret</option></select></label><label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Center</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label></div>';
+            html += '<label>Mobilvisning<select data-field="mobileMode"><option value="hamburger"' + (node.props.mobileMode === 'hamburger' ? ' selected' : '') + '>Hamburger</option><option value="vertical"' + (node.props.mobileMode === 'vertical' ? ' selected' : '') + '>Lodret menu</option><option value="wrap"' + (node.props.mobileMode === 'wrap' ? ' selected' : '') + '>Ombryd menupunkter</option></select></label>';
+            html += '<label class="h18-clean-checkbox"><input data-field="backgroundTransparent" type="checkbox"' + (node.props.backgroundTransparent !== false ? ' checked' : '') + '> Gennemsigtig baggrund</label>';
+            html += '<div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#30382a') + '"></label><label>Tekst<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#ffffff') + '"></label><label>Hover<input data-field="hoverTextColor" type="color" value="' + escapeAttr(node.props.hoverTextColor || '#c3ae83') + '"></label><label>Aktiv side<input data-field="activeTextColor" type="color" value="' + escapeAttr(node.props.activeTextColor || '#c3ae83') + '"></label><label>Størrelse px<input data-field="fontSize" type="number" min="8" max="64" value="' + (node.props.fontSize || 16) + '"></label><label>Tykkelse<select data-field="fontWeight">' + [300,400,500,600,700,800,900].map(function (v) { return '<option value="' + v + '"' + (parseInt(node.props.fontWeight || 600, 10) === v ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></label><label>Afstand px<input data-field="menuGap" type="number" min="0" max="120" value="' + (node.props.menuGap || 24) + '"></label><label>Padding X<input data-field="paddingX" type="number" min="0" max="120" value="' + (node.props.paddingX || 8) + '"></label><label>Padding Y<input data-field="paddingY" type="number" min="0" max="120" value="' + (node.props.paddingY || 8) + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label></div>';
+            html += '<p class="description">Menuen henter sine punkter fra WordPress. Visual Designer gemmer kun valgt menu og designindstillinger.</p>';
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button>';
             html += '<label>Billede i boksen<select data-field="fit"><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet</option><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld boksen · beskær</option><option value="original"' + (node.props.fit === 'original' ? ' selected' : '') + '>Original størrelse</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Stræk til boks</option></select></label>';
@@ -1333,6 +1397,12 @@
                 else if (field === 'focusColor') { current.props.focusColor = normalizeColor(control.value || '#c3ae83'); }
                 else if (field === 'paddingX') { current.props.paddingX = clamp(parseInt(control.value || 20, 10) || 20, 0, 120); }
                 else if (field === 'paddingY') { current.props.paddingY = clamp(parseInt(control.value || 10, 10) || 10, 0, 120); }
+                else if (field === 'menuId') { current.props.menuId = parseInt(control.value || 0, 10) || 0; }
+                else if (field === 'orientation') { current.props.orientation = control.value === 'vertical' ? 'vertical' : 'horizontal'; }
+                else if (field === 'mobileMode') { current.props.mobileMode = ['hamburger', 'vertical', 'wrap'].includes(control.value) ? control.value : 'hamburger'; }
+                else if (field === 'activeTextColor') { current.props.activeTextColor = normalizeColor(control.value || '#c3ae83'); }
+                else if (field === 'backgroundTransparent') { current.props.backgroundTransparent = !!control.checked; }
+                else if (field === 'menuGap') { current.props.menuGap = clamp(parseInt(control.value || 24, 10) || 24, 0, 120); }
                 else if (field === 'fit') { current.props.fit = ['cover', 'contain', 'original', 'stretch'].includes(control.value) ? control.value : 'contain'; }
                 else if (field === 'imageAlignX') { current.props.imageAlignX = ['left', 'center', 'right'].includes(control.value) ? control.value : 'center'; }
                 else if (field === 'imageAlignY') { current.props.imageAlignY = ['top', 'center', 'bottom'].includes(control.value) ? control.value : 'center'; }

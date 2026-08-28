@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.1.39",
+    "date": "2026-08-28",
+    "items": [
+      "Sider kan nu oprettes direkte i Visual Designer Manager med titel, slug, overordnet side og kladde/publiceret status; den nye side åbnes direkte i Designer.",
+      "Header/Footer Designer får et canonical Menu-element med WordPress-menu som datakilde.",
+      "Menu Inspector styrer retning, alignment, mobilvisning, farver, typografi, afstand, padding og baggrund uden at kopiere menupunkterne ind i layoutmodellen.",
+      "Menu understøtter Hamburger, Lodret og Ombryd som mobilstrategier; frontend-rendereren er klar til senere Theme Shell-cutover.",
+      "BUG-02 rich-text selection er PASS i bruger-QA på 0.1.38 og regressionskontrakten bevares i 0.1.39.",
+      "Theme Shell-cutover forbliver deaktiveret; eksisterende tema er fortsat sikker fallback indtil Header-parity er godkendt."
+    ]
+  },
+  {
     "version": "0.1.38",
     "date": "2026-08-28",
     "items": [

@@ -103,6 +103,30 @@ vdAssert((int) ($button['props']['pageId'] ?? 0) === 42, 'Button internal page I
 vdAssert(($button['props']['background'] ?? '') === '#30382a', 'Button background was not normalized.');
 vdAssert((int) ($button['props']['radius'] ?? -1) === 9, 'Button radius was not retained.');
 
+
+/* Menu is a canonical leaf whose content comes from a WordPress menu reference. */
+$menuModel = LayoutModel::normalize([
+    'nodes' => [
+        [
+            'id' => 'section-menu', 'type' => 'section', 'parentId' => '', 'order' => 10,
+            'geometry' => vdGeometry(0, 0, 120, 12),
+            'props' => ['background' => '#30382a', 'padding' => 0, 'minHeightRows' => 12],
+        ],
+        [
+            'id' => 'menu-a', 'type' => 'menu', 'parentId' => 'section-menu', 'order' => 10,
+            'geometry' => vdGeometry(40, 1, 80, 10),
+            'props' => ['menuId' => 6, 'orientation' => 'horizontal', 'align' => 'right', 'mobileMode' => 'hamburger', 'textColor' => '#FFFFFF', 'menuGap' => 28],
+        ],
+    ],
+]);
+$menuNode = null;
+foreach ($menuModel['nodes'] as $node) { if (($node['id'] ?? '') === 'menu-a') { $menuNode = $node; break; } }
+vdAssert(is_array($menuNode), 'Menu disappeared during canonical normalization.');
+vdAssert(($menuNode['type'] ?? '') === 'menu', 'Menu canonical type was not retained.');
+vdAssert((int) ($menuNode['props']['menuId'] ?? 0) === 6, 'Menu WordPress source ID was not retained.');
+vdAssert(($menuNode['props']['mobileMode'] ?? '') === 'hamburger', 'Menu mobile mode was not retained.');
+vdAssert(($menuNode['props']['textColor'] ?? '') === '#ffffff', 'Menu text color was not normalized.');
+
 /* Seed phase-1 single Header/Footer storage exactly as an existing 0.1.23 site could have it. */
 $legacyHeader = LayoutModel::normalize([
     'nodes' => [[
