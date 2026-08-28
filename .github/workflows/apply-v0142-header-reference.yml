@@ -1,0 +1,93 @@
+name: Apply Visual Designer Manager 0.1.42 Header reference fallback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0142-header-reference.yml'
+      - '.github/scripts/apply_v0142_header_reference.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.42 patch
+        run: python .github/scripts/apply_v0142_header_reference.py
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression and model QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.42 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'Version: 0.1.42' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.42'" clean/hangar18-manager/hangar18-manager.php
+          grep -q "h18_vd_legacy_header_converted_v0142" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "h18_vd_legacy_header_status_v0142" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "buildScreenshotReferenceModel" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "desktop-reference-2026-08-28" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "section-header-reference-v0142" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "menu-header-reference-primary-v0142" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "wordpress-custom-logo" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "wordpress-site-icon" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "Konvertér gammel Header igen" clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -q "renderLegacyHeaderConversion" clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -q "convertLegacyHeader" clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -q "Visual Designer Manager 0.1.42 model QA PASS" .github/scripts/v0125_model_qa.php
+          grep -q '"version": "0.1.42"' clean/hangar18-manager/release-history.json
+          grep -q 'BUG-11' clean-release-notes.html
+          test -s docs/v0142-status.md
+          grep -q "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "get_option(self::CUTOVER_OPTION, '0') === '1'" clean/hangar18-manager/src/Frontend/ThemeShell.php
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php \
+            clean/hangar18-manager/src/Admin/GlobalDesignerController.php \
+            .github/scripts/v0125_model_qa.php \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            docs/v0142-status.md
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Add observable Header reference conversion in v0.1.42'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          echo 'Unable to publish 0.1.42 implementation.' >&2
+          exit 1
