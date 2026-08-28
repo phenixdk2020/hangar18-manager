@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.38",
+  "version": "0.1.39",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.38.zip",
-  "sha256": "9c5e1b6e0a0702d7ea5eb2d50072973968f20ee89aa57c427c7783352a75c12d",
-  "source_commit": "a46950ad81b04f6e8461cdaedf81c59d4155f551",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.39.zip",
+  "sha256": "e8ce999de84fa67c7f525589ac67305117f105dd488589e235b92c340bc27b7c",
+  "source_commit": "6d994af0fda519aae53e84e574f18bdf57d63945",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.38</h4><ul><li><strong>BUG-02 cold start:</strong> selection-sessionen etableres nu allerede, når tekstmarkeringen afsluttes.</li><li><strong>Første klik:</strong> Fed/Kursiv/Understregning skal ikke længere både initialisere selection og formatere i samme pointer-sekvens.</li><li><strong>Fallback:</strong> toolbar-pointerdown kan stadig genetablere sessionen, hvis den mangler.</li><li><strong>Single owner:</strong> den permanente v0125-ejer fra 0.1.37 bevares.</li><li><strong>QA:</strong> cold-start efter frisk reload er nu obligatorisk i Firefox og Chrome.</li><li><strong>Scope:</strong> ingen ændring til Billede-adfærd.</li></ul>"
+    "changelog": "<h4>0.1.39</h4><ul><li><strong>Ny side:</strong> opret WordPress-sider direkte fra Visual Designer Manager og åbn dem straks i Designer.</li><li><strong>Header Menu:</strong> nyt canonical Menu-element med eksisterende WordPress-menu som datakilde.</li><li><strong>Menu design:</strong> retning, alignment, mobilvisning, farver, typografi, afstand, padding og baggrund styres i Inspector.</li><li><strong>Mobil:</strong> Hamburger, Lodret og Ombryd er tilgængelige menu-strategier.</li><li><strong>BUG-02:</strong> rich-text selection er bruger-QA PASS på 0.1.38; cold-start/single-owner-kontrakten bevares.</li><li><strong>Sikkerhed:</strong> Theme Shell-cutover forbliver slået fra indtil 1:1 Header-parity er godkendt.</li></ul>"
   }
 }
