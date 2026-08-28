@@ -39,6 +39,9 @@ jobs:
           grep -q "function restoreMarkerSelection" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "boundary-markers-v0137-single-owner" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "selectionOwner: 'v0125-authoritative'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "function primeSelectionSession" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "primeSelectionSession();" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "window.H18RichTextV0125.selectionOwner) { return; }" clean/hangar18-manager/assets/editor-v0131.js
           grep -q "window.H18RichTextV0125.selectionOwner);" clean/hangar18-manager/assets/editor-v0132.js
           if grep -n -E "selectionOwner[[:space:]]*===?[[:space:]]*['\"]v[0-9]+" clean/hangar18-manager/assets/editor-v0131.js clean/hangar18-manager/assets/editor-v0132.js; then
@@ -51,7 +54,7 @@ jobs:
           grep -q "visual-designer-manager-v" clean/hangar18-manager/src/Update/GitHubUpdater.php
           grep -q "24.2 Produktnavn og synlige filnavne" CLEAN-DESIGN-MANUAL.md
           grep -q "VD-COLOR-POPOVER-001" CLEAN-TECHNICAL-MANUAL.md
-          test -s docs/v0137-status.md
+          test -s docs/v0138-status.md
           test -s clean/hangar18-manager/release-history.json
           if grep -R -n -E 'Hangar18 Manager Clean|Hangar18 Designer|Clean Manager v|Clean editor |Clean layout gemt|Clean-sider|Ikke Clean|h18-Visual Designer-' clean/hangar18-manager; then
             echo 'Obsolete public product naming found in Visual Designer Manager source.' >&2
