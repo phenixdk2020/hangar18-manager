@@ -1,0 +1,86 @@
+name: Apply Visual Designer Manager 0.1.37 selection-owner fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0137-selection-owner.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.37 selection-owner patch
+        run: python .github/scripts/apply_v0137_selection_owner.py
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify BUG-02 single-owner contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "Version: 0.1.37" clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.37'" clean/hangar18-manager/hangar18-manager.php
+          grep -q "selectionOwner: 'v0125-authoritative'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "boundary-markers-v0137-single-owner" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "window.H18RichTextV0125.selectionOwner) { return; }" clean/hangar18-manager/assets/editor-v0131.js
+          grep -q "window.H18RichTextV0125.selectionOwner);" clean/hangar18-manager/assets/editor-v0132.js
+          if grep -n -E "selectionOwner[[:space:]]*===?[[:space:]]*['\"]v[0-9]+" clean/hangar18-manager/assets/editor-v0131.js clean/hangar18-manager/assets/editor-v0132.js; then
+            echo 'Version-bound legacy selection owner guard remains.' >&2
+            exit 1
+          fi
+          grep -q '"version": "0.1.37"' clean/hangar18-manager/release-history.json
+          grep -q "BUGFIX i 0.1.37" CLEAN-TECHNICAL-MANUAL.md
+          test -s docs/v0137-status.md
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php \
+                  clean/hangar18-manager/assets/editor-v0125.js \
+                  clean/hangar18-manager/assets/editor-v0131.js \
+                  clean/hangar18-manager/assets/editor-v0132.js \
+                  clean/hangar18-manager/release-history.json \
+                  CLEAN-TECHNICAL-MANUAL.md \
+                  clean-release-notes.html \
+                  docs/v0137-status.md \
+                  .github/workflows/visual-designer-release.yml
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Fix BUG-02 single rich-text selection owner for v0.1.37'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
