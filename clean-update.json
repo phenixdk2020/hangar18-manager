@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.37",
+  "version": "0.1.38",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.37.zip",
-  "sha256": "44a378b252692ea68207036bf0d220d6cbf5bf3ce6c4e5ed8264d6ccbf7e97b8",
-  "source_commit": "31f47acf221c8df3f43c52fab9c6f1f6f5f98785",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.38.zip",
+  "sha256": "9c5e1b6e0a0702d7ea5eb2d50072973968f20ee89aa57c427c7783352a75c12d",
+  "source_commit": "a46950ad81b04f6e8461cdaedf81c59d4155f551",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.37</h4><ul><li><strong>BUG-02 root cause:</strong> gamle rich-text restore-loops blev utilsigtet genaktiveret, fordi deres delegation var hardcoded til owner-navnet v0134.</li><li><strong>Single owner:</strong> v0125 er nu permanent autoritativ selection-ejer; v0131/v0132 delegerer uanset versionslabel.</li><li><strong>Regression gate:</strong> release-QA afviser fremover versionsbundne selection-owner guards.</li><li><strong>Formattering:</strong> boundary-marker motoren fra 0.1.36 kører nu uden konkurrerende selection-handlers.</li><li><strong>Scope:</strong> ingen ændring til Billede-adfærd i denne release.</li></ul>"
+    "changelog": "<h4>0.1.38</h4><ul><li><strong>BUG-02 cold start:</strong> selection-sessionen etableres nu allerede, når tekstmarkeringen afsluttes.</li><li><strong>Første klik:</strong> Fed/Kursiv/Understregning skal ikke længere både initialisere selection og formatere i samme pointer-sekvens.</li><li><strong>Fallback:</strong> toolbar-pointerdown kan stadig genetablere sessionen, hvis den mangler.</li><li><strong>Single owner:</strong> den permanente v0125-ejer fra 0.1.37 bevares.</li><li><strong>QA:</strong> cold-start efter frisk reload er nu obligatorisk i Firefox og Chrome.</li><li><strong>Scope:</strong> ingen ændring til Billede-adfærd.</li></ul>"
   }
 }
