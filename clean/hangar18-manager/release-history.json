@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.35",
+    "date": "2026-08-28",
+    "items": [
+      "Fed, Kursiv og Understregning bruger deterministisk DOM-formatteringsmotor i stedet for browser execCommand for de tre inline-formater.",
+      "Rich-text selection rekonstrueres fra logiske tekst-offsets efter formattering, og toolbar pointerdown forhindrer fokus-tab.",
+      "Native Windows/browser type=color-dialog er erstattet af Visual Designers egen Inspector-farvevælger.",
+      "Farvevælgeren har saturation/brightness-felt, hue-slider, HEX, preview og farvechips; canonical værdi forbliver #RRGGBB.",
+      "Floating top-layer og Inspector-scroll er bevaret uændret."
+    ]
+  },
+  {
     "version": "0.1.34",
     "date": "2026-08-28",
     "items": [

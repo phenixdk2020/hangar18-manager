@@ -143,26 +143,141 @@
         if (window.requestAnimationFrame) { window.requestAnimationFrame(restore); }
     }
 
+    var INLINE_FORMAT_TAGS = { bold: 'STRONG', italic: 'EM', underline: 'U' };
+
+    function formatAncestor(node, tagName, editor) {
+        var current = node && node.nodeType === 1 ? node : (node ? node.parentElement : null);
+        while (current && current !== editor) {
+            if (current.tagName === tagName) { return current; }
+            current = current.parentElement;
+        }
+        return null;
+    }
+
+    function textNodesIn(root) {
+        var out = [];
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        var node = walker.nextNode();
+        while (node) {
+            if (String(node.nodeValue || '').length) { out.push(node); }
+            node = walker.nextNode();
+        }
+        return out;
+    }
+
+    function unwrap(element) {
+        if (!element || !element.parentNode) { return; }
+        var parent = element.parentNode;
+        while (element.firstChild) { parent.insertBefore(element.firstChild, element); }
+        parent.removeChild(element);
+    }
+
+    function removeMarker(marker) {
+        var fragment = document.createDocumentFragment();
+        while (marker.firstChild) { fragment.appendChild(marker.firstChild); }
+        marker.parentNode.replaceChild(fragment, marker);
+    }
+
+    function splitTargetAroundMarker(marker, ancestor) {
+        try {
+            var beforeRange = document.createRange();
+            beforeRange.selectNodeContents(ancestor);
+            beforeRange.setEndBefore(marker);
+            var before = beforeRange.cloneContents();
+            var afterRange = document.createRange();
+            afterRange.selectNodeContents(ancestor);
+            afterRange.setStartAfter(marker);
+            var after = afterRange.cloneContents();
+
+            var chain = [];
+            var current = marker.parentElement;
+            while (current && current !== ancestor) { chain.push(current); current = current.parentElement; }
+            if (current !== ancestor) { return false; }
+            var selected = marker;
+            chain.forEach(function (element) {
+                var clone = element.cloneNode(false);
+                clone.appendChild(selected);
+                selected = clone;
+            });
+
+            var replacement = document.createDocumentFragment();
+            if (before.childNodes.length) {
+                var left = ancestor.cloneNode(false);
+                left.appendChild(before);
+                replacement.appendChild(left);
+            }
+            replacement.appendChild(selected);
+            if (after.childNodes.length) {
+                var right = ancestor.cloneNode(false);
+                right.appendChild(after);
+                replacement.appendChild(right);
+            }
+            ancestor.parentNode.replaceChild(replacement, ancestor);
+            return true;
+        } catch (ignore) { return false; }
+    }
+
+    function applyInlineFormat(name, snapshot) {
+        var tagName = INLINE_FORMAT_TAGS[String(name || '').toLowerCase()] || '';
+        if (!tagName || !snapshot || !restoreLogicalSelection(snapshot) || !window.getSelection) { return false; }
+        var selection = window.getSelection();
+        if (!selection || !selection.rangeCount) { return false; }
+        var range = selection.getRangeAt(0);
+        if (range.collapsed) { return false; }
+
+        var marker = document.createElement('span');
+        marker.setAttribute('data-vd-selection-marker', '1');
+        marker.style.display = 'contents';
+        try {
+            marker.appendChild(range.extractContents());
+            range.insertNode(marker);
+        } catch (ignoreExtract) { return false; }
+
+        var nodes = textNodesIn(marker);
+        if (!nodes.length) { removeMarker(marker); restoreLogicalSelection(snapshot); return false; }
+        var allFormatted = nodes.every(function (node) { return !!formatAncestor(node, tagName, snapshot.editor); });
+
+        if (allFormatted) {
+            Array.prototype.slice.call(marker.querySelectorAll(tagName.toLowerCase())).reverse().forEach(unwrap);
+            var guard = 0;
+            var outer = formatAncestor(marker, tagName, snapshot.editor);
+            while (outer && guard++ < 12) {
+                if (!splitTargetAroundMarker(marker, outer)) { break; }
+                outer = formatAncestor(marker, tagName, snapshot.editor);
+            }
+        } else {
+            textNodesIn(marker).forEach(function (node) {
+                if (formatAncestor(node, tagName, snapshot.editor)) { return; }
+                var wrapper = document.createElement(tagName.toLowerCase());
+                node.parentNode.insertBefore(wrapper, node);
+                wrapper.appendChild(node);
+            });
+        }
+
+        removeMarker(marker);
+        try { snapshot.editor.normalize(); } catch (ignoreNormalize) {}
+        restoreLogicalSelection(snapshot);
+        return true;
+    }
+
     function command(name, value) {
         if (!active || !active.editor) { return; }
-
-        // VD-TEXT-SEL-001 / 0.1.34: the logical snapshot captured before the
-        // toolbar steals focus is authoritative. A cloned DOM Range is only a
-        // fallback because Bold/Italic can replace text nodes in Firefox.
         var logicalSelection = active.savedLogical || captureLogicalSelection(active.editor);
         if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
         else { restoreSelection(); }
 
         active.formatting = true;
         try {
-            try { document.execCommand('styleWithCSS', false, 'false'); } catch (ignoreStyleMode) {}
-            try { document.execCommand(name, false, value || null); } catch (ignoreCommand) {}
-            try { active.editor.normalize(); } catch (ignoreNormalize) {}
-            if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
-            else { rememberSelection(); }
-        } finally {
-            active.formatting = false;
-        }
+            if (INLINE_FORMAT_TAGS[String(name || '').toLowerCase()] && logicalSelection) {
+                applyInlineFormat(name, logicalSelection);
+            } else {
+                try { document.execCommand('styleWithCSS', false, 'false'); } catch (ignoreStyleMode) {}
+                try { document.execCommand(name, false, value || null); } catch (ignoreCommand) {}
+                try { active.editor.normalize(); } catch (ignoreNormalize) {}
+                if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
+                else { rememberSelection(); }
+            }
+        } finally { active.formatting = false; }
 
         if (logicalSelection) { active.savedLogical = logicalSelection; }
         active.dirty = true;
@@ -202,7 +317,7 @@
         button.title = title;
         // Capture already on pointerdown, before a browser can move focus.
         // mousedown prevents the toolbar button from becoming the editing focus.
-        button.addEventListener('pointerdown', function () { captureToolbarSelection(); });
+        button.addEventListener('pointerdown', function (event) { captureToolbarSelection(); event.preventDefault(); });
         button.addEventListener('mousedown', function (event) { captureToolbarSelection(); event.preventDefault(); });
         button.addEventListener('click', handler);
         return button;
@@ -367,7 +482,7 @@
 
     window.H18RichTextV0125 = {
         sync: sync,
-        selectionOwner: 'v0134',
+        selectionOwner: 'v0135',
         restoreSelection: function () {
             if (!active) { return false; }
             return active.savedLogical ? restoreLogicalSelection(active.savedLogical) : restoreSelection();

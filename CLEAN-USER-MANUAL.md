@@ -1,7 +1,7 @@
 # Visual Designer Manager – Brugermanual
 
 Senest opdateret: 28. august 2026  
-Gælder for: Visual Designer Manager 0.1.34 og nyere; planlagte funktioner er mærket **Planlagt**  
+Gælder for: Visual Designer Manager 0.1.35 og nyere; planlagte funktioner er mærket **Planlagt**  
 Målgruppe: Redaktører og administratorer, der bygger og vedligeholder sider i WordPress
 
 > Denne manual beskriver **hvordan Visual Designer Manager bruges i praksis**. Den tekniske arkitektur er beskrevet separat i `CLEAN-DESIGN-MANUAL.md`.
@@ -436,6 +436,12 @@ Elementet til højre kan altså spænde over begge rækker.
 ---
 
 ## 8. Farverne i Designer
+
+### Farvevælger i Inspector
+
+Fra **0.1.35** bruger Visual Designer sin egen farvevælger i stedet for Windows/browserens native farvedialog. Du kan vælge farve i saturation/brightness-feltet, flytte Hue-slideren, skrive en præcis HEX-værdi eller bruge en farvechip. Klik **Anvend** for at gemme valget eller **Annuller** for at beholde den tidligere farve. Canonical farve gemmes fortsat som `#RRGGBB`.
+
+### Statusfarver i editoren
 
 Designer bruger farver til at vise status.
 

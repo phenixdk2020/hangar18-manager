@@ -579,7 +579,7 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ---
 
-## 21. Kontraktstatus for 0.1.34
+## 21. Kontraktstatus for 0.1.35
 
 ### VD-FLOAT-001 – Flydende Knap
 
@@ -587,9 +587,9 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ### VD-TEXT-SEL-001 – Rich-text selection
 
-**BUGFIX i 0.1.34 – afventer bruger-QA.** Bruger-QA af 0.1.33 viste Understregning stabil, Fed ustabil og Kursiv fortsat fejlbehæftet. Årsagen var tre samtidige selection-restore-lag (`v0125`, `v0131`, `v0132`). I 0.1.34 er `v0125` eneste autoritative selection-ejer; de to ældre restore-loops delegerer/returnerer. Selection fanges ved pointerdown som logiske tekst-offsets og bruges af én atomisk command-transaction for Fed, Kursiv og Understregning.
+**BUGFIX i 0.1.35 – afventer bruger-QA.** 0.1.34 løste ikke Fed/Kursiv stabilt. I 0.1.35 bruger Fed, Kursiv og Understregning ikke længere browserens `execCommand()` til selve inline-formatet. De tre udføres som deterministiske DOM-transaktioner, og selection rekonstrueres fra logiske tekst-offsets.
 
-Godkendelsestest: mindst gentagne markeringer med Fed, Kursiv og Understregning samt kæden Fed → Kursiv → Understregning uden ny markering.
+Godkendelsestest: 20/20 gentagelser for Fed, Kursiv og Understregning samt kæderne Fed → Kursiv → Understregning og Kursiv → Fed → Understregning uden ny markering.
 
 ### VD-BUTTON-TYPE-001 – Knap er Knap
 
@@ -599,9 +599,15 @@ Godkendelsestest: mindst gentagne markeringer med Fed, Kursiv og Understregning 
 
 **IMPLEMENTERET i 0.1.34.** Floating får et særskilt editor-toplag. Valg/selection af Tekst, Billede, Kasse eller Sektion må ikke skjule den flydende Knap. Dette editorlag ændrer ikke den canonical lagværdi.
 
+### VD-COLOR-001 – Inspector farvevælger
+
+**IMPLEMENTERET i 0.1.35 – afventer bruger-QA.** Inspector bruger sin egen farvevælger og må ikke afhænge af operativsystemets native `type=color`-dialog. UI har saturation/brightness-felt, hue-slider, HEX-input, preview og farvechips. Canonical værdi er fortsat `#RRGGBB`.
+
+Godkendelsestest: vælg en tydelig grøn farve, klik **Anvend**, og verificér samme HEX i Inspector, canvas og efter Save/Reload uden at tidligere sort/lav luminans hænger ved.
+
 ### VD-INSPECTOR-SCROLL-001 – Inspector bund-buffer
 
-**PASS i bruger-QA på 0.1.32 / uændret i 0.1.34.** Inspectorens ca. 360 px editor-only bund-buffer fungerer som aftalt og påvirker ikke canonical model, Preview eller frontend.
+**PASS i bruger-QA på 0.1.32 / uændret i 0.1.35.** Inspectorens ca. 360 px editor-only bund-buffer fungerer som aftalt og påvirker ikke canonical model, Preview eller frontend.
 
 ---
 

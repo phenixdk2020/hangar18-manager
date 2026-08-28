@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.34
+Version: 0.1.35
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.35 ==
+* Fed, Kursiv og Understregning bruger deterministisk DOM-formatteringsmotor og bruger ikke længere browser execCommand for de tre inline-formater.
+* Selection rekonstrueres fra logiske tekst-offsets, og toolbar pointerdown flytter ikke fokus før formattering.
+* Native type=color/Windows-farvedialog er erstattet af Visual Designers egen farvevælger med saturation/brightness, hue, HEX, preview og farvechips.
+* Farver gemmes fortsat canonical som #RRGGBB uden modelmigration.
+* Floating top-layer og Inspector-scroll er bevaret uændret.
 
 == 0.1.34 ==
 * Rich-text har nu én autoritativ selection-ejer: v0125 command-pipelinen. De ældre v0131/v0132 restore-loops er deaktiveret, så de ikke kan overskrive hinandens Range.
