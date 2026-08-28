@@ -88,6 +88,7 @@
     }
 
     document.addEventListener('mousedown', function (event) {
+        if (window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner === 'v0134') { return; }
         const button = event.target && event.target.closest ? event.target.closest('.h18-vd-rich-button') : null;
         if (!button) { return; }
         const shell = button.closest('.h18-vd-rich-shell');
@@ -96,6 +97,7 @@
     }, true);
 
     document.addEventListener('click', function (event) {
+        if (window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner === 'v0134') { return; }
         const button = event.target && event.target.closest ? event.target.closest('.h18-vd-rich-button') : null;
         if (!button || !richSelection) { return; }
         const snapshot = richSelection;
@@ -130,6 +132,8 @@
     function refreshFloatingHandles(root) {
         const scope = root && root.querySelectorAll ? root : document;
         scope.querySelectorAll('.h18-clean-node--button.is-floating[data-h18-floating="1"]').forEach(function (card) {
+            const canonicalLayer = clamp(parseInt(card.style.zIndex || '20', 10) || 20, 1, 200);
+            card.style.setProperty('--h18-vd-floating-layer', String(canonicalLayer));
             const handle = floatingHandle(card);
             if (!handle) { return; }
             handle.draggable = false;

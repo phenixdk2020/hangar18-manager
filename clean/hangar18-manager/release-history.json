@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.34",
+    "date": "2026-08-28",
+    "items": [
+      "Rich-text selection har én autoritativ ejer i v0125; de ældre v0131/v0132 restore-loops er deaktiveret for at fjerne Range-race conditions.",
+      "Fed, Kursiv og Understregning bruger samme logiske selection-snapshot og atomiske command-transaction; selection fanges allerede ved pointerdown.",
+      "Flydende Knap ligger altid over normale elementer i editoren, også når et andet element markeres.",
+      "Canonical Lag/z-index bevares til rækkefølge mellem flere floating-elementer og frontend; editorens top-lag er separat chrome-adfærd.",
+      "Inspector-scroll og palette-floating fra 0.1.32/0.1.33 er bevaret."
+    ]
+  },
+  {
     "version": "0.1.33",
     "date": "2026-08-28",
     "items": [

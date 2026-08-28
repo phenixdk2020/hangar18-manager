@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.33
+Version: 0.1.34
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.34 ==
+* Rich-text har nu én autoritativ selection-ejer: v0125 command-pipelinen. De ældre v0131/v0132 restore-loops er deaktiveret, så de ikke kan overskrive hinandens Range.
+* Toolbar-selection gemmes allerede ved pointerdown og som logiske tekst-offsets; Fed, Kursiv og Understregning bruger samme atomiske formatteringstransaktion.
+* Flydende Knap tegnes i editoren altid over normale elementer, også når et andet element markeres. Normal selection opretter ikke længere et stacking-context, der kan skjule floating.
+* Canonical Lag/z-index bevares og bruges fortsat til rækkefølge mellem flere flydende Knapper og på frontend.
+* Inspector-scrollrettelsen fra 0.1.32 og palette-floating fra 0.1.33 er bevaret uændret.
 
 == 0.1.33 ==
 * Kursiv bruger nu samme logiske selection-capture/restore inde i den fælles rich-text command-pipeline som Fed og Understregning.

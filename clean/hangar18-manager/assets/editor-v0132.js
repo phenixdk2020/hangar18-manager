@@ -20,6 +20,10 @@
     var paletteDrag = null;
     var noticeTimer = 0;
 
+    function richSelectionOwnedByV0125() {
+        return !!(window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner === 'v0134');
+    }
+
     function richEditorForButton(button) {
         var shell = button && button.closest ? button.closest('.h18-vd-rich-shell') : null;
         return shell ? shell.querySelector('.h18-vd-rich-editor') : null;
@@ -122,6 +126,7 @@
     }
 
     document.addEventListener('selectionchange', function () {
+        if (richSelectionOwnedByV0125()) { return; }
         var selection = window.getSelection && window.getSelection();
         if (selection && selection.rangeCount) {
             var range = selection.getRangeAt(0);
@@ -148,6 +153,7 @@
 
     ['pointerdown', 'mousedown'].forEach(function (eventName) {
         document.addEventListener(eventName, function (event) {
+            if (richSelectionOwnedByV0125()) { return; }
             var button = event.target && event.target.closest ? event.target.closest('.h18-vd-rich-button') : null;
             if (!button) { return; }
             armRichSelection(button);
@@ -155,12 +161,14 @@
     });
 
     document.addEventListener('keydown', function (event) {
+        if (richSelectionOwnedByV0125()) { return; }
         var button = event.target && event.target.closest ? event.target.closest('.h18-vd-rich-button') : null;
         if (!button || (event.key !== 'Enter' && event.key !== ' ')) { return; }
         armRichSelection(button);
     }, true);
 
     document.addEventListener('click', function (event) {
+        if (richSelectionOwnedByV0125()) { return; }
         var button = event.target && event.target.closest ? event.target.closest('.h18-vd-rich-button') : null;
         if (!button) { return; }
         var snapshot = armRichSelection(button);

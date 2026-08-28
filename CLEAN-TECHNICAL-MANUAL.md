@@ -224,6 +224,8 @@ Den skal:
 - kunne overlappe almindeligt indhold med vilje uden normal overlap-fejl;
 - have breakpoint-specifik geometri for Desktop/Laptop/Mobil.
 
+**Editor-stacking:** En Flydende Knap skal altid være visuelt over normale editor-elementer, også når et andet element vælges. Selection-chrome må ikke skabe et stacking-context, der skjuler floating. Canonical `zIndex` bevares til rækkefølge mellem flere floating-elementer og frontend; editorens top-lag er separat chrome-adfærd.
+
 ### 6.4 Floating må ikke skjules som CSS-only hack
 
 Floating-status skal være en model-egenskab/layouttilstand, som kan Save/Reloades og gengives ens i editor, Preview og frontend.
@@ -577,25 +579,29 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ---
 
-## 21. Kontraktstatus for 0.1.33
+## 21. Kontraktstatus for 0.1.34
 
 ### VD-FLOAT-001 – Flydende Knap
 
-**IMPLEMENTERET / rettet i 0.1.33.** En palette-Knap klassificeres som Flydende **før** drop-zonen beregnes. Derfor går en ny Flydende Knap ikke gennem Over/Under/Venstre/Højre celle-split og viser ikke disse guides ved indsættelse. Den kan placeres på Side-root, i Sektion eller Kasse. Normal Knap kan fortsat vælges i Inspector og følger almindeligt grid-layout.
+**IMPLEMENTERET / stacking rettet i 0.1.34.** Palette-Knap starter fortsat som Flydende før drop-zonen beregnes. 0.1.34 fjerner normal-elementers editor stacking-context og giver Flydende Knap et separat top-lag, så den ikke forsvinder, når et andet element markeres. Canonical `zIndex` bevares og bruges til rækkefølge mellem flere floating-elementer og på frontend.
 
 ### VD-TEXT-SEL-001 – Rich-text selection
 
-**IMPLEMENTERET / rettet i 0.1.33.** Bruger-QA af 0.1.32 viste Fed = PASS, Understregning = PASS og Kursiv = BUG. I 0.1.33 er logisk selection-capture/restore flyttet ind i den fælles rich-text command-pipeline, så DOM-ændringen ved Kursiv håndteres samme sted som Fed og Understregning.
+**BUGFIX i 0.1.34 – afventer bruger-QA.** Bruger-QA af 0.1.33 viste Understregning stabil, Fed ustabil og Kursiv fortsat fejlbehæftet. Årsagen var tre samtidige selection-restore-lag (`v0125`, `v0131`, `v0132`). I 0.1.34 er `v0125` eneste autoritative selection-ejer; de to ældre restore-loops delegerer/returnerer. Selection fanges ved pointerdown som logiske tekst-offsets og bruges af én atomisk command-transaction for Fed, Kursiv og Understregning.
 
-Godkendelsestest er fortsat: markér tekst → Fed → Kursiv → Understregning uden ny markering mellem kommandoerne.
+Godkendelsestest: mindst gentagne markeringer med Fed, Kursiv og Understregning samt kæden Fed → Kursiv → Understregning uden ny markering.
 
 ### VD-BUTTON-TYPE-001 – Knap er Knap
 
-**IMPLEMENTERET.** Palette-Knap oprettes canonical som `type=button`. 0.1.33 præciserer desuden, at den nye palette-Knap starter med `placementMode=overlay`; den er altså både Knap-type og Flydende layouttilstand fra første drop.
+**IMPLEMENTERET / uændret.** Palette-Knap er canonical `type=button` og starter med `placementMode=overlay`. Normal kan fortsat vælges i Inspector.
+
+### VD-FLOAT-STACK-001 – Floating altid over normale editor-elementer
+
+**IMPLEMENTERET i 0.1.34.** Floating får et særskilt editor-toplag. Valg/selection af Tekst, Billede, Kasse eller Sektion må ikke skjule den flydende Knap. Dette editorlag ændrer ikke den canonical lagværdi.
 
 ### VD-INSPECTOR-SCROLL-001 – Inspector bund-buffer
 
-**PASS i bruger-QA på 0.1.32 / uændret i 0.1.33.** Inspectorens ca. 360 px editor-only bund-buffer fungerer som aftalt og påvirker ikke canonical model, Preview eller frontend.
+**PASS i bruger-QA på 0.1.32 / uændret i 0.1.34.** Inspectorens ca. 360 px editor-only bund-buffer fungerer som aftalt og påvirker ikke canonical model, Preview eller frontend.
 
 ---
 

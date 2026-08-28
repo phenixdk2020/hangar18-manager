@@ -1,0 +1,30 @@
+/* Visual Designer Manager 0.1.34
+ * VD-FLOAT-STACK-001: floating Buttons are always above normal editor nodes.
+ * Canonical zIndex is still preserved and used to order floating Buttons.
+ */
+
+/* Normal selection chrome must not create a stacking context that traps or hides
+ * a floating descendant. Floating is the intentional overlay layer. */
+.h18-clean-workspace .h18-clean-node{
+    z-index:auto!important;
+}
+.h18-clean-workspace .h18-clean-node.is-selected{
+    z-index:auto!important;
+}
+.h18-clean-workspace .h18-clean-node.is-resizing{
+    z-index:2000!important;
+}
+.h18-clean-workspace .h18-clean-node.is-drop-left,
+.h18-clean-workspace .h18-clean-node.is-drop-right,
+.h18-clean-workspace .h18-clean-v018-drop-target{
+    z-index:3000!important;
+}
+
+/* Dedicated editor overlay band. --h18-vd-floating-layer mirrors canonical
+ * zIndex (1..200), so manual Lag still orders multiple floating Buttons. */
+.h18-clean-workspace .h18-clean-node--button.is-floating[data-h18-floating="1"]{
+    z-index:calc(10000 + var(--h18-vd-floating-layer,20))!important;
+}
+.h18-clean-workspace .h18-clean-node--button.is-floating.h18-v0131-floating-drag{
+    z-index:10250!important;
+}

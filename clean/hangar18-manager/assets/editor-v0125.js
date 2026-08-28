@@ -4,6 +4,7 @@
     var CFG = window.H18CleanEditor || {};
     var active = null;
     var initialShellChoices = null;
+    var selectionGeneration = 0;
 
     function cleanHtml(html) {
         var tpl = document.createElement('template');
@@ -46,16 +47,27 @@
         if (!selection || !selection.rangeCount) { return; }
         var range = selection.getRangeAt(0);
         var container = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentNode;
-        if (container && active.editor.contains(container)) { active.savedRange = range.cloneRange(); }
+        if (container && active.editor.contains(container)) {
+            try { active.savedRange = range.cloneRange(); } catch (ignoreRange) {}
+            if (!active.formatting) {
+                var logical = captureLogicalSelection(active.editor);
+                if (logical) { active.savedLogical = logical; }
+            }
+        }
     }
 
     function restoreSelection() {
-        if (!active || !active.editor) { return; }
-        active.editor.focus({ preventScroll: true });
-        if (!active.savedRange || !window.getSelection) { return; }
-        var selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(active.savedRange);
+        if (!active || !active.editor) { return false; }
+        try { active.editor.focus({ preventScroll: true }); } catch (ignoreFocus) { active.editor.focus(); }
+        if (!active.savedRange || !window.getSelection) { return false; }
+        try {
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(active.savedRange);
+            return true;
+        } catch (ignoreRange) {
+            return false;
+        }
     }
 
     function captureLogicalSelection(editor) {
@@ -118,7 +130,9 @@
 
     function reinforceLogicalSelection(snapshot) {
         if (!snapshot) { return; }
+        var generation = ++selectionGeneration;
         var restore = function () {
+            if (generation !== selectionGeneration) { return; }
             if (!active || active.editor !== snapshot.editor || !snapshot.editor.isConnected) { return; }
             restoreLogicalSelection(snapshot);
         };
@@ -126,19 +140,31 @@
         if (window.queueMicrotask) { window.queueMicrotask(restore); }
         else if (window.Promise) { Promise.resolve().then(restore); }
         window.setTimeout(restore, 0);
-        window.setTimeout(restore, 40);
-        if (window.requestAnimationFrame) {
-            window.requestAnimationFrame(function () { restore(); window.requestAnimationFrame(restore); });
-        }
+        if (window.requestAnimationFrame) { window.requestAnimationFrame(restore); }
     }
 
     function command(name, value) {
         if (!active || !active.editor) { return; }
-        restoreSelection();
-        var logicalSelection = captureLogicalSelection(active.editor);
-        try { document.execCommand('styleWithCSS', false, 'false'); } catch (ignoreStyleMode) {}
-        try { document.execCommand(name, false, value || null); } catch (ignore) {}
-        if (!logicalSelection || !restoreLogicalSelection(logicalSelection)) { rememberSelection(); }
+
+        // VD-TEXT-SEL-001 / 0.1.34: the logical snapshot captured before the
+        // toolbar steals focus is authoritative. A cloned DOM Range is only a
+        // fallback because Bold/Italic can replace text nodes in Firefox.
+        var logicalSelection = active.savedLogical || captureLogicalSelection(active.editor);
+        if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
+        else { restoreSelection(); }
+
+        active.formatting = true;
+        try {
+            try { document.execCommand('styleWithCSS', false, 'false'); } catch (ignoreStyleMode) {}
+            try { document.execCommand(name, false, value || null); } catch (ignoreCommand) {}
+            try { active.editor.normalize(); } catch (ignoreNormalize) {}
+            if (logicalSelection) { restoreLogicalSelection(logicalSelection); }
+            else { rememberSelection(); }
+        } finally {
+            active.formatting = false;
+        }
+
+        if (logicalSelection) { active.savedLogical = logicalSelection; }
         active.dirty = true;
         active.textarea.value = cleanHtml(active.editor.innerHTML);
         updateCanvasPreview(active.textarea.value);
@@ -161,13 +187,23 @@
         }
     }
 
+    function captureToolbarSelection() {
+        if (!active || !active.editor) { return; }
+        var logical = captureLogicalSelection(active.editor);
+        if (logical) { active.savedLogical = logical; }
+        rememberSelection();
+    }
+
     function toolbarButton(label, title, handler) {
         var button = document.createElement('button');
         button.type = 'button';
         button.className = 'button h18-vd-rich-button';
         button.innerHTML = label;
         button.title = title;
-        button.addEventListener('mousedown', function (event) { rememberSelection(); event.preventDefault(); });
+        // Capture already on pointerdown, before a browser can move focus.
+        // mousedown prevents the toolbar button from becoming the editing focus.
+        button.addEventListener('pointerdown', function () { captureToolbarSelection(); });
+        button.addEventListener('mousedown', function (event) { captureToolbarSelection(); event.preventDefault(); });
         button.addEventListener('click', handler);
         return button;
     }
@@ -189,7 +225,7 @@
         editor.setAttribute('aria-multiline', 'true');
         editor.innerHTML = plainToHtml(textarea.value || '');
 
-        active = { textarea: textarea, editor: editor, dirty: false, savedRange: null };
+        active = { textarea: textarea, editor: editor, dirty: false, savedRange: null, savedLogical: null, formatting: false };
 
         toolbar.appendChild(toolbarButton('<strong>B</strong>', 'Fed', function () { command('bold'); }));
         toolbar.appendChild(toolbarButton('<em>I</em>', 'Kursiv', function () { command('italic'); }));
@@ -202,13 +238,22 @@
         }));
         toolbar.appendChild(toolbarButton('× format', 'Fjern formatering', function () { command('removeFormat'); }));
 
-        ['mouseup','keyup','focus'].forEach(function (eventName) { editor.addEventListener(eventName, rememberSelection); });
+        ['mouseup','keyup','focus'].forEach(function (eventName) {
+            editor.addEventListener(eventName, function () {
+                if (!active || active.editor !== editor || active.formatting) { return; }
+                selectionGeneration += 1;
+                rememberSelection();
+            });
+        });
         editor.addEventListener('input', function () {
             if (!active || active.editor !== editor) { return; }
             active.dirty = true;
             textarea.value = cleanHtml(editor.innerHTML);
             updateCanvasPreview(textarea.value);
-            rememberSelection();
+            if (!active.formatting) {
+                selectionGeneration += 1;
+                rememberSelection();
+            }
         });
         editor.addEventListener('blur', function () { sync(); });
 
@@ -320,7 +365,14 @@
         }
     }
 
-    window.H18RichTextV0125 = { sync: sync };
+    window.H18RichTextV0125 = {
+        sync: sync,
+        selectionOwner: 'v0134',
+        restoreSelection: function () {
+            if (!active) { return false; }
+            return active.savedLogical ? restoreLogicalSelection(active.savedLogical) : restoreSelection();
+        }
+    };
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install, { once: true }); }
     else { install(); }
 }());
