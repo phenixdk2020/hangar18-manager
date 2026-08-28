@@ -242,4 +242,31 @@ vdAssert((int) ($convertedMenu['props']['fontWeight'] ?? 0) === 600, 'Legacy Sem
 vdAssert((int) ($convertedMenu['geometry']['mobile']['w'] ?? 0) === 30, 'Converted mobile Menu must reserve the right-side hamburger area.');
 vdAssert(empty($convertedMenu['geometry']['mobile']['inheritDesktop']), 'Converted mobile Menu geometry must be explicit.');
 
-echo "Visual Designer Manager 0.1.41 model QA PASS\n";
+/* 0.1.42 approved Desktop screenshot fallback is deterministic and canonical. */
+$referenceHeader = LegacyHeaderConverter::buildScreenshotReferenceModel(91, 77, 'https://example.test/header-logo.png');
+$referenceByType = [];
+foreach ($referenceHeader['nodes'] as $node) { $referenceByType[(string) ($node['type'] ?? '')][] = $node; }
+vdAssert(count($referenceByType['section'] ?? []) === 1, 'Reference Header must contain one Section.');
+vdAssert(count($referenceByType['container'] ?? []) === 1, 'Reference Header must contain one Container.');
+vdAssert(count($referenceByType['image'] ?? []) === 1, 'Reference Header must reserve one logo Image.');
+vdAssert(count($referenceByType['text'] ?? []) === 1, 'Reference Header must contain the association name Text.');
+vdAssert(count($referenceByType['menu'] ?? []) === 1, 'Reference Header must contain one Menu.');
+$referenceSection = ($referenceByType['section'] ?? [])[0] ?? [];
+$referenceImage = ($referenceByType['image'] ?? [])[0] ?? [];
+$referenceText = ($referenceByType['text'] ?? [])[0] ?? [];
+$referenceMenu = ($referenceByType['menu'] ?? [])[0] ?? [];
+vdAssert((int) ($referenceSection['geometry']['desktop']['x'] ?? -1) === 6, 'Reference Header must start at 5 percent / X=6.');
+vdAssert((int) ($referenceSection['geometry']['desktop']['w'] ?? -1) === 108, 'Reference Header must be 90 percent / 108 units wide.');
+vdAssert((int) ($referenceSection['geometry']['desktop']['h'] ?? -1) === 15, 'Reference Header must be ca. 120 px / 15 rows high.');
+vdAssert(($referenceSection['props']['background'] ?? '') === '#30382a', 'Reference Header background color is wrong.');
+vdAssert((int) ($referenceImage['geometry']['desktop']['w'] ?? -1) === 7, 'Reference logo width must match approved Desktop geometry.');
+vdAssert((int) ($referenceImage['props']['mediaId'] ?? 0) === 77, 'Reference logo media ID was not retained.');
+vdAssert(($referenceText['props']['text'] ?? '') === 'Aalborg Kaserners Veteran Panser- og Køretøjsforening', 'Reference brand text is wrong.');
+vdAssert(($referenceText['props']['textColor'] ?? '') === '#f2f0e8', 'Reference brand text color is wrong.');
+vdAssert((int) ($referenceMenu['geometry']['desktop']['x'] ?? -1) === 72, 'Reference Menu must occupy the right-side Desktop area.');
+vdAssert((int) ($referenceMenu['geometry']['desktop']['w'] ?? -1) === 48, 'Reference Menu Desktop width is wrong.');
+vdAssert((int) ($referenceMenu['props']['menuId'] ?? 0) === 91, 'Reference WordPress menu ID was not retained.');
+vdAssert(($referenceMenu['props']['mobileMode'] ?? '') === 'hamburger', 'Reference mobile Menu must use hamburger mode.');
+vdAssert((int) ($referenceMenu['geometry']['mobile']['x'] ?? -1) === 95, 'Reference mobile hamburger area must be right aligned.');
+
+echo "Visual Designer Manager 0.1.42 model QA PASS\n";

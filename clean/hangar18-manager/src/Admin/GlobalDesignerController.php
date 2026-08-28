@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Hangar18\Clean\Admin;
 
+use Hangar18\Clean\Migration\LegacyHeaderConverter;
 use Hangar18\Clean\Model\LayoutModel;
 use Hangar18\Clean\Model\TemplateLayoutModel;
 
@@ -13,9 +14,11 @@ final class GlobalDesignerController
     private const SAVE_ACTION = 'h18_clean_global_layout_save';
     private const RESTORE_ACTION = 'h18_clean_global_layout_restore';
     private const TEMPLATE_ACTION = 'h18_clean_global_template_action';
+    private const CONVERT_ACTION = 'h18_clean_legacy_header_convert';
     private const NONCE_SAVE = 'h18_clean_global_layout_save';
     private const NONCE_RESTORE = 'h18_clean_global_layout_restore';
     private const NONCE_TEMPLATE = 'h18_clean_global_template_action';
+    private const NONCE_CONVERT = 'h18_clean_legacy_header_convert';
 
     public static function register(): void
     {
@@ -24,6 +27,7 @@ final class GlobalDesignerController
         add_action('admin_post_' . self::SAVE_ACTION, [self::class, 'save']);
         add_action('admin_post_' . self::RESTORE_ACTION, [self::class, 'restore']);
         add_action('admin_post_' . self::TEMPLATE_ACTION, [self::class, 'templateAction']);
+        add_action('admin_post_' . self::CONVERT_ACTION, [self::class, 'convertLegacyHeader']);
     }
 
     public static function menu(): void
@@ -83,6 +87,8 @@ final class GlobalDesignerController
         echo '<div class="h18-global-statusbar"><strong>' . esc_html((string) ($meta['name'] ?? $label)) . '</strong><span>Version v' . esc_html((string) $version) . '</span><span class="h18-manager-badge is-progress">Under udvikling</span></div>';
         echo '<form class="h18-global-rename" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">'; wp_nonce_field(self::NONCE_TEMPLATE); echo '<input type="hidden" name="action" value="' . esc_attr(self::TEMPLATE_ACTION) . '"><input type="hidden" name="part" value="' . esc_attr($part) . '"><input type="hidden" name="template_id" value="' . esc_attr($templateId) . '"><input type="hidden" name="operation" value="rename"><label>Templatenavn <input type="text" name="template_name" value="' . esc_attr((string) ($meta['name'] ?? '')) . '"></label><button class="button" type="submit">Omdøb</button></form>';
 
+        if ($part === 'header') { self::renderLegacyHeaderConversion(); }
+
         echo '<form id="h18-clean-save-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field(self::NONCE_SAVE);
         echo '<input type="hidden" name="action" value="' . esc_attr(self::SAVE_ACTION) . '"><input type="hidden" name="part" value="' . esc_attr($part) . '"><input type="hidden" name="template_id" value="' . esc_attr($templateId) . '"><input type="hidden" id="h18-clean-model-json" name="model_json" value="' . esc_attr((string) wp_json_encode($model)) . '"><input type="hidden" id="h18-clean-change-note" name="change_note" value="">';
@@ -100,6 +106,49 @@ final class GlobalDesignerController
         if (!$history) { echo '<p>Ingen gemte versioner endnu.</p>'; }
         else { echo '<table class="widefat striped"><thead><tr><th>Version</th><th>Gemt</th><th>Ændringer</th><th>Digest</th><th></th></tr></thead><tbody>'; foreach (array_slice($history, 0, 20) as $entry) { $entryVersion = (int) ($entry['version'] ?? 0); echo '<tr><td><strong>v' . esc_html((string) $entryVersion) . '</strong></td><td>' . esc_html((string) ($entry['savedUtc'] ?? '')) . '</td><td>' . esc_html((string) ($entry['note'] ?? '')) . '</td><td><code>' . esc_html(substr((string) ($entry['digest'] ?? ''), 0, 14)) . '…</code></td><td><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">'; wp_nonce_field(self::NONCE_RESTORE); echo '<input type="hidden" name="action" value="' . esc_attr(self::RESTORE_ACTION) . '"><input type="hidden" name="part" value="' . esc_attr($part) . '"><input type="hidden" name="template_id" value="' . esc_attr($templateId) . '"><input type="hidden" name="version" value="' . esc_attr((string) $entryVersion) . '"><button type="submit" class="button">Gendan</button></form></td></tr>'; } echo '</tbody></table>'; }
         echo '</section></div>';
+    }
+
+    private static function renderLegacyHeaderConversion(): void
+    {
+        $status = LegacyHeaderConverter::diagnosticStatus();
+        $counts = is_array($status['targetNodeCounts'] ?? null) ? $status['targetNodeCounts'] : [];
+        $last = is_array($status['lastConversion'] ?? null) ? $status['lastConversion'] : [];
+
+        echo '<section class="h18-manager-card h18-global-conversion"><h2>Gammel Header → Visual Designer</h2>';
+        echo '<p class="description">Hvis de gamle Manager-data ikke længere findes, bruges den godkendte Desktop-reference fra 28-08-2026 som sikker fallback. Konverteringen gemmes altid som en ny Header-version.</p>';
+        echo '<table class="widefat striped"><tbody>';
+        echo '<tr><th>Legacy HeaderDesign</th><td>' . (!empty($status['legacyDesignFound']) ? 'Fundet' : 'Ikke fundet') . '</td></tr>';
+        echo '<tr><th>Legacy Header-blok</th><td>' . (!empty($status['legacyShellFound']) ? 'Fundet' : 'Ikke fundet') . '</td></tr>';
+        echo '<tr><th>WordPress-menu</th><td>' . esc_html((string) ($status['menuName'] ?? '')) . ' · ID ' . esc_html((string) ($status['menuId'] ?? 0)) . ' · ' . esc_html((string) ($status['menuItems'] ?? 0)) . ' elementer</td></tr>';
+        echo '<tr><th>Logo-kilde</th><td>' . esc_html((string) ($status['logoSource'] ?? 'not-found')) . (!empty($status['logoFound']) ? ' · fundet' : ' · ikke fundet; Billede-plads oprettes stadig') . '</td></tr>';
+        echo '<tr><th>Header – Standard nu</th><td>v' . esc_html((string) ($status['targetVersion'] ?? 0)) . ' · Sektion ' . esc_html((string) ($counts['section'] ?? 0)) . ' · Kasse ' . esc_html((string) ($counts['container'] ?? 0)) . ' · Billede ' . esc_html((string) ($counts['image'] ?? 0)) . ' · Tekst ' . esc_html((string) ($counts['text'] ?? 0)) . ' · Menu ' . esc_html((string) ($counts['menu'] ?? 0)) . '</td></tr>';
+        if ($last) {
+            echo '<tr><th>Seneste konvertering</th><td>' . esc_html((string) ($last['status'] ?? '')) . ' · ' . esc_html((string) ($last['source'] ?? '')) . ' · ' . esc_html((string) ($last['convertedUtc'] ?? $last['checkedUtc'] ?? '')) . (!empty($last['message']) ? ' · ' . esc_html((string) $last['message']) : '') . '</td></tr>';
+        }
+        echo '</tbody></table>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="margin-top:12px">';
+        wp_nonce_field(self::NONCE_CONVERT);
+        echo '<input type="hidden" name="action" value="' . esc_attr(self::CONVERT_ACTION) . '"><button class="button button-primary" type="submit">Konvertér gammel Header igen</button></form></section>';
+    }
+
+    public static function convertLegacyHeader(): void
+    {
+        self::guard();
+        check_admin_referer(self::NONCE_CONVERT);
+        try {
+            $result = LegacyHeaderConverter::convert(true);
+            $counts = is_array($result['nodeCounts'] ?? null) ? $result['nodeCounts'] : [];
+            $message = 'Header konverteret som v' . (int) ($result['templateVersion'] ?? 0)
+                . ' fra ' . (string) ($result['source'] ?? 'ukendt kilde')
+                . '. Sektion ' . (int) ($counts['section'] ?? 0)
+                . ', Kasse ' . (int) ($counts['container'] ?? 0)
+                . ', Billede ' . (int) ($counts['image'] ?? 0)
+                . ', Tekst ' . (int) ($counts['text'] ?? 0)
+                . ', Menu ' . (int) ($counts['menu'] ?? 0) . '.';
+            self::redirect('header', (string) ($result['templateId'] ?? ''), 'success', $message);
+        } catch (\Throwable $error) {
+            self::redirect('header', TemplateLayoutModel::defaultId('header'), 'error', 'Header-konvertering fejlede: ' . $error->getMessage());
+        }
     }
 
     public static function save(): void

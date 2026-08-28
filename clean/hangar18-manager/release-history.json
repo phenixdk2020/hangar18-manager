@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.1.42",
+    "date": "2026-08-28",
+    "items": [
+      "BUG-11 rettet: Header-konvertering stopper ikke længere tavst når legacy HeaderDesign/Header-blok mangler.",
+      "Header/Footer viser nu konverteringsdiagnose med legacy-kilder, WordPress-menu, logo-kilde, nodeantal og seneste konverteringsstatus.",
+      "Ny knap Konvertér gammel Header igen gemmer altid resultatet non-destruktivt som en ny version af Header – Standard.",
+      "Hvis legacy-kilden mangler, bruges den bruger-godkendte Desktop-reference fra 28-08-2026: 90% centreret, ca. 120 px høj, #30382A, logo/brand venstre og menu højre.",
+      "Logo søges i legacy Header, WordPress Custom Logo og Site Icon; et Billede-element reserveres selv hvis filkilden ikke kan findes.",
+      "Theme Shell-cutover forbliver OFF, indtil Desktop/Laptop/Mobil parity er bruger-QA PASS."
+    ]
+  },
+  {
     "version": "0.1.41",
     "date": "2026-08-28",
     "items": [

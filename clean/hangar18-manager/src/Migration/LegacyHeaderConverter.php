@@ -18,7 +18,8 @@ use Hangar18\Clean\Model\TemplateLayoutModel;
  */
 final class LegacyHeaderConverter
 {
-    public const MIGRATION_OPTION = 'h18_vd_legacy_header_converted_v0141';
+    public const MIGRATION_OPTION = 'h18_vd_legacy_header_converted_v0142';
+    public const STATUS_OPTION = 'h18_vd_legacy_header_status_v0142';
 
     private const LEGACY_DESIGN_OPTION = 'hangar18_manager_header_design_v25';
     private const LEGACY_ACTIVE_MENU_OPTION = 'hangar18_manager_active_menu';
@@ -37,20 +38,70 @@ final class LegacyHeaderConverter
             return;
         }
 
+        try {
+            self::convert(false);
+        } catch (\Throwable $error) {
+            update_option(self::STATUS_OPTION, [
+                'status' => 'error',
+                'checkedUtc' => gmdate('c'),
+                'message' => $error->getMessage(),
+            ], false);
+        }
+    }
+
+    /**
+     * Run or re-run the Header conversion. The operation is non-destructive:
+     * the target template is always saved through normal version history.
+     *
+     * @return array<string,mixed>
+     */
+    public static function convert(bool $force = true): array
+    {
+        if (!current_user_can('edit_theme_options')) {
+            throw new \RuntimeException('Ingen adgang til Header-konvertering.');
+        }
+        if (!$force && get_option(self::MIGRATION_OPTION, false)) {
+            return self::diagnosticStatus();
+        }
+
         $stored = get_option(self::LEGACY_DESIGN_OPTION, []);
         $stored = is_array($stored) ? $stored : [];
         $shell = self::legacyShellHeader();
-
-        // Do not manufacture a migration on sites that never had the legacy
-        // Hangar18 Header. If the source appears later, a later admin request
-        // can still perform the conversion because no marker is written here.
-        if (!$stored && $shell === '') {
-            return;
-        }
+        $legacyFound = !empty($stored) || $shell !== '';
 
         $design = array_merge(self::defaultLegacyDesign(), $stored);
         if ($shell !== '') {
             $design = array_merge($design, self::parseShellHeader($shell));
+        }
+
+        $logo = self::resolveLogo($design);
+        if ($logo['url'] !== '') {
+            $design['ShowLogo'] = true;
+            $design['LogoUrl'] = $logo['url'];
+            $design['LogoMediaId'] = $logo['mediaId'];
+        }
+
+        $menuId = self::legacyMenuId();
+        if ($menuId <= 0) {
+            throw new \RuntimeException('Ingen WordPress-menu kunne findes til Headeren.');
+        }
+
+        if ($legacyFound) {
+            $model = self::buildModelFromLegacyDesign($design, $menuId);
+            $source = 'legacy';
+            $note = 'Automatisk konvertering fra fundet legacy Header · v0.1.42';
+        } else {
+            $model = self::buildScreenshotReferenceModel($menuId, $logo['mediaId'], $logo['url']);
+            $source = 'desktop-reference-2026-08-28';
+            $note = 'Header-reference fra godkendt Desktop-screenshot · v0.1.42';
+        }
+
+        $counts = self::nodeCounts($model);
+        if (($counts['section'] ?? 0) < 1 || ($counts['container'] ?? 0) < 1 || ($counts['menu'] ?? 0) < 1) {
+            throw new \RuntimeException('Konverteringen gav ikke en gyldig Sektion/Kasse/Menu-struktur.');
+        }
+        if (($counts['text'] ?? 0) + ($counts['image'] ?? 0) < 1) {
+            throw new \RuntimeException('Konverteringen mangler Header-identitet (Tekst/Billede).');
         }
 
         TemplateLayoutModel::ensureMigrated();
@@ -61,32 +112,220 @@ final class LegacyHeaderConverter
             $targetId = TemplateLayoutModel::create('header', 'Header – Standard');
         }
 
-        $menuId = self::legacyMenuId();
-        $model = self::buildModelFromLegacyDesign($design, $menuId);
-        $settings = self::templateSettings($design);
+        $settings = $legacyFound
+            ? self::templateSettings($design)
+            : ['sticky' => false, 'overlay' => false, 'contentWidth' => 2400];
 
-        // saveVersion is deliberately used instead of replacing the option
-        // directly: any Header the user already saved remains restorable.
         $version = TemplateLayoutModel::saveVersion(
             $targetId,
             $model,
             $settings,
             get_current_user_id(),
-            'Automatisk 1:1-konvertering fra legacy Header · v0.1.41'
+            $note
         );
         TemplateLayoutModel::rename($targetId, 'Header – Standard');
         TemplateLayoutModel::setActive($targetId, true);
         TemplateLayoutModel::setDefault('header', $targetId);
 
-        update_option(self::MIGRATION_OPTION, [
+        $menu = wp_get_nav_menu_object($menuId);
+        $items = $menu ? wp_get_nav_menu_items($menuId) : [];
+        $result = [
+            'status' => 'success',
             'convertedUtc' => gmdate('c'),
             'templateId' => $targetId,
             'templateVersion' => $version,
+            'source' => $source,
+            'legacyDesignFound' => !empty($stored),
+            'legacyShellFound' => $shell !== '',
             'menuId' => $menuId,
-            'sourceOption' => (bool) $stored,
-            'sourceShell' => $shell !== '',
+            'menuName' => $menu ? (string) $menu->name : '',
+            'menuItems' => is_array($items) ? count($items) : 0,
+            'logoSource' => $logo['source'],
+            'logoFound' => $logo['url'] !== '',
+            'logoMediaId' => $logo['mediaId'],
+            'logoUrl' => $logo['url'],
+            'nodeCounts' => $counts,
             'digest' => LayoutModel::structuralDigest($model),
-        ], false);
+        ];
+        update_option(self::STATUS_OPTION, $result, false);
+        update_option(self::MIGRATION_OPTION, $result, false);
+        return $result;
+    }
+
+    /** @return array<string,mixed> */
+    public static function diagnosticStatus(): array
+    {
+        $stored = get_option(self::LEGACY_DESIGN_OPTION, []);
+        $stored = is_array($stored) ? $stored : [];
+        $shell = self::legacyShellHeader();
+        $design = array_merge(self::defaultLegacyDesign(), $stored);
+        if ($shell !== '') {
+            $design = array_merge($design, self::parseShellHeader($shell));
+        }
+        $logo = self::resolveLogo($design);
+        $menuId = self::legacyMenuId();
+        $menu = $menuId > 0 ? wp_get_nav_menu_object($menuId) : false;
+        $items = $menu ? wp_get_nav_menu_items($menuId) : [];
+
+        TemplateLayoutModel::ensureMigrated();
+        $targetId = TemplateLayoutModel::exists(self::TARGET_TEMPLATE_ID, 'header')
+            ? self::TARGET_TEMPLATE_ID
+            : TemplateLayoutModel::defaultId('header');
+        $model = $targetId !== '' ? TemplateLayoutModel::model($targetId) : LayoutModel::empty();
+
+        $last = get_option(self::STATUS_OPTION, []);
+        $last = is_array($last) ? $last : [];
+        return [
+            'legacyDesignFound' => !empty($stored),
+            'legacyShellFound' => $shell !== '',
+            'fallbackAvailable' => true,
+            'menuId' => $menuId,
+            'menuName' => $menu ? (string) $menu->name : '',
+            'menuItems' => is_array($items) ? count($items) : 0,
+            'logoSource' => $logo['source'],
+            'logoFound' => $logo['url'] !== '',
+            'logoUrl' => $logo['url'],
+            'targetTemplateId' => $targetId,
+            'targetVersion' => $targetId !== '' ? TemplateLayoutModel::version($targetId) : 0,
+            'targetNodeCounts' => self::nodeCounts($model),
+            'lastConversion' => $last,
+        ];
+    }
+
+    /**
+     * Approved desktop fallback from the 2026-08-28 visual reference:
+     * 90% centred Header, dark #30382a bar, logo/brand left, menu right.
+     *
+     * @return array<string,mixed>
+     */
+    public static function buildScreenshotReferenceModel(int $menuId, int $logoMediaId = 0, string $logoUrl = ''): array
+    {
+        $rowsDesktop = 15; // ca. 120 px at the canonical 8 px vertical grid.
+        $rowsMobile = 14;
+        $brand = 'Aalborg Kaserners Veteran Panser- og Køretøjsforening';
+        $nodes = [];
+
+        $nodes[] = self::node(
+            'section-header-reference-v0142',
+            'section',
+            '',
+            10,
+            self::geometry([6, 0, 108, $rowsDesktop], [6, 0, 108, $rowsDesktop], [0, 0, 120, $rowsMobile]),
+            [
+                'background' => '#30382a', 'radius' => 0, 'padding' => 0,
+                'minHeightRows' => $rowsDesktop, 'borderWidth' => 0,
+                'borderColor' => '#000000', 'gapX' => 0, 'gapY' => 0,
+            ]
+        );
+        $nodes[] = self::node(
+            'container-header-reference-v0142',
+            'container',
+            'section-header-reference-v0142',
+            10,
+            self::geometry([0, 0, 120, $rowsDesktop], [0, 0, 120, $rowsDesktop], [0, 0, 120, $rowsMobile]),
+            [
+                'background' => '', 'radius' => 0, 'padding' => 0,
+                'minHeightRows' => $rowsDesktop, 'borderWidth' => 0,
+                'borderColor' => '#000000', 'gapX' => 0, 'gapY' => 0,
+            ]
+        );
+        $nodes[] = self::node(
+            'image-header-reference-logo-v0142',
+            'image',
+            'container-header-reference-v0142',
+            10,
+            self::geometry([0, 1, 7, 13], [0, 1, 7, 13], [0, 1, 20, 12]),
+            [
+                'mediaId' => max(0, $logoMediaId), 'url' => esc_url_raw($logoUrl),
+                'alt' => $brand, 'fit' => 'contain', 'imageAlignX' => 'left',
+                'imageAlignY' => 'center', 'boxBackground' => '#30382a',
+                'boxTransparent' => true, 'focalX' => 50, 'focalY' => 50,
+                'borderWidth' => 0, 'borderColor' => '#000000', 'gapX' => 0, 'gapY' => 0,
+            ]
+        );
+        $nodes[] = self::node(
+            'text-header-reference-brand-v0142',
+            'text',
+            'container-header-reference-v0142',
+            20,
+            self::geometry([8, 0, 28, $rowsDesktop], [8, 0, 30, $rowsDesktop], [20, 0, 73, $rowsMobile]),
+            [
+                'heading' => '', 'headingLevel' => 'h2', 'text' => $brand,
+                'align' => 'left', 'background' => '#30382a', 'backgroundTransparent' => true,
+                'textColor' => '#f2f0e8', 'headingColor' => '#f2f0e8',
+                'padding' => 0, 'radius' => 0, 'fontFamily' => 'system',
+                'fontSize' => 19, 'fontWeight' => 700, 'lineHeight' => 1.18,
+                'letterSpacing' => 0, 'borderWidth' => 0, 'borderColor' => '#000000',
+                'gapX' => 0, 'gapY' => 0,
+            ]
+        );
+        $nodes[] = self::node(
+            'menu-header-reference-primary-v0142',
+            'menu',
+            'container-header-reference-v0142',
+            30,
+            self::geometry([72, 0, 48, $rowsDesktop], [68, 0, 52, $rowsDesktop], [95, 0, 25, $rowsMobile]),
+            [
+                'menuId' => max(0, $menuId), 'orientation' => 'horizontal',
+                'align' => 'right', 'mobileMode' => 'hamburger',
+                'textColor' => '#f2f0e8', 'hoverTextColor' => '#c3ae83',
+                'activeTextColor' => '#c3ae83', 'background' => '#30382a',
+                'backgroundTransparent' => true, 'fontSize' => 17, 'fontWeight' => 600,
+                'menuGap' => 22, 'paddingX' => 6, 'paddingY' => 8, 'radius' => 0,
+                'borderWidth' => 0, 'borderColor' => '#000000', 'gapX' => 0, 'gapY' => 0,
+            ]
+        );
+
+        return LayoutModel::normalize([
+            'schemaVersion' => LayoutModel::SCHEMA,
+            'units' => LayoutModel::UNITS,
+            'rowPx' => LayoutModel::ROW_PX,
+            'nodes' => $nodes,
+        ]);
+    }
+
+    /** @param array<string,mixed> $design @return array{mediaId:int,url:string,source:string} */
+    private static function resolveLogo(array $design): array
+    {
+        $url = esc_url_raw((string) ($design['LogoUrl'] ?? ''));
+        $mediaId = max(0, (int) ($design['LogoMediaId'] ?? 0));
+        if ($url !== '') {
+            return ['mediaId' => $mediaId, 'url' => $url, 'source' => 'legacy-header'];
+        }
+
+        if (function_exists('get_theme_mod')) {
+            $customLogoId = absint(get_theme_mod('custom_logo', 0));
+            $customLogoUrl = $customLogoId > 0 ? wp_get_attachment_url($customLogoId) : false;
+            if ($customLogoUrl) {
+                return ['mediaId' => $customLogoId, 'url' => esc_url_raw((string) $customLogoUrl), 'source' => 'wordpress-custom-logo'];
+            }
+        }
+
+        $siteIconId = absint(get_option('site_icon', 0));
+        $siteIconUrl = $siteIconId > 0 ? wp_get_attachment_url($siteIconId) : false;
+        if ($siteIconUrl) {
+            return ['mediaId' => $siteIconId, 'url' => esc_url_raw((string) $siteIconUrl), 'source' => 'wordpress-site-icon'];
+        }
+        if (function_exists('get_site_icon_url')) {
+            $siteIconUrl = (string) get_site_icon_url(512, '');
+            if ($siteIconUrl !== '') {
+                return ['mediaId' => 0, 'url' => esc_url_raw($siteIconUrl), 'source' => 'wordpress-site-icon-url'];
+            }
+        }
+
+        return ['mediaId' => 0, 'url' => '', 'source' => 'not-found'];
+    }
+
+    /** @param array<string,mixed> $model @return array<string,int> */
+    private static function nodeCounts(array $model): array
+    {
+        $counts = ['section' => 0, 'container' => 0, 'text' => 0, 'image' => 0, 'menu' => 0, 'button' => 0];
+        foreach (($model['nodes'] ?? []) as $node) {
+            if (!is_array($node)) { continue; }
+            $type = sanitize_key((string) ($node['type'] ?? ''));
+            if (array_key_exists($type, $counts)) { $counts[$type]++; }
+        }
+        return $counts;
     }
 
     /**
