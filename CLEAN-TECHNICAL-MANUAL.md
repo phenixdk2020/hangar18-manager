@@ -579,7 +579,7 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ---
 
-## 21. Kontraktstatus for 0.1.37
+## 21. Kontraktstatus for 0.1.38
 
 ### VD-FLOAT-001 – Flydende Knap
 
@@ -587,9 +587,11 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ### VD-TEXT-SEL-001 – Rich-text selection
 
-**BUGFIX i 0.1.37 – afventer bruger-QA.** Bruger-QA af 0.1.36 viste fortsat tab af selection ved Fed/Kursiv. Den konkrete regressionsårsag er identificeret: `v0131` og `v0132` deaktiverede kun deres gamle restore-loops, når `v0125.selectionOwner === 'v0134'`. Da den aktive owner-label senere blev ændret, blev legacy-loopene utilsigtet aktiveret igen og konkurrerede med den autoritative formatteringsmotor. I 0.1.37 er `v0125` permanent autoritativ ejer, og legacy-lag delegerer ved enhver truthy `selectionOwner`; kontrakten er dermed ikke versionsbundet. Boundary-marker motoren fra 0.1.36 bevares uændret som den eneste aktive selection-motor.
+**BUGFIX i 0.1.38 – afventer bruger-QA.** Bruger-QA af 0.1.37 viste et tydeligt cold-start-mønster: de første 2–3 formatteringer kunne miste selection, hvorefter samme editor-session blev stabil. 0.1.38 flytter derfor oprettelsen af boundary-marker-sessionen fra toolbar-pointerdown til afslutningen af selve tekstmarkeringen (`mouseup`/`keyup`). Når brugeren klikker Fed, Kursiv eller Understregning første gang, skal selection-sessionen allerede være etableret. Toolbar-pointerdown er kun fallback. Single-owner-kontrakten fra 0.1.37 bevares uændret.
 
 Godkendelsestest: 20/20 gentagelser for Fed, Kursiv og Understregning samt kæderne Fed → Kursiv → Understregning og Kursiv → Fed → Understregning uden ny markering.
+
+**Cold-start-test er obligatorisk:** efter frisk reload vælges et Tekst-element, tekst markeres én gang, og første klik på Fed/Kursiv/Understregning skal både formatere og bevare samme selection. Testen gentages efter frisk reload i mindst Firefox og Chrome, før BUG-02 kan lukkes.
 
 **FAST owner-regel:** Legacy rich-text-filer må aldrig afgøre delegation ud fra et konkret release-nummer. Hvis `H18RichTextV0125.selectionOwner` er sat, er v0125 den eneste selection-ejer, og ældre capture/restore-loops skal returnere uden handling.
 

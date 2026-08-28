@@ -402,16 +402,59 @@
         }
     }
 
+    function primeSelectionSession(snapshot) {
+        if (!active || !active.editor || active.formatting) { return false; }
+        var logical = snapshot || captureLogicalSelection(active.editor);
+        clearSelectionMarkers();
+        selectionGeneration += 1;
+
+        if (!logical || logical.editor !== active.editor || logical.end <= logical.start) {
+            active.savedLogical = null;
+            rememberSelection();
+            return false;
+        }
+
+        active.savedLogical = logical;
+        if (!restoreLogicalSelection(logical)) {
+            rememberSelection();
+            return false;
+        }
+        if (!installSelectionMarkers()) {
+            restoreLogicalSelection(logical);
+            rememberSelection();
+            return false;
+        }
+        reinforceMarkerSelection();
+        return true;
+    }
+
+    function schedulePrimeSelectionSession() {
+        if (!active || !active.editor || active.formatting) { return; }
+        var editor = active.editor;
+        var logical = captureLogicalSelection(editor);
+        if (!logical) {
+            primeSelectionSession(null);
+            return;
+        }
+        active.savedLogical = logical;
+        window.setTimeout(function () {
+            if (!active || active.editor !== editor || active.formatting || !editor.isConnected) { return; }
+            primeSelectionSession(logical);
+        }, 0);
+    }
+
     function captureToolbarSelection() {
         if (!active || !active.editor) { return; }
         if (markerSelectionValid()) {
             restoreMarkerSelection();
             return;
         }
-        var logical = captureLogicalSelection(active.editor);
-        if (logical) { active.savedLogical = logical; }
+        var logical = captureLogicalSelection(active.editor) || active.savedLogical;
+        if (logical) {
+            active.savedLogical = logical;
+            if (primeSelectionSession(logical)) { return; }
+        }
         rememberSelection();
-        installSelectionMarkers();
     }
 
     function toolbarButton(label, title, handler) {
@@ -465,9 +508,7 @@
         ['mouseup','keyup'].forEach(function (eventName) {
             editor.addEventListener(eventName, function () {
                 if (!active || active.editor !== editor || active.formatting) { return; }
-                clearSelectionMarkers();
-                selectionGeneration += 1;
-                rememberSelection();
+                schedulePrimeSelectionSession();
             });
         });
         editor.addEventListener('focus', function () {
@@ -599,6 +640,7 @@
         sync: sync,
         selectionOwner: 'v0125-authoritative',
         selectionMode: 'boundary-markers-v0137-single-owner',
+        selectionSessionMode: 'prearmed-v0138',
         restoreSelection: function () {
             if (!active) { return false; }
             if (markerSelectionValid()) { return restoreMarkerSelection(); }
