@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.33",
+    "date": "2026-08-28",
+    "items": [
+      "Kursiv bevarer nu selection via logiske tekst-offsets inde i den fælles rich-text command-pipeline; Fed og Understregning bruger samme mekanisme.",
+      "En Knap fra paletten klassificeres som Flydende før drop-beregning og går derfor ikke gennem Over/Under/Venstre/Højre celle-split.",
+      "Flydende Knap kan placeres på Side-root, i Sektion eller Kasse; Normal Knap forbliver et almindeligt grid/leaf-element.",
+      "Inspector-scroll fra 0.1.32 bevares uændret og er fortsat editor-only.",
+      "Teknisk manual og brugermanual er opdateret, så hierarchy-undtagelsen for Flydende Knap er eksplicit."
+    ]
+  },
+  {
     "version": "0.1.32",
     "date": "2026-08-27",
     "items": [

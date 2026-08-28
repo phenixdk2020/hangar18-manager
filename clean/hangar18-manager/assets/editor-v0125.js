@@ -58,15 +58,91 @@
         selection.addRange(active.savedRange);
     }
 
+    function captureLogicalSelection(editor) {
+        if (!editor || !window.getSelection) { return null; }
+        var selection = window.getSelection();
+        if (!selection || !selection.rangeCount) { return null; }
+        var range = selection.getRangeAt(0);
+        var common = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentNode;
+        if (!common || !editor.contains(common) || range.collapsed) { return null; }
+        try {
+            var startProbe = document.createRange();
+            startProbe.selectNodeContents(editor);
+            startProbe.setEnd(range.startContainer, range.startOffset);
+            var endProbe = document.createRange();
+            endProbe.selectNodeContents(editor);
+            endProbe.setEnd(range.endContainer, range.endOffset);
+            var start = startProbe.toString().length;
+            var end = endProbe.toString().length;
+            return end > start ? { editor: editor, start: start, end: end } : null;
+        } catch (ignore) {
+            return null;
+        }
+    }
+
+    function logicalPoint(editor, requestedOffset) {
+        var remaining = Math.max(0, parseInt(requestedOffset || 0, 10) || 0);
+        var walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+        var node = walker.nextNode();
+        var last = null;
+        while (node) {
+            last = node;
+            var length = String(node.nodeValue || '').length;
+            if (remaining <= length) { return { node: node, offset: remaining }; }
+            remaining -= length;
+            node = walker.nextNode();
+        }
+        if (last) { return { node: last, offset: String(last.nodeValue || '').length }; }
+        return { node: editor, offset: 0 };
+    }
+
+    function restoreLogicalSelection(snapshot) {
+        if (!snapshot || !snapshot.editor || !snapshot.editor.isConnected || !window.getSelection) { return false; }
+        var start = logicalPoint(snapshot.editor, snapshot.start);
+        var end = logicalPoint(snapshot.editor, snapshot.end);
+        try {
+            var range = document.createRange();
+            range.setStart(start.node, start.offset);
+            range.setEnd(end.node, end.offset);
+            if (range.collapsed && snapshot.end > snapshot.start) { return false; }
+            try { snapshot.editor.focus({ preventScroll: true }); } catch (ignoreFocus) { snapshot.editor.focus(); }
+            var selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            if (active && active.editor === snapshot.editor) { active.savedRange = range.cloneRange(); }
+            return true;
+        } catch (ignore) {
+            return false;
+        }
+    }
+
+    function reinforceLogicalSelection(snapshot) {
+        if (!snapshot) { return; }
+        var restore = function () {
+            if (!active || active.editor !== snapshot.editor || !snapshot.editor.isConnected) { return; }
+            restoreLogicalSelection(snapshot);
+        };
+        restore();
+        if (window.queueMicrotask) { window.queueMicrotask(restore); }
+        else if (window.Promise) { Promise.resolve().then(restore); }
+        window.setTimeout(restore, 0);
+        window.setTimeout(restore, 40);
+        if (window.requestAnimationFrame) {
+            window.requestAnimationFrame(function () { restore(); window.requestAnimationFrame(restore); });
+        }
+    }
+
     function command(name, value) {
         if (!active || !active.editor) { return; }
         restoreSelection();
-        try { document.execCommand('styleWithCSS', false, false); } catch (ignoreStyleMode) {}
+        var logicalSelection = captureLogicalSelection(active.editor);
+        try { document.execCommand('styleWithCSS', false, 'false'); } catch (ignoreStyleMode) {}
         try { document.execCommand(name, false, value || null); } catch (ignore) {}
-        rememberSelection();
+        if (!logicalSelection || !restoreLogicalSelection(logicalSelection)) { rememberSelection(); }
         active.dirty = true;
         active.textarea.value = cleanHtml(active.editor.innerHTML);
         updateCanvasPreview(active.textarea.value);
+        reinforceLogicalSelection(logicalSelection);
     }
 
     function updateCanvasPreview(html) {

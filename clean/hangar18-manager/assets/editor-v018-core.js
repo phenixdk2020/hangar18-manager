@@ -529,7 +529,7 @@
         return rx < 0.5 ? 'left' : 'right';
     }
 
-    function dropPlacement(surface, event, parentId, width, movingId) {
+    function dropPlacement(surface, event, parentId, width, movingId, paletteType) {
         width = clamp(parseInt(width || 1, 10) || 1, 1, UNITS);
         const rect = surface.getBoundingClientRect();
         const unitPx = Math.max(1, rect.width / UNITS);
@@ -546,9 +546,13 @@
             targetGeometry: null
         };
         const movingNode = movingId ? nodeById(movingId) : null;
-        if (isFloatingButton(movingNode)) {
+        const paletteFloatingButton = String(paletteType || '').toLowerCase() === 'button';
+        if (isFloatingButton(movingNode) || paletteFloatingButton) {
+            const overlayWidth = paletteFloatingButton ? Math.min(30, UNITS) : width;
             const pointerRow = clamp(Math.round((event.clientY - rect.top) / ROW_PX), 0, 10000);
-            const movingH = Math.max(1, movingNode.geometry.desktop.h || MIN_SPLIT_H);
+            const movingH = movingNode ? Math.max(1, movingNode.geometry.desktop.h || MIN_SPLIT_H) : MIN_SPLIT_H;
+            placement.w = clamp(overlayWidth, 1, UNITS);
+            placement.x = clamp(Math.round(pointerUnit - (placement.w / 2)), 0, UNITS - placement.w);
             placement.y = Math.max(0, pointerRow - Math.floor(movingH / 2));
             placement.targetId = '';
             placement.zone = 'overlay';
@@ -736,6 +740,7 @@
         const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8 };
         const defaultH = Math.max(MIN_SPLIT_H, parseInt(defaultRows[type] || MIN_SPLIT_H, 10) || MIN_SPLIT_H);
         const newProps = normalizeProps(type, {});
+        if (type === 'button' && p.zone === 'overlay') { newProps.placementMode = 'overlay'; }
         if (PARENT_TYPES.includes(type)) { newProps.minHeightRows = defaultH; }
         if (type === 'text') { newProps.padding = 12; }
         const desktop = normalizeDevice({ x: p.x, y: p.y, w: p.w || defaultW, h: defaultH }, false);
@@ -1048,7 +1053,7 @@
             if (event.dataTransfer) { event.dataTransfer.dropEffect = payload.kind === 'node' ? 'move' : 'copy'; }
             surface.classList.add('is-drop-target');
             const width = payload.kind === 'node' && nodeById(payload.id) ? nodeById(payload.id).geometry.desktop.w : defaultWidth(payload.type, parentId);
-            const placement = dropPlacement(surface, event, parentId, width, payload.kind === 'node' ? payload.id : '');
+            const placement = dropPlacement(surface, event, parentId, width, payload.kind === 'node' ? payload.id : '', payload.kind === 'palette' ? payload.type : '');
             showDropGuide(surface, event, placement);
         };
         surface.ondragleave = function (event) {
@@ -1065,7 +1070,7 @@
             event.stopPropagation();
             surface.classList.remove('is-drop-target');
             if (payload.kind === 'palette') {
-                const placement = dropPlacement(surface, event, parentId, defaultWidth(payload.type, parentId), '');
+                const placement = dropPlacement(surface, event, parentId, defaultWidth(payload.type, parentId), '', payload.type);
                 clearDropGuide();
                 addNode(payload.type, parentId, 'palette_drop', placement);
                 dragPaletteType = '';
@@ -1073,7 +1078,7 @@
             }
             const movingNode = nodeById(payload.id);
             if (!movingNode) { clearDragState(); return; }
-            const placement = dropPlacement(surface, event, parentId, movingNode.geometry.desktop.w, payload.id);
+            const placement = dropPlacement(surface, event, parentId, movingNode.geometry.desktop.w, payload.id, '');
             clearDropGuide();
             reparent(payload.id, parentId, placement);
             dragId = '';

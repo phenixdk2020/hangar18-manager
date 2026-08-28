@@ -59,7 +59,7 @@
         return rx < 0.5 ? 'left' : 'right';
     }
 
-    function decision(event, surface, type) {
+    function decision(event, surface, type, floating) {
         type = cleanType(type);
         if (!type || !surface) {
             return { allowed: true, message: '' };
@@ -91,6 +91,7 @@
         }
 
         if (effectiveParentId === '') {
+            if (type === 'button' && floating) { return { allowed: true, message: '' }; }
             return {
                 allowed: false,
                 message: (LABELS[type] || 'Elementet') + ' skal ligge inde i en Sektion eller Kasse.'
@@ -138,7 +139,7 @@
         const palette = target.closest('.h18-clean-add[data-type]');
         if (palette) {
             const type = cleanType(palette.getAttribute('data-type'));
-            activeDrag = type ? { kind: 'palette', type: type } : null;
+            activeDrag = type ? { kind: 'palette', type: type, floating: type === 'button' } : null;
             return;
         }
 
@@ -146,7 +147,7 @@
         if (!move) { return; }
         const card = move.closest('.h18-clean-node[data-node-id]');
         const type = nodeType(card);
-        activeDrag = type ? { kind: 'node', type: type, id: nodeId(card) } : null;
+        activeDrag = type ? { kind: 'node', type: type, id: nodeId(card), floating: !!(card && card.classList.contains('is-floating')) } : null;
     }
 
     function endDrag() {
@@ -159,7 +160,7 @@
         const surface = event.target.closest('.h18-clean-surface');
         if (!surface) { return; }
 
-        const result = decision(event, surface, activeDrag.type);
+        const result = decision(event, surface, activeDrag.type, !!activeDrag.floating);
         if (result.allowed) {
             surface.classList.remove('h18-clean-hierarchy-invalid');
             return;
@@ -188,7 +189,9 @@
         // Section only; all child element types must be dragged into a wrapper.
         event.preventDefault();
         event.stopImmediatePropagation();
-        toast((LABELS[type] || 'Elementet') + ' skal trækkes ind i en Sektion eller Kasse.', null);
+        toast(type === 'button'
+            ? 'Knap skal trækkes til canvas, Sektion eller Kasse, så placeringen kan vælges som Flydende.'
+            : (LABELS[type] || 'Elementet') + ' skal trækkes ind i en Sektion eller Kasse.', null);
     }
 
     function installHints() {
@@ -196,6 +199,8 @@
             const type = cleanType(button.getAttribute('data-type'));
             if (type === 'section') {
                 button.title = 'Klik eller træk: opret Sektion på sideniveau';
+            } else if (type === 'button') {
+                button.title = 'Træk Knap til canvas, Sektion eller Kasse · starter som Flydende';
             } else if (type) {
                 button.title = 'Træk ' + (LABELS[type] || type) + ' ind i en Sektion eller Kasse';
             }

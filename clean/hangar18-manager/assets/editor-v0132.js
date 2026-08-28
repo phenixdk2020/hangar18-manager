@@ -208,7 +208,7 @@
             el = document.createElement('div');
             el.id = 'h18-v0132-button-drag-badge';
             el.className = 'h18-v0132-button-drag-badge';
-            el.textContent = 'TRÆKKER KNAP · slip i Sektion eller Kasse';
+            el.textContent = 'TRÆKKER KNAP · slip på canvas, i Sektion eller Kasse';
             document.body.appendChild(el);
         }
         document.body.setAttribute('data-h18-v0132-palette-type', 'button');
@@ -234,7 +234,7 @@
             var added = Object.keys(after).filter(function (id) { return !Object.prototype.hasOwnProperty.call(attempt.before, id); });
             if (attempt.type !== 'button') { return; }
             if (!added.length) {
-                showNotice('Knap blev ikke oprettet. Træk Knap ind i en Sektion eller Kasse – det valgte TEKST-element er stadig det gamle element.', true);
+                showNotice('Knap blev ikke oprettet. Slip Knap på canvas eller i en Sektion/Kasse – det valgte element er stadig det gamle element.', true);
                 return;
             }
             var buttonIds = added.filter(function (id) { return after[id] === 'button'; });

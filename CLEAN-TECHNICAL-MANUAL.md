@@ -1,6 +1,6 @@
 # Visual Designer Manager – Teknisk manual og beslutningsregister
 
-Senest opdateret: 27. august 2026  
+Senest opdateret: 28. august 2026  
 Gælder for: Visual Designer Manager 0.1.x og nyere  
 Status: **Autoritativ reference for tekniske adfærdsregler, UX-kontrakter og godkendte implementeringsvalg**
 
@@ -183,7 +183,8 @@ Drop-guides skal visuelt gøre det tydeligt, hvilken celle der deles.
 
 - Sektion: kun direkte på Side/root.
 - Kasse: i Sektion eller Kasse.
-- Leaf-elementer: i Sektion eller Kasse.
+- Normale leaf-elementer: i Sektion eller Kasse.
+- **Flydende Knap er den eksplicitte leaf-undtagelse** og må placeres på Side/root, i Sektion eller Kasse.
 - Kasse må indeholde Kasse.
 - Sektion må ikke nestes som almindelig Kasse.
 
@@ -203,7 +204,9 @@ og aldrig `TEKST · <id>`.
 
 ### 6.2 Normal Knap
 
-En normal Knap deltager i almindeligt LEGO/grid-layout og kan placeres via Over/Under/Venstre/Højre.
+En normal Knap deltager i almindeligt LEGO/grid-layout og kan placeres via Over/Under/Venstre/Højre. Normal er en bevidst tilstand, som kan vælges i Inspector.
+
+Når **Knap trækkes fra paletten**, er den godkendte standard derimod **Flydende**, så indsættelsen ikke først går gennem almindelig celle-split.
 
 ### 6.3 Flydende Knap
 
@@ -574,27 +577,25 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ---
 
-## 21. Kontraktstatus for 0.1.32
+## 21. Kontraktstatus for 0.1.33
 
 ### VD-FLOAT-001 – Flydende Knap
 
-**IMPLEMENTERET / regressionstestet.** 0.1.31 indførte det parent-relative overlay-flow. 0.1.32 fastholder kontrakten: ingen normal grid-række/celle-split, ingen parent auto-grow alene på grund af floating-position og aldrig `position:fixed`.
+**IMPLEMENTERET / rettet i 0.1.33.** En palette-Knap klassificeres som Flydende **før** drop-zonen beregnes. Derfor går en ny Flydende Knap ikke gennem Over/Under/Venstre/Højre celle-split og viser ikke disse guides ved indsættelse. Den kan placeres på Side-root, i Sektion eller Kasse. Normal Knap kan fortsat vælges i Inspector og følger almindeligt grid-layout.
 
 ### VD-TEXT-SEL-001 – Rich-text selection
 
-**IMPLEMENTERET i 0.1.32.** Selection gendannes ud fra logiske tekst-offsets i flere browser-tidspunkter efter toolbar-kommandoen, så Fed, Kursiv og Understregning kan kædes på samme markering.
+**IMPLEMENTERET / rettet i 0.1.33.** Bruger-QA af 0.1.32 viste Fed = PASS, Understregning = PASS og Kursiv = BUG. I 0.1.33 er logisk selection-capture/restore flyttet ind i den fælles rich-text command-pipeline, så DOM-ændringen ved Kursiv håndteres samme sted som Fed og Understregning.
 
-Hvis browser-/DOM-adfærd senere igen bryder markeringen, genåbnes dette som BUG mod samme FAST-kontrakt.
+Godkendelsestest er fortsat: markér tekst → Fed → Kursiv → Understregning uden ny markering mellem kommandoerne.
 
 ### VD-BUTTON-TYPE-001 – Knap er Knap
 
-**IMPLEMENTERET / præciseret i 0.1.32.** Core opretter palette-elementet Knap som canonical `type=button`. Den observerede `TEKST`-situation kunne opstå, når hierarchy-reglen afviste et root-drop, hvorefter det tidligere valgte Tekst-element fortsat stod markeret. 0.1.32 gør den afvisning eksplicit og verificerer efter palette-drop, at en ny Knap enten er oprettet som `button`, eller at brugeren får besked om, at den ikke blev oprettet.
-
-Hierarkireglen ændres ikke: leaf-elementer som Knap skal ligge i Sektion eller Kasse.
+**IMPLEMENTERET.** Palette-Knap oprettes canonical som `type=button`. 0.1.33 præciserer desuden, at den nye palette-Knap starter med `placementMode=overlay`; den er altså både Knap-type og Flydende layouttilstand fra første drop.
 
 ### VD-INSPECTOR-SCROLL-001 – Inspector bund-buffer
 
-**IMPLEMENTERET i 0.1.32.** Inspector får ca. 360 px editor-only scroll-buffer efter sidste kontrol. Bufferen påvirker ikke canonical model, Preview eller frontend.
+**PASS i bruger-QA på 0.1.32 / uændret i 0.1.33.** Inspectorens ca. 360 px editor-only bund-buffer fungerer som aftalt og påvirker ikke canonical model, Preview eller frontend.
 
 ---
 

@@ -2,8 +2,15 @@
 Contributors: hangar18
 Requires at least: 6.4
 Requires PHP: 8.0
-Version: 0.1.32
+Version: 0.1.33
 Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
+
+== 0.1.33 ==
+* Kursiv bruger nu samme logiske selection-capture/restore inde i den fælles rich-text command-pipeline som Fed og Understregning.
+* Palette-Knap starter som Flydende før drop-zonen beregnes, så den ikke længere viser eller udfører Over/Under/Venstre/Højre cell-split.
+* Flydende Knap kan slippes på Side-root, i Sektion eller Kasse; Normal Knap følger fortsat almindelige leaf-/grid-regler.
+* Inspectorens 360 px bund-buffer fra 0.1.32 er uændret og regression-sikret.
+* Bruger- og teknisk dokumentation er synkroniseret med de to rettede interaction contracts.
 
 == 0.1.32 ==
 * Rich-text selection er hardenet: samme markerede tekst gendannes efter Fed, Kursiv og Understregning og bevares til kædede toolbar-kommandoer.

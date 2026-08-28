@@ -1,7 +1,7 @@
 # Visual Designer Manager – Brugermanual
 
-Senest opdateret: 27. august 2026  
-Gælder for: Visual Designer Manager 0.1.32 og nyere; planlagte funktioner er mærket **Planlagt**  
+Senest opdateret: 28. august 2026  
+Gælder for: Visual Designer Manager 0.1.33 og nyere; planlagte funktioner er mærket **Planlagt**  
 Målgruppe: Redaktører og administratorer, der bygger og vedligeholder sider i WordPress
 
 > Denne manual beskriver **hvordan Visual Designer Manager bruges i praksis**. Den tekniske arkitektur er beskrevet separat i `CLEAN-DESIGN-MANUAL.md`.
@@ -141,7 +141,9 @@ Billede skal også kunne fungere som link med samme fælles linkmodel som Knap o
 
 ### 2.9 Knap
 
-Knap er et selvstændigt element og skal ikke behandles som Tekst. En normal Knap deltager i LEGO-layoutet. En **Flydende Knap** er et parent-relativt overlay, som kan ligge over andet indhold uden at reservere en normal grid-celle.
+Knap er et selvstændigt element og skal ikke behandles som Tekst. Når **Knap trækkes fra paletten**, starter den som **Flydende Knap**, så den kan placeres frit på Side-root, i en Sektion eller Kasse uden at dele den celle, den ligger oven på. Derfor bruges der ikke Over/Under/Venstre/Højre cell-split under selve indsættelsen.
+
+I Inspector kan Knap efterfølgende skiftes til **Normal**, hvis den i stedet skal deltage i det almindelige LEGO/grid-layout. En Flydende Knap er et parent-relativt overlay, reserverer ingen normal grid-celle og skubber ikke naboelementer.
 
 ### 2.10 Icon
 
