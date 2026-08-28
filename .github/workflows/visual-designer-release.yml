@@ -41,7 +41,7 @@ jobs:
           grep -q "selectionOwner: 'v0125-authoritative'" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "function primeSelectionSession" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
-          grep -q "primeSelectionSession();" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "schedulePrimeSelectionSession();" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "window.H18RichTextV0125.selectionOwner) { return; }" clean/hangar18-manager/assets/editor-v0131.js
           grep -q "window.H18RichTextV0125.selectionOwner);" clean/hangar18-manager/assets/editor-v0132.js
           if grep -n -E "selectionOwner[[:space:]]*===?[[:space:]]*['\"]v[0-9]+" clean/hangar18-manager/assets/editor-v0131.js clean/hangar18-manager/assets/editor-v0132.js; then
