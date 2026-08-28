@@ -1,0 +1,95 @@
+name: Apply Visual Designer Manager 0.1.34 bugfixes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0134_bugfixes.py'
+      - '.github/workflows/apply-v0134-bugfixes.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic 0.1.34 patch
+        run: python .github/scripts/apply_v0134_bugfixes.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.34 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'Version: 0.1.34' clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "H18_CLEAN_VERSION', '0.1.34'" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "'h18-clean-editor-v0134'" clean/hangar18-manager/hangar18-manager.php
+          test -s clean/hangar18-manager/assets/editor-v0134.css
+
+          # VD-TEXT-SEL-001: one authoritative owner, logical snapshot and atomic command.
+          grep -Fq "selectionOwner: 'v0134'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq 'savedLogical' clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq 'active.formatting = true' clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq "button.addEventListener('pointerdown'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq "selectionOwner === 'v0134'" clean/hangar18-manager/assets/editor-v0131.js
+          grep -Fq 'richSelectionOwnedByV0125' clean/hangar18-manager/assets/editor-v0132.js
+
+          # VD-FLOAT-STACK-001: floating editor top layer, canonical layer preserved.
+          grep -Fq -- '--h18-vd-floating-layer' clean/hangar18-manager/assets/editor-v0131.js
+          grep -Fq 'z-index:calc(10000 + var(--h18-vd-floating-layer,20))' clean/hangar18-manager/assets/editor-v0134.css
+          grep -Fq '.h18-clean-node.is-selected' clean/hangar18-manager/assets/editor-v0134.css
+          grep -Fq 'Canonical zIndex' clean/hangar18-manager/assets/editor-v0134.css
+
+          grep -Fq '== 0.1.34 ==' clean/hangar18-manager/readme.txt
+          grep -Fq '"version": "0.1.34"' clean/hangar18-manager/release-history.json
+          grep -Fq '<h4>0.1.34</h4>' clean-release-notes.html
+          grep -Fq 'Visual Designer Manager 0.1.34 og nyere' CLEAN-USER-MANUAL.md
+          grep -Fq 'VD-FLOAT-STACK-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'Kontraktstatus for 0.1.34' CLEAN-TECHNICAL-MANUAL.md
+          test -s docs/v0134-status.md
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-ci-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php \
+                  clean/hangar18-manager/assets/editor-v0125.js \
+                  clean/hangar18-manager/assets/editor-v0131.js \
+                  clean/hangar18-manager/assets/editor-v0132.js \
+                  clean/hangar18-manager/assets/editor-v0134.css \
+                  clean/hangar18-manager/readme.txt \
+                  clean/hangar18-manager/release-history.json \
+                  clean-release-notes.html \
+                  CLEAN-USER-MANUAL.md \
+                  CLEAN-TECHNICAL-MANUAL.md \
+                  docs/v0134-status.md
+          if git diff --cached --quiet; then
+            echo 'Implementation already present.'
+            exit 0
+          fi
+          git commit -m 'Apply Visual Designer Manager 0.1.34 bugfixes'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            echo "Push race on attempt ${attempt}; retrying..."
+            sleep 2
+          done
+          exit 1
