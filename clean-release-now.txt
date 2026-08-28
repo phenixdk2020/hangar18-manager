@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.32
-Trigger: rich-selection-button-drop-inspector 2026-08-27
+Release Visual Designer Manager v0.1.33
+Trigger: italic-selection-floating-button-drop 2026-08-28
