@@ -57,9 +57,11 @@ require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/HierarchyNormali
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/LayoutModel.php';
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/GlobalLayoutModel.php';
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/TemplateLayoutModel.php';
+require_once __DIR__ . '/../../clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php';
 
 use Hangar18\Clean\Model\LayoutModel;
 use Hangar18\Clean\Model\TemplateLayoutModel;
+use Hangar18\Clean\Migration\LegacyHeaderConverter;
 
 function vdFail(string $message): void { fwrite(STDERR, "V0125 MODEL QA FAIL: {$message}\n"); exit(1); }
 function vdAssert(bool $condition, string $message): void { if (!$condition) { vdFail($message); } }
@@ -208,4 +210,36 @@ TemplateLayoutModel::ensureMigrated();
 vdAssert(count(TemplateLayoutModel::all('header')) === count($beforeHeaders), 'Migration is not idempotent.');
 vdAssert(count(TemplateLayoutModel::history('header-standard-v1')) === count($beforeHistory), 'Migration duplicated historical versions.');
 
-echo "Visual Designer Manager 0.1.25 model QA PASS\n";
+/* Legacy HeaderDesign is converted into a canonical editable Header model. */
+$convertedHeader = LegacyHeaderConverter::buildModelFromLegacyDesign([
+    'DesktopContentWidthPercent' => 90,
+    'LaptopContentWidthPercent' => 95,
+    'ShowBrand' => true,
+    'BrandText' => 'Aalborg Kaserners Veteran Panser- og Køretøjsforening',
+    'ShowLogo' => true,
+    'LogoMediaId' => 55,
+    'LogoUrl' => 'https://example.test/logo.png',
+    'MenuAlignment' => 'Right',
+    'BackgroundMode' => 'None',
+    'TextColor' => '#30382a',
+    'AccentColor' => '#c3ae83',
+    'MenuFontWeight' => 'Semibold',
+], 77);
+$convertedByType = [];
+foreach ($convertedHeader['nodes'] as $node) { $convertedByType[(string) ($node['type'] ?? '')][] = $node; }
+vdAssert(count($convertedByType['section'] ?? []) === 1, 'Legacy Header conversion must create one root Section.');
+vdAssert(count($convertedByType['container'] ?? []) === 1, 'Legacy Header conversion must create one inner Container.');
+vdAssert(count($convertedByType['image'] ?? []) === 1, 'Legacy Header logo was not converted to Image.');
+vdAssert(count($convertedByType['text'] ?? []) === 1, 'Legacy Header brand was not converted to Text.');
+vdAssert(count($convertedByType['menu'] ?? []) === 1, 'Legacy Header menu was not converted to Menu.');
+$convertedSection = ($convertedByType['section'] ?? [])[0] ?? [];
+$convertedMenu = ($convertedByType['menu'] ?? [])[0] ?? [];
+vdAssert((int) ($convertedSection['geometry']['desktop']['x'] ?? -1) === 6, '90 percent legacy Header width did not center at X=6.');
+vdAssert((int) ($convertedSection['geometry']['desktop']['w'] ?? -1) === 108, '90 percent legacy Header width did not become 108/120 units.');
+vdAssert((int) ($convertedMenu['props']['menuId'] ?? 0) === 77, 'Legacy active WordPress menu ID was not retained.');
+vdAssert(($convertedMenu['props']['textColor'] ?? '') === '#30382a', 'Transparent legacy Header did not retain dark menu text.');
+vdAssert((int) ($convertedMenu['props']['fontWeight'] ?? 0) === 600, 'Legacy Semibold menu weight was not converted.');
+vdAssert((int) ($convertedMenu['geometry']['mobile']['w'] ?? 0) === 30, 'Converted mobile Menu must reserve the right-side hamburger area.');
+vdAssert(empty($convertedMenu['geometry']['mobile']['inheritDesktop']), 'Converted mobile Menu geometry must be explicit.');
+
+echo "Visual Designer Manager 0.1.41 model QA PASS\n";

@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.1.41",
+    "date": "2026-08-28",
+    "items": [
+      "BUG-10 rettet: tomt Slug-felt genererer nu automatisk en slug fra sidetitlen allerede ved oprettelse af kladder.",
+      "Automatiske og manuelt angivne side-slugs gøres unikke på tværs af Publiceret, Kladde, Afventer, Privat og Planlagt.",
+      "Eksisterende Visual Designer-sider med tom slug fra 0.1.39/0.1.40 repareres én gang uden at ændre sideindhold eller Designer-layout.",
+      "Legacy Hangar18 Header konverteres automatisk og non-destruktivt til Header – Standard ud fra de faktiske gemte HeaderDesign-data og den eksisterende Header-blok.",
+      "Konverteringen binder Menu-elementet til den aktive WordPress-menu og bevarer den tidligere Visual Designer Header i template-historikken.",
+      "Theme Shell-cutover forbliver OFF; den konverterede Header afventer brugerens 1:1 parity-QA på Desktop/Laptop/Mobil."
+    ]
+  },
+  {
     "version": "0.1.40",
     "date": "2026-08-28",
     "items": [

@@ -18,6 +18,7 @@ final class AdminController
     private const EXPORT_NONCE = 'h18_clean_export_backup';
     private const CLEAR_LOG_NONCE = 'h18_clean_clear_diagnostics';
     private const CREATE_PAGE_NONCE = 'h18_clean_create_page';
+    private const BLANK_SLUG_REPAIR_OPTION = 'h18_vd_blank_page_slugs_repaired_v0141';
 
     /** @var array<string,array{title:string,slug:string}> */
     private const COLLECTIONS = [
@@ -33,6 +34,7 @@ final class AdminController
         add_action('admin_post_' . self::EXPORT_ACTION, [self::class, 'exportBackup']);
         add_action('admin_post_' . self::CLEAR_LOG_ACTION, [self::class, 'clearDiagnostics']);
         add_action('admin_post_' . self::CREATE_PAGE_ACTION, [self::class, 'createPage']);
+        add_action('admin_init', [self::class, 'repairBlankPageSlugs'], 20);
     }
 
     public static function menu(): void
@@ -363,7 +365,9 @@ final class AdminController
             exit;
         }
 
-        $slug = sanitize_title((string) wp_unslash($_POST['page_slug'] ?? ''));
+        $requestedSlug = sanitize_title((string) wp_unslash($_POST['page_slug'] ?? ''));
+        $slugBase = $requestedSlug !== '' ? $requestedSlug : sanitize_title($title);
+        $slug = self::uniquePageSlug($slugBase);
         $parent = absint($_POST['page_parent'] ?? 0);
         if ($parent > 0 && get_post_type($parent) !== 'page') { $parent = 0; }
 
@@ -392,6 +396,71 @@ final class AdminController
 
         wp_safe_redirect(self::designerUrl($postId));
         exit;
+    }
+
+    public static function repairBlankPageSlugs(): void
+    {
+        if (!current_user_can('edit_pages') || get_option(self::BLANK_SLUG_REPAIR_OPTION, false)) {
+            return;
+        }
+
+        $repaired = 0;
+        foreach (self::allPages() as $page) {
+            if (!$page instanceof \WP_Post || trim((string) $page->post_name) !== '') {
+                continue;
+            }
+            if (!current_user_can('edit_post', $page->ID)) {
+                continue;
+            }
+
+            $base = sanitize_title((string) $page->post_title);
+            $slug = self::uniquePageSlug($base !== '' ? $base : 'side');
+            $result = wp_update_post([
+                'ID' => (int) $page->ID,
+                'post_name' => $slug,
+            ], true);
+            if (!is_wp_error($result) && (int) $result > 0) {
+                $repaired++;
+            }
+        }
+
+        update_option(self::BLANK_SLUG_REPAIR_OPTION, [
+            'repairedUtc' => gmdate('c'),
+            'count' => $repaired,
+        ], false);
+    }
+
+    private static function uniquePageSlug(string $base): string
+    {
+        $base = sanitize_title($base);
+        if ($base === '') {
+            $base = 'side';
+        }
+
+        $candidate = $base;
+        $suffix = 2;
+        while (self::pageSlugExists($candidate)) {
+            $candidate = $base . '-' . $suffix;
+            $suffix++;
+            if ($suffix > 10000) {
+                throw new \RuntimeException('Kunne ikke finde en ledig side-slug.');
+            }
+        }
+        return $candidate;
+    }
+
+    private static function pageSlugExists(string $slug): bool
+    {
+        $ids = get_posts([
+            'post_type' => 'page',
+            'post_status' => ['publish', 'draft', 'pending', 'private', 'future'],
+            'name' => sanitize_title($slug),
+            'fields' => 'ids',
+            'posts_per_page' => 1,
+            'no_found_rows' => true,
+            'suppress_filters' => true,
+        ]);
+        return is_array($ids) && !empty($ids);
     }
 
     public static function exportBackup(): void
