@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.35",
+  "version": "0.1.36",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.35.zip",
-  "sha256": "f79f372cbc9a9b43b1aa7cddf85c3b2ef8ba464d72f8d73fe6f39a912a2306e8",
-  "source_commit": "7fc53275e686ffa508b18e6819a4f0d291291f64",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.36.zip",
+  "sha256": "296fb1fd86505d3dcaddd1bc4dd6a74995d1c30cc8a0157d25530a952f3fe63f",
+  "source_commit": "1cfd3134b78ea75771be7dbf897766dfdfe47021",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.35</h4><ul><li><strong>Rich text:</strong> Fed, Kursiv og Understregning bruger deterministisk DOM-formatteringsmotor.</li><li><strong>Selection:</strong> logiske tekst-offsets rekonstruerer samme markering efter formattering.</li><li><strong>Farvevælger:</strong> native Windows/browser-dialog er erstattet af Visual Designers egen HSV/HEX-vælger.</li><li><strong>Farvemodel:</strong> canonical værdi er fortsat #RRGGBB.</li><li><strong>Regression:</strong> Floating top-layer og Inspector-scroll er bevaret.</li></ul>"
+    "changelog": "<h4>0.1.36</h4><ul><li><strong>Rich text:</strong> Fed, Kursiv og Understregning fastholder selection mellem permanente start/slut-boundary-markører.</li><li><strong>Firefox:</strong> selection afhænger ikke længere primært af tekstnoderne i STRONG/EM efter DOM-ændringer.</li><li><strong>Farvevælger:</strong> fælles body-level popover for alle Inspector-farvefelter; viewport-aware placering og ingen clipping.</li><li><strong>Navngivning:</strong> nye synlige backup/release-navne bruger visual-designer-manager.</li><li><strong>Regression:</strong> Floating top-layer og Inspector-scroll bevares.</li></ul>"
   }
 }
