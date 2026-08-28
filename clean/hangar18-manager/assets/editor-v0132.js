@@ -21,7 +21,7 @@
     var noticeTimer = 0;
 
     function richSelectionOwnedByV0125() {
-        return !!(window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner === 'v0134');
+        return !!(window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner);
     }
 
     function richEditorForButton(button) {

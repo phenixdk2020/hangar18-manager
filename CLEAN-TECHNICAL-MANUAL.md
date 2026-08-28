@@ -579,7 +579,7 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ---
 
-## 21. Kontraktstatus for 0.1.36
+## 21. Kontraktstatus for 0.1.37
 
 ### VD-FLOAT-001 – Flydende Knap
 
@@ -587,9 +587,11 @@ Denne manual beskriver primært FAST og GODKENDT MÅL. Implementationsstatus må
 
 ### VD-TEXT-SEL-001 – Rich-text selection
 
-**BUGFIX i 0.1.36 – afventer bruger-QA.** Bruger-QA af 0.1.35 viste fortsat, at Understregning bevarer selection, mens Fed/Kursiv kan miste den. 0.1.36 gør derfor selection uafhængig af Firefox' genopbygning af `STRONG`/`EM`: to vedvarende, tomme editor-boundary-markører placeres omkring den valgte tekst ved toolbar-pointerdown. Fed, Kursiv og Understregning formatterer mellem de samme markører, og Range rekonstrueres fra markørerne efter hver kommando. Logiske tekst-offsets er kun fallback.
+**BUGFIX i 0.1.37 – afventer bruger-QA.** Bruger-QA af 0.1.36 viste fortsat tab af selection ved Fed/Kursiv. Den konkrete regressionsårsag er identificeret: `v0131` og `v0132` deaktiverede kun deres gamle restore-loops, når `v0125.selectionOwner === 'v0134'`. Da den aktive owner-label senere blev ændret, blev legacy-loopene utilsigtet aktiveret igen og konkurrerede med den autoritative formatteringsmotor. I 0.1.37 er `v0125` permanent autoritativ ejer, og legacy-lag delegerer ved enhver truthy `selectionOwner`; kontrakten er dermed ikke versionsbundet. Boundary-marker motoren fra 0.1.36 bevares uændret som den eneste aktive selection-motor.
 
 Godkendelsestest: 20/20 gentagelser for Fed, Kursiv og Understregning samt kæderne Fed → Kursiv → Understregning og Kursiv → Fed → Understregning uden ny markering.
+
+**FAST owner-regel:** Legacy rich-text-filer må aldrig afgøre delegation ud fra et konkret release-nummer. Hvis `H18RichTextV0125.selectionOwner` er sat, er v0125 den eneste selection-ejer, og ældre capture/restore-loops skal returnere uden handling.
 
 ### VD-BUTTON-TYPE-001 – Knap er Knap
 

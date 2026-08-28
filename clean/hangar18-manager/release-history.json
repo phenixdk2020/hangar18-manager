@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.37",
+    "date": "2026-08-28",
+    "items": [
+      "BUG-02 root cause rettet: v0131/v0132 selection-restore loops blev ved en versionsstrengsændring utilsigtet aktiveret igen.",
+      "v0125 er nu permanent autoritativ rich-text selection-ejer; legacy handlers delegerer ved enhver gyldig owner-værdi.",
+      "Owner-kontrakten er ikke længere bundet til et bestemt release-nummer og har en release-gate mod regression.",
+      "0.1.36 boundary-marker formatteringsmotoren bevares og får nu lov at køre uden konkurrerende restore-handlers.",
+      "Ingen ændringer til Billede-adfærd i denne release."
+    ]
+  },
+  {
     "version": "0.1.36",
     "date": "2026-08-28",
     "items": [

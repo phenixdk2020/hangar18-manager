@@ -597,8 +597,8 @@
 
     window.H18RichTextV0125 = {
         sync: sync,
-        selectionOwner: 'v0135',
-        selectionMode: 'boundary-markers-v0136',
+        selectionOwner: 'v0125-authoritative',
+        selectionMode: 'boundary-markers-v0137-single-owner',
         restoreSelection: function () {
             if (!active) { return false; }
             if (markerSelectionValid()) { return restoreMarkerSelection(); }

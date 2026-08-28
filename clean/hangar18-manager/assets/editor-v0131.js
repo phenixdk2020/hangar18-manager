@@ -88,7 +88,7 @@
     }
 
     document.addEventListener('mousedown', function (event) {
-        if (window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner === 'v0134') { return; }
+        if (window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner) { return; }
         const button = event.target && event.target.closest ? event.target.closest('.h18-vd-rich-button') : null;
         if (!button) { return; }
         const shell = button.closest('.h18-vd-rich-shell');
@@ -97,7 +97,7 @@
     }, true);
 
     document.addEventListener('click', function (event) {
-        if (window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner === 'v0134') { return; }
+        if (window.H18RichTextV0125 && window.H18RichTextV0125.selectionOwner) { return; }
         const button = event.target && event.target.closest ? event.target.closest('.h18-vd-rich-button') : null;
         if (!button || !richSelection) { return; }
         const snapshot = richSelection;
