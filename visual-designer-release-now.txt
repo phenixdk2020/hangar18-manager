@@ -1,0 +1,2 @@
+Release Visual Designer Manager v0.1.36
+Trigger: boundary-selection-color-popover-public-naming 2026-08-28
