@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.32.zip",
-  "sha256": "b469491157925afc9f636f1cbe272941a27631196435f46ca85967c52d7564cb",
-  "source_commit": "2652d55d2c31e9a68eceb9a29e3e98ef3e74ca5c",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-manager-clean-v0.1.33.zip",
+  "sha256": "2d91fb520c5da8f6f88869f60a006cc85c66a6d27ccd698f2aa419cc108d9136",
+  "source_commit": "7f22d1f618a6fc60714a6b4a0671d3702f565732",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.32</h4><ul><li><strong>Rich text selection:</strong> markeringen gendannes efter Fed, Kursiv og Understregning og bevares til flere formatteringer i træk.</li><li><strong>Knap-type og drop-feedback:</strong> Knap er fortsat canonical type <code>button</code>. Hvis hierarchy-reglen afviser et drop på root, får brugeren nu tydelig besked om, at Knap ikke blev oprettet og skal placeres i en Sektion eller Kasse.</li><li><strong>Inspector:</strong> 360 px ekstra usynlig scroll-buffer efter sidste kontrol gør de nederste felter lettere at arbejde med.</li><li><strong>Floating regression:</strong> Flydende Knap forbliver parent-relativ overlay, reserverer ingen normal grid-række og påvirker ikke autogrow alene på grund af sin position.</li><li><strong>Dokumentation:</strong> teknisk manual og brugermanual er opdateret til 0.1.32-kontrakterne.</li></ul>"
+    "changelog": "<h4>0.1.33</h4><ul><li><strong>Kursiv selection:</strong> selection gemmes og gendannes nu som logiske tekst-offsets inde i den fælles rich-text command-pipeline, så Kursiv matcher Fed og Understregning.</li><li><strong>Flydende Knap fra palette:</strong> Knap klassificeres som Flydende før drop-zone beregnes. Derfor vises eller udføres almindelig Over/Under/Venstre/Højre celle-split ikke ved indsættelse.</li><li><strong>Hierarchy:</strong> Flydende Knap er den eksplicitte leaf-undtagelse og må placeres på Side-root, i Sektion eller Kasse. Normal Knap følger fortsat almindeligt grid-layout.</li><li><strong>Inspector:</strong> den fungerende 360 px bund-buffer fra 0.1.32 er bevaret uændret.</li><li><strong>Dokumentation:</strong> bruger- og teknisk manual er synkroniseret med de rettede kontrakter.</li></ul>"
   }
 }
