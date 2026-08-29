@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.49
-Trigger: active-theme-shell-homepage-selection-akvpk-122 2026-08-29
+Release Visual Designer Manager v0.1.50
+Trigger: staged-page-conversion-akvpk-theme-migration 2026-08-29
