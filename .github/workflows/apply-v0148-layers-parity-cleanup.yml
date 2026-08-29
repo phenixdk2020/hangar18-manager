@@ -33,6 +33,7 @@ jobs:
           p.write_text(s, encoding='utf-8')
           PY
           python .github/scripts/apply_v0148_layers_parity_cleanup.py
+          git checkout -- .github/scripts/apply_v0148_layers_parity_cleanup.py
 
       - name: PHP syntax
         shell: bash
