@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/apply-v0143-header-footer.yml'
       - '.github/scripts/apply_v0143_header_footer.py'
+      - '.github/scripts/fix_v0143_footer_from_legacy_shell.py'
 
 permissions:
   contents: write
@@ -18,7 +19,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Apply 0.1.43 patch
-        run: python .github/scripts/apply_v0143_header_footer.py
+        run: |
+          python .github/scripts/apply_v0143_header_footer.py
+          python .github/scripts/fix_v0143_footer_from_legacy_shell.py
       - name: PHP syntax
         shell: bash
         run: |
@@ -49,6 +52,9 @@ jobs:
           grep -q "container-header-reference-v0143" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
           grep -q "'background'=>'#30382a'" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
           grep -q "HANGAR18-FOOTER-START" clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q "legacy-manager-shell-footer" clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q "Ingen Footer er gættet" clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q "sourceDigest" clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
           grep -q "FooterWidthPercent" clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
           grep -q "Visual Designer Manager 0.1.43 model QA PASS" .github/scripts/v0125_model_qa.php
           grep -q '"version": "0.1.43"' clean/hangar18-manager/release-history.json
@@ -73,7 +79,7 @@ jobs:
             echo 'No implementation changes to commit.'
             exit 0
           fi
-          git commit -m 'Improve Header parity and add Footer conversion in v0.1.43'
+          git commit -m 'Improve Header parity and convert Footer from legacy Manager shell in v0.1.43'
           for attempt in 1 2 3; do
             git fetch origin main
             git rebase origin/main
