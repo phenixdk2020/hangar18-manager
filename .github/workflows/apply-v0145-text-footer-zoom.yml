@@ -21,6 +21,18 @@ jobs:
       - name: Apply 0.1.45 patch
         run: python .github/scripts/apply_v0145_text_footer_zoom.py
 
+      - name: Fix model QA node lookup
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/v0125_model_qa.php')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("vdAssert(($verticalText['nodes'][0]['props']['verticalAlign']??'')==='center','Text verticalAlign was not retained canonically.');", "$verticalNode=null; foreach ($verticalText['nodes'] as $n) { if (($n['id']??'')==='text-vertical') { $verticalNode=$n; break; } }\nvdAssert(is_array($verticalNode) && ($verticalNode['props']['verticalAlign']??'')==='center','Text verticalAlign was not retained canonically.');")
+          s=s.replace("vdAssert(($verticalTextDefault['nodes'][0]['props']['verticalAlign']??'')==='top','Existing Text must default to top vertical alignment.');", "$verticalDefaultNode=null; foreach ($verticalTextDefault['nodes'] as $n) { if (($n['id']??'')==='text-vertical-default') { $verticalDefaultNode=$n; break; } }\nvdAssert(is_array($verticalDefaultNode) && ($verticalDefaultNode['props']['verticalAlign']??'')==='top','Existing Text must default to top vertical alignment.');")
+          p.write_text(s,encoding='utf-8')
+          PY
+
       - name: PHP syntax
         shell: bash
         run: |
