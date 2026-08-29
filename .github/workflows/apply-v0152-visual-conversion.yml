@@ -3,6 +3,7 @@ name: Apply Visual Designer Manager 0.1.52 Visual Conversion
 on:
   push:
     paths:
+      - '.github/scripts/prep_v0152_controller_copy.py'
       - '.github/scripts/apply_v0152_visual_conversion.py'
       - '.github/scripts/fix_v0152_visual_conversion.py'
       - '.github/scripts/v0152_visual_conversion_qa.php'
@@ -26,6 +27,7 @@ jobs:
 
       - name: Apply 0.1.52 patch
         run: |
+          python3 .github/scripts/prep_v0152_controller_copy.py
           python3 .github/scripts/apply_v0152_visual_conversion.py
           python3 .github/scripts/fix_v0152_visual_conversion.py
 
