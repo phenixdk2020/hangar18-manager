@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.53
-Trigger: transparent-element-background-parity 2026-08-29
+Release Visual Designer Manager v0.1.54
+Trigger: menu-ux-page-publish-draft 2026-08-29
