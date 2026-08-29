@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.52",
+      "date": "2026-08-29",
+      "items": [
+        "CONV-03: ekstern Gutenberg/page-frame-konvertering bygger nu rigtige canonical Sektion/Text/Image/Button/Kasse-noder i stedet for én stor Tekst-node.",
+        "test2/Hangar18-sideframe vælges før entry-content, så gammel Header, Footer og desktop/mobile Menu ikke importeres i sideindholdet.",
+        "Hjem-reference: 90% desktop/laptop frame, 100% mobil, 32/24 px sektionsafstand, Banner-6 hero, sand tagline og off-white indholdssektioner konverteres strukturelt.",
+        "Gutenberg columns/cards bliver Kasser; knapper bliver canonical Button; billeder bliver canonical Image og er fortsat source-linked til QA.",
+        "Hvis en ekstern side ikke kan strukturanalyseres, falder importen sikkert tilbage til den tidligere one-text kandidat og markerer fallback som warning."
+      ]
+    },
+    {
       "version": "0.1.51",
       "date": "2026-08-29",
       "items": [

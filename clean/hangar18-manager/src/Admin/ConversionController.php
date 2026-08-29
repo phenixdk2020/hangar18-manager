@@ -43,7 +43,7 @@ final class ConversionController
 
         echo '<div class="wrap h18-manager-admin">';
         echo '<h1>Konvertering af sider</h1>';
-        echo '<p class="h18-manager-description">Forbered Visual Designer-versioner af eksisterende WordPress-sider uden at ændre den offentlige side. Konvertering opretter først en QA-kandidat; først <strong>Godkend og aktivér</strong> gemmer kandidaten som en rigtig Visual Designer-version.</p>';
+        echo '<p class="h18-manager-description">Forbered Visual Designer-versioner af lokale WordPress-sider eller hent en eksisterende side fra et andet offentligt HTTPS-site. Eksterne Gutenberg/page-frame-sider opdeles nu i rigtige Sektioner, Tekst, Billeder, Knapper og Kasser. Alt oprettes først som QA-kandidat; først <strong>Godkend og aktivér</strong> ændrer mål-sidens Visual Designer-model.</p>';
         if ($message !== '') {
             echo '<div class="notice ' . ($statusMessage === 'error' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($message) . '</p></div>';
         }
@@ -69,7 +69,8 @@ final class ConversionController
         echo '</select></label>';
         echo '<label style="min-width:220px"><strong>Titel ved ny side</strong><input type="text" name="new_title" placeholder="Automatisk fra kilden"></label>';
         echo '<button class="button button-primary" type="submit">Hent ekstern side til QA</button></form>';
-        echo '<p class="description">Til forsiden: brug <code>https://test2.hangar18.dk/</code> og vælg <strong>Hjem – Visual Designer</strong> som målside. Relative billeder og links gøres absolutte mod kildesitet; eksterne assets flyttes ikke til det nye mediebibliotek i denne version.</p></section>';
+        echo '<p class="description">Kilden læses kun. På det gamle Hangar18-layout vælges selve <code>h18-page-frame</code>, så gammel Header/Footer/Menu ikke importeres som sideindhold. Hero, baggrundsfarver, Gutenberg-sektioner, kolonner, tekst, billeder og knapper bliver canonical Visual Designer-elementer. Eksterne billeder er fortsat kilde-linkede og skal QA-godkendes.</p>';
+echo '</section>';
 
         echo '<form id="h18-vd-conversion-batch" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-manager-toolbar">';
         wp_nonce_field(self::NONCE);

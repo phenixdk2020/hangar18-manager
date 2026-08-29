@@ -23,7 +23,7 @@ final class ExternalPageSourceService
             'redirection' => 3,
             'reject_unsafe_urls' => true,
             'limit_response_size' => self::MAX_RESPONSE_BYTES,
-            'user-agent' => 'Visual-Designer-Manager/0.1.51; ' . home_url('/'),
+            'user-agent' => 'Visual-Designer-Manager/0.1.52; ' . home_url('/'),
             'headers' => [
                 'Accept' => 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.1',
             ],
@@ -119,9 +119,10 @@ final class ExternalPageSourceService
 
         $root = null;
         foreach ([
+            '//*[contains(concat(" ", normalize-space(@class), " "), " h18-page-frame ")][1]',
+            '//*[contains(concat(" ", normalize-space(@class), " "), " entry-content ")][1]',
             '//main[1]',
             '//article[1]',
-            '//*[contains(concat(" ", normalize-space(@class), " "), " entry-content ")][1]',
             '//*[@id="content"][1]',
             '//body[1]',
         ] as $query) {
@@ -144,15 +145,15 @@ final class ExternalPageSourceService
                 if ($node->parentNode) { $node->parentNode->removeChild($node); }
             }
         }
-        if (strtolower((string) $root->nodeName) === 'body') {
-            foreach (['header', 'footer', 'nav'] as $tag) {
-                $nodes = $xpath->query('.//' . $tag, $root);
-                if (!$nodes) { continue; }
-                $remove = [];
-                foreach ($nodes as $node) { $remove[] = $node; }
-                foreach ($remove as $node) {
-                    if ($node->parentNode) { $node->parentNode->removeChild($node); }
-                }
+        // Header/Footer/Menu are global Visual Designer models. They must never
+        // become page nodes, regardless of which content root was selected.
+        foreach (['header', 'footer', 'nav'] as $tag) {
+            $nodes = $xpath->query('.//' . $tag, $root);
+            if (!$nodes) { continue; }
+            $remove = [];
+            foreach ($nodes as $node) { $remove[] = $node; }
+            foreach ($remove as $node) {
+                if ($node->parentNode) { $node->parentNode->removeChild($node); }
             }
         }
 
@@ -221,7 +222,9 @@ final class ExternalPageSourceService
     private static function extractFallback(string $raw, string $baseUrl): array
     {
         $body = $raw;
-        if (preg_match('/<main\b[^>]*>(.*?)<\/main>/is', $raw, $match)) {
+        if (preg_match('/<!--\s*HANGAR18-PAGE-FRAME-START\s*-->(.*?)<!--\s*HANGAR18-PAGE-FRAME-END\s*-->/is', $raw, $match)) {
+            $body = (string) $match[1];
+        } elseif (preg_match('/<main\b[^>]*>(.*?)<\/main>/is', $raw, $match)) {
             $body = (string) $match[1];
         } elseif (preg_match('/<body\b[^>]*>(.*?)<\/body>/is', $raw, $match)) {
             $body = (string) $match[1];

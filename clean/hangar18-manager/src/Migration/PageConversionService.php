@@ -134,7 +134,12 @@ final class PageConversionService
             ? array_values(array_unique(array_map('sanitize_text_field', $sourceData['warnings'])))
             : [];
         $sourceTitle = sanitize_text_field((string) ($sourceData['title'] ?? ''));
-        $model = self::modelFromHtml($postId, $html);
+        $model = VisualBlockConversionService::build($postId, $html, $warnings);
+        if ($model === null) {
+            $warnings[] = 'visual-block-conversion-fallback-to-single-text';
+            $model = self::modelFromHtml($postId, $html);
+        }
+        $warnings = array_values(array_unique(array_map('sanitize_text_field', $warnings)));
         $digest = LayoutModel::structuralDigest($model);
 
         update_post_meta($postId, self::SOURCE_META, [
@@ -205,8 +210,8 @@ final class PageConversionService
         }
 
         $note = $sourceType === 'external'
-            ? 'Godkendt ekstern sidekonvertering v0.1.51 · kilde ' . $sourceUrl
-            : 'Godkendt lokal sidekonvertering v0.1.51 · original post_content bevaret';
+            ? 'Godkendt ekstern visuel sidekonvertering v0.1.52 · kilde ' . $sourceUrl
+            : 'Godkendt lokal sidekonvertering v0.1.52 · original post_content bevaret';
         $version = LayoutModel::saveVersion($postId, $candidate, $userId, $note);
         TemplateLayoutModel::ensureMigrated();
         TemplateLayoutModel::setPageChoice($postId, 'header', 'auto');
