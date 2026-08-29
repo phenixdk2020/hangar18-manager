@@ -1,13 +1,13 @@
 {
   "schema_version": "1.0",
   "theme": "hangar18-base",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "requires": "6.4",
   "requires_php": "8.0",
-  "last_updated": "2026-08-29T18:00:00Z",
+  "last_updated": "2026-08-29T08:52:00Z",
   "details_url": "https://github.com/phenixdk2020/hangar18-manager",
   "package_url": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-base-theme.zip.b64",
   "package_encoding": "base64",
-  "package_sha256": "e5b56c49a725f8c73734622be37231fc023bf84aed4ee40ef41e8337097fb130",
-  "changelog": "<h4>AKVPK 1.2.1</h4><ul><li>Det synlige WordPress-temanavn er ændret fra Hangar18 Base Theme til AKVPK.</li><li>Teknisk theme-slug, mappe og Text Domain bevares for kompatibilitet.</li><li>Ingen layout- eller Theme Shell-cutover ændringer.</li></ul>"
+  "package_sha256": "fab5c3fdfe78b789a4eec50941ab2ccf4ab37934cf19da3b2af97009a941a2ea",
+  "changelog": "<h4>AKVPK 1.2.2</h4><ul><li>Theme runtime-versionen følger nu den synlige WordPress-version, så 1.2.1 ikke tilbydes igen efter installation.</li><li>Theme API viser konsekvent navnet AKVPK.</li><li>Ingen layoutændring; Visual Designer Manager 0.1.49 står for den aktive Header/Page/Footer-shell på Visual Designer-sider.</li></ul>"
 }

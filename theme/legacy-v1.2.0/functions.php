@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const H18_BASE_THEME_VERSION = '1.2.0';
+const H18_BASE_THEME_VERSION = '1.2.2';
 
 const H18_BASE_TRANSITION_CSS_OPTION = 'hangar18_base_transition_css';
 
@@ -201,10 +201,10 @@ function h18_base_theme_information($result, $action, $args) {
     }
 
     return (object) [
-        'name'          => 'Hangar18 Base Theme',
+        'name'          => 'AKVPK',
         'slug'          => 'hangar18-base',
         'version'       => $manifest['version'],
-        'author'        => '<a href="https://hangar18.dk/">Hangar18</a>',
+        'author'        => '<a href="https://hangar18.dk/">AKVPK</a>',
         'homepage'      => $manifest['details_url'],
         'requires'      => $manifest['requires'],
         'requires_php'  => $manifest['requires_php'],

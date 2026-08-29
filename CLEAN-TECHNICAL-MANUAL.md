@@ -834,3 +834,18 @@ Temaets globale CSS må ikke ændre Visual Designer Tekst-elementets paragraph-,
 - Editor entry og breakpointskift starter i Fit.
 - Theme Shell er fortsat OFF.
 - Synligt theme-navn er AKVPK; intern `hangar18-base` slug/Text Domain bevares.
+
+
+## 0.1.49 – Aktiv Theme Shell og Hjemmeside
+
+### VD-SHELL-LIVE-001
+Når Theme Shell er aktiv på en side med canonical Visual Designer-model, er live-rendering: valgt/Auto Header → sidens canonical model → valgt/Auto Footer. Alle tre dele bruger samme `Renderer::renderModel()` som preview.
+
+### VD-SHELL-FALLBACK-001
+Theme Shell må ikke overtage legacy/non-Visual-Designer sider under overgang. Hvis en resolved Header/Footer mangler, er inaktiv, tom eller fejler, udelades kun den del; sideindholdet skal fortsat rendres.
+
+### VD-HOME-001
+Visual Designer Manager → Sider er autoritativ UX for at vælge hjemmesiden. Handlingen må kun vælge en Visual Designer-side, publicerer den ved behov efter capability-check og skriver WordPress-standarderne `show_on_front=page` + `page_on_front=<ID>`. Den gamle forside slettes ikke.
+
+### VD-CUTOVER-0149
+0.1.49 er det eksplicit godkendte Header/Footer cutover. Cutover aktiveres én gang ved runtime og markerer `h18_visual_designer_theme_shell_cutover_v1=1`. Menu-redesign er ikke en del af denne kontrakt.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hangar18\Clean\Frontend;
 
 use Hangar18\Clean\Model\LayoutModel;
+use Hangar18\Clean\Model\TemplateLayoutModel;
 
 final class Renderer
 {
@@ -27,18 +28,52 @@ final class Renderer
         if ($postId <= 0) {
             return $content;
         }
+
         $preview = self::previewModel($postId);
         if ($preview !== null) {
-            return self::renderModel($preview);
+            $pageHtml = empty($preview['nodes']) ? '' : self::renderModel($preview);
+            return ThemeShell::enabled() ? self::renderLiveShell($postId, $pageHtml) : $pageHtml;
         }
+
+        // Safe transition rule: legacy/non-Designer pages are untouched.
         if (!metadata_exists('post', $postId, LayoutModel::META)) {
             return $content;
         }
+
         $model = LayoutModel::get($postId);
-        if (empty($model['nodes'])) {
+        $pageHtml = empty($model['nodes']) ? '' : self::renderModel($model);
+        return ThemeShell::enabled() ? self::renderLiveShell($postId, $pageHtml) : $pageHtml;
+    }
+
+    private static function renderLiveShell(int $postId, string $pageHtml): string
+    {
+        $headerId = ThemeShell::resolvedTemplateId($postId, 'header');
+        $footerId = ThemeShell::resolvedTemplateId($postId, 'footer');
+        $headerHtml = self::renderResolvedTemplate($headerId, 'header');
+        $footerHtml = self::renderResolvedTemplate($footerId, 'footer');
+
+        return '<div class="h18-vd-live-shell" data-h18-vd-shell="active" data-h18-vd-header="' . esc_attr($headerId) . '" data-h18-vd-footer="' . esc_attr($footerId) . '">'
+            . '<div class="h18-vd-live-shell-part h18-vd-live-shell-header">' . $headerHtml . '</div>'
+            . '<div class="h18-vd-live-shell-part h18-vd-live-shell-page">' . $pageHtml . '</div>'
+            . '<div class="h18-vd-live-shell-part h18-vd-live-shell-footer">' . $footerHtml . '</div>'
+            . '</div>';
+    }
+
+    private static function renderResolvedTemplate(string $templateId, string $type): string
+    {
+        if ($templateId === '') {
             return '';
         }
-        return self::renderModel($model);
+        try {
+            if (!TemplateLayoutModel::exists($templateId, $type)) {
+                return '';
+            }
+            $model = TemplateLayoutModel::model($templateId);
+            return empty($model['nodes']) ? '' : self::renderModel($model);
+        } catch (\Throwable $error) {
+            // Template failure must never suppress the page itself.
+            return '';
+        }
     }
 
     public static function css(): void
@@ -66,12 +101,14 @@ final class Renderer
         echo '.h18-clean-front-text-heading{margin:0 0 8px;line-height:1.2}';
         echo '.h18-clean-front-image{margin:0;width:100%;max-width:none;overflow:hidden;box-sizing:border-box;height:100%}';
         echo '.h18-clean-front-image img{display:block;max-width:none;margin:0;box-sizing:border-box}';
+        echo '.h18-vd-live-shell,.h18-vd-live-shell-part{display:block;width:100%;max-width:none;margin:0;padding:0;box-sizing:border-box}.h18-vd-live-shell{position:relative}';
         echo '</style>';
     }
 
 
     /**
-     * Standalone canonical preview used by the Designer while Theme Shell is OFF.
+     * Standalone canonical preview used by the Designer. It remains isolated
+     * from the active public shell so unsaved work never changes frontend output.
      * Header, page and Footer are rendered by the same PHP renderer as frontend.
      *
      * @param array<string,mixed> $pageModel

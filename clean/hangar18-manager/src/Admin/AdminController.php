@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hangar18\Clean\Admin;
 
 use Hangar18\Clean\Diagnostics\DiagnosticStore;
+use Hangar18\Clean\Frontend\ThemeShell;
 use Hangar18\Clean\Model\LayoutModel;
 use Hangar18\Clean\Model\TemplateLayoutModel;
 use Hangar18\Clean\Update\GitHubUpdater;
@@ -16,9 +17,11 @@ final class AdminController
     private const EXPORT_ACTION = 'h18_clean_export_backup';
     private const CLEAR_LOG_ACTION = 'h18_clean_clear_diagnostics';
     private const CREATE_PAGE_ACTION = 'h18_clean_create_page';
+    private const SET_HOME_PAGE_ACTION = 'h18_clean_set_home_page';
     private const EXPORT_NONCE = 'h18_clean_export_backup';
     private const CLEAR_LOG_NONCE = 'h18_clean_clear_diagnostics';
     private const CREATE_PAGE_NONCE = 'h18_clean_create_page';
+    private const SET_HOME_PAGE_NONCE = 'h18_clean_set_home_page';
     private const BLANK_SLUG_REPAIR_OPTION = 'h18_vd_blank_page_slugs_repaired_v0141';
     private const LANDING_PAGE_OPTION = 'h18_vd_landing_page_v0147';
     private const LANDING_PAGE_META = '_h18_vd_landing_page_v0147';
@@ -37,6 +40,7 @@ final class AdminController
         add_action('admin_post_' . self::EXPORT_ACTION, [self::class, 'exportBackup']);
         add_action('admin_post_' . self::CLEAR_LOG_ACTION, [self::class, 'clearDiagnostics']);
         add_action('admin_post_' . self::CREATE_PAGE_ACTION, [self::class, 'createPage']);
+        add_action('admin_post_' . self::SET_HOME_PAGE_ACTION, [self::class, 'setHomePage']);
         add_action('admin_init', [self::class, 'repairBlankPageSlugs'], 20);
         add_action('admin_init', [self::class, 'ensureLandingPage'], 25);
     }
@@ -161,9 +165,33 @@ final class AdminController
         $message = sanitize_text_field((string) wp_unslash($_GET['vd_message'] ?? ''));
         self::open('Sider', 'Alle WordPress-sider med Visual Designer-status');
         if ($message !== '') { echo '<div class="notice ' . ($status === 'error' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($message) . '</p></div>'; }
+
+        $frontId = get_option('show_on_front', 'posts') === 'page' ? absint(get_option('page_on_front', 0)) : 0;
+        $frontPage = $frontId > 0 ? get_post($frontId) : null;
+        echo '<div class="h18-manager-card"><h2>Hjemmeside</h2>';
+        if ($frontPage instanceof \WP_Post && $frontPage->post_type === 'page') {
+            echo '<p>WordPress-forsiden er <strong>' . esc_html((string) $frontPage->post_title) . '</strong> <span class="h18-manager-badge is-ok">Hjemmeside</span></p>';
+            if (metadata_exists('post', $frontId, LayoutModel::META)) {
+                echo '<p><a class="button button-primary" href="' . esc_url(self::designerUrl($frontId)) . '">Åbn hjemmesiden i Designer</a></p>';
+            } else {
+                echo '<p class="description">Den aktuelle forside er endnu ikke en Visual Designer-side. Vælg “Sæt som Hjem” på en Visual Designer-side nedenfor for at skifte sikkert.</p>';
+            }
+        } else {
+            echo '<p>WordPress viser aktuelt de seneste indlæg. Vælg <strong>Sæt som Hjem</strong> på en Visual Designer-side nedenfor.</p>';
+        }
+        echo '</div>';
+
         $landingId = absint(get_option(self::LANDING_PAGE_OPTION, 0));
         if ($landingId > 0 && get_post_type($landingId) === 'page') {
-            echo '<div class="h18-manager-card"><h2>Ny Visual Designer-landingsside</h2><p>Separat kladde til Header + indhold + Footer. Den gamle Hjem-side og WordPress-forsiden er ikke ændret.</p><p><a class="button button-primary" href="' . esc_url(self::designerUrl($landingId)) . '">Åbn Hjem – Visual Designer</a> <a class="button" href="' . esc_url(self::url('h18-clean-menu')) . '">Menu · næste arbejdsspor</a></p></div>';
+            echo '<div class="h18-manager-card"><h2>Hjem – Visual Designer</h2><p>Den separate Visual Designer-landingsside er klar til Header + indhold + Footer. Når du vælger den som Hjem, publiceres den automatisk hvis nødvendigt.</p><div class="h18-manager-toolbar"><a class="button button-primary" href="' . esc_url(self::designerUrl($landingId)) . '">Åbn Hjem – Visual Designer</a>';
+            if ($frontId === $landingId) {
+                echo '<span class="h18-manager-badge is-ok">Aktiv hjemmeside</span>';
+            } elseif (metadata_exists('post', $landingId, LayoutModel::META)) {
+                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                wp_nonce_field(self::SET_HOME_PAGE_NONCE);
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::SET_HOME_PAGE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $landingId) . '"><button class="button" type="submit">Publicér og sæt som Hjem</button></form>';
+            }
+            echo '</div></div>';
         }
         echo '<div class="h18-manager-card h18-manager-create-page"><h2>Ny side</h2><p class="description">Opret siden direkte i Visual Designer Manager. Efter oprettelse åbnes den i Designer.</p>';
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-manager-page-create-form">';
@@ -186,12 +214,19 @@ final class AdminController
             $designerStatus = $version > 0 ? '<span class="h18-manager-badge is-ok">Designer v' . esc_html((string) $version) . '</span>' : '<span class="h18-manager-badge">Ikke Visual Designer</span>';
             $wpStatusObject = get_post_status_object((string) $page->post_status);
             $wpStatusLabel = $wpStatusObject ? (string) $wpStatusObject->label : (string) $page->post_status;
-            echo '<tr><td><strong>' . esc_html((string) $page->post_title) . '</strong><br><small>ID ' . esc_html((string) $page->ID) . '</small></td>';
+            $homeBadge = $frontId === (int) $page->ID ? ' <span class="h18-manager-badge is-ok">Hjemmeside</span>' : '';
+            echo '<tr><td><strong>' . esc_html((string) $page->post_title) . '</strong>' . $homeBadge . '<br><small>ID ' . esc_html((string) $page->ID) . '</small></td>';
             echo '<td><code>' . esc_html((string) $page->post_name) . '</code></td><td><strong>' . esc_html($wpStatusLabel) . '</strong><br>' . $designerStatus . '</td><td>' . esc_html((string) count($model['nodes'])) . '</td><td>' . esc_html(self::prettyDate((string) ($last['savedUtc'] ?? ''))) . '</td><td class="h18-manager-actions">';
             echo '<a class="button button-primary" href="' . esc_url(self::designerUrl($page->ID)) . '">Designer</a>';
             echo '<a class="button" href="' . esc_url(get_edit_post_link($page->ID, 'raw') ?: '#') . '">WordPress</a>';
             $permalink = get_permalink($page->ID);
             if ($permalink) { echo '<a class="button" target="_blank" rel="noopener" href="' . esc_url($permalink) . '">Vis</a>'; }
+            if ($frontId !== (int) $page->ID && metadata_exists('post', $page->ID, LayoutModel::META)) {
+                $homeLabel = (string) $page->post_status === 'publish' ? 'Sæt som Hjem' : 'Publicér og sæt som Hjem';
+                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline">';
+                wp_nonce_field(self::SET_HOME_PAGE_NONCE);
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::SET_HOME_PAGE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $page->ID) . '"><button class="button" type="submit">' . esc_html($homeLabel) . '</button></form>';
+            }
             echo '</td></tr>';
         }
         echo '</tbody></table>';
@@ -235,13 +270,24 @@ final class AdminController
     {
         self::guard();
         $theme = wp_get_theme();
+        TemplateLayoutModel::ensureMigrated();
+        $headerId = TemplateLayoutModel::defaultId('header');
+        $footerId = TemplateLayoutModel::defaultId('footer');
+        $headerMeta = $headerId !== '' ? TemplateLayoutModel::meta($headerId) : null;
+        $footerMeta = $footerId !== '' ? TemplateLayoutModel::meta($footerId) : null;
+
         self::open('Header / Footer', 'Tema og global shell');
         echo '<div class="h18-manager-two-col"><div class="h18-manager-card"><h2>Aktivt tema</h2><dl class="h18-manager-dl">';
         echo '<dt>Navn</dt><dd>' . esc_html($theme->get('Name')) . '</dd><dt>Version</dt><dd>' . esc_html($theme->get('Version')) . '</dd><dt>Stylesheet</dt><dd><code>' . esc_html($theme->get_stylesheet()) . '</code></dd></dl>';
         echo '<p><a class="button" href="' . esc_url(admin_url('themes.php')) . '">Temaer</a>';
         if (current_user_can('edit_theme_options')) { echo ' <a class="button" href="' . esc_url(admin_url('customize.php')) . '">Tilpas</a>'; }
         echo '</p></div>';
-        echo '<div class="h18-manager-card"><h2>Visual Designer-princip</h2><p>Visual Designer styrer sideindholdets canonical layout. Header, footer og global navigation holdes adskilt fra side-layoutet, så en sideversion ikke utilsigtet ændrer hele sitet.</p><p class="description">Når den globale design-editor porteres, placeres den her frem for at genaktivere den gamle 0.9.x shell-runtime.</p></div></div>';
+
+        echo '<div class="h18-manager-card"><h2>Shell integration</h2>';
+        echo ThemeShell::enabled() ? '<p><span class="h18-manager-badge is-ok">Status: Aktiv</span></p>' : '<p><span class="h18-manager-badge">Status: Inaktiv</span></p>';
+        echo '<p>På offentlige <strong>Visual Designer-sider</strong> renderer Manageren nu Header → sideindhold → Footer med den samme canonical renderer som Preview.</p>';
+        echo '<dl class="h18-manager-dl"><dt>Standard Header</dt><dd>' . esc_html((string) ($headerMeta['name'] ?? 'Ingen aktiv')) . '</dd><dt>Standard Footer</dt><dd>' . esc_html((string) ($footerMeta['name'] ?? 'Ingen aktiv')) . '</dd></dl>';
+        echo '<p class="description">Sider uden Visual Designer-model ændres ikke. Hvis en Header/Footer mangler eller er inaktiv, vises selve siden stadig uden den pågældende del.</p></div></div>';
         self::close();
     }
 
@@ -403,6 +449,55 @@ final class AdminController
         }
 
         wp_safe_redirect(self::designerUrl($postId));
+        exit;
+    }
+
+
+    public static function setHomePage(): void
+    {
+        self::guard();
+        check_admin_referer(self::SET_HOME_PAGE_NONCE);
+
+        $postId = absint($_POST['post_id'] ?? 0);
+        if ($postId <= 0 || get_post_type($postId) !== 'page' || !current_user_can('edit_post', $postId)) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Den valgte side er ikke gyldig.']));
+            exit;
+        }
+        if (!metadata_exists('post', $postId, LayoutModel::META)) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Kun en side med Visual Designer-layout kan vælges som ny hjemmeside her.']));
+            exit;
+        }
+
+        $page = get_post($postId);
+        if (!$page instanceof \WP_Post) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden kunne ikke læses.']));
+            exit;
+        }
+
+        if ((string) $page->post_status !== 'publish') {
+            if (!current_user_can('publish_pages')) {
+                wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden skal publiceres før den kan være hjemmeside.']));
+                exit;
+            }
+            $published = wp_update_post(['ID' => $postId, 'post_status' => 'publish'], true);
+            if (is_wp_error($published) || (int) $published <= 0) {
+                $detail = is_wp_error($published) ? $published->get_error_message() : 'Ukendt WordPress-fejl';
+                wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden kunne ikke publiceres: ' . $detail]));
+                exit;
+            }
+        }
+
+        if (absint(get_option('page_for_posts', 0)) === $postId) {
+            update_option('page_for_posts', 0);
+        }
+        update_option('show_on_front', 'page');
+        update_option('page_on_front', $postId);
+        clean_post_cache($postId);
+
+        wp_safe_redirect(self::url('h18-clean-pages', [
+            'vd_status' => 'ok',
+            'vd_message' => '“' . get_the_title($postId) . '” er nu publiceret og valgt som hjemmeside.',
+        ]));
         exit;
     }
 
