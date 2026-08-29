@@ -1,0 +1,100 @@
+name: Apply Visual Designer Manager 0.1.46 Footer Preview Fit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0146-footer-preview-fit.yml'
+      - '.github/scripts/apply_v0146_footer_preview_fit.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.46 patch
+        run: python .github/scripts/apply_v0146_footer_preview_fit.py
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression and model QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.46 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'Version: 0.1.46' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.46'" clean/hangar18-manager/hangar18-manager.php
+          grep -q 'desktop-reference-2026-08-29' clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q 'text-footer-shortcuts-heading-v0146' clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q 'button-footer-join-v0146' clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q 'button-footer-contact-v0146' clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q 'container-footer-divider-v0146' clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q 'h18-global-preview-overlay' clean/hangar18-manager/assets/global-designer-v0123.js
+          if grep -q 'window.open(' clean/hangar18-manager/assets/global-designer-v0123.js; then echo 'Popup preview remains' >&2; exit 1; fi
+          grep -q "addEventListener('pageshow'" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q '.h18-clean-front-text p{margin:0!important' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q '.h18-clean-text-body p{margin:0!important' clean/hangar18-manager/assets/editor.css
+          grep -q 'Visual Designer Manager 0.1.46 model QA PASS' .github/scripts/v0125_model_qa.php
+          grep -q '"version": "0.1.46"' clean/hangar18-manager/release-history.json
+          grep -q 'VD-GLOBAL-PREVIEW-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -q 'VD-FOOTER-REFERENCE-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -q 'VD-CANVAS-START-FIT-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -q 'VD-RICHTEXT-SPACING-001' CLEAN-TECHNICAL-MANUAL.md
+          test -s docs/v0146-status.md
+          grep -q "get_option(self::CUTOVER_OPTION, '0') === '1'" clean/hangar18-manager/src/Frontend/ThemeShell.php
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Migration/LegacyFooterConverter.php \
+            clean/hangar18-manager/src/Admin/GlobalDesignerController.php \
+            clean/hangar18-manager/src/Frontend/Renderer.php \
+            clean/hangar18-manager/assets/global-designer-v0123.js \
+            clean/hangar18-manager/assets/global-designer-v0123.css \
+            clean/hangar18-manager/assets/editor-v0144-viewport.js \
+            clean/hangar18-manager/assets/editor-v018-core.js \
+            clean/hangar18-manager/assets/editor.css \
+            .github/scripts/v0125_model_qa.php \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            docs/v0146-status.md \
+            CLEAN-TECHNICAL-MANUAL.md
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Implement Footer preview Fit and text parity in v0.1.46'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
