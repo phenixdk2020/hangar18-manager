@@ -57,7 +57,7 @@ jobs:
               'source is sanitized': 'wp_kses_post' in source,
               'scripts/styles excluded': "external-scripts-not-imported" in source and "external-stylesheets-not-imported" in source,
               'external candidate source metadata': "'sourceType' => 'external'" in service and "'sourceUrl' => $sourceUrl" in service,
-              'approval refetch/hash gate': 'ExternalPageSourceService::fetch($sourceUrl)' in service and 'external kildeside er ændret' in service.lower(),
+              'approval refetch/hash gate': 'ExternalPageSourceService::fetch($sourceUrl)' in service and '$latestHash' in service and 'kildeside er ændret' in service.lower(),
               'external import UI': 'Hent ekstern side til QA' in controller and 'https://test2.hangar18.dk/' in controller,
               'new draft supported': 'Opret ny WordPress-kladde' in controller and "'post_status' => 'draft'" in controller,
               'no automatic activation on fetch': 'prepareExternalData' in controller and 'approve(' not in controller.split('public static function externalPrepare',1)[1].split('public static function prepare',1)[0],
