@@ -1,0 +1,83 @@
+name: Apply Visual Designer Manager 0.1.43 Header/Footer parity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0143-header-footer.yml'
+      - '.github/scripts/apply_v0143_header_footer.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply 0.1.43 patch
+        run: python .github/scripts/apply_v0143_header_footer.py
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Regression and model QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+      - name: Verify 0.1.43 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'Version: 0.1.43' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.43'" clean/hangar18-manager/hangar18-manager.php
+          test -s clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q "LegacyFooterConverter::register" clean/hangar18-manager/hangar18-manager.php
+          grep -q "Konvertér gammel Footer igen" clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -q "Visual Designer Hovedmenu" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "media-library-match" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "container-header-reference-v0143" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "'background'=>'#30382a'" clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php
+          grep -q "HANGAR18-FOOTER-START" clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q "FooterWidthPercent" clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q "Visual Designer Manager 0.1.43 model QA PASS" .github/scripts/v0125_model_qa.php
+          grep -q '"version": "0.1.43"' clean/hangar18-manager/release-history.json
+          test -s docs/v0143-status.md
+          grep -q "get_option(self::CUTOVER_OPTION, '0') === '1'" clean/hangar18-manager/src/Frontend/ThemeShell.php
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php \
+            clean/hangar18-manager/src/Migration/LegacyFooterConverter.php \
+            clean/hangar18-manager/src/Admin/GlobalDesignerController.php \
+            .github/scripts/v0125_model_qa.php \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            docs/v0143-status.md
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Improve Header parity and add Footer conversion in v0.1.43'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
