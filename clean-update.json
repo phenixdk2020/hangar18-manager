@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.44",
+  "version": "0.1.45",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.44.zip",
-  "sha256": "4083d83899970ba7220b3354c9cdc4c0aaa7d0d93eb03283ee9c5bb1cd1b4b18",
-  "source_commit": "2706fccde1dc658b763b7378b0a657cf5e3c80f8",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.45.zip",
+  "sha256": "d3b873d7089374fe0b8b849645b13b44badf2bc67b35ffbd721808392bfba1e4",
+  "source_commit": "8f87dface77044a4bbfcae4cb0beb819e747ff6e",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.44</h4><ul><li><strong>BUG-13:</strong> Sektion/Kasse farvelægger nu hele sin canonical geometri; child-surface er transparent og fylder hele boksen.</li><li><strong>Auto-grow:</strong> manuel højde er minimum, mens indhold fortsat kan udvide boksen.</li><li><strong>BUG-14 WYSIWYG:</strong> Designer beregner layout ved 1920 px Desktop, 1180 px Laptop og 390 px Mobil og skalerer kun visningen med Fit.</li><li><strong>Dynamisk Fit:</strong> Mere canvas, Inspector/Elementer ind/ud og resize genberegner zoom automatisk uden at flytte elementerne.</li><li><strong>Scale-aware input:</strong> drag/resize, floating Knap og manuel billedredigering bruger virtuelle koordinater under zoom.</li><li><strong>Sikkerhed:</strong> Theme Shell forbliver OFF indtil Header/Footer parity er bruger-QA PASS.</li></ul>"
+    "changelog": "<h4>0.1.45</h4>\n<ul>\n<li>Tekst: lodret justering Top / Midt / Bund i canonical model, Designer og frontend.</li>\n<li>Billede: eksplicit WordPress image/*-understøttelse, herunder PNG med transparens.</li>\n<li>Footer: gammel Visual Header/Footer Builder er nu første migrationskilde; shell er fallback, og gammel Manager-standard er sidste tydeligt mærkede fallback.</li>\n<li>Canvas: musehjulszoom 25-200 %, zoom omkring markøren, scrollbars ved overflow samt Fit/100%/−/+.</li>\n<li>Theme Shell er fortsat deaktiveret.</li>\n</ul>"
   }
 }
