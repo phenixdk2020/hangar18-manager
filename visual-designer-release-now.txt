@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.45
-Trigger: text-vertical-footer-builder-source-canvas-wheel-zoom 2026-08-29
+Release Visual Designer Manager v0.1.46
+Trigger: footer-reference-popup-free-preview-fit-start-richtext-parity 2026-08-29
