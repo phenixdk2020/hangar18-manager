@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.51
-Trigger: external-page-conversion-test2-readonly 2026-08-29
+Release Visual Designer Manager v0.1.52
+Trigger: conv03-visual-page-frame-gutenberg-conversion 2026-08-29
