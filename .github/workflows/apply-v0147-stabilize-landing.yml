@@ -1,0 +1,101 @@
+name: Apply Visual Designer Manager 0.1.47 Stabilize Landing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0147-stabilize-landing.yml'
+      - '.github/scripts/apply_v0147_stabilize_landing.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.47 patch
+        run: python .github/scripts/apply_v0147_stabilize_landing.py
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression and model QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.47 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'Version: 0.1.47' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.47'" clean/hangar18-manager/hangar18-manager.php
+          grep -q "selectionRegressionGate: 'bug02-v0147-persistent'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q 'h18-clean-front-text-content' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q 'padding:0;border:0' clean/hangar18-manager/assets/editor.css
+          grep -q 'canonical-model-and-shell-unchanged' clean/hangar18-manager/src/Admin/EditorController.php
+          grep -q 'Ingen ændringer siden seneste gemte version' clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -q 'h18_clean_composite_preview' clean/hangar18-manager/src/Admin/EditorController.php
+          grep -q 'standaloneDocument' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q 'Hjem – Visual Designer' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'h18_vd_landing_page_v0147' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'h18_vd_legacy_footer_converted_v0147' clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q "'lineHeight'=>1.75" clean/hangar18-manager/src/Migration/LegacyFooterConverter.php
+          grep -q 'Visual Designer Manager 0.1.47 model QA PASS' .github/scripts/v0125_model_qa.php
+          grep -q '"version": "0.1.47"' clean/hangar18-manager/release-history.json
+          grep -q '0.1.47 – stabilisering før Menu-UX' CLEAN-TECHNICAL-MANUAL.md
+          test -s docs/v0147-status.md
+          grep -q "get_option(self::CUTOVER_OPTION, '0') === '1'" clean/hangar18-manager/src/Frontend/ThemeShell.php
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/assets/editor.css \
+            clean/hangar18-manager/assets/editor-v0144.css \
+            clean/hangar18-manager/assets/editor-v0125.js \
+            clean/hangar18-manager/assets/editor-v0125.css \
+            clean/hangar18-manager/assets/global-designer-v0123.js \
+            clean/hangar18-manager/assets/global-designer-v0123.css \
+            clean/hangar18-manager/src/Frontend/Renderer.php \
+            clean/hangar18-manager/src/Admin/EditorController.php \
+            clean/hangar18-manager/src/Admin/GlobalDesignerController.php \
+            clean/hangar18-manager/src/Admin/AdminController.php \
+            clean/hangar18-manager/src/Migration/LegacyFooterConverter.php \
+            .github/scripts/v0125_model_qa.php \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            docs/v0147-status.md \
+            CLEAN-TECHNICAL-MANUAL.md
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Stabilize Designer and add landing preview in v0.1.47'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
