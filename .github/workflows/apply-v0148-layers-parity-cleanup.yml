@@ -22,9 +22,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # The 0.1.47 preview CSS is minified on one physical line. Normalize
-          # the patch script's CSS needle before execution; source code itself
-          # is still changed only by the deterministic patch script.
           python - <<'PY'
           from pathlib import Path
           p = Path('.github/scripts/apply_v0148_layers_parity_cleanup.py')
@@ -60,15 +57,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo 'Gate: version'
           grep -q 'Version: 0.1.48' clean/hangar18-manager/hangar18-manager.php
           grep -q "H18_CLEAN_VERSION', '0.1.48'" clean/hangar18-manager/hangar18-manager.php
 
+          echo 'Gate: Layers'
           grep -q 'editor-v0148-layers.js' clean/hangar18-manager/hangar18-manager.php
           grep -q 'editor-v0148-layers.css' clean/hangar18-manager/hangar18-manager.php
           grep -q 'data-h18-left-tab="layers"' clean/hangar18-manager/assets/editor-v0148-layers.js
           grep -q 'data-node-id' clean/hangar18-manager/assets/editor-v0148-layers.js
           grep -q "new MouseEvent('click'" clean/hangar18-manager/assets/editor-v0148-layers.js
 
+          echo 'Gate: Button parity'
           if grep -q 'border-color:transparent!important' clean/hangar18-manager/assets/global-designer-v0123.css; then
             echo 'Local template preview still suppresses canonical border color.' >&2
             exit 1
@@ -79,6 +79,7 @@ jobs:
             exit 1
           fi
 
+          echo 'Gate: Legacy converter runtime retired'
           if grep -q 'LegacyHeaderConverter::register' clean/hangar18-manager/hangar18-manager.php; then exit 1; fi
           if grep -q 'LegacyFooterConverter::register' clean/hangar18-manager/hangar18-manager.php; then exit 1; fi
           if grep -q 'renderLegacyHeaderConversion();' clean/hangar18-manager/src/Admin/GlobalDesignerController.php; then exit 1; fi
@@ -86,17 +87,20 @@ jobs:
           if grep -q "admin_post_' . self::CONVERT_ACTION" clean/hangar18-manager/src/Admin/GlobalDesignerController.php; then exit 1; fi
           if grep -q "admin_post_' . self::FOOTER_CONVERT_ACTION" clean/hangar18-manager/src/Admin/GlobalDesignerController.php; then exit 1; fi
 
-          grep -q "let mode = 'fit'" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          echo 'Gate: Fit + BUG-02 regression'
+          grep -Eq "(var|let|const)[[:space:]]+mode[[:space:]]*=[[:space:]]*'fit'" clean/hangar18-manager/assets/editor-v0144-viewport.js
           grep -q 'setFit();' clean/hangar18-manager/assets/editor-v0144-viewport.js
           grep -q "selectionRegressionGate: 'bug02-v0147-persistent'" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "selectionOwner: 'v0125-authoritative'" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
 
+          echo 'Gate: AKVPK theme identity'
           grep -q '^Theme Name: AKVPK$' theme/legacy-v1.2.0/style.css
           grep -q '^Version: 1.2.1$' theme/legacy-v1.2.0/style.css
           grep -q '^Text Domain: hangar18-base$' theme/legacy-v1.2.0/style.css
           grep -q '"theme": "hangar18-base"' theme-update.json
 
+          echo 'Gate: docs + shell safety'
           grep -q '"version": "0.1.48"' clean/hangar18-manager/release-history.json
           test -s docs/v0148-status.md
           grep -q '0.1.48 – Lag, parity og legacy-oprydning' CLEAN-TECHNICAL-MANUAL.md
