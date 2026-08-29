@@ -1,0 +1,88 @@
+name: Apply Visual Designer Manager 0.1.53 Transparent Background
+
+on:
+  push:
+    paths:
+      - '.github/scripts/apply_v0153_transparent_background.py'
+      - '.github/workflows/apply-v0153-transparent-background.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: visual-designer-v0153-transparent-background
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.53 patch
+        run: python3 .github/scripts/apply_v0153_transparent_background.py
+
+      - name: PHP syntax
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for f in clean/hangar18-manager/assets/*.js; do node --check "$f"; done
+
+      - name: Existing model QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify transparent paint contract
+        run: |
+          set -euo pipefail
+          CORE='clean/hangar18-manager/assets/editor-v018-core.js'
+          CSS='clean/hangar18-manager/assets/editor-v0153-transparent.css'
+          RENDERER='clean/hangar18-manager/src/Frontend/Renderer.php'
+          PLUGIN='clean/hangar18-manager/hangar18-manager.php'
+          grep -q "data-h18-leaf-transparent" "$CORE"
+          grep -q "node.type === 'text' || node.type === 'menu' || node.type === 'image'" "$CORE"
+          grep -q "props.boxTransparent !== false : props.backgroundTransparent !== false" "$CORE"
+          grep -q 'data-h18-leaf-transparent="1"' "$CSS"
+          grep -q 'background:transparent!important' "$CSS"
+          grep -q "h18-clean-editor-v0153-transparent" "$PLUGIN"
+          grep -q "assets/editor-v0153-transparent.css" "$PLUGIN"
+          grep -q "Version: 0.1.53" "$PLUGIN"
+          grep -q "H18_CLEAN_VERSION', '0.1.53'" "$PLUGIN"
+          grep -q "backgroundTransparent" "$RENDERER"
+          grep -q "? 'transparent'" "$RENDERER"
+          grep -q '0.1.53 – Gennemsigtig elementbaggrund' clean-release-notes.html
+          grep -q '"version": "0.1.53"' clean/hangar18-manager/release-history.json
+          test -s docs/v0153-status.md
+          echo 'transparent paint contract PASS'
+
+      - name: Regression gates
+        run: |
+          set -euo pipefail
+          grep -q "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "boundary-markers-v0137-single-owner" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "var mode = 'fit'" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q "VisualBlockConversionService.php" clean/hangar18-manager/hangar18-manager.php
+          grep -q "h18-clean-editor-v0148-layers" clean/hangar18-manager/hangar18-manager.php
+          echo 'regression gates PASS'
+
+      - name: Commit implementation
+        run: |
+          set -euo pipefail
+          git config user.name "phenixdk2020"
+          git config user.email "74060601+phenixdk2020@users.noreply.github.com"
+          git add clean/hangar18-manager clean-release-notes.html docs/v0153-status.md
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit'
+            exit 0
+          fi
+          git commit -m 'Fix transparent element backgrounds in Visual Designer Manager 0.1.53'
+          git pull --rebase origin main
+          git push origin HEAD:main
