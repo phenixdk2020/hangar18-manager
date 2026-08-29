@@ -18,10 +18,14 @@ final class AdminController
     private const CLEAR_LOG_ACTION = 'h18_clean_clear_diagnostics';
     private const CREATE_PAGE_ACTION = 'h18_clean_create_page';
     private const SET_HOME_PAGE_ACTION = 'h18_clean_set_home_page';
+    private const PAGE_STATUS_ACTION = 'h18_clean_page_status';
+    private const TRASH_PAGE_ACTION = 'h18_clean_trash_page';
     private const EXPORT_NONCE = 'h18_clean_export_backup';
     private const CLEAR_LOG_NONCE = 'h18_clean_clear_diagnostics';
     private const CREATE_PAGE_NONCE = 'h18_clean_create_page';
     private const SET_HOME_PAGE_NONCE = 'h18_clean_set_home_page';
+    private const PAGE_STATUS_NONCE = 'h18_clean_page_status';
+    private const TRASH_PAGE_NONCE = 'h18_clean_trash_page';
     private const BLANK_SLUG_REPAIR_OPTION = 'h18_vd_blank_page_slugs_repaired_v0141';
     private const LANDING_PAGE_OPTION = 'h18_vd_landing_page_v0147';
     private const LANDING_PAGE_META = '_h18_vd_landing_page_v0147';
@@ -41,6 +45,8 @@ final class AdminController
         add_action('admin_post_' . self::CLEAR_LOG_ACTION, [self::class, 'clearDiagnostics']);
         add_action('admin_post_' . self::CREATE_PAGE_ACTION, [self::class, 'createPage']);
         add_action('admin_post_' . self::SET_HOME_PAGE_ACTION, [self::class, 'setHomePage']);
+        add_action('admin_post_' . self::PAGE_STATUS_ACTION, [self::class, 'updatePageStatus']);
+        add_action('admin_post_' . self::TRASH_PAGE_ACTION, [self::class, 'trashPage']);
         add_action('admin_init', [self::class, 'repairBlankPageSlugs'], 20);
         add_action('admin_init', [self::class, 'ensureLandingPage'], 25);
     }
@@ -189,9 +195,17 @@ final class AdminController
             if ($frontId === $landingId) {
                 echo '<span class="h18-manager-badge is-ok">Aktiv hjemmeside</span>';
             } elseif (metadata_exists('post', $landingId, LayoutModel::META)) {
-                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
-                wp_nonce_field(self::SET_HOME_PAGE_NONCE);
-                echo '<input type="hidden" name="action" value="' . esc_attr(self::SET_HOME_PAGE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $landingId) . '"><button class="button" type="submit">Publicér og sæt som Hjem</button></form>';
+                $landingPost = get_post($landingId);
+                if ($landingPost instanceof \WP_Post && (string) $landingPost->post_status === 'publish') {
+                    echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                    wp_nonce_field(self::SET_HOME_PAGE_NONCE);
+                    echo '<input type="hidden" name="action" value="' . esc_attr(self::SET_HOME_PAGE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $landingId) . '"><button class="button" type="submit">Sæt som Hjem</button></form>';
+                } elseif ($landingPost instanceof \WP_Post && current_user_can('publish_pages')) {
+                    echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
+                    wp_nonce_field(self::PAGE_STATUS_NONCE);
+                    echo '<input type="hidden" name="action" value="' . esc_attr(self::PAGE_STATUS_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $landingId) . '"><input type="hidden" name="page_status" value="publish"><button class="button" type="submit">Publicér</button></form>';
+                    echo '<span class="description">Publicér først; vælg derefter siden som Hjem.</span>';
+                }
             }
             echo '</div></div>';
         }
@@ -223,11 +237,29 @@ final class AdminController
             echo '<a class="button" href="' . esc_url(get_edit_post_link($page->ID, 'raw') ?: '#') . '">WordPress</a>';
             $permalink = get_permalink($page->ID);
             if ($permalink) { echo '<a class="button" target="_blank" rel="noopener" href="' . esc_url($permalink) . '">Vis</a>'; }
-            if ($frontId !== (int) $page->ID && metadata_exists('post', $page->ID, LayoutModel::META)) {
-                $homeLabel = (string) $page->post_status === 'publish' ? 'Sæt som Hjem' : 'Publicér og sæt som Hjem';
+            $isFrontPage = $frontId === (int) $page->ID;
+            $isPublished = (string) $page->post_status === 'publish';
+            if (!$isPublished && current_user_can('publish_pages') && current_user_can('edit_post', $page->ID)) {
+                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline">';
+                wp_nonce_field(self::PAGE_STATUS_NONCE);
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::PAGE_STATUS_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $page->ID) . '"><input type="hidden" name="page_status" value="publish"><button class="button" type="submit">Publicér</button></form>';
+            } elseif ($isPublished && !$isFrontPage && current_user_can('edit_post', $page->ID)) {
+                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline">';
+                wp_nonce_field(self::PAGE_STATUS_NONCE);
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::PAGE_STATUS_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $page->ID) . '"><input type="hidden" name="page_status" value="draft"><button class="button" type="submit" onclick="return confirm(\'Gør denne side til kladde? Den fjernes fra offentlig visning.\');">Gør til kladde</button></form>';
+            }
+            if (!$isFrontPage && $isPublished && metadata_exists('post', $page->ID, LayoutModel::META)) {
                 echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline">';
                 wp_nonce_field(self::SET_HOME_PAGE_NONCE);
-                echo '<input type="hidden" name="action" value="' . esc_attr(self::SET_HOME_PAGE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $page->ID) . '"><button class="button" type="submit">' . esc_html($homeLabel) . '</button></form>';
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::SET_HOME_PAGE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $page->ID) . '"><button class="button" type="submit">Sæt som Hjem</button></form>';
+            }
+            if (!$isFrontPage && current_user_can('delete_post', $page->ID)) {
+                $confirmTitle = esc_js((string) $page->post_title);
+                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline">';
+                wp_nonce_field(self::TRASH_PAGE_NONCE);
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::TRASH_PAGE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $page->ID) . '"><button class="button button-link-delete" type="submit" onclick="return confirm(\'Flyt “' . $confirmTitle . '” til papirkurven? Siden kan gendannes fra WordPress-papirkurven.\');">Slet</button></form>';
+            } elseif ($isFrontPage) {
+                echo '<span class="description" title="Vælg en anden hjemmeside før denne side kan afpubliceres eller slettes.">Hjemmesiden er beskyttet</span>';
             }
             echo '</td></tr>';
         }
@@ -455,6 +487,76 @@ final class AdminController
     }
 
 
+    public static function updatePageStatus(): void
+    {
+        self::guard();
+        check_admin_referer(self::PAGE_STATUS_NONCE);
+
+        $postId = absint($_POST['post_id'] ?? 0);
+        $desired = sanitize_key((string) ($_POST['page_status'] ?? ''));
+        if ($postId <= 0 || get_post_type($postId) !== 'page' || !current_user_can('edit_post', $postId)) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Den valgte side er ikke gyldig.']));
+            exit;
+        }
+        if (!in_array($desired, ['publish', 'draft'], true)) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Den ønskede sidestatus er ikke gyldig.']));
+            exit;
+        }
+        if ($desired === 'publish' && !current_user_can('publish_pages')) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Du har ikke rettighed til at publicere sider.']));
+            exit;
+        }
+
+        $frontId = get_option('show_on_front', 'posts') === 'page' ? absint(get_option('page_on_front', 0)) : 0;
+        if ($desired === 'draft' && $frontId === $postId) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Den aktive hjemmeside kan ikke gøres til kladde. Vælg først en anden side som Hjem.']));
+            exit;
+        }
+
+        $result = wp_update_post(['ID' => $postId, 'post_status' => $desired], true);
+        if (is_wp_error($result) || (int) $result <= 0) {
+            $detail = is_wp_error($result) ? $result->get_error_message() : 'Ukendt WordPress-fejl';
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Sidestatus kunne ikke ændres: ' . $detail]));
+            exit;
+        }
+        clean_post_cache($postId);
+        $message = $desired === 'publish'
+            ? '“' . get_the_title($postId) . '” er nu publiceret.'
+            : '“' . get_the_title($postId) . '” er nu kladde og ikke længere offentligt publiceret.';
+        wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'ok', 'vd_message' => $message]));
+        exit;
+    }
+
+    public static function trashPage(): void
+    {
+        self::guard();
+        check_admin_referer(self::TRASH_PAGE_NONCE);
+
+        $postId = absint($_POST['post_id'] ?? 0);
+        if ($postId <= 0 || get_post_type($postId) !== 'page' || !current_user_can('delete_post', $postId)) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden kan ikke slettes eller du mangler rettighed.']));
+            exit;
+        }
+        $frontId = get_option('show_on_front', 'posts') === 'page' ? absint(get_option('page_on_front', 0)) : 0;
+        if ($frontId === $postId) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Den aktive hjemmeside kan ikke slettes. Vælg først en anden side som Hjem.']));
+            exit;
+        }
+
+        $title = (string) get_the_title($postId);
+        $trashed = wp_trash_post($postId);
+        if (!$trashed instanceof \WP_Post) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden kunne ikke flyttes til papirkurven.']));
+            exit;
+        }
+        wp_safe_redirect(self::url('h18-clean-pages', [
+            'vd_status' => 'ok',
+            'vd_message' => '“' . $title . '” er flyttet til WordPress-papirkurven og kan gendannes derfra.',
+        ]));
+        exit;
+    }
+
+
     public static function setHomePage(): void
     {
         self::guard();
@@ -477,16 +579,8 @@ final class AdminController
         }
 
         if ((string) $page->post_status !== 'publish') {
-            if (!current_user_can('publish_pages')) {
-                wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden skal publiceres før den kan være hjemmeside.']));
-                exit;
-            }
-            $published = wp_update_post(['ID' => $postId, 'post_status' => 'publish'], true);
-            if (is_wp_error($published) || (int) $published <= 0) {
-                $detail = is_wp_error($published) ? $published->get_error_message() : 'Ukendt WordPress-fejl';
-                wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden kunne ikke publiceres: ' . $detail]));
-                exit;
-            }
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Publicér siden først. “Sæt som Hjem” ændrer kun hjemmesidevalget og publicerer aldrig automatisk.']));
+            exit;
         }
 
         if (absint(get_option('page_for_posts', 0)) === $postId) {
@@ -498,7 +592,7 @@ final class AdminController
 
         wp_safe_redirect(self::url('h18-clean-pages', [
             'vd_status' => 'ok',
-            'vd_message' => '“' . get_the_title($postId) . '” er nu publiceret og valgt som hjemmeside.',
+            'vd_message' => '“' . get_the_title($postId) . '” er nu valgt som hjemmeside.',
         ]));
         exit;
     }

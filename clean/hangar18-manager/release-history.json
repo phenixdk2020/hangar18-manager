@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.55",
+      "date": "2026-08-29",
+      "items": [
+        "VD-PAGES-ACTIONS-001: Manager → Sider har separate Publicér, Gør til kladde, Sæt som Hjem og Slet-handlinger.",
+        "Sæt som Hjem publicerer ikke længere automatisk; siden skal være publiceret først.",
+        "Slet flytter siden til WordPress-papirkurven efter bekræftelse, så den kan gendannes.",
+        "Den aktive hjemmeside kan hverken gøres til kladde eller slettes, før en anden side er valgt som Hjem.",
+        "Designer, WordPress og Vis bevares som separate handlinger."
+      ]
+    },
+    {
       "version": "0.1.54",
       "date": "2026-08-29",
       "items": [

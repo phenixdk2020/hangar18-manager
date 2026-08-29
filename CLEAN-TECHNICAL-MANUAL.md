@@ -878,3 +878,15 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - Statusændringen går gennem samme Save-submit som canonical layoutet, så aktuelle Designer-ændringer ikke tabes ved publicering/afpublicering.
 - Header/Footer templates har ikke denne kontrol; den gælder almindelige WordPress-sider.
 
+## 0.1.55 – Sidehandlinger
+
+### VD-PAGES-ACTIONS-001
+- Manager → Sider viser publiceringsstatus og sidehandlinger uden at sammenblande publicering og hjemmesidevalg.
+- `Publicér` ændrer kun WordPress `post_status` til `publish`.
+- `Gør til kladde` ændrer kun WordPress `post_status` til `draft` og kræver en tydelig bekræftelse i UI.
+- `Sæt som Hjem` kræver, at siden allerede er publiceret, og ændrer kun `show_on_front=page` + `page_on_front=<ID>`; handlingen må ikke auto-publicere.
+- `Slet` er en recoverable handling og bruger WordPress-papirkurven (`wp_trash_post`) efter bekræftelse. Permanent sletning er ikke en normal VDM-sidehandling.
+- Den aktive hjemmeside må ikke gøres til kladde eller flyttes til papirkurven. Brugeren skal først vælge en anden publiceret Visual Designer-side som Hjem.
+- `Designer`, `WordPress` og `Vis` forbliver separate navigationshandlinger.
+- Denne kontrakt superseder auto-publiceringsdelen af `VD-HOME-001` fra 0.1.49; hjemmesidevalget er fra 0.1.55 selection-only.
+
