@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.54",
+      "date": "2026-08-29",
+      "items": [
+        "VD-MENU-UX-002: Manager → Menu bruger WordPress-menuen som eneste datakilde og giver drag-and-drop/pilebaseret rækkefølge samt tydelig undermenu-parent.",
+        "Menu Inspector er opdelt i Indhold, Layout, Tekst, Farver og Mobil med direkte link til Redigér menupunkter.",
+        "Hamburger-menu kan vises som dropdown, panel fra højre eller panel fra venstre og kan lukke efter valg, ved klik udenfor og med Esc.",
+        "Mobilmenuens åbne/lukkede tilstand bruger aria-expanded/aria-controls og bevarer aktiv-side styling.",
+        "VD-PAGE-STATUS-001: Side-Designer viser rigtig WordPress-status og kan Gem & publicér eller Gem & gør til kladde i samme sikre Save-flow."
+      ]
+    },
+    {
       "version": "0.1.53",
       "date": "2026-08-29",
       "items": [

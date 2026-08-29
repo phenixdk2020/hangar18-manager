@@ -861,3 +861,20 @@ Legacy Header/Footer-markører fjernes fra kandidatens body, fordi Visual Design
 
 ### VD-THEME-AKVPK-001
 Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migration fra historisk `hangar18-base` skal bevare theme_mods/menu-locations og Custom CSS før theme-switch. Theme URI er `https://akvpk.dk/`.
+
+## 0.1.54 – Menu UX og sidestatus
+
+### VD-MENU-UX-002
+- WordPress `nav_menu`/`nav_menu_item` er fortsat canonical datakilde for navigation. VDM må ikke oprette en parallel menustruktur i Header/Footer.
+- Manager → Menu er den primære brugervenlige redigering: rækkefølge kan ændres med drag-and-drop og tastaturvenlige pile; undermenu vælges eksplicit via parent.
+- Menu-elementet gemmer kun menu-reference og design/responsive egenskaber.
+- Desktop/Laptop/Mobil bruger samme menupunkter. Breakpointet ændrer præsentationen, ikke datasættet.
+- Hamburger understøtter Dropdown, Panel fra højre og Panel fra venstre. `aria-expanded`, `aria-controls`, Esc, klik udenfor og valgfri luk-efter-valg er faste accessibility/UX-kontrakter.
+
+### VD-PAGE-STATUS-001
+- Side-Designer viser og ændrer WordPress' rigtige `post_status`; der oprettes ingen separat Visual Designer-publiceringsstatus.
+- Kladde kan publiceres fra Designer, hvis brugeren har `publish_pages`.
+- En publiceret side kan gøres til kladde med eksplicit bekræftelse.
+- Statusændringen går gennem samme Save-submit som canonical layoutet, så aktuelle Designer-ændringer ikke tabes ved publicering/afpublicering.
+- Header/Footer templates har ikke denne kontrol; den gælder almindelige WordPress-sider.
+

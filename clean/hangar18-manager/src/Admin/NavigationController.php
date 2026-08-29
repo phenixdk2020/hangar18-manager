@@ -18,6 +18,7 @@ final class NavigationController
     public static function register(): void
     {
         add_action('admin_menu', [self::class, 'menu'], 8);
+        add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
         add_action('admin_post_' . self::ACTION_CREATE, [self::class, 'createMenu']);
         add_action('admin_post_' . self::ACTION_ADD, [self::class, 'addItem']);
         add_action('admin_post_' . self::ACTION_SAVE, [self::class, 'saveMenu']);
@@ -39,6 +40,15 @@ final class NavigationController
         );
     }
 
+    public static function enqueue(string $hook): void
+    {
+        if (!current_user_can('edit_theme_options') || sanitize_key((string) ($_GET['page'] ?? '')) !== 'h18-clean-menu') {
+            return;
+        }
+        wp_enqueue_style('h18-clean-menu-v0154', H18_CLEAN_URL . 'assets/admin-v0154-menu.css', [], H18_CLEAN_VERSION);
+        wp_enqueue_script('h18-clean-menu-v0154', H18_CLEAN_URL . 'assets/admin-v0154-menu.js', [], H18_CLEAN_VERSION, true);
+    }
+
     public static function render(): void
     {
         self::guard();
@@ -53,7 +63,7 @@ final class NavigationController
 
         echo '<div class="wrap h18-manager-admin">';
         echo '<h1>Menu / Navigation</h1>';
-        echo '<p class="h18-manager-description">Administrér navigationens struktur uafhængigt af Visual Designer. Menuens udseende, responsive hamburger-menu og placering hører senere til Menu-elementet i Header/Footer Designer.</p>';
+        echo '<p class="h18-manager-description">Administrér menupunkter her med samme WordPress-menu som datakilde på frontend. Visual Designer styrer kun udseende og responsive visning — der oprettes aldrig en parallel menustruktur.</p>';
         self::notice();
 
         echo '<div class="h18-manager-two-col">';
@@ -265,24 +275,25 @@ final class NavigationController
         wp_nonce_field('h18_clean_nav_save_' . $menuId);
         echo '<p><label><strong>Menunavn</strong><br><input class="regular-text" name="menu_name" value="' . esc_attr($menuName) . '"></label></p>';
         if ($items) {
-            echo '<table class="widefat striped h18-manager-table"><thead><tr><th>Titel</th><th>Type</th><th>Parent</th><th>Position</th><th>URL</th></tr></thead><tbody>';
+            echo '<p class="description">Træk punkterne med ☰ for at ændre rækkefølgen. Piletasterne ved hvert punkt er et tastaturvenligt alternativ. Vælg "Undermenu under" for at lave et underpunkt.</p>';
+            echo '<table class="widefat striped h18-manager-table h18-menu-sort-table"><thead><tr><th>Flyt</th><th>Menutekst</th><th>Type</th><th>Undermenu under</th><th>Rækkefølge</th><th>Destination</th></tr></thead><tbody id="h18-menu-sort-list">';
             foreach ($items as $item) {
                 $id = (int) $item->ID;
-                echo '<tr><td><input name="item_title[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->title) . '"></td><td><code>' . esc_html((string) $item->type) . '</code></td>';
-                echo '<td><select name="item_parent[' . esc_attr((string) $id) . ']"><option value="0">— root —</option>';
+                echo '<tr class="h18-menu-sort-row" draggable="true" data-menu-item-id="' . esc_attr((string) $id) . '"><td class="h18-menu-drag-cell"><span class="h18-menu-drag-handle" title="Træk for at flytte" aria-hidden="true">☰</span><span class="h18-menu-order-buttons"><button type="button" class="button button-small" data-menu-move="up" aria-label="Flyt op">↑</button><button type="button" class="button button-small" data-menu-move="down" aria-label="Flyt ned">↓</button></span></td><td><input class="regular-text" name="item_title[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->title) . '"><small class="description">Kan ændres uden at ændre sidens titel.</small></td><td><code>' . esc_html((string) $item->type) . '</code></td>';
+                echo '<td><select name="item_parent[' . esc_attr((string) $id) . ']"><option value="0">Topniveau</option>';
                 foreach ($items as $candidate) {
                     if ((int) $candidate->ID === $id) {
                         continue;
                     }
                     echo '<option value="' . esc_attr((string) $candidate->ID) . '"' . selected((int) $item->menu_item_parent, (int) $candidate->ID, false) . '>' . esc_html((string) $candidate->title) . '</option>';
                 }
-                echo '</select></td><td><input type="number" min="1" style="width:75px" name="item_order[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->menu_order) . '"></td><td><small>' . esc_html((string) $item->url) . '</small></td></tr>';
+                echo '</select></td><td><input class="h18-menu-order-input" type="hidden" name="item_order[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->menu_order) . '"><strong class="h18-menu-order-label">' . esc_html((string) $item->menu_order) . '</strong></td><td><small>' . esc_html((string) $item->url) . '</small></td></tr>';
             }
             echo '</tbody></table>';
         } else {
             echo '<p>Menuen har ingen punkter endnu.</p>';
         }
-        echo '<p><button class="button button-primary" type="submit">Gem menu</button> <a class="button" href="' . esc_url(admin_url('nav-menus.php?action=edit&menu=' . $menuId)) . '">Åbn WordPress Menu-editor</a></p></form>';
+        echo '<p><button class="button button-primary" type="submit">Gem menu og rækkefølge</button> <a class="button" href="' . esc_url(admin_url('nav-menus.php?action=edit&menu=' . $menuId)) . '">Avanceret WordPress Menu-editor</a></p></form>';
 
         self::renderAddItems($menuId);
         if ($items) {

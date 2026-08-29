@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.53
+ * Version: 0.1.54
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.53');
+define('H18_CLEAN_VERSION', '0.1.54');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -145,6 +145,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'initialModel' => $model,
         'pages' => array_values(array_map(static function ($page): array { return ['id' => (int) $page->ID, 'title' => (string) $page->post_title]; }, get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC', 'post_status' => ['publish', 'draft', 'pending', 'private', 'future']]))),
         'menus' => $menuPayload,
+        'menuAdminUrl' => admin_url('admin.php?page=h18-clean-menu'),
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'diagAction' => 'h18_clean_diag_append',
         'diagNonce' => wp_create_nonce('h18_clean_diag_append'),
@@ -262,6 +263,12 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'h18-clean-editor-v0153-transparent',
         H18_CLEAN_URL . 'assets/editor-v0153-transparent.css',
         ['h18-clean-editor-v0148-layers'],
+        H18_CLEAN_VERSION
+    );
+    wp_enqueue_style(
+        'h18-clean-editor-v0154-menu',
+        H18_CLEAN_URL . 'assets/editor-v0154-menu.css',
+        ['h18-clean-editor-v0153-transparent'],
         H18_CLEAN_VERSION
     );
 

@@ -131,6 +131,14 @@ final class EditorController
         echo '</select></label><span class="description">Header og Footer vælges uafhængigt. Frontend-overtagelse aktiveres først med Theme-shell.</span></section>';
 
         echo '<div class="h18-clean-toolbar">';
+        $isPublished = (string) $post->post_status === 'publish';
+        $statusLabel = $isPublished ? 'Publiceret' : 'Kladde';
+        echo '<span class="h18-vd-page-status ' . ($isPublished ? 'is-published' : 'is-draft') . '"><strong>Status:</strong> ' . esc_html($statusLabel) . '</span>';
+        if ($isPublished) {
+            echo '<button type="submit" class="button h18-vd-status-action" name="post_status_action" value="draft" onclick="return confirm(\'Gør siden til kladde? Den fjernes fra offentlig visning, og aktuelle Designer-ændringer gemmes samtidig.\');">Gem &amp; gør til kladde</button>';
+        } elseif (current_user_can('publish_pages')) {
+            echo '<button type="submit" class="button button-primary h18-vd-status-action" name="post_status_action" value="publish">Gem &amp; publicér</button>';
+        }
         echo '<button type="button" class="button" id="h18-clean-undo" disabled>↶ Fortryd</button>';
         echo '<button type="button" class="button" id="h18-clean-redo" disabled>↷ Gentag</button>';
         echo '<span class="h18-clean-grid-label">120 units · 8 px lodret snap</span>';
@@ -225,13 +233,31 @@ final class EditorController
             $sameModel = hash_equals(LayoutModel::structuralDigest(LayoutModel::get($postId)), LayoutModel::structuralDigest($normalized));
             $sameShell = TemplateLayoutModel::pageChoice($postId, 'header') === ($headerChoice !== '' ? $headerChoice : 'auto')
                 && TemplateLayoutModel::pageChoice($postId, 'footer') === ($footerChoice !== '' ? $footerChoice : 'auto');
-            if ($currentVersion > 0 && $sameModel && $sameShell) {
+            $statusAction = sanitize_key((string) wp_unslash($_POST['post_status_action'] ?? ''));
+            $desiredStatus = in_array($statusAction, ['publish', 'draft'], true) ? $statusAction : '';
+            $currentPostStatus = (string) get_post_status($postId);
+            $statusChanged = $desiredStatus !== '' && $desiredStatus !== $currentPostStatus;
+            if ($desiredStatus === 'publish' && !current_user_can('publish_pages')) {
+                throw new \RuntimeException('Du har ikke rettighed til at publicere sider.');
+            }
+            if ($currentVersion > 0 && $sameModel && $sameShell && !$statusChanged) {
                 DiagnosticStore::append($postId, 'save_noop', ['version' => $currentVersion, 'reason' => 'canonical-model-and-shell-unchanged']);
                 self::redirect($postId, 'success', 'Ingen ændringer siden seneste gemte version. Der blev ikke oprettet en ny version.');
             }
-            $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gemt Visual Designer-layout');
-            TemplateLayoutModel::setPageChoice($postId, 'header', $headerChoice);
-            TemplateLayoutModel::setPageChoice($postId, 'footer', $footerChoice);
+            if ($currentVersion > 0 && $sameModel && $sameShell) {
+                $version = $currentVersion;
+            } else {
+                $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gemt Visual Designer-layout');
+                TemplateLayoutModel::setPageChoice($postId, 'header', $headerChoice);
+                TemplateLayoutModel::setPageChoice($postId, 'footer', $footerChoice);
+            }
+            if ($statusChanged) {
+                $updatedPost = wp_update_post(['ID' => $postId, 'post_status' => $desiredStatus], true);
+                if (is_wp_error($updatedPost)) {
+                    throw new \RuntimeException($updatedPost->get_error_message());
+                }
+                DiagnosticStore::append($postId, 'page_status_changed', ['from' => $currentPostStatus, 'to' => $desiredStatus, 'version' => $version]);
+            }
             $saved = LayoutModel::get($postId);
             $incomingDigest = LayoutModel::structuralDigest($normalized);
             $savedDigest = LayoutModel::structuralDigest($saved);
@@ -250,7 +276,8 @@ final class EditorController
                     exit;
                 }
             }
-            self::redirect($postId, 'success', 'Visual Designer-layout gemt og verificeret som version v' . $version . '.');
+            $statusMessage = $statusChanged ? ($desiredStatus === 'publish' ? ' Siden er publiceret.' : ' Siden er nu kladde og ikke længere offentligt publiceret.') : '';
+            self::redirect($postId, 'success', 'Visual Designer-layout gemt og verificeret som version v' . $version . '.' . $statusMessage);
         } catch (\Throwable $error) {
             DiagnosticStore::append($postId, 'save_error', ['errorType' => get_class($error), 'message' => $error->getMessage()]);
             self::redirect($postId, 'error', 'Gem fejlede: ' . $error->getMessage());

@@ -275,11 +275,16 @@ final class LayoutModel
             if (!in_array($align, ['left', 'center', 'right'], true)) { $align = 'right'; }
             $mobileMode = strtolower((string) ($raw['mobileMode'] ?? 'hamburger'));
             if (!in_array($mobileMode, ['hamburger', 'vertical', 'wrap'], true)) { $mobileMode = 'hamburger'; }
+            $mobilePresentation = strtolower((string) ($raw['mobilePresentation'] ?? 'dropdown'));
+            if (!in_array($mobilePresentation, ['dropdown', 'panel-right', 'panel-left'], true)) { $mobilePresentation = 'dropdown'; }
             return array_merge([
                 'menuId' => absint($raw['menuId'] ?? 0),
                 'orientation' => $orientation,
                 'align' => $align,
                 'mobileMode' => $mobileMode,
+                'mobilePresentation' => $mobilePresentation,
+                'mobileCloseOnSelect' => array_key_exists('mobileCloseOnSelect', $raw) ? (bool) $raw['mobileCloseOnSelect'] : true,
+                'mobileCloseOutside' => array_key_exists('mobileCloseOutside', $raw) ? (bool) $raw['mobileCloseOutside'] : true,
                 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#ffffff')) ?: '#ffffff',
                 'hoverTextColor' => sanitize_hex_color((string) ($raw['hoverTextColor'] ?? '#c3ae83')) ?: '#c3ae83',
                 'activeTextColor' => sanitize_hex_color((string) ($raw['activeTextColor'] ?? '#c3ae83')) ?: '#c3ae83',

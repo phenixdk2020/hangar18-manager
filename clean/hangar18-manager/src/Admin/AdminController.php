@@ -119,7 +119,7 @@ final class AdminController
         self::card('Backup', 'Download én samlet JSON-backup af alle Visual Designer-layouts og deres versionshistorik.', self::url('h18-clean-backup'), 'Åbn Backup');
         self::card('Log / diagnostics', 'Læs de strukturelle Visual Designer-logs pr. side og kopiér diagnose-link.', self::url('h18-clean-log'), 'Åbn Log');
         self::card('Opdateringer', 'Brug den SHA-256-verificerede GitHub-opdateringskanal.', self::url('h18-clean-updates'), 'Tjek version');
-        self::card('Menu · næste arbejdsspor', 'Menu-redesignet er næste UX-opgave. Eksisterende WordPress-menuer forbliver datakilden, mens vi gør valg, struktur og mobiladfærd mere brugervenlig.', self::url('h18-clean-menu'), 'Forbered Menu');
+        self::card('Menu', 'Redigér WordPress-menuens punkter og rækkefølge i en brugervenlig VDM-visning. Samme menu bruges direkte af Visual Designer.', self::url('h18-clean-menu'), 'Redigér Menu');
         echo '</div>';
         self::close();
     }
