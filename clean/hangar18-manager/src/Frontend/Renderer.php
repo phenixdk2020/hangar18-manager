@@ -302,9 +302,9 @@ final class Renderer
                 $heightCss = $h > 0 ? 'height:' . ($h * LayoutModel::ROW_PX) . 'px;min-height:' . ($h * LayoutModel::ROW_PX) . 'px;' : '';
                 $layoutStyle = 'position:absolute;left:' . $leftPct . '%;top:' . ($y * LayoutModel::ROW_PX) . 'px;width:' . $widthPct . '%;' . $heightCss . 'z-index:' . $zIndex . ';grid-column:auto;grid-row:auto;margin-top:0;';
             }
-            $buttonStyle = $layoutStyle . $borderStyle . $spacingStyle . $radiusStyle
+            $buttonStyle = $layoutStyle . $spacingStyle
                 . '--h18-btn-bg:' . $background . ';--h18-btn-color:' . $textColor . ';--h18-btn-hover-bg:' . $hoverBackground . ';--h18-btn-hover-color:' . $hoverTextColor . ';--h18-btn-focus:' . $focusColor . ';padding:0;overflow:visible;';
-            $linkStyle = 'border-radius:' . $radius . 'px;padding:' . $paddingY . 'px ' . $paddingX . 'px;';
+            $linkStyle = $borderStyle . $radiusStyle . 'padding:' . $paddingY . 'px ' . $paddingX . 'px;';
             $target = !empty($props['targetBlank']) ? ' target="_blank" rel="noopener"' : '';
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-button' . ($floating ? ' h18-clean-front-button--floating' : '') . '" style="' . esc_attr($buttonStyle) . '"><a class="h18-clean-front-button-link" href="' . esc_url($href) . '"' . $target . ' style="' . esc_attr($linkStyle) . '">' . esc_html((string) ($props['text'] ?? 'Knap')) . '</a></div>';
         }

@@ -823,3 +823,14 @@ Temaets globale CSS må ikke ændre Visual Designer Tekst-elementets paragraph-,
 - **VD-SAVE-NOOP-001:** brugerens Gem må ikke oprette ny Side/Header/Footer-version, hvis canonical model og relevante settings/valg er identiske med seneste gemte state. En ændringsnote alene er ikke en ændring. Restore/konvertering kan fortsat være eksplicit non-destruktive versionshandlinger.
 - **VD-LANDING-PREVIEW-001:** en separat Visual Designer Hjem-kladdeside kan bruges til Header + Side + Footer parity uden at ændre gammel Hjem eller `page_on_front`. Samlet preview bruger canonical modeller og Theme Shell forbliver OFF.
 - **VD-MENU-UX-NEXT:** næste hovedarbejdsspor er en mere brugervenlig Menu-oplevelse; WordPress-menu-ID forbliver canonical datakilde.
+
+
+## 0.1.48 – Lag, parity og legacy-oprydning
+
+- Venstre Designer-panel har `Elementer | Lag`; Lag-træet er editor-chrome og ændrer aldrig canonical modellen.
+- Klik på et Lag vælger den tilsvarende canvas-node, også når den er fysisk dækket af en anden node.
+- Button border/background/radius skal males på samme synlige surface i Designer, lokal Preview og frontend.
+- Legacy Header/Footer converter UI og automatisk runtime er retired; historiske klasser må kun eksistere dormant for QA/data-kompatibilitet.
+- Editor entry og breakpointskift starter i Fit.
+- Theme Shell er fortsat OFF.
+- Synligt theme-navn er AKVPK; intern `hangar18-base` slug/Text Domain bevares.

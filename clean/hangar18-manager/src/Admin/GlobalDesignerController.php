@@ -30,8 +30,6 @@ final class GlobalDesignerController
         add_action('admin_post_' . self::SAVE_ACTION, [self::class, 'save']);
         add_action('admin_post_' . self::RESTORE_ACTION, [self::class, 'restore']);
         add_action('admin_post_' . self::TEMPLATE_ACTION, [self::class, 'templateAction']);
-        add_action('admin_post_' . self::CONVERT_ACTION, [self::class, 'convertLegacyHeader']);
-        add_action('admin_post_' . self::FOOTER_CONVERT_ACTION, [self::class, 'convertLegacyFooter']);
     }
 
     public static function menu(): void
@@ -91,8 +89,6 @@ final class GlobalDesignerController
         echo '<div class="h18-global-statusbar"><strong>' . esc_html((string) ($meta['name'] ?? $label)) . '</strong><span>Version v' . esc_html((string) $version) . '</span><span class="h18-manager-badge is-progress">Under udvikling</span></div>';
         echo '<form class="h18-global-rename" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">'; wp_nonce_field(self::NONCE_TEMPLATE); echo '<input type="hidden" name="action" value="' . esc_attr(self::TEMPLATE_ACTION) . '"><input type="hidden" name="part" value="' . esc_attr($part) . '"><input type="hidden" name="template_id" value="' . esc_attr($templateId) . '"><input type="hidden" name="operation" value="rename"><label>Templatenavn <input type="text" name="template_name" value="' . esc_attr((string) ($meta['name'] ?? '')) . '"></label><button class="button" type="submit">Omdøb</button></form>';
 
-        if ($part === 'header') { self::renderLegacyHeaderConversion(); }
-        if ($part === 'footer') { self::renderLegacyFooterConversion(); }
 
         echo '<form id="h18-clean-save-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field(self::NONCE_SAVE);

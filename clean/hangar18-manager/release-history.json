@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.1.48",
+    "date": "2026-08-29",
+    "items": [
+      "Ny Elementer/Lag-fane viser det fysiske hierarki og kan vælge dækkede eller fuldt overlappede elementer direkte fra lagtræet.",
+      "BUG-17: Button-ramme/radius males på den synlige klikflade på frontend, og lokal Header/Footer-preview skjuler ikke længere canonical elementrammer.",
+      "Legacy Header/Footer-konverteringspaneler og deres POST/automatisk runtime er fjernet; eksisterende templates og versionshistorik bevares.",
+      "Canvas starter fortsat i Fit og BUG-02 multiline rich-text selection forbliver release-gated fra 0.1.47.",
+      "Det synlige WordPress-temanavn bliver AKVPK 1.2.1; teknisk hangar18-base kompatibilitet bevares.",
+      "Theme Shell forbliver OFF; Menu er fortsat næste hovedspor efter Footer-parity."
+    ]
+  },
+  {
     "version": "0.1.47",
     "date": "2026-08-29",
     "items": [
