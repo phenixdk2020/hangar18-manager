@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.45",
+  "version": "0.1.46",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.45.zip",
-  "sha256": "d3b873d7089374fe0b8b849645b13b44badf2bc67b35ffbd721808392bfba1e4",
-  "source_commit": "8f87dface77044a4bbfcae4cb0beb819e747ff6e",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.46.zip",
+  "sha256": "a44f5d3018720ddc73b74e490da5672dfc6baebde12d9f7b838c84d473208682",
+  "source_commit": "c27e2fc81085b8e5e8df10730d22458bc2c4abcc",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.45</h4>\n<ul>\n<li>Tekst: lodret justering Top / Midt / Bund i canonical model, Designer og frontend.</li>\n<li>Billede: eksplicit WordPress image/*-understøttelse, herunder PNG med transparens.</li>\n<li>Footer: gammel Visual Header/Footer Builder er nu første migrationskilde; shell er fallback, og gammel Manager-standard er sidste tydeligt mærkede fallback.</li>\n<li>Canvas: musehjulszoom 25-200 %, zoom omkring markøren, scrollbars ved overflow samt Fit/100%/−/+.</li>\n<li>Theme Shell er fortsat deaktiveret.</li>\n</ul>"
+    "changelog": "<h4>0.1.46</h4>\n<ul>\n<li>Popup-fri Header/Footer preview i intern overlay.</li>\n<li>Footer Desktop-reference fallback fra 29-08-2026 med tre områder, CTA-knapper, skillelinje og copyright.</li>\n<li>Designer starter altid i Fit; 100% er manuel zoom.</li>\n<li>Rich-text paragraph/list/link spacing isoleres fra tema-CSS for Designer/frontend parity.</li>\n<li>Theme Shell er fortsat deaktiveret.</li>\n</ul>"
   }
 }
