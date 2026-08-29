@@ -1,0 +1,104 @@
+name: Apply Visual Designer Manager 0.1.44 WYSIWYG
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0144-wysiwyg.yml'
+      - '.github/scripts/apply_v0144_wysiwyg.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.44 patch
+        run: python .github/scripts/apply_v0144_wysiwyg.py
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression and model QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.44 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'Version: 0.1.44' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.44'" clean/hangar18-manager/hangar18-manager.php
+          test -s clean/hangar18-manager/assets/editor-v0144-viewport.js
+          test -s clean/hangar18-manager/assets/editor-v0144.css
+          grep -q "desktop: 1920" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q "laptop: 1180" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q "mobile: 390" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q "ResizeObserver" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q "h18-clean-wide-canvas" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q "h18-clean-panel-toggle" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q "editorRowPx" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "data-h18-parent-painted-box" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "inner.style.background = 'transparent'" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q "ROW_PX \* editorScale" clean/hangar18-manager/assets/editor-v0121.js
+          grep -q "ROW_PX \* editorScale" clean/hangar18-manager/assets/editor-v0131.js
+          grep -q "event.clientX - transform.startX) / scale" clean/hangar18-manager/assets/editor-v0120.js
+          if grep -q 'height:auto!important' clean/hangar18-manager/src/Frontend/Renderer.php; then
+            echo 'Frontend still forces parent height:auto!important.' >&2
+            exit 1
+          fi
+          grep -q "Visual Designer Manager 0.1.44 model QA PASS" .github/scripts/v0125_model_qa.php
+          grep -q '"version": "0.1.44"' clean/hangar18-manager/release-history.json
+          test -s docs/v0144-status.md
+          grep -q "VD-WYSIWYG-VIEWPORT-001" CLEAN-TECHNICAL-MANUAL.md
+          grep -q "get_option(self::CUTOVER_OPTION, '0') === '1'" clean/hangar18-manager/src/Frontend/ThemeShell.php
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/assets/editor-v0144-viewport.js \
+            clean/hangar18-manager/assets/editor-v0144.css \
+            clean/hangar18-manager/assets/editor-v018-core.js \
+            clean/hangar18-manager/assets/editor-v0120.js \
+            clean/hangar18-manager/assets/editor-v0121.js \
+            clean/hangar18-manager/assets/editor-v0131.js \
+            clean/hangar18-manager/src/Frontend/Renderer.php \
+            .github/scripts/v0125_model_qa.php \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            docs/v0144-status.md \
+            CLEAN-TECHNICAL-MANUAL.md
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Implement WYSIWYG viewport and parent box geometry in v0.1.44'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
