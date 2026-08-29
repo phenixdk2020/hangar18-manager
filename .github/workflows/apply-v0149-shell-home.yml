@@ -1,0 +1,165 @@
+name: Apply Visual Designer Manager 0.1.49 Shell Home
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0149-shell-home.yml'
+      - '.github/scripts/apply_v0149_shell_home.py'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.49 patch
+        run: python .github/scripts/apply_v0149_shell_home.py
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l theme/legacy-v1.2.0/functions.php
+          php -l theme/legacy-v1.2.0/page.php
+          php -l theme/legacy-v1.2.0/header.php
+          php -l theme/legacy-v1.2.0/footer.php
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression and model QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.49 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'Gate: version'
+          grep -q 'Version: 0.1.49' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.49'" clean/hangar18-manager/hangar18-manager.php
+
+          echo 'Gate: explicit shell cutover'
+          grep -q "activateApprovedCutover" clean/hangar18-manager/src/Frontend/ThemeShell.php
+          grep -q "update_option(self::CUTOVER_OPTION, '1', false)" clean/hangar18-manager/src/Frontend/ThemeShell.php
+          grep -q "scope' => 'visual-designer-pages-only'" clean/hangar18-manager/src/Frontend/ThemeShell.php
+
+          echo 'Gate: live Header/Page/Footer renderer'
+          grep -q 'ThemeShell::enabled() ? self::renderLiveShell' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q "ThemeShell::resolvedTemplateId(\$postId, 'header')" clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q "ThemeShell::resolvedTemplateId(\$postId, 'footer')" clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q 'TemplateLayoutModel::model' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q 'h18-vd-live-shell-header' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q 'h18-vd-live-shell-page' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q 'h18-vd-live-shell-footer' clean/hangar18-manager/src/Frontend/Renderer.php
+
+          echo 'Gate: transition safe fallback'
+          grep -q "if (!metadata_exists('post', \$postId, LayoutModel::META))" clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q 'Safe transition rule: legacy/non-Designer pages are untouched' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -q 'Template failure must never suppress the page itself' clean/hangar18-manager/src/Frontend/Renderer.php
+
+          echo 'Gate: Manager homepage selection'
+          grep -q "SET_HOME_PAGE_ACTION = 'h18_clean_set_home_page'" clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'function setHomePage' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q "metadata_exists('post', \$postId, LayoutModel::META)" clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q "update_option('show_on_front', 'page')" clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q "update_option('page_on_front', \$postId)" clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'Publicér og sæt som Hjem' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'Hjemmeside</span>' clean/hangar18-manager/src/Admin/AdminController.php
+
+          echo 'Gate: Shell admin status'
+          grep -q '<h2>Shell integration</h2>' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'Status: Aktiv' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'Standard Header' clean/hangar18-manager/src/Admin/AdminController.php
+          grep -q 'Standard Footer' clean/hangar18-manager/src/Admin/AdminController.php
+
+          echo 'Gate: 0.1.48 regressions'
+          grep -q 'editor-v0148-layers.js' clean/hangar18-manager/hangar18-manager.php
+          grep -q '\$linkStyle = \$borderStyle . \$radiusStyle' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -Eq "(var|let|const)[[:space:]]+mode[[:space:]]*=[[:space:]]*'fit'" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q "selectionRegressionGate: 'bug02-v0147-persistent'" clean/hangar18-manager/assets/editor-v0125.js
+
+          echo 'Gate: AKVPK 1.2.2 identity'
+          grep -q '^Theme Name: AKVPK$' theme/legacy-v1.2.0/style.css
+          grep -q '^Version: 1.2.2$' theme/legacy-v1.2.0/style.css
+          grep -q "H18_BASE_THEME_VERSION = '1.2.2'" theme/legacy-v1.2.0/functions.php
+          grep -q "'name'          => 'AKVPK'" theme/legacy-v1.2.0/functions.php
+          grep -q '"version": "1.2.2"' theme-update.json
+          grep -q '"theme": "hangar18-base"' theme-update.json
+
+          echo 'Gate: docs'
+          grep -q '"version": "0.1.49"' clean/hangar18-manager/release-history.json
+          test -s docs/v0149-status.md
+          grep -q 'VD-SHELL-LIVE-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -q 'VD-HOME-001' CLEAN-TECHNICAL-MANUAL.md
+
+      - name: Build AKVPK theme 1.2.2 update package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .theme-build
+          mkdir -p .theme-build/hangar18-base dist
+          cp -a theme/legacy-v1.2.0/. .theme-build/hangar18-base/
+          (cd .theme-build && zip -qr ../dist/hangar18-base-theme-v1.2.2.zip hangar18-base)
+          unzip -tq dist/hangar18-base-theme-v1.2.2.zip
+          THEME_SHA="$(sha256sum dist/hangar18-base-theme-v1.2.2.zip | awk '{print $1}')"
+          base64 -w 0 dist/hangar18-base-theme-v1.2.2.zip > dist/hangar18-base-theme-v1.2.2.zip.b64
+          printf '\n' >> dist/hangar18-base-theme-v1.2.2.zip.b64
+          cp dist/hangar18-base-theme-v1.2.2.zip.b64 dist/hangar18-base-theme.zip.b64
+          python - "$THEME_SHA" <<'PY'
+          import json, sys
+          from pathlib import Path
+          p = Path('theme-update.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          data['package_sha256'] = sys.argv[1]
+          data['package_url'] = 'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/hangar18-base-theme.zip.b64'
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          rm -rf .theme-build dist/hangar18-base-theme-v1.2.2.zip
+          echo "AKVPK theme package SHA256: $THEME_SHA"
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-implementation-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Frontend/ThemeShell.php \
+            clean/hangar18-manager/src/Frontend/Renderer.php \
+            clean/hangar18-manager/src/Admin/AdminController.php \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            docs/v0149-status.md \
+            CLEAN-TECHNICAL-MANUAL.md \
+            theme/legacy-v1.2.0/style.css \
+            theme/legacy-v1.2.0/functions.php \
+            theme-update.json \
+            dist/hangar18-base-theme-v1.2.2.zip.b64 \
+            dist/hangar18-base-theme.zip.b64
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Activate Visual Designer shell and homepage selection in v0.1.49'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
