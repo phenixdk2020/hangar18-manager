@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.1.45",
+    "date": "2026-08-29",
+    "items": [
+      "Tekst får canonical lodret justering Top, Midt og Bund med samme resultat i Designer, Preview og frontend; eksisterende Tekst beholder Top som standard.",
+      "Billedevælgerens WordPress image/*-kontrakt er eksplicit: PNG inkl. transparens, JPG/JPEG, WebP, GIF og øvrige billedformater som WordPress tillader.",
+      "Footer-konvertering søger først i den gamle Visual Header/Footer Builders templates/global assignment, derefter i HANGAR18-FOOTER-blokke og bruger kun derefter en tydeligt mærket gammel Manager-standardfallback.",
+      "Canvas kan zoomes 25-200% med musehjulet over designområdet; zoom forankres omkring musemarkøren, overflow giver scrollbars og Fit/100%/plus/minus ligger i toolbaren.",
+      "Fit følger fortsat Mere canvas, panel-foldning og resize; manuel zoom forbliver fast. Device-skift går tilbage til Fit.",
+      "Theme Shell forbliver OFF; Header/Footer afventer fortsat brugerens parity-QA."
+    ]
+  },
+  {
     "version": "0.1.44",
     "date": "2026-08-29",
     "items": [

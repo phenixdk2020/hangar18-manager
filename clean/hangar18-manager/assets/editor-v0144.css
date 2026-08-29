@@ -1,4 +1,9 @@
-/* Visual Designer Manager 0.1.44 · BUG-13 / BUG-14 */
+/* Visual Designer Manager 0.1.45 · WYSIWYG + manual canvas zoom */
+.h18-clean-canvas-column.h18-vd-zoom-scroll-host{
+    overflow:auto!important;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+}
 .h18-vd-viewport-stage{
     position:relative;
     display:block;
@@ -15,6 +20,17 @@
     transition:none!important;
     transform-origin:0 0!important;
 }
+.h18-vd-zoom-controls{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    white-space:nowrap;
+}
+.h18-vd-zoom-controls .button{
+    min-width:34px;
+    min-height:28px;
+    padding:0 7px;
+}
 .h18-vd-viewport-status{
     display:inline-flex;
     align-items:center;
@@ -28,15 +44,11 @@
     font-weight:700;
     white-space:nowrap;
 }
-/* Device width is owned by the virtual viewport layer, never by the editor's
-   remaining physical column width. */
 .h18-vd-viewport-stage>.h18-clean-root[data-h18-device="desktop"],
 .h18-vd-viewport-stage>.h18-clean-root[data-h18-device="laptop"],
 .h18-vd-viewport-stage>.h18-clean-root[data-h18-device="mobile"]{
     max-width:none!important;
 }
-/* BUG-13: Section/Box owns the physical painted box. The inner surface is only
-   a transparent child-layout grid and fills the complete canonical geometry. */
 .h18-clean-node--section,.h18-clean-node--container{
     background-clip:border-box!important;
 }

@@ -167,6 +167,8 @@ final class Renderer
             $headingLevel = in_array((string) ($props['headingLevel'] ?? 'h2'), ['h2', 'h3', 'h4', 'h5', 'h6'], true) ? (string) $props['headingLevel'] : 'h2';
             $headingColor = sanitize_hex_color((string) ($props['headingColor'] ?? '#000000')) ?: '#000000';
             $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#000000')) ?: '#000000';
+            $verticalAlign = in_array((string) ($props['verticalAlign'] ?? 'top'), ['top', 'center', 'bottom'], true) ? (string) $props['verticalAlign'] : 'top';
+            $verticalJustify = ['top' => 'flex-start', 'center' => 'center', 'bottom' => 'flex-end'][$verticalAlign];
             $background = !empty($props['backgroundTransparent'])
                 ? 'transparent'
                 : (sanitize_hex_color((string) ($props['background'] ?? '#ffffff')) ?: '#ffffff');
@@ -187,7 +189,7 @@ final class Renderer
                 ? '<' . $headingLevel . ' class="h18-clean-front-text-heading" style="color:' . esc_attr($headingColor) . ';font-family:' . esc_attr($headingFamily) . ';font-size:' . esc_attr((string) $headingSize) . 'px;font-weight:' . esc_attr((string) $headingWeight) . ';line-height:' . esc_attr((string) $headingLineHeight) . ';letter-spacing:' . esc_attr((string) $headingLetterSpacing) . 'px">' . esc_html($heading) . '</' . $headingLevel . '>'
                 : '';
             $textStyle = $style . $borderStyle . $spacingStyle . $radiusStyle
-                . 'background:' . $background . ';padding:' . $padding . 'px;color:' . $textColor . ';text-align:' . (string) ($props['align'] ?? 'left') . ';font-family:' . $bodyFamily . ';font-size:' . $fontSize . 'px;font-weight:' . $fontWeight . ';line-height:' . $lineHeight . ';letter-spacing:' . $letterSpacing . 'px;';
+                . 'background:' . $background . ';padding:' . $padding . 'px;color:' . $textColor . ';text-align:' . (string) ($props['align'] ?? 'left') . ';font-family:' . $bodyFamily . ';font-size:' . $fontSize . 'px;font-weight:' . $fontWeight . ';line-height:' . $lineHeight . ';letter-spacing:' . $letterSpacing . 'px;display:flex;flex-direction:column;justify-content:' . $verticalJustify . ';';
             $rawText = (string) ($props['text'] ?? '');
             $bodyHtml = strpos($rawText, '<') === false ? nl2br(esc_html($rawText), false) : wp_kses_post($rawText);
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '">' . $headingHtml . $bodyHtml . '</div>';

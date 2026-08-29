@@ -12,6 +12,8 @@ final class LegacyFooterConverter
     public const MIGRATION_OPTION='h18_vd_legacy_footer_converted_v0143';
     public const STATUS_OPTION='h18_vd_legacy_footer_status_v0143';
     private const LEGACY_DESIGN_OPTION='hangar18_manager_header_design_v25';
+    private const LEGACY_SITE_TEMPLATES_OPTION='hangar18_manager_site_templates_v1';
+    private const LEGACY_SITE_ASSIGNMENTS_OPTION='hangar18_manager_site_template_assignments_v1';
     private const TARGET_TEMPLATE_ID='footer-standard-v1';
     private const FOOTER_START='<!-- HANGAR18-FOOTER-START -->';
     private const FOOTER_END='<!-- HANGAR18-FOOTER-END -->';
@@ -25,14 +27,18 @@ final class LegacyFooterConverter
     public static function convert(bool $force=true): array {
         if (!current_user_can('edit_theme_options')) throw new \RuntimeException('Ingen adgang til Footer-konvertering.');
         if (!$force && get_option(self::MIGRATION_OPTION,false)) return self::diagnosticStatus();
-        $source=self::legacyShellFooter();
+        $source=self::resolveLegacyFooterSource();
         $stored=get_option(self::LEGACY_DESIGN_OPTION,[]); $design=is_array($stored)?$stored:[];
-        if ($source['html']==='') {
-            throw new \RuntimeException('Den gamle Manager-Footer blev ikke fundet mellem HANGAR18-FOOTER-START/END på Hjem eller andre WordPress-sider. Ingen Footer er gættet eller oprettet automatisk.');
+        $fallbackUsed=$source['html']==='';
+        if ($fallbackUsed) {
+            $model=self::buildReferenceFooterModel($design);
+            $kind='legacy-manager-standard-fallback';
+            $note='Standardfallback fra gammel Manager · v0.1.45 · ikke 1:1-kilde';
+        } else {
+            $model=self::buildModelFromLegacyFooter($source['html'],$design);
+            $kind=(string)($source['sourceKind']??'legacy-manager-shell-footer');
+            $note='Automatisk Footer-konvertering fra '.$kind.' · v0.1.45';
         }
-        $model=self::buildModelFromLegacyFooter($source['html'],$design);
-        $kind='legacy-manager-shell-footer';
-        $note='Automatisk konvertering fra gammel Manager shell/Footer · v0.1.43';
         $counts=self::nodeCounts($model);
         if (($counts['section']??0)<1 || ($counts['container']??0)<1 || ($counts['text']??0)<1) throw new \RuntimeException('Footer-konverteringen gav ikke Sektion/Kasse/Tekst.');
         TemplateLayoutModel::ensureMigrated();
@@ -40,15 +46,15 @@ final class LegacyFooterConverter
         if ($id==='') $id=TemplateLayoutModel::create('footer','Footer – Standard');
         $version=TemplateLayoutModel::saveVersion($id,$model,['contentWidth'=>1728],get_current_user_id(),$note);
         TemplateLayoutModel::rename($id,'Footer – Standard'); TemplateLayoutModel::setActive($id,true); TemplateLayoutModel::setDefault('footer',$id);
-        $result=['status'=>'success','convertedUtc'=>gmdate('c'),'templateId'=>$id,'templateVersion'=>$version,'source'=>$kind,'legacyFooterFound'=>$source['html']!=='','sourcePageId'=>$source['pageId'],'sourcePageTitle'=>$source['pageTitle'],'sourceDigest'=>hash('sha256',$source['html']),'sourcePreview'=>self::sourcePreview($source['html']),'footerWidthPercent'=>self::footerWidth($design),'nodeCounts'=>$counts,'digest'=>LayoutModel::structuralDigest($model)];
+        $result=['status'=>'success','convertedUtc'=>gmdate('c'),'templateId'=>$id,'templateVersion'=>$version,'source'=>$kind,'legacyFooterFound'=>$source['html']!=='','fallbackUsed'=>$fallbackUsed,'legacyBuilderFound'=>!empty($source['builderFound']),'legacyBuilderAmbiguous'=>!empty($source['builderAmbiguous']),'legacyBuilderCandidates'=>$source['builderCandidates']??[],'legacyBuilderTemplateId'=>$source['builderTemplateId']??'','legacyBuilderTemplateName'=>$source['builderTemplateName']??'','sourcePageId'=>$source['pageId'],'sourcePageTitle'=>$source['pageTitle'],'sourceDigest'=>$source['html']!==''?hash('sha256',$source['html']):'','sourcePreview'=>self::sourcePreview($source['html']),'footerWidthPercent'=>self::footerWidth($design),'nodeCounts'=>$counts,'digest'=>LayoutModel::structuralDigest($model)];
         update_option(self::STATUS_OPTION,$result,false); update_option(self::MIGRATION_OPTION,$result,false); return $result;
     }
     /** @return array<string,mixed> */
     public static function diagnosticStatus(): array {
-        $source=self::legacyShellFooter(); $stored=get_option(self::LEGACY_DESIGN_OPTION,[]); $design=is_array($stored)?$stored:[];
+        $source=self::resolveLegacyFooterSource(); $stored=get_option(self::LEGACY_DESIGN_OPTION,[]); $design=is_array($stored)?$stored:[];
         TemplateLayoutModel::ensureMigrated(); $id=TemplateLayoutModel::exists(self::TARGET_TEMPLATE_ID,'footer')?self::TARGET_TEMPLATE_ID:TemplateLayoutModel::defaultId('footer');
         $model=$id!==''?TemplateLayoutModel::model($id):LayoutModel::empty(); $last=get_option(self::STATUS_OPTION,[]); $last=is_array($last)?$last:[];
-        return ['legacyFooterFound'=>$source['html']!=='','sourcePageId'=>$source['pageId'],'sourcePageTitle'=>$source['pageTitle'],'sourceDigest'=>$source['html']!==''?hash('sha256',$source['html']):'','sourcePreview'=>self::sourcePreview($source['html']),'footerWidthPercent'=>self::footerWidth($design),'targetTemplateId'=>$id,'targetVersion'=>$id!==''?TemplateLayoutModel::version($id):0,'targetNodeCounts'=>self::nodeCounts($model),'lastConversion'=>$last];
+        return ['legacyFooterFound'=>$source['html']!=='','fallbackAvailable'=>true,'legacyBuilderFound'=>!empty($source['builderFound']),'legacyBuilderAmbiguous'=>!empty($source['builderAmbiguous']),'legacyBuilderCandidates'=>$source['builderCandidates']??[],'legacyBuilderTemplateId'=>$source['builderTemplateId']??'','legacyBuilderTemplateName'=>$source['builderTemplateName']??'','sourceKind'=>$source['sourceKind']??'','sourcePageId'=>$source['pageId'],'sourcePageTitle'=>$source['pageTitle'],'sourceDigest'=>$source['html']!==''?hash('sha256',$source['html']):'','sourcePreview'=>self::sourcePreview($source['html']),'footerWidthPercent'=>self::footerWidth($design),'targetTemplateId'=>$id,'targetVersion'=>$id!==''?TemplateLayoutModel::version($id):0,'targetNodeCounts'=>self::nodeCounts($model),'lastConversion'=>$last];
     }
     /** @param array<string,mixed> $design */
     public static function buildModelFromLegacyFooter(string $html,array $design=[]): array {
@@ -90,7 +96,7 @@ final class LegacyFooterConverter
         $nodes=[
             self::node('section-footer-v0143','section','',10,$geometry,['background'=>$primary,'radius'=>0,'padding'=>0,'minHeightRows'=>$rows,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
             self::node('container-footer-v0143','container','section-footer-v0143',10,self::geometry([0,0,120,$rows],[0,0,120,$rows],[0,0,120,$rows]),['background'=>$primary,'radius'=>0,'padding'=>0,'minHeightRows'=>$rows,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
-            self::node('text-footer-v0143','text','container-footer-v0143',20,self::geometry([4,2,112,8],[4,2,112,8],[5,2,110,8]),['heading'=>'','headingLevel'=>'h2','text'=>$text,'align'=>$align,'background'=>$primary,'backgroundTransparent'=>true,'textColor'=>$light,'headingColor'=>$light,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>14,'fontWeight'=>400,'lineHeight'=>1.4,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('text-footer-v0143','text','container-footer-v0143',20,self::geometry([4,2,112,8],[4,2,112,8],[5,2,110,8]),['heading'=>'','headingLevel'=>'h2','text'=>$text,'align'=>$align,'verticalAlign'=>'center','background'=>$primary,'backgroundTransparent'=>true,'textColor'=>$light,'headingColor'=>$light,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>14,'fontWeight'=>400,'lineHeight'=>1.4,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
         ];
 
         // Preserve an actual image found in the legacy Footer as a canonical
@@ -115,10 +121,102 @@ final class LegacyFooterConverter
         $nodes=[
             self::node('section-footer-v0143','section','',10,$geometry,['background'=>$bg,'radius'=>0,'padding'=>0,'minHeightRows'=>$rows,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
             self::node('container-footer-v0143','container','section-footer-v0143',10,self::geometry([0,0,120,$rows],[0,0,120,$rows],[0,0,120,$rows]),['background'=>$bg,'radius'=>0,'padding'=>0,'minHeightRows'=>$rows,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
-            self::node('text-footer-v0143','text','container-footer-v0143',10,self::geometry([4,2,112,8],[4,2,112,8],[5,2,110,8]),['heading'=>'','headingLevel'=>'h2','text'=>$text,'align'=>'center','background'=>$bg,'backgroundTransparent'=>true,'textColor'=>$fg,'headingColor'=>$fg,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>14,'fontWeight'=>400,'lineHeight'=>1.4,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('text-footer-v0143','text','container-footer-v0143',10,self::geometry([4,2,112,8],[4,2,112,8],[5,2,110,8]),['heading'=>'','headingLevel'=>'h2','text'=>$text,'align'=>'center','verticalAlign'=>'center','background'=>$bg,'backgroundTransparent'=>true,'textColor'=>$fg,'headingColor'=>$fg,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>14,'fontWeight'=>400,'lineHeight'=>1.4,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
         ];
         return LayoutModel::normalize(['schemaVersion'=>LayoutModel::SCHEMA,'units'=>LayoutModel::UNITS,'rowPx'=>LayoutModel::ROW_PX,'nodes'=>$nodes]);
     }
+    /** @return array<string,mixed> */
+    private static function resolveLegacyFooterSource(): array {
+        $builder=self::legacyVisualBuilderFooter();
+        if (($builder['html']??'')!=='') return $builder;
+        $shell=self::legacyShellFooter();
+        if (($shell['html']??'')!=='') {
+            return array_merge($shell,[
+                'sourceKind'=>'legacy-manager-shell-footer',
+                'builderFound'=>!empty($builder['builderFound']),
+                'builderAmbiguous'=>!empty($builder['builderAmbiguous']),
+                'builderCandidates'=>$builder['builderCandidates']??[],
+                'builderTemplateId'=>'',
+                'builderTemplateName'=>'',
+            ]);
+        }
+        return [
+            'html'=>'','pageId'=>0,'pageTitle'=>'','sourceKind'=>'legacy-manager-standard-fallback',
+            'builderFound'=>!empty($builder['builderFound']),
+            'builderAmbiguous'=>!empty($builder['builderAmbiguous']),
+            'builderCandidates'=>$builder['builderCandidates']??[],
+            'builderTemplateId'=>'','builderTemplateName'=>'',
+        ];
+    }
+
+    /** @return array<string,mixed> */
+    private static function legacyVisualBuilderFooter(): array {
+        $stored=get_option(self::LEGACY_SITE_TEMPLATES_OPTION,[]);
+        $templates=is_array($stored)?$stored:[];
+        $footers=[];
+        foreach ($templates as $key=>$template) {
+            if (!is_array($template) || strtolower((string)($template['Kind']??''))!=='footer') continue;
+            $id=sanitize_key((string)($template['Id']??$key));
+            if ($id==='') continue;
+            $footers[$id]=$template;
+        }
+        $candidates=[];
+        foreach ($footers as $id=>$template) {
+            $candidates[]=[
+                'id'=>$id,
+                'name'=>(string)($template['Name']??$id),
+                'revision'=>(int)($template['Revision']??0),
+            ];
+        }
+        $assignments=get_option(self::LEGACY_SITE_ASSIGNMENTS_OPTION,[]);
+        $assignments=is_array($assignments)?$assignments:[];
+        $assigned=sanitize_key((string)($assignments['footer']??''));
+        $selected=null; $sourceKind='';
+        if ($assigned!=='' && isset($footers[$assigned])) {
+            $selected=$footers[$assigned]; $sourceKind='legacy-visual-builder-assigned';
+        } elseif (count($footers)===1) {
+            $assigned=(string)array_key_first($footers); $selected=$footers[$assigned]; $sourceKind='legacy-visual-builder-single';
+        }
+        if (!is_array($selected)) {
+            return [
+                'html'=>'','pageId'=>0,'pageTitle'=>'','sourceKind'=>'',
+                'builderFound'=>count($footers)>0,
+                'builderAmbiguous'=>count($footers)>1,
+                'builderCandidates'=>$candidates,
+                'builderTemplateId'=>'','builderTemplateName'=>'',
+            ];
+        }
+        $html=self::legacyVisualBuilderTemplateHtml($selected);
+        return [
+            'html'=>$html,'pageId'=>0,'pageTitle'=>'Gammel Visual Header/Footer Builder','sourceKind'=>$sourceKind,
+            'builderFound'=>true,'builderAmbiguous'=>false,'builderCandidates'=>$candidates,
+            'builderTemplateId'=>$assigned,'builderTemplateName'=>(string)($selected['Name']??$assigned),
+        ];
+    }
+
+    /** @param array<string,mixed> $template */
+    private static function legacyVisualBuilderTemplateHtml(array $template): string {
+        $sections=is_array($template['Sections']??null)?array_values($template['Sections']):[];
+        $lines=[]; $background='#30382a'; $color='#f2f0e8'; $align='center';
+        foreach ($sections as $section) {
+            if (!is_array($section)) continue;
+            $bg=sanitize_hex_color((string)($section['CustomBackgroundColor']??''));
+            if ($bg) $background=strtolower($bg);
+            $fg=sanitize_hex_color((string)($section['CustomTextColor']??''));
+            if ($fg) $color=strtolower($fg);
+            $a=strtolower((string)($section['DesktopAlignment']??''));
+            if (in_array($a,['left','center','right'],true)) $align=$a;
+            foreach (['Title','Content'] as $field) {
+                $value=html_entity_decode(wp_strip_all_tags((string)($section[$field]??'')),ENT_QUOTES|ENT_HTML5,'UTF-8');
+                $value=trim(preg_replace('/\s+/u',' ',$value)??'');
+                if ($value!=='' && !in_array($value,$lines,true)) $lines[]=$value;
+            }
+        }
+        if (!$lines) return '';
+        $visible=implode('<br>',array_map('esc_html',$lines));
+        return '<!-- HANGAR18-FOOTER-START --><footer class="h18-site-footer h18-legacy-builder-footer" style="background:'.esc_attr($background).';color:'.esc_attr($color).';text-align:'.esc_attr($align).'">'.$visible.'</footer><!-- HANGAR18-FOOTER-END -->';
+    }
+
     /** @return array{html:string,pageId:int,pageTitle:string} */
     private static function legacyShellFooter(): array {
         $pages=[]; $home=get_page_by_path('hjem',OBJECT,'page'); if ($home instanceof \WP_Post) $pages[]=$home;

@@ -140,8 +140,10 @@ final class GlobalDesignerController
     {
         $status=LegacyFooterConverter::diagnosticStatus(); $counts=is_array($status['targetNodeCounts']??null)?$status['targetNodeCounts']:[]; $last=is_array($status['lastConversion']??null)?$status['lastConversion']:[];
         echo '<section class="h18-manager-card h18-global-conversion"><h2>Gammel Footer → Visual Designer</h2>';
-        echo '<p class="description">Footer læses med den gamle Managers egen shell-metode fra den faktiske HANGAR18-FOOTER-blok på Hjem eller en anden gammel styret side. Hvis blokken mangler, stoppes konverteringen med en tydelig fejl; der gættes ikke på Footer-indhold. Hver konvertering gemmes som ny Footer-version.</p><table class="widefat striped"><tbody>';
-        echo '<tr><th>Legacy Footer-blok</th><td>'.(!empty($status['legacyFooterFound'])?'Fundet':'Ikke fundet · konvertering stoppes').'</td></tr>';
+        echo '<p class="description">Kildeprioritet: gammel Visual Header/Footer Builder → HANGAR18-FOOTER-blok → tydeligt mærket gammel Manager-standardfallback. En fallback betegnes aldrig som 1:1-konvertering. Hver kørsel gemmes som ny Footer-version.</p><table class="widefat striped"><tbody>';
+        echo '<tr><th>Gammel Visual Builder</th><td>'.(!empty($status['legacyBuilderFound'])?'Fundet':'Ikke fundet').(!empty($status['legacyBuilderAmbiguous'])?' · flere Footer-templates uden entydig global assignment':'').'</td></tr>';
+        echo '<tr><th>Valgt gammel Builder-template</th><td>'.esc_html((string)($status['legacyBuilderTemplateName']??'')).(!empty($status['legacyBuilderTemplateId'])?' · '.esc_html((string)$status['legacyBuilderTemplateId']):'').'</td></tr>';
+        echo '<tr><th>Legacy Footer-kilde</th><td>'.(!empty($status['legacyFooterFound'])?'Fundet · '.esc_html((string)($status['sourceKind']??'')):'Ikke fundet · gammel Manager-standardfallback er tilgængelig').'</td></tr>';
         echo '<tr><th>Kildeside</th><td>'.esc_html((string)($status['sourcePageTitle']??'')).' · ID '.esc_html((string)($status['sourcePageId']??0)).'</td></tr>';
         echo '<tr><th>FooterWidthPercent</th><td>'.esc_html((string)($status['footerWidthPercent']??100)).'%</td></tr>';
         echo '<tr><th>Kildeudsnit</th><td><code>'.esc_html((string)($status['sourcePreview']??'')).'</code></td></tr>';

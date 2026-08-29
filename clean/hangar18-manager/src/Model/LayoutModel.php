@@ -217,11 +217,16 @@ final class LayoutModel
             if (!in_array($align, ['left', 'center', 'right'], true)) {
                 $align = 'left';
             }
+            $verticalAlign = strtolower((string) ($raw['verticalAlign'] ?? 'top'));
+            if (!in_array($verticalAlign, ['top', 'center', 'bottom'], true)) {
+                $verticalAlign = 'top';
+            }
             return array_merge([
                 'heading' => sanitize_text_field((string) ($raw['heading'] ?? '')),
                 'headingLevel' => $headingLevel,
                 'text' => wp_kses_post((string) ($raw['text'] ?? 'Ny tekst')),
                 'align' => $align,
+                'verticalAlign' => $verticalAlign,
                 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
                 'backgroundTransparent' => array_key_exists('backgroundTransparent', $raw) ? (bool) $raw['backgroundTransparent'] : true,
                 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#000000')) ?: '#000000',

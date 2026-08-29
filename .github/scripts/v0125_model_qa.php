@@ -297,4 +297,31 @@ vdAssert(str_contains((string) $coreJs, "data-h18-parent-painted-box") && str_co
 vdAssert(str_contains((string) $viewportCss, 'height:100%!important') && str_contains((string) $viewportCss, 'background:transparent!important'), 'BUG-13 inner surface does not fill the parent transparently.');
 vdAssert(!str_contains((string) $rendererPhp, 'height:auto!important'), 'Frontend still forces parent height:auto!important.');
 
-echo "Visual Designer Manager 0.1.44 model QA PASS\n";
+
+/* 0.1.45: Text vertical alignment is canonical and defaults safely. */
+$verticalText = LayoutModel::normalize(['nodes'=>[[
+    'id'=>'text-vertical','type'=>'text','parentId'=>'','order'=>10,
+    'geometry'=>vdGeometry(0,0,60,12),
+    'props'=>['text'=>'Midt','align'=>'left','verticalAlign'=>'center'],
+]]]);
+$verticalNode=null; foreach ($verticalText['nodes'] as $n) { if (($n['id']??'')==='text-vertical') { $verticalNode=$n; break; } }
+vdAssert(is_array($verticalNode) && ($verticalNode['props']['verticalAlign']??'')==='center','Text verticalAlign was not retained canonically.');
+
+$verticalTextDefault = LayoutModel::normalize(['nodes'=>[[
+    'id'=>'text-vertical-default','type'=>'text','parentId'=>'','order'=>10,
+    'geometry'=>vdGeometry(0,0,60,12),
+    'props'=>['text'=>'Top'],
+]]]);
+$verticalDefaultNode=null; foreach ($verticalTextDefault['nodes'] as $n) { if (($n['id']??'')==='text-vertical-default') { $verticalDefaultNode=$n; break; } }
+vdAssert(is_array($verticalDefaultNode) && ($verticalDefaultNode['props']['verticalAlign']??'')==='top','Existing Text must default to top vertical alignment.');
+
+vdAssert(str_contains((string)$coreJs,'Lodret justering') && str_contains((string)$coreJs,"field === 'verticalAlign'"),'Text vertical alignment Inspector contract is missing.');
+vdAssert(str_contains((string)$rendererPhp,'justify-content:') && str_contains((string)$rendererPhp,"['top', 'center', 'bottom']"),'Frontend vertical alignment contract is missing.');
+vdAssert(str_contains((string)$coreJs,"library: { type: 'image' }") && !preg_match('/library[^\n]{0,100}\\.(?:jpe?g)/i',(string)$coreJs),'Image picker must use WordPress image/* filtering instead of JPG-only filtering.');
+vdAssert(str_contains((string)$viewportJs,'MAX_MANUAL_SCALE = 2.0') && str_contains((string)$viewportJs,"addEventListener('wheel'") && str_contains((string)$viewportJs,'event.preventDefault()'),'Manual wheel zoom contract is missing.');
+vdAssert(str_contains((string)$viewportJs,'scrollLeft') && str_contains((string)$viewportJs,'virtualX') && str_contains((string)$viewportJs,"data-vd-zoom=\"fit\""),'Pointer-anchored zoom / Fit controls are missing.');
+$footerPhp=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/src/Migration/LegacyFooterConverter.php');
+vdAssert(str_contains((string)$footerPhp,'hangar18_manager_site_templates_v1') && str_contains((string)$footerPhp,'hangar18_manager_site_template_assignments_v1'),'Legacy Visual Builder Footer source is missing.');
+vdAssert(str_contains((string)$footerPhp,'legacy-manager-standard-fallback') && str_contains((string)$footerPhp,'ikke 1:1-kilde'),'Footer standard fallback is not explicitly labelled.');
+
+echo "Visual Designer Manager 0.1.45 model QA PASS\n";

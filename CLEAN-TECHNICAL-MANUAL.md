@@ -757,3 +757,44 @@ Designerens layoutbredde må aldrig være den tilfældige restbredde mellem Word
 
 ### VD-WYSIWYG-FIT-001 · IMPLEMENTERET 0.1.44
 Fit-zoom genberegnes dynamisk ved ResizeObserver på canvas-kolonnen samt ved breakpointskift, Mere canvas og foldning af Elementer/Inspector. Ændret Fit må aldrig mutere canonical x/y/w/h eller responsive inheritance. Drag/resize og pixelbaserede editorfunktioner skal omsætte fysiske pointer-deltaer tilbage til virtuelle pixels/8px-rækker.
+
+
+---
+
+## 22. Kontraktstatus for 0.1.45
+
+### VD-TEXT-VALIGN-001 – IMPLEMENTERET, afventer bruger-QA
+
+- Tekst har en canonical `verticalAlign` med værdierne `top`, `center`, `bottom`.
+- Eksisterende Tekst uden property skal normaliseres til `top`, så gamle layouts ikke flytter sig.
+- Inspector viser særskilt vandret og lodret justering.
+- Designer, Preview og frontend skal bruge samme property.
+
+### VD-IMAGE-MIME-001 – IMPLEMENTERET, afventer bruger-QA
+
+- Billede-elementets medievælger filtrerer på WordPress `image/*`, ikke på en hårdkodet filendelse.
+- PNG, inkl. alpha/transparens, må ikke konverteres eller flades ud af Visual Designer.
+- JPG/JPEG, WebP, GIF og andre image-formater følger WordPress-installationens tilladte MIME-typer.
+- SVG er kun tilgængelig hvis WordPress-installationen selv tillader SVG-upload.
+
+### VD-FOOTER-LEGACY-SOURCE-001 – IMPLEMENTERET, afventer bruger-QA
+
+Kildeprioritet ved gammel Footer-konvertering:
+
+1. global Footer-assignment i den gamle Visual Header/Footer Builder;
+2. præcis én gammel Footer-template hvis ingen global assignment findes;
+3. gammel `HANGAR18-FOOTER-START/END` shell på Hjem eller anden side;
+4. gammel Manager-standard som eksplicit fallback.
+
+Hvis flere gamle Footer-templates findes uden entydig assignment, må systemet ikke gætte hvilken af dem der var aktiv. En standardfallback skal mærkes som fallback og må ikke beskrives som 1:1-konvertering.
+
+### VD-CANVAS-ZOOM-001 – IMPLEMENTERET, afventer bruger-QA
+
+- Virtuel viewport fra VD-WYSIWYG-VIEWPORT-001 ændres aldrig af zoom.
+- Musehjul over canvas zoomer designet 25-200% i 10 procentpoint-trin.
+- Zoom forankres omkring musemarkørens virtuelle punkt.
+- Ved overflow viser canvas-host vandret/lodret scrollbar; Elementer, Inspector og toolbar zoomes ikke.
+- `Fit` genberegnes ved ændret editorbredde, Mere canvas og panel-foldning.
+- Manuel zoom forbliver fast ved de samme ændringer.
+- Skift mellem Desktop/Laptop/Mobil går tilbage til `Fit` for den nye virtuelle viewport.
+- Alle pointerbaserede layoutoperationer bruger fortsat den aktuelle viewport-scale til at oversætte skærmpixels til virtuelle layoutkoordinater.
