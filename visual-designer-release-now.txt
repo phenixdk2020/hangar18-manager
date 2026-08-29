@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.43
-Trigger: header-parity-footer-from-legacy-manager-shell 2026-08-29
+Release Visual Designer Manager v0.1.44
+Trigger: wysiwyg-virtual-viewport-parent-painted-box 2026-08-29
