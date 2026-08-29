@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.48
-Trigger: layers-button-parity-legacy-cleanup-akvpk 2026-08-29
+Release Visual Designer Manager v0.1.49
+Trigger: active-theme-shell-homepage-selection-akvpk-122 2026-08-29
