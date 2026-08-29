@@ -22,3 +22,6 @@ body.h18-global-preview-open{overflow:hidden!important}
 .h18-global-preview-host{min-height:120px;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.12)}
 .vd-global-preview-canvas .h18-clean-node{cursor:default!important}
 .vd-global-preview-canvas .h18-clean-inner-surface{min-height:100%}
+
+/* 0.1.47 frontend-like local template preview */
+.h18-global-preview-host{margin:0 auto;transform-origin:0 0}.vd-global-preview-canvas .h18-clean-node:not([data-h18-parent-painted-box="1"]){background:transparent!important;border-color:transparent!important}.vd-global-preview-canvas .h18-clean-node-preview{min-height:0!important;padding:0!important;overflow:visible!important}.vd-global-preview-canvas .h18-clean-node-preview--text{overflow:visible!important}.vd-global-preview-canvas .h18-clean-text-body{overflow:visible!important}

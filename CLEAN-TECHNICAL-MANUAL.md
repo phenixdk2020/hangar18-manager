@@ -813,3 +813,13 @@ Designer starter altid i Fit ved ny editor-entry, reload/pageshow og breakpoints
 
 ### VD-RICHTEXT-SPACING-001
 Temaets globale CSS må ikke ændre Visual Designer Tekst-elementets paragraph-, liste- eller link-spacing. Designer og frontend ejer disse baselines deterministisk.
+
+
+## 0.1.47 – stabilisering før Menu-UX
+
+- **VD-TEXT-SEL-001:** BUG-02 er permanent release-gate. `v0125-authoritative` + `prearmed-v0138` må ikke fjernes; første og kædede Fed/Kursiv/Understregning skal bevare native selection.
+- **VD-TEXT-FLEX-001:** lodret Tekst-justering arbejder på én samlet content-wrapper. Inline `EM`, `STRONG`, `U` og `A` må aldrig blive selvstændige flex-items.
+- **VD-VIEWPORT-EDGE-001:** X=0/Y=0/W=120 refererer til den faktiske virtuelle side. Editor-padding/border er chrome uden for canonical sidegeometri.
+- **VD-SAVE-NOOP-001:** brugerens Gem må ikke oprette ny Side/Header/Footer-version, hvis canonical model og relevante settings/valg er identiske med seneste gemte state. En ændringsnote alene er ikke en ændring. Restore/konvertering kan fortsat være eksplicit non-destruktive versionshandlinger.
+- **VD-LANDING-PREVIEW-001:** en separat Visual Designer Hjem-kladdeside kan bruges til Header + Side + Footer parity uden at ændre gammel Hjem eller `page_on_front`. Samlet preview bruger canonical modeller og Theme Shell forbliver OFF.
+- **VD-MENU-UX-NEXT:** næste hovedarbejdsspor er en mere brugervenlig Menu-oplevelse; WordPress-menu-ID forbliver canonical datakilde.

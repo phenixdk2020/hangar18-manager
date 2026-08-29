@@ -28,8 +28,18 @@
         var virtualWidth=parseInt(canvas.getAttribute('data-h18-viewport-width')||'0',10)||canvas.offsetWidth||1440;
         copy.removeAttribute('data-h18-viewport-scale'); copy.removeAttribute('data-h18-viewport-mode'); copy.style.transform='none'; copy.style.transformOrigin='0 0'; copy.style.width=virtualWidth+'px'; copy.style.maxWidth='none'; copy.style.margin='0';
         var overlay=ensurePreviewOverlay(); var host=overlay.querySelector('.h18-global-preview-host'); if(!host)return;
-        host.innerHTML=''; host.style.width=virtualWidth+'px'; host.appendChild(copy); overlay.hidden=false; document.body.classList.add('h18-global-preview-open');
-        var scroller=overlay.querySelector('.h18-global-preview-scroll'); if(scroller){scroller.scrollTop=0;scroller.scrollLeft=0;}
+        host.innerHTML=''; host.appendChild(copy); overlay.hidden=false; document.body.classList.add('h18-global-preview-open');
+        var scroller=overlay.querySelector('.h18-global-preview-scroll');
+        var fit=function(){
+            if(!scroller||!copy||!host)return;
+            var available=Math.max(160,scroller.clientWidth-48);
+            var scale=Math.min(1,available/Math.max(1,virtualWidth));
+            copy.style.transform='scale('+scale+')'; copy.style.transformOrigin='0 0';
+            host.style.width=Math.ceil(virtualWidth*scale)+'px';
+            host.style.height=Math.max(120,Math.ceil((copy.scrollHeight||copy.offsetHeight||120)*scale))+'px';
+        };
+        if(scroller){scroller.scrollTop=0;scroller.scrollLeft=0;}
+        window.requestAnimationFrame(function(){fit();window.requestAnimationFrame(fit);});
     }
 
     function install() {

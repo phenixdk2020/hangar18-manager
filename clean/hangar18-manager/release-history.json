@@ -1,5 +1,19 @@
 [
   {
+    "version": "0.1.47",
+    "date": "2026-08-29",
+    "items": [
+      "BUG-02: rich-text selection er igen release-gated; Fed/Kursiv/Understregning får længere restore-burst og kort selectionchange-beskyttelse.",
+      "BUG-17: frontend Tekst bruger én content-wrapper, så EM/STRONG/U ikke bliver separate flex-items ved lodret justering.",
+      "BUG-18: virtuel side har ingen intern root-padding/border; X=0/Y=0/W=120 rammer de faktiske sidekanter.",
+      "Footer parity: Genveje-spacing reduceret, divider er baggrundsneutral med tynd ramme, og lokal Header/Footer preview Fit-skalerer hele den virtuelle bredde.",
+      "Versionshistorik: Side/Header/Footer opretter ikke en ny version, når canonical model og relevante valg/settings er uændrede.",
+      "Ny separat kladde Hjem – Visual Designer oprettes én gang med Auto Header/Footer; eksisterende Hjem og page_on_front ændres ikke.",
+      "Ny samlet canonical preview viser Header + aktuel side + Footer inde i Designer mens Theme Shell er OFF.",
+      "Menu markeres som næste UX-arbejdsspor; eksisterende WordPress-menuer ændres ikke i denne release."
+    ]
+  },
+  {
     "version": "0.1.46",
     "date": "2026-08-29",
     "items": [

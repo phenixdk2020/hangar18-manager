@@ -8,7 +8,7 @@
 .h18-clean-add{width:100%;margin-bottom:8px!important;text-align:left}
 .h18-clean-canvas-column{min-width:0;background:#dcdcde;padding:12px;border-radius:8px;overflow:auto}
 .h18-clean-surface{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));align-items:start;width:100%;min-width:0;box-sizing:border-box;position:relative;min-height:92px}
-.h18-clean-root{background:#fff;min-height:650px;padding:8px;border:1px solid #a7aaad}
+.h18-clean-root{background:#fff;min-height:650px;padding:0;border:0}
 .h18-clean-inner-surface{margin-top:8px;min-height:90px;border:1px dashed #a7aaad}
 .h18-clean-surface.is-drop-target{outline:3px solid #2271b1;outline-offset:-3px;background-color:rgba(34,113,177,.06)}
 .h18-clean-surface.has-spatial-drop-guide{outline-color:#135e96}

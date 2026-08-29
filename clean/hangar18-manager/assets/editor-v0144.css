@@ -10,6 +10,8 @@
     margin:0 auto;
     min-height:1px;
     box-sizing:border-box;
+    background:#fff;
+    box-shadow:0 0 0 1px #a7aaad;
 }
 .h18-vd-viewport-stage>.h18-clean-root{
     position:absolute!important;

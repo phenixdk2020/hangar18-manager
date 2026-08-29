@@ -190,9 +190,20 @@ final class GlobalDesignerController
         try {
             $normalized = LayoutModel::normalize($decoded);
             $settings = ['sticky' => !empty($_POST['global_sticky']), 'overlay' => !empty($_POST['global_overlay']), 'contentWidth' => absint($_POST['global_content_width'] ?? 1440)];
+            $normalizedSettings = TemplateLayoutModel::normalizeSettings($part, $settings);
             $note = sanitize_text_field((string) wp_unslash($_POST['change_note'] ?? '')); if ($note === '') { $note = 'Opdateret ' . ($part === 'header' ? 'Header' : 'Footer') . '-template'; }
-            TemplateLayoutModel::setActive($id, !empty($_POST['template_active']));
-            $version = TemplateLayoutModel::saveVersion($id, $normalized, $settings, get_current_user_id(), $note);
+            $newActive = !empty($_POST['template_active']);
+            $meta = TemplateLayoutModel::meta($id);
+            $sameActive = is_array($meta) && (!empty($meta['active']) === $newActive);
+            $sameState = hash_equals(
+                TemplateLayoutModel::digest(TemplateLayoutModel::model($id), TemplateLayoutModel::settings($id)),
+                TemplateLayoutModel::digest($normalized, $normalizedSettings)
+            );
+            if (TemplateLayoutModel::version($id) > 0 && $sameState && $sameActive) {
+                self::redirect($part, $id, 'success', 'Ingen ændringer siden seneste gemte version. Der blev ikke oprettet en ny version.');
+            }
+            TemplateLayoutModel::setActive($id, $newActive);
+            $version = TemplateLayoutModel::saveVersion($id, $normalized, $normalizedSettings, get_current_user_id(), $note);
             if (!hash_equals(LayoutModel::structuralDigest($normalized), LayoutModel::structuralDigest(TemplateLayoutModel::model($id)))) { throw new \RuntimeException('Save-verifikation fejlede.'); }
             self::redirect($part, $id, 'success', 'Template gemt og verificeret som v' . $version . '.');
         } catch (\Throwable $error) { self::redirect($part, $id, 'error', 'Gem fejlede: ' . $error->getMessage()); }

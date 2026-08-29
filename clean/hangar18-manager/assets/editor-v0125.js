@@ -5,6 +5,7 @@
     var active = null;
     var initialShellChoices = null;
     var selectionGeneration = 0;
+    var selectionHoldUntil = 0;
 
     function cleanHtml(html) {
         var tpl = document.createElement('template');
@@ -234,6 +235,9 @@
         else if (window.Promise) { Promise.resolve().then(restore); }
         window.setTimeout(restore, 0);
         window.setTimeout(restore, 24);
+        window.setTimeout(restore, 80);
+        window.setTimeout(restore, 180);
+        window.setTimeout(restore, 320);
         if (window.requestAnimationFrame) { window.requestAnimationFrame(restore); }
     }
 
@@ -379,6 +383,7 @@
         } finally { active.formatting = false; }
 
         if (logicalSelection) { active.savedLogical = captureLogicalSelection(active.editor) || logicalSelection; }
+        selectionHoldUntil = Date.now() + 360;
         active.dirty = true;
         active.textarea.value = cleanHtml(active.editor.innerHTML);
         updateCanvasPreview(active.textarea.value);
@@ -457,9 +462,27 @@
         rememberSelection();
     }
 
+    document.addEventListener('selectionchange', function () {
+        if (!active || !active.editor || active.formatting || !markerSelectionValid()) { return; }
+        if (Date.now() > selectionHoldUntil) { return; }
+        var selection = window.getSelection && window.getSelection();
+        var valid = false;
+        if (selection && selection.rangeCount && !selection.getRangeAt(0).collapsed) {
+            var range = selection.getRangeAt(0);
+            var common = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentNode;
+            valid = !!(common && active.editor.contains(common));
+        }
+        if (!valid) {
+            window.setTimeout(function () {
+                if (Date.now() <= selectionHoldUntil && markerSelectionValid()) { restoreMarkerSelection(); }
+            }, 0);
+        }
+    });
+
     function toolbarButton(label, title, handler) {
         var button = document.createElement('button');
         button.type = 'button';
+        button.tabIndex = -1;
         button.className = 'button h18-vd-rich-button';
         button.innerHTML = label;
         button.title = title;
@@ -468,6 +491,7 @@
             event.preventDefault();
         });
         button.addEventListener('mousedown', function (event) { event.preventDefault(); });
+        button.addEventListener('pointerup', function (event) { event.preventDefault(); });
         button.addEventListener('click', function (event) {
             event.preventDefault();
             handler(event);
@@ -620,11 +644,77 @@
         }
     }
 
+    function ensureCompositeOverlay() {
+        var overlay = document.getElementById('h18-vd-composite-overlay');
+        if (overlay) { return overlay; }
+        overlay = document.createElement('div');
+        overlay.id = 'h18-vd-composite-overlay';
+        overlay.className = 'h18-vd-composite-overlay';
+        overlay.hidden = true;
+        overlay.innerHTML = '<div class="h18-vd-composite-dialog" role="dialog" aria-modal="true"><div class="h18-vd-composite-bar"><strong>Visual Designer · Header + landingsside + Footer</strong><button type="button" class="button" data-vd-composite-close>Luk</button></div><div class="h18-vd-composite-frame-wrap"><div class="h18-vd-composite-loading">Renderer samlet preview…</div><iframe class="h18-vd-composite-frame" title="Samlet Visual Designer preview"></iframe></div></div>';
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', function (event) {
+            if (event.target === overlay || (event.target && event.target.closest && event.target.closest('[data-vd-composite-close]'))) {
+                overlay.hidden = true;
+                document.body.classList.remove('h18-vd-composite-open');
+            }
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !overlay.hidden) {
+                overlay.hidden = true;
+                document.body.classList.remove('h18-vd-composite-open');
+            }
+        });
+        return overlay;
+    }
+
+    function openCompositePreview() {
+        var button = document.getElementById('h18-clean-composite-preview');
+        var model = document.getElementById('h18-clean-model-json');
+        if (!button || !model) { return; }
+        sync();
+        if (window.H18CleanV0120 && typeof window.H18CleanV0120.sync === 'function') { window.H18CleanV0120.sync(); }
+        var overlay = ensureCompositeOverlay();
+        var loading = overlay.querySelector('.h18-vd-composite-loading');
+        var frame = overlay.querySelector('.h18-vd-composite-frame');
+        overlay.hidden = false;
+        document.body.classList.add('h18-vd-composite-open');
+        if (loading) { loading.hidden = false; loading.textContent = 'Renderer samlet preview…'; }
+        if (frame) { frame.hidden = true; frame.removeAttribute('src'); }
+
+        var body = new URLSearchParams();
+        body.set('action', 'h18_clean_composite_preview');
+        body.set('_wpnonce', String(button.getAttribute('data-nonce') || ''));
+        body.set('post_id', String(button.getAttribute('data-post-id') || '0'));
+        body.set('model_json', model.value || '{}');
+        var header = document.querySelector('select[name="header_template_choice"]');
+        var footer = document.querySelector('select[name="footer_template_choice"]');
+        body.set('header_template_choice', header ? String(header.value || 'auto') : 'auto');
+        body.set('footer_template_choice', footer ? String(footer.value || 'auto') : 'auto');
+
+        fetch(String(button.getAttribute('data-url') || ''), {
+            method: 'POST', credentials: 'same-origin', cache: 'no-store',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: body.toString()
+        }).then(function (response) {
+            return response.text().then(function (html) { return { ok: response.ok, html: html }; });
+        }).then(function (result) {
+            if (!frame) { return; }
+            frame.srcdoc = result.html;
+            frame.hidden = false;
+            if (loading) { loading.hidden = true; }
+        }).catch(function (error) {
+            if (loading) { loading.hidden = false; loading.textContent = 'Samlet preview fejlede: ' + String(error && error.message || error); }
+        });
+    }
+
     function install() {
         var inspector = document.getElementById('h18-clean-inspector');
         if (!inspector) { return; }
         initialShellChoices = currentShellChoices();
         enhance();
+        var compositeButton = document.getElementById('h18-clean-composite-preview');
+        if (compositeButton) { compositeButton.addEventListener('click', openCompositePreview); }
         new MutationObserver(function () { enhance(); }).observe(inspector, { childList: true, subtree: true });
         var form = document.getElementById('h18-clean-save-form');
         if (form) {
@@ -641,6 +731,7 @@
         selectionOwner: 'v0125-authoritative',
         selectionMode: 'boundary-markers-v0137-single-owner',
         selectionSessionMode: 'prearmed-v0138',
+        selectionRegressionGate: 'bug02-v0147-persistent',
         restoreSelection: function () {
             if (!active) { return false; }
             if (markerSelectionValid()) { return restoreMarkerSelection(); }

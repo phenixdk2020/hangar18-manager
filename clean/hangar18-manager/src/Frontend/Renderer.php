@@ -8,6 +8,8 @@ use Hangar18\Clean\Model\LayoutModel;
 
 final class Renderer
 {
+    private static bool $forceStandaloneCss = false;
+
     public static function register(): void
     {
         add_filter('the_content', [self::class, 'content'], 20);
@@ -41,12 +43,14 @@ final class Renderer
 
     public static function css(): void
     {
-        if (!is_singular('page')) {
-            return;
-        }
-        $postId = get_queried_object_id();
-        if ($postId <= 0 || (!metadata_exists('post', $postId, LayoutModel::META) && self::previewModel($postId) === null)) {
-            return;
+        if (!self::$forceStandaloneCss) {
+            if (!is_singular('page')) {
+                return;
+            }
+            $postId = get_queried_object_id();
+            if ($postId <= 0 || (!metadata_exists('post', $postId, LayoutModel::META) && self::previewModel($postId) === null)) {
+                return;
+            }
         }
         $rowPx = LayoutModel::ROW_PX;
         echo '<style id="h18-clean-frontend-css">';
@@ -65,6 +69,35 @@ final class Renderer
         echo '</style>';
     }
 
+
+    /**
+     * Standalone canonical preview used by the Designer while Theme Shell is OFF.
+     * Header, page and Footer are rendered by the same PHP renderer as frontend.
+     *
+     * @param array<string,mixed> $pageModel
+     * @param array<string,mixed>|null $headerModel
+     * @param array<string,mixed>|null $footerModel
+     */
+    public static function standaloneDocument(array $pageModel, ?array $headerModel, ?array $footerModel, string $title = 'Visual Designer preview'): string
+    {
+        $previous = self::$forceStandaloneCss;
+        self::$forceStandaloneCss = true;
+        ob_start();
+        self::css();
+        $style = (string) ob_get_clean();
+        self::$forceStandaloneCss = $previous;
+
+        $header = $headerModel !== null ? self::renderModel(LayoutModel::normalize($headerModel)) : '';
+        $page = self::renderModel(LayoutModel::normalize($pageModel));
+        $footer = $footerModel !== null ? self::renderModel(LayoutModel::normalize($footerModel)) : '';
+        $safeTitle = esc_html($title);
+
+        return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' . $safeTitle . '</title>'
+            . $style
+            . '<style>html,body{margin:0;padding:0;background:#fff;color:#1d2327}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.h18-vd-composite-part{width:100%;margin:0;padding:0}.h18-vd-composite-main{min-height:320px}.h18-clean-front-text-content{display:block;min-width:0}.h18-clean-front-text-content>p:first-child{margin-top:0!important}.h18-clean-front-text-content>p:last-child{margin-bottom:0!important}</style>'
+            . '</head><body><header class="h18-vd-composite-part h18-vd-composite-header">' . $header . '</header><main class="h18-vd-composite-part h18-vd-composite-main">' . $page . '</main><footer class="h18-vd-composite-part h18-vd-composite-footer">' . $footer . '</footer>'
+            . '<script>document.addEventListener("click",function(e){var b=e.target.closest(".h18-clean-front-menu-toggle");if(!b)return;var n=b.closest(".h18-clean-front-menu");if(!n)return;var open=!n.classList.contains("is-open");n.classList.toggle("is-open",open);b.setAttribute("aria-expanded",open?"true":"false");});</script></body></html>';
+    }
 
     public static function menuScript(): void
     {
@@ -192,7 +225,7 @@ final class Renderer
                 . 'background:' . $background . ';padding:' . $padding . 'px;color:' . $textColor . ';text-align:' . (string) ($props['align'] ?? 'left') . ';font-family:' . $bodyFamily . ';font-size:' . $fontSize . 'px;font-weight:' . $fontWeight . ';line-height:' . $lineHeight . ';letter-spacing:' . $letterSpacing . 'px;display:flex;flex-direction:column;justify-content:' . $verticalJustify . ';';
             $rawText = (string) ($props['text'] ?? '');
             $bodyHtml = strpos($rawText, '<') === false ? nl2br(esc_html($rawText), false) : wp_kses_post($rawText);
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '">' . $headingHtml . $bodyHtml . '</div>';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-text" style="' . esc_attr($textStyle) . '"><div class="h18-clean-front-text-content">' . $headingHtml . $bodyHtml . '</div></div>';
         }
 
         if ($type === 'menu') {

@@ -17,11 +17,13 @@ final class EditorController
     private const RESTORE_ACTION = 'h18_clean_restore';
     private const RESTORE_COPY_ACTION = 'h18_clean_restore_copy';
     private const PREVIEW_ACTION = 'h18_clean_preview';
+    private const COMPOSITE_PREVIEW_ACTION = 'h18_clean_composite_preview';
     private const VERSION_PREVIEW_ACTION = 'h18_clean_version_preview';
     private const NONCE_SAVE = 'h18_clean_save';
     private const NONCE_RESTORE = 'h18_clean_restore';
     private const NONCE_RESTORE_COPY = 'h18_clean_restore_copy';
     private const NONCE_PREVIEW = 'h18_clean_preview';
+    private const NONCE_COMPOSITE_PREVIEW = 'h18_clean_composite_preview';
     private const NONCE_VERSION_PREVIEW = 'h18_clean_version_preview';
 
     public static function register(): void
@@ -32,6 +34,7 @@ final class EditorController
         add_action('admin_post_' . self::RESTORE_ACTION, [self::class, 'restore']);
         add_action('admin_post_' . self::RESTORE_COPY_ACTION, [self::class, 'restoreCopy']);
         add_action('admin_post_' . self::PREVIEW_ACTION, [self::class, 'preview']);
+        add_action('admin_post_' . self::COMPOSITE_PREVIEW_ACTION, [self::class, 'compositePreview']);
         add_action('admin_post_' . self::VERSION_PREVIEW_ACTION, [self::class, 'previewVersion']);
     }
 
@@ -132,6 +135,7 @@ final class EditorController
         echo '<button type="button" class="button" id="h18-clean-redo" disabled>↷ Gentag</button>';
         echo '<span class="h18-clean-grid-label">120 units · 8 px lodret snap</span>';
         echo '<button type="button" class="button" id="h18-clean-preview" data-url="' . esc_attr(admin_url('admin-post.php')) . '" data-nonce="' . esc_attr(wp_create_nonce(self::NONCE_PREVIEW)) . '" data-post-id="' . esc_attr((string) $postId) . '">Forhåndsvis</button>';
+        echo '<button type="button" class="button" id="h18-clean-composite-preview" data-url="' . esc_attr(admin_url('admin-post.php')) . '" data-nonce="' . esc_attr(wp_create_nonce(self::NONCE_COMPOSITE_PREVIEW)) . '" data-post-id="' . esc_attr((string) $postId) . '">Vis med Header + Footer</button>';
         echo '<button type="submit" class="button" name="after_save" value="preview" formtarget="_blank">Gem &amp; vis</button>';
         echo '<button type="submit" class="button button-primary h18-clean-save">Gem som ny version</button>';
         echo '</div>';
@@ -214,10 +218,20 @@ final class EditorController
                 'incoming' => DiagnosticStore::modelSummary($normalized),
             ]);
             $note = isset($_POST['change_note']) ? sanitize_text_field((string) wp_unslash($_POST['change_note'])) : '';
-            $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gemt Visual Designer-layout');
             TemplateLayoutModel::ensureMigrated();
-            TemplateLayoutModel::setPageChoice($postId, 'header', sanitize_key((string) wp_unslash($_POST['header_template_choice'] ?? 'auto')));
-            TemplateLayoutModel::setPageChoice($postId, 'footer', sanitize_key((string) wp_unslash($_POST['footer_template_choice'] ?? 'auto')));
+            $headerChoice = sanitize_key((string) wp_unslash($_POST['header_template_choice'] ?? 'auto'));
+            $footerChoice = sanitize_key((string) wp_unslash($_POST['footer_template_choice'] ?? 'auto'));
+            $currentVersion = max(0, (int) get_post_meta($postId, LayoutModel::VERSION_META, true));
+            $sameModel = hash_equals(LayoutModel::structuralDigest(LayoutModel::get($postId)), LayoutModel::structuralDigest($normalized));
+            $sameShell = TemplateLayoutModel::pageChoice($postId, 'header') === ($headerChoice !== '' ? $headerChoice : 'auto')
+                && TemplateLayoutModel::pageChoice($postId, 'footer') === ($footerChoice !== '' ? $footerChoice : 'auto');
+            if ($currentVersion > 0 && $sameModel && $sameShell) {
+                DiagnosticStore::append($postId, 'save_noop', ['version' => $currentVersion, 'reason' => 'canonical-model-and-shell-unchanged']);
+                self::redirect($postId, 'success', 'Ingen ændringer siden seneste gemte version. Der blev ikke oprettet en ny version.');
+            }
+            $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gemt Visual Designer-layout');
+            TemplateLayoutModel::setPageChoice($postId, 'header', $headerChoice);
+            TemplateLayoutModel::setPageChoice($postId, 'footer', $footerChoice);
             $saved = LayoutModel::get($postId);
             $incomingDigest = LayoutModel::structuralDigest($normalized);
             $savedDigest = LayoutModel::structuralDigest($saved);
@@ -240,6 +254,36 @@ final class EditorController
         } catch (\Throwable $error) {
             DiagnosticStore::append($postId, 'save_error', ['errorType' => get_class($error), 'message' => $error->getMessage()]);
             self::redirect($postId, 'error', 'Gem fejlede: ' . $error->getMessage());
+        }
+    }
+
+    public static function compositePreview(): void
+    {
+        if (!current_user_can('edit_pages')) {
+            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+        }
+        check_admin_referer(self::NONCE_COMPOSITE_PREVIEW);
+        $postId = absint($_POST['post_id'] ?? 0);
+        if ($postId <= 0 || get_post_type($postId) !== 'page') {
+            wp_die(esc_html__('Ugyldig side.', 'hangar18-manager-clean'));
+        }
+        $decoded = json_decode(isset($_POST['model_json']) ? (string) wp_unslash($_POST['model_json']) : '', true);
+        if (!is_array($decoded)) {
+            wp_die(esc_html__('Preview-modellen er ikke gyldig JSON.', 'hangar18-manager-clean'));
+        }
+        try {
+            $pageModel = LayoutModel::normalize($decoded);
+            TemplateLayoutModel::ensureMigrated();
+            $headerChoice = sanitize_key((string) wp_unslash($_POST['header_template_choice'] ?? 'auto'));
+            $footerChoice = sanitize_key((string) wp_unslash($_POST['footer_template_choice'] ?? 'auto'));
+            $headerModel = self::templateModelForPreview('header', $headerChoice);
+            $footerModel = self::templateModelForPreview('footer', $footerChoice);
+            nocache_headers();
+            header('Content-Type: text/html; charset=utf-8');
+            echo Renderer::standaloneDocument($pageModel, $headerModel, $footerModel, 'Visual Designer · samlet preview');
+            exit;
+        } catch (\Throwable $error) {
+            wp_die(esc_html('Samlet preview fejlede: ' . $error->getMessage()));
         }
     }
 
@@ -414,6 +458,19 @@ final class EditorController
             echo '<tr><td>' . esc_html((string) $page->post_title) . '</td><td><code>' . esc_html((string) $page->post_name) . '</code></td><td>' . esc_html($statusLabel) . '</td><td>' . esc_html($version > 0 ? 'v' . $version : 'Ikke gemt endnu') . '</td><td><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=' . self::MENU . '&post=' . $page->ID)) . '">Åbn designer</a></td></tr>';
         }
         echo '</tbody></table></div>';
+    }
+
+    /** @return array<string,mixed>|null */
+    private static function templateModelForPreview(string $part, string $choice): ?array
+    {
+        $part = sanitize_key($part) === 'footer' ? 'footer' : 'header';
+        $choice = sanitize_key($choice);
+        if ($choice === 'none') { return null; }
+        $id = $choice !== '' && $choice !== 'auto' && TemplateLayoutModel::exists($choice, $part)
+            ? $choice
+            : TemplateLayoutModel::defaultId($part);
+        if ($id === '' || !TemplateLayoutModel::exists($id, $part)) { return null; }
+        return TemplateLayoutModel::model($id);
     }
 
     private static function redirect(int $postId, string $status, string $message): void

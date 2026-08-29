@@ -343,4 +343,22 @@ vdAssert(is_string($globalPreviewJs)&&str_contains($globalPreviewJs,'h18-global-
 vdAssert(str_contains((string)$viewportJs,"mode = 'fit';")&&str_contains((string)$viewportJs,"addEventListener('pageshow'"),'Designer must always enter in Fit mode.');
 vdAssert(str_contains((string)$rendererPhp,'.h18-clean-front-text p{margin:0!important')&&str_contains((string)$rendererPhp,'.h18-clean-front-text li{margin:0!important'),'Frontend rich-text spacing is not isolated from theme CSS.');
 
-echo "Visual Designer Manager 0.1.46 model QA PASS\n";
+/* 0.1.47 stabilization gates */
+$richJs=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/assets/editor-v0125.js');
+$editorCss=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/assets/editor.css');
+$globalController=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/src/Admin/GlobalDesignerController.php');
+$pageController=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/src/Admin/EditorController.php');
+$adminController=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/src/Admin/AdminController.php');
+$globalPreviewCss=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/assets/global-designer-v0123.css');
+vdAssert(str_contains((string)$richJs,"selectionOwner: 'v0125-authoritative'") && str_contains((string)$richJs,"selectionSessionMode: 'prearmed-v0138'") && str_contains((string)$richJs,"selectionRegressionGate: 'bug02-v0147-persistent'"),'BUG-02 permanent selection gate is missing.');
+vdAssert(str_contains((string)$richJs,'window.setTimeout(restore, 320)') && str_contains((string)$richJs,"addEventListener('selectionchange'"),'BUG-02 restore burst/selection guard regressed.');
+$renderer147=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/src/Frontend/Renderer.php');
+vdAssert(str_contains((string)$renderer147,'h18-clean-front-text-content'),'BUG-17 rich-text content wrapper is missing.');
+vdAssert(str_contains((string)$editorCss,'.h18-clean-root{background:#fff;min-height:650px;padding:0;border:0}'),'BUG-18 root padding/border still alters X/Y=0.');
+vdAssert(str_contains((string)$pageController,'canonical-model-and-shell-unchanged') && str_contains((string)$globalController,'Ingen ændringer siden seneste gemte version'),'No-op version gate is missing.');
+vdAssert(str_contains((string)$pageController,'h18_clean_composite_preview') && str_contains((string)$renderer147,'standaloneDocument'),'Composite Header/page/Footer preview contract is missing.');
+vdAssert(str_contains((string)$adminController,"Hjem – Visual Designer") && str_contains((string)$adminController,"LANDING_PAGE_OPTION"),'Separate landing page seed is missing.');
+vdAssert(str_contains((string)$globalPreviewCss,'h18-clean-node-preview--text{overflow:visible!important}'),'Footer local-preview leaf chrome reset is missing.');
+vdAssert(str_contains((string)$footerPhp,'h18_vd_legacy_footer_converted_v0147') && str_contains((string)$footerPhp,"'lineHeight'=>1.75"),'Footer 0.1.47 parity migration did not advance.');
+
+echo "Visual Designer Manager 0.1.47 model QA PASS\n";

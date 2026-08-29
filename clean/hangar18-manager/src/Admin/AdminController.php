@@ -6,6 +6,7 @@ namespace Hangar18\Clean\Admin;
 
 use Hangar18\Clean\Diagnostics\DiagnosticStore;
 use Hangar18\Clean\Model\LayoutModel;
+use Hangar18\Clean\Model\TemplateLayoutModel;
 use Hangar18\Clean\Update\GitHubUpdater;
 
 final class AdminController
@@ -19,6 +20,8 @@ final class AdminController
     private const CLEAR_LOG_NONCE = 'h18_clean_clear_diagnostics';
     private const CREATE_PAGE_NONCE = 'h18_clean_create_page';
     private const BLANK_SLUG_REPAIR_OPTION = 'h18_vd_blank_page_slugs_repaired_v0141';
+    private const LANDING_PAGE_OPTION = 'h18_vd_landing_page_v0147';
+    private const LANDING_PAGE_META = '_h18_vd_landing_page_v0147';
 
     /** @var array<string,array{title:string,slug:string}> */
     private const COLLECTIONS = [
@@ -35,6 +38,7 @@ final class AdminController
         add_action('admin_post_' . self::CLEAR_LOG_ACTION, [self::class, 'clearDiagnostics']);
         add_action('admin_post_' . self::CREATE_PAGE_ACTION, [self::class, 'createPage']);
         add_action('admin_init', [self::class, 'repairBlankPageSlugs'], 20);
+        add_action('admin_init', [self::class, 'ensureLandingPage'], 25);
     }
 
     public static function menu(): void
@@ -109,7 +113,7 @@ final class AdminController
         self::card('Backup', 'Download én samlet JSON-backup af alle Visual Designer-layouts og deres versionshistorik.', self::url('h18-clean-backup'), 'Åbn Backup');
         self::card('Log / diagnostics', 'Læs de strukturelle Visual Designer-logs pr. side og kopiér diagnose-link.', self::url('h18-clean-log'), 'Åbn Log');
         self::card('Opdateringer', 'Brug den SHA-256-verificerede GitHub-opdateringskanal.', self::url('h18-clean-updates'), 'Tjek version');
-        self::card('Menu', 'Se WordPress-navigation og aktive menulocations uden at ændre Visual Designer-layoutdata.', self::url('h18-clean-menu'), 'Vis menu');
+        self::card('Menu · næste arbejdsspor', 'Menu-redesignet er næste UX-opgave. Eksisterende WordPress-menuer forbliver datakilden, mens vi gør valg, struktur og mobiladfærd mere brugervenlig.', self::url('h18-clean-menu'), 'Forbered Menu');
         echo '</div>';
         self::close();
     }
@@ -157,6 +161,10 @@ final class AdminController
         $message = sanitize_text_field((string) wp_unslash($_GET['vd_message'] ?? ''));
         self::open('Sider', 'Alle WordPress-sider med Visual Designer-status');
         if ($message !== '') { echo '<div class="notice ' . ($status === 'error' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($message) . '</p></div>'; }
+        $landingId = absint(get_option(self::LANDING_PAGE_OPTION, 0));
+        if ($landingId > 0 && get_post_type($landingId) === 'page') {
+            echo '<div class="h18-manager-card"><h2>Ny Visual Designer-landingsside</h2><p>Separat kladde til Header + indhold + Footer. Den gamle Hjem-side og WordPress-forsiden er ikke ændret.</p><p><a class="button button-primary" href="' . esc_url(self::designerUrl($landingId)) . '">Åbn Hjem – Visual Designer</a> <a class="button" href="' . esc_url(self::url('h18-clean-menu')) . '">Menu · næste arbejdsspor</a></p></div>';
+        }
         echo '<div class="h18-manager-card h18-manager-create-page"><h2>Ny side</h2><p class="description">Opret siden direkte i Visual Designer Manager. Efter oprettelse åbnes den i Designer.</p>';
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-manager-page-create-form">';
         wp_nonce_field(self::CREATE_PAGE_NONCE);
@@ -396,6 +404,58 @@ final class AdminController
 
         wp_safe_redirect(self::designerUrl($postId));
         exit;
+    }
+
+    public static function ensureLandingPage(): void
+    {
+        if (!current_user_can('edit_pages')) { return; }
+        $stored = absint(get_option(self::LANDING_PAGE_OPTION, 0));
+        if ($stored > 0 && get_post_type($stored) === 'page') { return; }
+
+        $existing = get_posts([
+            'post_type' => 'page', 'post_status' => ['publish','draft','pending','private','future'],
+            'meta_key' => self::LANDING_PAGE_META, 'meta_value' => '1', 'fields' => 'ids',
+            'posts_per_page' => 1, 'no_found_rows' => true, 'suppress_filters' => true,
+        ]);
+        if (is_array($existing) && !empty($existing)) {
+            update_option(self::LANDING_PAGE_OPTION, (int) $existing[0], false);
+            return;
+        }
+
+        $postId = wp_insert_post([
+            'post_type' => 'page',
+            'post_title' => 'Hjem – Visual Designer',
+            'post_name' => self::uniquePageSlug('hjem-visual-designer'),
+            'post_status' => 'draft',
+            'post_content' => '',
+            'post_author' => get_current_user_id(),
+        ], true);
+        if (is_wp_error($postId) || (int) $postId <= 0) { return; }
+        $postId = (int) $postId;
+        update_post_meta($postId, self::LANDING_PAGE_META, '1');
+        LayoutModel::saveVersion($postId, self::landingPageModel(), get_current_user_id(), 'Oprettet ny Visual Designer-landingsside · gammel Hjem-side urørt');
+        TemplateLayoutModel::ensureMigrated();
+        TemplateLayoutModel::setPageChoice($postId, 'header', 'auto');
+        TemplateLayoutModel::setPageChoice($postId, 'footer', 'auto');
+        update_option(self::LANDING_PAGE_OPTION, $postId, false);
+    }
+
+    /** @return array<string,mixed> */
+    private static function landingPageModel(): array
+    {
+        $g = static function (int $x,int $y,int $w,int $h): array {
+            return [
+                'desktop'=>['x'=>$x,'y'=>$y,'w'=>$w,'h'=>$h],
+                'laptop'=>['x'=>$x,'y'=>$y,'w'=>$w,'h'=>$h,'inheritDesktop'=>true],
+                'tablet'=>['x'=>$x,'y'=>$y,'w'=>$w,'h'=>$h,'inheritDesktop'=>true],
+                'mobile'=>['x'=>0,'y'=>$y,'w'=>120,'h'=>$h,'inheritDesktop'=>false],
+            ];
+        };
+        return LayoutModel::normalize(['nodes'=>[
+            ['id'=>'section-landing-v0147','type'=>'section','parentId'=>'','order'=>10,'geometry'=>$g(6,0,108,42),'props'=>['background'=>'#ffffff','padding'=>0,'minHeightRows'=>42,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]],
+            ['id'=>'container-landing-v0147','type'=>'container','parentId'=>'section-landing-v0147','order'=>10,'geometry'=>$g(0,0,120,42),'props'=>['background'=>'#ffffff','padding'=>0,'minHeightRows'=>42,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]],
+            ['id'=>'text-landing-v0147','type'=>'text','parentId'=>'container-landing-v0147','order'=>10,'geometry'=>$g(6,10,108,14),'props'=>['heading'=>'Ny Visual Designer-landingsside','headingLevel'=>'h2','text'=>'Denne kladde er oprettet som et rent udgangspunkt. Header og Footer vises i Samlet preview. Den gamle Hjem-side konverteres først senere.','align'=>'center','verticalAlign'=>'center','background'=>'#ffffff','backgroundTransparent'=>true,'textColor'=>'#30382a','headingColor'=>'#30382a','fontFamily'=>'system','fontSize'=>18,'fontWeight'=>400,'lineHeight'=>1.5,'letterSpacing'=>0,'headingFontFamily'=>'body','headingFontSize'=>36,'headingFontWeight'=>700,'headingLineHeight'=>1.2,'headingLetterSpacing'=>0,'padding'=>16,'radius'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]],
+        ]]);
     }
 
     public static function repairBlankPageSlugs(): void
