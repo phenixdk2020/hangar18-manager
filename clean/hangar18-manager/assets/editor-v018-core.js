@@ -887,6 +887,17 @@
             card.style.background = background;
             card.style.borderRadius = clamp(parseInt(props.radius || 0, 10) || 0, 0, 100) + 'px';
             card.setAttribute('data-h18-parent-painted-box', '1');
+            card.removeAttribute('data-h18-leaf-transparent');
+        } else if (node.type === 'text' || node.type === 'menu' || node.type === 'image') {
+            const transparent = node.type === 'image' ? props.boxTransparent !== false : props.backgroundTransparent !== false;
+            const fallback = node.type === 'image' ? '#ffffff' : (node.type === 'menu' ? '#30382a' : '#ffffff');
+            const requested = node.type === 'image' ? props.boxBackground : props.background;
+            const background = transparent ? 'transparent' : (/^#[0-9a-f]{6}$/i.test(String(requested || '')) ? String(requested).toLowerCase() : fallback);
+            card.style.background = background;
+            card.style.borderRadius = clamp(parseInt(props.radius || 0, 10) || 0, 0, 100) + 'px';
+            card.setAttribute('data-h18-leaf-transparent', transparent ? '1' : '0');
+        } else {
+            card.removeAttribute('data-h18-leaf-transparent');
         }
     }
 

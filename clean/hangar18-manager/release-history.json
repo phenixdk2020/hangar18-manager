@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.53",
+      "date": "2026-08-29",
+      "items": [
+        "BUG-18: Gennemsigtig baggrund på Tekst viser nu den nærmeste Kasse/Sektions baggrund igennem i Designer.",
+        "Samme paint-regel gælder Menu og gennemsigtig Billede-boks, så leaf-transparens er ensartet.",
+        "Transparent paint ændrer ikke canonical geometri, selection/hover-outline eller parent-baggrund.",
+        "Preview/frontend-behavior regression-gates mod Rendererens eksisterende transparent-kontrakt.",
+        "Rettelsen gælder både almindelige sider og Global Header/Footer Designer, som deler v018-core."
+      ]
+    },
+    {
       "version": "0.1.52",
       "date": "2026-08-29",
       "items": [

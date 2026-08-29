@@ -1,0 +1,7 @@
+/* Visual Designer Manager 0.1.53 · transparent leaf parity.
+ * A transparent leaf must reveal its nearest painted parent in Designer,
+ * just as canonical Preview/frontend already do. Selection/hover outlines
+ * remain visible; only the physical paint surface becomes transparent. */
+.h18-clean-node[data-h18-leaf-transparent="1"]{background:transparent!important}
+.h18-clean-node[data-h18-leaf-transparent="1"]>.h18-clean-node-preview{background-color:transparent!important}
+.h18-clean-node[data-h18-leaf-transparent="0"]{background-clip:border-box!important}
