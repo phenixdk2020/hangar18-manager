@@ -1,0 +1,101 @@
+name: Apply Visual Designer Manager 0.1.52 Visual Conversion
+
+on:
+  push:
+    paths:
+      - '.github/scripts/apply_v0152_visual_conversion.py'
+      - '.github/scripts/fix_v0152_visual_conversion.py'
+      - '.github/scripts/v0152_visual_conversion_qa.php'
+      - '.github/workflows/apply-v0152-visual-conversion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: visual-designer-v0152-visual-conversion
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.52 patch
+        run: |
+          python3 .github/scripts/apply_v0152_visual_conversion.py
+          python3 .github/scripts/fix_v0152_visual_conversion.py
+
+      - name: PHP syntax
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for f in clean/hangar18-manager/assets/*.js; do node --check "$f"; done
+
+      - name: Existing hierarchy/model QA
+        run: php .github/scripts/hierarchy_normalizer_qa.php
+
+      - name: Visual conversion model QA
+        run: php .github/scripts/v0152_visual_conversion_qa.php
+
+      - name: Read-only test2 source contract
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 30 -A 'Visual-Designer-Manager-QA/0.1.52' https://test2.hangar18.dk/ -o /tmp/test2-home.html
+          grep -q 'h18-page-frame' /tmp/test2-home.html
+          grep -q 'Banner-6.jpg' /tmp/test2-home.html
+          grep -q 'Bevaring, restaurering og levende formidling af dansk militærhistorie' /tmp/test2-home.html
+          grep -q 'Om foreningen' /tmp/test2-home.html
+          echo 'test2 home visual-source contract PASS'
+
+      - name: Verify 0.1.52 contracts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('clean/hangar18-manager')
+          plugin=(p/'hangar18-manager.php').read_text(encoding='utf-8')
+          source=(p/'src/Migration/ExternalPageSourceService.php').read_text(encoding='utf-8')
+          visual=(p/'src/Migration/VisualBlockConversionService.php').read_text(encoding='utf-8')
+          service=(p/'src/Migration/PageConversionService.php').read_text(encoding='utf-8')
+          controller=(p/'src/Admin/ConversionController.php').read_text(encoding='utf-8')
+          history=(p/'release-history.json').read_text(encoding='utf-8')
+          checks={
+            'version': 'Version: 0.1.52' in plugin and "H18_CLEAN_VERSION', '0.1.52'" in plugin,
+            'service loaded': 'VisualBlockConversionService.php' in plugin,
+            'page frame first': ' h18-page-frame ' in source and source.index(' h18-page-frame ') < source.index(' entry-content '),
+            'shell removed regardless root': "foreach (['header', 'footer', 'nav'] as $tag)" in source,
+            'external visual first': 'VisualBlockConversionService::build($postId, $html, $warnings)' in service,
+            'safe fallback': 'visual-block-conversion-fallback-to-single-text' in service and 'self::modelFromHtml($postId, $html)' in service,
+            'hero canonical image': "'type' => 'image'" in visual and 'Banner' not in visual,
+            '90 percent frame': "self::geometry(6, $desktopY, 108" in visual,
+            'mobile full width': "0, $mobileY, 120" in visual,
+            'button canonical': "'type' => 'button'" in visual,
+            'columns canonical': 'buildColumns' in visual and "'type' => 'container'" in visual,
+            'visual admin copy': 'rigtige Sektioner, Tekst, Billeder, Knapper og Kasser' in controller,
+            'release history': '"version": "0.1.52"' in history,
+          }
+          failed=[name for name,ok in checks.items() if not ok]
+          for name,ok in checks.items(): print(('PASS ' if ok else 'FAIL ')+name)
+          if failed: raise SystemExit('0.1.52 contract verification failed: '+', '.join(failed))
+          PY
+
+      - name: Commit implementation
+        run: |
+          set -euo pipefail
+          git config user.name "phenixdk2020"
+          git config user.email "74060601+phenixdk2020@users.noreply.github.com"
+          git add clean/hangar18-manager docs/v0152-status.md
+          if git diff --cached --quiet; then
+            echo 'No implementation changes to commit'
+            exit 0
+          fi
+          git commit -m 'Add visual external page conversion in Visual Designer Manager 0.1.52'
+          git pull --rebase origin main
+          git push origin HEAD:main
