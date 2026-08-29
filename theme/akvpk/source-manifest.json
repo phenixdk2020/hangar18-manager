@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "theme": "hangar18-base",
+  "version": "1.2.0",
+  "source": "dist/hangar18-base-theme-v1.2.0.zip.b64",
+  "package_sha256": "6d3c7a2e45d249e31a74a3703844364ed79c3122798b6e916ddaa1116e62e6bf",
+  "files": {
+    "404.php": {"size": 517, "sha256": "ccf4f44cfb56196d48a7562efa7b5a33638be0deb258038987fa4e17fc320726"},
+    "style.css": {"size": 3540, "sha256": "e65fef8440e9964651ec277069cda0e2f88efee0e467dcf65a02ea72c730d3e4"},
+    "header.php": {"size": 311, "sha256": "373cc1b2d6e509e015d81384454f7f8c2544315107b0f22220544236f456d58c"},
+    "functions.php": {"size": 13556, "sha256": "663bee2374ac7ccf5dfb2b03641e657d32f9f983cea8d7bdfffd60867f0b09c5"},
+    "theme.json": {"size": 3793, "sha256": "9bd9eb562729b68b1d81f6f374efbce9ce87da61ccfc5ad0e3c2279d6f31ef05"},
+    "page.php": {"size": 649, "sha256": "e260f83885f18d9e7a6d5a6cf47b213c38fe16152a8c0e9a0acf085e70542a9e"},
+    "front-page.php": {"size": 649, "sha256": "e260f83885f18d9e7a6d5a6cf47b213c38fe16152a8c0e9a0acf085e70542a9e"},
+    "footer.php": {"size": 59, "sha256": "0c9056f4022cd0cb47c8a23ebb837f36ac68430574adb364ea5c3ac4eb3b5fe1"},
+    "README.txt": {"size": 2613, "sha256": "7668291fe81f3f26ab425809557f268ac4020ddb393839259f266f16718e4621"},
+    "comments.php": {"size": 684, "sha256": "9491339bdaf56c875e1b013b5f00590db2be4d2cbe3bd959622251fefff8c92f"},
+    "index.php": {"size": 774, "sha256": "590b5498e85bd29e88f6e9221110ce0df4f3fdc943634ee83136a74cf3afb909"},
+    "single.php": {"size": 506, "sha256": "1f2ab4a3eba651b63a1effc5cc346cce6db3087cf2e4e34b2f8bbf82331fb131"}
+  }
+}

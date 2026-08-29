@@ -849,3 +849,15 @@ Visual Designer Manager → Sider er autoritativ UX for at vælge hjemmesiden. H
 
 ### VD-CUTOVER-0149
 0.1.49 er det eksplicit godkendte Header/Footer cutover. Cutover aktiveres én gang ved runtime og markerer `h18_visual_designer_theme_shell_cutover_v1=1`. Menu-redesign er ikke en del af denne kontrakt.
+
+
+## 0.1.50 – Sidekonvertering og AKVPK teknisk theme-identitet
+
+### VD-CONVERSION-STAGE-001
+Konvertering af en eksisterende WordPress-side skal være staging-only indtil eksplicit godkendelse. Original `post_content` overskrives ikke. Batch-konvertering må oprette kandidater, men må ikke aktivere dem.
+
+### VD-CONVERSION-SHELL-001
+Legacy Header/Footer-markører fjernes fra kandidatens body, fordi Visual Designer Header/Footer allerede leveres af den aktive globale shell. Kandidat-preview skal bruge samme canonical Renderer.
+
+### VD-THEME-AKVPK-001
+Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migration fra historisk `hangar18-base` skal bevare theme_mods/menu-locations og Custom CSS før theme-switch. Theme URI er `https://akvpk.dk/`.

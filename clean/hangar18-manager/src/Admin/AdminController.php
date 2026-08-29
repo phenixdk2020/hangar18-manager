@@ -65,6 +65,7 @@ final class AdminController
         add_submenu_page(self::MENU, 'Billedgalleri', 'Billedgalleri', $cap, 'h18-clean-gallery', [self::class, 'gallery']);
         add_submenu_page(self::MENU, 'Data', 'Data', $cap, 'h18-clean-data', [self::class, 'data']);
         add_submenu_page(self::MENU, 'Sider', 'Sider', $cap, 'h18-clean-pages', [self::class, 'pages']);
+        add_submenu_page(self::MENU, 'Konvertering af sider', 'Konvertering', $cap, 'h18-clean-conversion', [ConversionController::class, 'render']);
         add_submenu_page(self::MENU, 'Menu', 'Menu', $cap, 'h18-clean-menu', [self::class, 'menus']);
         add_submenu_page(self::MENU, 'Header / Footer og design', 'Header / Footer', $cap, 'h18-clean-header-footer', [self::class, 'headerFooter']);
         add_submenu_page(self::MENU, 'Backup', 'Backup', $cap, 'h18-clean-backup', [self::class, 'backup']);
@@ -114,6 +115,7 @@ final class AdminController
         echo '<div class="h18-manager-card-grid">';
         self::card('Designer', 'Byg sider med 120-unit / 8-px grid, Undo/Redo og versionshistorik.', self::designerUrl(), 'Åbn Designer');
         self::card('Sider', 'Se Visual Designer-status, nodeantal og seneste version for alle WordPress-sider.', self::url('h18-clean-pages'), 'Vis sider');
+        self::card('Konvertering', 'Forbered eksisterende WordPress-sider som ikke-destruktive Visual Designer-kandidater, QA dem og aktivér én side ad gangen.', self::url('h18-clean-conversion'), 'Konvertér sider');
         self::card('Backup', 'Download én samlet JSON-backup af alle Visual Designer-layouts og deres versionshistorik.', self::url('h18-clean-backup'), 'Åbn Backup');
         self::card('Log / diagnostics', 'Læs de strukturelle Visual Designer-logs pr. side og kopiér diagnose-link.', self::url('h18-clean-log'), 'Åbn Log');
         self::card('Opdateringer', 'Brug den SHA-256-verificerede GitHub-opdateringskanal.', self::url('h18-clean-updates'), 'Tjek version');

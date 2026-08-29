@@ -4,11 +4,47 @@ declare(strict_types=1);
 
 namespace Hangar18\Clean\Admin;
 
+use Hangar18\Clean\Frontend\ThemeShell;
+
 final class ThemeController
 {
+    private const THEME_MIGRATION_OPTION = 'h18_vd_theme_slug_migration_v0150';
     public static function register(): void
     {
+        add_action('setup_theme', [self::class, 'maybeMigrateAkVpkTheme'], 0);
         add_action('admin_menu', [self::class, 'menu'], 9);
+    }
+
+    public static function maybeMigrateAkVpkTheme(): void
+    {
+        if (get_stylesheet() !== 'hangar18-base' || get_option(self::THEME_MIGRATION_OPTION, false)) {
+            return;
+        }
+        $target = wp_get_theme('akvpk');
+        if (!$target->exists()) {
+            return;
+        }
+
+        $oldMods = get_option('theme_mods_hangar18-base', null);
+        if (is_array($oldMods) && get_option('theme_mods_akvpk', null) === null) {
+            update_option('theme_mods_akvpk', $oldMods, false);
+        }
+        if (function_exists('wp_get_custom_css') && function_exists('wp_update_custom_css_post')) {
+            $css = trim((string) wp_get_custom_css('hangar18-base'));
+            if ($css !== '' && trim((string) wp_get_custom_css('akvpk')) === '') {
+                wp_update_custom_css_post($css, ['stylesheet' => 'akvpk']);
+            }
+        }
+        if (!function_exists('switch_theme')) {
+            return;
+        }
+        switch_theme('akvpk');
+        update_option(self::THEME_MIGRATION_OPTION, [
+            'migratedUtc' => gmdate('c'),
+            'from' => 'hangar18-base',
+            'to' => 'akvpk',
+            'themeModsCopied' => is_array($oldMods),
+        ], false);
     }
 
     public static function menu(): void
@@ -98,7 +134,9 @@ final class ThemeController
         echo '<tr><td>Global palette, typografi og sidebredder</td><td><strong>Globalt design</strong> – senere</td></tr>';
         echo '</tbody></table></section>';
 
-        echo '<section class="h18-manager-card h18-manager-module"><h2>Shell integration</h2><p><strong>Status:</strong> Ikke overtaget endnu.</p><p>Den aktive offentlige theme-runtime ændres ikke af denne administrationsside. Først når Globalt design og Header/Footer-modellerne er QA-godkendt, kan temaet reduceres til en tynd shell med sikker fallback.</p></section>';
+        $shellActive = ThemeShell::enabled();
+        echo '<section class="h18-manager-card h18-manager-module"><h2>Shell integration</h2><p><strong>Status:</strong> <span class="h18-manager-badge ' . ($shellActive ? 'is-ok' : '') . '">' . ($shellActive ? 'Aktiv' : 'Deaktiveret') . '</span></p>';
+        echo '<p>Visual Designer Manager leverer live Header → side → Footer på Visual Designer-sider. Ikke-konverterede WordPress-sider beholder deres eksisterende indhold som sikker fallback.</p><p class="description">AKVPK-temaet er den tynde WordPress-shell; global Header/Footer og side-layout kommer fra de canonical Visual Designer-modeller.</p></section>';
         echo '</div>';
     }
 

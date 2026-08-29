@@ -1,6 +1,19 @@
 {
   "versions": [
     {
+      "version": "0.1.50",
+      "date": "2026-08-29",
+      "items": [
+        "Nyt hovedpunkt “Konvertering” viser alle WordPress-sider og deres migrationsstatus.",
+        "Konvertér én, markerede eller alle ikke-konverterede sider til ikke-destruktive QA-kandidater.",
+        "Kandidat-preview bruger canonical Renderer med aktiv Header/Footer; frontend ændres først ved “Godkend og aktivér”.",
+        "Original post_content gemmes urørt og første snapshot bevares som konverteringskilde/fallback.",
+        "Legacy Header/Footer-markører fjernes fra kandidatens body, fordi global Visual Designer-shell allerede er live.",
+        "Tema/Shell-status er rettet til Aktiv.",
+        "AKVPK 1.3.0 introducerer teknisk theme-slug akvpk og Theme URI https://akvpk.dk/ med sikker migration fra hangar18-base."
+      ]
+    },
+    {
       "version": "0.1.49",
       "date": "2026-08-29",
       "items": [
