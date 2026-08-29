@@ -19,6 +19,13 @@
 
     function clone(value) { return JSON.parse(JSON.stringify(value)); }
     function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function editorScale() {
+        if (window.H18VDViewport && typeof window.H18VDViewport.scale === 'function') {
+            var value = parseFloat(window.H18VDViewport.scale());
+            if (Number.isFinite(value) && value > 0) { return value; }
+        }
+        return 1;
+    }
     function n(value, fallback) {
         var parsed = parseInt(value, 10);
         return Number.isFinite(parsed) ? parsed : fallback;
@@ -328,7 +335,7 @@
         var surfaceRect = transform.surface.getBoundingClientRect();
         var unit = Math.max(1, surfaceRect.width / UNITS);
         var dx = Math.round((event.clientX - transform.startX) / unit);
-        var dy = Math.round((event.clientY - transform.startY) / ROW_PX);
+        var dy = Math.round((event.clientY - transform.startY) / (ROW_PX * editorScale()));
         var start = transform.start;
         if (transform.kind === 'move') {
             g.x = clamp(start.x + dx, 0, UNITS - start.w);

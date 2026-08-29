@@ -286,4 +286,15 @@ vdAssert((int)($fBy['section'][0]['geometry']['desktop']['x']??-1)===6,'90 perce
 vdAssert((int)($fBy['section'][0]['geometry']['desktop']['w']??-1)===108,'90 percent Footer must be 108/120 units.');
 vdAssert(str_contains((string)($fBy['text'][0]['props']['text']??''),'Aalborg Kaserners'),'Footer text was not extracted from legacy block.');
 
-echo "Visual Designer Manager 0.1.43 model QA PASS\\n";
+$viewportJs = file_get_contents(__DIR__ . '/../../clean/hangar18-manager/assets/editor-v0144-viewport.js');
+$viewportCss = file_get_contents(__DIR__ . '/../../clean/hangar18-manager/assets/editor-v0144.css');
+$coreJs = file_get_contents(__DIR__ . '/../../clean/hangar18-manager/assets/editor-v018-core.js');
+$rendererPhp = file_get_contents(__DIR__ . '/../../clean/hangar18-manager/src/Frontend/Renderer.php');
+vdAssert(is_string($viewportJs) && str_contains($viewportJs, "desktop: 1920") && str_contains($viewportJs, "laptop: 1180") && str_contains($viewportJs, "mobile: 390"), 'BUG-14 virtual viewport widths are missing.');
+vdAssert(str_contains((string) $viewportJs, 'ResizeObserver') && str_contains((string) $viewportJs, 'h18-clean-wide-canvas') && str_contains((string) $viewportJs, 'h18-clean-panel-toggle'), 'BUG-14 Fit zoom is not wired to dynamic editor width changes.');
+vdAssert(str_contains((string) $viewportJs, 'data-h18-viewport-scale') && str_contains((string) $coreJs, 'editorRowPx()'), 'BUG-14 scale is not consumed by core pointer geometry.');
+vdAssert(str_contains((string) $coreJs, "data-h18-parent-painted-box") && str_contains((string) $coreJs, "inner.style.background = 'transparent'"), 'BUG-13 parent box does not own its background.');
+vdAssert(str_contains((string) $viewportCss, 'height:100%!important') && str_contains((string) $viewportCss, 'background:transparent!important'), 'BUG-13 inner surface does not fill the parent transparently.');
+vdAssert(!str_contains((string) $rendererPhp, 'height:auto!important'), 'Frontend still forces parent height:auto!important.');
+
+echo "Visual Designer Manager 0.1.44 model QA PASS\n";

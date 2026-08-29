@@ -16,6 +16,13 @@
         return /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value).toLowerCase() : fallback;
     }
     function clone(value) { return JSON.parse(JSON.stringify(value)); }
+    function editorScale() {
+        if (window.H18VDViewport && typeof window.H18VDViewport.scale === 'function') {
+            var value = parseFloat(window.H18VDViewport.scale());
+            if (Number.isFinite(value) && value > 0) { return value; }
+        }
+        return 1;
+    }
 
     (Array.isArray(CFG.initialModel && CFG.initialModel.nodes) ? CFG.initialModel.nodes : []).forEach(function (node) {
         if (node && node.id) { initialNodes[String(node.id)] = clone(node); }
@@ -172,23 +179,26 @@
 
     function initializeManualGeometry(preview, img, e) {
         var box = preview.getBoundingClientRect();
-        if (box.width <= 0 || box.height <= 0) { return; }
+        var scale = editorScale();
+        var boxWidth = box.width / scale;
+        var boxHeight = box.height / scale;
+        if (boxWidth <= 0 || boxHeight <= 0) { return; }
         var naturalW = Math.max(1, Number(img.naturalWidth || img.width || 1));
         var naturalH = Math.max(1, Number(img.naturalHeight || img.height || 1));
         var ratio = naturalW / naturalH;
         var width;
         var height;
-        if ((box.width / box.height) >= ratio) {
-            height = box.height;
+        if ((boxWidth / boxHeight) >= ratio) {
+            height = boxHeight;
             width = height * ratio;
         } else {
-            width = box.width;
+            width = boxWidth;
             height = width / ratio;
         }
         e.manualW = clamp(Math.round(width), 1, 4000);
         e.manualH = clamp(Math.round(height), 1, 4000);
-        e.manualX = Math.round((box.width - width) / 2);
-        e.manualY = Math.round((box.height - height) / 2);
+        e.manualX = Math.round((boxWidth - width) / 2);
+        e.manualY = Math.round((boxHeight - height) / 2);
     }
 
     function enterManual(id, card) {
@@ -323,8 +333,9 @@
         if (!transform || event.pointerId !== transform.pointerId) { return; }
         var e = extras[transform.id];
         if (!e) { return; }
-        var dx = event.clientX - transform.startX;
-        var dy = event.clientY - transform.startY;
+        var scale = editorScale();
+        var dx = (event.clientX - transform.startX) / scale;
+        var dy = (event.clientY - transform.startY) / scale;
         var start = transform.start;
         if (transform.kind === 'move') {
             e.manualX = clamp(Math.round(start.manualX + dx), -4000, 4000);

@@ -12,6 +12,14 @@
         return Math.max(min, Math.min(max, value));
     }
 
+    function editorScale() {
+        if (window.H18VDViewport && typeof window.H18VDViewport.scale === 'function') {
+            var value = parseFloat(window.H18VDViewport.scale());
+            if (Number.isFinite(value) && value > 0) { return value; }
+        }
+        return 1;
+    }
+
     function cleanId(value) {
         return String(value || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 100);
     }
@@ -181,11 +189,10 @@
             surface: surface,
             startClientX: event.clientX,
             startClientY: event.clientY,
-            startLeftPx: startX * unitPx,
-            startTopPx: startY * ROW_PX,
+            startX: startX,
+            startY: startY,
             unitPx: unitPx,
             widthUnits: widthUnits,
-            maxLeftPx: Math.max(0, (UNITS - widthUnits) * unitPx),
             x: startX,
             y: startY
         };
@@ -196,14 +203,12 @@
         if (!floatingDrag || event.pointerId !== floatingDrag.pointerId) { return; }
         const drag = floatingDrag;
         if (!drag.card || !drag.card.isConnected) { floatingDrag = null; return; }
-        const dx = event.clientX - drag.startClientX;
-        const dy = event.clientY - drag.startClientY;
-        const leftPx = clamp(drag.startLeftPx + dx, 0, drag.maxLeftPx);
-        const topPx = Math.max(0, drag.startTopPx + dy);
-        drag.x = clamp(Math.round(leftPx / drag.unitPx), 0, UNITS - drag.widthUnits);
-        drag.y = clamp(Math.round(topPx / ROW_PX), 0, 10000);
-        drag.card.style.left = leftPx + 'px';
-        drag.card.style.top = topPx + 'px';
+        const dxUnits = Math.round((event.clientX - drag.startClientX) / drag.unitPx);
+        const dyRows = Math.round((event.clientY - drag.startClientY) / (ROW_PX * editorScale()));
+        drag.x = clamp(drag.startX + dxUnits, 0, UNITS - drag.widthUnits);
+        drag.y = clamp(drag.startY + dyRows, 0, 10000);
+        drag.card.style.left = ((drag.x / UNITS) * 100) + '%';
+        drag.card.style.top = (drag.y * ROW_PX) + 'px';
         event.preventDefault();
     }
 

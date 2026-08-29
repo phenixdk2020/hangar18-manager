@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.1.44",
+    "date": "2026-08-29",
+    "items": [
+      "BUG-13: Sektion/Kasse ejer nu hele sin fysiske baggrund, ramme og radius; den indre child-surface er transparent og fylder hele canonical geometri.",
+      "BUG-13: manuel højde er fortsat minimumshøjde, mens indhold kan autogrow; editor-chrome tæller ikke som layoutindhold.",
+      "BUG-14: Designer bruger virtuelle frontend-viewports på 1920 px Desktop, 1180 px Laptop og 390 px Mobil.",
+      "BUG-14: Fit-zoom genberegnes automatisk ved Mere canvas, foldning af Elementer/Inspector og ændringer i editorbredden uden at ændre modellen.",
+      "Drag/resize, floating Knap og manuel billedplacering er scale-aware, så pointerbevægelser oversættes tilbage til virtuelle pixels/8px-rækker.",
+      "Theme Shell forbliver OFF; Header/Footer parity testes igen på det nye WYSIWYG-canvas."
+    ]
+  },
+  {
     "version": "0.1.43",
     "date": "2026-08-29",
     "items": [

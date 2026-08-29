@@ -13,6 +13,17 @@
     const MIN_SPLIT_H = 8;
     const FONT_TOKENS = ['system','arial','verdana','tahoma','trebuchet','georgia','times','courier'];
 
+    function editorScale() {
+        if (window.H18VDViewport && typeof window.H18VDViewport.scale === 'function') {
+            const value = parseFloat(window.H18VDViewport.scale());
+            if (Number.isFinite(value) && value > 0) { return value; }
+        }
+        const canvas = document.getElementById('h18-clean-canvas');
+        const value = canvas ? parseFloat(canvas.getAttribute('data-h18-viewport-scale') || '1') : 1;
+        return Number.isFinite(value) && value > 0 ? value : 1;
+    }
+    function editorRowPx() { return ROW_PX * editorScale(); }
+
     let state = normalizeModel(CFG.initialModel || {});
     let selectedId = '';
     let dragId = '';
@@ -364,7 +375,7 @@
             const node = nodeById(card.getAttribute('data-node-id') || '');
             if (!node || PARENT_TYPES.includes(node.type) || node.geometry.desktop.h > 0) { return; }
             const rect = card.getBoundingClientRect();
-            const rows = Math.max(1, Math.ceil((Math.max(1, rect.height) + Math.max(0, parseInt(node.props.gapY || 0, 10) || 0)) / ROW_PX));
+            const rows = Math.max(1, Math.ceil((Math.max(1, rect.height / editorScale()) + Math.max(0, parseInt(node.props.gapY || 0, 10) || 0)) / ROW_PX));
             node.geometry.desktop.h = rows;
             changed.add(node.id);
         });
@@ -467,7 +478,7 @@
             const unitPx = Math.max(0.1, surfaceWidth / UNITS);
             const rect = button.getBoundingClientRect();
             const nextW = clamp(Math.ceil(Math.max(1, rect.width) / unitPx), 1, UNITS - node.geometry.desktop.x);
-            const nextH = clamp(Math.ceil(Math.max(1, rect.height) / ROW_PX), 1, 4000);
+            const nextH = clamp(Math.ceil(Math.max(1, rect.height) / editorRowPx()), 1, 4000);
             if (node.geometry.desktop.w !== nextW || node.geometry.desktop.h !== nextH) {
                 node.geometry.desktop.w = nextW;
                 node.geometry.desktop.h = nextH;
@@ -506,7 +517,7 @@
             return node.geometry.desktop.h;
         }
         if (!card) { return MIN_SPLIT_H; }
-        return Math.max(MIN_SPLIT_H, Math.round(card.getBoundingClientRect().height / ROW_PX));
+        return Math.max(MIN_SPLIT_H, Math.round(card.getBoundingClientRect().height / editorRowPx()));
     }
 
     function visualBand(surface, targetElement, movingId) {
@@ -568,7 +579,7 @@
         const paletteFloatingButton = String(paletteType || '').toLowerCase() === 'button';
         if (isFloatingButton(movingNode) || paletteFloatingButton) {
             const overlayWidth = paletteFloatingButton ? Math.min(30, UNITS) : width;
-            const pointerRow = clamp(Math.round((event.clientY - rect.top) / ROW_PX), 0, 10000);
+            const pointerRow = clamp(Math.round((event.clientY - rect.top) / editorRowPx()), 0, 10000);
             const movingH = movingNode ? Math.max(1, movingNode.geometry.desktop.h || MIN_SPLIT_H) : MIN_SPLIT_H;
             placement.w = clamp(overlayWidth, 1, UNITS);
             placement.x = clamp(Math.round(pointerUnit - (placement.w / 2)), 0, UNITS - placement.w);
@@ -870,6 +881,12 @@
         card.style.marginBottom = gapY + 'px';
         card.setAttribute('data-gap-x', String(gapX));
         card.setAttribute('data-gap-y', String(gapY));
+        if (PARENT_TYPES.includes(node.type)) {
+            const background = /^#[0-9a-f]{6}$/i.test(String(props.background || '')) ? String(props.background).toLowerCase() : 'transparent';
+            card.style.background = background;
+            card.style.borderRadius = clamp(parseInt(props.radius || 0, 10) || 0, 0, 100) + 'px';
+            card.setAttribute('data-h18-parent-painted-box', '1');
+        }
     }
 
     function makeHandle(direction) {
@@ -1188,22 +1205,24 @@
             header.appendChild(move);
             header.appendChild(title);
             card.appendChild(header);
-            try {
-                card.appendChild(cardContent(node));
-            } catch (error) {
-                const failed = document.createElement('div');
-                failed.className = 'h18-clean-render-error';
-                failed.textContent = 'Elementet kunne ikke vises: ' + (error && error.message ? error.message : 'ukendt render-fejl');
-                card.appendChild(failed);
-                diag('node_render_error', { id: node.id, type: node.type, message: String(error && error.message || error || 'unknown') });
+            if (!PARENT_TYPES.includes(node.type)) {
+                try {
+                    card.appendChild(cardContent(node));
+                } catch (error) {
+                    const failed = document.createElement('div');
+                    failed.className = 'h18-clean-render-error';
+                    failed.textContent = 'Elementet kunne ikke vises: ' + (error && error.message ? error.message : 'ukendt render-fejl');
+                    card.appendChild(failed);
+                    diag('node_render_error', { id: node.id, type: node.type, message: String(error && error.message || error || 'unknown') });
+                }
             }
 
             if (PARENT_TYPES.includes(node.type)) {
                 const inner = document.createElement('div');
                 inner.className = 'h18-clean-surface h18-clean-inner-surface';
                 const p = node.props || {};
-                inner.style.background = p.background || 'transparent';
-                inner.style.borderRadius = (p.radius || 0) + 'px';
+                inner.style.background = 'transparent';
+                inner.style.borderRadius = 'inherit';
                 inner.style.padding = (p.padding || 0) + 'px';
                 try {
                     renderSurface(node.id, inner);
@@ -1239,7 +1258,7 @@
         if (!node) { return; }
         const rect = card.getBoundingClientRect();
         const g = clone(node.geometry.desktop);
-        const startH = g.h > 0 ? g.h : Math.max(1, Math.round(rect.height / ROW_PX));
+        const startH = g.h > 0 ? g.h : Math.max(1, Math.round(rect.height / editorRowPx()));
         resize = {
             id: id, direction: direction, pointerId: event.pointerId, card: card, surface: surface,
             startX: event.clientX, startY: event.clientY, start: g, startH: startH, before: clone(state)
@@ -1257,7 +1276,7 @@
         if (!node) { return; }
         const width = Math.max(1, resize.surface.getBoundingClientRect().width);
         const dx = Math.round((event.clientX - resize.startX) / (width / UNITS));
-        const dy = Math.round((event.clientY - resize.startY) / ROW_PX);
+        const dy = Math.round((event.clientY - resize.startY) / editorRowPx());
         const next = clone(resize.start);
         const dir = resize.direction;
         if (dir.includes('e')) { next.w = clamp(resize.start.w + dx, 1, UNITS - resize.start.x); }

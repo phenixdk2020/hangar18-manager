@@ -52,7 +52,7 @@ final class Renderer
         echo '<style id="h18-clean-frontend-css">';
         echo '.h18-clean-page,.h18-clean-front-surface{display:grid;position:relative;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;width:100%;box-sizing:border-box;min-width:0}';
         echo '.h18-clean-front-node{box-sizing:border-box;min-width:0;position:relative}';
-        echo '.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;min-width:0;box-sizing:border-box;height:auto!important}';
+        echo '.h18-clean-front-container,.h18-clean-front-section{display:grid;grid-template-columns:repeat(120,minmax(0,1fr));grid-auto-rows:' . esc_attr((string) $rowPx) . 'px;align-items:stretch;min-width:0;box-sizing:border-box;background-clip:border-box}';
         echo '.h18-clean-front-text{overflow-wrap:anywhere}';
         echo '.h18-clean-front-text>p:first-of-type{margin-top:0}.h18-clean-front-text>p:last-child{margin-bottom:0}';
         echo '.h18-clean-front-button-link{display:flex;width:100%;height:100%;box-sizing:border-box;align-items:center;justify-content:center;text-decoration:none;background:var(--h18-btn-bg);color:var(--h18-btn-color);transition:background-color .15s ease,color .15s ease,border-color .15s ease}';

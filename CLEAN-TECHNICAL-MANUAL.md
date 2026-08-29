@@ -745,3 +745,15 @@ Når Visual Designer udvikles, skal vi kunne svare **ja** til tre spørgsmål:
 3. **Kan QA bevise, at brugerens handling giver samme resultat hver gang?**
 
 Hvis ikke, er funktionen ikke teknisk låst endnu.
+
+
+## 22. WYSIWYG viewport- og containerkontrakt · 0.1.44
+
+### VD-CONTAINER-PAINT-001 · IMPLEMENTERET 0.1.44
+Sektion og Kasse ejer hele deres fysiske canonical geometri. Baggrund, ramme og radius må ikke afhænge af, om child-elementer fylder højden. Den indre child-surface er transparent og fylder hele parentens geometri. Manuel højde er et minimum; required child height kan autogrow parenten. Editor-labels/handles er chrome og tæller ikke i layoutgeometrien.
+
+### VD-WYSIWYG-VIEWPORT-001 · IMPLEMENTERET 0.1.44
+Designerens layoutbredde må aldrig være den tilfældige restbredde mellem WordPress-adminmenu, Elementer og Inspector. Layout beregnes ved en virtuel frontend-viewport: Desktop 1920 px, Laptop 1180 px og Mobil 390 px. Editorens tilgængelige plads styrer kun Fit-zoom.
+
+### VD-WYSIWYG-FIT-001 · IMPLEMENTERET 0.1.44
+Fit-zoom genberegnes dynamisk ved ResizeObserver på canvas-kolonnen samt ved breakpointskift, Mere canvas og foldning af Elementer/Inspector. Ændret Fit må aldrig mutere canonical x/y/w/h eller responsive inheritance. Drag/resize og pixelbaserede editorfunktioner skal omsætte fysiske pointer-deltaer tilbage til virtuelle pixels/8px-rækker.

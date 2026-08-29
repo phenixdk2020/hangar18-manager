@@ -1,0 +1,55 @@
+/* Visual Designer Manager 0.1.44 · BUG-13 / BUG-14 */
+.h18-vd-viewport-stage{
+    position:relative;
+    display:block;
+    margin:0 auto;
+    min-height:1px;
+    box-sizing:border-box;
+}
+.h18-vd-viewport-stage>.h18-clean-root{
+    position:absolute!important;
+    top:0!important;
+    left:0!important;
+    margin:0!important;
+    max-width:none!important;
+    transition:none!important;
+    transform-origin:0 0!important;
+}
+.h18-vd-viewport-status{
+    display:inline-flex;
+    align-items:center;
+    min-height:28px;
+    padding:0 8px;
+    border:1px solid #c3c4c7;
+    border-radius:5px;
+    background:#fff;
+    color:#50575e;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+}
+/* Device width is owned by the virtual viewport layer, never by the editor's
+   remaining physical column width. */
+.h18-vd-viewport-stage>.h18-clean-root[data-h18-device="desktop"],
+.h18-vd-viewport-stage>.h18-clean-root[data-h18-device="laptop"],
+.h18-vd-viewport-stage>.h18-clean-root[data-h18-device="mobile"]{
+    max-width:none!important;
+}
+/* BUG-13: Section/Box owns the physical painted box. The inner surface is only
+   a transparent child-layout grid and fills the complete canonical geometry. */
+.h18-clean-node--section,.h18-clean-node--container{
+    background-clip:border-box!important;
+}
+.h18-clean-node--section>.h18-clean-inner-surface,
+.h18-clean-node--container>.h18-clean-inner-surface{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+    background:transparent!important;
+    border-color:transparent!important;
+    border-radius:inherit!important;
+}
