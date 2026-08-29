@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.51",
+      "date": "2026-08-29",
+      "items": [
+        "Konvertering kan nu hente en offentlig HTTPS-side som read-only ekstern kilde og stage den som QA-kandidat på en eksisterende eller ny WordPress-side.",
+        "Hjem kan hentes fra https://test2.hangar18.dk/ og lægges på Hjem – Visual Designer uden at ændre test2 eller live frontend før godkendelse.",
+        "Ekstern HTML renses for scripts/styles, relative links/billeder gøres absolutte, og kildehash kontrolleres igen ved Godkend og aktivér.",
+        "Eksterne billeder forbliver kilde-linkede i denne version og markeres til QA; mediebiblioteks-lokalisering er et separat senere trin.",
+        "Theme slug-migrationen hangar18-base → akvpk flyttes til admin_init, så den faktisk kan køre efter installation af AKVPK 1.3.0."
+      ]
+    },
+    {
       "version": "0.1.50",
       "date": "2026-08-29",
       "items": [

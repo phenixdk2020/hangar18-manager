@@ -26,9 +26,12 @@ final class PageConversionService
         $candidate = self::candidate($postId);
         $state = get_post_meta($postId, self::STATE_META, true);
         $state = is_array($state) ? $state : [];
+        $sourceType = sanitize_key((string) ($state['sourceType'] ?? 'local'));
+        $sourceUrl = esc_url_raw((string) ($state['sourceUrl'] ?? ''));
         $post = get_post($postId);
         $currentHash = $post instanceof \WP_Post ? hash('sha256', (string) $post->post_content) : '';
         $sourceHash = sanitize_text_field((string) ($state['sourceHash'] ?? ''));
+        $sourceChanged = $sourceType !== 'external' && $sourceHash !== '' && $currentHash !== '' && !hash_equals($sourceHash, $currentHash);
 
         if ($candidate !== null) {
             $key = 'review';
@@ -46,7 +49,10 @@ final class PageConversionService
             'candidateDigest' => $candidate !== null ? LayoutModel::structuralDigest($candidate) : '',
             'preparedUtc' => sanitize_text_field((string) ($state['preparedUtc'] ?? '')),
             'sourceHash' => $sourceHash,
-            'sourceChanged' => $sourceHash !== '' && $currentHash !== '' && !hash_equals($sourceHash, $currentHash),
+            'sourceType' => $sourceType,
+            'sourceUrl' => $sourceUrl,
+            'sourceTitle' => sanitize_text_field((string) ($state['sourceTitle'] ?? '')),
+            'sourceChanged' => $sourceChanged,
             'warnings' => isset($state['warnings']) && is_array($state['warnings']) ? array_values(array_map('sanitize_text_field', $state['warnings'])) : [],
         ];
     }
@@ -70,6 +76,7 @@ final class PageConversionService
                 'postName' => (string) $post->post_name,
                 'postStatus' => (string) $post->post_status,
                 'postContent' => $source,
+                'sourceType' => 'local',
             ]);
         }
 
@@ -83,9 +90,74 @@ final class PageConversionService
             'status' => 'review',
             'preparedUtc' => gmdate('c'),
             'preparedBy' => max(0, $userId),
+            'sourceType' => 'local',
+            'sourceUrl' => '',
+            'sourceTitle' => (string) $post->post_title,
             'sourceHash' => $sourceHash,
             'sourceLength' => strlen($source),
             'bodyLength' => strlen($body),
+            'candidateDigest' => $digest,
+            'warnings' => $warnings,
+        ]);
+
+        return self::status($postId);
+    }
+
+    /** @return array<string,mixed> */
+    public static function prepareExternal(int $postId, string $url, int $userId): array
+    {
+        return self::prepareExternalData($postId, ExternalPageSourceService::fetch($url), $userId);
+    }
+
+    /**
+     * @param array<string,mixed> $sourceData
+     * @return array<string,mixed>
+     */
+    public static function prepareExternalData(int $postId, array $sourceData, int $userId): array
+    {
+        $post = get_post($postId);
+        if (!$post instanceof \WP_Post || $post->post_type !== 'page') {
+            throw new \InvalidArgumentException('Kun WordPress-sider kan bruges som mål for ekstern konvertering.');
+        }
+
+        $sourceUrl = esc_url_raw((string) ($sourceData['url'] ?? ''));
+        $html = trim((string) ($sourceData['html'] ?? ''));
+        $sourceHash = sanitize_text_field((string) ($sourceData['hash'] ?? ''));
+        if ($sourceUrl === '' || $html === '' || !preg_match('/^[a-f0-9]{64}$/', $sourceHash)) {
+            throw new \RuntimeException('Den eksterne kildesnapshot er ugyldig.');
+        }
+        if (!hash_equals($sourceHash, hash('sha256', $html))) {
+            throw new \RuntimeException('Kildesnapshotets kontrolsum passer ikke.');
+        }
+
+        $warnings = isset($sourceData['warnings']) && is_array($sourceData['warnings'])
+            ? array_values(array_unique(array_map('sanitize_text_field', $sourceData['warnings'])))
+            : [];
+        $sourceTitle = sanitize_text_field((string) ($sourceData['title'] ?? ''));
+        $model = self::modelFromHtml($postId, $html);
+        $digest = LayoutModel::structuralDigest($model);
+
+        update_post_meta($postId, self::SOURCE_META, [
+            'capturedUtc' => sanitize_text_field((string) ($sourceData['capturedUtc'] ?? gmdate('c'))),
+            'sourceType' => 'external',
+            'sourceUrl' => $sourceUrl,
+            'sourceHash' => $sourceHash,
+            'sourceTitle' => $sourceTitle,
+            'sourceHtml' => $html,
+            'rawLength' => max(0, (int) ($sourceData['rawLength'] ?? 0)),
+            'bodyLength' => strlen($html),
+        ]);
+        update_post_meta($postId, self::CANDIDATE_META, $model);
+        update_post_meta($postId, self::STATE_META, [
+            'status' => 'review',
+            'preparedUtc' => gmdate('c'),
+            'preparedBy' => max(0, $userId),
+            'sourceType' => 'external',
+            'sourceUrl' => $sourceUrl,
+            'sourceTitle' => $sourceTitle,
+            'sourceHash' => $sourceHash,
+            'sourceLength' => max(0, (int) ($sourceData['rawLength'] ?? 0)),
+            'bodyLength' => strlen($html),
             'candidateDigest' => $digest,
             'warnings' => $warnings,
         ]);
@@ -114,13 +186,28 @@ final class PageConversionService
             throw new \RuntimeException('Der findes ingen konverteringskandidat at godkende.');
         }
         $state = get_post_meta($postId, self::STATE_META, true);
-        $sourceHash = is_array($state) ? sanitize_text_field((string) ($state['sourceHash'] ?? '')) : '';
+        $state = is_array($state) ? $state : [];
+        $sourceHash = sanitize_text_field((string) ($state['sourceHash'] ?? ''));
+        $sourceType = sanitize_key((string) ($state['sourceType'] ?? 'local'));
+        $sourceUrl = esc_url_raw((string) ($state['sourceUrl'] ?? ''));
         $post = get_post($postId);
-        if ($post instanceof \WP_Post && $sourceHash !== '' && !hash_equals($sourceHash, hash('sha256', (string) $post->post_content))) {
+        if ($sourceType === 'external') {
+            if ($sourceUrl === '' || $sourceHash === '') {
+                throw new \RuntimeException('Ekstern kildeinformation mangler. Konvertér siden igen.');
+            }
+            $latest = ExternalPageSourceService::fetch($sourceUrl);
+            $latestHash = sanitize_text_field((string) ($latest['hash'] ?? ''));
+            if ($latestHash === '' || !hash_equals($sourceHash, $latestHash)) {
+                throw new \RuntimeException('Den eksterne kildeside er ændret siden kandidaten blev lavet. Hent kilden igen før godkendelse.');
+            }
+        } elseif ($post instanceof \WP_Post && $sourceHash !== '' && !hash_equals($sourceHash, hash('sha256', (string) $post->post_content))) {
             throw new \RuntimeException('Kildesiden er ændret efter konverteringen. Konvertér siden igen før godkendelse.');
         }
 
-        $version = LayoutModel::saveVersion($postId, $candidate, $userId, 'Godkendt sidekonvertering v0.1.50 · original post_content bevaret');
+        $note = $sourceType === 'external'
+            ? 'Godkendt ekstern sidekonvertering v0.1.51 · kilde ' . $sourceUrl
+            : 'Godkendt lokal sidekonvertering v0.1.51 · original post_content bevaret';
+        $version = LayoutModel::saveVersion($postId, $candidate, $userId, $note);
         TemplateLayoutModel::ensureMigrated();
         TemplateLayoutModel::setPageChoice($postId, 'header', 'auto');
         TemplateLayoutModel::setPageChoice($postId, 'footer', 'auto');
@@ -129,9 +216,12 @@ final class PageConversionService
             'status' => 'active',
             'approvedUtc' => gmdate('c'),
             'approvedBy' => max(0, $userId),
+            'sourceType' => $sourceType,
+            'sourceUrl' => $sourceUrl,
+            'sourceTitle' => sanitize_text_field((string) ($state['sourceTitle'] ?? '')),
             'sourceHash' => $sourceHash,
             'version' => $version,
-            'warnings' => is_array($state) && isset($state['warnings']) && is_array($state['warnings']) ? $state['warnings'] : [],
+            'warnings' => isset($state['warnings']) && is_array($state['warnings']) ? $state['warnings'] : [],
         ]);
         return $version;
     }

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Hangar18\Clean\Admin;
 
+use Hangar18\Clean\Migration\ExternalPageSourceService;
 use Hangar18\Clean\Migration\PageConversionService;
 use Hangar18\Clean\Model\LayoutModel;
 
 final class ConversionController
 {
     private const PREPARE_ACTION = 'h18_vd_conversion_prepare_v0150';
+    private const EXTERNAL_PREPARE_ACTION = 'h18_vd_conversion_external_prepare_v0151';
     private const BATCH_ACTION = 'h18_vd_conversion_batch_v0150';
     private const APPROVE_ACTION = 'h18_vd_conversion_approve_v0150';
     private const DISCARD_ACTION = 'h18_vd_conversion_discard_v0150';
@@ -19,6 +21,7 @@ final class ConversionController
     public static function register(): void
     {
         add_action('admin_post_' . self::PREPARE_ACTION, [self::class, 'prepare']);
+        add_action('admin_post_' . self::EXTERNAL_PREPARE_ACTION, [self::class, 'externalPrepare']);
         add_action('admin_post_' . self::BATCH_ACTION, [self::class, 'batch']);
         add_action('admin_post_' . self::APPROVE_ACTION, [self::class, 'approve']);
         add_action('admin_post_' . self::DISCARD_ACTION, [self::class, 'discard']);
@@ -52,7 +55,21 @@ final class ConversionController
         self::stat('Ikke konverteret', $counts['not-converted'], 'Kan forberedes i batch');
         echo '</div>';
 
-        echo '<section class="h18-manager-card"><h2>Sikker arbejdsgang</h2><ol class="h18-manager-list"><li><strong>Konvertér</strong> opretter en kandidat og gemmer et snapshot af den oprindelige side.</li><li><strong>Forhåndsvis</strong> viser kandidat + aktiv Header/Footer uden at ændre frontend.</li><li><strong>Godkend og aktivér</strong> opretter en ny Visual Designer-version. Original <code>post_content</code> overskrives ikke.</li></ol><p class="description">Første automatiske pass bevarer eksisterende body-HTML i en canonical Text-blok. Det giver en sikker indholdsmigrering, men komplekse legacy-layouts kan stadig kræve visuel QA og efterfølgende opdeling i rigtige Text/Image/Button/Kasse-elementer.</p></section>';
+        echo '<section class="h18-manager-card"><h2>Sikker arbejdsgang</h2><ol class="h18-manager-list"><li><strong>Konvertér</strong> eller <strong>Hent ekstern side</strong> opretter kun en kandidat.</li><li><strong>Forhåndsvis</strong> viser kandidat + aktiv Header/Footer uden at ændre frontend.</li><li><strong>Godkend og aktivér</strong> opretter en ny Visual Designer-version. Lokal <code>post_content</code> overskrives ikke.</li></ol><p class="description">Første automatiske pass bevarer body-HTML i en canonical Text-blok. Komplekse layouts kræver fortsat visuel QA og kan bagefter opdeles i rigtige Text/Image/Button/Kasse-elementer.</p></section>';
+
+        echo '<section class="h18-manager-card"><h2>Ekstern kilde</h2><p>Hent en eksisterende side fra et andet offentligt HTTPS-site som QA-kandidat. Kildesitet læses kun; det ændres aldrig.</p>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-manager-page-create-form">';
+        wp_nonce_field(self::NONCE);
+        echo '<input type="hidden" name="action" value="' . esc_attr(self::EXTERNAL_PREPARE_ACTION) . '">';
+        echo '<label style="min-width:320px;flex:2"><strong>Kilde-URL</strong><input type="url" name="source_url" required value="https://test2.hangar18.dk/" placeholder="https://test2.hangar18.dk/"></label>';
+        echo '<label style="min-width:260px"><strong>Målside</strong><select name="target_post_id"><option value="0">Opret ny WordPress-kladde</option>';
+        foreach ($pages as $targetPage) {
+            echo '<option value="' . esc_attr((string) $targetPage->ID) . '">' . esc_html((string) $targetPage->post_title) . ' · ' . esc_html((string) $targetPage->post_name) . '</option>';
+        }
+        echo '</select></label>';
+        echo '<label style="min-width:220px"><strong>Titel ved ny side</strong><input type="text" name="new_title" placeholder="Automatisk fra kilden"></label>';
+        echo '<button class="button button-primary" type="submit">Hent ekstern side til QA</button></form>';
+        echo '<p class="description">Til forsiden: brug <code>https://test2.hangar18.dk/</code> og vælg <strong>Hjem – Visual Designer</strong> som målside. Relative billeder og links gøres absolutte mod kildesitet; eksterne assets flyttes ikke til det nye mediebibliotek i denne version.</p></section>';
 
         echo '<form id="h18-vd-conversion-batch" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-manager-toolbar">';
         wp_nonce_field(self::NONCE);
@@ -81,7 +98,10 @@ final class ConversionController
             echo '<td>' . $badge;
             if ((int) ($state['version'] ?? 0) > 0) { echo '<br><small>Designer v' . esc_html((string) $state['version']) . '</small>'; }
             echo '</td>';
-            echo '<td>' . ($warnings ? '<small>' . esc_html(implode(' · ', array_unique(array_map('strval', $warnings)))) . '</small>' : '<span class="description">—</span>') . '</td>';
+            $sourceInfo = (string) ($state['sourceType'] ?? 'local') === 'external' && !empty($state['sourceUrl'])
+                ? '<br><small>Kilde: <code>' . esc_html((string) $state['sourceUrl']) . '</code></small>'
+                : '';
+            echo '<td>' . ($warnings ? '<small>' . esc_html(implode(' · ', array_unique(array_map('strval', $warnings)))) . '</small>' : '<span class="description">—</span>') . $sourceInfo . '</td>';
             echo '<td class="h18-manager-actions">';
             self::postButton(self::PREPARE_ACTION, $postId, $key === 'review' ? 'Konvertér igen' : ($key === 'active' ? 'Lav ny kandidat' : 'Konvertér'), false);
             if ($key === 'review') {
@@ -98,6 +118,57 @@ final class ConversionController
         echo '</tbody></table>';
         echo '<script>document.addEventListener("DOMContentLoaded",function(){var all=document.getElementById("h18-vd-select-all");if(!all)return;all.addEventListener("change",function(){document.querySelectorAll(".h18-vd-page-check").forEach(function(box){box.checked=all.checked;});});});</script>';
         echo '</div>';
+    }
+
+
+    public static function externalPrepare(): void
+    {
+        self::guard();
+        check_admin_referer(self::NONCE);
+        $sourceUrl = esc_url_raw((string) wp_unslash($_POST['source_url'] ?? ''));
+        $targetPostId = absint($_POST['target_post_id'] ?? 0);
+        $newTitle = sanitize_text_field((string) wp_unslash($_POST['new_title'] ?? ''));
+        $createdPostId = 0;
+
+        try {
+            $sourceData = ExternalPageSourceService::fetch($sourceUrl);
+            if ($targetPostId <= 0) {
+                if (!current_user_can('edit_pages')) {
+                    throw new \RuntimeException('Du har ikke rettighed til at oprette en målside.');
+                }
+                $title = $newTitle !== '' ? $newTitle : sanitize_text_field((string) ($sourceData['title'] ?? ''));
+                if ($title === '') {
+                    $path = trim((string) wp_parse_url($sourceUrl, PHP_URL_PATH), '/');
+                    $title = $path === '' ? 'Hjem – Visual Designer' : ucwords(str_replace(['-', '_'], ' ', basename($path)));
+                }
+                $slugBase = trim((string) wp_parse_url($sourceUrl, PHP_URL_PATH), '/');
+                $slugBase = $slugBase === '' ? 'hjem-visual-designer' : sanitize_title(basename($slugBase));
+                $created = wp_insert_post([
+                    'post_type' => 'page',
+                    'post_status' => 'draft',
+                    'post_title' => $title,
+                    'post_name' => $slugBase,
+                    'post_content' => '',
+                ], true);
+                if (is_wp_error($created)) {
+                    throw new \RuntimeException('Målsiden kunne ikke oprettes: ' . $created->get_error_message());
+                }
+                $targetPostId = (int) $created;
+                $createdPostId = $targetPostId;
+            } else {
+                self::assertEditablePage($targetPostId);
+            }
+
+            PageConversionService::prepareExternalData($targetPostId, $sourceData, get_current_user_id());
+            $target = get_post($targetPostId);
+            $targetTitle = $target instanceof \WP_Post ? (string) $target->post_title : ('ID ' . $targetPostId);
+            self::redirect('success', 'Ekstern kilde er hentet til QA på “' . $targetTitle . '”. Kildesitet og frontend er ikke ændret.');
+        } catch (\Throwable $error) {
+            if ($createdPostId > 0 && get_post_type($createdPostId) === 'page') {
+                wp_delete_post($createdPostId, true);
+            }
+            self::redirect('error', 'Ekstern konvertering fejlede: ' . $error->getMessage());
+        }
     }
 
     public static function prepare(): void

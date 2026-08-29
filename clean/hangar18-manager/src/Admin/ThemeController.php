@@ -11,12 +11,13 @@ final class ThemeController
     private const THEME_MIGRATION_OPTION = 'h18_vd_theme_slug_migration_v0150';
     public static function register(): void
     {
-        add_action('setup_theme', [self::class, 'maybeMigrateAkVpkTheme'], 0);
+        add_action('admin_init', [self::class, 'maybeMigrateAkVpkTheme'], 1);
         add_action('admin_menu', [self::class, 'menu'], 9);
     }
 
     public static function maybeMigrateAkVpkTheme(): void
     {
+        if (!current_user_can('switch_themes')) { return; }
         if (get_stylesheet() !== 'hangar18-base' || get_option(self::THEME_MIGRATION_OPTION, false)) {
             return;
         }
