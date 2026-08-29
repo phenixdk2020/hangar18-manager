@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.1.43",
+    "date": "2026-08-29",
+    "items": [
+      "Header Desktop parity: mørkegrøn Section og Kasse, eksplicit vertikal placering af brand/menu og 1728 px max referencebredde.",
+      "Header menuvalidering matcher de syv kendte Hangar18-menupunkter; en dedikeret Visual Designer Hovedmenu oprettes kun hvis ingen eksisterende menu matcher.",
+      "Header logo-søgning udvidet til WordPress-mediebiblioteket med logo/emblem-kriterier og frasortering af banner/hero-billeder.",
+      "Footer-konvertering til Footer – Standard læser eksisterende HANGAR18-FOOTER-blok og FooterWidthPercent.",
+      "Footer har diagnose og Konvertér gammel Footer igen; fallback er tydeligt markeret hvis legacy Footer ikke findes.",
+      "Theme Shell forbliver OFF; Header og Footer afventer brugerens parity-QA."
+    ]
+  },
+  {
     "version": "0.1.42",
     "date": "2026-08-28",
     "items": [

@@ -18,8 +18,8 @@ use Hangar18\Clean\Model\TemplateLayoutModel;
  */
 final class LegacyHeaderConverter
 {
-    public const MIGRATION_OPTION = 'h18_vd_legacy_header_converted_v0142';
-    public const STATUS_OPTION = 'h18_vd_legacy_header_status_v0142';
+    public const MIGRATION_OPTION = 'h18_vd_legacy_header_converted_v0143';
+    public const STATUS_OPTION = 'h18_vd_legacy_header_status_v0143';
 
     private const LEGACY_DESIGN_OPTION = 'hangar18_manager_header_design_v25';
     private const LEGACY_ACTIVE_MENU_OPTION = 'hangar18_manager_active_menu';
@@ -89,11 +89,11 @@ final class LegacyHeaderConverter
         if ($legacyFound) {
             $model = self::buildModelFromLegacyDesign($design, $menuId);
             $source = 'legacy';
-            $note = 'Automatisk konvertering fra fundet legacy Header · v0.1.42';
+            $note = 'Automatisk konvertering fra fundet legacy Header · v0.1.43';
         } else {
             $model = self::buildScreenshotReferenceModel($menuId, $logo['mediaId'], $logo['url']);
             $source = 'desktop-reference-2026-08-28';
-            $note = 'Header-reference fra godkendt Desktop-screenshot · v0.1.42';
+            $note = 'Header-reference fra godkendt Desktop-screenshot · v0.1.43';
         }
 
         $counts = self::nodeCounts($model);
@@ -114,7 +114,7 @@ final class LegacyHeaderConverter
 
         $settings = $legacyFound
             ? self::templateSettings($design)
-            : ['sticky' => false, 'overlay' => false, 'contentWidth' => 2400];
+            : ['sticky' => false, 'overlay' => false, 'contentWidth' => 1728];
 
         $version = TemplateLayoutModel::saveVersion(
             $targetId,
@@ -200,88 +200,26 @@ final class LegacyHeaderConverter
      */
     public static function buildScreenshotReferenceModel(int $menuId, int $logoMediaId = 0, string $logoUrl = ''): array
     {
-        $rowsDesktop = 15; // ca. 120 px at the canonical 8 px vertical grid.
+        $rowsDesktop = 15;
         $rowsMobile = 14;
         $brand = 'Aalborg Kaserners Veteran Panser- og Køretøjsforening';
         $nodes = [];
-
-        $nodes[] = self::node(
-            'section-header-reference-v0142',
-            'section',
-            '',
-            10,
-            self::geometry([6, 0, 108, $rowsDesktop], [6, 0, 108, $rowsDesktop], [0, 0, 120, $rowsMobile]),
-            [
-                'background' => '#30382a', 'radius' => 0, 'padding' => 0,
-                'minHeightRows' => $rowsDesktop, 'borderWidth' => 0,
-                'borderColor' => '#000000', 'gapX' => 0, 'gapY' => 0,
-            ]
-        );
-        $nodes[] = self::node(
-            'container-header-reference-v0142',
-            'container',
-            'section-header-reference-v0142',
-            10,
-            self::geometry([0, 0, 120, $rowsDesktop], [0, 0, 120, $rowsDesktop], [0, 0, 120, $rowsMobile]),
-            [
-                'background' => '', 'radius' => 0, 'padding' => 0,
-                'minHeightRows' => $rowsDesktop, 'borderWidth' => 0,
-                'borderColor' => '#000000', 'gapX' => 0, 'gapY' => 0,
-            ]
-        );
-        $nodes[] = self::node(
-            'image-header-reference-logo-v0142',
-            'image',
-            'container-header-reference-v0142',
-            10,
-            self::geometry([0, 1, 7, 13], [0, 1, 7, 13], [0, 1, 20, 12]),
-            [
-                'mediaId' => max(0, $logoMediaId), 'url' => esc_url_raw($logoUrl),
-                'alt' => $brand, 'fit' => 'contain', 'imageAlignX' => 'left',
-                'imageAlignY' => 'center', 'boxBackground' => '#30382a',
-                'boxTransparent' => true, 'focalX' => 50, 'focalY' => 50,
-                'borderWidth' => 0, 'borderColor' => '#000000', 'gapX' => 0, 'gapY' => 0,
-            ]
-        );
-        $nodes[] = self::node(
-            'text-header-reference-brand-v0142',
-            'text',
-            'container-header-reference-v0142',
-            20,
-            self::geometry([8, 0, 28, $rowsDesktop], [8, 0, 30, $rowsDesktop], [20, 0, 73, $rowsMobile]),
-            [
-                'heading' => '', 'headingLevel' => 'h2', 'text' => $brand,
-                'align' => 'left', 'background' => '#30382a', 'backgroundTransparent' => true,
-                'textColor' => '#f2f0e8', 'headingColor' => '#f2f0e8',
-                'padding' => 0, 'radius' => 0, 'fontFamily' => 'system',
-                'fontSize' => 19, 'fontWeight' => 700, 'lineHeight' => 1.18,
-                'letterSpacing' => 0, 'borderWidth' => 0, 'borderColor' => '#000000',
-                'gapX' => 0, 'gapY' => 0,
-            ]
-        );
-        $nodes[] = self::node(
-            'menu-header-reference-primary-v0142',
-            'menu',
-            'container-header-reference-v0142',
-            30,
-            self::geometry([72, 0, 48, $rowsDesktop], [68, 0, 52, $rowsDesktop], [95, 0, 25, $rowsMobile]),
-            [
-                'menuId' => max(0, $menuId), 'orientation' => 'horizontal',
-                'align' => 'right', 'mobileMode' => 'hamburger',
-                'textColor' => '#f2f0e8', 'hoverTextColor' => '#c3ae83',
-                'activeTextColor' => '#c3ae83', 'background' => '#30382a',
-                'backgroundTransparent' => true, 'fontSize' => 17, 'fontWeight' => 600,
-                'menuGap' => 22, 'paddingX' => 6, 'paddingY' => 8, 'radius' => 0,
-                'borderWidth' => 0, 'borderColor' => '#000000', 'gapX' => 0, 'gapY' => 0,
-            ]
-        );
-
-        return LayoutModel::normalize([
-            'schemaVersion' => LayoutModel::SCHEMA,
-            'units' => LayoutModel::UNITS,
-            'rowPx' => LayoutModel::ROW_PX,
-            'nodes' => $nodes,
-        ]);
+        $nodes[] = self::node('section-header-reference-v0143','section','',10,
+            self::geometry([6,0,108,$rowsDesktop],[6,0,108,$rowsDesktop],[0,0,120,$rowsMobile]),
+            ['background'=>'#30382a','radius'=>0,'padding'=>0,'minHeightRows'=>$rowsDesktop,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]);
+        $nodes[] = self::node('container-header-reference-v0143','container','section-header-reference-v0143',10,
+            self::geometry([0,0,120,$rowsDesktop],[0,0,120,$rowsDesktop],[0,0,120,$rowsMobile]),
+            ['background'=>'#30382a','radius'=>0,'padding'=>0,'minHeightRows'=>$rowsDesktop,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]);
+        $nodes[] = self::node('image-header-reference-logo-v0143','image','container-header-reference-v0143',10,
+            self::geometry([0,1,7,13],[0,1,7,13],[0,1,20,12]),
+            ['mediaId'=>max(0,$logoMediaId),'url'=>esc_url_raw($logoUrl),'alt'=>$brand,'fit'=>'contain','imageAlignX'=>'left','imageAlignY'=>'center','boxBackground'=>'#30382a','boxTransparent'=>true,'focalX'=>50,'focalY'=>50,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]);
+        $nodes[] = self::node('text-header-reference-brand-v0143','text','container-header-reference-v0143',20,
+            self::geometry([8,4,28,7],[8,4,30,7],[20,3,72,8]),
+            ['heading'=>'','headingLevel'=>'h2','text'=>$brand,'align'=>'left','background'=>'#30382a','backgroundTransparent'=>true,'textColor'=>'#f2f0e8','headingColor'=>'#f2f0e8','padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>19,'fontWeight'=>700,'lineHeight'=>1.18,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]);
+        $nodes[] = self::node('menu-header-reference-primary-v0143','menu','container-header-reference-v0143',30,
+            self::geometry([72,4,48,7],[68,4,52,7],[95,3,25,8]),
+            ['menuId'=>max(0,$menuId),'orientation'=>'horizontal','align'=>'right','mobileMode'=>'hamburger','textColor'=>'#f2f0e8','hoverTextColor'=>'#c3ae83','activeTextColor'=>'#c3ae83','background'=>'#30382a','backgroundTransparent'=>true,'fontSize'=>17,'fontWeight'=>600,'menuGap'=>22,'paddingX'=>6,'paddingY'=>8,'radius'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]);
+        return LayoutModel::normalize(['schemaVersion'=>LayoutModel::SCHEMA,'units'=>LayoutModel::UNITS,'rowPx'=>LayoutModel::ROW_PX,'nodes'=>$nodes]);
     }
 
     /** @param array<string,mixed> $design @return array{mediaId:int,url:string,source:string} */
@@ -289,31 +227,37 @@ final class LegacyHeaderConverter
     {
         $url = esc_url_raw((string) ($design['LogoUrl'] ?? ''));
         $mediaId = max(0, (int) ($design['LogoMediaId'] ?? 0));
-        if ($url !== '') {
-            return ['mediaId' => $mediaId, 'url' => $url, 'source' => 'legacy-header'];
-        }
-
+        if ($url !== '') { return ['mediaId'=>$mediaId,'url'=>$url,'source'=>'legacy-header']; }
         if (function_exists('get_theme_mod')) {
-            $customLogoId = absint(get_theme_mod('custom_logo', 0));
-            $customLogoUrl = $customLogoId > 0 ? wp_get_attachment_url($customLogoId) : false;
-            if ($customLogoUrl) {
-                return ['mediaId' => $customLogoId, 'url' => esc_url_raw((string) $customLogoUrl), 'source' => 'wordpress-custom-logo'];
-            }
+            $id=absint(get_theme_mod('custom_logo',0)); $u=$id>0?wp_get_attachment_url($id):false;
+            if ($u) return ['mediaId'=>$id,'url'=>esc_url_raw((string)$u),'source'=>'wordpress-custom-logo'];
         }
+        $siteIconId=absint(get_option('site_icon',0)); $siteIconUrl=$siteIconId>0?wp_get_attachment_url($siteIconId):false;
+        if ($siteIconUrl) return ['mediaId'=>$siteIconId,'url'=>esc_url_raw((string)$siteIconUrl),'source'=>'wordpress-site-icon'];
 
-        $siteIconId = absint(get_option('site_icon', 0));
-        $siteIconUrl = $siteIconId > 0 ? wp_get_attachment_url($siteIconId) : false;
-        if ($siteIconUrl) {
-            return ['mediaId' => $siteIconId, 'url' => esc_url_raw((string) $siteIconUrl), 'source' => 'wordpress-site-icon'];
+        $best=['score'=>0,'mediaId'=>0,'url'=>''];
+        $attachments=get_posts(['post_type'=>'attachment','post_status'=>'inherit','post_mime_type'=>'image','posts_per_page'=>200,'orderby'=>'date','order'=>'DESC','suppress_filters'=>true]);
+        foreach ((array)$attachments as $attachment) {
+            if (!$attachment instanceof \WP_Post) continue;
+            $file=(string)get_post_meta($attachment->ID,'_wp_attached_file',true);
+            $hay=sanitize_title((string)$attachment->post_title.' '.basename($file).' '.(string)$attachment->guid);
+            $score=0;
+            foreach (['logo'=>70,'emblem'=>55,'veteran'=>25,'kaserne'=>25,'aalborg'=>20,'panser'=>15] as $needle=>$points) if (str_contains($hay,$needle)) $score+=$points;
+            foreach (['banner'=>80,'hero'=>70,'topbanner'=>90,'header-billede'=>60] as $needle=>$points) if (str_contains($hay,$needle)) $score-=$points;
+            $meta=wp_get_attachment_metadata($attachment->ID);
+            if (is_array($meta) && !empty($meta['width']) && !empty($meta['height'])) {
+                $ratio=(float)$meta['width']/max(1,(float)$meta['height']);
+                if ($ratio>=0.75 && $ratio<=1.25) $score+=25;
+                elseif ($ratio>2.0) $score-=25;
+            }
+            $u=wp_get_attachment_url($attachment->ID);
+            if ($u && $score>$best['score']) $best=['score'=>$score,'mediaId'=>(int)$attachment->ID,'url'=>esc_url_raw((string)$u)];
         }
+        if ($best['score']>=40) return ['mediaId'=>$best['mediaId'],'url'=>$best['url'],'source'=>'media-library-match'];
         if (function_exists('get_site_icon_url')) {
-            $siteIconUrl = (string) get_site_icon_url(512, '');
-            if ($siteIconUrl !== '') {
-                return ['mediaId' => 0, 'url' => esc_url_raw($siteIconUrl), 'source' => 'wordpress-site-icon-url'];
-            }
+            $u=(string)get_site_icon_url(512,''); if ($u!=='') return ['mediaId'=>0,'url'=>esc_url_raw($u),'source'=>'wordpress-site-icon-url'];
         }
-
-        return ['mediaId' => 0, 'url' => '', 'source' => 'not-found'];
+        return ['mediaId'=>0,'url'=>'','source'=>'not-found'];
     }
 
     /** @param array<string,mixed> $model @return array<string,int> */
@@ -617,21 +561,73 @@ final class LegacyHeaderConverter
 
     private static function legacyMenuId(): int
     {
+        $defs = self::referenceMenuDefinitions();
         $saved = absint(get_option(self::LEGACY_ACTIVE_MENU_OPTION, 0));
         if ($saved > 0 && wp_get_nav_menu_object($saved)) {
             return $saved;
         }
-
         $locations = get_nav_menu_locations();
-        if (is_array($locations) && !empty($locations['primary']) && wp_get_nav_menu_object((int) $locations['primary'])) {
-            return (int) $locations['primary'];
+        $primary = is_array($locations) ? absint($locations['primary'] ?? 0) : 0;
+        $bestId=0; $bestScore=-1;
+        foreach ((array) wp_get_nav_menus() as $menu) {
+            $id=(int)($menu->term_id ?? 0); if ($id<=0) continue;
+            $items=wp_get_nav_menu_items($id); $items=is_array($items)?$items:[];
+            $matched=[]; $score=0;
+            foreach ($items as $item) {
+                $titleSlug=sanitize_title(strip_tags((string)$item->title));
+                $pageSlug='';
+                if (($item->object ?? '')==='page' && !empty($item->object_id)) { $p=get_post((int)$item->object_id); if ($p instanceof \WP_Post) $pageSlug=sanitize_title((string)$p->post_name); }
+                foreach ($defs as $def) {
+                    if (isset($matched[$def['slug']])) continue;
+                    if ($pageSlug===$def['slug'] || $titleSlug===sanitize_title($def['title']) || in_array($titleSlug,$def['aliases'],true)) { $matched[$def['slug']]=true; $score+=10; }
+                }
+            }
+            if (count($items)===7) $score+=10;
+            $name=sanitize_title((string)($menu->name ?? ''));
+            if (str_contains($name,'hangar18') || str_contains($name,'hoved') || str_contains($name,'main')) $score+=5;
+            if ($id===$saved) $score+=2; if ($id===$primary) $score+=3;
+            if ($score>$bestScore) { $bestScore=$score; $bestId=$id; }
         }
+        if ($bestId>0 && $bestScore>=45) return $bestId;
+        return self::ensureReferenceMenu($defs);
+    }
 
-        $menus = wp_get_nav_menus();
-        if (is_array($menus) && $menus) {
-            return (int) ($menus[0]->term_id ?? 0);
+    /** @return array<int,array{slug:string,title:string,aliases:array<int,string>}> */
+    private static function referenceMenuDefinitions(): array
+    {
+        return [
+            ['slug'=>'hjem','title'=>'Hjem','aliases'=>['hjem','home']],
+            ['slug'=>'events','title'=>'Events','aliases'=>['events','event']],
+            ['slug'=>'koeretoejer-og-materiel','title'=>'Køretøjer','aliases'=>['koeretoejer','koeretoejer-og-materiel','koretojer']],
+            ['slug'=>'billedgalleri','title'=>'Billedgalleri','aliases'=>['billedgalleri','galleri']],
+            ['slug'=>'om-foreningen','title'=>'Om','aliases'=>['om','om-foreningen']],
+            ['slug'=>'bliv-medlem','title'=>'Bliv medlem','aliases'=>['bliv-medlem']],
+            ['slug'=>'kontakt','title'=>'Kontakt','aliases'=>['kontakt']],
+        ];
+    }
+
+    private static function ensureReferenceMenu(array $defs): int
+    {
+        $menu=wp_get_nav_menu_object('Visual Designer Hovedmenu');
+        if (!$menu) {
+            $created=wp_create_nav_menu('Visual Designer Hovedmenu');
+            if (is_wp_error($created)) throw new \RuntimeException('Kunne ikke oprette Visual Designer Hovedmenu: '.$created->get_error_message());
+            $menu=wp_get_nav_menu_object((int)$created);
         }
-        return 0;
+        $menuId=(int)($menu->term_id ?? 0); if ($menuId<=0) throw new \RuntimeException('Visual Designer Hovedmenu fik ikke et gyldigt ID.');
+        $items=wp_get_nav_menu_items($menuId); if (!is_array($items) || count($items)<count($defs)) {
+            foreach ((array)$items as $item) wp_delete_post((int)$item->ID,true);
+            $position=1;
+            foreach ($defs as $def) {
+                $page=get_page_by_path($def['slug'],OBJECT,'page');
+                $args=['menu-item-title'=>$def['title'],'menu-item-position'=>$position++,'menu-item-status'=>'publish'];
+                if ($page instanceof \WP_Post) $args += ['menu-item-object-id'=>(int)$page->ID,'menu-item-object'=>'page','menu-item-type'=>'post_type'];
+                else $args += ['menu-item-type'=>'custom','menu-item-url'=>home_url('/'.$def['slug'].'/')];
+                $result=wp_update_nav_menu_item($menuId,0,$args);
+                if (is_wp_error($result)) throw new \RuntimeException('Kunne ikke opbygge Visual Designer Hovedmenu: '.$result->get_error_message());
+            }
+        }
+        return $menuId;
     }
 
     private static function legacyShellHeader(): string

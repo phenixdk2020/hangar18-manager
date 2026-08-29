@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hangar18\Clean\Admin;
 
 use Hangar18\Clean\Migration\LegacyHeaderConverter;
+use Hangar18\Clean\Migration\LegacyFooterConverter;
 use Hangar18\Clean\Model\LayoutModel;
 use Hangar18\Clean\Model\TemplateLayoutModel;
 
@@ -15,10 +16,12 @@ final class GlobalDesignerController
     private const RESTORE_ACTION = 'h18_clean_global_layout_restore';
     private const TEMPLATE_ACTION = 'h18_clean_global_template_action';
     private const CONVERT_ACTION = 'h18_clean_legacy_header_convert';
+    private const FOOTER_CONVERT_ACTION = 'h18_clean_legacy_footer_convert';
     private const NONCE_SAVE = 'h18_clean_global_layout_save';
     private const NONCE_RESTORE = 'h18_clean_global_layout_restore';
     private const NONCE_TEMPLATE = 'h18_clean_global_template_action';
     private const NONCE_CONVERT = 'h18_clean_legacy_header_convert';
+    private const NONCE_FOOTER_CONVERT = 'h18_clean_legacy_footer_convert';
 
     public static function register(): void
     {
@@ -28,6 +31,7 @@ final class GlobalDesignerController
         add_action('admin_post_' . self::RESTORE_ACTION, [self::class, 'restore']);
         add_action('admin_post_' . self::TEMPLATE_ACTION, [self::class, 'templateAction']);
         add_action('admin_post_' . self::CONVERT_ACTION, [self::class, 'convertLegacyHeader']);
+        add_action('admin_post_' . self::FOOTER_CONVERT_ACTION, [self::class, 'convertLegacyFooter']);
     }
 
     public static function menu(): void
@@ -88,6 +92,7 @@ final class GlobalDesignerController
         echo '<form class="h18-global-rename" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">'; wp_nonce_field(self::NONCE_TEMPLATE); echo '<input type="hidden" name="action" value="' . esc_attr(self::TEMPLATE_ACTION) . '"><input type="hidden" name="part" value="' . esc_attr($part) . '"><input type="hidden" name="template_id" value="' . esc_attr($templateId) . '"><input type="hidden" name="operation" value="rename"><label>Templatenavn <input type="text" name="template_name" value="' . esc_attr((string) ($meta['name'] ?? '')) . '"></label><button class="button" type="submit">Omdøb</button></form>';
 
         if ($part === 'header') { self::renderLegacyHeaderConversion(); }
+        if ($part === 'footer') { self::renderLegacyFooterConversion(); }
 
         echo '<form id="h18-clean-save-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field(self::NONCE_SAVE);
@@ -129,6 +134,28 @@ final class GlobalDesignerController
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="margin-top:12px">';
         wp_nonce_field(self::NONCE_CONVERT);
         echo '<input type="hidden" name="action" value="' . esc_attr(self::CONVERT_ACTION) . '"><button class="button button-primary" type="submit">Konvertér gammel Header igen</button></form></section>';
+    }
+
+    private static function renderLegacyFooterConversion(): void
+    {
+        $status=LegacyFooterConverter::diagnosticStatus(); $counts=is_array($status['targetNodeCounts']??null)?$status['targetNodeCounts']:[]; $last=is_array($status['lastConversion']??null)?$status['lastConversion']:[];
+        echo '<section class="h18-manager-card h18-global-conversion"><h2>Gammel Footer → Visual Designer</h2>';
+        echo '<p class="description">Footer læses med den gamle Managers egen shell-metode fra den faktiske HANGAR18-FOOTER-blok på Hjem eller en anden gammel styret side. Hvis blokken mangler, stoppes konverteringen med en tydelig fejl; der gættes ikke på Footer-indhold. Hver konvertering gemmes som ny Footer-version.</p><table class="widefat striped"><tbody>';
+        echo '<tr><th>Legacy Footer-blok</th><td>'.(!empty($status['legacyFooterFound'])?'Fundet':'Ikke fundet · konvertering stoppes').'</td></tr>';
+        echo '<tr><th>Kildeside</th><td>'.esc_html((string)($status['sourcePageTitle']??'')).' · ID '.esc_html((string)($status['sourcePageId']??0)).'</td></tr>';
+        echo '<tr><th>FooterWidthPercent</th><td>'.esc_html((string)($status['footerWidthPercent']??100)).'%</td></tr>';
+        echo '<tr><th>Kildeudsnit</th><td><code>'.esc_html((string)($status['sourcePreview']??'')).'</code></td></tr>';
+        echo '<tr><th>Kilde-digest</th><td><code>'.esc_html(substr((string)($status['sourceDigest']??''),0,20)).'</code></td></tr>';
+        echo '<tr><th>Footer – Standard nu</th><td>v'.esc_html((string)($status['targetVersion']??0)).' · Sektion '.esc_html((string)($counts['section']??0)).' · Kasse '.esc_html((string)($counts['container']??0)).' · Tekst '.esc_html((string)($counts['text']??0)).'</td></tr>';
+        if ($last) echo '<tr><th>Seneste konvertering</th><td>'.esc_html((string)($last['source']??$last['status']??'')).' · '.esc_html((string)($last['convertedUtc']??$last['checkedUtc']??'')).(!empty($last['message'])?' · '.esc_html((string)$last['message']):'').'</td></tr>';
+        echo '</tbody></table><form method="post" action="'.esc_url(admin_url('admin-post.php')).'">'; wp_nonce_field(self::NONCE_FOOTER_CONVERT); echo '<input type="hidden" name="action" value="'.esc_attr(self::FOOTER_CONVERT_ACTION).'"><button class="button button-primary" type="submit">Konvertér gammel Footer igen</button></form></section>';
+    }
+
+    public static function convertLegacyFooter(): void
+    {
+        self::guard(); check_admin_referer(self::NONCE_FOOTER_CONVERT);
+        try { $r=LegacyFooterConverter::convert(true); $c=is_array($r['nodeCounts']??null)?$r['nodeCounts']:[]; $m='Footer konverteret som v'.(int)($r['templateVersion']??0).' fra '.(string)($r['source']??'ukendt kilde').'. Sektion '.(int)($c['section']??0).', Kasse '.(int)($c['container']??0).', Tekst '.(int)($c['text']??0).'.'; self::redirect('footer',(string)($r['templateId']??''),'success',$m); }
+        catch (\Throwable $e) { self::redirect('footer',TemplateLayoutModel::defaultId('footer'),'error','Footer-konvertering fejlede: '.$e->getMessage()); }
     }
 
     public static function convertLegacyHeader(): void

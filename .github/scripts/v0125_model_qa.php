@@ -58,10 +58,12 @@ require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/LayoutModel.php'
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/GlobalLayoutModel.php';
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/TemplateLayoutModel.php';
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php';
+require_once __DIR__ . '/../../clean/hangar18-manager/src/Migration/LegacyFooterConverter.php';
 
 use Hangar18\Clean\Model\LayoutModel;
 use Hangar18\Clean\Model\TemplateLayoutModel;
 use Hangar18\Clean\Migration\LegacyHeaderConverter;
+use Hangar18\Clean\Migration\LegacyFooterConverter;
 
 function vdFail(string $message): void { fwrite(STDERR, "V0125 MODEL QA FAIL: {$message}\n"); exit(1); }
 function vdAssert(bool $condition, string $message): void { if (!$condition) { vdFail($message); } }
@@ -269,4 +271,19 @@ vdAssert((int) ($referenceMenu['props']['menuId'] ?? 0) === 91, 'Reference WordP
 vdAssert(($referenceMenu['props']['mobileMode'] ?? '') === 'hamburger', 'Reference mobile Menu must use hamburger mode.');
 vdAssert((int) ($referenceMenu['geometry']['mobile']['x'] ?? -1) === 95, 'Reference mobile hamburger area must be right aligned.');
 
-echo "Visual Designer Manager 0.1.42 model QA PASS\n";
+$headerRef = LegacyHeaderConverter::buildScreenshotReferenceModel(77, 55, 'https://example.test/logo.png');
+$hBy=[]; foreach ($headerRef['nodes'] as $n) { $hBy[$n['type']][]=$n; }
+vdAssert(($hBy['section'][0]['props']['background']??'')==='#30382a','0.1.43 Header Section must be dark green.');
+vdAssert(($hBy['container'][0]['props']['background']??'')==='#30382a','0.1.43 Header inner Container must be dark green.');
+vdAssert((int)($hBy['text'][0]['geometry']['desktop']['y']??-1)===4,'Header brand must be vertically centred by explicit Y.');
+vdAssert((int)($hBy['menu'][0]['geometry']['desktop']['y']??-1)===4,'Header menu must be vertically centred by explicit Y.');
+$footerRef=LegacyFooterConverter::buildModelFromLegacyFooter('<!-- HANGAR18-FOOTER-START --><footer class="h18-site-footer">© Aalborg Kaserners Veteran Panser- og Køretøjsforening</footer><!-- HANGAR18-FOOTER-END -->',['FooterWidthPercent'=>90,'PrimaryColor'=>'#30382a','LightTextColor'=>'#f2f0e8']);
+$fBy=[]; foreach ($footerRef['nodes'] as $n) { $fBy[$n['type']][]=$n; }
+vdAssert(count($fBy['section']??[])===1,'Footer conversion must create Section.');
+vdAssert(count($fBy['container']??[])===1,'Footer conversion must create Container.');
+vdAssert(count($fBy['text']??[])===1,'Footer conversion must create Text.');
+vdAssert((int)($fBy['section'][0]['geometry']['desktop']['x']??-1)===6,'90 percent Footer must center at X=6.');
+vdAssert((int)($fBy['section'][0]['geometry']['desktop']['w']??-1)===108,'90 percent Footer must be 108/120 units.');
+vdAssert(str_contains((string)($fBy['text'][0]['props']['text']??''),'Aalborg Kaserners'),'Footer text was not extracted from legacy block.');
+
+echo "Visual Designer Manager 0.1.43 model QA PASS\\n";
