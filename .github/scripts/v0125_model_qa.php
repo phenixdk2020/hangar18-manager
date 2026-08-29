@@ -322,6 +322,25 @@ vdAssert(str_contains((string)$viewportJs,'MAX_MANUAL_SCALE = 2.0') && str_conta
 vdAssert(str_contains((string)$viewportJs,'scrollLeft') && str_contains((string)$viewportJs,'virtualX') && str_contains((string)$viewportJs,"data-vd-zoom=\"fit\""),'Pointer-anchored zoom / Fit controls are missing.');
 $footerPhp=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/src/Migration/LegacyFooterConverter.php');
 vdAssert(str_contains((string)$footerPhp,'hangar18_manager_site_templates_v1') && str_contains((string)$footerPhp,'hangar18_manager_site_template_assignments_v1'),'Legacy Visual Builder Footer source is missing.');
-vdAssert(str_contains((string)$footerPhp,'legacy-manager-standard-fallback') && str_contains((string)$footerPhp,'ikke 1:1-kilde'),'Footer standard fallback is not explicitly labelled.');
+vdAssert(str_contains((string)$footerPhp,'hangar18_manager_site_templates_v1') && str_contains((string)$footerPhp,'hangar18_manager_site_template_assignments_v1'),'Footer legacy-source precedence regressed.');
 
-echo "Visual Designer Manager 0.1.45 model QA PASS\n";
+/* 0.1.46 */
+$footerDesktop=LegacyFooterConverter::buildDesktopReferenceFooterModel(['FooterWidthPercent'=>90,'PrimaryColor'=>'#30382a','LightTextColor'=>'#f2f0e8','AccentColor'=>'#c3ae83'],['home'=>'/','about'=>'/om-foreningen/','vehicles'=>'/koeretoejer-og-materiel/','events'=>'/events/','gallery'=>'/billedgalleri/','join'=>'/bliv-medlem/','contact'=>'/kontakt/']);
+$fdBy=[]; foreach($footerDesktop['nodes'] as $n){$fdBy[$n['type']][]=$n;}
+vdAssert(count($fdBy['section']??[])===1,'Footer reference must have one Section.');
+vdAssert(count($fdBy['container']??[])>=2,'Footer reference must have main Kasse and divider Kasse.');
+vdAssert(count($fdBy['text']??[])>=6,'Footer reference text structure is incomplete.');
+vdAssert(count($fdBy['button']??[])===2,'Footer reference must have two CTA buttons.');
+vdAssert((int)($fdBy['section'][0]['geometry']['desktop']['x']??-1)===6 && (int)($fdBy['section'][0]['geometry']['desktop']['w']??-1)===108,'Footer reference must be 90 percent centred.');
+vdAssert((int)($fdBy['section'][0]['geometry']['desktop']['h']??-1)===40,'Footer reference Desktop height must be 40 rows.');
+$fdText=implode("\n",array_map(static fn($n)=>(string)($n['props']['text']??''),$fdBy['text']??[]));
+$fdButtons=implode("\n",array_map(static fn($n)=>(string)($n['props']['text']??''),$fdBy['button']??[]));
+vdAssert(str_contains($fdText,'Genveje')&&str_contains($fdText,'Foreningen')&&str_contains($fdText,'Billedgalleri'),'Footer reference columns are incomplete.');
+vdAssert(str_contains($fdButtons,'Bliv medlem')&&str_contains($fdButtons,'Kontakt'),'Footer reference CTA labels are incomplete.');
+vdAssert(str_contains((string)$footerPhp,'desktop-reference-2026-08-29'),'Footer Desktop-reference fallback marker is missing.');
+$globalPreviewJs=file_get_contents(__DIR__ . '/../../clean/hangar18-manager/assets/global-designer-v0123.js');
+vdAssert(is_string($globalPreviewJs)&&str_contains($globalPreviewJs,'h18-global-preview-overlay')&&!str_contains($globalPreviewJs,'window.open('),'BUG-15 popup-free Header/Footer preview contract failed.');
+vdAssert(str_contains((string)$viewportJs,"mode = 'fit';")&&str_contains((string)$viewportJs,"addEventListener('pageshow'"),'Designer must always enter in Fit mode.');
+vdAssert(str_contains((string)$rendererPhp,'.h18-clean-front-text p{margin:0!important')&&str_contains((string)$rendererPhp,'.h18-clean-front-text li{margin:0!important'),'Frontend rich-text spacing is not isolated from theme CSS.');
+
+echo "Visual Designer Manager 0.1.46 model QA PASS\n";

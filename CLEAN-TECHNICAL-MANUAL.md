@@ -798,3 +798,18 @@ Hvis flere gamle Footer-templates findes uden entydig assignment, må systemet i
 - Manuel zoom forbliver fast ved de samme ændringer.
 - Skift mellem Desktop/Laptop/Mobil går tilbage til `Fit` for den nye virtuelle viewport.
 - Alle pointerbaserede layoutoperationer bruger fortsat den aktuelle viewport-scale til at oversætte skærmpixels til virtuelle layoutkoordinater.
+
+
+## 0.1.46 – Footer/preview/Fit/rich-text parity
+
+### VD-GLOBAL-PREVIEW-001
+Header/Footer lokal preview må ikke kræve browser-popup-tilladelse. Preview vises i en intern overlay/modal og må ikke bruge popup som normalmekanisme.
+
+### VD-FOOTER-REFERENCE-001
+Hvis hverken gammel Visual Header/Footer Builder-kilde eller HANGAR18-FOOTER-shell findes, bruges den godkendte Desktop-reference fra 29-08-2026 som eksplicit visuel fallback. Den må ikke beskrives som 1:1-kildekonvertering.
+
+### VD-CANVAS-START-FIT-001
+Designer starter altid i Fit ved ny editor-entry, reload/pageshow og breakpointskift. 100% og anden manuel zoom er kun sessionens manuelle visningsvalg.
+
+### VD-RICHTEXT-SPACING-001
+Temaets globale CSS må ikke ændre Visual Designer Tekst-elementets paragraph-, liste- eller link-spacing. Designer og frontend ejer disse baselines deterministisk.

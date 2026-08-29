@@ -7,33 +7,29 @@
         }
     }
 
+    function ensurePreviewOverlay() {
+        var overlay=document.getElementById('h18-global-preview-overlay');
+        if (overlay) { return overlay; }
+        overlay=document.createElement('div');
+        overlay.id='h18-global-preview-overlay'; overlay.className='h18-global-preview-overlay'; overlay.hidden=true;
+        overlay.innerHTML='<div class="h18-global-preview-dialog" role="dialog" aria-modal="true" aria-label="Header / Footer preview"><div class="h18-global-preview-bar"><strong>Visual Designer · Header / Footer preview</strong><button type="button" class="button" data-vd-preview-close>Luk</button></div><div class="h18-global-preview-scroll"><div class="h18-global-preview-host"></div></div></div>';
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click',function(event){ if(event.target===overlay||(event.target&&event.target.closest&&event.target.closest('[data-vd-preview-close]'))){ closePreview(); } });
+        document.addEventListener('keydown',function(event){ if(event.key==='Escape'&&!overlay.hidden){ closePreview(); } });
+        return overlay;
+    }
+    function closePreview(){ var overlay=document.getElementById('h18-global-preview-overlay'); if(!overlay)return; overlay.hidden=true; document.body.classList.remove('h18-global-preview-open'); }
     function previewLayout() {
         syncModel();
-        var canvas = document.getElementById('h18-clean-canvas');
-        if (!canvas) { return; }
-        var copy = canvas.cloneNode(true);
-        copy.removeAttribute('id');
-        copy.classList.add('vd-global-preview-canvas');
-        copy.querySelectorAll('.h18-clean-node-header,.h18-clean-resize,.h18-clean-empty-drop,.h18-clean-v018-drop-overlay,.h18-clean-image-edit-frame').forEach(function (node) { node.remove(); });
-        copy.querySelectorAll('.h18-clean-node').forEach(function (node) {
-            node.classList.remove('is-selected', 'is-resizing', 'is-dragging', 'has-layout-overlap', 'h18-clean-v018-drop-target', 'h18-clean-v018-drop-inside');
-            node.style.outline = 'none';
-            node.style.boxShadow = 'none';
-        });
-
-        var win = window.open('', '_blank', 'noopener');
-        if (!win) {
-            window.alert('Browseren blokerede forhåndsvisningsvinduet. Tillad popups for WordPress-admin og prøv igen.');
-            return;
-        }
-        var links = Array.prototype.slice.call(document.querySelectorAll('link[rel="stylesheet"]')).map(function (link) {
-            return '<link rel="stylesheet" href="' + String(link.href).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">';
-        }).join('');
-        win.document.open();
-        win.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Header / Footer preview</title>' + links + '<style>body{margin:0;padding:24px;background:#f0f0f1;font-family:system-ui,sans-serif}.vd-preview-shell{max-width:1440px;margin:0 auto;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.12)}.vd-global-preview-canvas{width:100%;min-height:120px}.vd-global-preview-canvas .h18-clean-node{cursor:default!important}.vd-global-preview-canvas .h18-clean-inner-surface{min-height:100%}.vd-preview-note{max-width:1440px;margin:0 auto 10px;color:#50575e;font-size:13px}</style></head><body><div class="vd-preview-note">Visual Designer · lokal Header/Footer-forhåndsvisning. Temaets shell overtages ikke endnu i 0.1.23.</div><div class="vd-preview-shell"></div></body></html>');
-        win.document.close();
-        var shell = win.document.querySelector('.vd-preview-shell');
-        if (shell) { shell.appendChild(win.document.importNode(copy, true)); }
+        var canvas=document.getElementById('h18-clean-canvas'); if(!canvas)return;
+        var copy=canvas.cloneNode(true); copy.removeAttribute('id'); copy.classList.add('vd-global-preview-canvas');
+        copy.querySelectorAll('.h18-clean-node-header,.h18-clean-resize,.h18-clean-empty-drop,.h18-clean-v018-drop-overlay,.h18-clean-image-edit-frame').forEach(function(node){node.remove();});
+        copy.querySelectorAll('.h18-clean-node').forEach(function(node){node.classList.remove('is-selected','is-resizing','is-dragging','has-layout-overlap','h18-clean-v018-drop-target','h18-clean-v018-drop-inside');node.style.outline='none';node.style.boxShadow='none';});
+        var virtualWidth=parseInt(canvas.getAttribute('data-h18-viewport-width')||'0',10)||canvas.offsetWidth||1440;
+        copy.removeAttribute('data-h18-viewport-scale'); copy.removeAttribute('data-h18-viewport-mode'); copy.style.transform='none'; copy.style.transformOrigin='0 0'; copy.style.width=virtualWidth+'px'; copy.style.maxWidth='none'; copy.style.margin='0';
+        var overlay=ensurePreviewOverlay(); var host=overlay.querySelector('.h18-global-preview-host'); if(!host)return;
+        host.innerHTML=''; host.style.width=virtualWidth+'px'; host.appendChild(copy); overlay.hidden=false; document.body.classList.add('h18-global-preview-open');
+        var scroller=overlay.querySelector('.h18-global-preview-scroll'); if(scroller){scroller.scrollTop=0;scroller.scrollLeft=0;}
     }
 
     function install() {

@@ -9,8 +9,8 @@ use Hangar18\Clean\Model\TemplateLayoutModel;
 
 final class LegacyFooterConverter
 {
-    public const MIGRATION_OPTION='h18_vd_legacy_footer_converted_v0143';
-    public const STATUS_OPTION='h18_vd_legacy_footer_status_v0143';
+    public const MIGRATION_OPTION='h18_vd_legacy_footer_converted_v0146';
+    public const STATUS_OPTION='h18_vd_legacy_footer_status_v0146';
     private const LEGACY_DESIGN_OPTION='hangar18_manager_header_design_v25';
     private const LEGACY_SITE_TEMPLATES_OPTION='hangar18_manager_site_templates_v1';
     private const LEGACY_SITE_ASSIGNMENTS_OPTION='hangar18_manager_site_template_assignments_v1';
@@ -31,9 +31,9 @@ final class LegacyFooterConverter
         $stored=get_option(self::LEGACY_DESIGN_OPTION,[]); $design=is_array($stored)?$stored:[];
         $fallbackUsed=$source['html']==='';
         if ($fallbackUsed) {
-            $model=self::buildReferenceFooterModel($design);
-            $kind='legacy-manager-standard-fallback';
-            $note='Standardfallback fra gammel Manager · v0.1.45 · ikke 1:1-kilde';
+            $model=self::buildDesktopReferenceFooterModel($design,self::referenceFooterLinks());
+            $kind='desktop-reference-2026-08-29';
+            $note='Footer-reference fra godkendt Desktop-screenshot · v0.1.46';
         } else {
             $model=self::buildModelFromLegacyFooter($source['html'],$design);
             $kind=(string)($source['sourceKind']??'legacy-manager-shell-footer');
@@ -111,10 +111,80 @@ final class LegacyFooterConverter
         return LayoutModel::normalize(['schemaVersion'=>LayoutModel::SCHEMA,'units'=>LayoutModel::UNITS,'rowPx'=>LayoutModel::ROW_PX,'nodes'=>$nodes]);
     }
 
+    /**
+     * Deterministic no-legacy fallback based on the real Desktop Footer
+     * reference supplied 2026-08-29. It is a visual reconstruction, not a
+     * claim that the historical source was recovered.
+     *
+     * @param array<string,mixed> $design
+     * @param array<string,string> $links
+     */
+    public static function buildDesktopReferenceFooterModel(array $design=[],array $links=[]): array {
+        $pct=self::footerWidth($design); if ($pct>=100) $pct=90; [$x,$w]=self::centredUnits($pct);
+        $bg=self::color($design['PrimaryColor']??'#30382a','#30382a');
+        $fg=self::color($design['LightTextColor']??'#f2f0e8','#f2f0e8');
+        $accent=self::color($design['AccentColor']??'#c3ae83','#c3ae83');
+        $rows=40;
+        $nodes=[
+            self::node('section-footer-reference-v0146','section','',10,self::geometry([$x,0,$w,$rows],[3,0,114,44],[0,0,120,82]),['background'=>$bg,'radius'=>0,'padding'=>0,'minHeightRows'=>$rows,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('container-footer-reference-v0146','container','section-footer-reference-v0146',10,self::geometry([0,0,120,$rows],[0,0,120,44],[0,0,120,82]),['background'=>$bg,'radius'=>0,'padding'=>0,'minHeightRows'=>$rows,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('text-footer-brand-v0146','text','container-footer-reference-v0146',20,self::geometry([2,5,42,4],[2,5,42,5],[4,4,112,5]),['heading'=>'','headingLevel'=>'h2','text'=>'Aalborg Kaserners Veteran Panser- og Køretøjsforening','align'=>'left','verticalAlign'=>'center','background'=>$bg,'backgroundTransparent'=>true,'textColor'=>$fg,'headingColor'=>$fg,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>18,'fontWeight'=>700,'lineHeight'=>1.25,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('text-footer-description-v0146','text','container-footer-reference-v0146',30,self::geometry([2,10,36,7],[2,11,40,8],[4,10,112,10]),['heading'=>'','headingLevel'=>'h2','text'=>'Bevaring, restaurering og levende formidling af militærhistorisk materiel med særlig tilknytning til Aalborg Kaserner.','align'=>'left','verticalAlign'=>'top','background'=>$bg,'backgroundTransparent'=>true,'textColor'=>$fg,'headingColor'=>$fg,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>14,'fontWeight'=>400,'lineHeight'=>1.45,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('text-footer-shortcuts-heading-v0146','text','container-footer-reference-v0146',40,self::geometry([49,5,18,3],[47,5,20,3],[4,23,112,3]),['heading'=>'','headingLevel'=>'h2','text'=>'Genveje','align'=>'left','verticalAlign'=>'center','background'=>$bg,'backgroundTransparent'=>true,'textColor'=>$accent,'headingColor'=>$accent,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>14,'fontWeight'=>600,'lineHeight'=>1.2,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('text-footer-shortcuts-v0146','text','container-footer-reference-v0146',50,self::geometry([49,9,20,18],[47,9,22,19],[4,27,112,18]),['heading'=>'','headingLevel'=>'h2','text'=>self::referenceShortcutHtml($links),'align'=>'left','verticalAlign'=>'top','background'=>$bg,'backgroundTransparent'=>true,'textColor'=>$fg,'headingColor'=>$fg,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>14,'fontWeight'=>400,'lineHeight'=>2.05,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('text-footer-association-heading-v0146','text','container-footer-reference-v0146',60,self::geometry([84,5,32,3],[80,5,38,3],[4,48,112,3]),['heading'=>'','headingLevel'=>'h2','text'=>'Foreningen','align'=>'left','verticalAlign'=>'center','background'=>$bg,'backgroundTransparent'=>true,'textColor'=>$accent,'headingColor'=>$accent,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>14,'fontWeight'=>600,'lineHeight'=>1.2,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+            self::node('button-footer-join-v0146','button','container-footer-reference-v0146',70,self::geometry([84,8,32,6],[80,8,38,6],[4,52,112,6]),['text'=>'Bliv medlem','linkType'=>'url','url'=>self::referenceLink($links,'join','/bliv-medlem/'),'targetBlank'=>false,'autoSize'=>false,'placementMode'=>'normal','zIndex'=>20,'background'=>$accent,'textColor'=>'#1d2327','hoverBackground'=>$accent,'hoverTextColor'=>'#1d2327','focusColor'=>$fg,'paddingX'=>12,'paddingY'=>8,'radius'=>5,'borderWidth'=>0,'borderColor'=>$accent,'gapX'=>0,'gapY'=>0]),
+            self::node('button-footer-contact-v0146','button','container-footer-reference-v0146',80,self::geometry([84,16,32,6],[80,16,38,6],[4,60,112,6]),['text'=>'Kontakt','linkType'=>'url','url'=>self::referenceLink($links,'contact','/kontakt/'),'targetBlank'=>false,'autoSize'=>false,'placementMode'=>'normal','zIndex'=>20,'background'=>$bg,'textColor'=>$fg,'hoverBackground'=>$bg,'hoverTextColor'=>$fg,'focusColor'=>$accent,'paddingX'=>12,'paddingY'=>8,'radius'=>5,'borderWidth'=>1,'borderColor'=>$accent,'gapX'=>0,'gapY'=>0]),
+            self::node('container-footer-divider-v0146','container','container-footer-reference-v0146',90,self::geometry([2,31,116,1],[2,34,116,1],[4,70,112,1]),['background'=>'#596052','radius'=>0,'padding'=>0,'minHeightRows'=>1,'borderWidth'=>0,'borderColor'=>'#596052','gapX'=>0,'gapY'=>0]),
+            self::node('text-footer-copyright-v0146','text','container-footer-reference-v0146',100,self::geometry([35,34,50,4],[30,37,60,4],[4,74,112,5]),['heading'=>'','headingLevel'=>'h2','text'=>'© 2026 Aalborg Kaserners Veteran Panser- og Køretøjsforening','align'=>'center','verticalAlign'=>'center','background'=>$bg,'backgroundTransparent'=>true,'textColor'=>$fg,'headingColor'=>$fg,'padding'=>0,'radius'=>0,'fontFamily'=>'system','fontSize'=>11,'fontWeight'=>400,'lineHeight'=>1.3,'letterSpacing'=>0,'borderWidth'=>0,'borderColor'=>'#000000','gapX'=>0,'gapY'=>0]),
+        ];
+        return LayoutModel::normalize(['schemaVersion'=>LayoutModel::SCHEMA,'units'=>LayoutModel::UNITS,'rowPx'=>LayoutModel::ROW_PX,'nodes'=>$nodes]);
+    }
+
     /** @param array<string,mixed> $design */
     public static function buildReferenceFooterModel(array $design=[]): array {
-        $pct=self::footerWidth($design); if ($pct>=100) $pct=90; [$x,$w]=self::centredUnits($pct);
-        return self::model($x,$w,12,self::color($design['PrimaryColor']??'#30382a','#30382a'),self::color($design['LightTextColor']??'#f2f0e8','#f2f0e8'),'Aalborg Kaserners Veteran Panser- og Køretøjsforening');
+        return self::buildDesktopReferenceFooterModel($design,[]);
+    }
+
+    /** @param array<string,string> $links */
+    private static function referenceShortcutHtml(array $links): string {
+        $items=[['home','Hjem','/'],['about','Om','/om-foreningen/'],['vehicles','Køretøjer','/koeretoejer-og-materiel/'],['events','Events','/events/'],['gallery','Billedgalleri','/billedgalleri/']];
+        $rows=[];
+        foreach ($items as $item) {
+            [$key,$label,$fallback]=$item; $url=self::referenceLink($links,$key,$fallback);
+            $rows[]='<a href="'.htmlspecialchars($url,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8').'">'.htmlspecialchars($label,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8').'</a>';
+        }
+        return implode("<br>\n",$rows);
+    }
+
+    /** @param array<string,string> $links */
+    private static function referenceLink(array $links,string $key,string $fallback): string {
+        $url=esc_url_raw((string)($links[$key]??'')); return $url!==''?$url:$fallback;
+    }
+
+    /** @return array<string,string> */
+    private static function referenceFooterLinks(): array {
+        return [
+            'home'=>self::referencePageUrl([], '/'),
+            'about'=>self::referencePageUrl(['om-foreningen','om'], '/om-foreningen/'),
+            'vehicles'=>self::referencePageUrl(['koeretoejer-og-materiel','koretojer-og-materiel','koeretoejer'], '/koeretoejer-og-materiel/'),
+            'events'=>self::referencePageUrl(['events'], '/events/'),
+            'gallery'=>self::referencePageUrl(['billedgalleri'], '/billedgalleri/'),
+            'join'=>self::referencePageUrl(['bliv-medlem'], '/bliv-medlem/'),
+            'contact'=>self::referencePageUrl(['kontakt'], '/kontakt/'),
+        ];
+    }
+
+    /** @param array<int,string> $slugs */
+    private static function referencePageUrl(array $slugs,string $fallbackPath): string {
+        if (function_exists('get_page_by_path') && function_exists('get_permalink')) {
+            foreach ($slugs as $slug) {
+                $page=get_page_by_path($slug,OBJECT,'page');
+                if ($page instanceof \WP_Post) { $url=get_permalink($page); if (is_string($url) && $url!=='') return esc_url_raw($url); }
+            }
+        }
+        if (function_exists('home_url')) return esc_url_raw((string)home_url($fallbackPath));
+        return $fallbackPath;
     }
     private static function model(int $x,int $w,int $rows,string $bg,string $fg,string $text): array {
         $geometry=self::geometry([$x,0,$w,$rows],[$x,0,$w,$rows],[0,0,120,$rows]);
@@ -141,7 +211,7 @@ final class LegacyFooterConverter
             ]);
         }
         return [
-            'html'=>'','pageId'=>0,'pageTitle'=>'','sourceKind'=>'legacy-manager-standard-fallback',
+            'html'=>'','pageId'=>0,'pageTitle'=>'','sourceKind'=>'desktop-reference-2026-08-29',
             'builderFound'=>!empty($builder['builderFound']),
             'builderAmbiguous'=>!empty($builder['builderAmbiguous']),
             'builderCandidates'=>$builder['builderCandidates']??[],

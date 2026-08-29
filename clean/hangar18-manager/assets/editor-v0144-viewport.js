@@ -190,6 +190,7 @@
             bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['data-h18-clean-device', 'class'] });
         }
         window.addEventListener('resize', function () { if (mode === 'fit') { schedule(); } }, { passive: true });
+        window.addEventListener('pageshow', function () { mode = 'fit'; window.requestAnimationFrame(setFit); }, { passive: true });
         document.addEventListener('click', function (event) {
             if (!event.target || !event.target.closest) { return; }
             if (event.target.closest('.h18-clean-device-button')) {
@@ -204,6 +205,8 @@
     }
     function install() {
         if (!ensureStage()) { return; }
+        mode = 'fit';
+        currentScale = 1;
         setFit();
         installWheel();
         installObservers();

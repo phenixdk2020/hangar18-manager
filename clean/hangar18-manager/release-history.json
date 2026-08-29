@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.46",
+    "date": "2026-08-29",
+    "items": [
+      "BUG-15: Header/Footer-forhåndsvisning åbner nu som intern Visual Designer-overlay og kræver ikke browser-popup-tilladelse.",
+      "BUG-16: Manglende legacy Footer bruger Desktop-reference fra 29-08-2026 med tre indholdsområder, CTA-knapper, skillelinje og copyright i stedet for den simple standardfallback.",
+      "Canvas starter altid i Fit ved editor-entry/pageshow og breakpointskift; 100% er fortsat kun manuel zoom.",
+      "Rich-text spacing er isoleret fra temaets paragraph/list/link CSS, så Designer og frontend ikke får forskellige ekstra linje-/afsnitsafstande.",
+      "Theme Shell forbliver OFF; Footer Desktop parity afventer bruger-QA før Menu bliver næste hovedopgave."
+    ]
+  },
+  {
     "version": "0.1.45",
     "date": "2026-08-29",
     "items": [

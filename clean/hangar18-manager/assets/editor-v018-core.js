@@ -930,6 +930,7 @@
             const body = document.createElement('div');
             body.className = 'h18-clean-text-body';
             body.innerHTML = richPreviewHtml(String(node.props.text || 'Ny tekst')) || 'Tekst';
+            body.querySelectorAll('a').forEach(function (link) { link.addEventListener('click', function (event) { event.preventDefault(); }); });
             wrap.appendChild(body);
         } else if (node.type === 'button') {
             wrap.classList.add('h18-clean-node-preview--button');
