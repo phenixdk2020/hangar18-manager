@@ -1,0 +1,74 @@
+name: Inspect test2 home for v0.1.52
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-test2-home-v0152.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch test2 home read-only
+        run: |
+          set -euo pipefail
+          curl -fsSL --max-time 30 -A 'Visual-Designer-Manager-QA/0.1.52' https://test2.hangar18.dk/ -o /tmp/home.html
+          echo "bytes=$(wc -c </tmp/home.html)"
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urljoin
+          import re
+          html=Path('/tmp/home.html').read_text(encoding='utf-8',errors='replace')
+          print('--- stylesheet links ---')
+          for m in re.finditer(r'<link[^>]+(?:rel=["\']stylesheet["\'][^>]+href=["\']([^"\']+)|href=["\']([^"\']+)["\'][^>]+rel=["\']stylesheet["\'])',html,re.I):
+              print(urljoin('https://test2.hangar18.dk/',m.group(1) or m.group(2)))
+          print('--- background/image refs ---')
+          for m in re.finditer(r'(?:src|data-src|style)=["\']([^"\']*(?:jpg|jpeg|png|webp)[^"\']*)["\']',html,re.I):
+              print(m.group(0)[:300])
+          print('--- elements around target text ---')
+          targets=['Bevaring, restaurering','Om foreningen','Læs om foreningen']
+          for t in targets:
+              i=html.lower().find(t.lower())
+              print('\nTARGET',t,'at',i)
+              if i>=0: print(html[max(0,i-1800):i+2200])
+          print('--- likely content class/id names ---')
+          names=[]
+          for m in re.finditer(r'<(?:section|div|main|article|figure|img|a|h[1-6]|p)\b([^>]*)>',html,re.I):
+              attrs=m.group(1)
+              cls=re.search(r'class=["\']([^"\']+)',attrs,re.I)
+              iid=re.search(r'id=["\']([^"\']+)',attrs,re.I)
+              if cls or iid:
+                  s=('id='+iid.group(1)+' ' if iid else '')+('class='+cls.group(1) if cls else '')
+                  if any(k in s.lower() for k in ['hero','home','banner','content','section','wp-block','entry','front']):
+                      names.append(s)
+          for s in dict.fromkeys(names): print(s)
+          PY
+      - name: Fetch same-origin stylesheets and inspect relevant CSS
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from urllib.parse import urljoin,urlparse
+          import re,subprocess
+          html=Path('/tmp/home.html').read_text(encoding='utf-8',errors='replace')
+          urls=[]
+          for m in re.finditer(r'<link[^>]+(?:rel=["\']stylesheet["\'][^>]+href=["\']([^"\']+)|href=["\']([^"\']+)["\'][^>]+rel=["\']stylesheet["\'])',html,re.I):
+              u=urljoin('https://test2.hangar18.dk/',m.group(1) or m.group(2))
+              if urlparse(u).netloc=='test2.hangar18.dk': urls.append(u)
+          for n,u in enumerate(dict.fromkeys(urls)):
+              out=f'/tmp/style{n}.css'
+              subprocess.run(['curl','-fsSL','--max-time','20',u,'-o',out],check=False)
+              p=Path(out)
+              if not p.exists(): continue
+              css=p.read_text(encoding='utf-8',errors='replace')
+              print('\n--- CSS',u,'bytes',len(css),'---')
+              for key in ['background-image','Bevaring','hero','banner','entry-content','home','front']:
+                  for m in list(re.finditer(key,css,re.I))[:8]:
+                      print(css[max(0,m.start()-500):m.start()+1000])
+          PY
