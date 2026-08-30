@@ -54,3 +54,10 @@
 
 /* 0.1.46 rich-text spacing parity with frontend */
 .h18-clean-text-body p{margin:0!important;padding:0!important}.h18-clean-text-body ul,.h18-clean-text-body ol{margin:0!important;padding-top:0!important;padding-bottom:0!important}.h18-clean-text-body li{margin:0!important}.h18-clean-text-body a{display:inline!important;margin:0!important;padding:0!important;color:inherit;text-decoration:inherit}
+
+
+/* 0.1.61 keyboard + clipboard productivity */
+.h18-vd-productivity{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.h18-vd-clipboard-status{font-size:12px;color:#50575e;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h18-vd-nudge-inspector{margin:12px 0;padding:10px;border:1px solid #dcdcde;border-radius:6px;background:#f9f9f9}
+.h18-vd-nudge-inspector>strong{display:block;margin-bottom:6px}

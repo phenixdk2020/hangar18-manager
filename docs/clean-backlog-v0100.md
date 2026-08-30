@@ -1,8 +1,15 @@
 # Hangar18 Manager Clean v0.1.x – canonical clean backlog
 
-**Statusdato:** 25. august 2026  
+**Statusdato:** 30. august 2026  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** eksisterende root-plugin v0.9.x må bruges som specifikation/migrationskilde, men ingen gammel editor-runtime må kopieres ind i clean-pluginet.
+
+## Aktuel milepælsstatus · v0.1.61
+
+- **HEADER/FOOTER — FÆRDIG:** multi-template baseline, side-overrides, `Ingen`, standardvalg, migration, versionshistorik og delt Preview/frontend-resolver er lukket som regression-gate.
+- **VD-KEYBOARD-001 — IMPLEMENTERET:** markeret element kan finjusteres 1 px med piletaster og 10 px med `Shift + pil`; offset X/Y er canonical og kan nulstilles i Inspector.
+- **VD-CLIPBOARD-001 — IMPLEMENTERET:** `Ctrl/Cmd+C`, `Ctrl/Cmd+V` og `Ctrl/Cmd+D`, subtree-kopi af Kasse/Sektion, nye IDs/parentId-remap og clipboard mellem Designer-sider.
+- **Næste generelle elementpakke:** Spacer, Divider, Ikon og Tabel/Dataliste. Dynamiske Køretøjer/Events/Billedgalleri følger derefter den separate modularkitektur.
 
 ## Formål
 

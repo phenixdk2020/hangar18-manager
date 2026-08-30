@@ -228,6 +228,10 @@ final class Renderer
         $id = esc_attr((string) $node['id']);
         $type = (string) $node['type'];
         $props = is_array($node['props'] ?? null) ? $node['props'] : [];
+        $offsetX = max(-2000, min(2000, (int) ($props['offsetX'] ?? 0)));
+        $offsetY = max(-2000, min(2000, (int) ($props['offsetY'] ?? 0)));
+        $offsetStyle = ($offsetX !== 0 || $offsetY !== 0) ? 'transform:translate(' . $offsetX . 'px,' . $offsetY . 'px);' : '';
+        $style .= $offsetStyle;
         $borderStyle = self::borderStyle($props);
         $spacingStyle = self::spacingStyle($props);
         $radius = max(0, min(100, (int) ($props['radius'] ?? 0)));
@@ -350,7 +354,7 @@ final class Renderer
                 $widthPct = ($w / LayoutModel::UNITS) * 100;
                 $zIndex = max(1, min(200, (int) ($props['zIndex'] ?? 20)));
                 $heightCss = $h > 0 ? 'height:' . ($h * LayoutModel::ROW_PX) . 'px;min-height:' . ($h * LayoutModel::ROW_PX) . 'px;' : '';
-                $layoutStyle = 'position:absolute;left:' . $leftPct . '%;top:' . ($y * LayoutModel::ROW_PX) . 'px;width:' . $widthPct . '%;' . $heightCss . 'z-index:' . $zIndex . ';grid-column:auto;grid-row:auto;margin-top:0;';
+                $layoutStyle = 'position:absolute;left:' . $leftPct . '%;top:' . ($y * LayoutModel::ROW_PX) . 'px;width:' . $widthPct . '%;' . $heightCss . 'z-index:' . $zIndex . ';grid-column:auto;grid-row:auto;margin-top:0;' . $offsetStyle;
             }
             $buttonStyle = $layoutStyle . $spacingStyle
                 . '--h18-btn-bg:' . $background . ';--h18-btn-color:' . $textColor . ';--h18-btn-hover-bg:' . $hoverBackground . ';--h18-btn-hover-color:' . $hoverTextColor . ';--h18-btn-focus:' . $focusColor . ';padding:0;overflow:visible;';

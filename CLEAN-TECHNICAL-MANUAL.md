@@ -949,3 +949,27 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - `autoSize=false` bevarer manuel bredde/højde og tillader normal tekstombrydning.
 - Temaets link-/button-typografi må ikke ændre den synlige størrelse på et Visual Designer Button-element.
 - Sektion/Kasse-geometri, Menu, Billede og Tekst ændres ikke af denne kontrakt.
+
+## 0.1.61 – Keyboard, Clipboard og Header/Footer baseline
+
+### VD-KEYBOARD-001
+- Et markeret Designer-element kan finjusteres visuelt uden at ændre 120-unit-gridpositionen.
+- `Pil` ændrer canonical `offsetX`/`offsetY` med 1 px; `Shift + pil` ændrer med 10 px.
+- Offset er begrænset til ±2000 px og renderes identisk i Designer og frontend via `transform: translate(...)`.
+- Gentagne piletastetryk indtil keyup grupperes som én Undo/Redo-transaktion.
+- Tastaturgenveje må ikke overtage piletaster/Ctrl-genveje når fokus står i input, textarea, select eller contenteditable.
+
+### VD-CLIPBOARD-001
+- `Ctrl/Cmd+C` kopierer valgt element; `Ctrl/Cmd+V` indsætter; `Ctrl/Cmd+D` duplikerer uden at overskrive clipboard.
+- Kasse/Sektion kopieres som komplet subtree med alle descendants.
+- Ved indsættelse oprettes nye unikke element-ID'er, og interne `parentId`-referencer remappes til de nye IDs.
+- Clipboard lagres bruger-specifikt i browserens localStorage og overlever navigation mellem Visual Designer-sider på samme website; der findes in-memory fallback.
+- Root for en indsættelse placeres på næste frie Y-position i mål-parenten, mens subtree-intern geometri, props, billeder, links og styling bevares.
+- Indsæt/Duplikér er én Undo/Redo-transaktion.
+
+### VD-HEADER-FOOTER-COMPLETE-001
+- Multi-template Header/Footer baseline er FÆRDIG fra v0.1.61.
+- `TemplateLayoutModel::resolveChoiceId()` er fælles resolverkontrakt for frontend og composite Preview.
+- Inaktiv stored default ignoreres; resolveren falder deterministisk tilbage til første aktive template eller tom fallback.
+- `Ingen Header/Footer` stopper resolveren eksplicit.
+- `.github/scripts/v0161_header_footer_qa.php` er permanent Definition-of-Done regression gate.

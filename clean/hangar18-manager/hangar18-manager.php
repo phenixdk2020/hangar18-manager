@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.60
+ * Version: 0.1.61
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.60');
+define('H18_CLEAN_VERSION', '0.1.61');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -99,10 +99,13 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         $templateId = isset($_GET['template']) ? sanitize_key((string) $_GET['template']) : '';
         if ($templateId === '' || !\VisualDesignerManager\Model\TemplateLayoutModel::exists($templateId, $part)) { $templateId = \VisualDesignerManager\Model\TemplateLayoutModel::defaultId($part); }
         $model = $templateId !== '' ? \VisualDesignerManager\Model\TemplateLayoutModel::model($templateId) : \VisualDesignerManager\Model\LayoutModel::empty();
+        $templateMeta = $templateId !== '' ? \VisualDesignerManager\Model\TemplateLayoutModel::meta($templateId) : null;
+        $contextLabel = is_array($templateMeta) ? (string) ($templateMeta['name'] ?? ($part === 'header' ? 'Header' : 'Footer')) : ($part === 'header' ? 'Header' : 'Footer');
     } else {
         $model = $postId > 0 && get_post_type($postId) === 'page'
             ? \VisualDesignerManager\Model\LayoutModel::get($postId)
             : \VisualDesignerManager\Model\LayoutModel::empty();
+        $contextLabel = $postId > 0 ? (string) get_the_title($postId) : 'Visual Designer';
     }
 
     $menuPayload = array_values(array_map(static function ($menu): array {
@@ -142,6 +145,8 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'units' => \VisualDesignerManager\Model\LayoutModel::UNITS,
         'rowPx' => \VisualDesignerManager\Model\LayoutModel::ROW_PX,
         'postId' => $postId,
+        'userId' => get_current_user_id(),
+        'contextLabel' => $contextLabel,
         'initialModel' => $model,
         'pages' => array_values(array_map(static function ($page): array { return ['id' => (int) $page->ID, 'title' => (string) $page->post_title]; }, get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC', 'post_status' => ['publish', 'draft', 'pending', 'private', 'future']]))),
         'menus' => $menuPayload,

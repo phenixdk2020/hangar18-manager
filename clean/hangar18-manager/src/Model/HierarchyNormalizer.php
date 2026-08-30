@@ -156,6 +156,8 @@ final class HierarchyNormalizer
             'borderColor' => '#000000',
             'gapX' => $gapX,
             'gapY' => $gapY,
+            'offsetX' => 0,
+            'offsetY' => 0,
         ];
     }
 

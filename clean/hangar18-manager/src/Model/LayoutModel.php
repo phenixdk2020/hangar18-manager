@@ -354,6 +354,8 @@ final class LayoutModel
             'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
             'gapX' => self::clamp($raw['gapX'] ?? 0, 0, 200, 0),
             'gapY' => self::clamp($raw['gapY'] ?? 0, 0, 200, 0),
+            'offsetX' => self::clamp($raw['offsetX'] ?? 0, -2000, 2000, 0),
+            'offsetY' => self::clamp($raw['offsetY'] ?? 0, -2000, 2000, 0),
         ];
     }
 

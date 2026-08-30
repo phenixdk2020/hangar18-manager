@@ -128,7 +128,7 @@ final class EditorController
         echo '</select></label><label>Footer <select name="footer_template_choice">';
         echo '<option value="auto"' . selected($footerChoice, 'auto', false) . '>Automatisk / standard</option><option value="none"' . selected($footerChoice, 'none', false) . '>Ingen Footer</option>';
         foreach ($footerTemplates as $template) { if (!empty($template['active'])) { echo '<option value="' . esc_attr((string) $template['id']) . '"' . selected($footerChoice, (string) $template['id'], false) . '>' . esc_html((string) $template['name']) . '</option>'; } }
-        echo '</select></label><span class="description">Header og Footer vælges uafhængigt. Frontend-overtagelse aktiveres først med Theme-shell.</span></section>';
+        echo '</select></label><span class="description">Header og Footer vælges uafhængigt. Theme-shell er aktiv på Visual Designer-sider; Automatisk bruger den aktive website-standard.</span></section>';
 
         echo '<div class="h18-clean-toolbar">';
         $isPublished = (string) $post->post_status === 'publish';
@@ -499,10 +499,7 @@ final class EditorController
     {
         $part = sanitize_key($part) === 'footer' ? 'footer' : 'header';
         $choice = sanitize_key($choice);
-        if ($choice === 'none') { return null; }
-        $id = $choice !== '' && $choice !== 'auto' && TemplateLayoutModel::exists($choice, $part)
-            ? $choice
-            : TemplateLayoutModel::defaultId($part);
+        $id = TemplateLayoutModel::resolveChoiceId($part, $choice);
         if ($id === '' || !TemplateLayoutModel::exists($id, $part)) { return null; }
         return TemplateLayoutModel::model($id);
     }

@@ -164,7 +164,10 @@ final class TemplateLayoutModel
         $raw = get_option(self::DEFAULTS_OPTION, []);
         $id = is_array($raw) ? self::id($raw[$type] ?? '') : '';
         if ($id !== '' && self::exists($id, $type)) {
-            return $id;
+            $meta = self::meta($id);
+            if ($meta && !empty($meta['active'])) {
+                return $id;
+            }
         }
         foreach (self::allWithoutDefaultRecursion($type) as $row) {
             if (!empty($row['active'])) {
@@ -277,22 +280,28 @@ final class TemplateLayoutModel
         update_post_meta($postId, $metaKey, $choice);
     }
 
-    public static function resolveId(int $postId, string $type): string
+    public static function resolveChoiceId(string $type, string $choice): string
     {
         $type = self::type($type);
-        $choice = self::pageChoice($postId, $type);
+        $choice = sanitize_key($choice);
         if ($choice === 'none') {
             return '';
         }
-        if ($choice !== 'auto') {
+        if ($choice !== '' && $choice !== 'auto') {
             $meta = self::meta($choice);
-            if ($meta && !empty($meta['active'])) {
+            if ($meta && ($meta['type'] ?? '') === $type && !empty($meta['active'])) {
                 return $choice;
             }
         }
         $default = self::defaultId($type);
         $meta = $default !== '' ? self::meta($default) : null;
         return $meta && !empty($meta['active']) ? $default : '';
+    }
+
+    public static function resolveId(int $postId, string $type): string
+    {
+        $type = self::type($type);
+        return self::resolveChoiceId($type, self::pageChoice($postId, $type));
     }
 
     /** @param array<string,mixed> $model @param array<string,mixed> $settings */

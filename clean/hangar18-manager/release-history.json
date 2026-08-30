@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "0.1.61",
+      "date": "2026-08-30",
+      "items": [
+        "VD-KEYBOARD-001: Pil flytter valgt element 1 px visuelt; Shift+pil flytter 10 px via canonical offsetX/offsetY.",
+        "VD-CLIPBOARD-001: Ctrl/Cmd+C, V og D understøtter subtree-kopi, cross-page clipboard, nye IDs og parentId-remap.",
+        "Piletastsekvenser og Paste/Duplicate er grupperede Undo/Redo-transaktioner.",
+        "Header/Footer multi-template baseline er markeret FÆRDIG.",
+        "Preview og frontend deler resolveChoiceId; inaktive defaults/templates vælges ikke automatisk.",
+        "Header/Footer Definition of Done er permanent release-regression gate."
+      ]
+    },
+    {
       "version": "0.1.60",
       "date": "2026-08-30",
       "items": [

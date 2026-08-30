@@ -1,7 +1,7 @@
 # Visual Designer – Header, Footer, Menu og Theme
 
-**Statusdato:** 26. august 2026  
-**Status:** Godkendt målarkitektur under implementation  
+**Statusdato:** 30. august 2026  
+**Status:** FÆRDIG baseline · v0.1.61  
 **Produkt:** Visual Designer / Visual Designer Manager
 
 ## 1. Grundprincip
@@ -470,3 +470,20 @@ Funktionen er ikke grøn/Klar før følgende er opfyldt:
 - eksisterende fase-1 Header/Footer migreres uden datatab.
 
 Denne fil er den autoritative detaljespecifikation for grænsen mellem Header, Footer, Menu og Theme.
+
+## 15. Baseline lukket i v0.1.61
+
+Multi-template Header/Footer er markeret **FÆRDIG** som produktionsbaseline i v0.1.61.
+
+Definition of Done i afsnit 14 er nu en permanent regression gate og verificeres af `.github/scripts/v0161_header_footer_qa.php` samt release-workflowen:
+
+- flere samtidige Header- og Footer-templates;
+- stabilt template-ID, omdøbning og duplikering;
+- uafhængig versionshistorik;
+- aktiv website-standard Header og Footer;
+- uafhængigt sidevalg med `Automatisk`, konkret template og `Ingen`;
+- én delt deterministisk resolver for frontend og composite Preview;
+- inaktive templates vælges ikke automatisk;
+- fase-1 Header/Footer migreres til `Header – Standard` / `Footer – Standard` uden model- eller versionstab.
+
+Assignment-regler, Export/Import, anvendelsestællere og nye generelle elementtyper som Ikon/Divider/Spacer er fremtidige udvidelser og genåbner ikke den afsluttede Header/Footer-baseline. Fejl i ovenstående Definition of Done gør derimod milepælen rød igen.
