@@ -91,7 +91,7 @@ jobs:
           set -euo pipefail
           git config user.name 'phenixdk2020'
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
-          git add clean/hangar18-manager clean-release-notes.html CLEAN-TECHNICAL-MANUAL.md docs/v0157-status.md
+          git add clean/hangar18-manager clean-release-notes.html CLEAN-TECHNICAL-MANUAL.md docs/v0157-status.md .github/scripts/hierarchy_normalizer_qa.php .github/scripts/v0125_model_qa.php
           if git diff --cached --quiet; then echo 'No implementation changes'; exit 0; fi
           git commit -m 'Fix menu save and runtime identity in Visual Designer Manager 0.1.57'
           git pull --rebase origin main
