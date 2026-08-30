@@ -45,8 +45,8 @@ final class NavigationController
         if (!current_user_can('edit_theme_options') || sanitize_key((string) ($_GET['page'] ?? '')) !== 'h18-clean-menu') {
             return;
         }
-        wp_enqueue_style('h18-clean-menu-v0154', H18_CLEAN_URL . 'assets/admin-v0154-menu.css', [], H18_CLEAN_VERSION);
-        wp_enqueue_script('h18-clean-menu-v0154', H18_CLEAN_URL . 'assets/admin-v0154-menu.js', [], H18_CLEAN_VERSION, true);
+        wp_enqueue_style('h18-clean-menu-v0156', H18_CLEAN_URL . 'assets/admin-v0156-menu.css', [], H18_CLEAN_VERSION);
+        wp_enqueue_script('h18-clean-menu-v0156', H18_CLEAN_URL . 'assets/admin-v0156-menu.js', [], H18_CLEAN_VERSION, true);
     }
 
     public static function render(): void
@@ -58,26 +58,52 @@ final class NavigationController
             $selectedId = (int) $menus[0]->term_id;
         }
         $selected = $selectedId > 0 ? wp_get_nav_menu_object($selectedId) : false;
+        if (!$selected instanceof \WP_Term && !empty($menus)) {
+            $selectedId = (int) $menus[0]->term_id;
+            $selected = wp_get_nav_menu_object($selectedId);
+        }
         $history = self::history();
         $selectedSnapshot = sanitize_text_field((string) wp_unslash($_GET['snapshot'] ?? ''));
 
-        echo '<div class="wrap h18-manager-admin">';
-        echo '<h1>Menu / Navigation</h1>';
-        echo '<p class="h18-manager-description">Administrér menupunkter her med samme WordPress-menu som datakilde på frontend. Visual Designer styrer kun udseende og responsive visning — der oprettes aldrig en parallel menustruktur.</p>';
+        echo '<div class="wrap h18-manager-admin h18-menu-visual-admin" data-vd-menu-root>';
+        echo '<h1>Menu</h1>';
+        echo '<p class="h18-manager-description">Byg sidens navigation ved at flytte og redigere de menupunkter, besøgende faktisk ser. Visual Designer styrer udseendet; WordPress-menuen er fortsat den eneste datakilde.</p>';
         self::notice();
 
-        echo '<div class="h18-manager-two-col">';
-        self::renderMenuList($menus, $selectedId);
-        echo '<section class="h18-manager-card"><h2>Theme locations</h2>';
-        self::renderLocations($menus);
-        echo '<p class="description">En theme-location kobler navigationens data til temaets runtime. Det visuelle menu-design skal ikke ligge i temaet.</p></section>';
-        echo '</div>';
+        if (!$menus) {
+            echo '<section class="h18-manager-card h18-menu-empty"><h2>Opret din første menu</h2><p>Start med én hovedmenu. Når den er oprettet, kan du vælge publicerede sider med få klik og trække dem i den ønskede rækkefølge.</p>';
+            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_CREATE) . '">';
+            wp_nonce_field('h18_clean_nav_create');
+            echo '<label><strong>Navn</strong><input class="regular-text" name="menu_name" value="Hovedmenu" required></label> <button class="button button-primary" type="submit">Opret Hovedmenu</button></form></section>';
+            echo '</div>';
+            return;
+        }
+
+        echo '<section class="h18-manager-card h18-menu-picker"><div><span class="h18-menu-kicker">Aktuel menu</span><h2>' . esc_html($selected instanceof \WP_Term ? (string) $selected->name : 'Menu') . '</h2></div>';
+        if (count($menus) > 1) {
+            echo '<form method="get"><input type="hidden" name="page" value="h18-clean-menu"><label><span class="screen-reader-text">Skift menu</span><select name="menu_id" onchange="this.form.submit()">';
+            foreach ($menus as $menu) {
+                echo '<option value="' . esc_attr((string) $menu->term_id) . '"' . selected($selectedId, (int) $menu->term_id, false) . '>' . esc_html((string) $menu->name) . '</option>';
+            }
+            echo '</select></label></form>';
+        } else {
+            echo '<span class="h18-manager-badge is-ok">Hovedmenu</span>';
+        }
+        echo '</section>';
 
         if ($selected instanceof \WP_Term) {
             self::renderSelectedMenu((int) $selected->term_id, (string) $selected->name);
         }
 
+        echo '<details class="h18-manager-card h18-menu-advanced"' . ($selectedSnapshot !== '' ? ' open' : '') . '><summary><strong>⚙ Avancerede indstillinger</strong><span>Flere menuer, theme-locations og versionshistorik</span></summary><div class="h18-menu-advanced-body">';
+        echo '<div class="h18-manager-two-col">';
+        self::renderMenuList($menus, $selectedId);
+        echo '<section class="h18-manager-card"><h2>Theme locations</h2>';
+        self::renderLocations($menus);
+        echo '<p class="description">Theme locations er en teknisk WordPress-kobling. Visual Designer Menu-elementet kan fortsat vælge menuen direkte.</p></section>';
+        echo '</div>';
         self::renderHistory($history, $selectedSnapshot);
+        echo '</div></details>';
         echo '</div>';
     }
 
@@ -103,26 +129,71 @@ final class NavigationController
         $menuId = absint($_POST['menu_id'] ?? 0);
         check_admin_referer('h18_clean_nav_add_' . $menuId);
         self::requireMenu($menuId);
-        $kind = sanitize_key((string) ($_POST['item_kind'] ?? 'page'));
-        self::snapshot('Før tilføjelse af menupunkt');
+        $kind = sanitize_key((string) ($_POST['item_kind'] ?? 'pages'));
 
-        if ($kind === 'page') {
-            $pageId = absint($_POST['page_id'] ?? 0);
-            $page = get_post($pageId);
-            if (!$page instanceof \WP_Post || $page->post_type !== 'page') {
-                wp_die(esc_html__('Ugyldig side.', 'hangar18-manager-clean'));
+        if ($kind === 'pages' || $kind === 'page') {
+            $pageIds = $kind === 'page'
+                ? [absint($_POST['page_id'] ?? 0)]
+                : array_values(array_unique(array_filter(array_map('absint', self::postedArray('page_ids')))));
+            if (!$pageIds) {
+                self::redirect($menuId, 'Vælg mindst én publiceret side.');
             }
+
+            $existing = wp_get_nav_menu_items($menuId, ['post_status' => 'any']);
+            $usedPageIds = [];
+            foreach (is_array($existing) ? $existing : [] as $item) {
+                if ((string) $item->type === 'post_type' && (string) $item->object === 'page') {
+                    $usedPageIds[(int) $item->object_id] = true;
+                }
+            }
+
+            $valid = [];
+            foreach (array_slice($pageIds, 0, 100) as $pageId) {
+                $page = get_post($pageId);
+                if (!$page instanceof \WP_Post || $page->post_type !== 'page' || $page->post_status !== 'publish' || isset($usedPageIds[$pageId])) {
+                    continue;
+                }
+                $valid[] = $pageId;
+            }
+            if (!$valid) {
+                self::redirect($menuId, 'De valgte sider er allerede i menuen eller er ikke publiceret.');
+            }
+
+            self::snapshot('Før tilføjelse af sider til menu');
+            $added = 0;
+            foreach ($valid as $pageId) {
+                $result = wp_update_nav_menu_item($menuId, 0, [
+                    'menu-item-object-id' => $pageId,
+                    'menu-item-object' => 'page',
+                    'menu-item-type' => 'post_type',
+                    'menu-item-status' => 'publish',
+                ]);
+                if (is_wp_error($result)) {
+                    wp_die(esc_html($result->get_error_message()));
+                }
+                $added++;
+            }
+            self::redirect($menuId, $added === 1 ? 'Siden er tilføjet til menuen.' : $added . ' sider er tilføjet til menuen.');
+        }
+
+        $title = sanitize_text_field((string) wp_unslash($_POST['custom_title'] ?? ''));
+        if ($title === '') {
+            self::redirect($menuId, 'Menutekst mangler.');
+        }
+
+        self::snapshot($kind === 'heading' ? 'Før tilføjelse af menuoverskrift' : 'Før tilføjelse af eksternt link');
+        if ($kind === 'heading') {
             $result = wp_update_nav_menu_item($menuId, 0, [
-                'menu-item-object-id' => $pageId,
-                'menu-item-object' => 'page',
-                'menu-item-type' => 'post_type',
+                'menu-item-title' => $title,
+                'menu-item-url' => '#',
+                'menu-item-type' => 'custom',
                 'menu-item-status' => 'publish',
+                'menu-item-classes' => ['vd-menu-heading'],
             ]);
         } else {
-            $title = sanitize_text_field((string) wp_unslash($_POST['custom_title'] ?? ''));
             $url = esc_url_raw((string) wp_unslash($_POST['custom_url'] ?? ''));
-            if ($title === '' || $url === '') {
-                wp_die(esc_html__('Titel og URL er påkrævet.', 'hangar18-manager-clean'));
+            if ($url === '') {
+                self::redirect($menuId, 'URL mangler eller er ugyldig.');
             }
             $result = wp_update_nav_menu_item($menuId, 0, [
                 'menu-item-title' => $title,
@@ -134,7 +205,7 @@ final class NavigationController
         if (is_wp_error($result)) {
             wp_die(esc_html($result->get_error_message()));
         }
-        self::redirect($menuId, 'Menupunkt tilføjet.');
+        self::redirect($menuId, $kind === 'heading' ? 'Overskrift tilføjet.' : 'Link tilføjet.');
     }
 
     public static function saveMenu(): void
@@ -146,6 +217,23 @@ final class NavigationController
 
         $items = wp_get_nav_menu_items($menuId, ['post_status' => 'any']);
         $items = is_array($items) ? $items : [];
+        $deleteItemId = absint($_POST['delete_item_id'] ?? 0);
+        if ($deleteItemId > 0) {
+            $belongs = false;
+            foreach ($items as $item) {
+                if ((int) $item->ID === $deleteItemId) {
+                    $belongs = true;
+                    break;
+                }
+            }
+            if (!$belongs) {
+                wp_die(esc_html__('Menupunktet tilhører ikke denne menu.', 'hangar18-manager-clean'));
+            }
+            self::snapshot('Før fjernelse af menupunkt');
+            wp_delete_post($deleteItemId, true);
+            self::redirect($menuId, 'Menupunkt fjernet fra menuen.');
+        }
+
         $titles = self::postedArray('item_title');
         $parents = self::postedArray('item_parent');
         $orders = self::postedArray('item_order');
@@ -269,58 +357,102 @@ final class NavigationController
     private static function renderSelectedMenu(int $menuId, string $menuName): void
     {
         $items = wp_get_nav_menu_items($menuId, ['post_status' => 'any']);
-        $items = is_array($items) ? $items : [];
-        echo '<section class="h18-manager-card"><h2>Redigér: ' . esc_html($menuName) . '</h2>';
-        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_SAVE) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '">';
+        $items = is_array($items) ? array_values($items) : [];
+        $parentMap = [];
+        foreach ($items as $item) {
+            $parentMap[(int) $item->ID] = (int) $item->menu_item_parent;
+        }
+        $depthOf = static function (int $id) use ($parentMap): int {
+            $depth = 0;
+            $seen = [];
+            $cursor = (int) ($parentMap[$id] ?? 0);
+            while ($cursor > 0 && isset($parentMap[$cursor]) && !isset($seen[$cursor]) && $depth < 6) {
+                $seen[$cursor] = true;
+                $depth++;
+                $cursor = (int) ($parentMap[$cursor] ?? 0);
+            }
+            return $depth;
+        };
+
+        echo '<section class="h18-manager-card h18-menu-editor-shell">';
+        echo '<div class="h18-menu-editor-head"><div><span class="h18-menu-kicker">Menupunkter</span><h2>' . esc_html($menuName) . '</h2><p>Træk punkterne op eller ned. Brug <strong>↳</strong> til undermenu og <strong>←</strong> til at flytte et niveau ud. Klik Redigér hvis menuteksten skal ændres.</p></div><div class="h18-menu-primary-actions"><button class="button button-primary" type="button" data-menu-add-open>+ Tilføj menupunkt</button><button class="button button-primary" type="submit" form="h18-menu-main-form">Gem menu</button></div></div>';
+
+        echo '<div class="h18-menu-workspace"><div class="h18-menu-structure">';
+        echo '<form id="h18-menu-main-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_SAVE) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '">';
         wp_nonce_field('h18_clean_nav_save_' . $menuId);
-        echo '<p><label><strong>Menunavn</strong><br><input class="regular-text" name="menu_name" value="' . esc_attr($menuName) . '"></label></p>';
+        echo '<input type="hidden" name="menu_name" value="' . esc_attr($menuName) . '">';
+
         if ($items) {
-            echo '<p class="description">Træk punkterne med ☰ for at ændre rækkefølgen. Piletasterne ved hvert punkt er et tastaturvenligt alternativ. Vælg "Undermenu under" for at lave et underpunkt.</p>';
-            echo '<table class="widefat striped h18-manager-table h18-menu-sort-table"><thead><tr><th>Flyt</th><th>Menutekst</th><th>Type</th><th>Undermenu under</th><th>Rækkefølge</th><th>Destination</th></tr></thead><tbody id="h18-menu-sort-list">';
+            echo '<ol id="h18-menu-sort-list" class="h18-menu-visual-list" aria-label="Menupunkter">';
             foreach ($items as $item) {
                 $id = (int) $item->ID;
-                echo '<tr class="h18-menu-sort-row" draggable="true" data-menu-item-id="' . esc_attr((string) $id) . '"><td class="h18-menu-drag-cell"><span class="h18-menu-drag-handle" title="Træk for at flytte" aria-hidden="true">☰</span><span class="h18-menu-order-buttons"><button type="button" class="button button-small" data-menu-move="up" aria-label="Flyt op">↑</button><button type="button" class="button button-small" data-menu-move="down" aria-label="Flyt ned">↓</button></span></td><td><input class="regular-text" name="item_title[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->title) . '"><small class="description">Kan ændres uden at ændre sidens titel.</small></td><td><code>' . esc_html((string) $item->type) . '</code></td>';
-                echo '<td><select name="item_parent[' . esc_attr((string) $id) . ']"><option value="0">Topniveau</option>';
-                foreach ($items as $candidate) {
-                    if ((int) $candidate->ID === $id) {
-                        continue;
-                    }
-                    echo '<option value="' . esc_attr((string) $candidate->ID) . '"' . selected((int) $item->menu_item_parent, (int) $candidate->ID, false) . '>' . esc_html((string) $candidate->title) . '</option>';
-                }
-                echo '</select></td><td><input class="h18-menu-order-input" type="hidden" name="item_order[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->menu_order) . '"><strong class="h18-menu-order-label">' . esc_html((string) $item->menu_order) . '</strong></td><td><small>' . esc_html((string) $item->url) . '</small></td></tr>';
+                $classes = is_array($item->classes) ? array_map('strval', $item->classes) : [];
+                $isHeading = in_array('vd-menu-heading', $classes, true);
+                $typeLabel = $isHeading ? 'Overskrift' : (((string) $item->type === 'post_type' && (string) $item->object === 'page') ? 'Side' : 'Link');
+                $destination = $isHeading ? 'Ingen destination · bruges som gruppeoverskrift' : (string) $item->url;
+                $depth = $depthOf($id);
+                echo '<li class="h18-menu-sort-row" draggable="true" data-menu-item-id="' . esc_attr((string) $id) . '" data-parent-id="' . esc_attr((string) $item->menu_item_parent) . '" style="--vd-menu-depth:' . esc_attr((string) $depth) . '">';
+                echo '<div class="h18-menu-item-main"><span class="h18-menu-drag-handle" title="Træk for at flytte" aria-label="Træk for at flytte" tabindex="0">☰</span><div class="h18-menu-item-copy"><strong class="h18-menu-item-title-preview">' . esc_html((string) $item->title) . '</strong><span><span class="h18-menu-type-badge">' . esc_html($typeLabel) . '</span> <small class="h18-menu-destination">' . esc_html($destination) . '</small></span></div>';
+                echo '<div class="h18-menu-item-buttons"><button type="button" class="button button-small" data-menu-move="up" title="Flyt op" aria-label="Flyt op">↑</button><button type="button" class="button button-small" data-menu-move="down" title="Flyt ned" aria-label="Flyt ned">↓</button><button type="button" class="button button-small" data-menu-outdent title="Flyt et niveau ud" aria-label="Flyt et niveau ud">←</button><button type="button" class="button button-small" data-menu-indent title="Gør til undermenu under forrige punkt" aria-label="Gør til undermenu">↳</button><button type="button" class="button" data-menu-edit aria-expanded="false">Redigér</button></div></div>';
+                echo '<div class="h18-menu-item-editor" hidden><label><strong>Menutekst</strong><input class="regular-text h18-menu-title-input" name="item_title[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->title) . '"></label><p class="description"><strong>Destination:</strong> ' . esc_html($destination) . '</p><button class="button h18-menu-remove" type="submit" name="delete_item_id" value="' . esc_attr((string) $id) . '" onclick="return confirm(\'Fjern dette punkt fra menuen? Selve siden slettes ikke.\');">Fjern fra menu</button></div>';
+                echo '<input class="h18-menu-parent-input" type="hidden" name="item_parent[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->menu_item_parent) . '"><input class="h18-menu-order-input" type="hidden" name="item_order[' . esc_attr((string) $id) . ']" value="' . esc_attr((string) $item->menu_order) . '">';
+                echo '</li>';
             }
-            echo '</tbody></table>';
+            echo '</ol>';
         } else {
-            echo '<p>Menuen har ingen punkter endnu.</p>';
+            echo '<div class="h18-menu-empty-list"><strong>Menuen er tom</strong><p>Tilføj de sider, der skal kunne vælges i navigationen.</p><button class="button button-primary" type="button" data-menu-add-open>+ Tilføj menupunkt</button></div>';
         }
-        echo '<p><button class="button button-primary" type="submit">Gem menu og rækkefølge</button> <a class="button" href="' . esc_url(admin_url('nav-menus.php?action=edit&menu=' . $menuId)) . '">Avanceret WordPress Menu-editor</a></p></form>';
 
-        self::renderAddItems($menuId);
-        if ($items) {
-            echo '<h3>Slet menupunkt</h3><div class="h18-manager-actions">';
-            foreach ($items as $item) {
-                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'Slet dette menupunkt?\');"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_DELETE_ITEM) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_id" value="' . esc_attr((string) $item->ID) . '">';
-                wp_nonce_field('h18_clean_nav_delete_' . $menuId . '_' . (int) $item->ID);
-                echo '<button class="button" type="submit">Slet ' . esc_html((string) $item->title) . '</button></form>';
-            }
-            echo '</div>';
-        }
+        echo '<div class="h18-menu-form-footer"><button class="button button-primary" type="submit">Gem menu</button><span class="description">Rækkefølge og undermenuer gemmes først, når du trykker Gem menu.</span></div></form></div>';
+
+        echo '<aside class="h18-menu-preview-panel"><h3>Struktur-preview</h3><p class="description">Preview viser rækkefølge og undermenuer. Farver og typografi styres fortsat i Visual Designer.</p><div class="h18-menu-preview-device"><strong>Desktop</strong><nav id="h18-menu-preview-desktop" aria-label="Desktop menu preview"></nav></div><div class="h18-menu-preview-device"><strong>Mobil</strong><div class="h18-menu-mobile-bar"><span>Menu</span><span>☰</span></div><nav id="h18-menu-preview-mobile" aria-label="Mobil menu preview"></nav></div></aside></div>';
+
+        self::renderAddItems($menuId, $items);
         echo '</section>';
     }
 
-    private static function renderAddItems(int $menuId): void
+    /** @param array<int,\WP_Post> $items */
+    private static function renderAddItems(int $menuId, array $items = []): void
     {
-        echo '<hr><h3>Tilføj menupunkt</h3><div class="h18-manager-two-col"><div><h4>WordPress-side</h4>';
-        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_ADD) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="page">';
-        wp_nonce_field('h18_clean_nav_add_' . $menuId);
-        echo '<select name="page_id" required><option value="">Vælg side…</option>';
-        foreach (get_pages(['sort_column' => 'post_title']) as $page) {
-            echo '<option value="' . esc_attr((string) $page->ID) . '">' . esc_html((string) $page->post_title) . '</option>';
+        $usedPages = [];
+        foreach ($items as $item) {
+            if ((string) $item->type === 'post_type' && (string) $item->object === 'page') {
+                $usedPages[(int) $item->object_id] = true;
+            }
         }
-        echo '</select> <button class="button" type="submit">Tilføj side</button></form></div>';
-        echo '<div><h4>Custom link</h4><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_ADD) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="custom">';
+        $pages = get_pages([
+            'sort_column' => 'post_title',
+            'sort_order' => 'ASC',
+            'post_status' => 'publish',
+        ]);
+
+        echo '<div id="h18-menu-add-dialog" class="h18-menu-dialog" hidden><div class="h18-menu-dialog-backdrop" data-menu-add-close></div><section class="h18-menu-dialog-card" role="dialog" aria-modal="true" aria-labelledby="h18-menu-add-title"><div class="h18-menu-dialog-head"><div><span class="h18-menu-kicker">Menu</span><h2 id="h18-menu-add-title">Tilføj menupunkt</h2></div><button type="button" class="button" data-menu-add-close aria-label="Luk">✕</button></div>';
+        echo '<div class="h18-menu-add-tabs" role="tablist"><button type="button" class="button button-primary" data-menu-add-tab="pages">Sider</button><button type="button" class="button" data-menu-add-tab="link">Eksternt link</button><button type="button" class="button" data-menu-add-tab="heading">Overskrift</button></div>';
+
+        echo '<div class="h18-menu-add-panel" data-menu-add-panel="pages"><h3>Publicerede sider</h3><p class="description">Vælg én eller flere sider. Sider, der allerede er i menuen, kan ikke vælges igen.</p>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_ADD) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="pages">';
         wp_nonce_field('h18_clean_nav_add_' . $menuId);
-        echo '<p><input name="custom_title" placeholder="Titel" required></p><p><input class="regular-text" type="url" name="custom_url" placeholder="https://…" required></p><button class="button" type="submit">Tilføj link</button></form></div></div>';
+        echo '<div class="h18-menu-page-picker">';
+        $selectable = 0;
+        foreach ($pages as $page) {
+            if (!$page instanceof \WP_Post) { continue; }
+            $used = isset($usedPages[(int) $page->ID]);
+            if (!$used) { $selectable++; }
+            echo '<label class="h18-menu-page-choice' . ($used ? ' is-used' : '') . '"><input type="checkbox" name="page_ids[]" value="' . esc_attr((string) $page->ID) . '"' . ($used ? ' disabled' : '') . '><span><strong>' . esc_html((string) $page->post_title) . '</strong><small>/' . esc_html((string) $page->post_name) . '/</small></span>' . ($used ? '<em>Allerede i menuen</em>' : '') . '</label>';
+        }
+        if (!$pages) {
+            echo '<p>Der er ingen publicerede sider endnu.</p>';
+        }
+        echo '</div><p><button class="button button-primary" type="submit"' . ($selectable === 0 ? ' disabled' : '') . '>Tilføj valgte</button></p></form></div>';
+
+        echo '<div class="h18-menu-add-panel" data-menu-add-panel="link" hidden><h3>Eksternt link</h3><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_ADD) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="custom">';
+        wp_nonce_field('h18_clean_nav_add_' . $menuId);
+        echo '<label><strong>Menutekst</strong><input class="regular-text" name="custom_title" required placeholder="Ekstern side"></label><label><strong>URL</strong><input class="regular-text" type="url" name="custom_url" placeholder="https://…" required></label><p><button class="button button-primary" type="submit">Tilføj link</button></p></form></div>';
+
+        echo '<div class="h18-menu-add-panel" data-menu-add-panel="heading" hidden><h3>Overskrift / gruppe</h3><p class="description">Bruges som et ikke-sidemål, som andre punkter kan ligge under.</p><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="' . esc_attr(self::ACTION_ADD) . '"><input type="hidden" name="menu_id" value="' . esc_attr((string) $menuId) . '"><input type="hidden" name="item_kind" value="heading">';
+        wp_nonce_field('h18_clean_nav_add_' . $menuId);
+        echo '<label><strong>Tekst</strong><input class="regular-text" name="custom_title" required placeholder="Køretøjer"></label><p><button class="button button-primary" type="submit">Tilføj overskrift</button></p></form></div>';
+        echo '</section></div>';
     }
 
     /** @param array<int,\WP_Term> $menus */

@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.56",
+      "date": "2026-08-30",
+      "items": [
+        "VD-MENU-UX-003: Manager → Menu viser en visuel drag-and-drop liste som standard og gemmer WordPress-tekniske indstillinger under Avanceret.",
+        "+ Tilføj menupunkt viser publicerede sider, eksternt link og overskrift/gruppe i en enkel dialog; kladder og allerede valgte sider filtreres.",
+        "Menutekst kan redigeres direkte; Fjern fra menu sletter kun menupunktet og aldrig destinationssiden.",
+        "Undermenuer styres med ↳ / ← samt drag-and-drop, mens backend fortsat validerer parent-grafen.",
+        "Desktop/Mobil struktur-preview opdateres live; farver og typografi ejes fortsat af Visual Designer Menu-elementet."
+      ]
+    },
+    {
       "version": "0.1.55",
       "date": "2026-08-29",
       "items": [

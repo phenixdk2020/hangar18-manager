@@ -890,3 +890,13 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - `Designer`, `WordPress` og `Vis` forbliver separate navigationshandlinger.
 - Denne kontrakt superseder auto-publiceringsdelen af `VD-HOME-001` fra 0.1.49; hjemmesidevalget er fra 0.1.55 selection-only.
 
+## 0.1.56 – Forenklet visuel Menu-administration
+
+### VD-MENU-UX-003
+- Manager → Menu viser som standard den valgte menus faktiske menupunkter; WordPress-tekniske felter, theme-locations, flere menuer og historik ligger under **Avancerede indstillinger**.
+- Menupunkter kan flyttes visuelt med drag-and-drop samt tastaturvenlige op/ned-knapper. `↳` gør et punkt til undermenu under forrige punkt, og `←` flytter ét niveau ud. Backend validerer fortsat parent-grafen mod cycles og ugyldige parents.
+- **+ Tilføj menupunkt** åbner en dialog med tre enkle valg: publicerede WordPress-sider, eksternt link eller overskrift/gruppe. Kladder vises ikke som valgbare sider, og en side der allerede er i menuen kan ikke tilføjes igen via standarddialogen.
+- Menutekst kan ændres uden at ændre WordPress-sidens titel. **Fjern fra menu** sletter kun `nav_menu_item`; destinationssiden slettes aldrig.
+- Struktur-preview opdateres i browseren ved ændret rækkefølge, nesting eller menutekst. Preview viser kun informationsarkitektur; typografi/farver/layout styres fortsat af Visual Designer Menu-elementet.
+- WordPress `nav_menu` / `nav_menu_item` er fortsat den eneste canonical datakilde. Versionssnapshots og restore-kontrakten fra VD-MENU-UX-002 bevares.
+
