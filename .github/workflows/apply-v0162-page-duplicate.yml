@@ -1,0 +1,77 @@
+name: Apply Visual Designer Manager 0.1.62 Page Duplicate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0162_page_duplicate.py'
+      - '.github/scripts/v0162_page_duplicate_qa.py'
+      - '.github/workflows/apply-v0162-page-duplicate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate v0.1.62 scripts
+        run: |
+          python3 -m py_compile .github/scripts/apply_v0162_page_duplicate.py
+          python3 -m py_compile .github/scripts/v0162_page_duplicate_qa.py
+
+      - name: Apply v0.1.62 page duplicate
+        run: python3 .github/scripts/apply_v0162_page_duplicate.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for f in clean/hangar18-manager/assets/*.js; do node --check "$f"; done
+
+      - name: Existing model regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+
+      - name: Page duplicate contract QA
+        run: python3 .github/scripts/v0162_page_duplicate_qa.py
+
+      - name: Preserve critical regression gates
+        run: |
+          set -euo pipefail
+          grep -Fq "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq 'boundary-markers-v0137-single-owner' clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq "const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u'" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'VD-KEYBOARD-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-CLIPBOARD-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-BUTTON-PARITY-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'h18-manager-badge is-ok">Klar' clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          echo 'critical regression gates PASS'
+
+      - name: Commit implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Admin/AdminController.php \
+            clean/hangar18-manager/assets/admin-v0123.css \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            CLEAN-TECHNICAL-MANUAL.md \
+            docs/HEADER-FOOTER-SPEC.md \
+            docs/clean-backlog-v0100.md \
+            docs/v0162-status.md
+          if git diff --cached --quiet; then echo 'No implementation changes'; exit 0; fi
+          git commit -m 'Add page duplication in Visual Designer Manager 0.1.62'
+          git pull --rebase origin main
+          git push origin HEAD:main
