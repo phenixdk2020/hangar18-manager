@@ -1,0 +1,55 @@
+name: Apply Visual Designer Manager 0.1.64 Clipboard Fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0164_clipboard_fix.py'
+      - '.github/scripts/v0164_clipboard_qa.py'
+      - '.github/workflows/apply-v0164-clipboard-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate v0.1.64 scripts
+        run: |
+          python3 -m py_compile .github/scripts/apply_v0164_clipboard_fix.py
+          python3 -m py_compile .github/scripts/v0164_clipboard_qa.py
+
+      - name: Apply v0.1.64 Designer clipboard fix
+        run: python3 .github/scripts/apply_v0164_clipboard_fix.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Existing regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+          python3 .github/scripts/v0162_page_duplicate_qa.py
+
+      - name: Clipboard runtime QA
+        run: python3 .github/scripts/v0164_clipboard_qa.py
+
+      - name: Commit implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php clean/hangar18-manager/assets/editor-v018-core.js clean-release-notes.html CLEAN-TECHNICAL-MANUAL.md docs/v0164-status.md
+          if git diff --cached --quiet; then echo 'No implementation changes'; exit 0; fi
+          git commit -m 'Fix Designer clipboard reliability in 0.1.64'
+          git pull --rebase origin main
+          git push origin HEAD:main
