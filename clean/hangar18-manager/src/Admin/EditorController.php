@@ -241,8 +241,12 @@ final class EditorController
                 throw new \RuntimeException('Du har ikke rettighed til at publicere sider.');
             }
             if ($currentVersion > 0 && $sameModel && $sameShell && !$statusChanged) {
+                // A previous Designer save may already be canonical while a page cache still
+                // contains older frontend HTML. Touching the page is therefore intentional
+                // even on a canonical no-op save.
+                self::touchFrontendPage($postId, '', $currentVersion);
                 DiagnosticStore::append($postId, 'save_noop', ['version' => $currentVersion, 'reason' => 'canonical-model-and-shell-unchanged']);
-                self::redirect($postId, 'success', 'Ingen ændringer siden seneste gemte version. Der blev ikke oprettet en ny version.');
+                self::redirect($postId, 'success', 'Ingen layoutændringer siden seneste gemte version. Frontend-cache er blevet invalideret.');
             }
             if ($currentVersion > 0 && $sameModel && $sameShell) {
                 $version = $currentVersion;
@@ -251,11 +255,11 @@ final class EditorController
                 TemplateLayoutModel::setPageChoice($postId, 'header', $headerChoice);
                 TemplateLayoutModel::setPageChoice($postId, 'footer', $footerChoice);
             }
+            // LayoutModel::saveVersion() writes canonical Designer data to post meta.
+            // Touch the WordPress page only AFTER those writes so conventional WordPress,
+            // host and plugin caches observe and purge against the new Designer state.
+            self::touchFrontendPage($postId, $statusChanged ? $desiredStatus : '', $version);
             if ($statusChanged) {
-                $updatedPost = wp_update_post(['ID' => $postId, 'post_status' => $desiredStatus], true);
-                if (is_wp_error($updatedPost)) {
-                    throw new \RuntimeException($updatedPost->get_error_message());
-                }
                 DiagnosticStore::append($postId, 'page_status_changed', ['from' => $currentPostStatus, 'to' => $desiredStatus, 'version' => $version]);
             }
             $saved = LayoutModel::get($postId);
@@ -272,7 +276,9 @@ final class EditorController
             if (isset($_POST['after_save']) && sanitize_key((string) wp_unslash($_POST['after_save'])) === 'preview') {
                 $permalink = get_permalink($postId);
                 if (is_string($permalink) && $permalink !== '') {
-                    wp_safe_redirect($permalink);
+                    // The version query makes Gem & vis unambiguous even behind a cache layer
+                    // that does not immediately honour a WordPress purge event.
+                    wp_safe_redirect(add_query_arg('h18_vd_saved', $version, $permalink));
                     exit;
                 }
             }
@@ -458,6 +464,7 @@ final class EditorController
                 get_current_user_id(),
                 'Restore fra v' . $targetVersion
             );
+            self::touchFrontendPage($postId, '', $newVersion);
             DiagnosticStore::append($postId, 'restore_result', [
                 'targetVersion' => $targetVersion,
                 'newVersion' => $newVersion,
@@ -498,6 +505,39 @@ final class EditorController
             : TemplateLayoutModel::defaultId($part);
         if ($id === '' || !TemplateLayoutModel::exists($id, $part)) { return null; }
         return TemplateLayoutModel::model($id);
+    }
+
+    /**
+     * Make a Designer meta save visible through the normal WordPress post lifecycle.
+     *
+     * Canonical Designer data is already persisted before this method is called. The
+     * subsequent wp_update_post() deliberately fires post_updated/save_post hooks so
+     * WordPress and full-page cache integrations invalidate the old public rendering.
+     */
+    private static function touchFrontendPage(int $postId, string $desiredStatus, int $version): void
+    {
+        $post = get_post($postId);
+        if (!$post instanceof \WP_Post || $post->post_type !== 'page') {
+            throw new \RuntimeException('Frontend-cache kunne ikke invalideres: siden findes ikke længere.');
+        }
+
+        $update = ['ID' => $postId];
+        if ($desiredStatus !== '') {
+            $update['post_status'] = $desiredStatus;
+        }
+
+        $updatedPost = wp_update_post($update, true);
+        if (is_wp_error($updatedPost)) {
+            throw new \RuntimeException('Frontend-cache kunne ikke invalideres: ' . $updatedPost->get_error_message());
+        }
+
+        clean_post_cache($postId);
+        do_action('h18_clean_designer_page_saved', $postId, $version, (string) get_post_status($postId));
+        DiagnosticStore::append($postId, 'frontend_cache_invalidated', [
+            'version' => $version,
+            'status' => (string) get_post_status($postId),
+            'strategy' => 'wp_update_post+clean_post_cache',
+        ]);
     }
 
     private static function redirect(int $postId, string $status, string $message): void

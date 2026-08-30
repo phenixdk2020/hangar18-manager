@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.58",
+      "date": "2026-08-30",
+      "items": [
+        "BUG-20: Side Designer Gem invaliderer nu frontend efter canonical meta-save.",
+        "wp_update_post køres efter Designer-data er skrevet, så save_post/post_updated cache hooks arbejder på ny state.",
+        "clean_post_cache køres ved Gem, canonical no-op Gem og restore.",
+        "Gem & vis får h18_vd_saved=<version> cache-buster til umiddelbar verifikation.",
+        "Menuadministration og navigation er uændret."
+      ]
+    },
+    {
       "version": "0.1.57",
       "date": "2026-08-30",
       "items": [

@@ -915,3 +915,15 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - WordPress Text Domain er `visual-designer-manager`.
 - Persistente kompatibilitets-ID'er som eksisterende option/meta/action/page-slugs med `h18_clean` / `h18-clean` ændres ikke i denne migration. De er data-/URL-kompatibilitet og må ikke masseomdøbes uden en særskilt migrationskontrakt.
 - Den historiske `Hangar18_Manager` compatibility marker bevares, så eksisterende theme-integration ikke brydes.
+
+
+## 0.1.58 – Side Designer Gem → frontend synkronisering
+
+### VD-PAGE-SAVE-CACHE-001
+- Side Designerens canonical model gemmes fortsat i `_h18_clean_layout_v1`/versionshistorikken; WordPress `post_content` bliver ikke Designer-datakilde.
+- Efter en verificerbar Designer-gemning skal den tilhørende WordPress-side touches med `wp_update_post()` og derefter `clean_post_cache()`.
+- Touch udføres **efter** Designer-meta og Header/Footer-valg er skrevet, så `post_updated`/`save_post`-baserede host-, plugin- og full-page caches invaliderer den gamle offentlige render og efterfølgende læser den nye canonical model.
+- En canonical no-op Gem må også invaliderer frontend-cache. Det gør det muligt at reparere en allerede stale offentlig side uden at oprette en kunstig Designer-version.
+- `Gem & vis` skal åbne permalinket med `h18_vd_saved=<version>` som cache-buster for den umiddelbare efterkontrol.
+- Restore af en Designer-version skal bruge samme frontend-invalideringsvej.
+- Menu-save og navigationens datamodel er uden for denne kontrakt og må ikke ændres af 0.1.58.
