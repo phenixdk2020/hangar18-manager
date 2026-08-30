@@ -1,2 +1,2 @@
-Release Visual Designer Manager v0.1.56
-Trigger: simplified-visual-menu-administration 2026-08-30
+Release Visual Designer Manager v0.1.57
+Trigger: menu-save-runtime-identity-cleanup 2026-08-30
