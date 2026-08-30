@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.59",
+      "date": "2026-08-30",
+      "items": [
+        "BUG-21: Tekst-elementets canonical backgroundTransparent er nu altid true.",
+        "Paint-kæden er Tekst → nærmeste Kasse → Sektion.",
+        "Legacy Text-state med backgroundTransparent=false kan ikke længere give hvid elementbaggrund.",
+        "Transparent Kasse lader fortsat Sektionens baggrund skinne igennem.",
+        "Menu, Billede, Knap, geometri og hierarchy-normalisering er uændret."
+      ]
+    },
+    {
       "version": "0.1.58",
       "date": "2026-08-30",
       "items": [

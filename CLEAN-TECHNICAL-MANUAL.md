@@ -927,3 +927,14 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - `Gem & vis` skal åbne permalinket med `h18_vd_saved=<version>` som cache-buster for den umiddelbare efterkontrol.
 - Restore af en Designer-version skal bruge samme frontend-invalideringsvej.
 - Menu-save og navigationens datamodel er uden for denne kontrakt og må ikke ændres af 0.1.58.
+
+
+## 0.1.59 – Tekstbaggrund arver Kasse/Sektion
+
+### VD-TEXT-BG-INHERIT-001
+- Tekst-elementer har ikke en selvstændig synlig baggrundskontrakt i den aktuelle Inspector og normaliseres derfor canonical med `backgroundTransparent=true`.
+- Paint-kæden er **Tekst → nærmeste Kasse → Sektion**.
+- Ligger Tekst direkte under en Sektion, er Sektionens baggrund den synlige baggrund bag teksten.
+- Ligger Tekst under en Kasse, er Kassens baggrund den synlige baggrund; er Kassen transparent, fortsætter paint-kæden til Sektionen.
+- Ældre persisted Text-state med `backgroundTransparent=false` må ikke genindføre en hvid leaf-baggrund.
+- Menu, Billede og Knap beholder deres egne eksisterende background-kontrakter.
