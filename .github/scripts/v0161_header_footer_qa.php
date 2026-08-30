@@ -27,7 +27,7 @@ function update_post_meta($postId, $key, $value): bool { $GLOBALS['v0161_post_me
 function wp_generate_uuid4(): string
 {
     $GLOBALS['v0161_uuid_counter']++;
-    return sprintf('00000000-0000-4000-8000-%012d', $GLOBALS['v0161_uuid_counter']);
+    return sprintf('%08x-0000-4000-8000-%012d', $GLOBALS['v0161_uuid_counter'], $GLOBALS['v0161_uuid_counter']);
 }
 
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/HierarchyNormalizer.php';
