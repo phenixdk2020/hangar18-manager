@@ -1,0 +1,85 @@
+name: Apply Visual Designer Manager 0.1.56 Menu UX
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0156_menu_ux_visual.py'
+      - '.github/workflows/apply-v0156-menu-ux-visual.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.56 patch
+        run: python3 .github/scripts/apply_v0156_menu_ux_visual.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for f in clean/hangar18-manager/assets/*.js; do node --check "$f"; done
+
+      - name: Existing model regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify 0.1.56 Menu UX contracts
+        run: |
+          set -euo pipefail
+          NAV='clean/hangar18-manager/src/Admin/NavigationController.php'
+          JS='clean/hangar18-manager/assets/admin-v0156-menu.js'
+          CSS='clean/hangar18-manager/assets/admin-v0156-menu.css'
+          PLUGIN='clean/hangar18-manager/hangar18-manager.php'
+          grep -q 'Version: 0.1.56' "$PLUGIN"
+          grep -q "H18_CLEAN_VERSION', '0.1.56'" "$PLUGIN"
+          grep -q 'admin-v0156-menu.css' "$NAV"
+          grep -q 'admin-v0156-menu.js' "$NAV"
+          grep -q '+ Tilføj menupunkt' "$NAV"
+          grep -q 'Publicerede sider' "$NAV"
+          grep -q "'post_status' => 'publish'" "$NAV"
+          grep -q "item_kind\" value=\"heading" "$NAV"
+          grep -q 'h18-menu-add-dialog' "$NAV"
+          grep -q 'data-menu-indent' "$NAV"
+          grep -q 'data-menu-outdent' "$NAV"
+          grep -q 'Fjern fra menu' "$NAV"
+          grep -q 'Struktur-preview' "$NAV"
+          grep -q 'Avancerede indstillinger' "$NAV"
+          grep -q 'function updatePreview' "$JS"
+          grep -q 'function indentRow' "$JS"
+          grep -q 'function outdentRow' "$JS"
+          grep -q 'h18-menu-preview-panel' "$CSS"
+          grep -q 'VD-MENU-UX-003' CLEAN-TECHNICAL-MANUAL.md
+          test -s docs/v0156-status.md
+          echo '0.1.56 Menu UX contracts PASS'
+
+      - name: Preserve critical regression gates
+        run: |
+          set -euo pipefail
+          grep -q "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -q 'boundary-markers-v0137-single-owner' clean/hangar18-manager/assets/editor-v0125.js
+          grep -q "var mode = 'fit'" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -q 'data-h18-leaf-transparent' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -q 'VD-PAGES-ACTIONS-001' CLEAN-TECHNICAL-MANUAL.md
+          echo 'regression gates PASS'
+
+      - name: Commit implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager clean-release-notes.html CLEAN-TECHNICAL-MANUAL.md docs/v0156-status.md
+          if git diff --cached --quiet; then echo 'No implementation changes'; exit 0; fi
+          git commit -m 'Simplify Menu administration in Visual Designer Manager 0.1.56'
+          git pull --rebase origin main
+          git push origin HEAD:main
