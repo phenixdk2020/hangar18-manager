@@ -9,6 +9,10 @@ TECH = ROOT / 'CLEAN-TECHNICAL-MANUAL.md'
 NOTES = ROOT / 'clean-release-notes.html'
 HISTORY = PLUGIN_ROOT / 'release-history.json'
 STATUS = ROOT / 'docs/v0157-status.md'
+QA_FILES = [
+    ROOT / '.github/scripts/hierarchy_normalizer_qa.php',
+    ROOT / '.github/scripts/v0125_model_qa.php',
+]
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -96,6 +100,17 @@ if old_namespace_hits < 10:
 if old_domain_hits < 1:
     raise SystemExit('Text-domain migration found no old domain')
 
+# Active regression QA must follow the same runtime namespace.
+qa_namespace_hits = 0
+for path in QA_FILES:
+    text = path.read_text(encoding='utf-8')
+    qa_namespace_hits += text.count('Hangar18\\Clean')
+    text = text.replace('\\Hangar18\\Clean\\', '\\VisualDesignerManager\\')
+    text = text.replace('Hangar18\\Clean\\', 'VisualDesignerManager\\')
+    path.write_text(text, encoding='utf-8')
+if qa_namespace_hits < 2:
+    raise SystemExit(f'QA namespace migration hit count unexpectedly low: {qa_namespace_hits}')
+
 # 3) Version bump.
 plugin = PLUGIN.read_text(encoding='utf-8')
 plugin = replace_once(plugin, ' * Version: 0.1.56', ' * Version: 0.1.57', 'plugin header version')
@@ -147,6 +162,6 @@ if not versions or versions[0].get('version') != '0.1.57':
 HISTORY.write_text(json.dumps(history, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 STATUS.parent.mkdir(parents=True, exist_ok=True)
-STATUS.write_text('''# Visual Designer Manager 0.1.57 status\n\n- BUG-19: WordPress menu-item CSS-klasser serialiseres som streng i alle aktive skriveveje.\n- CLEANUP-02: aktiv PHP runtime namespace er `VisualDesignerManager\\...`.\n- Text Domain er `visual-designer-manager`.\n- Persistente `h18_clean` / `h18-clean` option/meta/action/page-slugs er med vilje bevaret som kompatibilitets-IDer.\n- Historisk `Hangar18_Manager` theme-compatibility marker er bevaret.\n- Ingen database-/meta-massenavngivning udføres i 0.1.57.\n''', encoding='utf-8')
+STATUS.write_text('''# Visual Designer Manager 0.1.57 status\n\n- BUG-19: WordPress menu-item CSS-klasser serialiseres som streng i alle aktive skriveveje.\n- CLEANUP-02: aktiv PHP runtime namespace er `VisualDesignerManager\\...`.\n- Text Domain er `visual-designer-manager`.\n- Aktive regression-QA scripts er migreret til samme namespace.\n- Persistente `h18_clean` / `h18-clean` option/meta/action/page-slugs er med vilje bevaret som kompatibilitets-IDer.\n- Historisk `Hangar18_Manager` theme-compatibility marker er bevaret.\n- Ingen database-/meta-massenavngivning udføres i 0.1.57.\n''', encoding='utf-8')
 
-print(f'Applied 0.1.57: migrated {old_namespace_hits} active namespace references and {old_domain_hits} text-domain references.')
+print(f'Applied 0.1.57: migrated {old_namespace_hits} active namespace references, {qa_namespace_hits} QA references and {old_domain_hits} text-domain references.')
