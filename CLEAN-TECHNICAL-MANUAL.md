@@ -973,3 +973,15 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - Inaktiv stored default ignoreres; resolveren falder deterministisk tilbage til første aktive template eller tom fallback.
 - `Ingen Header/Footer` stopper resolveren eksplicit.
 - `.github/scripts/v0161_header_footer_qa.php` er permanent Definition-of-Done regression gate.
+
+## 0.1.62 – Kopiér side
+
+### VD-PAGE-DUPLICATE-001
+- Funktionen ligger under `Visual Designer Manager → Sider` og ikke i den generelle Designer-toolbar.
+- Brugeren vælger `Kopiér`, angiver et nyt sidenavn og får en ny WordPress-side med nyt side-ID og unik slug.
+- Kopien oprettes altid som `draft`; hjemmeside-status kopieres aldrig.
+- WordPress-indhold, parent, menu-order, side-template og featured image kopieres som sikre sideattributter.
+- Hvis kildesiden er en Visual Designer-side, kopieres den aktuelle canonical model til kopien og gemmes som kopiens egen version 1. Kildens versionshistorik kopieres ikke.
+- Header- og Footer-sidevalg kopieres eksplicit med `TemplateLayoutModel::pageChoice()` / `setPageChoice()`.
+- Den nye Designer-model SHA/digest verificeres mod kilden. Hvis kopieringen fejler efter oprettelsen, rulles den nye side tilbage til papirkurven.
+- Original side og original versionshistorik ændres ikke.

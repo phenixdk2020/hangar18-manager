@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.62",
+      "date": "2026-08-30",
+      "items": [
+        "VD-PAGE-DUPLICATE-001: Manager → Sider kan kopiere en side og kræver et nyt sidenavn.",
+        "Kopien oprettes som kladde med nyt WordPress-ID, unik slug og separat Designer-v1-historik.",
+        "Canonical layout samt Header/Footer-sidevalg kopieres; original historik og hjemmeside-status kopieres ikke.",
+        "Header/Footer Admin-status er Klar, mens fælles Designer-forbedringer fortsat skal propagere til Header/Footer."
+      ]
+    },
+    {
       "version": "0.1.61",
       "date": "2026-08-30",
       "items": [

@@ -17,12 +17,14 @@ final class AdminController
     private const EXPORT_ACTION = 'h18_clean_export_backup';
     private const CLEAR_LOG_ACTION = 'h18_clean_clear_diagnostics';
     private const CREATE_PAGE_ACTION = 'h18_clean_create_page';
+    private const DUPLICATE_PAGE_ACTION = 'h18_clean_duplicate_page';
     private const SET_HOME_PAGE_ACTION = 'h18_clean_set_home_page';
     private const PAGE_STATUS_ACTION = 'h18_clean_page_status';
     private const TRASH_PAGE_ACTION = 'h18_clean_trash_page';
     private const EXPORT_NONCE = 'h18_clean_export_backup';
     private const CLEAR_LOG_NONCE = 'h18_clean_clear_diagnostics';
     private const CREATE_PAGE_NONCE = 'h18_clean_create_page';
+    private const DUPLICATE_PAGE_NONCE = 'h18_clean_duplicate_page';
     private const SET_HOME_PAGE_NONCE = 'h18_clean_set_home_page';
     private const PAGE_STATUS_NONCE = 'h18_clean_page_status';
     private const TRASH_PAGE_NONCE = 'h18_clean_trash_page';
@@ -44,6 +46,7 @@ final class AdminController
         add_action('admin_post_' . self::EXPORT_ACTION, [self::class, 'exportBackup']);
         add_action('admin_post_' . self::CLEAR_LOG_ACTION, [self::class, 'clearDiagnostics']);
         add_action('admin_post_' . self::CREATE_PAGE_ACTION, [self::class, 'createPage']);
+        add_action('admin_post_' . self::DUPLICATE_PAGE_ACTION, [self::class, 'duplicatePage']);
         add_action('admin_post_' . self::SET_HOME_PAGE_ACTION, [self::class, 'setHomePage']);
         add_action('admin_post_' . self::PAGE_STATUS_ACTION, [self::class, 'updatePageStatus']);
         add_action('admin_post_' . self::TRASH_PAGE_ACTION, [self::class, 'trashPage']);
@@ -252,6 +255,14 @@ final class AdminController
                 echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline">';
                 wp_nonce_field(self::SET_HOME_PAGE_NONCE);
                 echo '<input type="hidden" name="action" value="' . esc_attr(self::SET_HOME_PAGE_ACTION) . '"><input type="hidden" name="post_id" value="' . esc_attr((string) $page->ID) . '"><button class="button" type="submit">Sæt som Hjem</button></form>';
+            }
+            if (current_user_can('edit_post', $page->ID)) {
+                echo '<details class="h18-manager-copy-page"><summary class="button">Kopiér</summary>';
+                echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="h18-manager-copy-page-form">';
+                wp_nonce_field(self::DUPLICATE_PAGE_NONCE);
+                echo '<input type="hidden" name="action" value="' . esc_attr(self::DUPLICATE_PAGE_ACTION) . '"><input type="hidden" name="source_post_id" value="' . esc_attr((string) $page->ID) . '">';
+                echo '<label><span class="screen-reader-text">Nyt sidenavn</span><input type="text" name="new_page_title" required value="' . esc_attr((string) $page->post_title . ' – kopi') . '" aria-label="Nyt sidenavn"></label>';
+                echo '<button class="button button-primary" type="submit">Kopiér side</button></form></details>';
             }
             if (!$isFrontPage && current_user_can('delete_post', $page->ID)) {
                 $confirmTitle = esc_js((string) $page->post_title);
@@ -486,6 +497,99 @@ final class AdminController
         exit;
     }
 
+
+    public static function duplicatePage(): void
+    {
+        self::guard();
+        check_admin_referer(self::DUPLICATE_PAGE_NONCE);
+
+        $sourceId = absint($_POST['source_post_id'] ?? 0);
+        $newTitle = sanitize_text_field((string) wp_unslash($_POST['new_page_title'] ?? ''));
+        if ($sourceId <= 0 || get_post_type($sourceId) !== 'page' || !current_user_can('edit_post', $sourceId)) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Kildesiden er ikke gyldig eller du mangler rettighed.']));
+            exit;
+        }
+        if ($newTitle === '') {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Nyt sidenavn mangler.']));
+            exit;
+        }
+
+        $source = get_post($sourceId);
+        if (!$source instanceof \WP_Post) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Kildesiden kunne ikke læses.']));
+            exit;
+        }
+
+        $newSlug = self::uniquePageSlug(sanitize_title($newTitle));
+        $newPostId = wp_insert_post([
+            'post_type' => 'page',
+            'post_title' => $newTitle,
+            'post_name' => $newSlug,
+            'post_parent' => (int) $source->post_parent,
+            'post_status' => 'draft',
+            'post_content' => (string) $source->post_content,
+            'post_excerpt' => (string) $source->post_excerpt,
+            'menu_order' => (int) $source->menu_order,
+            'comment_status' => (string) $source->comment_status,
+            'ping_status' => (string) $source->ping_status,
+            'post_author' => get_current_user_id(),
+        ], true);
+
+        if (is_wp_error($newPostId)) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Siden kunne ikke kopieres: ' . $newPostId->get_error_message()]));
+            exit;
+        }
+        $newPostId = (int) $newPostId;
+        if ($newPostId <= 0) {
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'WordPress returnerede ikke et gyldigt ID til kopien.']));
+            exit;
+        }
+
+        try {
+            $pageTemplate = sanitize_text_field((string) get_post_meta($sourceId, '_wp_page_template', true));
+            if ($pageTemplate !== '') {
+                update_post_meta($newPostId, '_wp_page_template', $pageTemplate);
+            }
+            $thumbnailId = absint(get_post_thumbnail_id($sourceId));
+            if ($thumbnailId > 0) {
+                set_post_thumbnail($newPostId, $thumbnailId);
+            }
+
+            TemplateLayoutModel::ensureMigrated();
+            TemplateLayoutModel::setPageChoice($newPostId, 'header', TemplateLayoutModel::pageChoice($sourceId, 'header'));
+            TemplateLayoutModel::setPageChoice($newPostId, 'footer', TemplateLayoutModel::pageChoice($sourceId, 'footer'));
+
+            $sourceHasDesigner = metadata_exists('post', $sourceId, LayoutModel::META)
+                || (int) get_post_meta($sourceId, LayoutModel::VERSION_META, true) > 0;
+            if ($sourceHasDesigner) {
+                $sourceModel = LayoutModel::get($sourceId);
+                $newVersion = LayoutModel::saveVersion(
+                    $newPostId,
+                    $sourceModel,
+                    get_current_user_id(),
+                    'Kopieret fra side ID ' . $sourceId . ' · ' . (string) $source->post_title
+                );
+                if ($newVersion !== 1) {
+                    throw new \RuntimeException('Den kopierede Designer-side startede ikke med sin egen v1-historik.');
+                }
+                if (!hash_equals(LayoutModel::structuralDigest($sourceModel), LayoutModel::structuralDigest(LayoutModel::get($newPostId)))) {
+                    throw new \RuntimeException('Designer-layoutet på kopien matcher ikke kildesiden.');
+                }
+            }
+
+            clean_post_cache($newPostId);
+        } catch (\Throwable $error) {
+            wp_trash_post($newPostId);
+            wp_safe_redirect(self::url('h18-clean-pages', ['vd_status' => 'error', 'vd_message' => 'Kopien blev rullet tilbage: ' . $error->getMessage()]));
+            exit;
+        }
+
+        wp_safe_redirect(self::url('h18-clean-pages', [
+            'vd_status' => 'ok',
+            'vd_message' => '“' . (string) $source->post_title . '” er kopieret som “' . $newTitle . '” (kladde).',
+        ]));
+        exit;
+    }
 
     public static function updatePageStatus(): void
     {

@@ -487,3 +487,17 @@ Definition of Done i afsnit 14 er nu en permanent regression gate og verificeres
 - fase-1 Header/Footer migreres til `Header – Standard` / `Footer – Standard` uden model- eller versionstab.
 
 Assignment-regler, Export/Import, anvendelsestællere og nye generelle elementtyper som Ikon/Divider/Spacer er fremtidige udvidelser og genåbner ikke den afsluttede Header/Footer-baseline. Fejl i ovenstående Definition of Done gør derimod milepælen rød igen.
+
+## 16. Klar betyder vedligeholdt – fælles Designer-paritet
+
+Admin-status **Klar** betyder, at Header/Footer-arkitekturen er en afsluttet produktionsbaseline. Det betyder ikke, at Header/Footer fryses.
+
+Permanent vedligeholdelsesregel:
+
+- fejlrettelser i den fælles Visual Designer-layoutmotor, elementmodel, Inspector, renderer eller responsive adfærd skal også gælde Header/Footer, når funktionen er relevant dér;
+- nye eller forbedrede generelle Designer-elementer skal stilles til rådighed i Header/Footer, når de giver mening i globale templates;
+- Side Designer og Header/Footer Designer skal så vidt muligt bruge samme canonical model, editor-runtime og renderer frem for parallel specialkode;
+- release-QA skal ved relevante fælles Designer-ændringer kontrollere både Side Designer og Header/Footer for regression/paritet;
+- en fælles Designer-forbedring må ikke betragtes som færdig, hvis den efterlader en relevant Header/Footer-variant på ældre adfærd.
+
+`Klar` er derfor en vedligeholdt baseline, ikke en funktionsfrysning.
