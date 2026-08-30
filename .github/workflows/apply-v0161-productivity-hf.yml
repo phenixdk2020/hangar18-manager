@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/scripts/apply_v0161_productivity.py'
+      - '.github/scripts/apply_v0161_hierarchy_offset.py'
       - '.github/scripts/apply_v0161_header_footer_meta.py'
       - '.github/scripts/v0161_header_footer_qa.php'
       - '.github/workflows/apply-v0161-productivity-hf.yml'
@@ -23,11 +24,15 @@ jobs:
       - name: Validate apply scripts
         run: |
           python3 -m py_compile .github/scripts/apply_v0161_productivity.py
+          python3 -m py_compile .github/scripts/apply_v0161_hierarchy_offset.py
           python3 -m py_compile .github/scripts/apply_v0161_header_footer_meta.py
           php -l .github/scripts/v0161_header_footer_qa.php
 
       - name: Apply 0.1.61 keyboard and clipboard
         run: python3 .github/scripts/apply_v0161_productivity.py
+
+      - name: Apply 0.1.61 hierarchy offset compatibility
+        run: python3 .github/scripts/apply_v0161_hierarchy_offset.py
 
       - name: Apply 0.1.61 Header Footer completion
         run: python3 .github/scripts/apply_v0161_header_footer_meta.py
@@ -58,6 +63,8 @@ jobs:
           grep -Fq "H18_CLEAN_VERSION', '0.1.61'" clean/hangar18-manager/hangar18-manager.php
           grep -Fq "'offsetX' => self::clamp" clean/hangar18-manager/src/Model/LayoutModel.php
           grep -Fq "'offsetY' => self::clamp" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -Fq "'offsetX' => 0" clean/hangar18-manager/src/Model/HierarchyNormalizer.php
+          grep -Fq "'offsetY' => 0" clean/hangar18-manager/src/Model/HierarchyNormalizer.php
           grep -Fq 'transform:translate(' clean/hangar18-manager/src/Frontend/Renderer.php
           grep -Fq "const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u'" clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function nudgeSelected' clean/hangar18-manager/assets/editor-v018-core.js
@@ -103,6 +110,7 @@ jobs:
           git add \
             clean/hangar18-manager/hangar18-manager.php \
             clean/hangar18-manager/src/Model/LayoutModel.php \
+            clean/hangar18-manager/src/Model/HierarchyNormalizer.php \
             clean/hangar18-manager/src/Model/TemplateLayoutModel.php \
             clean/hangar18-manager/src/Frontend/Renderer.php \
             clean/hangar18-manager/src/Admin/EditorController.php \
