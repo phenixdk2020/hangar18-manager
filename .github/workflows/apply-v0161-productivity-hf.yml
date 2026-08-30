@@ -32,6 +32,9 @@ jobs:
       - name: Apply 0.1.61 Header Footer completion
         run: python3 .github/scripts/apply_v0161_header_footer_meta.py
 
+      - name: Keep reviewed permanent release gates
+        run: git checkout HEAD -- .github/workflows/visual-designer-release.yml
+
       - name: PHP syntax
         run: find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
 
@@ -111,8 +114,7 @@ jobs:
             CLEAN-TECHNICAL-MANUAL.md \
             docs/HEADER-FOOTER-SPEC.md \
             docs/clean-backlog-v0100.md \
-            docs/v0161-status.md \
-            .github/workflows/visual-designer-release.yml
+            docs/v0161-status.md
           if git diff --cached --quiet; then echo 'No implementation changes'; exit 0; fi
           git commit -m 'Add keyboard clipboard and complete Header Footer in 0.1.61'
           git pull --rebase origin main
