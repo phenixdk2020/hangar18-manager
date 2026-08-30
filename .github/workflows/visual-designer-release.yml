@@ -37,12 +37,16 @@ jobs:
           php .github/scripts/v0125_model_qa.php
           php .github/scripts/v0161_header_footer_qa.php
           python3 .github/scripts/v0162_page_duplicate_qa.py
+          python3 .github/scripts/v0164_clipboard_qa.py
           grep -Fq 'VD-KEYBOARD-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-CLIPBOARD-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-PAGE-DUPLICATE-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-CLIPBOARD-002' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq "const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u'" clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function nudgeSelected' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function pastePayload' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'function selectedNodeForProductivity' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'window.H18VDProductivity = {' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq "'offsetX' => self::clamp" clean/hangar18-manager/src/Model/LayoutModel.php
           grep -Fq 'transform:translate(' clean/hangar18-manager/src/Frontend/Renderer.php
           grep -Fq 'public static function resolveChoiceId' clean/hangar18-manager/src/Model/TemplateLayoutModel.php
@@ -70,6 +74,7 @@ jobs:
           grep -q "VD-COLOR-POPOVER-001" CLEAN-TECHNICAL-MANUAL.md
           test -s docs/v0138-status.md
           test -s docs/v0162-status.md
+          test -s docs/v0164-status.md
           test -s clean/hangar18-manager/release-history.json
           if grep -R -n -E 'Hangar18 Manager Clean|Hangar18 Designer|Clean Manager v|Clean editor |Clean layout gemt|Clean-sider|Ikke Clean|h18-Visual Designer-' clean/hangar18-manager; then
             echo 'Obsolete public product naming found in Visual Designer Manager source.' >&2
