@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# v0.1.63 patch runner; v0.1.62 feature QA is intentionally forward-compatible.
 ROOT = Path('.')
 PLUGIN = ROOT / 'clean/hangar18-manager/hangar18-manager.php'
 ADMIN_JS = ROOT / 'clean/hangar18-manager/assets/admin-v0123.js'
