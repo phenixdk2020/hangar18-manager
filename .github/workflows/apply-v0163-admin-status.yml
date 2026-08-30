@@ -1,0 +1,61 @@
+name: Apply Visual Designer Manager 0.1.63 Admin Status
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0163_admin_status.py'
+      - '.github/workflows/apply-v0163-admin-status.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate apply script
+        run: python3 -m py_compile .github/scripts/apply_v0163_admin_status.py
+
+      - name: Apply v0.1.63 admin status patch
+        run: python3 .github/scripts/apply_v0163_admin_status.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Existing regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+          python3 .github/scripts/v0162_page_duplicate_qa.py
+
+      - name: Verify admin status patch
+        run: |
+          set -euo pipefail
+          grep -Fq 'Version: 0.1.63' clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "H18_CLEAN_VERSION', '0.1.63'" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "'h18-clean-menu': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
+          grep -Fq "'h18-clean-header-footer': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
+          grep -Fq '0.1.63 – Admin-status for Menu og Header/Footer' clean-release-notes.html
+          grep -Fq "'h18-clean-menu': ['Klar', 'ready']" .github/workflows/visual-designer-release.yml
+          grep -Fq "'h18-clean-header-footer': ['Klar', 'ready']" .github/workflows/visual-designer-release.yml
+          echo 'v0.1.63 admin status contracts PASS'
+
+      - name: Commit implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php clean/hangar18-manager/assets/admin-v0123.js clean-release-notes.html .github/workflows/visual-designer-release.yml
+          if git diff --cached --quiet; then echo 'No implementation changes'; exit 0; fi
+          git commit -m 'Mark Menu and Header Footer ready in 0.1.63'
+          git pull --rebase origin main
+          git push origin HEAD:main
