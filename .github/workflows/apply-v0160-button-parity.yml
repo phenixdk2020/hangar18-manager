@@ -1,0 +1,81 @@
+name: Apply Visual Designer Manager 0.1.60 Button Parity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0160_button_parity.py'
+      - '.github/workflows/apply-v0160-button-parity.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply 0.1.60 patch
+        run: python3 .github/scripts/apply_v0160_button_parity.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for f in clean/hangar18-manager/assets/*.js; do node --check "$f"; done
+
+      - name: Existing model regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Verify Button parity contract
+        run: |
+          set -euo pipefail
+          grep -Fq 'Version: 0.1.60' clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "H18_CLEAN_VERSION', '0.1.60'" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "'fontFamily' => self::fontToken(\$raw['fontFamily'] ?? 'system', false)" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -Fq "fontFamily: normalizeFontToken(raw.fontFamily || 'system', false)" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq "button.style.fontFamily = fontCss(node.props.fontFamily || 'system', 'system')" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq "button.style.whiteSpace = node.props.autoSize === false ? 'normal' : 'nowrap'" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'Typografi · knap' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq "\$whiteSpace = \$autoSize ? 'nowrap' : 'normal'" clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -Fq "font-family:' . \$fontFamily" clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -Fq 'VD-BUTTON-PARITY-001' CLEAN-TECHNICAL-MANUAL.md
+          test -s docs/v0160-status.md
+          echo '0.1.60 Button parity PASS'
+
+      - name: Preserve unrelated runtime contracts
+        run: |
+          set -euo pipefail
+          grep -Fq "'backgroundTransparent' => true" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -Fq 'data-h18-leaf-transparent' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq 'boundary-markers-v0137-single-owner' clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq "var mode = 'fit'" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -Fq 'VD-MENU-UX-003' CLEAN-TECHNICAL-MANUAL.md
+          echo 'Critical regression gates PASS'
+
+      - name: Commit implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Model/LayoutModel.php \
+            clean/hangar18-manager/src/Frontend/Renderer.php \
+            clean/hangar18-manager/assets/editor-v018-core.js \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            CLEAN-TECHNICAL-MANUAL.md \
+            docs/v0160-status.md
+          if git diff --cached --quiet; then echo 'No implementation changes'; exit 0; fi
+          git commit -m 'Fix Button Designer frontend parity in 0.1.60'
+          git pull --rebase origin main
+          git push origin HEAD:main
