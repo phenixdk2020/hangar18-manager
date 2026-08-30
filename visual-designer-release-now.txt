@@ -1,3 +1,3 @@
-Release Visual Designer Manager v0.1.59
-Trigger: text-background-inheritance 2026-08-30
+Release Visual Designer Manager v0.1.60
+Trigger: button-designer-frontend-parity 2026-08-30
 Publish: requested 2026-08-30
