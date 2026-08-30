@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Admin;
+namespace VisualDesignerManager\Admin;
 
-use Hangar18\Clean\Frontend\ThemeShell;
+use VisualDesignerManager\Frontend\ThemeShell;
 
 final class ThemeController
 {
@@ -149,7 +149,7 @@ final class ThemeController
     private static function guard(): void
     {
         if (!current_user_can('edit_theme_options')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
     }
 }

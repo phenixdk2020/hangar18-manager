@@ -60,10 +60,10 @@ require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/TemplateLayoutMo
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Migration/LegacyHeaderConverter.php';
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Migration/LegacyFooterConverter.php';
 
-use Hangar18\Clean\Model\LayoutModel;
-use Hangar18\Clean\Model\TemplateLayoutModel;
-use Hangar18\Clean\Migration\LegacyHeaderConverter;
-use Hangar18\Clean\Migration\LegacyFooterConverter;
+use VisualDesignerManager\Model\LayoutModel;
+use VisualDesignerManager\Model\TemplateLayoutModel;
+use VisualDesignerManager\Migration\LegacyHeaderConverter;
+use VisualDesignerManager\Migration\LegacyFooterConverter;
 
 function vdFail(string $message): void { fwrite(STDERR, "V0125 MODEL QA FAIL: {$message}\n"); exit(1); }
 function vdAssert(bool $condition, string $message): void { if (!$condition) { vdFail($message); } }

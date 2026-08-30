@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Admin;
+namespace VisualDesignerManager\Admin;
 
-use Hangar18\Clean\Diagnostics\DiagnosticStore;
-use Hangar18\Clean\Frontend\Renderer;
-use Hangar18\Clean\Model\LayoutModel;
-use Hangar18\Clean\Model\TemplateLayoutModel;
-use Hangar18\Clean\Update\GitHubUpdater;
+use VisualDesignerManager\Diagnostics\DiagnosticStore;
+use VisualDesignerManager\Frontend\Renderer;
+use VisualDesignerManager\Model\LayoutModel;
+use VisualDesignerManager\Model\TemplateLayoutModel;
+use VisualDesignerManager\Update\GitHubUpdater;
 
 final class EditorController
 {
@@ -78,7 +78,7 @@ final class EditorController
     public static function render(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
         $postId = isset($_GET['post']) ? absint($_GET['post']) : 0;
         if ($postId <= 0 || get_post_type($postId) !== 'page') {
@@ -203,7 +203,7 @@ final class EditorController
     public static function save(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
         check_admin_referer(self::NONCE_SAVE);
         $postId = absint($_POST['post_id'] ?? 0);
@@ -287,16 +287,16 @@ final class EditorController
     public static function compositePreview(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
         check_admin_referer(self::NONCE_COMPOSITE_PREVIEW);
         $postId = absint($_POST['post_id'] ?? 0);
         if ($postId <= 0 || get_post_type($postId) !== 'page') {
-            wp_die(esc_html__('Ugyldig side.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ugyldig side.', 'visual-designer-manager'));
         }
         $decoded = json_decode(isset($_POST['model_json']) ? (string) wp_unslash($_POST['model_json']) : '', true);
         if (!is_array($decoded)) {
-            wp_die(esc_html__('Preview-modellen er ikke gyldig JSON.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Preview-modellen er ikke gyldig JSON.', 'visual-designer-manager'));
         }
         try {
             $pageModel = LayoutModel::normalize($decoded);
@@ -317,20 +317,20 @@ final class EditorController
     public static function preview(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
         check_admin_referer(self::NONCE_PREVIEW);
         $postId = absint($_POST['post_id'] ?? 0);
         if ($postId <= 0 || get_post_type($postId) !== 'page') {
-            wp_die(esc_html__('Ugyldig side.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ugyldig side.', 'visual-designer-manager'));
         }
         $rawJson = isset($_POST['model_json']) ? (string) wp_unslash($_POST['model_json']) : '';
         if ($rawJson === '' || strlen($rawJson) > 2 * 1024 * 1024) {
-            wp_die(esc_html__('Preview-modellen mangler eller er for stor.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Preview-modellen mangler eller er for stor.', 'visual-designer-manager'));
         }
         $decoded = json_decode($rawJson, true);
         if (!is_array($decoded)) {
-            wp_die(esc_html__('Preview-modellen er ikke gyldig JSON.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Preview-modellen er ikke gyldig JSON.', 'visual-designer-manager'));
         }
         try {
             $normalized = LayoutModel::normalize($decoded);
@@ -355,24 +355,24 @@ final class EditorController
     public static function previewVersion(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
         check_admin_referer(self::NONCE_VERSION_PREVIEW);
         $postId = absint($_POST['post_id'] ?? 0);
         $targetVersion = absint($_POST['version'] ?? 0);
         if ($postId <= 0 || get_post_type($postId) !== 'page' || $targetVersion <= 0) {
-            wp_die(esc_html__('Ugyldig versionsanmodning.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ugyldig versionsanmodning.', 'visual-designer-manager'));
         }
         $target = LayoutModel::historyModel($postId, $targetVersion);
         if ($target === null) {
-            wp_die(esc_html__('Den valgte Visual Designer-version findes ikke længere.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Den valgte Visual Designer-version findes ikke længere.', 'visual-designer-manager'));
         }
         $token = strtolower(wp_generate_password(24, false, false));
         set_transient(Renderer::previewKey(get_current_user_id(), $postId, $token), $target, 10 * MINUTE_IN_SECONDS);
         DiagnosticStore::append($postId, 'version_preview_open', ['targetVersion' => $targetVersion]);
         $permalink = get_permalink($postId);
         if (!is_string($permalink) || $permalink === '') {
-            wp_die(esc_html__('Siden har ingen gyldig permalink.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Siden har ingen gyldig permalink.', 'visual-designer-manager'));
         }
         wp_safe_redirect(add_query_arg([
             'h18_clean_preview' => rawurlencode($token),
@@ -384,7 +384,7 @@ final class EditorController
     public static function restoreCopy(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
         check_admin_referer(self::NONCE_RESTORE_COPY);
         $postId = absint($_POST['post_id'] ?? 0);
@@ -432,7 +432,7 @@ final class EditorController
     public static function restore(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
         check_admin_referer(self::NONCE_RESTORE);
         $postId = absint($_POST['post_id'] ?? 0);

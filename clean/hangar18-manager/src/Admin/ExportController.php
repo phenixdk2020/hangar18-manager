@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Admin;
+namespace VisualDesignerManager\Admin;
 
-use Hangar18\Clean\Model\LayoutModel;
+use VisualDesignerManager\Model\LayoutModel;
 
 final class ExportController
 {
@@ -91,11 +91,11 @@ final class ExportController
         self::guard();
         $kind = sanitize_key((string) ($_POST['export_kind'] ?? ''));
         if (!isset(self::LABELS[$kind])) {
-            wp_die(esc_html__('Ukendt exporttype.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ukendt exporttype.', 'visual-designer-manager'));
         }
         check_admin_referer(self::NONCE . '_' . $kind);
         if (!class_exists('ZipArchive')) {
-            wp_die(esc_html__('PHP ZipArchive er ikke tilgængelig på serveren.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('PHP ZipArchive er ikke tilgængelig på serveren.', 'visual-designer-manager'));
         }
 
         if (function_exists('set_time_limit')) {
@@ -104,14 +104,14 @@ final class ExportController
 
         $tmp = wp_tempnam('visual-designer-export-' . $kind . '.zip');
         if (!is_string($tmp) || $tmp === '') {
-            wp_die(esc_html__('Kunne ikke oprette midlertidig exportfil.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Kunne ikke oprette midlertidig exportfil.', 'visual-designer-manager'));
         }
 
         $zip = new \ZipArchive();
         $opened = $zip->open($tmp, \ZipArchive::OVERWRITE);
         if ($opened !== true) {
             @unlink($tmp);
-            wp_die(esc_html__('Kunne ikke oprette ZIP-export.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Kunne ikke oprette ZIP-export.', 'visual-designer-manager'));
         }
 
         $files = [];
@@ -186,7 +186,7 @@ final class ExportController
 
         if (!is_file($tmp) || filesize($tmp) === 0) {
             @unlink($tmp);
-            wp_die(esc_html__('Exportpakken blev ikke oprettet korrekt.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Exportpakken blev ikke oprettet korrekt.', 'visual-designer-manager'));
         }
 
         $filename = self::downloadName($kind);
@@ -682,7 +682,7 @@ final class ExportController
     private static function guard(): void
     {
         if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
     }
 }

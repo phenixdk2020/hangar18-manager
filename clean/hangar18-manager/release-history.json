@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.57",
+      "date": "2026-08-30",
+      "items": [
+        "BUG-19: menu-item-classes serialiseres som WordPress-kompatibel whitespace-streng ved Gem menu, overskrift og snapshot-restore.",
+        "CSS-klasser saniteres, tomme værdier filtreres og dubletter fjernes før wp_update_nav_menu_item().",
+        "VD-RUNTIME-IDENTITY-001: aktiv PHP namespace-rod er VisualDesignerManager i stedet for Hangar18\\Clean.",
+        "WordPress Text Domain er visual-designer-manager.",
+        "Persistente h18_clean/h18-clean kompatibilitets-IDer bevares uændret for at beskytte eksisterende data og URLs."
+      ]
+    },
+    {
       "version": "0.1.56",
       "date": "2026-08-30",
       "items": [

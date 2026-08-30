@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Migration;
+namespace VisualDesignerManager\Migration;
 
-use Hangar18\Clean\Frontend\Renderer;
-use Hangar18\Clean\Model\LayoutModel;
-use Hangar18\Clean\Model\TemplateLayoutModel;
+use VisualDesignerManager\Frontend\Renderer;
+use VisualDesignerManager\Model\LayoutModel;
+use VisualDesignerManager\Model\TemplateLayoutModel;
 
 /**
  * Creates a staged Visual Designer candidate without changing public output.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Migration;
+namespace VisualDesignerManager\Migration;
 
 /**
  * Read-only importer for public HTTPS pages.

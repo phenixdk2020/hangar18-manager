@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Frontend;
+namespace VisualDesignerManager\Frontend;
 
-use Hangar18\Clean\Model\LayoutModel;
+use VisualDesignerManager\Model\LayoutModel;
 
 /**
  * Responsive geometry layer for Clean Designer.

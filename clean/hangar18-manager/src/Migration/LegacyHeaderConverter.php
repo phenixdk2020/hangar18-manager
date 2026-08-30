@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Migration;
+namespace VisualDesignerManager\Migration;
 
-use Hangar18\Clean\Model\LayoutModel;
-use Hangar18\Clean\Model\TemplateLayoutModel;
+use VisualDesignerManager\Model\LayoutModel;
+use VisualDesignerManager\Model\TemplateLayoutModel;
 
 /**
  * Non-destructive one-time conversion of the historical Hangar18 Manager

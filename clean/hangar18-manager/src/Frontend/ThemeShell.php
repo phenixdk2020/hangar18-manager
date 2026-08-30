@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Frontend;
+namespace VisualDesignerManager\Frontend;
 
-use Hangar18\Clean\Model\TemplateLayoutModel;
+use VisualDesignerManager\Model\TemplateLayoutModel;
 
 /**
  * Theme-shell coordination for the Visual Designer runtime.

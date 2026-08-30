@@ -4,18 +4,18 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.56
+ * Version: 0.1.57
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
- * Text Domain: hangar18-manager-clean
+ * Text Domain: visual-designer-manager
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.56');
+define('H18_CLEAN_VERSION', '0.1.57');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -24,9 +24,9 @@ define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
  * Compatibility marker for Hangar18 Base Theme 1.2.x.
  *
  * The theme only checks whether the historical Hangar18_Manager class exists
- * to decide if a Manager is active. Clean deliberately does not load the
+ * to decide if a Manager is active. Visual Designer Manager deliberately does not load the
  * legacy manager runtime, but exposing this empty marker keeps the theme's
- * status detection correct while the clean architecture remains isolated.
+ * status detection correct while the current architecture remains isolated.
  */
 if (!class_exists('Hangar18_Manager', false)) {
     final class Hangar18_Manager
@@ -63,19 +63,19 @@ require_once H18_CLEAN_DIR . 'src/Frontend/ThemeShell.php';
 require_once H18_CLEAN_DIR . 'src/Update/GitHubUpdater.php';
 
 add_action('plugins_loaded', static function (): void {
-    \Hangar18\Clean\Diagnostics\DiagnosticStore::register();
-    \Hangar18\Clean\Admin\EditorController::register();
-    \Hangar18\Clean\Admin\AdminController::register();
-    \Hangar18\Clean\Admin\AdminMenuBridge::register();
-    \Hangar18\Clean\Admin\ConversionController::register();
-    \Hangar18\Clean\Admin\ExportController::register();
-    \Hangar18\Clean\Admin\NavigationController::register();
-    \Hangar18\Clean\Admin\ThemeController::register();
-    \Hangar18\Clean\Admin\GlobalDesignerController::register();
-    \Hangar18\Clean\Frontend\Renderer::register();
-    \Hangar18\Clean\Frontend\ResponsiveRenderer::register();
-    \Hangar18\Clean\Frontend\ThemeShell::register();
-    \Hangar18\Clean\Update\GitHubUpdater::register();
+    \VisualDesignerManager\Diagnostics\DiagnosticStore::register();
+    \VisualDesignerManager\Admin\EditorController::register();
+    \VisualDesignerManager\Admin\AdminController::register();
+    \VisualDesignerManager\Admin\AdminMenuBridge::register();
+    \VisualDesignerManager\Admin\ConversionController::register();
+    \VisualDesignerManager\Admin\ExportController::register();
+    \VisualDesignerManager\Admin\NavigationController::register();
+    \VisualDesignerManager\Admin\ThemeController::register();
+    \VisualDesignerManager\Admin\GlobalDesignerController::register();
+    \VisualDesignerManager\Frontend\Renderer::register();
+    \VisualDesignerManager\Frontend\ResponsiveRenderer::register();
+    \VisualDesignerManager\Frontend\ThemeShell::register();
+    \VisualDesignerManager\Update\GitHubUpdater::register();
 });
 
 add_action('admin_enqueue_scripts', static function (string $hook): void {
@@ -86,7 +86,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     }
 
     /*
-     * Current Clean core provides theme-accurate preview, canonical grid layout,
+     * Current Visual Designer Manager core provides theme-accurate preview, canonical grid layout,
      * verified Save, independent image-box rendering and responsive layout editing.
      */
     wp_dequeue_script('h18-clean-editor');
@@ -95,14 +95,14 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     if ($isGlobalDesigner) {
         $part = isset($_GET['part']) && sanitize_key((string) $_GET['part']) === 'footer' ? 'footer' : 'header';
         $postId = 0;
-        \Hangar18\Clean\Model\TemplateLayoutModel::ensureMigrated();
+        \VisualDesignerManager\Model\TemplateLayoutModel::ensureMigrated();
         $templateId = isset($_GET['template']) ? sanitize_key((string) $_GET['template']) : '';
-        if ($templateId === '' || !\Hangar18\Clean\Model\TemplateLayoutModel::exists($templateId, $part)) { $templateId = \Hangar18\Clean\Model\TemplateLayoutModel::defaultId($part); }
-        $model = $templateId !== '' ? \Hangar18\Clean\Model\TemplateLayoutModel::model($templateId) : \Hangar18\Clean\Model\LayoutModel::empty();
+        if ($templateId === '' || !\VisualDesignerManager\Model\TemplateLayoutModel::exists($templateId, $part)) { $templateId = \VisualDesignerManager\Model\TemplateLayoutModel::defaultId($part); }
+        $model = $templateId !== '' ? \VisualDesignerManager\Model\TemplateLayoutModel::model($templateId) : \VisualDesignerManager\Model\LayoutModel::empty();
     } else {
         $model = $postId > 0 && get_post_type($postId) === 'page'
-            ? \Hangar18\Clean\Model\LayoutModel::get($postId)
-            : \Hangar18\Clean\Model\LayoutModel::empty();
+            ? \VisualDesignerManager\Model\LayoutModel::get($postId)
+            : \VisualDesignerManager\Model\LayoutModel::empty();
     }
 
     $menuPayload = array_values(array_map(static function ($menu): array {
@@ -138,9 +138,9 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     );
     wp_localize_script('h18-clean-editor-v018-core', 'H18CleanEditor', [
         'version' => H18_CLEAN_VERSION,
-        'schemaVersion' => \Hangar18\Clean\Model\LayoutModel::SCHEMA,
-        'units' => \Hangar18\Clean\Model\LayoutModel::UNITS,
-        'rowPx' => \Hangar18\Clean\Model\LayoutModel::ROW_PX,
+        'schemaVersion' => \VisualDesignerManager\Model\LayoutModel::SCHEMA,
+        'units' => \VisualDesignerManager\Model\LayoutModel::UNITS,
+        'rowPx' => \VisualDesignerManager\Model\LayoutModel::ROW_PX,
         'postId' => $postId,
         'initialModel' => $model,
         'pages' => array_values(array_map(static function ($page): array { return ['id' => (int) $page->ID, 'title' => (string) $page->post_title]; }, get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC', 'post_status' => ['publish', 'draft', 'pending', 'private', 'future']]))),

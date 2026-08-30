@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/HierarchyNormalizer.php';
 
-use Hangar18\Clean\Model\HierarchyNormalizer;
-use Hangar18\Clean\Model\LayoutModel;
+use VisualDesignerManager\Model\HierarchyNormalizer;
+use VisualDesignerManager\Model\LayoutModel;
 
 /* Minimal WordPress function stubs required by LayoutModel::normalize(). */
 if (!function_exists('sanitize_key')) {

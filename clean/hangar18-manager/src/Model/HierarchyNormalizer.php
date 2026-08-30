@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Model;
+namespace VisualDesignerManager\Model;
 
 /**
  * Compatibility-safe hierarchy normalization for the Visual Designer model.

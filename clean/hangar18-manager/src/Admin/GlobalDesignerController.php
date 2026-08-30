@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Admin;
+namespace VisualDesignerManager\Admin;
 
-use Hangar18\Clean\Migration\LegacyHeaderConverter;
-use Hangar18\Clean\Migration\LegacyFooterConverter;
-use Hangar18\Clean\Model\LayoutModel;
-use Hangar18\Clean\Model\TemplateLayoutModel;
+use VisualDesignerManager\Migration\LegacyHeaderConverter;
+use VisualDesignerManager\Migration\LegacyFooterConverter;
+use VisualDesignerManager\Model\LayoutModel;
+use VisualDesignerManager\Model\TemplateLayoutModel;
 
 final class GlobalDesignerController
 {
@@ -229,7 +229,7 @@ final class GlobalDesignerController
         } catch (\Throwable $error) { self::redirect($part, $id, 'error', 'Template-handling fejlede: ' . $error->getMessage()); }
     }
 
-    private static function guard(): void { if (!current_user_can('edit_theme_options')) { wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean')); } }
+    private static function guard(): void { if (!current_user_can('edit_theme_options')) { wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager')); } }
     private static function part($value): string { return sanitize_key((string) $value) === 'footer' ? 'footer' : 'header'; }
     private static function url(string $part, string $template = ''): string { $args = ['page' => self::PAGE, 'part' => self::part($part)]; if ($template !== '') { $args['template'] = sanitize_key($template); } return add_query_arg($args, admin_url('admin.php')); }
     private static function redirect(string $part, string $template, string $status, string $message): void { $args = ['page' => self::PAGE, 'part' => self::part($part), 'vd_status' => sanitize_key($status), 'vd_message' => $message]; if ($template !== '') { $args['template'] = sanitize_key($template); } wp_safe_redirect(add_query_arg($args, admin_url('admin.php'))); exit; }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Update;
+namespace VisualDesignerManager\Update;
 
 final class GitHubUpdater
 {
@@ -181,7 +181,7 @@ final class GitHubUpdater
     public static function manualCheck(): void
     {
         if (!current_user_can('update_plugins')) {
-            wp_die(esc_html__('Ingen adgang til plugin-opdateringer.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang til plugin-opdateringer.', 'visual-designer-manager'));
         }
         check_admin_referer(self::CHECK_NONCE);
 
@@ -314,7 +314,7 @@ final class GitHubUpdater
     public static function installNow(): void
     {
         if (!current_user_can('update_plugins')) {
-            wp_die(esc_html__('Ingen adgang til plugin-opdateringer.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang til plugin-opdateringer.', 'visual-designer-manager'));
         }
         check_admin_referer(self::INSTALL_NONCE);
 
@@ -608,10 +608,10 @@ final class GitHubUpdater
     private static function createDesignerCheckpoint(string $directory, string $baseName, string $targetVersion): array|\WP_Error
     {
         try {
-            \Hangar18\Clean\Model\TemplateLayoutModel::ensureMigrated();
+            \VisualDesignerManager\Model\TemplateLayoutModel::ensureMigrated();
             $payload = [
                 'product' => 'Visual Designer Manager update checkpoint',
-                'schemaVersion' => \Hangar18\Clean\Model\LayoutModel::SCHEMA,
+                'schemaVersion' => \VisualDesignerManager\Model\LayoutModel::SCHEMA,
                 'currentVersion' => H18_CLEAN_VERSION,
                 'targetVersion' => $targetVersion,
                 'generatedUtc' => gmdate('c'),
@@ -631,10 +631,10 @@ final class GitHubUpdater
                     continue;
                 }
                 $postId = (int) $page->ID;
-                $headerChoice = \Hangar18\Clean\Model\TemplateLayoutModel::pageChoice($postId, 'header');
-                $footerChoice = \Hangar18\Clean\Model\TemplateLayoutModel::pageChoice($postId, 'footer');
-                $hasLayout = metadata_exists('post', $postId, \Hangar18\Clean\Model\LayoutModel::META)
-                    || (int) get_post_meta($postId, \Hangar18\Clean\Model\LayoutModel::VERSION_META, true) > 0;
+                $headerChoice = \VisualDesignerManager\Model\TemplateLayoutModel::pageChoice($postId, 'header');
+                $footerChoice = \VisualDesignerManager\Model\TemplateLayoutModel::pageChoice($postId, 'footer');
+                $hasLayout = metadata_exists('post', $postId, \VisualDesignerManager\Model\LayoutModel::META)
+                    || (int) get_post_meta($postId, \VisualDesignerManager\Model\LayoutModel::VERSION_META, true) > 0;
                 if (!$hasLayout && $headerChoice === 'auto' && $footerChoice === 'auto') {
                     continue;
                 }
@@ -643,16 +643,16 @@ final class GitHubUpdater
                     'title' => (string) $page->post_title,
                     'slug' => (string) $page->post_name,
                     'status' => (string) $page->post_status,
-                    'version' => (int) get_post_meta($postId, \Hangar18\Clean\Model\LayoutModel::VERSION_META, true),
-                    'model' => \Hangar18\Clean\Model\LayoutModel::get($postId),
-                    'history' => \Hangar18\Clean\Model\LayoutModel::history($postId),
+                    'version' => (int) get_post_meta($postId, \VisualDesignerManager\Model\LayoutModel::VERSION_META, true),
+                    'model' => \VisualDesignerManager\Model\LayoutModel::get($postId),
+                    'history' => \VisualDesignerManager\Model\LayoutModel::history($postId),
                     'headerChoice' => $headerChoice,
                     'footerChoice' => $footerChoice,
                 ];
             }
 
             foreach (['header', 'footer'] as $type) {
-                foreach (\Hangar18\Clean\Model\TemplateLayoutModel::all($type) as $row) {
+                foreach (\VisualDesignerManager\Model\TemplateLayoutModel::all($type) as $row) {
                     $id = (string) ($row['id'] ?? '');
                     if ($id === '') {
                         continue;
@@ -663,10 +663,10 @@ final class GitHubUpdater
                         'name' => (string) ($row['name'] ?? ''),
                         'active' => !empty($row['active']),
                         'isDefault' => !empty($row['isDefault']),
-                        'version' => \Hangar18\Clean\Model\TemplateLayoutModel::version($id),
-                        'model' => \Hangar18\Clean\Model\TemplateLayoutModel::model($id),
-                        'settings' => \Hangar18\Clean\Model\TemplateLayoutModel::settings($id),
-                        'history' => \Hangar18\Clean\Model\TemplateLayoutModel::history($id),
+                        'version' => \VisualDesignerManager\Model\TemplateLayoutModel::version($id),
+                        'model' => \VisualDesignerManager\Model\TemplateLayoutModel::model($id),
+                        'settings' => \VisualDesignerManager\Model\TemplateLayoutModel::settings($id),
+                        'history' => \VisualDesignerManager\Model\TemplateLayoutModel::history($id),
                     ];
                 }
             }

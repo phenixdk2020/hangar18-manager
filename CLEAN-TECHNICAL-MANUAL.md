@@ -900,3 +900,18 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - Struktur-preview opdateres i browseren ved ændret rækkefølge, nesting eller menutekst. Preview viser kun informationsarkitektur; typografi/farver/layout styres fortsat af Visual Designer Menu-elementet.
 - WordPress `nav_menu` / `nav_menu_item` er fortsat den eneste canonical datakilde. Versionssnapshots og restore-kontrakten fra VD-MENU-UX-002 bevares.
 
+
+
+## 0.1.57 – Menu-save og runtime-identitet
+
+### VD-MENU-CLASS-SERIALIZATION-001
+- Alle kald til WordPress `wp_update_nav_menu_item()` skal sende `menu-item-classes` som en whitespace-separeret streng, aldrig som PHP-array.
+- Eksisterende CSS-klasser normaliseres med `sanitize_html_class`, dubletter fjernes, og tomme værdier udelades.
+- Reglen gælder både almindelig Gem menu, oprettelse af overskrift/gruppe og gendannelse fra navigation-snapshot.
+- En eksisterende menu med én eller flere CSS-klasser må ikke kunne udløse PHP `TypeError` i WordPress `nav-menu.php`.
+
+### VD-RUNTIME-IDENTITY-001
+- Aktiv PHP-runtime bruger namespace-roden `VisualDesignerManager\\...`; nye stacktraces må ikke vise `Hangar18\\Clean\\...`.
+- WordPress Text Domain er `visual-designer-manager`.
+- Persistente kompatibilitets-ID'er som eksisterende option/meta/action/page-slugs med `h18_clean` / `h18-clean` ændres ikke i denne migration. De er data-/URL-kompatibilitet og må ikke masseomdøbes uden en særskilt migrationskontrakt.
+- Den historiske `Hangar18_Manager` compatibility marker bevares, så eksisterende theme-integration ikke brydes.

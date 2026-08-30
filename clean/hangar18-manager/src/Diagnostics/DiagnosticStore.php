@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Diagnostics;
+namespace VisualDesignerManager\Diagnostics;
 
-use Hangar18\Clean\Model\LayoutModel;
+use VisualDesignerManager\Model\LayoutModel;
 
 final class DiagnosticStore
 {

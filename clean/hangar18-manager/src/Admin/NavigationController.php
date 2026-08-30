@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Admin;
+namespace VisualDesignerManager\Admin;
 
 final class NavigationController
 {
@@ -188,7 +188,7 @@ final class NavigationController
                 'menu-item-url' => '#',
                 'menu-item-type' => 'custom',
                 'menu-item-status' => 'publish',
-                'menu-item-classes' => ['vd-menu-heading'],
+                'menu-item-classes' => 'vd-menu-heading',
             ]);
         } else {
             $url = esc_url_raw((string) wp_unslash($_POST['custom_url'] ?? ''));
@@ -227,7 +227,7 @@ final class NavigationController
                 }
             }
             if (!$belongs) {
-                wp_die(esc_html__('Menupunktet tilhører ikke denne menu.', 'hangar18-manager-clean'));
+                wp_die(esc_html__('Menupunktet tilhører ikke denne menu.', 'visual-designer-manager'));
             }
             self::snapshot('Før fjernelse af menupunkt');
             wp_delete_post($deleteItemId, true);
@@ -264,7 +264,7 @@ final class NavigationController
                 'menu-item-object' => (string) $item->object,
                 'menu-item-object-id' => (int) $item->object_id,
                 'menu-item-target' => (string) $item->target,
-                'menu-item-classes' => is_array($item->classes) ? $item->classes : [],
+                'menu-item-classes' => self::menuItemClasses($item->classes),
             ];
             if ((string) $item->type === 'custom') {
                 $args['menu-item-url'] = esc_url_raw((string) $item->url);
@@ -285,7 +285,7 @@ final class NavigationController
         check_admin_referer('h18_clean_nav_delete_' . $menuId . '_' . $itemId);
         self::requireMenu($menuId);
         if ($itemId <= 0 || get_post_type($itemId) !== 'nav_menu_item') {
-            wp_die(esc_html__('Ugyldigt menupunkt.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ugyldigt menupunkt.', 'visual-designer-manager'));
         }
         self::snapshot('Før sletning af menupunkt');
         wp_delete_post($itemId, true);
@@ -312,12 +312,12 @@ final class NavigationController
         self::guard();
         $fingerprint = sanitize_text_field((string) wp_unslash($_POST['snapshot'] ?? ''));
         if ($fingerprint === '') {
-            wp_die(esc_html__('Snapshot mangler.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Snapshot mangler.', 'visual-designer-manager'));
         }
         check_admin_referer('h18_clean_nav_restore_' . $fingerprint);
         $entry = self::findSnapshot($fingerprint);
         if ($entry === null) {
-            wp_die(esc_html__('Snapshot findes ikke længere.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Snapshot findes ikke længere.', 'visual-designer-manager'));
         }
 
         self::validateSnapshot($entry);
@@ -820,7 +820,7 @@ final class NavigationController
             'menu-item-position' => max(1, absint($item['order'] ?? 1)),
             'menu-item-status' => 'publish',
             'menu-item-target' => sanitize_key((string) ($item['target'] ?? '')),
-            'menu-item-classes' => isset($item['classes']) && is_array($item['classes']) ? array_map('sanitize_html_class', $item['classes']) : [],
+            'menu-item-classes' => self::menuItemClasses($item['classes'] ?? []),
             'menu-item-attr-title' => sanitize_text_field((string) ($item['attrTitle'] ?? '')),
             'menu-item-description' => sanitize_textarea_field((string) ($item['description'] ?? '')),
             'menu-item-xfn' => sanitize_text_field((string) ($item['xfn'] ?? '')),
@@ -874,6 +874,26 @@ final class NavigationController
         }
     }
 
+    /** @param mixed $classes */
+    private static function menuItemClasses($classes): string
+    {
+        if (is_string($classes)) {
+            $classes = preg_split('/\s+/', trim($classes)) ?: [];
+        }
+        if (!is_array($classes)) {
+            $classes = [];
+        }
+
+        $clean = [];
+        foreach ($classes as $className) {
+            $className = sanitize_html_class((string) $className);
+            if ($className !== '') {
+                $clean[] = $className;
+            }
+        }
+        return implode(' ', array_values(array_unique($clean)));
+    }
+
     /** @return array<mixed> */
     private static function postedArray(string $key): array
     {
@@ -885,7 +905,7 @@ final class NavigationController
     {
         $menu = wp_get_nav_menu_object($menuId);
         if (!$menu instanceof \WP_Term) {
-            wp_die(esc_html__('Menuen findes ikke.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Menuen findes ikke.', 'visual-designer-manager'));
         }
         return $menu;
     }
@@ -923,7 +943,7 @@ final class NavigationController
     private static function guard(): void
     {
         if (!current_user_can('edit_theme_options')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
     }
 }

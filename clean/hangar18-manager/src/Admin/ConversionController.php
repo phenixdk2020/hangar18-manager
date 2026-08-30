@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Admin;
+namespace VisualDesignerManager\Admin;
 
-use Hangar18\Clean\Migration\ExternalPageSourceService;
-use Hangar18\Clean\Migration\PageConversionService;
-use Hangar18\Clean\Model\LayoutModel;
+use VisualDesignerManager\Migration\ExternalPageSourceService;
+use VisualDesignerManager\Migration\PageConversionService;
+use VisualDesignerManager\Model\LayoutModel;
 
 final class ConversionController
 {
@@ -276,7 +276,7 @@ echo '</section>';
     private static function assertEditablePage(int $postId): void
     {
         if ($postId <= 0 || get_post_type($postId) !== 'page' || !current_user_can('edit_post', $postId)) {
-            wp_die(esc_html__('Ingen adgang til siden.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang til siden.', 'visual-designer-manager'));
         }
     }
 
@@ -296,7 +296,7 @@ echo '</section>';
     private static function guard(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
     }
 

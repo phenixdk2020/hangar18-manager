@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Migration;
+namespace VisualDesignerManager\Migration;
 
-use Hangar18\Clean\Model\LayoutModel;
+use VisualDesignerManager\Model\LayoutModel;
 
 /**
  * Converts visible Gutenberg/page-frame structure into canonical Visual

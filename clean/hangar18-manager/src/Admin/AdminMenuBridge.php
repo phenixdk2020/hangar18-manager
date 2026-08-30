@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Admin;
+namespace VisualDesignerManager\Admin;
 
 final class AdminMenuBridge
 {

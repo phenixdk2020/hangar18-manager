@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Hangar18\Clean\Admin;
+namespace VisualDesignerManager\Admin;
 
-use Hangar18\Clean\Diagnostics\DiagnosticStore;
-use Hangar18\Clean\Frontend\ThemeShell;
-use Hangar18\Clean\Model\LayoutModel;
-use Hangar18\Clean\Model\TemplateLayoutModel;
-use Hangar18\Clean\Update\GitHubUpdater;
+use VisualDesignerManager\Diagnostics\DiagnosticStore;
+use VisualDesignerManager\Frontend\ThemeShell;
+use VisualDesignerManager\Model\LayoutModel;
+use VisualDesignerManager\Model\TemplateLayoutModel;
+use VisualDesignerManager\Update\GitHubUpdater;
 
 final class AdminController
 {
@@ -804,7 +804,7 @@ final class AdminController
     private static function guard(): void
     {
         if (!current_user_can('edit_pages')) {
-            wp_die(esc_html__('Ingen adgang.', 'hangar18-manager-clean'));
+            wp_die(esc_html__('Ingen adgang.', 'visual-designer-manager'));
         }
     }
 
