@@ -1,11 +1,10 @@
 from pathlib import Path
 
-# v0.1.63 patch runner; v0.1.62 feature QA is intentionally forward-compatible.
+# v0.1.63 patch runner; workflow regression gates are maintained separately.
 ROOT = Path('.')
 PLUGIN = ROOT / 'clean/hangar18-manager/hangar18-manager.php'
 ADMIN_JS = ROOT / 'clean/hangar18-manager/assets/admin-v0123.js'
 NOTES = ROOT / 'clean-release-notes.html'
-RELEASE_WORKFLOW = ROOT / '.github/workflows/visual-designer-release.yml'
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -29,10 +28,3 @@ entry = '<h4>0.1.63 – Admin-status for Menu og Header/Footer</h4><ul><li><stro
 if not notes.startswith('<h4>0.1.63'):
     notes = entry + notes
 NOTES.write_text(notes, encoding='utf-8')
-
-workflow = RELEASE_WORKFLOW.read_text(encoding='utf-8')
-anchor = "          grep -Fq 'h18-manager-badge is-ok\">Klar' clean/hangar18-manager/src/Admin/GlobalDesignerController.php\n"
-addition = anchor + "          grep -Fq \"'h18-clean-menu': ['Klar', 'ready']\" clean/hangar18-manager/assets/admin-v0123.js\n          grep -Fq \"'h18-clean-header-footer': ['Klar', 'ready']\" clean/hangar18-manager/assets/admin-v0123.js\n"
-if "'h18-clean-menu': ['Klar', 'ready']" not in workflow:
-    workflow = replace_once(workflow, anchor, addition, 'release admin status gates')
-RELEASE_WORKFLOW.write_text(workflow, encoding='utf-8')
