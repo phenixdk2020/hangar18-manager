@@ -1,0 +1,77 @@
+name: Recover Visual Designer Manager 0.1.64 Core
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/recover-v0164-core.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Recover QA-green core and prefer visible selection
+        shell: bash
+        run: |
+          set -euo pipefail
+          CORE='clean/hangar18-manager/assets/editor-v018-core.js'
+          CURRENT_BLOB="$(git hash-object "$CORE")"
+          test "$CURRENT_BLOB" = '3f92a58e4e367c66042846bfa32c62776e7d0659'
+          git show 5a207eb6641e6c6d565220490e47cae4dea719da:"$CORE" > "$CORE"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('clean/hangar18-manager/assets/editor-v018-core.js')
+          s = p.read_text(encoding='utf-8')
+          old = '''    function selectedNodeForProductivity() {
+              const direct = nodeById(selectedId);
+              if (direct) { return direct; }
+              const card = document.querySelector('#h18-clean-canvas .h18-clean-node.is-selected[data-node-id]');
+              if (!card) { return null; }
+              const recovered = nodeById(card.getAttribute('data-node-id') || '');
+              if (recovered) { selectedId = recovered.id; }
+              return recovered;
+          }
+          '''
+          new = '''    function selectedNodeForProductivity() {
+              const card = document.querySelector('#h18-clean-canvas .h18-clean-node.is-selected[data-node-id]');
+              if (card) {
+                  const recovered = nodeById(card.getAttribute('data-node-id') || '');
+                  if (recovered) {
+                      selectedId = recovered.id;
+                      return recovered;
+                  }
+              }
+              return nodeById(selectedId);
+          }
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f'expected one selection helper, found {s.count(old)}')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Validate recovered source
+        run: |
+          node --check clean/hangar18-manager/assets/editor-v018-core.js
+          python3 .github/scripts/v0164_clipboard_qa.py
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+          python3 .github/scripts/v0162_page_duplicate_qa.py
+
+      - name: Commit recovered core
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/assets/editor-v018-core.js
+          git commit -m 'Recover v0.1.64 core and prefer visible clipboard selection'
+          git pull --rebase origin main
+          git push origin HEAD:main
