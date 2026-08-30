@@ -146,6 +146,11 @@
                 targetBlank: !!raw.targetBlank,
                 background: /^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#30382a',
                 textColor: /^#[0-9a-f]{6}$/i.test(String(raw.textColor || '')) ? String(raw.textColor).toLowerCase() : '#ffffff',
+                fontFamily: normalizeFontToken(raw.fontFamily || 'system', false),
+                fontSize: clamp(parseInt(raw.fontSize || 16, 10) || 16, 8, 120),
+                fontWeight: clamp(parseInt(raw.fontWeight || 400, 10) || 400, 100, 900),
+                lineHeight: Math.max(0.8, Math.min(3, parseFloat(raw.lineHeight || 1.2) || 1.2)),
+                letterSpacing: Math.max(-10, Math.min(30, parseFloat(raw.letterSpacing || 0) || 0)),
                 hoverBackground: /^#[0-9a-f]{6}$/i.test(String(raw.hoverBackground || '')) ? String(raw.hoverBackground).toLowerCase() : '#525a5f',
                 hoverTextColor: /^#[0-9a-f]{6}$/i.test(String(raw.hoverTextColor || '')) ? String(raw.hoverTextColor).toLowerCase() : '#ffffff',
                 focusColor: /^#[0-9a-f]{6}$/i.test(String(raw.focusColor || '')) ? String(raw.focusColor).toLowerCase() : '#c3ae83',
@@ -959,6 +964,12 @@
             button.style.boxSizing = 'border-box';
             button.style.background = node.props.background || '#30382a';
             button.style.color = node.props.textColor || '#ffffff';
+            button.style.fontFamily = fontCss(node.props.fontFamily || 'system', 'system');
+            button.style.fontSize = String(node.props.fontSize || 16) + 'px';
+            button.style.fontWeight = String(node.props.fontWeight || 400);
+            button.style.lineHeight = String(node.props.lineHeight || 1.2);
+            button.style.letterSpacing = String(node.props.letterSpacing || 0) + 'px';
+            button.style.whiteSpace = node.props.autoSize === false ? 'normal' : 'nowrap';
             button.style.borderRadius = String(node.props.radius || 0) + 'px';
             button.style.padding = String(node.props.paddingY || 10) + 'px ' + String(node.props.paddingX || 20) + 'px';
             wrap.appendChild(button);
@@ -1386,6 +1397,7 @@
             html += '<label>Placering<select data-field="placementMode"><option value="normal"' + (node.props.placementMode !== 'overlay' ? ' selected' : '') + '>Normal i layout</option><option value="overlay"' + (node.props.placementMode === 'overlay' ? ' selected' : '') + '>Flydende i område</option></select></label>';
             if (node.props.placementMode === 'overlay') { html += '<label>Lag<input data-field="zIndex" type="number" min="1" max="200" value="' + (node.props.zIndex || 20) + '"><span class="description">Højere lag ligger foran andre elementer. Knappen flyder frit i sin aktuelle Side/Sektion/Kasse og flyttes med ✥ eller X/Y.</span></label>'; }
             html += '<label class="h18-clean-checkbox"><input data-field="autoSize" type="checkbox"' + (node.props.autoSize !== false ? ' checked' : '') + '> Automatisk størrelse efter tekst og padding</label>';
+            html += '<div class="h18-vd-typography"><strong>Typografi · knap</strong><div class="h18-clean-field-grid"><label>Skrifttype<select data-field="fontFamily">' + fontOptions(node.props.fontFamily || 'system', false) + '</select></label><label>Størrelse px<input data-field="fontSize" type="number" min="8" max="120" value="' + (node.props.fontSize || 16) + '"></label><label>Tykkelse<select data-field="fontWeight">' + [300,400,500,600,700,800,900].map(function (v) { return '<option value="' + v + '"' + (parseInt(node.props.fontWeight || 400, 10) === v ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></label><label>Linjeafstand<input data-field="lineHeight" type="number" step="0.1" min="0.8" max="3" value="' + (node.props.lineHeight || 1.2) + '"></label><label>Bogstavafstand px<input data-field="letterSpacing" type="number" step="0.1" min="-10" max="30" value="' + (node.props.letterSpacing || 0) + '"></label></div></div>';
             html += '<div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#30382a') + '"></label><label>Tekstfarve<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#ffffff') + '"></label><label>Hover baggrund<input data-field="hoverBackground" type="color" value="' + escapeAttr(node.props.hoverBackground || '#525a5f') + '"></label><label>Hover tekst<input data-field="hoverTextColor" type="color" value="' + escapeAttr(node.props.hoverTextColor || '#ffffff') + '"></label><label>Focus-farve<input data-field="focusColor" type="color" value="' + escapeAttr(node.props.focusColor || '#c3ae83') + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label><label>Padding X<input data-field="paddingX" type="number" min="0" max="120" value="' + (node.props.paddingX || 20) + '"></label><label>Padding Y<input data-field="paddingY" type="number" min="0" max="120" value="' + (node.props.paddingY || 10) + '"></label></div>';
         } else if (node.type === 'menu') {
             html += '<div class="h18-vd-menu-group"><h3>Indhold</h3><label>Menu<select data-field="menuId"><option value="0">Vælg menu…</option>' + (Array.isArray(CFG.menus) ? CFG.menus.map(function (menu) { const id = parseInt(menu.id || 0, 10) || 0; return '<option value="' + id + '"' + (parseInt(node.props.menuId || 0, 10) === id ? ' selected' : '') + '>' + escapeHtml(String(menu.name || ('Menu ' + id))) + '</option>'; }).join('') : '') + '</select></label>';

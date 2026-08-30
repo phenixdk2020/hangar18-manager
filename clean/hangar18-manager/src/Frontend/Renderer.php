@@ -330,11 +330,18 @@ final class Renderer
             if ($href === '') { $href = '#'; }
             $background = sanitize_hex_color((string) ($props['background'] ?? '#30382a')) ?: '#30382a';
             $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#ffffff')) ?: '#ffffff';
+            $fontFamily = self::fontCss((string) ($props['fontFamily'] ?? 'system'));
+            $fontSize = max(8, min(120, (int) ($props['fontSize'] ?? 16)));
+            $fontWeight = max(100, min(900, (int) ($props['fontWeight'] ?? 400)));
+            $lineHeight = max(0.8, min(3.0, (float) ($props['lineHeight'] ?? 1.2)));
+            $letterSpacing = max(-10.0, min(30.0, (float) ($props['letterSpacing'] ?? 0)));
             $hoverBackground = sanitize_hex_color((string) ($props['hoverBackground'] ?? '#525a5f')) ?: '#525a5f';
             $hoverTextColor = sanitize_hex_color((string) ($props['hoverTextColor'] ?? '#ffffff')) ?: '#ffffff';
             $focusColor = sanitize_hex_color((string) ($props['focusColor'] ?? '#c3ae83')) ?: '#c3ae83';
             $paddingX = max(0, min(120, (int) ($props['paddingX'] ?? 20)));
             $paddingY = max(0, min(120, (int) ($props['paddingY'] ?? 10)));
+            $autoSize = !array_key_exists('autoSize', $props) || !empty($props['autoSize']);
+            $whiteSpace = $autoSize ? 'nowrap' : 'normal';
             $placementMode = (string) ($props['placementMode'] ?? 'normal');
             $floating = $placementMode === 'overlay';
             $layoutStyle = $style;
@@ -347,7 +354,8 @@ final class Renderer
             }
             $buttonStyle = $layoutStyle . $spacingStyle
                 . '--h18-btn-bg:' . $background . ';--h18-btn-color:' . $textColor . ';--h18-btn-hover-bg:' . $hoverBackground . ';--h18-btn-hover-color:' . $hoverTextColor . ';--h18-btn-focus:' . $focusColor . ';padding:0;overflow:visible;';
-            $linkStyle = $borderStyle . $radiusStyle . 'padding:' . $paddingY . 'px ' . $paddingX . 'px;';
+            $linkStyle = $borderStyle . $radiusStyle . 'padding:' . $paddingY . 'px ' . $paddingX . 'px;'
+                . 'font-family:' . $fontFamily . ';font-size:' . $fontSize . 'px;font-weight:' . $fontWeight . ';line-height:' . $lineHeight . ';letter-spacing:' . $letterSpacing . 'px;white-space:' . $whiteSpace . ';';
             $target = !empty($props['targetBlank']) ? ' target="_blank" rel="noopener"' : '';
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-button' . ($floating ? ' h18-clean-front-button--floating' : '') . '" style="' . esc_attr($buttonStyle) . '"><a class="h18-clean-front-button-link" href="' . esc_url($href) . '"' . $target . ' style="' . esc_attr($linkStyle) . '">' . esc_html((string) ($props['text'] ?? 'Knap')) . '</a></div>';
         }

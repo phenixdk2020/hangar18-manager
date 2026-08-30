@@ -938,3 +938,14 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - Ligger Tekst under en Kasse, er Kassens baggrund den synlige baggrund; er Kassen transparent, fortsætter paint-kæden til Sektionen.
 - Ældre persisted Text-state med `backgroundTransparent=false` må ikke genindføre en hvid leaf-baggrund.
 - Menu, Billede og Knap beholder deres egne eksisterende background-kontrakter.
+
+
+## 0.1.60 – Button Designer/frontend parity
+
+### VD-BUTTON-PARITY-001
+- Knap-elementets typografi er canonical data: skrifttype, størrelse, tykkelse, linjeafstand og bogstavafstand.
+- Designer-preview og PHP Renderer bruger de samme Button-properties og samme system-font fallback.
+- `autoSize=true` betyder, at knapteksten holdes på én linje (`nowrap`) og Designerens målte tekst/padding materialiserer elementets grid-geometri.
+- `autoSize=false` bevarer manuel bredde/højde og tillader normal tekstombrydning.
+- Temaets link-/button-typografi må ikke ændre den synlige størrelse på et Visual Designer Button-element.
+- Sektion/Kasse-geometri, Menu, Billede og Tekst ændres ikke af denne kontrakt.

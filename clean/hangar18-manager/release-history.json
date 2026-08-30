@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.60",
+      "date": "2026-08-30",
+      "items": [
+        "BUG-22: Button Designer/frontend parity er rettet.",
+        "Button har nu canonical fontFamily, fontSize, fontWeight, lineHeight og letterSpacing.",
+        "Designer-preview og frontend Renderer bruger samme typografidata.",
+        "Auto størrelse bruger nowrap; manuel størrelse tillader wrap.",
+        "Sektion/Kasse, Menu, Billede og Tekst er uændret."
+      ]
+    },
+    {
       "version": "0.1.59",
       "date": "2026-08-30",
       "items": [
