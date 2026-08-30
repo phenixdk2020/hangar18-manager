@@ -1,3 +1,3 @@
-Release Visual Designer Manager v0.1.61
-Trigger: keyboard-clipboard-header-footer-complete 2026-08-30
+Release Visual Designer Manager v0.1.62
+Trigger: page-duplicate-header-footer-klar 2026-08-30
 Publish: requested 2026-08-30
