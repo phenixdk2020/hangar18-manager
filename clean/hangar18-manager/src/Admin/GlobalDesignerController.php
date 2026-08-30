@@ -86,7 +86,7 @@ final class GlobalDesignerController
         }
         echo '</tbody></table></div><div class="h18-global-template-create"><h2>Ny ' . esc_html($label) . '</h2><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">'; wp_nonce_field(self::NONCE_TEMPLATE); echo '<input type="hidden" name="action" value="' . esc_attr(self::TEMPLATE_ACTION) . '"><input type="hidden" name="part" value="' . esc_attr($part) . '"><input type="hidden" name="operation" value="create"><input type="text" name="template_name" placeholder="Navn" required><button class="button button-primary" type="submit">Opret template</button></form></div></section>';
 
-        echo '<div class="h18-global-statusbar"><strong>' . esc_html((string) ($meta['name'] ?? $label)) . '</strong><span>Version v' . esc_html((string) $version) . '</span><span class="h18-manager-badge is-ok">Færdig</span></div>';
+        echo '<div class="h18-global-statusbar"><strong>' . esc_html((string) ($meta['name'] ?? $label)) . '</strong><span>Version v' . esc_html((string) $version) . '</span><span class="h18-manager-badge is-ok">Klar</span></div>';
         echo '<form class="h18-global-rename" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">'; wp_nonce_field(self::NONCE_TEMPLATE); echo '<input type="hidden" name="action" value="' . esc_attr(self::TEMPLATE_ACTION) . '"><input type="hidden" name="part" value="' . esc_attr($part) . '"><input type="hidden" name="template_id" value="' . esc_attr($templateId) . '"><input type="hidden" name="operation" value="rename"><label>Templatenavn <input type="text" name="template_name" value="' . esc_attr((string) ($meta['name'] ?? '')) . '"></label><button class="button" type="submit">Omdøb</button></form>';
 
 
