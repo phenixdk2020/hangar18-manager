@@ -228,7 +228,7 @@ final class LayoutModel
                 'align' => $align,
                 'verticalAlign' => $verticalAlign,
                 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
-                'backgroundTransparent' => array_key_exists('backgroundTransparent', $raw) ? (bool) $raw['backgroundTransparent'] : true,
+                'backgroundTransparent' => true,
                 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#000000')) ?: '#000000',
                 'headingColor' => sanitize_hex_color((string) ($raw['headingColor'] ?? '#000000')) ?: '#000000',
                 'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
