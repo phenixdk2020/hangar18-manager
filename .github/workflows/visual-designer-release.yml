@@ -47,6 +47,8 @@ jobs:
           grep -Fq 'transform:translate(' clean/hangar18-manager/src/Frontend/Renderer.php
           grep -Fq 'public static function resolveChoiceId' clean/hangar18-manager/src/Model/TemplateLayoutModel.php
           grep -Fq 'h18-manager-badge is-ok">Klar' clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -Fq "'h18-clean-menu': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
+          grep -Fq "'h18-clean-header-footer': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
           grep -q "data-vd-selection-boundary" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "function restoreMarkerSelection" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "boundary-markers-v0137-single-owner" clean/hangar18-manager/assets/editor-v0125.js
