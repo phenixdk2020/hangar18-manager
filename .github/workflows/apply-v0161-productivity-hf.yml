@@ -1,0 +1,119 @@
+name: Apply Visual Designer Manager 0.1.61 Productivity and Header Footer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0161_productivity.py'
+      - '.github/scripts/apply_v0161_header_footer_meta.py'
+      - '.github/scripts/v0161_header_footer_qa.php'
+      - '.github/workflows/apply-v0161-productivity-hf.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate apply scripts
+        run: |
+          python3 -m py_compile .github/scripts/apply_v0161_productivity.py
+          python3 -m py_compile .github/scripts/apply_v0161_header_footer_meta.py
+          php -l .github/scripts/v0161_header_footer_qa.php
+
+      - name: Apply 0.1.61 keyboard and clipboard
+        run: python3 .github/scripts/apply_v0161_productivity.py
+
+      - name: Apply 0.1.61 Header Footer completion
+        run: python3 .github/scripts/apply_v0161_header_footer_meta.py
+
+      - name: PHP syntax
+        run: find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: JavaScript syntax
+        run: |
+          set -euo pipefail
+          for f in clean/hangar18-manager/assets/*.js; do node --check "$f"; done
+
+      - name: Existing model regression QA
+        run: |
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+
+      - name: Header Footer Definition of Done QA
+        run: php .github/scripts/v0161_header_footer_qa.php
+
+      - name: Verify 0.1.61 productivity contracts
+        run: |
+          set -euo pipefail
+          grep -Fq 'Version: 0.1.61' clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "H18_CLEAN_VERSION', '0.1.61'" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "'offsetX' => self::clamp" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -Fq "'offsetY' => self::clamp" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -Fq 'transform:translate(' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -Fq "const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u'" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'function nudgeSelected' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'function pastePayload' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq "key === 'c'" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq "key === 'v'" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq "key === 'd'" clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'Nulstil finjustering' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'VD-KEYBOARD-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-CLIPBOARD-001' CLEAN-TECHNICAL-MANUAL.md
+          echo '0.1.61 productivity contracts PASS'
+
+      - name: Verify Header Footer completed baseline
+        run: |
+          set -euo pipefail
+          grep -Fq 'public static function resolveChoiceId' clean/hangar18-manager/src/Model/TemplateLayoutModel.php
+          grep -Fq 'TemplateLayoutModel::resolveChoiceId($part, $choice)' clean/hangar18-manager/src/Admin/EditorController.php
+          grep -Fq 'h18-manager-badge is-ok">Færdig' clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -Fq 'Theme-shell er aktiv på Visual Designer-sider' clean/hangar18-manager/src/Admin/GlobalDesignerController.php
+          grep -Fq '**Status:** FÆRDIG baseline · v0.1.61' docs/HEADER-FOOTER-SPEC.md
+          grep -Fq 'VD-HEADER-FOOTER-COMPLETE-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'HEADER/FOOTER — FÆRDIG' docs/clean-backlog-v0100.md
+          test -s docs/v0161-status.md
+          echo 'Header/Footer completed baseline PASS'
+
+      - name: Preserve critical regression gates
+        run: |
+          set -euo pipefail
+          grep -Fq "selectionSessionMode: 'prearmed-v0138'" clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq 'boundary-markers-v0137-single-owner' clean/hangar18-manager/assets/editor-v0125.js
+          grep -Fq "var mode = 'fit'" clean/hangar18-manager/assets/editor-v0144-viewport.js
+          grep -Fq 'data-h18-leaf-transparent' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'VD-MENU-UX-003' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-PAGES-ACTIONS-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-BUTTON-PARITY-001' CLEAN-TECHNICAL-MANUAL.md
+          echo 'critical regression gates PASS'
+
+      - name: Commit implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'phenixdk2020'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Model/LayoutModel.php \
+            clean/hangar18-manager/src/Model/TemplateLayoutModel.php \
+            clean/hangar18-manager/src/Frontend/Renderer.php \
+            clean/hangar18-manager/src/Admin/EditorController.php \
+            clean/hangar18-manager/src/Admin/GlobalDesignerController.php \
+            clean/hangar18-manager/assets/editor-v018-core.js \
+            clean/hangar18-manager/assets/editor.css \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            CLEAN-TECHNICAL-MANUAL.md \
+            docs/HEADER-FOOTER-SPEC.md \
+            docs/clean-backlog-v0100.md \
+            docs/v0161-status.md \
+            .github/workflows/visual-designer-release.yml
+          if git diff --cached --quiet; then echo 'No implementation changes'; exit 0; fi
+          git commit -m 'Add keyboard clipboard and complete Header Footer in 0.1.61'
+          git pull --rebase origin main
+          git push origin HEAD:main
