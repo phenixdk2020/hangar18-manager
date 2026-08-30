@@ -47,6 +47,18 @@ function qa_assert(bool $condition, string $message): void
     echo "PASS: {$message}\n";
 }
 
+/** @return array<string,array<string,mixed>> */
+function nodes_by_id(array $model): array
+{
+    $result = [];
+    foreach (($model['nodes'] ?? []) as $node) {
+        if (is_array($node) && isset($node['id'])) {
+            $result[(string) $node['id']] = $node;
+        }
+    }
+    return $result;
+}
+
 $legacyHeader = LayoutModel::empty();
 $legacyHeader['nodes'][] = [
     'id' => 'legacy-header-text',
@@ -71,8 +83,16 @@ $GLOBALS['v0161_options']['h18_clean_global_header_version_v1'] = 3;
 $GLOBALS['v0161_options']['h18_clean_global_footer_version_v1'] = 4;
 
 TemplateLayoutModel::ensureMigrated();
-qa_assert(count(TemplateLayoutModel::model('header-standard-v1')['nodes']) === 1, 'legacy Header migreres uden datatab');
-qa_assert(count(TemplateLayoutModel::model('footer-standard-v1')['nodes']) === 1, 'legacy Footer migreres uden datatab');
+$headerNodes = nodes_by_id(TemplateLayoutModel::model('header-standard-v1'));
+$footerNodes = nodes_by_id(TemplateLayoutModel::model('footer-standard-v1'));
+qa_assert(isset($headerNodes['legacy-header-text']), 'legacy Header-indhold bevares ved migration');
+qa_assert(isset($footerNodes['legacy-footer-text']), 'legacy Footer-indhold bevares ved migration');
+qa_assert(($headerNodes['legacy-header-text']['props']['text'] ?? '') === 'Legacy header', 'legacy Header-tekst bevares byte-logisk');
+qa_assert(($footerNodes['legacy-footer-text']['props']['text'] ?? '') === 'Legacy footer', 'legacy Footer-tekst bevares byte-logisk');
+$headerParent = (string) ($headerNodes['legacy-header-text']['parentId'] ?? '');
+$footerParent = (string) ($footerNodes['legacy-footer-text']['parentId'] ?? '');
+qa_assert($headerParent !== '' && isset($headerNodes[$headerParent]) && ($headerNodes[$headerParent]['type'] ?? '') === 'section', 'legacy Header canonicaliseres sikkert under Section-wrapper');
+qa_assert($footerParent !== '' && isset($footerNodes[$footerParent]) && ($footerNodes[$footerParent]['type'] ?? '') === 'section', 'legacy Footer canonicaliseres sikkert under Section-wrapper');
 qa_assert(TemplateLayoutModel::version('header-standard-v1') === 3, 'Header-version bevares ved migration');
 qa_assert(TemplateLayoutModel::version('footer-standard-v1') === 4, 'Footer-version bevares ved migration');
 
