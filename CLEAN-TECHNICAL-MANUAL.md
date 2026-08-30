@@ -985,3 +985,15 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - Header- og Footer-sidevalg kopieres eksplicit med `TemplateLayoutModel::pageChoice()` / `setPageChoice()`.
 - Den nye Designer-model SHA/digest verificeres mod kilden. Hvis kopieringen fejler efter oprettelsen, rulles den nye side tilbage til papirkurven.
 - Original side og original versionshistorik ændres ikke.
+
+## 0.1.64 – Designer clipboard reliability
+
+### BUG-23 / VD-CLIPBOARD-002
+- Kopiér/Duplikér må ikke afhænge af kun én intern selection-variabel. Hvis core-selection mangler, må den synligt markerede `.is-selected` node bruges som sikker fallback.
+- `Ctrl/Cmd+C`, `Ctrl/Cmd+V`, `Ctrl/Cmd+D` og toolbar-knapperne skal kalde samme produktionsfunktioner.
+- Efter Indsæt/Duplikér skal den nye root-node være markeret og automatisk scrolles ind i canvas-view, så en korrekt indsættelse ikke kan ligne en no-op.
+- Clipboard-status skal give synlig feedback ved Kopiér, Indsæt, Duplikér og tomt clipboard.
+- Clientens canonical model skal bevare `desktop`, `laptop`, `tablet` og `mobile` geometry ved normalisering og clipboard roundtrip.
+- `window.H18VDProductivity` eksponerer de samme produktionsfunktioner til live QA/diagnostik; den er ikke en separat implementering.
+- Side Designer og Header/Footer skal fortsat bruge den samme `editor-v018-core.js`, så Designer-rettelser gælder begge steder.
+

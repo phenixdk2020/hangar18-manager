@@ -36,6 +36,7 @@
     let lastAction = '';
     let nudgeSession = null;
     let memoryClipboard = null;
+    let productivityNoticeTimer = 0;
 
     function clone(value) { return JSON.parse(JSON.stringify(value)); }
     function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
@@ -239,6 +240,7 @@
                 order: Math.max(1, parseInt(item.order || ((index + 1) * 10), 10) || ((index + 1) * 10)),
                 geometry: {
                     desktop: normalizeDevice(item.geometry && item.geometry.desktop, false),
+                    laptop: normalizeDevice(item.geometry && item.geometry.laptop, true),
                     tablet: normalizeDevice(item.geometry && item.geometry.tablet, true),
                     mobile: normalizeDevice(item.geometry && item.geometry.mobile, true)
                 },
@@ -290,6 +292,41 @@
         return !!target.closest('input,textarea,select,[contenteditable="true"],.wp-editor-area,.mce-content-body');
     }
 
+    function selectedNodeForProductivity() {
+        const direct = nodeById(selectedId);
+        if (direct) { return direct; }
+        const card = document.querySelector('#h18-clean-canvas .h18-clean-node.is-selected[data-node-id]');
+        if (!card) { return null; }
+        const recovered = nodeById(card.getAttribute('data-node-id') || '');
+        if (recovered) { selectedId = recovered.id; }
+        return recovered;
+    }
+
+    function productivityNotice(message) {
+        const status = document.getElementById('h18-vd-clipboard-status');
+        if (!status) { return; }
+        if (productivityNoticeTimer) { window.clearTimeout(productivityNoticeTimer); }
+        status.textContent = String(message || '');
+        productivityNoticeTimer = window.setTimeout(function () {
+            productivityNoticeTimer = 0;
+            updateProductivityToolbar();
+        }, 2200);
+    }
+
+    function revealSelected(message) {
+        const id = cleanId(selectedId);
+        const reveal = function () {
+            const card = id ? document.querySelector('#h18-clean-canvas .h18-clean-node[data-node-id="' + CSS.escape(id) + '"]') : null;
+            if (card) {
+                try { card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' }); }
+                catch (ignore) { try { card.scrollIntoView(); } catch (ignoreFallback) {} }
+            }
+            productivityNotice(message);
+        };
+        if (window.requestAnimationFrame) { window.requestAnimationFrame(reveal); }
+        else { window.setTimeout(reveal, 0); }
+    }
+
     function clipboardPayloadFor(id) {
         const root = nodeById(id);
         if (!root) { return null; }
@@ -328,16 +365,18 @@
     }
 
     function copySelected() {
-        const payload = clipboardPayloadFor(selectedId);
-        if (!payload) { return false; }
+        const selected = selectedNodeForProductivity();
+        const payload = selected ? clipboardPayloadFor(selected.id) : null;
+        if (!payload) { productivityNotice('Vælg først et element'); return false; }
         writeClipboard(payload);
         lastAction = 'Kopiér ' + typeLabel(payload.rootType);
+        productivityNotice('Kopieret: ' + typeLabel(payload.rootType) + (payload.nodes.length > 1 ? ' + indhold' : '') + ' · brug Indsæt eller Ctrl+V');
         diag('clipboard_copy', { rootId: payload.rootId, rootType: payload.rootType, nodeCount: payload.nodes.length, sourcePostId: POST_ID });
         return true;
     }
 
     function resolvePasteParent(payload) {
-        const selected = nodeById(selectedId);
+        const selected = selectedNodeForProductivity();
         if (selected && PARENT_TYPES.includes(selected.type) && selected.id !== payload.rootId) { return selected.id; }
         if (selected && !PARENT_TYPES.includes(selected.type)) { return selected.parentId; }
         if (parseInt(payload.sourcePostId || 0, 10) === POST_ID) {
@@ -392,14 +431,21 @@
         const label = (duplicateMode ? 'Duplikér ' : 'Indsæt ') + typeLabel(sourceRoot.type) + (payload.nodes.length > 1 ? ' + indhold' : '');
         commit(before, label);
         render();
+        revealSelected((duplicateMode ? 'Duplikeret: ' : 'Indsat: ') + typeLabel(sourceRoot.type) + (payload.nodes.length > 1 ? ' + indhold' : ''));
         diag(duplicateMode ? 'clipboard_duplicate' : 'clipboard_paste', { sourceRootId: payload.rootId, newRootId: selectedId, nodeCount: payload.nodes.length, targetParentId: parentId, sourcePostId: parseInt(payload.sourcePostId || 0, 10) || 0, targetPostId: POST_ID });
         return true;
     }
 
-    function pasteClipboard() { return pastePayload(readClipboard(), false); }
+    function pasteClipboard() {
+        const payload = readClipboard();
+        if (!payload) { productivityNotice('Clipboard er tomt'); return false; }
+        return pastePayload(payload, false);
+    }
     function duplicateSelected() {
-        const payload = clipboardPayloadFor(selectedId);
-        return payload ? pastePayload(payload, true) : false;
+        const selected = selectedNodeForProductivity();
+        const payload = selected ? clipboardPayloadFor(selected.id) : null;
+        if (!payload) { productivityNotice('Vælg først et element'); return false; }
+        return pastePayload(payload, true);
     }
 
     function finalizeNudge() {
@@ -450,14 +496,23 @@
         const duplicateButton = host.querySelector('#h18-vd-duplicate');
         const clearButton = host.querySelector('#h18-vd-clear-clipboard');
         const status = host.querySelector('#h18-vd-clipboard-status');
-        if (copyButton) { copyButton.disabled = !nodeById(selectedId); }
-        if (duplicateButton) { duplicateButton.disabled = !nodeById(selectedId); }
+        const selected = selectedNodeForProductivity();
+        if (copyButton) { copyButton.disabled = !selected; }
+        if (duplicateButton) { duplicateButton.disabled = !selected; }
         if (pasteButton) { pasteButton.disabled = !payload; }
         if (clearButton) { clearButton.disabled = !payload; }
         if (status) {
             status.textContent = payload ? ('Clipboard: ' + typeLabel(payload.rootType || '') + ' · ' + payload.nodes.length + ' element' + (payload.nodes.length === 1 ? '' : 'er') + (payload.sourceContext ? ' · ' + payload.sourceContext : '')) : 'Clipboard: tom';
         }
     }
+
+    window.H18VDProductivity = {
+        copySelected: copySelected,
+        pasteClipboard: pasteClipboard,
+        duplicateSelected: duplicateSelected,
+        selectedId: function () { const node = selectedNodeForProductivity(); return node ? node.id : ''; },
+        clipboard: function () { return clone(readClipboard()); }
+    };
 
     function structuralSummary() {
         return {
@@ -971,6 +1026,7 @@
             order: nextOrder(parentId),
             geometry: {
                 desktop: desktop,
+                laptop: Object.assign({}, desktop, { inheritDesktop: true }),
                 tablet: Object.assign({}, desktop, { inheritDesktop: true }),
                 mobile: { x: 0, y: 0, w: 120, h: defaultH, inheritDesktop: true }
             },
@@ -1804,9 +1860,9 @@
                 if (key === 'z' && event.shiftKey) { event.preventDefault(); finalizeNudge(); redo(); }
                 else if (key === 'z') { event.preventDefault(); finalizeNudge(); undo(); }
                 else if (key === 'y') { event.preventDefault(); finalizeNudge(); redo(); }
-                else if (key === 'c' && nodeById(selectedId)) { event.preventDefault(); finalizeNudge(); copySelected(); }
-                else if (key === 'v' && readClipboard()) { event.preventDefault(); finalizeNudge(); pasteClipboard(); }
-                else if (key === 'd' && nodeById(selectedId)) { event.preventDefault(); finalizeNudge(); duplicateSelected(); }
+                else if (key === 'c' && selectedNodeForProductivity()) { event.preventDefault(); finalizeNudge(); copySelected(); }
+                else if (key === 'v') { event.preventDefault(); finalizeNudge(); pasteClipboard(); }
+                else if (key === 'd' && selectedNodeForProductivity()) { event.preventDefault(); finalizeNudge(); duplicateSelected(); }
                 return;
             }
             const step = event.shiftKey ? 10 : 1;
