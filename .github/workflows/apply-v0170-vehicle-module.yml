@@ -65,6 +65,11 @@ jobs:
           set -euo pipefail
           git config user.name 'visual-designer-apply-bot'
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          # The generated central release workflow was QA-verified above, but GitHub
+          # Actions' GITHUB_TOKEN cannot push workflow-file changes. Restore that one
+          # file before this source commit; it is applied separately by an authorized
+          # connector immediately after the guarded source push succeeds.
+          git restore .github/workflows/visual-designer-release.yml
           git add clean/hangar18-manager/hangar18-manager.php \
                   clean/hangar18-manager/src/Modules/VehicleFieldRegistry.php \
                   clean/hangar18-manager/src/Admin/VehicleAdminController.php \
@@ -79,7 +84,6 @@ jobs:
                   clean/hangar18-manager/assets/editor-v018-core.js \
                   clean/hangar18-manager/assets/editor-v0166-foundation.css \
                   clean/hangar18-manager/src/Frontend/Renderer.php \
-                  .github/workflows/visual-designer-release.yml \
                   clean/hangar18-manager/release-history.json \
                   CLEAN-DESIGN-MANUAL.md CLEAN-TECHNICAL-MANUAL.md CLEAN-USER-MANUAL.md \
                   clean-release-notes.html docs/clean-backlog-v0100.md docs/v0170-status.md
