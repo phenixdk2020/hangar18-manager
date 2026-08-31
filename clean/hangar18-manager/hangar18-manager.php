@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.65
+ * Version: 0.1.66
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.65');
+define('H18_CLEAN_VERSION', '0.1.66');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -39,6 +39,7 @@ if (!class_exists('Hangar18_Manager', false)) {
     }
 }
 
+require_once H18_CLEAN_DIR . 'src/Icons/IconRegistry.php';
 require_once H18_CLEAN_DIR . 'src/Model/HierarchyNormalizer.php';
 require_once H18_CLEAN_DIR . 'src/Model/LayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Model/GlobalLayoutModel.php';
@@ -147,6 +148,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'postId' => $postId,
         'userId' => get_current_user_id(),
         'contextLabel' => $contextLabel,
+        'iconLibrary' => \VisualDesignerManager\Icons\IconRegistry::editorCatalog(),
         'initialModel' => $model,
         'pages' => array_values(array_map(static function ($page): array { return ['id' => (int) $page->ID, 'title' => (string) $page->post_title]; }, get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC', 'post_status' => ['publish', 'draft', 'pending', 'private', 'future']]))),
         'menus' => $menuPayload,
@@ -280,6 +282,12 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'h18-clean-editor-v0165-elements',
         H18_CLEAN_URL . 'assets/editor-v0165-elements.css',
         ['h18-clean-editor-v0154-menu'],
+        H18_CLEAN_VERSION
+    );
+    wp_enqueue_style(
+        'h18-clean-editor-v0166-foundation',
+        H18_CLEAN_URL . 'assets/editor-v0166-foundation.css',
+        ['h18-clean-editor-v0165-elements'],
         H18_CLEAN_VERSION
     );
 

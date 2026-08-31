@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.66",
+      "date": "2026-08-31",
+      "items": [
+        "VD-ICON-LIBRARY-001: Centralt SVG-ikonregister med Core, Module og reserveret Custom-niveau.",
+        "VD-TABLE-BORDERS-001: Excel-lignende multi-cell selection og canonical kanter pr. side/celle.",
+        "VD-MENU-PREVIEW-001: Bredere Desktop Struktur-preview med nowrap og vandret scroll.",
+        "VD-ADMIN-STATUS-002: Log og Konvertering vises som Klar."
+      ]
+    },
+    {
       "version": "0.1.65",
       "date": "2026-08-31",
       "items": [

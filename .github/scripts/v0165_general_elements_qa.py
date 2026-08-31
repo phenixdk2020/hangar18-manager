@@ -26,10 +26,11 @@ def require_all(rel: str, needles: list[str]) -> None:
 
 try:
     plugin = text('clean/hangar18-manager/hangar18-manager.php')
-    if not re.search(r'Version:\s*0\.1\.65\b', plugin):
-        raise AssertionError('plugin header is not 0.1.65')
-    if "define('H18_CLEAN_VERSION', '0.1.65');" not in plugin:
-        raise AssertionError('H18_CLEAN_VERSION is not 0.1.65')
+    match = re.search(r'Version:\s*([0-9]+)\.([0-9]+)\.([0-9]+)\b', plugin)
+    if not match or tuple(map(int, match.groups())) < (0, 1, 65):
+        raise AssertionError('plugin version is older than 0.1.65')
+    if not re.search(r"define\('H18_CLEAN_VERSION', '[0-9]+\.[0-9]+\.[0-9]+'\);", plugin):
+        raise AssertionError('H18_CLEAN_VERSION is missing')
     require('clean/hangar18-manager/hangar18-manager.php', "assets/editor-v0165-elements.css", 'new element CSS is not enqueued by the shared Designer bootstrap')
 
     new_types = ['spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table']

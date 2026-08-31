@@ -608,3 +608,19 @@ En senere intern namespace/slug-migration skal behandles som en særskilt kompat
 - Menu-data bevares separat. Visuelt Menu-element bygges først efter Header/Footer-canvas og indsættes derefter som et normalt globalt element.
 - Manager-moduler viser modenhedsstatus; gul betyder ikke færdig.
 - Versionsnote er valgfri og kan systemgenereres.
+
+## 25. Ikonbibliotek
+
+Visual Designer bruger et centralt SVG-ikonregister. Et Icon-element gemmer kun sin canonical kilde (`iconSet`) og sit ikon-ID (`icon`). SVG-geometrien ligger i biblioteket og må ikke kopieres ind i hver side.
+
+Ikonbiblioteket har tre permanente niveauer:
+
+1. **Core icons** – følger med Visual Designer Manager og organiseres i kategorier.
+2. **Module icons** – moduler som Køretøjer, Events og Galleri kan registrere ekstra ikon-sæt uden at ændre core-biblioteket.
+3. **Custom icons** – reserveret udvidelsesniveau, hvor administrator senere skal kunne uploade eller indsætte egne sanitiserede SVG-ikoner. Persistent Custom-upload er ikke aktiveret i v0.1.66.
+
+Core-biblioteket skal være lokalt, SVG-baseret og uden eksterne font-/ikonafhængigheder. Designer og frontend skal bruge samme registry.
+
+## 26. Tabel – kantdesign
+
+Tabel er et struktureret Designer-element og skal understøtte Excel-lignende kantstyring. En eller flere celler kan markeres, og kantværktøjet kan anvende Yderramme, Indvendige, Alle, Vandret, Lodret, Top, Højre, Bund, Venstre eller Ingen. Stregens tykkelse, farve og stil (`solid`, `dashed`, `dotted`) er canonical data. Celle-overrides gemmes separat fra tabelstandarden og skal fungere med Copy/Paste, Undo/Redo, Save/Reload, Preview og frontend.

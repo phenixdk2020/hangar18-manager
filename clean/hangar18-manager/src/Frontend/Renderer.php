@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace VisualDesignerManager\Frontend;
 
+use VisualDesignerManager\Icons\IconRegistry;
 use VisualDesignerManager\Model\LayoutModel;
 use VisualDesignerManager\Model\TemplateLayoutModel;
 
@@ -392,7 +393,7 @@ final class Renderer
             $background = !empty($props['backgroundTransparent']) ? 'transparent' : (sanitize_hex_color((string) ($props['background'] ?? '#ffffff')) ?: '#ffffff');
             $padding = max(0, min(120, (int) ($props['padding'] ?? 0)));
             $markStyle = 'width:' . $size . 'px;height:' . $size . 'px;color:' . $color . ';background:' . $background . ';padding:' . $padding . 'px;' . $radiusStyle;
-            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-icon" style="' . esc_attr($style . $borderStyle . $spacingStyle . 'justify-content:' . $justify . ';') . '"><span class="h18-clean-front-icon-mark" style="' . esc_attr($markStyle) . '">' . self::iconSvg((string) ($props['icon'] ?? 'star')) . '</span></div>';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-icon" style="' . esc_attr($style . $borderStyle . $spacingStyle . 'justify-content:' . $justify . ';') . '"><span class="h18-clean-front-icon-mark" style="' . esc_attr($markStyle) . '">' . IconRegistry::svg((string) ($props['iconSet'] ?? 'core'), (string) ($props['icon'] ?? 'star')) . '</span></div>';
         }
 
         if ($type === 'badge') {
@@ -467,16 +468,24 @@ final class Renderer
             $cellPadding = max(0, min(60, (int) ($props['cellPadding'] ?? 8)));
             $fontSize = max(8, min(80, (int) ($props['fontSize'] ?? 14)));
             $headerWeight = max(100, min(900, (int) ($props['headerWeight'] ?? 700)));
-            $cellBorder = $cellBorderWidth . 'px solid ' . $cellBorderColor;
+            $totalRows = count($rows) + 1;
+            $totalCols = count($headers);
             $thead = '<thead><tr>';
-            foreach ($headers as $header) { $thead .= '<th style="background:' . esc_attr($headerBg) . ';color:' . esc_attr($headerColor) . ';font-weight:' . esc_attr((string) $headerWeight) . ';padding:' . esc_attr((string) $cellPadding) . 'px;border:' . esc_attr($cellBorder) . '">' . esc_html((string) $header) . '</th>'; }
+            foreach ($headers as $columnIndex => $header) {
+                $cellKey = 'h' . $columnIndex;
+                $cellBorderCss = self::tableCellBorderCss($props, $cellKey, 0, $columnIndex, $totalRows, $totalCols);
+                $thead .= '<th style="background:' . esc_attr($headerBg) . ';color:' . esc_attr($headerColor) . ';font-weight:' . esc_attr((string) $headerWeight) . ';padding:' . esc_attr((string) $cellPadding) . 'px;' . esc_attr($cellBorderCss) . '">' . esc_html((string) $header) . '</th>';
+            }
             $thead .= '</tr></thead>';
             $tbody = '<tbody>';
             foreach ($rows as $rowIndex => $row) {
-                if (!is_array($row)) { continue; }
-                $rowBg = !empty($props['zebra']) && ((int) $rowIndex % 2 === 1) ? $zebraBg : $cellBg;
+                $rowBg = !empty($props['zebra']) && $rowIndex % 2 ? $zebraBg : $cellBg;
                 $tbody .= '<tr>';
-                foreach ($headers as $columnIndex => $header) { $tbody .= '<td data-label="' . esc_attr((string) $header) . '" style="background:' . esc_attr($rowBg) . ';color:' . esc_attr($cellColor) . ';padding:' . esc_attr((string) $cellPadding) . 'px;border:' . esc_attr($cellBorder) . '">' . esc_html((string) ($row[$columnIndex] ?? '')) . '</td>'; }
+                foreach ($headers as $columnIndex => $header) {
+                    $cellKey = 'r' . $rowIndex . 'c' . $columnIndex;
+                    $cellBorderCss = self::tableCellBorderCss($props, $cellKey, $rowIndex + 1, $columnIndex, $totalRows, $totalCols);
+                    $tbody .= '<td data-label="' . esc_attr((string) $header) . '" style="background:' . esc_attr($rowBg) . ';color:' . esc_attr($cellColor) . ';padding:' . esc_attr((string) $cellPadding) . 'px;' . esc_attr($cellBorderCss) . '">' . esc_html((string) ($row[$columnIndex] ?? '')) . '</td>';
+                }
                 $tbody .= '</tr>';
             }
             $tbody .= '</tbody>';
@@ -538,6 +547,31 @@ final class Renderer
         }
         $boxStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . 'background:' . $background . ';padding:' . $padding . 'px;';
         return '<section id="h18-clean-' . $id . '" class="h18-clean-front-node ' . esc_attr($classes) . '" style="' . esc_attr($boxStyle) . '">' . self::children((string) $node['id'], $byParent, $byId) . '</section>';
+    }
+
+    /** @param array<string,mixed> $props */
+    private static function tableCellBorderCss(array $props, string $key, int $row, int $col, int $rowCount, int $colCount): string
+    {
+        $mode = in_array((string) ($props['borderMode'] ?? 'all'), ['all', 'outer', 'inner', 'none'], true) ? (string) ($props['borderMode'] ?? 'all') : 'all';
+        $width = max(0, min(10, (int) ($props['cellBorderWidth'] ?? 1)));
+        $color = sanitize_hex_color((string) ($props['cellBorderColor'] ?? '#dcdcde')) ?: '#dcdcde';
+        $style = in_array((string) ($props['cellBorderStyle'] ?? 'solid'), ['solid', 'dashed', 'dotted'], true) ? (string) ($props['cellBorderStyle'] ?? 'solid') : 'solid';
+        $custom = isset($props['cellBorders'][$key]) && is_array($props['cellBorders'][$key]) ? $props['cellBorders'][$key] : [];
+        $values = [];
+        foreach (['top', 'right', 'bottom', 'left'] as $side) {
+            $outer = $side === 'top' ? $row === 0 : ($side === 'bottom' ? $row === $rowCount - 1 : ($side === 'left' ? $col === 0 : $col === $colCount - 1));
+            $enabled = $mode === 'all' || ($mode === 'outer' && $outer) || ($mode === 'inner' && !$outer);
+            $sideWidth = $width; $sideColor = $color; $sideStyle = $style;
+            if (isset($custom[$side]) && is_array($custom[$side])) {
+                $entry = $custom[$side];
+                $enabled = array_key_exists('enabled', $entry) ? (bool) $entry['enabled'] : true;
+                $sideWidth = max(0, min(10, (int) ($entry['width'] ?? $width)));
+                $sideColor = sanitize_hex_color((string) ($entry['color'] ?? $color)) ?: $color;
+                $sideStyle = in_array((string) ($entry['style'] ?? $style), ['solid', 'dashed', 'dotted'], true) ? (string) ($entry['style'] ?? $style) : $style;
+            }
+            $values[$side] = $enabled && $sideWidth > 0 ? ($sideWidth . 'px ' . $sideStyle . ' ' . $sideColor) : '0';
+        }
+        return 'border-top:' . $values['top'] . ';border-right:' . $values['right'] . ';border-bottom:' . $values['bottom'] . ';border-left:' . $values['left'] . ';';
     }
 
     private static function iconSvg(string $token): string

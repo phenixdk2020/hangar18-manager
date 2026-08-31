@@ -37,6 +37,7 @@
     let nudgeSession = null;
     let memoryClipboard = null;
     let productivityNoticeTimer = 0;
+    let tableCellSelection = null;
 
     function clone(value) { return JSON.parse(JSON.stringify(value)); }
     function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
@@ -154,6 +155,188 @@
         const rows = String(value || '').split(/\r?\n/).slice(0,50).map(function (line) { return line.split('|').map(function (cell) { return cell.trim(); }); });
         return normalizeMatrixRows(rows, columns);
     }
+    function iconLibrarySets() {
+        const library = CFG.iconLibrary && typeof CFG.iconLibrary === 'object' ? CFG.iconLibrary : {};
+        return Array.isArray(library.sets) ? library.sets : [];
+    }
+    function iconEntry(setKey, iconKey) {
+        setKey = String(setKey || 'core'); iconKey = String(iconKey || 'star');
+        for (const set of iconLibrarySets()) {
+            if (String(set.key || '') !== setKey) { continue; }
+            for (const category of (Array.isArray(set.categories) ? set.categories : [])) {
+                for (const icon of (Array.isArray(category.icons) ? category.icons : [])) {
+                    if (String(icon.key || '') === iconKey) { return {set:set, category:category, icon:icon}; }
+                }
+            }
+        }
+        return null;
+    }
+    function normalizeIconSelection(setKey, iconKey) {
+        const direct = iconEntry(setKey, iconKey);
+        if (direct) { return {set:String(direct.set.key), icon:String(direct.icon.key)}; }
+        const legacy = iconEntry('core', iconKey);
+        if (legacy) { return {set:'core', icon:String(legacy.icon.key)}; }
+        return {set:'core', icon:'star'};
+    }
+    function registryIconSvgMarkup(setKey, iconKey) {
+        const entry = iconEntry(setKey, iconKey);
+        return entry && entry.icon && entry.icon.svg ? String(entry.icon.svg) : iconSvgMarkup(iconKey);
+    }
+    function currentIconLabel(setKey, iconKey) {
+        const entry = iconEntry(setKey, iconKey);
+        return entry ? String(entry.icon.label || entry.icon.key || iconKey) : String(iconKey || 'star');
+    }
+
+    function normalizeTableCellBorders(raw) {
+        raw = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+        const out = {}; let count = 0;
+        Object.keys(raw).forEach(function (key) {
+            if (count >= 700 || !/^(?:h\d+|r\d+c\d+)$/.test(key)) { return; }
+            const cell = raw[key] && typeof raw[key] === 'object' ? raw[key] : {};
+            ['top','right','bottom','left'].forEach(function (side) {
+                if (!cell[side] || typeof cell[side] !== 'object') { return; }
+                const value = cell[side];
+                if (!out[key]) { out[key] = {}; }
+                out[key][side] = {
+                    enabled: value.enabled !== false,
+                    width: clamp(parseInt(value.width != null ? value.width : 1, 10) || 0, 0, 10),
+                    color: /^#[0-9a-f]{6}$/i.test(String(value.color || '')) ? String(value.color).toLowerCase() : '#dcdcde',
+                    style: ['solid','dashed','dotted'].includes(String(value.style || '').toLowerCase()) ? String(value.style).toLowerCase() : 'solid'
+                };
+            });
+            if (out[key]) { count += 1; }
+        });
+        return out;
+    }
+    function tableGrid(node) {
+        const headers = normalizeHeaders(node && node.props ? node.props.headers : []);
+        const rows = normalizeMatrixRows(node && node.props ? node.props.rows : [], headers.length);
+        const grid = [headers.map(function (_value, col) { return 'h' + col; })];
+        rows.forEach(function (row, rowIndex) { grid.push(row.map(function (_value, col) { return 'r' + rowIndex + 'c' + col; })); });
+        const pos = {};
+        grid.forEach(function (row, r) { row.forEach(function (key, c) { pos[key] = {row:r,col:c}; }); });
+        return {headers:headers, rows:rows, grid:grid, pos:pos, rowCount:grid.length, colCount:headers.length};
+    }
+    function tableSelectionKeys(node) {
+        if (!tableCellSelection || !node || tableCellSelection.nodeId !== node.id) { return []; }
+        const grid = tableGrid(node);
+        return (Array.isArray(tableCellSelection.keys) ? tableCellSelection.keys : []).filter(function (key) { return !!grid.pos[key]; });
+    }
+    function tableRangeKeys(node, fromKey, toKey) {
+        const grid = tableGrid(node), a = grid.pos[fromKey], b = grid.pos[toKey];
+        if (!a || !b) { return [toKey]; }
+        const out = [];
+        const minR = Math.min(a.row,b.row), maxR = Math.max(a.row,b.row), minC = Math.min(a.col,b.col), maxC = Math.max(a.col,b.col);
+        for (let r=minR; r<=maxR; r+=1) { for (let c=minC; c<=maxC; c+=1) { if (grid.grid[r] && grid.grid[r][c]) { out.push(grid.grid[r][c]); } } }
+        return out;
+    }
+    function tableNeighborKey(node, key, side) {
+        const grid = tableGrid(node), p = grid.pos[key]; if (!p) { return ''; }
+        const delta = {top:[-1,0],right:[0,1],bottom:[1,0],left:[0,-1]}[side];
+        const r = p.row + delta[0], c = p.col + delta[1];
+        return grid.grid[r] && grid.grid[r][c] ? grid.grid[r][c] : '';
+    }
+    function tableBaseSideEnabled(node, key, side) {
+        const grid = tableGrid(node), p = grid.pos[key]; if (!p) { return false; }
+        const mode = ['all','outer','inner','none'].includes(String(node.props.borderMode || 'all')) ? String(node.props.borderMode || 'all') : 'all';
+        if (mode === 'all') { return true; }
+        if (mode === 'none') { return false; }
+        const outer = side === 'top' ? p.row === 0 : side === 'bottom' ? p.row === grid.rowCount - 1 : side === 'left' ? p.col === 0 : p.col === grid.colCount - 1;
+        return mode === 'outer' ? outer : !outer;
+    }
+    function tableEffectiveSide(node, key, side) {
+        const custom = node.props.cellBorders && node.props.cellBorders[key] && node.props.cellBorders[key][side];
+        if (custom) { return custom; }
+        return {
+            enabled: tableBaseSideEnabled(node,key,side),
+            width: clamp(parseInt(node.props.cellBorderWidth != null ? node.props.cellBorderWidth : 1,10) || 0,0,10),
+            color: /^#[0-9a-f]{6}$/i.test(String(node.props.cellBorderColor || '')) ? String(node.props.cellBorderColor).toLowerCase() : '#dcdcde',
+            style: ['solid','dashed','dotted'].includes(String(node.props.cellBorderStyle || '').toLowerCase()) ? String(node.props.cellBorderStyle).toLowerCase() : 'solid'
+        };
+    }
+    function tableBorderCssValue(value) { return value && value.enabled && value.width > 0 ? (String(value.width) + 'px ' + value.style + ' ' + value.color) : '0'; }
+    function applyTableCellBorders(element, node, key) {
+        element.style.borderTop = tableBorderCssValue(tableEffectiveSide(node,key,'top'));
+        element.style.borderRight = tableBorderCssValue(tableEffectiveSide(node,key,'right'));
+        element.style.borderBottom = tableBorderCssValue(tableEffectiveSide(node,key,'bottom'));
+        element.style.borderLeft = tableBorderCssValue(tableEffectiveSide(node,key,'left'));
+    }
+    function setTableCellSide(node, key, side, enabled, pen) {
+        if (!node.props.cellBorders || typeof node.props.cellBorders !== 'object') { node.props.cellBorders = {}; }
+        if (!node.props.cellBorders[key]) { node.props.cellBorders[key] = {}; }
+        const value = {enabled:!!enabled,width:pen.width,color:pen.color,style:pen.style};
+        node.props.cellBorders[key][side] = value;
+        const opposite = {top:'bottom',right:'left',bottom:'top',left:'right'}[side];
+        const neighbor = tableNeighborKey(node,key,side);
+        if (neighbor) {
+            if (!node.props.cellBorders[neighbor]) { node.props.cellBorders[neighbor] = {}; }
+            node.props.cellBorders[neighbor][opposite] = clone(value);
+        }
+    }
+    function applyTableBorderAction(node, keys, action, pen) {
+        const selected = new Set(keys);
+        function neighborSelected(key, side) { const n = tableNeighborKey(node,key,side); return !!n && selected.has(n); }
+        keys.forEach(function (key) {
+            if (action === 'none') { ['top','right','bottom','left'].forEach(function (side) { setTableCellSide(node,key,side,false,pen); }); return; }
+            if (action === 'all') { ['top','right','bottom','left'].forEach(function (side) { setTableCellSide(node,key,side,true,pen); }); return; }
+            if (action === 'outer') { ['top','right','bottom','left'].forEach(function (side) { if (!neighborSelected(key,side)) { setTableCellSide(node,key,side,true,pen); } }); return; }
+            if (action === 'inner') { ['right','bottom'].forEach(function (side) { if (neighborSelected(key,side)) { setTableCellSide(node,key,side,true,pen); } }); return; }
+            if (action === 'horizontal') { if (neighborSelected(key,'bottom')) { setTableCellSide(node,key,'bottom',true,pen); } return; }
+            if (action === 'vertical') { if (neighborSelected(key,'right')) { setTableCellSide(node,key,'right',true,pen); } return; }
+            if (['top','right','bottom','left'].includes(action) && !neighborSelected(key,action)) { setTableCellSide(node,key,action,true,pen); }
+        });
+    }
+    function selectTableCell(node, key, event) {
+        const current = tableCellSelection && tableCellSelection.nodeId === node.id ? tableCellSelection : {nodeId:node.id,keys:[],anchorKey:key};
+        let keys = [];
+        if (event.shiftKey && current.anchorKey) {
+            keys = tableRangeKeys(node,current.anchorKey,key);
+        } else if (event.ctrlKey || event.metaKey) {
+            keys = Array.isArray(current.keys) ? current.keys.slice() : [];
+            const index = keys.indexOf(key); if (index >= 0) { keys.splice(index,1); } else { keys.push(key); }
+            if (!keys.length) { keys = [key]; }
+        } else { keys = [key]; current.anchorKey = key; }
+        tableCellSelection = {nodeId:node.id,keys:keys,anchorKey:current.anchorKey || key};
+        selectedId = node.id;
+        render();
+    }
+
+    function openIconLibrary() {
+        const node = nodeById(selectedId); if (!node || node.type !== 'icon') { return; }
+        const old = document.getElementById('h18-vd-icon-library-dialog'); if (old) { old.remove(); }
+        const dialog = document.createElement('div'); dialog.id = 'h18-vd-icon-library-dialog'; dialog.className = 'h18-vd-icon-library-dialog';
+        const backdrop = document.createElement('div'); backdrop.className = 'h18-vd-icon-library-backdrop'; dialog.appendChild(backdrop);
+        const card = document.createElement('div'); card.className = 'h18-vd-icon-library-card'; dialog.appendChild(card);
+        const head = document.createElement('div'); head.className = 'h18-vd-icon-library-head'; head.innerHTML = '<div><h2>Ikonbibliotek</h2><p class="description">Core icons følger med Designer. Module icons registreres af moduler. Egne SVG-ikoner er reserveret til en senere Custom icons-funktion.</p></div><button type="button" class="button" data-icon-close>Luk</button>'; card.appendChild(head);
+        const tools = document.createElement('div'); tools.className = 'h18-vd-icon-library-tools'; tools.innerHTML = '<input type="search" placeholder="Søg efter ikon…" aria-label="Søg efter ikon"><select aria-label="Ikonsæt"><option value="">Alle ikonsæt</option></select>'; card.appendChild(tools);
+        const search = tools.querySelector('input'), setSelect = tools.querySelector('select');
+        iconLibrarySets().forEach(function (set) { const option = document.createElement('option'); option.value = String(set.key || ''); option.textContent = String(set.label || set.key || 'Ikonsæt'); setSelect.appendChild(option); });
+        const scroll = document.createElement('div'); scroll.className = 'h18-vd-icon-library-scroll'; card.appendChild(scroll);
+        const footer = document.createElement('div'); footer.className = 'h18-vd-icon-library-footer'; footer.textContent = 'Custom icons: upload/indsæt af egne SVG-filer er planlagt som næste udvidelsesniveau og er ikke aktiveret endnu.'; card.appendChild(footer);
+        function close() { dialog.remove(); }
+        function rebuild() {
+            const needle = String(search.value || '').toLowerCase().trim(), setFilter = String(setSelect.value || ''); scroll.replaceChildren();
+            iconLibrarySets().forEach(function (set) {
+                if (setFilter && String(set.key || '') !== setFilter) { return; }
+                const setBox = document.createElement('section'); setBox.className = 'h18-vd-icon-library-set'; const h3 = document.createElement('h3'); h3.textContent = String(set.label || set.key || 'Ikonsæt'); setBox.appendChild(h3); let count = 0;
+                (Array.isArray(set.categories) ? set.categories : []).forEach(function (category) {
+                    const matches = (Array.isArray(category.icons) ? category.icons : []).filter(function (icon) { const hay = [set.label,category.label,icon.label,icon.key].join(' ').toLowerCase(); return !needle || hay.indexOf(needle) >= 0; });
+                    if (!matches.length) { return; }
+                    const cat = document.createElement('section'); cat.className = 'h18-vd-icon-library-category'; const h4 = document.createElement('h4'); h4.textContent = String(category.label || category.key || 'Kategori'); cat.appendChild(h4); const grid = document.createElement('div'); grid.className = 'h18-vd-icon-library-grid';
+                    matches.forEach(function (icon) {
+                        const button = document.createElement('button'); button.type = 'button'; button.className = 'h18-vd-icon-library-item'; const selection = normalizeIconSelection(node.props.iconSet || 'core', node.props.icon || 'star'); if (selection.set === String(set.key) && selection.icon === String(icon.key)) { button.classList.add('is-current'); }
+                        const mark = document.createElement('span'); mark.innerHTML = String(icon.svg || ''); const label = document.createElement('small'); label.textContent = String(icon.label || icon.key || 'Ikon'); button.appendChild(mark); button.appendChild(label);
+                        button.addEventListener('click', function () { const before = clone(state); node.props.iconSet = String(set.key || 'core'); node.props.icon = String(icon.key || 'star'); commit(before, 'Skift ikon'); close(); render(); }); grid.appendChild(button); count += 1;
+                    }); cat.appendChild(grid); setBox.appendChild(cat);
+                });
+                if (count) { scroll.appendChild(setBox); }
+            });
+            if (!scroll.children.length) { const empty = document.createElement('p'); empty.textContent = 'Ingen ikoner matcher søgningen.'; scroll.appendChild(empty); }
+        }
+        backdrop.addEventListener('click', close); head.querySelector('[data-icon-close]').addEventListener('click', close); search.addEventListener('input', rebuild); setSelect.addEventListener('change', rebuild); dialog.addEventListener('keydown', function (event) { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); } });
+        document.body.appendChild(dialog); rebuild(); setTimeout(function () { search.focus(); },0);
+    }
+
     function iconSvgMarkup(token) {
         const shapes = {
             star:'<polygon points="12 2.7 14.8 8.4 21 9.3 16.5 13.7 17.6 20 12 17 6.4 20 7.5 13.7 3 9.3 9.2 8.4 12 2.7"/>',
@@ -256,8 +439,10 @@
             });
         }
         if (type === 'icon') {
+            const iconSelection = normalizeIconSelection(raw.iconSet || 'core', raw.icon || 'star');
             return Object.assign(common, {
-                icon: ['star','check','info','calendar','camera','people','ruler','weight','gear','link'].includes(String(raw.icon || '').toLowerCase()) ? String(raw.icon).toLowerCase() : 'star',
+                iconSet: iconSelection.set,
+                icon: iconSelection.icon,
                 iconSize: clamp(parseInt(raw.iconSize || 32, 10) || 32, 8, 240),
                 iconColor: /^#[0-9a-f]{6}$/i.test(String(raw.iconColor || '')) ? String(raw.iconColor).toLowerCase() : '#30382a',
                 background: /^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#ffffff',
@@ -331,6 +516,9 @@
                 zebraBackground: /^#[0-9a-f]{6}$/i.test(String(raw.zebraBackground || '')) ? String(raw.zebraBackground).toLowerCase() : '#f6f7f7',
                 cellBorderColor: /^#[0-9a-f]{6}$/i.test(String(raw.cellBorderColor || '')) ? String(raw.cellBorderColor).toLowerCase() : '#dcdcde',
                 cellBorderWidth: clamp(parseInt(raw.cellBorderWidth != null ? raw.cellBorderWidth : 1, 10) || 0, 0, 10),
+                cellBorderStyle: ['solid','dashed','dotted'].includes(String(raw.cellBorderStyle || '').toLowerCase()) ? String(raw.cellBorderStyle).toLowerCase() : 'solid',
+                borderMode: ['all','outer','inner','none'].includes(String(raw.borderMode || '').toLowerCase()) ? String(raw.borderMode).toLowerCase() : 'all',
+                cellBorders: normalizeTableCellBorders(raw.cellBorders),
                 cellPadding: clamp(parseInt(raw.cellPadding || 8, 10) || 8, 0, 60),
                 fontFamily: normalizeFontToken(raw.fontFamily || 'system', false),
                 fontSize: clamp(parseInt(raw.fontSize || 14, 10) || 14, 8, 80),
@@ -1439,7 +1627,7 @@
             icon.style.color = node.props.iconColor || '#30382a';
             icon.style.background = node.props.backgroundTransparent === false ? (node.props.background || '#ffffff') : 'transparent';
             icon.style.padding = String(node.props.padding || 0) + 'px'; icon.style.borderRadius = String(node.props.radius || 0) + 'px';
-            icon.innerHTML = iconSvgMarkup(node.props.icon || 'star'); wrap.appendChild(icon);
+            icon.innerHTML = registryIconSvgMarkup(node.props.iconSet || 'core', node.props.icon || 'star'); wrap.appendChild(icon);
         } else if (node.type === 'badge') {
             wrap.classList.add('h18-clean-node-preview--badge');
             wrap.style.justifyContent = ({left:'flex-start',center:'center',right:'flex-end'})[node.props.align] || 'flex-start';
@@ -1453,7 +1641,17 @@
             wrap.classList.add('h18-clean-node-preview--datalist'); const list = document.createElement('div'); list.className = 'h18-vd-datalist-preview' + (node.props.layout === 'stacked' ? ' is-stacked' : ''); list.style.setProperty('--h18-vd-label-width', String(node.props.labelWidth || 40) + '%'); list.style.fontFamily = fontCss(node.props.fontFamily || 'system'); list.style.fontSize = String(node.props.fontSize || 15) + 'px';
             normalizePairRows(node.props.rows).forEach(function (row, index) { const item = document.createElement('div'); item.className = 'h18-vd-datalist-row'; item.style.background = node.props.zebra && index % 2 ? (node.props.zebraBackground || '#f6f7f7') : (node.props.background || '#ffffff'); if (node.props.showDividers && index) { item.style.borderTop = '1px solid ' + (node.props.lineColor || '#dcdcde'); } const label = document.createElement('span'); label.className = 'h18-vd-datalist-label'; label.textContent = row.label; label.style.padding = String(node.props.cellPadding || 8) + 'px'; label.style.color = node.props.labelColor || '#30382a'; label.style.fontWeight = String(node.props.labelWeight || 600); const value = document.createElement('span'); value.textContent = row.value; value.style.padding = String(node.props.cellPadding || 8) + 'px'; value.style.color = node.props.valueColor || '#30382a'; value.style.fontWeight = String(node.props.valueWeight || 400); item.appendChild(label); item.appendChild(value); list.appendChild(item); }); wrap.appendChild(list);
         } else if (node.type === 'table') {
-            wrap.classList.add('h18-clean-node-preview--table'); const table = document.createElement('table'); table.className = 'h18-vd-table-preview'; table.style.fontFamily = fontCss(node.props.fontFamily || 'system'); table.style.fontSize = String(node.props.fontSize || 14) + 'px'; const headers = normalizeHeaders(node.props.headers); const head = document.createElement('thead'); const hr = document.createElement('tr'); headers.forEach(function (value) { const th = document.createElement('th'); th.textContent = value; th.style.background = node.props.headerBackground || '#30382a'; th.style.color = node.props.headerTextColor || '#ffffff'; th.style.fontWeight = String(node.props.headerWeight || 700); th.style.padding = String(node.props.cellPadding || 8) + 'px'; th.style.border = String(node.props.cellBorderWidth || 0) + 'px solid ' + (node.props.cellBorderColor || '#dcdcde'); hr.appendChild(th); }); head.appendChild(hr); table.appendChild(head); const body = document.createElement('tbody'); normalizeMatrixRows(node.props.rows, headers.length).forEach(function (row, index) { const tr = document.createElement('tr'); row.forEach(function (value) { const td = document.createElement('td'); td.textContent = value; td.style.background = node.props.zebra && index % 2 ? (node.props.zebraBackground || '#f6f7f7') : (node.props.cellBackground || '#ffffff'); td.style.color = node.props.cellTextColor || '#30382a'; td.style.padding = String(node.props.cellPadding || 8) + 'px'; td.style.border = String(node.props.cellBorderWidth || 0) + 'px solid ' + (node.props.cellBorderColor || '#dcdcde'); tr.appendChild(td); }); body.appendChild(tr); }); table.appendChild(body); wrap.appendChild(table);
+            wrap.classList.add('h18-clean-node-preview--table');
+            const table = document.createElement('table'); table.className = 'h18-vd-table-preview'; table.style.fontFamily = fontCss(node.props.fontFamily || 'system'); table.style.fontSize = String(node.props.fontSize || 14) + 'px';
+            const grid = tableGrid(node), selectedCells = new Set(tableSelectionKeys(node));
+            function configureCell(cell, key) {
+                cell.dataset.vdTableCell = key; applyTableCellBorders(cell,node,key); if (selectedCells.has(key)) { cell.classList.add('is-vd-table-cell-selected'); }
+                cell.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); selectTableCell(node,key,event); });
+            }
+            const head = document.createElement('thead'), hr = document.createElement('tr');
+            grid.headers.forEach(function (value,col) { const th = document.createElement('th'); th.textContent = value; th.style.background = node.props.headerBackground || '#30382a'; th.style.color = node.props.headerTextColor || '#ffffff'; th.style.fontWeight = String(node.props.headerWeight || 700); th.style.padding = String(node.props.cellPadding || 8) + 'px'; configureCell(th,'h'+col); hr.appendChild(th); }); head.appendChild(hr); table.appendChild(head);
+            const body = document.createElement('tbody');
+            grid.rows.forEach(function (row,rowIndex) { const tr = document.createElement('tr'); row.forEach(function (value,col) { const td = document.createElement('td'); td.textContent = value; td.style.background = node.props.zebra && rowIndex % 2 ? (node.props.zebraBackground || '#f6f7f7') : (node.props.cellBackground || '#ffffff'); td.style.color = node.props.cellTextColor || '#30382a'; td.style.padding = String(node.props.cellPadding || 8) + 'px'; configureCell(td,'r'+rowIndex+'c'+col); tr.appendChild(td); }); body.appendChild(tr); }); table.appendChild(body); wrap.appendChild(table);
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
             const alignX = ['left', 'center', 'right'].includes(node.props.imageAlignX) ? node.props.imageAlignX : 'center';
@@ -1839,7 +2037,8 @@
         } else if (node.type === 'divider') {
             html += '<label>Retning<select data-field="orientation"><option value="horizontal"' + (node.props.orientation === 'horizontal' ? ' selected' : '') + '>Vandret</option><option value="vertical"' + (node.props.orientation === 'vertical' ? ' selected' : '') + '>Lodret</option></select></label><div class="h18-clean-field-grid"><label>Tykkelse px<input data-field="lineWidth" type="number" min="1" max="20" value="' + (node.props.lineWidth || 1) + '"></label><label>Farve<input data-field="lineColor" type="color" value="' + escapeAttr(node.props.lineColor || '#c3c4c7') + '"></label></div><label>Stil<select data-field="lineStyle"><option value="solid"' + (node.props.lineStyle === 'solid' ? ' selected' : '') + '>Solid</option><option value="dashed"' + (node.props.lineStyle === 'dashed' ? ' selected' : '') + '>Stiplet</option><option value="dotted"' + (node.props.lineStyle === 'dotted' ? ' selected' : '') + '>Prikket</option></select></label>';
         } else if (node.type === 'icon') {
-            html += '<label>Ikon<select data-field="icon">' + [['star','Stjerne'],['check','Check'],['info','Info'],['calendar','Kalender'],['camera','Kamera'],['people','Personer'],['ruler','Lineal'],['weight','Vægt'],['gear','Tandhjul'],['link','Link']].map(function (item) { return '<option value="' + item[0] + '"' + (node.props.icon === item[0] ? ' selected' : '') + '>' + item[1] + '</option>'; }).join('') + '</select></label><div class="h18-clean-field-grid"><label>Størrelse px<input data-field="iconSize" type="number" min="8" max="240" value="' + (node.props.iconSize || 32) + '"></label><label>Farve<input data-field="iconColor" type="color" value="' + escapeAttr(node.props.iconColor || '#30382a') + '"></label></div><label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label><label class="h18-clean-checkbox"><input data-field="backgroundTransparent" type="checkbox"' + (node.props.backgroundTransparent !== false ? ' checked' : '') + '> Gennemsigtig baggrund</label><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#ffffff') + '"></label><div class="h18-clean-field-grid"><label>Padding px<input data-field="padding" type="number" min="0" max="120" value="' + (node.props.padding || 0) + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label></div>';
+            const selection = normalizeIconSelection(node.props.iconSet || 'core', node.props.icon || 'star');
+            html += '<button type="button" class="button" id="h18-vd-icon-library-open">Vælg ikon fra bibliotek</button><div class="h18-vd-icon-current"><span class="h18-vd-icon-current-mark">' + registryIconSvgMarkup(selection.set,selection.icon) + '</span><span><strong>' + escapeHtml(currentIconLabel(selection.set,selection.icon)) + '</strong><br><small>' + escapeHtml(selection.set) + '</small></span></div><div class="h18-clean-field-grid"><label>Størrelse px<input data-field="iconSize" type="number" min="8" max="240" value="' + (node.props.iconSize || 32) + '"></label><label>Farve<input data-field="iconColor" type="color" value="' + escapeAttr(node.props.iconColor || '#30382a') + '"></label></div><label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label><label class="h18-clean-checkbox"><input data-field="backgroundTransparent" type="checkbox"' + (node.props.backgroundTransparent !== false ? ' checked' : '') + '> Gennemsigtig baggrund</label><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#ffffff') + '"></label><div class="h18-clean-field-grid"><label>Padding px<input data-field="padding" type="number" min="0" max="120" value="' + (node.props.padding || 0) + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label></div>';
         } else if (node.type === 'badge') {
             html += '<label>Tekst<input data-field="badgeText" type="text" value="' + escapeAttr(node.props.text || 'Badge') + '"></label><label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label><div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#c3ae83') + '"></label><label>Tekst<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#30382a') + '"></label><label>Størrelse px<input data-field="fontSize" type="number" min="8" max="80" value="' + (node.props.fontSize || 13) + '"></label><label>Tykkelse<input data-field="fontWeight" type="number" min="100" max="900" step="100" value="' + (node.props.fontWeight || 700) + '"></label><label>Padding X<input data-field="paddingX" type="number" min="0" max="120" value="' + (node.props.paddingX || 12) + '"></label><label>Padding Y<input data-field="paddingY" type="number" min="0" max="120" value="' + (node.props.paddingY || 5) + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 20) + '"></label></div>';
         } else if (node.type === 'link') {
@@ -1849,8 +2048,12 @@
         } else if (node.type === 'datalist') {
             html += '<div class="h18-vd-structured-editor"><div class="h18-vd-element-note"><strong>Statisk Data List · test</strong><br>Én linje pr. felt: <code>Felt | Værdi</code>. Dynamisk datakilde kobles på i næste fundament-version.</div><label>Rækker<textarea data-field="dataRows" rows="7">' + escapeHtml(pairRowsText(node.props.rows)) + '</textarea></label><label>Layout<select data-field="dataLayout"><option value="rows"' + (node.props.layout === 'rows' ? ' selected' : '') + '>Felt + værdi i samme række</option><option value="stacked"' + (node.props.layout === 'stacked' ? ' selected' : '') + '>Felt over værdi</option></select></label><div class="h18-clean-field-grid"><label>Labelbredde %<input data-field="labelWidth" type="number" min="15" max="80" value="' + (node.props.labelWidth || 40) + '"></label><label>Cell padding px<input data-field="cellPadding" type="number" min="0" max="60" value="' + (node.props.cellPadding || 8) + '"></label><label>Skrift px<input data-field="fontSize" type="number" min="8" max="80" value="' + (node.props.fontSize || 15) + '"></label><label>Label tykkelse<input data-field="labelWeight" type="number" min="100" max="900" step="100" value="' + (node.props.labelWeight || 600) + '"></label><label>Værdi tykkelse<input data-field="valueWeight" type="number" min="100" max="900" step="100" value="' + (node.props.valueWeight || 400) + '"></label></div><label class="h18-clean-checkbox"><input data-field="showDividers" type="checkbox"' + (node.props.showDividers !== false ? ' checked' : '') + '> Skillelinjer mellem rækker</label><label class="h18-clean-checkbox"><input data-field="zebra" type="checkbox"' + (node.props.zebra ? ' checked' : '') + '> Zebra-baggrund</label><div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#ffffff') + '"></label><label>Zebra<input data-field="zebraBackground" type="color" value="' + escapeAttr(node.props.zebraBackground || '#f6f7f7') + '"></label><label>Linje<input data-field="lineColor" type="color" value="' + escapeAttr(node.props.lineColor || '#dcdcde') + '"></label><label>Label<input data-field="labelColor" type="color" value="' + escapeAttr(node.props.labelColor || '#30382a') + '"></label><label>Værdi<input data-field="valueColor" type="color" value="' + escapeAttr(node.props.valueColor || '#30382a') + '"></label></div></div>';
         } else if (node.type === 'table') {
-            const tableHeaders = normalizeHeaders(node.props.headers);
-            html += '<div class="h18-vd-structured-editor"><div class="h18-vd-element-note"><strong>Statisk Tabel · test</strong><br>Kolonner og rækker redigeres med <code>|</code> som separator. Mobil kan scrolle eller vises som kort.</div><label>Kolonner<input data-field="tableHeaders" type="text" value="' + escapeAttr(headersText(tableHeaders)) + '"></label><label>Rækker<textarea data-field="tableRows" rows="8">' + escapeHtml(matrixRowsText(node.props.rows, tableHeaders.length)) + '</textarea></label><label>Mobilvisning<select data-field="mobileTableMode"><option value="scroll"' + (node.props.mobileMode === 'scroll' ? ' selected' : '') + '>Horisontal scroll</option><option value="cards"' + (node.props.mobileMode === 'cards' ? ' selected' : '') + '>Kort · kolonnenavn + værdi</option></select></label><div class="h18-clean-field-grid"><label>Cell padding px<input data-field="cellPadding" type="number" min="0" max="60" value="' + (node.props.cellPadding || 8) + '"></label><label>Cell ramme px<input data-field="cellBorderWidth" type="number" min="0" max="10" value="' + (node.props.cellBorderWidth || 0) + '"></label><label>Skrift px<input data-field="fontSize" type="number" min="8" max="80" value="' + (node.props.fontSize || 14) + '"></label><label>Header tykkelse<input data-field="headerWeight" type="number" min="100" max="900" step="100" value="' + (node.props.headerWeight || 700) + '"></label></div><label class="h18-clean-checkbox"><input data-field="zebra" type="checkbox"' + (node.props.zebra !== false ? ' checked' : '') + '> Zebra-rækker</label><div class="h18-clean-field-grid"><label>Header baggrund<input data-field="headerBackground" type="color" value="' + escapeAttr(node.props.headerBackground || '#30382a') + '"></label><label>Header tekst<input data-field="headerTextColor" type="color" value="' + escapeAttr(node.props.headerTextColor || '#ffffff') + '"></label><label>Cell baggrund<input data-field="cellBackground" type="color" value="' + escapeAttr(node.props.cellBackground || '#ffffff') + '"></label><label>Cell tekst<input data-field="cellTextColor" type="color" value="' + escapeAttr(node.props.cellTextColor || '#30382a') + '"></label><label>Zebra<input data-field="zebraBackground" type="color" value="' + escapeAttr(node.props.zebraBackground || '#f6f7f7') + '"></label><label>Cell ramme<input data-field="cellBorderColor" type="color" value="' + escapeAttr(node.props.cellBorderColor || '#dcdcde') + '"></label></div></div>';
+            const tableHeaders = normalizeHeaders(node.props.headers), selectedCells = tableSelectionKeys(node);
+            html += '<div class="h18-vd-structured-editor"><div class="h18-vd-element-note"><strong>Statisk Tabel · test</strong><br>Kolonner og rækker redigeres med <code>|</code> som separator. Klik celler i preview for Excel-lignende kantstyring; Ctrl/Cmd vælger flere og Shift vælger et område.</div><label>Kolonner<input data-field="tableHeaders" type="text" value="' + escapeAttr(headersText(tableHeaders)) + '"></label><label>Rækker<textarea data-field="tableRows" rows="8">' + escapeHtml(matrixRowsText(node.props.rows, tableHeaders.length)) + '</textarea></label><label>Mobilvisning<select data-field="mobileTableMode"><option value="scroll"' + (node.props.mobileMode === 'scroll' ? ' selected' : '') + '>Horisontal scroll</option><option value="cards"' + (node.props.mobileMode === 'cards' ? ' selected' : '') + '>Kort · kolonnenavn + værdi</option></select></label><label>Tabelstandard for kanter<select data-field="tableBorderMode"><option value="all"' + (node.props.borderMode === 'all' ? ' selected' : '') + '>Alle kanter</option><option value="outer"' + (node.props.borderMode === 'outer' ? ' selected' : '') + '>Kun yderramme</option><option value="inner"' + (node.props.borderMode === 'inner' ? ' selected' : '') + '>Kun indvendige linjer</option><option value="none"' + (node.props.borderMode === 'none' ? ' selected' : '') + '>Ingen kanter</option></select></label><div class="h18-clean-field-grid"><label>Standard ramme px<input data-field="cellBorderWidth" type="number" min="0" max="10" value="' + (node.props.cellBorderWidth || 0) + '"></label><label>Standard streg<select data-field="cellBorderStyle"><option value="solid"' + (node.props.cellBorderStyle === 'solid' ? ' selected' : '') + '>Solid</option><option value="dashed"' + (node.props.cellBorderStyle === 'dashed' ? ' selected' : '') + '>Stiplet</option><option value="dotted"' + (node.props.cellBorderStyle === 'dotted' ? ' selected' : '') + '>Prikket</option></select></label><label>Standard farve<input data-field="cellBorderColor" type="color" value="' + escapeAttr(node.props.cellBorderColor || '#dcdcde') + '"></label><label>Cell padding px<input data-field="cellPadding" type="number" min="0" max="60" value="' + (node.props.cellPadding || 8) + '"></label><label>Skrift px<input data-field="fontSize" type="number" min="8" max="80" value="' + (node.props.fontSize || 14) + '"></label><label>Header tykkelse<input data-field="headerWeight" type="number" min="100" max="900" step="100" value="' + (node.props.headerWeight || 700) + '"></label></div><label class="h18-clean-checkbox"><input data-field="zebra" type="checkbox"' + (node.props.zebra !== false ? ' checked' : '') + '> Zebra-rækker</label><div class="h18-clean-field-grid"><label>Header baggrund<input data-field="headerBackground" type="color" value="' + escapeAttr(node.props.headerBackground || '#30382a') + '"></label><label>Header tekst<input data-field="headerTextColor" type="color" value="' + escapeAttr(node.props.headerTextColor || '#ffffff') + '"></label><label>Cell baggrund<input data-field="cellBackground" type="color" value="' + escapeAttr(node.props.cellBackground || '#ffffff') + '"></label><label>Cell tekst<input data-field="cellTextColor" type="color" value="' + escapeAttr(node.props.cellTextColor || '#30382a') + '"></label><label>Zebra<input data-field="zebraBackground" type="color" value="' + escapeAttr(node.props.zebraBackground || '#f6f7f7') + '"></label></div>';
+            if (selectedCells.length) {
+                html += '<div class="h18-vd-table-selection-note"><strong>' + selectedCells.length + ' celle' + (selectedCells.length === 1 ? '' : 'r') + ' markeret.</strong><div class="h18-vd-table-selection-help">Klik = ny markering · Ctrl/Cmd+klik = til/fra · Shift+klik = rektangulært område.</div></div><div class="h18-vd-table-border-designer"><h4>Kantværktøj</h4><div class="h18-vd-table-pen"><label>Tykkelse px<input id="h18-vd-table-pen-width" type="number" min="0" max="10" value="' + (node.props.cellBorderWidth || 1) + '"></label><label>Farve<input id="h18-vd-table-pen-color" type="color" value="' + escapeAttr(node.props.cellBorderColor || '#dcdcde') + '"></label><label>Stil<select id="h18-vd-table-pen-style"><option value="solid">Solid</option><option value="dashed">Stiplet</option><option value="dotted">Prikket</option></select></label></div><div class="h18-vd-table-border-actions"><button type="button" class="button" data-table-border-action="outer">Yderramme</button><button type="button" class="button" data-table-border-action="inner">Indvendige</button><button type="button" class="button" data-table-border-action="all">Alle</button><button type="button" class="button" data-table-border-action="horizontal">Vandret</button><button type="button" class="button" data-table-border-action="vertical">Lodret</button><button type="button" class="button" data-table-border-action="top">Top</button><button type="button" class="button" data-table-border-action="right">Højre</button><button type="button" class="button" data-table-border-action="bottom">Bund</button><button type="button" class="button" data-table-border-action="left">Venstre</button><button type="button" class="button" data-table-border-action="none">Ingen</button></div></div>';
+            } else { html += '<div class="h18-vd-table-selection-note">Klik en eller flere celler i tabel-previewet for at tegne kanter på det valgte område.</div>'; }
+            html += '</div>';
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button><p class="description">PNG, JPG/JPEG, WebP, GIF og andre image/*-formater som WordPress tillader. PNG-transparens bevares.</p>';
             html += '<label>Billede i boksen<select data-field="fit"><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet</option><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld boksen · beskær</option><option value="original"' + (node.props.fit === 'original' ? ' selected' : '') + '>Original størrelse</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Stræk til boks</option></select></label>';
@@ -1929,6 +2132,8 @@
                 else if (field === 'cellTextColor') { current.props.cellTextColor = normalizeColor(control.value || '#30382a'); }
                 else if (field === 'cellBorderColor') { current.props.cellBorderColor = normalizeColor(control.value || '#dcdcde'); }
                 else if (field === 'cellBorderWidth') { current.props.cellBorderWidth = clamp(parseInt(control.value || 0, 10) || 0, 0, 10); }
+                else if (field === 'cellBorderStyle') { current.props.cellBorderStyle = ['solid','dashed','dotted'].includes(control.value) ? control.value : 'solid'; }
+                else if (field === 'tableBorderMode') { current.props.borderMode = ['all','outer','inner','none'].includes(control.value) ? control.value : 'all'; }
                 else if (field === 'headerWeight') { current.props.headerWeight = clamp(parseInt(control.value || 700, 10) || 700, 100, 900); }
                 else if (field === 'mobileTableMode') { current.props.mobileMode = ['scroll','cards'].includes(control.value) ? control.value : 'scroll'; }
                 else if (field === 'buttonText') { current.props.text = String(control.value || 'Knap'); }
@@ -1983,6 +2188,18 @@
                 commit(before, 'Ændr ' + fieldLabel(field) + ' på ' + typeLabel(current.type));
                 diag('inspector_change', { id: current.id, type: current.type, field: field, state: structuralSummary() });
                 render();
+            });
+        });
+        const iconLibraryOpen = document.getElementById('h18-vd-icon-library-open');
+        if (iconLibraryOpen) { iconLibraryOpen.addEventListener('click', openIconLibrary); }
+        document.querySelectorAll('[data-table-border-action]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const current = nodeById(selectedId); if (!current || current.type !== 'table') { return; }
+                const keys = tableSelectionKeys(current); if (!keys.length) { return; }
+                const widthInput = document.getElementById('h18-vd-table-pen-width'), colorInput = document.getElementById('h18-vd-table-pen-color'), styleInput = document.getElementById('h18-vd-table-pen-style');
+                const pen = {width:clamp(parseInt(widthInput && widthInput.value || current.props.cellBorderWidth || 1,10) || 0,0,10),color:normalizeColor(colorInput && colorInput.value || current.props.cellBorderColor || '#dcdcde'),style:['solid','dashed','dotted'].includes(String(styleInput && styleInput.value || 'solid')) ? String(styleInput && styleInput.value || 'solid') : 'solid'};
+                const before = clone(state), action = String(button.getAttribute('data-table-border-action') || 'all');
+                applyTableBorderAction(current,keys,action,pen); commit(before,'Tabelkanter · ' + action); render();
             });
         });
         const resetOffset = document.getElementById('h18-clean-reset-offset');

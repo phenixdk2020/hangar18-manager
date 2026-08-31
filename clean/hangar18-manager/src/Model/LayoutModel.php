@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace VisualDesignerManager\Model;
 
+use VisualDesignerManager\Icons\IconRegistry;
+
 final class LayoutModel
 {
     public const META = '_h18_clean_layout_v1';
@@ -321,8 +323,10 @@ final class LayoutModel
         if ($type === 'icon') {
             $align = strtolower((string) ($raw['align'] ?? 'center'));
             if (!in_array($align, ['left', 'center', 'right'], true)) { $align = 'center'; }
+            $selection = IconRegistry::normalizeSelection((string) ($raw['iconSet'] ?? 'core'), (string) ($raw['icon'] ?? 'star'));
             return array_merge([
-                'icon' => self::iconToken($raw['icon'] ?? 'star'),
+                'iconSet' => $selection['set'],
+                'icon' => $selection['icon'],
                 'iconSize' => self::clamp($raw['iconSize'] ?? 32, 8, 240, 32),
                 'iconColor' => sanitize_hex_color((string) ($raw['iconColor'] ?? '#30382a')) ?: '#30382a',
                 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
@@ -406,6 +410,9 @@ final class LayoutModel
                 'zebraBackground' => sanitize_hex_color((string) ($raw['zebraBackground'] ?? '#f6f7f7')) ?: '#f6f7f7',
                 'cellBorderColor' => sanitize_hex_color((string) ($raw['cellBorderColor'] ?? '#dcdcde')) ?: '#dcdcde',
                 'cellBorderWidth' => self::clamp($raw['cellBorderWidth'] ?? 1, 0, 10, 1),
+                'cellBorderStyle' => self::lineStyle($raw['cellBorderStyle'] ?? 'solid'),
+                'borderMode' => self::tableBorderMode($raw['borderMode'] ?? 'all'),
+                'cellBorders' => self::tableCellBorders($raw['cellBorders'] ?? []),
                 'cellPadding' => self::clamp($raw['cellPadding'] ?? 8, 0, 60, 8),
                 'fontFamily' => self::fontToken($raw['fontFamily'] ?? 'system', false),
                 'fontSize' => self::clamp($raw['fontSize'] ?? 14, 8, 80, 14),
@@ -511,10 +518,48 @@ final class LayoutModel
     }
 
     /** @param mixed $value */
+    private static function lineStyle($value): string
+    {
+        $style = strtolower((string) $value);
+        return in_array($style, ['solid', 'dashed', 'dotted'], true) ? $style : 'solid';
+    }
+
+    /** @param mixed $value */
+    private static function tableBorderMode($value): string
+    {
+        $mode = strtolower((string) $value);
+        return in_array($mode, ['all', 'outer', 'inner', 'none'], true) ? $mode : 'all';
+    }
+
+    /** @param mixed $value @return array<string,array<string,array<string,mixed>>> */
+    private static function tableCellBorders($value): array
+    {
+        if (!is_array($value)) { return []; }
+        $out = [];
+        $count = 0;
+        foreach ($value as $key => $cell) {
+            if ($count >= 700 || !is_array($cell)) { break; }
+            $key = (string) $key;
+            if (!preg_match('/^(?:h\d+|r\d+c\d+)$/', $key)) { continue; }
+            foreach (['top', 'right', 'bottom', 'left'] as $side) {
+                if (!array_key_exists($side, $cell) || !is_array($cell[$side])) { continue; }
+                $raw = $cell[$side];
+                $out[$key][$side] = [
+                    'enabled' => array_key_exists('enabled', $raw) ? (bool) $raw['enabled'] : true,
+                    'width' => self::clamp($raw['width'] ?? 1, 0, 10, 1),
+                    'color' => sanitize_hex_color((string) ($raw['color'] ?? '#dcdcde')) ?: '#dcdcde',
+                    'style' => self::lineStyle($raw['style'] ?? 'solid'),
+                ];
+            }
+            if (isset($out[$key])) { $count++; }
+        }
+        return $out;
+    }
+
+    /** @param mixed $value */
     private static function iconToken($value): string
     {
-        $token = sanitize_key((string) $value);
-        return in_array($token, ['star', 'check', 'info', 'calendar', 'camera', 'people', 'ruler', 'weight', 'gear', 'link'], true) ? $token : 'star';
+        return IconRegistry::normalizeSelection('core', (string) $value)['icon'];
     }
 
     /** @param array<string,mixed> $raw @return array<string,mixed> */

@@ -367,7 +367,7 @@ For border-selection styres mindst:
 
 - tykkelse;
 - farve;
-- senere eventuelt solid/dashed/dotted.
+- solid/dashed/dotted.
 
 ### 11.4 Mobilstrategier
 
@@ -1002,3 +1002,30 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 ## VD-ELEMENTS-001 · General Designer Elements v0.1.65
 
 Visual Designer har canonical leaf-typerne `spacer`, `divider`, `icon`, `badge`, `link`, `datalist` og `table`. De skal fungere i samme layout-/clipboard-/historikmotor som eksisterende elementer og i både Side Designer og Header/Footer Designer. `datalist` og `table` er i v0.1.65 statiske; dynamisk datasource/binding er et separat efterfølgende kontraktlag.
+
+## 27. v0.1.66 – ikonregister, tabelkanter og Menu-preview
+
+### VD-ICON-LIBRARY-001
+
+- Core icons er lokal SVG og kategoriseret i det centrale `IconRegistry`.
+- Module icons registreres via den dokumenterede module-filterkontrakt.
+- Custom icons er reserveret som tredje niveau; upload/indsæt-UI kommer senere.
+- Side Designer og Header/Footer bruger samme ikonregister og samme SVG-rendering som frontend.
+
+### VD-TABLE-BORDERS-001
+
+- Klik markerer én tabelcelle. Ctrl/Cmd+klik tilføjer/fjerner celler. Shift+klik markerer et rektangulært område.
+- Markeret område understøtter Yderramme, Indvendige, Alle, Vandret, Lodret, Top, Højre, Bund, Venstre og Ingen.
+- Border-pen styrer tykkelse, farve og `solid/dashed/dotted`.
+- Cellekanter er canonical `cellBorders`; tabelstandard er `borderMode`, `cellBorderWidth`, `cellBorderColor`, `cellBorderStyle`.
+- Samme data bruges i Designer-preview og frontend.
+
+### VD-MENU-PREVIEW-001
+
+- Struktur-preview er bredere på store skærme og holder Desktop-menuens root-punkter på én vandret række.
+- Hvis strukturen stadig er bredere end previewet, bruges vandret scroll i previewet i stedet for kunstig line-wrap.
+- På smallere adminskærme flyttes previewet fortsat under menu-editoren.
+
+### VD-ADMIN-STATUS-002
+
+- `Log` og `Konvertering` vises som `Klar` i Visual Designer Manager-menuen.
