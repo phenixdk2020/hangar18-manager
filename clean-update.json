@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.69",
+  "version": "0.1.70",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.69.zip",
-  "sha256": "be57fff0a3cf0352f944ff12e2fd6dad70da60dad31fe8f57d397277fa7be8d2",
-  "source_commit": "8e47798e034382b1a67dd9b24cddc16aefb28d1b",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.70.zip",
+  "sha256": "d275f0c2cf24023f75d341ec35ef96b12b222db52683099a813e47a53986953e",
+  "source_commit": "d4323398622991e0fa69046a195f75682f730fe5",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.69 – Canvas Auto Height</h4>\n<ul>\n<li>Webside/canvas udvider sig automatisk under den nederste root-Sektion.</li>\n<li>Canvas krymper igen, når Sektioner flyttes op eller slettes.</li>\n<li>Synkronisering gælder flytning, resize, add, paste/duplicate, delete, Undo/Redo og responsive skift.</li>\n<li>Ingen canonical geometri eller frontend z-index ændres af auto-height.</li>\n</ul>"
+    "changelog": "<h4>0.1.70 – Køretøjsmodul</h4>\n<ul>\n<li>Manager → Køretøjer har CRUD, status, sortering, primært billede og galleri.</li>\n<li>Køretøjsfelter er fleksible og bruger stabile felt-IDer.</li>\n<li>Visual Designer har Køretøjsliste og Køretøjsdetalje med dynamisk ModuleStore-binding.</li>\n<li>Én detaljeside kan genbruges via <code>?h18_vehicle=&lt;record-id&gt;</code>.</li>\n<li>Designmanual, Brugermanual, Teknisk manual og backlog er opdateret til v0.1.70.</li>\n</ul>"
   }
 }
