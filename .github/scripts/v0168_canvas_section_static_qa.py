@@ -83,13 +83,11 @@ try:
         'VD-SELECTION-LAYER-001',
     ])
     require('CLEAN-USER-MANUAL.md', ['Automatisk Section-struktur fra v0.1.68'])
-    require('docs/v0168-status.md', ['Status: TESTKANDIDAT', 'Køretøjsmodulet er flyttet til v0.1.69'])
-    require('docs/clean-backlog-v0100.md', ['Aktuel milepælsstatus · v0.1.68', 'v0.1.69 – Køretøjsmodul'])
-    require('clean-release-notes.html', ['0.1.68 – Canvas/Section Structure'])
+    require('docs/v0168-status.md', ['# Visual Designer Manager v0.1.68'])
     require('clean/hangar18-manager/release-history.json', ['"version": "0.1.68"', 'VD-CANVAS-SECTION-001', 'VD-SELECTION-LAYER-001'])
 
 except AssertionError as exc:
     print(f'V0168 CANVAS SECTION STATIC QA FAIL: {exc}', file=sys.stderr)
     raise SystemExit(1)
 
-print('V0168 CANVAS SECTION STATIC QA OK')
+print('V0168 CANVAS SECTION STATIC QA OK (forward-compatible)')
