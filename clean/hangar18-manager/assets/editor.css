@@ -15,9 +15,10 @@
 .h18-clean-empty-drop{min-height:60px;display:flex;align-items:center;justify-content:center;border:1px dashed #c3c4c7;color:#646970;font-size:12px;padding:8px;box-sizing:border-box}
 .h18-clean-node{position:relative;box-sizing:border-box;min-width:0;border:1px solid #8c8f94;background:#fff;overflow:visible;z-index:1}
 .h18-clean-node:hover{border-color:#2271b1}
-.h18-clean-node.is-selected{outline:2px solid #2271b1;outline-offset:1px;z-index:5}
-.h18-clean-node.is-dragging{opacity:.45}
-.h18-clean-node.is-resizing{z-index:20;box-shadow:0 0 0 2px #2271b1}
+.h18-clean-node:has(.h18-clean-node.is-selected),.h18-clean-node:has(.h18-clean-node.is-dragging),.h18-clean-node:has(.h18-clean-node.is-resizing){z-index:9000!important}
+.h18-clean-node.is-selected{outline:2px solid #2271b1;outline-offset:1px;z-index:10000!important}
+.h18-clean-node.is-dragging{opacity:.55;z-index:11000!important}
+.h18-clean-node.is-resizing{z-index:12000!important;box-shadow:0 0 0 2px #2271b1}
 .h18-clean-node--section{border-color:#8b4a2b;background:#faf8f0}
 .h18-clean-node--container{border-color:#c3ae83;background:#fffdf6}
 .h18-clean-node--section,.h18-clean-node--container{height:auto!important}

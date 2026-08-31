@@ -1,8 +1,8 @@
-<h4>0.1.67 – Module/Data Foundation</h4>
+<h4>0.1.68 – Canvas/Section Structure</h4>
 <ul>
-<li>Fælles ModuleRegistry for Køretøjer, Events og Billedgalleri.</li>
-<li>Canonical ModuleRecord v1 med fleksible, ordnede attributter til bl.a. tekniske køretøjsdata.</li>
-<li>Privat WordPress ModuleStore med canonical JSON, indeks-meta og SHA-256 digest.</li>
-<li>ModuleBinding v1 for kommende liste/detail-elementer og dynamisk datasource.</li>
-<li>Release-QA er forward-kompatibel med Icon Library fra v0.1.66.</li>
+<li>Alle Designer-sider følger nu canonical Webside → Sektion → Kasse/Element.</li>
+<li>Eksisterende sider migreres automatisk med rå backup, ID-bevarelse, rollback og ny Designer-version.</li>
+<li>Nye root-elementer pakkes automatisk i en Sektion; Sektioner kan kun ligge direkte på websiden.</li>
+<li>Markerede, trukne og resized elementer ligger midlertidigt øverst i Designeren uden at ændre frontendens z-index.</li>
+<li>Køretøjsmodulet flyttes til næste version oven på den færdige Canvas/Section-kontrakt.</li>
 </ul>

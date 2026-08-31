@@ -557,6 +557,71 @@
         return common;
     }
 
+
+    function hierarchyLocalGeometry(geometry) {
+        geometry = geometry && typeof geometry === 'object' ? geometry : {};
+        const desktopSource = normalizeDevice(geometry.desktop, false);
+        const result = {
+            desktop: { x: 0, y: 0, w: UNITS, h: desktopSource.h }
+        };
+        ['laptop', 'tablet', 'mobile'].forEach(function (key) {
+            const source = normalizeDevice(geometry[key], true);
+            const inherit = source.inheritDesktop !== false;
+            result[key] = { x: 0, y: 0, w: UNITS, h: inherit ? desktopSource.h : source.h, inheritDesktop: inherit };
+        });
+        return result;
+    }
+
+    function hierarchyWrapperId(sourceId, map) {
+        const tail = cleanId(sourceId).slice(-70) || 'element';
+        const base = cleanId('section-migrated-' + tail) || 'section-migrated';
+        let candidate = base;
+        let suffix = 2;
+        while (map[candidate]) {
+            candidate = cleanId(base.slice(0, 92) + '-' + String(suffix));
+            suffix += 1;
+        }
+        return candidate;
+    }
+
+    function normalizeCanvasHierarchy(nodes) {
+        const map = {};
+        nodes.forEach(function (node) { map[node.id] = node; });
+
+        // Sektion is page-level only. Historical nested sections are losslessly
+        // treated as Kasser, matching the server HierarchyNormalizer contract.
+        nodes.forEach(function (node) {
+            if (node.type === 'section' && node.parentId) {
+                node.type = 'container';
+                node.props = normalizeProps('container', node.props || {});
+            }
+        });
+
+        const roots = nodes.filter(function (node) { return !node.parentId && node.type !== 'section'; });
+        roots.forEach(function (node) {
+            const oldGeometry = clone(node.geometry || {});
+            const wrapperId = hierarchyWrapperId(node.id, map);
+            const gapX = clamp(parseInt(node.props && node.props.gapX || 0, 10) || 0, 0, 200);
+            const gapY = clamp(parseInt(node.props && node.props.gapY || 0, 10) || 0, 0, 200);
+            const wrapper = {
+                id: wrapperId,
+                type: 'section',
+                parentId: '',
+                order: Math.max(1, parseInt(node.order || 10, 10) || 10),
+                geometry: clone(oldGeometry),
+                props: normalizeProps('section', { gapX: gapX, gapY: gapY, minHeightRows: 0 })
+            };
+            map[wrapperId] = wrapper;
+            nodes.push(wrapper);
+            if (node.props) { node.props.gapX = 0; node.props.gapY = 0; }
+            node.parentId = wrapperId;
+            node.order = 10;
+            node.geometry = hierarchyLocalGeometry(oldGeometry);
+        });
+
+        return nodes;
+    }
+
     function normalizeModel(raw) {
         raw = raw && typeof raw === 'object' ? raw : {};
         const used = {};
@@ -599,6 +664,7 @@
                 cursor = map[cursor.parentId];
             }
         });
+        normalizeCanvasHierarchy(nodes);
         return { schemaVersion: 1, units: UNITS, rowPx: ROW_PX, nodes: nodes };
     }
 
@@ -1338,8 +1404,9 @@
     function addNode(type, parentId, source, dropGeometry) {
         type = String(type || '').toLowerCase();
         if (!TYPES.includes(type)) { return; }
-        const placement = dropGeometry && typeof dropGeometry === 'object' ? dropGeometry : null;
+        let placement = dropGeometry && typeof dropGeometry === 'object' ? dropGeometry : null;
         parentId = cleanId(placement && placement.parentId != null ? placement.parentId : parentId || '');
+        if (type === 'section' && parentId) { parentId = ''; placement = null; }
         const parent = parentId ? nodeById(parentId) : null;
         if (parentId && (!parent || !PARENT_TYPES.includes(parent.type))) { return; }
         const before = clone(state);
@@ -1368,6 +1435,7 @@
         });
         reorderForPlacement(id, parentId, p);
         applyDestinationGeometry(id, p);
+        state = normalizeModel(state);
         selectedId = id;
         commit(before, 'Tilføj ' + typeLabel(type) + ' · ' + p.zone);
         render();
@@ -1394,6 +1462,7 @@
         const parent = parentId ? nodeById(parentId) : null;
         if (parentId && (!parent || !PARENT_TYPES.includes(parent.type))) { return; }
         if (parentId === id || descendants(id).includes(parentId)) { return; }
+        if (node.type === 'section' && parentId) { productivityNotice('Sektioner kan kun ligge direkte på websiden'); return; }
 
         const before = clone(state);
         const from = node.parentId;
@@ -1404,6 +1473,7 @@
         reorderForPlacement(id, parentId, placement);
         applyDestinationGeometry(id, placement);
         node.geometry.desktop.w = Math.min(UNITS, Math.max(1, node.geometry.desktop.w));
+        state = normalizeModel(state);
         commit(before, 'Flyt ' + typeLabel(node.type) + ' · ' + placement.zone);
         render();
         diag('cell_drop_commit', { id: id, type: node.type, operation: 'move', fromParentId: from, toParentId: parentId, dropZone: placement.zone, targetId: placement.targetId || '', placement: clone(placement), state: structuralSummary() });

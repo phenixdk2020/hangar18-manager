@@ -4,7 +4,7 @@
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** eksisterende root-plugin v0.9.x må bruges som specifikation/migrationskilde, men ingen gammel editor-runtime må kopieres ind i clean-pluginet.
 
-## Aktuel milepælsstatus · v0.1.67
+## Aktuel milepælsstatus · v0.1.68
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template baseline, side-overrides, `Ingen`, standardvalg, migration, versionshistorik og delt Preview/frontend-resolver er lukket som regression-gate.
 - **VD-KEYBOARD-001 — IMPLEMENTERET:** markeret element kan finjusteres 1 px med piletaster og 10 px med `Shift + pil`; offset X/Y er canonical og kan nulstilles i Inspector.
@@ -12,7 +12,8 @@
 - **VD-PAGE-DUPLICATE-001 — IMPLEMENTERET:** Sider kan kopieres med nyt navn som selvstændig kladde, nyt WordPress-ID, unik slug og egen Designer-v1-historik.
 - **VD-ELEMENTS-001 / VD-ICON-LIBRARY-001 / VD-TABLE-BORDERS-001 — IMPLEMENTERET:** generelle elementer, ikonbibliotek og Excel-lignende tabelkanter er nu canonical Designer-funktioner.
 - **VD-MODULE-DATA-001 — IMPLEMENTERET I v0.1.67:** fælles ModuleRegistry, ModuleRecord, ModuleBinding og privat ModuleStore er fundamentet for Køretøjer, Events og Billedgalleri.
-- **Næste modul:** Køretøjer bygges først oven på den fælles modularkitektur; derefter Events og Billedgalleri.
+- **VD-CANVAS-SECTION-001 / VD-SELECTION-LAYER-001 — IMPLEMENTERET I v0.1.68:** root er kun Sektioner, eksisterende sider migreres automatisk, og markeret/drag/resize løftes kun i editorlaget.
+- **Næste modul:** Køretøjer bygges i v0.1.69 oven på den fælles modularkitektur og den låste Canvas/Section-kontrakt; derefter Events og Billedgalleri.
 
 ## Formål
 
@@ -41,10 +42,10 @@ Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent su
 
 ### CLEAN-REPARENT-004 — IMPLEMENTERET / MANUEL QA
 - Et allerede deployet element kan trækkes ind i `Sektion` eller `Kasse`.
-- Elementet kan trækkes ud til root igen.
+- Elementet kan trækkes ud mod root; Designer opretter automatisk en neutral Sektion, så root fortsat kun indeholder Sektioner.
 - Self/descendant-drop afvises for at forhindre cycles.
 - Re-parent ændrer modellen først og renderer derefter canvas fra modellen.
-- Fra v0.1.1 kan nye palette-elementer trækkes direkte til root, Sektion eller Kasse.
+- Nye palette-elementer kan slippes på websiden, Sektion eller Kasse; drop på websiden auto-wrapper ikke-Sektioner i en neutral Sektion.
 
 ### CLEAN-IMAGE-005 — IMPLEMENTERET / MANUEL QA
 - Billede vælges via WordPress Media Library.
@@ -81,13 +82,14 @@ Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent su
 - Update-pakken SHA-256-verificeres mod manifestet før WordPress får lov at installere den.
 - Plugin-headeren bruger `Update URI`, så clean-pluginet ikke kan kollidere med en eventuel WordPress.org-plugin med samme slug.
 
-## Roadmap fra v0.1.67
+## Roadmap fra v0.1.68
 
 1. **v0.1.67 – Module/Data Foundation:** registry, canonical recordmodel, private datastore og binding-kontrakt.
-2. **Næste – Køretøjsmodul:** Manager-CRUD, fleksible tekniske datafelter, billeder, sortering og Designer-modul-elementer til liste/detail.
-3. **Derefter – Events:** samme data-/bindingarkitektur med dato, sted, status og eventvisninger.
-4. **Derefter – Billedgalleri:** album/medier på samme modulstore og genbrugelige Designer-visninger.
-5. Dynamisk binding aktiveres først i de konkrete modulelementer; v0.1.67 ændrer ikke eksisterende statiske Data List/Tabel-renderinger.
+2. **v0.1.68 – Canvas/Section Structure:** root kun Sektioner, automatisk persist-migration og editor-only active layer.
+3. **v0.1.69 – Køretøjsmodul:** Manager-CRUD, fleksible tekniske datafelter, billeder, sortering og Designer-modul-elementer til liste/detail.
+4. **Derefter – Events:** samme data-/bindingarkitektur med dato, sted, status og eventvisninger.
+5. **Derefter – Billedgalleri:** album/medier på samme modulstore og genbrugelige Designer-visninger.
+6. Dynamisk binding aktiveres først i de konkrete modulelementer; v0.1.67 ændrede ikke eksisterende statiske Data List/Tabel-renderinger.
 
 ## Næste backlog
 
@@ -130,7 +132,7 @@ Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent su
 2. Tilføj Sektion, Kasse, to Tekst-elementer og ét Billede.
 3. Træk mindst ét nyt palette-element direkte ind i Kasse uden først at oprette det på root.
 4. Resize alle elementtyper fra E/W/N/S og mindst to hjørner.
-5. Træk eksisterende Tekst ind i Kasse og ud til root igen.
+5. Træk eksisterende Tekst ind i Kasse og ud mod websiden igen; verificér at Designer automatisk opretter en Sektion omkring elementet.
 6. Træk Billede ind i Kasse.
 7. Test Cover, Contain og Stretch samt focal X/Y.
 8. Undo/Redo både resize, re-parent, palette-drop, image-fit og Inspectorændring.

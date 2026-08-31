@@ -76,6 +76,71 @@ final class HierarchyNormalizer
         }
     }
 
+
+    /**
+     * Returns true only when the node graph obeys the canonical page contract:
+     * PAGE -> SECTION -> (CONTAINER|LEAF), with nested CONTAINER allowed.
+     *
+     * @param array<int|string,array<string,mixed>> $nodes
+     */
+    public static function isCanonical(array $nodes): bool
+    {
+        $map = [];
+        foreach ($nodes as $key => $node) {
+            if (!is_array($node)) {
+                return false;
+            }
+            $id = (string) ($node['id'] ?? (is_string($key) ? $key : ''));
+            if ($id === '' || isset($map[$id])) {
+                return false;
+            }
+            $map[$id] = $node;
+        }
+
+        foreach ($map as $id => $node) {
+            $type = (string) ($node['type'] ?? '');
+            $parent = (string) ($node['parentId'] ?? '');
+
+            if ($type === 'section') {
+                if ($parent !== '') {
+                    return false;
+                }
+                continue;
+            }
+            if ($parent === '') {
+                return false;
+            }
+
+            $seen = [];
+            $cursor = $id;
+            while (isset($map[$cursor])) {
+                if (isset($seen[$cursor])) {
+                    return false;
+                }
+                $seen[$cursor] = true;
+                $current = $map[$cursor];
+                $currentType = (string) ($current['type'] ?? '');
+                $currentParent = (string) ($current['parentId'] ?? '');
+                if ($currentParent === '') {
+                    if ($currentType !== 'section') {
+                        return false;
+                    }
+                    break;
+                }
+                if (!isset($map[$currentParent])) {
+                    return false;
+                }
+                $parentType = (string) ($map[$currentParent]['type'] ?? '');
+                if (!in_array($parentType, ['section', 'container'], true)) {
+                    return false;
+                }
+                $cursor = $currentParent;
+            }
+        }
+
+        return true;
+    }
+
     /** @param array<string,array<string,mixed>> $nodes */
     private static function uniqueWrapperId(string $sourceId, array $nodes): string
     {

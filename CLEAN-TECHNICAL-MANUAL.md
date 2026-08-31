@@ -1040,3 +1040,17 @@ Visual Designer har canonical leaf-typerne `spacer`, `divider`, `icon`, `badge`,
 - `ModuleBinding` schema 1 beskriver `static|module`, `list|detail`, record-ID, query og field-map. Kontrakten er foundation i v0.1.67; eksisterende statiske Designer-elementer skifter ikke datasource automatisk.
 - Records har canonical SHA-256 digest, så senere import/migration og QA kan verificere strukturel identitet.
 - Modulrækkefølge: Køretøjer først, derefter Events og Billedgalleri.
+
+## VD-CANVAS-SECTION-001 – Canonical Canvas/Section hierarchy
+
+- Root på en almindelig Designer-side må kun indeholde `section`.
+- `container` og alle leaf-typer skal have ancestry, der ender i en root-`section`.
+- `HierarchyNormalizer::normalize()` wrapper legacy root-noder i en neutral Sektion og konverterer nested Sektion til Kasse.
+- `HierarchyNormalizer::isCanonical()` er den fælles verifieringskontrakt for migration/QA.
+- `CanvasSectionMigration` kører én gang i Admin for sider med `_h18_clean_layout_v1`, gemmer `_h18_clean_layout_pre_section_v0168`, bevarer alle oprindelige node-ID'er og gemmer migrationen som en ny Designer-version.
+- Ved validerings- eller save-fejl gendannes current model, history og version-meta til før migreringen.
+- Editorens JavaScript-normalizer håndhæver samme root-kontrakt ved runtime, så add/paste/re-parent ikke kan efterlade løse root-elementer.
+
+## VD-SELECTION-LAYER-001 – Editor-only active layer
+
+Markeret element og element under drag/resize skal ligge øverst i Designerens stacking context. Ancestor wrappers løftes samtidig, så et markeret child ikke kan skjules bag en sibling-Kasse/Sektion. Lagløftet implementeres kun i editor-CSS og må ikke persistére eller ændre frontendens canonical `zIndex`.

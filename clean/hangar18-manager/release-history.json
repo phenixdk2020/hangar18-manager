@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.68",
+      "date": "2026-08-31",
+      "items": [
+        "VD-CANVAS-SECTION-001: Webside-root må kun indeholde Sektioner; Kasser og leaf-elementer ligger altid under en Sektion.",
+        "Eksisterende Designer-sider migreres automatisk og rollback-sikkert med rå v0.1.68-backup samt ny Designer-version.",
+        "Editor-runtime normaliserer samme hierarki ved add, paste, undo/redo og re-parent, så nye løse root-elementer ikke kan opstå.",
+        "VD-SELECTION-LAYER-001: markeret, trukket eller resized element løftes midlertidigt øverst i Designeren uden at ændre frontend z-index."
+      ]
+    },
+    {
       "version": "0.1.67",
       "date": "2026-08-31",
       "items": [

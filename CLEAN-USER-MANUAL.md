@@ -1024,3 +1024,9 @@ Når nye brugerfunktioner bliver frigivet, skal denne brugermanual opdateres sam
 - Inspector har ekstra tom scrollplads nederst, så sidste kontrol kan rulles komfortabelt op fra vinduets nederste kant.
 - Flydende Knap forbliver et parent-relativt overlay og påvirker ikke normal grid-autogrow alene på grund af floating-position.
 
+
+### Automatisk Section-struktur fra v0.1.68
+
+Visual Designer sørger automatisk for, at en side er bygget som **Webside → Sektion → Kasse/Element**. Du behøver ikke selv åbne gamle sider og flytte løse elementer ind i Sektioner. Ved opdatering konverteres berørte Designer-sider automatisk med backup og en ny sideversion.
+
+Hvis du trækker et almindeligt element ud på selve websiden, opretter Designer den nødvendige Sektion automatisk. En Sektion kan kun ligge direkte på websiden. Når et element er markeret, flyttes det visuelt øverst under redigering/drag/resize; dette ændrer ikke den publicerede sides lagrækkefølge.

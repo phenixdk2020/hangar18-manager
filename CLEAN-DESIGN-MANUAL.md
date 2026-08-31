@@ -632,3 +632,13 @@ Visual Designer Manager skelner nu mellem **statiske elementdata** og **genbruge
 Et modulrecord har fælles titel/status/billede/sortering samt modul-specifikke standardfelter. Derudover findes ordnede, brugerdefinerede attributter. Det er især grundlaget for Køretøjer, hvor tekniske datafelter skal kunne tilføjes, skjules og sorteres uden at ændre datamodellen.
 
 v0.1.67 indeholder **ikke** den endelige Køretøjer-Manager eller dynamisk frontendbinding. Den etablerer den datakontrakt, som næste version bygger UI og visninger oven på.
+
+## 27. Canvas/Section-struktur
+
+Den canonical sideanatomi er **Webside/Canvas → Sektion → Kasse eller indholdselement**. Kun Sektion må ligge direkte på Webside/Canvas. Kasser, Tekst, Billede, Knap, Menu, Tabel, Data List og andre leaf-elementer skal derfor altid have en Sektion som øverste layoutforælder. Kasser kan fortsat nestes i Sektion/Kasse.
+
+Når et eksisterende legacy-layout har et element direkte på root, opretter normalizeren en neutral Sektion omkring elementet og flytter root-geometri og ekstern spacing til Sektionen. Elementets ID og synlige placering bevares. En historisk nested Sektion konverteres tabsfrit til Kasse.
+
+Fra v0.1.68 bliver denne normalisering også persisteret automatisk for eksisterende Designer-sider. Hver berørt side får en rå pre-migration-backup og en ny Designer-version. Migreringen må kun committe, hvis alle oprindelige element-ID'er stadig findes og den nye model består canonical hierarchy-validering.
+
+I editoren er lagløft under redigering en **ren UI-egenskab**: markeret element, drag og resize må midlertidigt ligge foran andre elementer og løfte nødvendige ancestor stacking contexts. Det må aldrig ændre elementets canonical `zIndex` eller frontendens lagrækkefølge.
