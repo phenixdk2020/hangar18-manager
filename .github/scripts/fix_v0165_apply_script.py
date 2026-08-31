@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Rerun trigger after making the v0.1.64 clipboard QA forward-compatible.
 p = Path('.github/scripts/apply_v0165_general_elements.py')
 s = p.read_text(encoding='utf-8')
 
