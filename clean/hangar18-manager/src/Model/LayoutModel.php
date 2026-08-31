@@ -58,7 +58,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -303,6 +303,116 @@ final class LayoutModel
                 'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
             ], $border);
         }
+        if ($type === 'spacer') {
+            return $border;
+        }
+        if ($type === 'divider') {
+            $orientation = strtolower((string) ($raw['orientation'] ?? 'horizontal'));
+            if (!in_array($orientation, ['horizontal', 'vertical'], true)) { $orientation = 'horizontal'; }
+            $lineStyle = strtolower((string) ($raw['lineStyle'] ?? 'solid'));
+            if (!in_array($lineStyle, ['solid', 'dashed', 'dotted'], true)) { $lineStyle = 'solid'; }
+            return array_merge([
+                'orientation' => $orientation,
+                'lineColor' => sanitize_hex_color((string) ($raw['lineColor'] ?? '#c3c4c7')) ?: '#c3c4c7',
+                'lineWidth' => self::clamp($raw['lineWidth'] ?? 1, 1, 20, 1),
+                'lineStyle' => $lineStyle,
+            ], $border);
+        }
+        if ($type === 'icon') {
+            $align = strtolower((string) ($raw['align'] ?? 'center'));
+            if (!in_array($align, ['left', 'center', 'right'], true)) { $align = 'center'; }
+            return array_merge([
+                'icon' => self::iconToken($raw['icon'] ?? 'star'),
+                'iconSize' => self::clamp($raw['iconSize'] ?? 32, 8, 240, 32),
+                'iconColor' => sanitize_hex_color((string) ($raw['iconColor'] ?? '#30382a')) ?: '#30382a',
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
+                'backgroundTransparent' => array_key_exists('backgroundTransparent', $raw) ? (bool) $raw['backgroundTransparent'] : true,
+                'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
+                'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
+                'align' => $align,
+            ], $border);
+        }
+        if ($type === 'badge') {
+            $align = strtolower((string) ($raw['align'] ?? 'left'));
+            if (!in_array($align, ['left', 'center', 'right'], true)) { $align = 'left'; }
+            return array_merge([
+                'text' => sanitize_text_field((string) ($raw['text'] ?? 'Badge')),
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#c3ae83')) ?: '#c3ae83',
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a',
+                'fontFamily' => self::fontToken($raw['fontFamily'] ?? 'system', false),
+                'fontSize' => self::clamp($raw['fontSize'] ?? 13, 8, 80, 13),
+                'fontWeight' => self::clamp($raw['fontWeight'] ?? 700, 100, 900, 700),
+                'paddingX' => self::clamp($raw['paddingX'] ?? 12, 0, 120, 12),
+                'paddingY' => self::clamp($raw['paddingY'] ?? 5, 0, 120, 5),
+                'radius' => self::clamp($raw['radius'] ?? 20, 0, 100, 20),
+                'align' => $align,
+            ], $border);
+        }
+        if ($type === 'link') {
+            $linkType = strtolower((string) ($raw['linkType'] ?? 'url'));
+            if (!in_array($linkType, ['page', 'url', 'anchor', 'email', 'phone'], true)) { $linkType = 'url'; }
+            $align = strtolower((string) ($raw['align'] ?? 'left'));
+            if (!in_array($align, ['left', 'center', 'right'], true)) { $align = 'left'; }
+            return array_merge([
+                'text' => sanitize_text_field((string) ($raw['text'] ?? 'Læs mere →')),
+                'linkType' => $linkType,
+                'pageId' => absint($raw['pageId'] ?? 0),
+                'url' => sanitize_text_field((string) ($raw['url'] ?? '')),
+                'targetBlank' => !empty($raw['targetBlank']),
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#2271b1')) ?: '#2271b1',
+                'hoverTextColor' => sanitize_hex_color((string) ($raw['hoverTextColor'] ?? '#135e96')) ?: '#135e96',
+                'fontFamily' => self::fontToken($raw['fontFamily'] ?? 'system', false),
+                'fontSize' => self::clamp($raw['fontSize'] ?? 16, 8, 120, 16),
+                'fontWeight' => self::clamp($raw['fontWeight'] ?? 600, 100, 900, 600),
+                'lineHeight' => self::clampFloat($raw['lineHeight'] ?? 1.3, 0.8, 3.0, 1.3),
+                'letterSpacing' => self::clampFloat($raw['letterSpacing'] ?? 0, -10.0, 30.0, 0.0),
+                'underline' => array_key_exists('underline', $raw) ? (bool) $raw['underline'] : false,
+                'align' => $align,
+            ], $border);
+        }
+        if ($type === 'datalist') {
+            $layout = strtolower((string) ($raw['layout'] ?? 'rows'));
+            if (!in_array($layout, ['rows', 'stacked'], true)) { $layout = 'rows'; }
+            return array_merge([
+                'rows' => self::pairRows($raw['rows'] ?? []),
+                'layout' => $layout,
+                'labelWidth' => self::clamp($raw['labelWidth'] ?? 40, 15, 80, 40),
+                'cellPadding' => self::clamp($raw['cellPadding'] ?? 8, 0, 60, 8),
+                'showDividers' => array_key_exists('showDividers', $raw) ? (bool) $raw['showDividers'] : true,
+                'zebra' => !empty($raw['zebra']),
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
+                'zebraBackground' => sanitize_hex_color((string) ($raw['zebraBackground'] ?? '#f6f7f7')) ?: '#f6f7f7',
+                'lineColor' => sanitize_hex_color((string) ($raw['lineColor'] ?? '#dcdcde')) ?: '#dcdcde',
+                'labelColor' => sanitize_hex_color((string) ($raw['labelColor'] ?? '#30382a')) ?: '#30382a',
+                'valueColor' => sanitize_hex_color((string) ($raw['valueColor'] ?? '#30382a')) ?: '#30382a',
+                'fontFamily' => self::fontToken($raw['fontFamily'] ?? 'system', false),
+                'fontSize' => self::clamp($raw['fontSize'] ?? 15, 8, 80, 15),
+                'labelWeight' => self::clamp($raw['labelWeight'] ?? 600, 100, 900, 600),
+                'valueWeight' => self::clamp($raw['valueWeight'] ?? 400, 100, 900, 400),
+            ], $border);
+        }
+        if ($type === 'table') {
+            $headers = self::stringList($raw['headers'] ?? [], 12, ['Kolonne 1', 'Kolonne 2', 'Kolonne 3']);
+            $mobileMode = strtolower((string) ($raw['mobileMode'] ?? 'scroll'));
+            if (!in_array($mobileMode, ['scroll', 'cards'], true)) { $mobileMode = 'scroll'; }
+            return array_merge([
+                'headers' => $headers,
+                'rows' => self::matrixRows($raw['rows'] ?? [], count($headers), 50),
+                'headerBackground' => sanitize_hex_color((string) ($raw['headerBackground'] ?? '#30382a')) ?: '#30382a',
+                'headerTextColor' => sanitize_hex_color((string) ($raw['headerTextColor'] ?? '#ffffff')) ?: '#ffffff',
+                'cellBackground' => sanitize_hex_color((string) ($raw['cellBackground'] ?? '#ffffff')) ?: '#ffffff',
+                'cellTextColor' => sanitize_hex_color((string) ($raw['cellTextColor'] ?? '#30382a')) ?: '#30382a',
+                'zebra' => array_key_exists('zebra', $raw) ? (bool) $raw['zebra'] : true,
+                'zebraBackground' => sanitize_hex_color((string) ($raw['zebraBackground'] ?? '#f6f7f7')) ?: '#f6f7f7',
+                'cellBorderColor' => sanitize_hex_color((string) ($raw['cellBorderColor'] ?? '#dcdcde')) ?: '#dcdcde',
+                'cellBorderWidth' => self::clamp($raw['cellBorderWidth'] ?? 1, 0, 10, 1),
+                'cellPadding' => self::clamp($raw['cellPadding'] ?? 8, 0, 60, 8),
+                'fontFamily' => self::fontToken($raw['fontFamily'] ?? 'system', false),
+                'fontSize' => self::clamp($raw['fontSize'] ?? 14, 8, 80, 14),
+                'headerWeight' => self::clamp($raw['headerWeight'] ?? 700, 100, 900, 700),
+                'mobileMode' => $mobileMode,
+            ], $border);
+        }
         if ($type === 'image') {
             $fit = strtolower((string) ($raw['fit'] ?? 'contain'));
             if (!in_array($fit, ['cover', 'contain', 'original', 'stretch', 'manual'], true)) {
@@ -343,6 +453,68 @@ final class LayoutModel
             ], $border);
         }
         return $border;
+    }
+
+    /** @param mixed $value @return array<int,array{label:string,value:string}> */
+    private static function pairRows($value): array
+    {
+        $source = is_array($value) ? array_values($value) : [];
+        $rows = [];
+        foreach (array_slice($source, 0, 50) as $row) {
+            if (!is_array($row)) { continue; }
+            $label = sanitize_text_field((string) ($row['label'] ?? ''));
+            $cellValue = sanitize_text_field((string) ($row['value'] ?? ''));
+            if ($label === '' && $cellValue === '') { continue; }
+            $rows[] = ['label' => $label, 'value' => $cellValue];
+        }
+        return $rows ?: [
+            ['label' => 'Felt', 'value' => 'Værdi'],
+            ['label' => 'Eksempel', 'value' => 'Indhold'],
+        ];
+    }
+
+    /** @param mixed $value @param array<int,string> $fallback @return array<int,string> */
+    private static function stringList($value, int $max, array $fallback): array
+    {
+        $source = is_array($value) ? array_values($value) : [];
+        $out = [];
+        foreach (array_slice($source, 0, max(1, $max)) as $item) {
+            $cell = sanitize_text_field((string) $item);
+            if ($cell !== '') { $out[] = $cell; }
+        }
+        return $out ?: $fallback;
+    }
+
+    /** @param mixed $value @return array<int,array<int,string>> */
+    private static function matrixRows($value, int $columns, int $maxRows): array
+    {
+        $columns = max(1, min(12, $columns));
+        $source = is_array($value) ? array_values($value) : [];
+        $out = [];
+        foreach (array_slice($source, 0, max(1, $maxRows)) as $row) {
+            if (!is_array($row)) { continue; }
+            $cells = [];
+            for ($i = 0; $i < $columns; $i++) {
+                $cells[] = sanitize_text_field((string) ($row[$i] ?? ''));
+            }
+            if (implode('', $cells) !== '') { $out[] = $cells; }
+        }
+        if (!$out) {
+            $sample1 = array_fill(0, $columns, '');
+            $sample2 = array_fill(0, $columns, '');
+            $sample1[0] = 'Række 1';
+            $sample2[0] = 'Række 2';
+            if ($columns > 1) { $sample1[1] = 'Værdi'; $sample2[1] = 'Værdi'; }
+            $out = [$sample1, $sample2];
+        }
+        return $out;
+    }
+
+    /** @param mixed $value */
+    private static function iconToken($value): string
+    {
+        $token = sanitize_key((string) $value);
+        return in_array($token, ['star', 'check', 'info', 'calendar', 'camera', 'people', 'ruler', 'weight', 'gear', 'link'], true) ? $token : 'star';
     }
 
     /** @param array<string,mixed> $raw @return array<string,mixed> */

@@ -8,7 +8,7 @@
     const USER_ID = Math.max(0, parseInt(CFG.userId || 0, 10) || 0);
     const CONTEXT_LABEL = String(CFG.contextLabel || (POST_ID ? ('Side ' + POST_ID) : 'Global Designer'));
     const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u' + String(USER_ID);
-    const TYPES = ['section', 'container', 'text', 'image', 'button', 'menu'];
+    const TYPES = ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table'];
     const PARENT_TYPES = ['section', 'container'];
     const undoStack = [];
     const redoStack = [];
@@ -64,7 +64,7 @@
         if (explicit > 0) { return explicit; }
         return ({h2:32,h3:28,h4:24,h5:20,h6:18})[String(props.headingLevel || 'h2')] || 32;
     }
-    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap',menu:'Menu'})[String(type || '')] || String(type || 'Element'); }
+    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap',menu:'Menu',spacer:'Mellemrum',divider:'Skillelinje',icon:'Ikon',badge:'Badge',link:'Link',datalist:'Data List',table:'Tabel'})[String(type || '')] || String(type || 'Element'); }
     function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }
     function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',verticalAlign:'lodret justering',fontFamily:'skrifttype',fontSize:'skriftstørrelse',fontWeight:'skrifttykkelse',lineHeight:'linjeafstand',letterSpacing:'bogstavafstand',headingFontFamily:'overskriftsskrifttype',headingFontSize:'overskriftsstørrelse',headingFontWeight:'overskriftstykkelse',headingLineHeight:'overskriftens linjeafstand',headingLetterSpacing:'overskriftens bogstavafstand',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',offsetX:'finjustering X',offsetY:'finjustering Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding',autoSize:'automatisk størrelse',placementMode:'placering',zIndex:'lag',menuId:'WordPress-menu',orientation:'menuretning',mobileMode:'mobilmenu',mobilePresentation:'mobilmenu-visning',mobileCloseOnSelect:'luk efter valg',mobileCloseOutside:'luk ved klik udenfor',activeTextColor:'aktiv menufarve',backgroundTransparent:'gennemsigtig baggrund',menuGap:'menuafstand'})[String(field || '')] || String(field || 'felt'); }
     function richPreviewHtml(value) {
@@ -114,6 +114,60 @@
             offsetX: clamp(parseInt(raw.offsetX || 0, 10) || 0, -2000, 2000),
             offsetY: clamp(parseInt(raw.offsetY || 0, 10) || 0, -2000, 2000)
         };
+    }
+
+    function normalizePairRows(raw) {
+        const source = Array.isArray(raw) ? raw : [];
+        const rows = source.slice(0, 50).map(function (row) {
+            row = row && typeof row === 'object' ? row : {};
+            return { label: String(row.label || '').trim(), value: String(row.value || '').trim() };
+        }).filter(function (row) { return row.label || row.value; });
+        return rows.length ? rows : [{label:'Felt',value:'Værdi'},{label:'Eksempel',value:'Indhold'}];
+    }
+    function normalizeHeaders(raw) {
+        const headers = (Array.isArray(raw) ? raw : []).slice(0, 12).map(function (item) { return String(item || '').trim(); }).filter(Boolean);
+        return headers.length ? headers : ['Kolonne 1','Kolonne 2','Kolonne 3'];
+    }
+    function normalizeMatrixRows(raw, columns) {
+        columns = clamp(parseInt(columns || 1, 10) || 1, 1, 12);
+        const rows = (Array.isArray(raw) ? raw : []).slice(0, 50).map(function (row) {
+            const source = Array.isArray(row) ? row : [];
+            const cells = [];
+            for (let i = 0; i < columns; i += 1) { cells.push(String(source[i] || '').trim()); }
+            return cells;
+        }).filter(function (row) { return row.join('').length > 0; });
+        if (rows.length) { return rows; }
+        const a = Array(columns).fill(''); const b = Array(columns).fill('');
+        a[0] = 'Række 1'; b[0] = 'Række 2'; if (columns > 1) { a[1] = 'Værdi'; b[1] = 'Værdi'; }
+        return [a,b];
+    }
+    function pairRowsText(rows) { return normalizePairRows(rows).map(function (row) { return row.label + ' | ' + row.value; }).join('\n'); }
+    function parsePairRowsText(value) {
+        return String(value || '').split(/\r?\n/).slice(0,50).map(function (line) {
+            const parts = line.split('|'); return {label:String(parts.shift() || '').trim(),value:String(parts.join('|') || '').trim()};
+        }).filter(function (row) { return row.label || row.value; });
+    }
+    function headersText(headers) { return normalizeHeaders(headers).join(' | '); }
+    function parseHeadersText(value) { return normalizeHeaders(String(value || '').split('|')); }
+    function matrixRowsText(rows, columns) { return normalizeMatrixRows(rows, columns).map(function (row) { return row.join(' | '); }).join('\n'); }
+    function parseMatrixRowsText(value, columns) {
+        const rows = String(value || '').split(/\r?\n/).slice(0,50).map(function (line) { return line.split('|').map(function (cell) { return cell.trim(); }); });
+        return normalizeMatrixRows(rows, columns);
+    }
+    function iconSvgMarkup(token) {
+        const shapes = {
+            star:'<polygon points="12 2.7 14.8 8.4 21 9.3 16.5 13.7 17.6 20 12 17 6.4 20 7.5 13.7 3 9.3 9.2 8.4 12 2.7"/>',
+            check:'<polyline points="4 12.5 9.5 18 20 6"/>',
+            info:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="10.5" x2="12" y2="17"/><line x1="12" y1="7" x2="12.01" y2="7"/>',
+            calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><line x1="7" y1="3" x2="7" y2="7"/><line x1="17" y1="3" x2="17" y2="7"/><line x1="3" y1="10" x2="21" y2="10"/>',
+            camera:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7l1.5-3h5L16 7"/><circle cx="12" cy="13.5" r="3.5"/>',
+            people:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.8-4 3-6 6-6s5.2 2 6 6"/><path d="M14 15c3.5-.5 6 1.1 7 4"/>',
+            ruler:'<path d="M4 17L17 4l3 3L7 20z"/><line x1="13" y1="8" x2="16" y2="11"/><line x1="10" y1="11" x2="12" y2="13"/><line x1="7" y1="14" x2="10" y2="17"/>',
+            weight:'<path d="M6 8h12l2 12H4z"/><path d="M9 8a3 3 0 016 0"/><line x1="12" y1="11" x2="14" y2="14"/>',
+            gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+            link:'<path d="M10 13a5 5 0 007 0l2-2a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-2 2a5 5 0 007 7l1-1"/>'
+        };
+        return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + (shapes[String(token || '')] || shapes.star) + '</svg>';
     }
 
     function normalizeProps(type, raw) {
@@ -190,6 +244,98 @@
                 paddingX: clamp(parseInt(raw.paddingX || 8, 10) || 8, 0, 120),
                 paddingY: clamp(parseInt(raw.paddingY || 8, 10) || 8, 0, 120),
                 radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100)
+            });
+        }
+        if (type === 'spacer') { return common; }
+        if (type === 'divider') {
+            return Object.assign(common, {
+                orientation: ['horizontal','vertical'].includes(String(raw.orientation || '').toLowerCase()) ? String(raw.orientation).toLowerCase() : 'horizontal',
+                lineColor: /^#[0-9a-f]{6}$/i.test(String(raw.lineColor || '')) ? String(raw.lineColor).toLowerCase() : '#c3c4c7',
+                lineWidth: clamp(parseInt(raw.lineWidth || 1, 10) || 1, 1, 20),
+                lineStyle: ['solid','dashed','dotted'].includes(String(raw.lineStyle || '').toLowerCase()) ? String(raw.lineStyle).toLowerCase() : 'solid'
+            });
+        }
+        if (type === 'icon') {
+            return Object.assign(common, {
+                icon: ['star','check','info','calendar','camera','people','ruler','weight','gear','link'].includes(String(raw.icon || '').toLowerCase()) ? String(raw.icon).toLowerCase() : 'star',
+                iconSize: clamp(parseInt(raw.iconSize || 32, 10) || 32, 8, 240),
+                iconColor: /^#[0-9a-f]{6}$/i.test(String(raw.iconColor || '')) ? String(raw.iconColor).toLowerCase() : '#30382a',
+                background: /^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#ffffff',
+                backgroundTransparent: raw.backgroundTransparent !== false,
+                padding: clamp(parseInt(raw.padding || 0, 10) || 0, 0, 120),
+                radius: clamp(parseInt(raw.radius || 0, 10) || 0, 0, 100),
+                align: ['left','center','right'].includes(String(raw.align || '').toLowerCase()) ? String(raw.align).toLowerCase() : 'center'
+            });
+        }
+        if (type === 'badge') {
+            return Object.assign(common, {
+                text: String(raw.text || 'Badge'),
+                background: /^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#c3ae83',
+                textColor: /^#[0-9a-f]{6}$/i.test(String(raw.textColor || '')) ? String(raw.textColor).toLowerCase() : '#30382a',
+                fontFamily: normalizeFontToken(raw.fontFamily || 'system', false),
+                fontSize: clamp(parseInt(raw.fontSize || 13, 10) || 13, 8, 80),
+                fontWeight: clamp(parseInt(raw.fontWeight || 700, 10) || 700, 100, 900),
+                paddingX: clamp(parseInt(raw.paddingX || 12, 10) || 12, 0, 120),
+                paddingY: clamp(parseInt(raw.paddingY || 5, 10) || 5, 0, 120),
+                radius: clamp(parseInt(raw.radius || 20, 10) || 20, 0, 100),
+                align: ['left','center','right'].includes(String(raw.align || '').toLowerCase()) ? String(raw.align).toLowerCase() : 'left'
+            });
+        }
+        if (type === 'link') {
+            return Object.assign(common, {
+                text: String(raw.text || 'Læs mere →'),
+                linkType: ['page','url','anchor','email','phone'].includes(String(raw.linkType || '').toLowerCase()) ? String(raw.linkType).toLowerCase() : 'url',
+                pageId: parseInt(raw.pageId || 0, 10) || 0,
+                url: String(raw.url || ''),
+                targetBlank: !!raw.targetBlank,
+                textColor: /^#[0-9a-f]{6}$/i.test(String(raw.textColor || '')) ? String(raw.textColor).toLowerCase() : '#2271b1',
+                hoverTextColor: /^#[0-9a-f]{6}$/i.test(String(raw.hoverTextColor || '')) ? String(raw.hoverTextColor).toLowerCase() : '#135e96',
+                fontFamily: normalizeFontToken(raw.fontFamily || 'system', false),
+                fontSize: clamp(parseInt(raw.fontSize || 16, 10) || 16, 8, 120),
+                fontWeight: clamp(parseInt(raw.fontWeight || 600, 10) || 600, 100, 900),
+                lineHeight: Math.max(0.8, Math.min(3, parseFloat(raw.lineHeight || 1.3) || 1.3)),
+                letterSpacing: Math.max(-10, Math.min(30, parseFloat(raw.letterSpacing || 0) || 0)),
+                underline: !!raw.underline,
+                align: ['left','center','right'].includes(String(raw.align || '').toLowerCase()) ? String(raw.align).toLowerCase() : 'left'
+            });
+        }
+        if (type === 'datalist') {
+            return Object.assign(common, {
+                rows: normalizePairRows(raw.rows),
+                layout: ['rows','stacked'].includes(String(raw.layout || '').toLowerCase()) ? String(raw.layout).toLowerCase() : 'rows',
+                labelWidth: clamp(parseInt(raw.labelWidth || 40, 10) || 40, 15, 80),
+                cellPadding: clamp(parseInt(raw.cellPadding || 8, 10) || 8, 0, 60),
+                showDividers: raw.showDividers !== false,
+                zebra: !!raw.zebra,
+                background: /^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#ffffff',
+                zebraBackground: /^#[0-9a-f]{6}$/i.test(String(raw.zebraBackground || '')) ? String(raw.zebraBackground).toLowerCase() : '#f6f7f7',
+                lineColor: /^#[0-9a-f]{6}$/i.test(String(raw.lineColor || '')) ? String(raw.lineColor).toLowerCase() : '#dcdcde',
+                labelColor: /^#[0-9a-f]{6}$/i.test(String(raw.labelColor || '')) ? String(raw.labelColor).toLowerCase() : '#30382a',
+                valueColor: /^#[0-9a-f]{6}$/i.test(String(raw.valueColor || '')) ? String(raw.valueColor).toLowerCase() : '#30382a',
+                fontFamily: normalizeFontToken(raw.fontFamily || 'system', false),
+                fontSize: clamp(parseInt(raw.fontSize || 15, 10) || 15, 8, 80),
+                labelWeight: clamp(parseInt(raw.labelWeight || 600, 10) || 600, 100, 900),
+                valueWeight: clamp(parseInt(raw.valueWeight || 400, 10) || 400, 100, 900)
+            });
+        }
+        if (type === 'table') {
+            const headers = normalizeHeaders(raw.headers);
+            return Object.assign(common, {
+                headers: headers,
+                rows: normalizeMatrixRows(raw.rows, headers.length),
+                headerBackground: /^#[0-9a-f]{6}$/i.test(String(raw.headerBackground || '')) ? String(raw.headerBackground).toLowerCase() : '#30382a',
+                headerTextColor: /^#[0-9a-f]{6}$/i.test(String(raw.headerTextColor || '')) ? String(raw.headerTextColor).toLowerCase() : '#ffffff',
+                cellBackground: /^#[0-9a-f]{6}$/i.test(String(raw.cellBackground || '')) ? String(raw.cellBackground).toLowerCase() : '#ffffff',
+                cellTextColor: /^#[0-9a-f]{6}$/i.test(String(raw.cellTextColor || '')) ? String(raw.cellTextColor).toLowerCase() : '#30382a',
+                zebra: raw.zebra !== false,
+                zebraBackground: /^#[0-9a-f]{6}$/i.test(String(raw.zebraBackground || '')) ? String(raw.zebraBackground).toLowerCase() : '#f6f7f7',
+                cellBorderColor: /^#[0-9a-f]{6}$/i.test(String(raw.cellBorderColor || '')) ? String(raw.cellBorderColor).toLowerCase() : '#dcdcde',
+                cellBorderWidth: clamp(parseInt(raw.cellBorderWidth != null ? raw.cellBorderWidth : 1, 10) || 0, 0, 10),
+                cellPadding: clamp(parseInt(raw.cellPadding || 8, 10) || 8, 0, 60),
+                fontFamily: normalizeFontToken(raw.fontFamily || 'system', false),
+                fontSize: clamp(parseInt(raw.fontSize || 14, 10) || 14, 8, 80),
+                headerWeight: clamp(parseInt(raw.headerWeight || 700, 10) || 700, 100, 900),
+                mobileMode: ['scroll','cards'].includes(String(raw.mobileMode || '').toLowerCase()) ? String(raw.mobileMode).toLowerCase() : 'scroll'
             });
         }
         if (type === 'image') {
@@ -1012,7 +1158,7 @@
         const id = makeId(type);
         const defaultW = defaultWidth(type, parentId);
         const p = placement || { parentId: parentId, x: 0, y: nextFreeY(parentId), w: defaultW, targetId: '', zone: 'free', bandIds: [], bandH: MIN_SPLIT_H };
-        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10 };
+        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10, spacer: 4, divider: 6, icon: 10, badge: 8, link: 8, datalist: 18, table: 22 };
         const defaultH = Math.max(MIN_SPLIT_H, parseInt(defaultRows[type] || MIN_SPLIT_H, 10) || MIN_SPLIT_H);
         const newProps = normalizeProps(type, {});
         if (type === 'button' && p.zone === 'overlay') { newProps.placementMode = 'overlay'; }
@@ -1270,6 +1416,44 @@
                 }
                 wrap.appendChild(nav);
             }
+        } else if (node.type === 'spacer') {
+            wrap.classList.add('h18-clean-node-preview--spacer');
+            wrap.textContent = 'Mellemrum · ' + Math.max(0, node.geometry.desktop.h * ROW_PX) + ' px';
+        } else if (node.type === 'divider') {
+            wrap.classList.add('h18-clean-node-preview--divider');
+            const line = document.createElement('span');
+            line.className = 'h18-vd-divider-line';
+            const vertical = node.props.orientation === 'vertical';
+            line.style.width = vertical ? String(node.props.lineWidth || 1) + 'px' : '100%';
+            line.style.height = vertical ? '100%' : String(node.props.lineWidth || 1) + 'px';
+            line.style.borderStyle = node.props.lineStyle || 'solid';
+            line.style.borderColor = node.props.lineColor || '#c3c4c7';
+            line.style.borderWidth = vertical ? '0 0 0 ' + String(node.props.lineWidth || 1) + 'px' : String(node.props.lineWidth || 1) + 'px 0 0 0';
+            wrap.appendChild(line);
+        } else if (node.type === 'icon') {
+            wrap.classList.add('h18-clean-node-preview--icon');
+            wrap.style.justifyContent = ({left:'flex-start',center:'center',right:'flex-end'})[node.props.align] || 'center';
+            const icon = document.createElement('span');
+            icon.className = 'h18-vd-icon-preview';
+            icon.style.width = String(node.props.iconSize || 32) + 'px'; icon.style.height = String(node.props.iconSize || 32) + 'px';
+            icon.style.color = node.props.iconColor || '#30382a';
+            icon.style.background = node.props.backgroundTransparent === false ? (node.props.background || '#ffffff') : 'transparent';
+            icon.style.padding = String(node.props.padding || 0) + 'px'; icon.style.borderRadius = String(node.props.radius || 0) + 'px';
+            icon.innerHTML = iconSvgMarkup(node.props.icon || 'star'); wrap.appendChild(icon);
+        } else if (node.type === 'badge') {
+            wrap.classList.add('h18-clean-node-preview--badge');
+            wrap.style.justifyContent = ({left:'flex-start',center:'center',right:'flex-end'})[node.props.align] || 'flex-start';
+            const badge = document.createElement('span'); badge.className = 'h18-vd-badge-preview'; badge.textContent = String(node.props.text || 'Badge');
+            badge.style.background = node.props.background || '#c3ae83'; badge.style.color = node.props.textColor || '#30382a'; badge.style.fontFamily = fontCss(node.props.fontFamily || 'system');
+            badge.style.fontSize = String(node.props.fontSize || 13) + 'px'; badge.style.fontWeight = String(node.props.fontWeight || 700); badge.style.padding = String(node.props.paddingY || 5) + 'px ' + String(node.props.paddingX || 12) + 'px'; badge.style.borderRadius = String(node.props.radius || 20) + 'px'; wrap.appendChild(badge);
+        } else if (node.type === 'link') {
+            wrap.classList.add('h18-clean-node-preview--link'); wrap.style.justifyContent = ({left:'flex-start',center:'center',right:'flex-end'})[node.props.align] || 'flex-start';
+            const link = document.createElement('span'); link.className = 'h18-vd-link-preview'; link.textContent = String(node.props.text || 'Læs mere →'); link.style.color = node.props.textColor || '#2271b1'; link.style.fontFamily = fontCss(node.props.fontFamily || 'system'); link.style.fontSize = String(node.props.fontSize || 16) + 'px'; link.style.fontWeight = String(node.props.fontWeight || 600); link.style.lineHeight = String(node.props.lineHeight || 1.3); link.style.letterSpacing = String(node.props.letterSpacing || 0) + 'px'; link.style.textDecoration = node.props.underline ? 'underline' : 'none'; wrap.appendChild(link);
+        } else if (node.type === 'datalist') {
+            wrap.classList.add('h18-clean-node-preview--datalist'); const list = document.createElement('div'); list.className = 'h18-vd-datalist-preview' + (node.props.layout === 'stacked' ? ' is-stacked' : ''); list.style.setProperty('--h18-vd-label-width', String(node.props.labelWidth || 40) + '%'); list.style.fontFamily = fontCss(node.props.fontFamily || 'system'); list.style.fontSize = String(node.props.fontSize || 15) + 'px';
+            normalizePairRows(node.props.rows).forEach(function (row, index) { const item = document.createElement('div'); item.className = 'h18-vd-datalist-row'; item.style.background = node.props.zebra && index % 2 ? (node.props.zebraBackground || '#f6f7f7') : (node.props.background || '#ffffff'); if (node.props.showDividers && index) { item.style.borderTop = '1px solid ' + (node.props.lineColor || '#dcdcde'); } const label = document.createElement('span'); label.className = 'h18-vd-datalist-label'; label.textContent = row.label; label.style.padding = String(node.props.cellPadding || 8) + 'px'; label.style.color = node.props.labelColor || '#30382a'; label.style.fontWeight = String(node.props.labelWeight || 600); const value = document.createElement('span'); value.textContent = row.value; value.style.padding = String(node.props.cellPadding || 8) + 'px'; value.style.color = node.props.valueColor || '#30382a'; value.style.fontWeight = String(node.props.valueWeight || 400); item.appendChild(label); item.appendChild(value); list.appendChild(item); }); wrap.appendChild(list);
+        } else if (node.type === 'table') {
+            wrap.classList.add('h18-clean-node-preview--table'); const table = document.createElement('table'); table.className = 'h18-vd-table-preview'; table.style.fontFamily = fontCss(node.props.fontFamily || 'system'); table.style.fontSize = String(node.props.fontSize || 14) + 'px'; const headers = normalizeHeaders(node.props.headers); const head = document.createElement('thead'); const hr = document.createElement('tr'); headers.forEach(function (value) { const th = document.createElement('th'); th.textContent = value; th.style.background = node.props.headerBackground || '#30382a'; th.style.color = node.props.headerTextColor || '#ffffff'; th.style.fontWeight = String(node.props.headerWeight || 700); th.style.padding = String(node.props.cellPadding || 8) + 'px'; th.style.border = String(node.props.cellBorderWidth || 0) + 'px solid ' + (node.props.cellBorderColor || '#dcdcde'); hr.appendChild(th); }); head.appendChild(hr); table.appendChild(head); const body = document.createElement('tbody'); normalizeMatrixRows(node.props.rows, headers.length).forEach(function (row, index) { const tr = document.createElement('tr'); row.forEach(function (value) { const td = document.createElement('td'); td.textContent = value; td.style.background = node.props.zebra && index % 2 ? (node.props.zebraBackground || '#f6f7f7') : (node.props.cellBackground || '#ffffff'); td.style.color = node.props.cellTextColor || '#30382a'; td.style.padding = String(node.props.cellPadding || 8) + 'px'; td.style.border = String(node.props.cellBorderWidth || 0) + 'px solid ' + (node.props.cellBorderColor || '#dcdcde'); tr.appendChild(td); }); body.appendChild(tr); }); table.appendChild(body); wrap.appendChild(table);
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
             const alignX = ['left', 'center', 'right'].includes(node.props.imageAlignX) ? node.props.imageAlignX : 'center';
@@ -1492,7 +1676,7 @@
             });
             move.addEventListener('dragend', function () { card.classList.remove('is-dragging'); clearDragState(); });
             const title = document.createElement('strong');
-            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
+            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
             header.appendChild(move);
             header.appendChild(title);
             card.appendChild(header);
@@ -1615,7 +1799,7 @@
         const node = nodeById(selectedId);
         if (!node) { host.innerHTML = '<p class="description">Vælg et element på canvas.</p>'; return; }
         const g = node.geometry.desktop;
-        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
+        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
         html += '<div class="h18-clean-field-grid"><label>X / 120<input data-field="gx" type="number" min="0" max="119" value="' + g.x + '"></label><label>Bredde / 120<input data-field="gw" type="number" min="1" max="120" value="' + g.w + '"></label><label>Y · 8px<input data-field="gy" type="number" value="' + g.y + '"></label><label>Højde · 8px<input data-field="gh" type="number" min="0" value="' + g.h + '"></label></div>';
         html += '<div class="h18-vd-nudge-inspector"><strong>Finjustering · pixels</strong><div class="h18-clean-field-grid"><label>Offset X px<input data-field="offsetX" type="number" min="-2000" max="2000" value="' + (node.props.offsetX || 0) + '"></label><label>Offset Y px<input data-field="offsetY" type="number" min="-2000" max="2000" value="' + (node.props.offsetY || 0) + '"></label></div><button type="button" class="button" id="h18-clean-reset-offset">Nulstil finjustering</button><p class="description">Piletaster flytter 1 px. Shift + piletast flytter 10 px. Grid-positionen ændres ikke.</p></div>';
         if (node.type === 'text') {
@@ -1650,6 +1834,23 @@
             html += '<div class="h18-vd-menu-group"><h3>Mobil</h3><label>Mobilvisning<select data-field="mobileMode"><option value="hamburger"' + (node.props.mobileMode === 'hamburger' ? ' selected' : '') + '>Hamburger</option><option value="vertical"' + (node.props.mobileMode === 'vertical' ? ' selected' : '') + '>Lodret menu</option><option value="wrap"' + (node.props.mobileMode === 'wrap' ? ' selected' : '') + '>Ombryd menupunkter</option></select></label>';
             if (node.props.mobileMode === 'hamburger') { html += '<label>Åbn som<select data-field="mobilePresentation"><option value="dropdown"' + (node.props.mobilePresentation === 'dropdown' ? ' selected' : '') + '>Dropdown</option><option value="panel-right"' + (node.props.mobilePresentation === 'panel-right' ? ' selected' : '') + '>Panel fra højre</option><option value="panel-left"' + (node.props.mobilePresentation === 'panel-left' ? ' selected' : '') + '>Panel fra venstre</option></select></label><label class="h18-clean-checkbox"><input data-field="mobileCloseOnSelect" type="checkbox"' + (node.props.mobileCloseOnSelect !== false ? ' checked' : '') + '> Luk efter valg</label><label class="h18-clean-checkbox"><input data-field="mobileCloseOutside" type="checkbox"' + (node.props.mobileCloseOutside !== false ? ' checked' : '') + '> Luk ved klik udenfor</label>'; }
             html += '<p class="description">Mobil bruger de samme menupunkter som Desktop; kun præsentationen ændres.</p></div>';
+        } else if (node.type === 'spacer') {
+            html += '<div class="h18-vd-element-note"><strong>Mellemrum</strong><br>Elementet er usynligt på frontend. Brug Højde ovenfor og responsive Desktop/Laptop/Tablet/Mobil-indstillinger til at styre luften.</div>';
+        } else if (node.type === 'divider') {
+            html += '<label>Retning<select data-field="orientation"><option value="horizontal"' + (node.props.orientation === 'horizontal' ? ' selected' : '') + '>Vandret</option><option value="vertical"' + (node.props.orientation === 'vertical' ? ' selected' : '') + '>Lodret</option></select></label><div class="h18-clean-field-grid"><label>Tykkelse px<input data-field="lineWidth" type="number" min="1" max="20" value="' + (node.props.lineWidth || 1) + '"></label><label>Farve<input data-field="lineColor" type="color" value="' + escapeAttr(node.props.lineColor || '#c3c4c7') + '"></label></div><label>Stil<select data-field="lineStyle"><option value="solid"' + (node.props.lineStyle === 'solid' ? ' selected' : '') + '>Solid</option><option value="dashed"' + (node.props.lineStyle === 'dashed' ? ' selected' : '') + '>Stiplet</option><option value="dotted"' + (node.props.lineStyle === 'dotted' ? ' selected' : '') + '>Prikket</option></select></label>';
+        } else if (node.type === 'icon') {
+            html += '<label>Ikon<select data-field="icon">' + [['star','Stjerne'],['check','Check'],['info','Info'],['calendar','Kalender'],['camera','Kamera'],['people','Personer'],['ruler','Lineal'],['weight','Vægt'],['gear','Tandhjul'],['link','Link']].map(function (item) { return '<option value="' + item[0] + '"' + (node.props.icon === item[0] ? ' selected' : '') + '>' + item[1] + '</option>'; }).join('') + '</select></label><div class="h18-clean-field-grid"><label>Størrelse px<input data-field="iconSize" type="number" min="8" max="240" value="' + (node.props.iconSize || 32) + '"></label><label>Farve<input data-field="iconColor" type="color" value="' + escapeAttr(node.props.iconColor || '#30382a') + '"></label></div><label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label><label class="h18-clean-checkbox"><input data-field="backgroundTransparent" type="checkbox"' + (node.props.backgroundTransparent !== false ? ' checked' : '') + '> Gennemsigtig baggrund</label><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#ffffff') + '"></label><div class="h18-clean-field-grid"><label>Padding px<input data-field="padding" type="number" min="0" max="120" value="' + (node.props.padding || 0) + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label></div>';
+        } else if (node.type === 'badge') {
+            html += '<label>Tekst<input data-field="badgeText" type="text" value="' + escapeAttr(node.props.text || 'Badge') + '"></label><label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label><div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#c3ae83') + '"></label><label>Tekst<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#30382a') + '"></label><label>Størrelse px<input data-field="fontSize" type="number" min="8" max="80" value="' + (node.props.fontSize || 13) + '"></label><label>Tykkelse<input data-field="fontWeight" type="number" min="100" max="900" step="100" value="' + (node.props.fontWeight || 700) + '"></label><label>Padding X<input data-field="paddingX" type="number" min="0" max="120" value="' + (node.props.paddingX || 12) + '"></label><label>Padding Y<input data-field="paddingY" type="number" min="0" max="120" value="' + (node.props.paddingY || 5) + '"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 20) + '"></label></div>';
+        } else if (node.type === 'link') {
+            html += '<label>Linktekst<input data-field="linkText" type="text" value="' + escapeAttr(node.props.text || 'Læs mere →') + '"></label><label>Linktype<select data-field="linkType"><option value="page"' + (node.props.linkType === 'page' ? ' selected' : '') + '>Intern side</option><option value="url"' + (node.props.linkType === 'url' ? ' selected' : '') + '>Ekstern URL</option><option value="anchor"' + (node.props.linkType === 'anchor' ? ' selected' : '') + '>Anker</option><option value="email"' + (node.props.linkType === 'email' ? ' selected' : '') + '>E-mail</option><option value="phone"' + (node.props.linkType === 'phone' ? ' selected' : '') + '>Telefon</option></select></label>';
+            if (node.props.linkType === 'page') { html += '<label>Intern side<select data-field="pageId"><option value="0">Vælg side…</option>' + (Array.isArray(CFG.pages) ? CFG.pages.map(function (page) { const id = parseInt(page.id || 0, 10) || 0; return '<option value="' + id + '"' + (parseInt(node.props.pageId || 0, 10) === id ? ' selected' : '') + '>' + escapeHtml(String(page.title || ('Side ' + id))) + '</option>'; }).join('') : '') + '</select></label>'; } else { html += '<label>Destination<input data-field="url" type="text" value="' + escapeAttr(node.props.url || '') + '"></label>'; }
+            html += '<label class="h18-clean-checkbox"><input data-field="targetBlank" type="checkbox"' + (node.props.targetBlank ? ' checked' : '') + '> Åbn i ny fane</label><label class="h18-clean-checkbox"><input data-field="underline" type="checkbox"' + (node.props.underline ? ' checked' : '') + '> Understreg link</label><label>Justering<select data-field="align"><option value="left"' + (node.props.align === 'left' ? ' selected' : '') + '>Venstre</option><option value="center"' + (node.props.align === 'center' ? ' selected' : '') + '>Midt</option><option value="right"' + (node.props.align === 'right' ? ' selected' : '') + '>Højre</option></select></label><div class="h18-clean-field-grid"><label>Tekstfarve<input data-field="textColor" type="color" value="' + escapeAttr(node.props.textColor || '#2271b1') + '"></label><label>Hoverfarve<input data-field="hoverTextColor" type="color" value="' + escapeAttr(node.props.hoverTextColor || '#135e96') + '"></label><label>Størrelse px<input data-field="fontSize" type="number" min="8" max="120" value="' + (node.props.fontSize || 16) + '"></label><label>Tykkelse<input data-field="fontWeight" type="number" min="100" max="900" step="100" value="' + (node.props.fontWeight || 600) + '"></label></div>';
+        } else if (node.type === 'datalist') {
+            html += '<div class="h18-vd-structured-editor"><div class="h18-vd-element-note"><strong>Statisk Data List · test</strong><br>Én linje pr. felt: <code>Felt | Værdi</code>. Dynamisk datakilde kobles på i næste fundament-version.</div><label>Rækker<textarea data-field="dataRows" rows="7">' + escapeHtml(pairRowsText(node.props.rows)) + '</textarea></label><label>Layout<select data-field="dataLayout"><option value="rows"' + (node.props.layout === 'rows' ? ' selected' : '') + '>Felt + værdi i samme række</option><option value="stacked"' + (node.props.layout === 'stacked' ? ' selected' : '') + '>Felt over værdi</option></select></label><div class="h18-clean-field-grid"><label>Labelbredde %<input data-field="labelWidth" type="number" min="15" max="80" value="' + (node.props.labelWidth || 40) + '"></label><label>Cell padding px<input data-field="cellPadding" type="number" min="0" max="60" value="' + (node.props.cellPadding || 8) + '"></label><label>Skrift px<input data-field="fontSize" type="number" min="8" max="80" value="' + (node.props.fontSize || 15) + '"></label><label>Label tykkelse<input data-field="labelWeight" type="number" min="100" max="900" step="100" value="' + (node.props.labelWeight || 600) + '"></label><label>Værdi tykkelse<input data-field="valueWeight" type="number" min="100" max="900" step="100" value="' + (node.props.valueWeight || 400) + '"></label></div><label class="h18-clean-checkbox"><input data-field="showDividers" type="checkbox"' + (node.props.showDividers !== false ? ' checked' : '') + '> Skillelinjer mellem rækker</label><label class="h18-clean-checkbox"><input data-field="zebra" type="checkbox"' + (node.props.zebra ? ' checked' : '') + '> Zebra-baggrund</label><div class="h18-clean-field-grid"><label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#ffffff') + '"></label><label>Zebra<input data-field="zebraBackground" type="color" value="' + escapeAttr(node.props.zebraBackground || '#f6f7f7') + '"></label><label>Linje<input data-field="lineColor" type="color" value="' + escapeAttr(node.props.lineColor || '#dcdcde') + '"></label><label>Label<input data-field="labelColor" type="color" value="' + escapeAttr(node.props.labelColor || '#30382a') + '"></label><label>Værdi<input data-field="valueColor" type="color" value="' + escapeAttr(node.props.valueColor || '#30382a') + '"></label></div></div>';
+        } else if (node.type === 'table') {
+            const tableHeaders = normalizeHeaders(node.props.headers);
+            html += '<div class="h18-vd-structured-editor"><div class="h18-vd-element-note"><strong>Statisk Tabel · test</strong><br>Kolonner og rækker redigeres med <code>|</code> som separator. Mobil kan scrolle eller vises som kort.</div><label>Kolonner<input data-field="tableHeaders" type="text" value="' + escapeAttr(headersText(tableHeaders)) + '"></label><label>Rækker<textarea data-field="tableRows" rows="8">' + escapeHtml(matrixRowsText(node.props.rows, tableHeaders.length)) + '</textarea></label><label>Mobilvisning<select data-field="mobileTableMode"><option value="scroll"' + (node.props.mobileMode === 'scroll' ? ' selected' : '') + '>Horisontal scroll</option><option value="cards"' + (node.props.mobileMode === 'cards' ? ' selected' : '') + '>Kort · kolonnenavn + værdi</option></select></label><div class="h18-clean-field-grid"><label>Cell padding px<input data-field="cellPadding" type="number" min="0" max="60" value="' + (node.props.cellPadding || 8) + '"></label><label>Cell ramme px<input data-field="cellBorderWidth" type="number" min="0" max="10" value="' + (node.props.cellBorderWidth || 0) + '"></label><label>Skrift px<input data-field="fontSize" type="number" min="8" max="80" value="' + (node.props.fontSize || 14) + '"></label><label>Header tykkelse<input data-field="headerWeight" type="number" min="100" max="900" step="100" value="' + (node.props.headerWeight || 700) + '"></label></div><label class="h18-clean-checkbox"><input data-field="zebra" type="checkbox"' + (node.props.zebra !== false ? ' checked' : '') + '> Zebra-rækker</label><div class="h18-clean-field-grid"><label>Header baggrund<input data-field="headerBackground" type="color" value="' + escapeAttr(node.props.headerBackground || '#30382a') + '"></label><label>Header tekst<input data-field="headerTextColor" type="color" value="' + escapeAttr(node.props.headerTextColor || '#ffffff') + '"></label><label>Cell baggrund<input data-field="cellBackground" type="color" value="' + escapeAttr(node.props.cellBackground || '#ffffff') + '"></label><label>Cell tekst<input data-field="cellTextColor" type="color" value="' + escapeAttr(node.props.cellTextColor || '#30382a') + '"></label><label>Zebra<input data-field="zebraBackground" type="color" value="' + escapeAttr(node.props.zebraBackground || '#f6f7f7') + '"></label><label>Cell ramme<input data-field="cellBorderColor" type="color" value="' + escapeAttr(node.props.cellBorderColor || '#dcdcde') + '"></label></div></div>';
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button><p class="description">PNG, JPG/JPEG, WebP, GIF og andre image/*-formater som WordPress tillader. PNG-transparens bevares.</p>';
             html += '<label>Billede i boksen<select data-field="fit"><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet</option><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld boksen · beskær</option><option value="original"' + (node.props.fit === 'original' ? ' selected' : '') + '>Original størrelse</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Stræk til boks</option></select></label>';
@@ -1663,12 +1864,12 @@
             html += '<label>Baggrund<input data-field="background" type="color" value="' + escapeAttr(node.props.background || '#ffffff') + '"></label>';
             html += '<div class="h18-clean-field-grid"><label>Hjørner px<input data-field="radius" type="number" min="0" max="100" value="' + (node.props.radius || 0) + '"></label><label>Padding px<input data-field="padding" type="number" min="0" max="120" value="' + (node.props.padding || 0) + '"></label></div>';
         }
-        html += '<div class="h18-clean-v0111-layout-style"><strong>Ramme og afstand</strong><div class="h18-clean-field-grid">';
+        if (node.type !== 'spacer') { html += '<div class="h18-clean-v0111-layout-style"><strong>Ramme og afstand</strong><div class="h18-clean-field-grid">';
         html += '<label>Ramme px<input data-field="borderWidth" type="number" min="0" max="20" value="' + (node.props.borderWidth || 0) + '"></label>';
         html += '<label>Rammefarve<input data-field="borderColor" type="color" value="' + escapeAttr(node.props.borderColor || '#000000') + '"></label>';
         html += '<label>Afstand X px<input data-field="gapX" type="number" min="0" max="200" value="' + (node.props.gapX || 0) + '"></label>';
         html += '<label>Afstand Y px<input data-field="gapY" type="number" min="0" max="200" value="' + (node.props.gapY || 0) + '"></label>';
-        html += '</div><p class="description">0 = ingen ramme/afstand. X er luft mod næste element til højre; Y er luft mod næste element under.</p></div>';
+        html += '</div><p class="description">0 = ingen ramme/afstand. X er luft mod næste element til højre; Y er luft mod næste element under.</p></div>'; }
         html += '<button type="button" class="button button-link-delete" id="h18-clean-delete">Slet element' + (PARENT_TYPES.includes(node.type) ? ' + indhold' : '') + '</button>';
         host.innerHTML = html;
 
@@ -1700,6 +1901,36 @@
                 else if (field === 'headingFontWeight') { current.props.headingFontWeight = clamp(parseInt(control.value || 700, 10) || 700, 100, 900); }
                 else if (field === 'headingLineHeight') { current.props.headingLineHeight = Math.max(0.8, Math.min(3, parseFloat(control.value || 1.2) || 1.2)); }
                 else if (field === 'headingLetterSpacing') { current.props.headingLetterSpacing = Math.max(-10, Math.min(30, parseFloat(control.value || 0) || 0)); }
+                else if (field === 'badgeText') { current.props.text = String(control.value || 'Badge'); }
+                else if (field === 'linkText') { current.props.text = String(control.value || 'Læs mere →'); }
+                else if (field === 'underline') { current.props.underline = !!control.checked; }
+                else if (field === 'lineWidth') { current.props.lineWidth = clamp(parseInt(control.value || 1, 10) || 1, 1, 20); }
+                else if (field === 'lineColor') { current.props.lineColor = normalizeColor(control.value || '#dcdcde'); }
+                else if (field === 'lineStyle') { current.props.lineStyle = ['solid','dashed','dotted'].includes(control.value) ? control.value : 'solid'; }
+                else if (field === 'icon') { current.props.icon = ['star','check','info','calendar','camera','people','ruler','weight','gear','link'].includes(control.value) ? control.value : 'star'; }
+                else if (field === 'iconSize') { current.props.iconSize = clamp(parseInt(control.value || 32, 10) || 32, 8, 240); }
+                else if (field === 'iconColor') { current.props.iconColor = normalizeColor(control.value || '#30382a'); }
+                else if (field === 'dataRows') { current.props.rows = normalizePairRows(parsePairRowsText(control.value)); }
+                else if (field === 'dataLayout') { current.props.layout = ['rows','stacked'].includes(control.value) ? control.value : 'rows'; }
+                else if (field === 'labelWidth') { current.props.labelWidth = clamp(parseInt(control.value || 40, 10) || 40, 15, 80); }
+                else if (field === 'cellPadding') { current.props.cellPadding = clamp(parseInt(control.value || 8, 10) || 8, 0, 60); }
+                else if (field === 'showDividers') { current.props.showDividers = !!control.checked; }
+                else if (field === 'zebra') { current.props.zebra = !!control.checked; }
+                else if (field === 'zebraBackground') { current.props.zebraBackground = normalizeColor(control.value || '#f6f7f7'); }
+                else if (field === 'labelColor') { current.props.labelColor = normalizeColor(control.value || '#30382a'); }
+                else if (field === 'valueColor') { current.props.valueColor = normalizeColor(control.value || '#30382a'); }
+                else if (field === 'labelWeight') { current.props.labelWeight = clamp(parseInt(control.value || 600, 10) || 600, 100, 900); }
+                else if (field === 'valueWeight') { current.props.valueWeight = clamp(parseInt(control.value || 400, 10) || 400, 100, 900); }
+                else if (field === 'tableHeaders') { current.props.headers = parseHeadersText(control.value); current.props.rows = normalizeMatrixRows(current.props.rows, current.props.headers.length); }
+                else if (field === 'tableRows') { current.props.rows = parseMatrixRowsText(control.value, normalizeHeaders(current.props.headers).length); }
+                else if (field === 'headerBackground') { current.props.headerBackground = normalizeColor(control.value || '#30382a'); }
+                else if (field === 'headerTextColor') { current.props.headerTextColor = normalizeColor(control.value || '#ffffff'); }
+                else if (field === 'cellBackground') { current.props.cellBackground = normalizeColor(control.value || '#ffffff'); }
+                else if (field === 'cellTextColor') { current.props.cellTextColor = normalizeColor(control.value || '#30382a'); }
+                else if (field === 'cellBorderColor') { current.props.cellBorderColor = normalizeColor(control.value || '#dcdcde'); }
+                else if (field === 'cellBorderWidth') { current.props.cellBorderWidth = clamp(parseInt(control.value || 0, 10) || 0, 0, 10); }
+                else if (field === 'headerWeight') { current.props.headerWeight = clamp(parseInt(control.value || 700, 10) || 700, 100, 900); }
+                else if (field === 'mobileTableMode') { current.props.mobileMode = ['scroll','cards'].includes(control.value) ? control.value : 'scroll'; }
                 else if (field === 'buttonText') { current.props.text = String(control.value || 'Knap'); }
                 else if (field === 'linkType') { current.props.linkType = ['page', 'url', 'anchor', 'email', 'phone'].includes(control.value) ? control.value : 'url'; }
                 else if (field === 'pageId') { current.props.pageId = parseInt(control.value || 0, 10) || 0; }

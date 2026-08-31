@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.65",
+      "date": "2026-08-31",
+      "items": [
+        "VD-ELEMENTS-001: Mellemrum, Skillelinje, Ikon, Badge, Link, Data List og Tabel er canonical Designer-elementer.",
+        "Data List og Tabel har statisk testdata, Inspector, Designer-preview og frontend-rendering.",
+        "Tabel understøtter mobil scroll/kort samt header-, celle-, zebra-, border- og padding-design.",
+        "Dynamisk binding og Køretøjsmodulet er bevidst ikke en del af 0.1.65."
+      ]
+    },
+    {
       "version": "0.1.62",
       "date": "2026-08-30",
       "items": [

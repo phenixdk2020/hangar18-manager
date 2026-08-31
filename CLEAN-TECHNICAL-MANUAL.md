@@ -997,3 +997,8 @@ Det officielle WordPress-theme hedder og installeres teknisk som `akvpk`. Migrat
 - `window.H18VDProductivity` eksponerer de samme produktionsfunktioner til live QA/diagnostik; den er ikke en separat implementering.
 - Side Designer og Header/Footer skal fortsat bruge den samme `editor-v018-core.js`, så Designer-rettelser gælder begge steder.
 
+
+
+## VD-ELEMENTS-001 · General Designer Elements v0.1.65
+
+Visual Designer har canonical leaf-typerne `spacer`, `divider`, `icon`, `badge`, `link`, `datalist` og `table`. De skal fungere i samme layout-/clipboard-/historikmotor som eksisterende elementer og i både Side Designer og Header/Footer Designer. `datalist` og `table` er i v0.1.65 statiske; dynamisk datasource/binding er et separat efterfølgende kontraktlag.

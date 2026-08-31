@@ -156,6 +156,13 @@ final class EditorController
             'text' => 'Tekst',
             'image' => 'Billede',
             'button' => 'Knap',
+            'link' => 'Link',
+            'spacer' => 'Mellemrum',
+            'divider' => 'Skillelinje',
+            'icon' => 'Ikon',
+            'badge' => 'Badge',
+            'datalist' => 'Data List',
+            'table' => 'Tabel',
         ] as $type => $label) {
             echo '<button type="button" draggable="true" class="button h18-clean-add" data-type="' . esc_attr($type) . '">+ ' . esc_html($label) . '</button>';
         }
