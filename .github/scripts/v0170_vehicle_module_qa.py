@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# Authenticated re-trigger after VehicleFieldRegistry generator repair.
 from pathlib import Path
 import json
 import re
@@ -22,10 +21,17 @@ def require(path: str, *needles: str) -> None:
             raise SystemExit(f'{path}: missing contract marker: {needle}')
 
 
-# Version/bootstrap and concrete module classes.
+def version_tuple(value: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in value.split('.'))
+
+
+# v0.1.70 is a permanent regression contract, not a requirement that the
+# current product release itself must remain exactly 0.1.70.
+plugin = text('clean/hangar18-manager/hangar18-manager.php')
+match = re.search(r'\* Version:\s*([0-9]+(?:\.[0-9]+)+)', plugin)
+if match is None or version_tuple(match.group(1)) < (0, 1, 70):
+    raise SystemExit('hangar18-manager.php: current version is older than v0.1.70')
 require('clean/hangar18-manager/hangar18-manager.php',
-        ' * Version: 0.1.70',
-        "define('H18_CLEAN_VERSION', '0.1.70');",
         "src/Modules/VehicleFieldRegistry.php",
         "src/Admin/VehicleAdminController.php",
         'VehicleAdminController::register()',
@@ -42,7 +48,7 @@ require('clean/hangar18-manager/src/Admin/VehicleAdminController.php',
         'function saveVehicle', 'function deleteVehicle', 'function saveFields',
         "ModuleStore::save('vehicles'", 'VehicleFieldRegistry::all()')
 
-# Admin routes and UI must be real, not placeholders.
+# Admin routes and UI must remain real, not placeholders.
 require('clean/hangar18-manager/src/Admin/AdminController.php',
         "[VehicleAdminController::class, 'render']",
         "[VehicleAdminController::class, 'renderFields']")
@@ -92,30 +98,24 @@ require('clean/hangar18-manager/src/Frontend/Renderer.php',
         'h18-clean-front-vehicle-list',
         'h18-clean-front-vehicle-detail')
 
-# Manuals/backlog/release traceability explicitly requested by the user.
+# Manuals and release history preserve the v0.1.70 contract across later releases.
 for manual in ('CLEAN-DESIGN-MANUAL.md', 'CLEAN-USER-MANUAL.md', 'CLEAN-TECHNICAL-MANUAL.md'):
     require(manual, 'Køretøj')
 require('CLEAN-TECHNICAL-MANUAL.md', 'VD-VEHICLE-MODULE-001')
 require('CLEAN-DESIGN-MANUAL.md', 'Køretøjsmodul – designprincip')
 require('CLEAN-USER-MANUAL.md', 'Sådan bruger du Køretøjsmodulet')
-require('docs/clean-backlog-v0100.md',
-        'Aktuel release:** v0.1.70',
-        'VD-VEHICLE-MODULE-001',
-        'v0.1.71 – Events',
-        'v0.1.72 – Billedgalleri')
-require('docs/v0170-status.md', 'VD-VEHICLE-MODULE-001', 'release candidate')
-require('clean-release-notes.html', '0.1.70 – Køretøjsmodul')
+require('docs/clean-backlog-v0100.md', 'VD-VEHICLE-MODULE-001')
+require('docs/v0170-status.md', 'VD-VEHICLE-MODULE-001')
 
 history = json.loads(text('clean/hangar18-manager/release-history.json'))
 versions = history.get('versions', []) if isinstance(history, dict) else []
 if not any(isinstance(row, dict) and str(row.get('version', '')) == '0.1.70' for row in versions):
     raise SystemExit('release-history.json: v0.1.70 missing')
 
-# Permanent central release gate and package-presence checks must be wired before release.
+# Permanent central release gate for the historical vehicle contract must remain wired.
 require('.github/workflows/visual-designer-release.yml',
         'v0170_vehicle_module_qa.py',
         'VD-VEHICLE-MODULE-001',
-        'docs/v0170-status.md',
         'src/Admin/VehicleAdminController.php',
         'src/Modules/VehicleFieldRegistry.php')
 
