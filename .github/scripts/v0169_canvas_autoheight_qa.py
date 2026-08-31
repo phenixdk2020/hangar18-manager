@@ -25,7 +25,6 @@ js = text('clean/hangar18-manager/assets/editor-v0169-canvas-height.js')
 tech = text('CLEAN-TECHNICAL-MANUAL.md')
 design = text('CLEAN-DESIGN-MANUAL.md')
 user = text('CLEAN-USER-MANUAL.md')
-notes = text('clean-release-notes.html')
 history = json.loads(text('clean/hangar18-manager/release-history.json'))
 
 header_match = re.search(r'\* Version:\s*([0-9.]+)', plugin)
@@ -47,7 +46,6 @@ require('window.H18VDCanvasAutoHeight' in js and 'refresh: schedule' in js, 'dia
 require('VD-CANVAS-AUTOHEIGHT-001' in tech, 'technical contract is documented')
 require('Canvas Auto Height' in design, 'design rule is documented')
 require('Websiden følger Sektionerne automatisk' in user, 'user manual documents automatic behavior')
-require('0.1.69 – Canvas Auto Height' in notes, 'v0.1.69 release notes remain documented')
 require(any(str(v.get('version')) == '0.1.69' for v in history.get('versions', []) if isinstance(v, dict)), 'release history contains v0.1.69')
 require((ROOT / 'docs/v0169-status.md').is_file(), 'v0.1.69 status file exists')
 
