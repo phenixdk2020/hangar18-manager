@@ -44,6 +44,8 @@ jobs:
           php .github/scripts/v0167_module_foundation_qa.php
           php .github/scripts/v0168_canvas_section_qa.php
           python3 .github/scripts/v0168_canvas_section_static_qa.py
+          python3 .github/scripts/v0169_canvas_autoheight_qa.py
+          python3 .github/scripts/v0170_vehicle_module_qa.py
           grep -Fq 'VD-KEYBOARD-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-CLIPBOARD-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-PAGE-DUPLICATE-001' CLEAN-TECHNICAL-MANUAL.md
@@ -56,6 +58,8 @@ jobs:
           grep -Fq 'VD-MODULE-DATA-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-CANVAS-SECTION-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-SELECTION-LAYER-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-CANVAS-AUTOHEIGHT-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-VEHICLE-MODULE-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq "const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u'" clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function nudgeSelected' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function pastePayload' clean/hangar18-manager/assets/editor-v018-core.js
@@ -107,6 +111,8 @@ jobs:
           test -s docs/v0166-status.md
           test -s docs/v0167-status.md
           test -s docs/v0168-status.md
+          test -s docs/v0169-status.md
+          test -s docs/v0170-status.md
           test -s clean/hangar18-manager/assets/editor-v0165-elements.css
           test -s clean/hangar18-manager/assets/editor-v0166-foundation.css
           test -s clean/hangar18-manager/src/Icons/IconRegistry.php
@@ -115,6 +121,8 @@ jobs:
           test -s clean/hangar18-manager/src/Modules/ModuleRecord.php
           test -s clean/hangar18-manager/src/Modules/ModuleBinding.php
           test -s clean/hangar18-manager/src/Modules/ModuleStore.php
+          test -s clean/hangar18-manager/src/Admin/VehicleAdminController.php
+          test -s clean/hangar18-manager/src/Modules/VehicleFieldRegistry.php
           test -s clean/hangar18-manager/release-history.json
           if grep -R -n -E 'Hangar18 Manager Clean|Hangar18 Designer|Clean Manager v|Clean editor |Clean layout gemt|Clean-sider|Ikke Clean|h18-Visual Designer-' clean/hangar18-manager; then
             echo 'Obsolete public product naming found in Visual Designer Manager source.' >&2
@@ -136,6 +144,7 @@ jobs:
           unzip -tq "$VERSIONED"
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/hangar18-manager.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Admin/AdminController.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Admin/VehicleAdminController.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Model/LayoutModel.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Frontend/Renderer.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Icons/IconRegistry.php$')" = '1'
@@ -144,6 +153,7 @@ jobs:
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Modules/ModuleRecord.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Modules/ModuleBinding.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Modules/ModuleStore.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Modules/VehicleFieldRegistry.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0125.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0135.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0165-elements.css$')" = '1'
