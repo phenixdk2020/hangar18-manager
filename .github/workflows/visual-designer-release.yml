@@ -40,22 +40,32 @@ jobs:
           python3 .github/scripts/v0164_clipboard_qa.py
           php .github/scripts/v0165_elements_model_qa.php
           python3 .github/scripts/v0165_general_elements_qa.py
+          python3 .github/scripts/v0166_foundation_qa.py
           grep -Fq 'VD-KEYBOARD-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-CLIPBOARD-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-PAGE-DUPLICATE-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-CLIPBOARD-002' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-ELEMENTS-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-ICON-LIBRARY-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-TABLE-BORDERS-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-MENU-PREVIEW-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-ADMIN-STATUS-002' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq "const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u'" clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function nudgeSelected' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function pastePayload' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function selectedNodeForProductivity' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'window.H18VDProductivity = {' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'function openIconLibrary()' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'function applyTableBorderAction' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq "'offsetX' => self::clamp" clean/hangar18-manager/src/Model/LayoutModel.php
           grep -Fq 'transform:translate(' clean/hangar18-manager/src/Frontend/Renderer.php
+          grep -Fq 'IconRegistry::svg(' clean/hangar18-manager/src/Frontend/Renderer.php
           grep -Fq 'public static function resolveChoiceId' clean/hangar18-manager/src/Model/TemplateLayoutModel.php
           grep -Fq 'h18-manager-badge is-ok">Klar' clean/hangar18-manager/src/Admin/GlobalDesignerController.php
           grep -Fq "'h18-clean-menu': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
           grep -Fq "'h18-clean-header-footer': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
+          grep -Fq "'h18-clean-log': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
+          grep -Fq "'h18-clean-conversion': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
           grep -q "data-vd-selection-boundary" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "function restoreMarkerSelection" clean/hangar18-manager/assets/editor-v0125.js
           grep -q "boundary-markers-v0137-single-owner" clean/hangar18-manager/assets/editor-v0125.js
@@ -79,7 +89,10 @@ jobs:
           test -s docs/v0162-status.md
           test -s docs/v0164-status.md
           test -s docs/v0165-status.md
+          test -s docs/v0166-status.md
           test -s clean/hangar18-manager/assets/editor-v0165-elements.css
+          test -s clean/hangar18-manager/assets/editor-v0166-foundation.css
+          test -s clean/hangar18-manager/src/Icons/IconRegistry.php
           test -s clean/hangar18-manager/release-history.json
           if grep -R -n -E 'Hangar18 Manager Clean|Hangar18 Designer|Clean Manager v|Clean editor |Clean layout gemt|Clean-sider|Ikke Clean|h18-Visual Designer-' clean/hangar18-manager; then
             echo 'Obsolete public product naming found in Visual Designer Manager source.' >&2
@@ -103,9 +116,11 @@ jobs:
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Admin/AdminController.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Model/LayoutModel.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Frontend/Renderer.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Icons/IconRegistry.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0125.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0135.js$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0165-elements.css$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/assets/editor-v0166-foundation.css$')" = '1'
           SHA="$(sha256sum "$VERSIONED" | awk '{print $1}')"
           SOURCE_COMMIT="$(git rev-parse HEAD)"
           python - "$VERSION" "$SHA" "$SOURCE_COMMIT" <<'PY'
