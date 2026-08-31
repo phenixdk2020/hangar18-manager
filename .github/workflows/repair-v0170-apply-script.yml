@@ -1,0 +1,56 @@
+name: Repair v0.1.70 Apply Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repair-v0170-apply-script.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Repair malformed Inspector insertion block
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/scripts/apply_v0170_vehicle_module.py')
+          value = path.read_text(encoding='utf-8')
+          lines = value.splitlines(keepends=True)
+          start = next((i for i, line in enumerate(lines) if line.startswith('regex_once(js_path, r"(') and 'h18-clean-pick-image' in line), None)
+          if start is None:
+              raise SystemExit('Malformed v0.1.70 block was not found')
+          end = start + 1
+          while end < len(lines) and not lines[end].startswith('# Inspector field handlers.'):
+              end += 1
+          if end >= len(lines):
+              raise SystemExit('Inspector field handler boundary was not found')
+          replacement = '''value = read(js_path)\nbutton_pos = value.find('h18-clean-pick-image')\nif button_pos < 0:\n    raise RuntimeError(f'{js_path}: image Inspector marker missing')\nbranch_marker = "        } else if (node.type === 'image') {\\n"\nbranch_pos = value.rfind(branch_marker, 0, button_pos)\nif branch_pos < 0:\n    raise RuntimeError(f'{js_path}: image Inspector branch missing')\nwrite(js_path, value[:branch_pos] + inspector_vehicle + value[branch_pos:])\n\n'''
+          path.write_text(''.join(lines[:start]) + replacement + ''.join(lines[end:]), encoding='utf-8')
+          PY
+          python3 -m py_compile .github/scripts/apply_v0170_vehicle_module.py
+
+      - name: Commit repaired apply script
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-repair-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add .github/scripts/apply_v0170_vehicle_module.py
+          git diff --cached --check
+          git commit -m 'Fix v0.1.70 apply script syntax'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
