@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import re
 
+# v0.1.69 release gate; historical v0.1.68 assertions are intentionally forward-compatible.
 ROOT = Path(__file__).resolve().parents[2]
 
 
