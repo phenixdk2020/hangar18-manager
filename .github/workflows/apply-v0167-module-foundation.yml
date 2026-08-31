@@ -1,0 +1,76 @@
+name: Apply Visual Designer Manager 0.1.67 Module Foundation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0167_module_foundation.py'
+      - '.github/scripts/v0167_module_foundation_qa.php'
+      - '.github/workflows/apply-v0167-module-foundation.yml'
+      - 'clean/hangar18-manager/src/Modules/**'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply v0.1.67 source changes
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/apply_v0167_module_foundation.py
+
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          php -l .github/scripts/v0167_module_foundation_qa.php
+
+      - name: Regression QA
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+          python3 .github/scripts/v0162_page_duplicate_qa.py
+          python3 .github/scripts/v0164_clipboard_qa.py
+          php .github/scripts/v0165_elements_model_qa.php
+          python3 .github/scripts/v0165_general_elements_qa.py
+          python3 .github/scripts/v0166_foundation_qa.py
+          php .github/scripts/v0167_module_foundation_qa.php
+
+      - name: Verify scoped diff
+        run: |
+          set -euo pipefail
+          git status --short
+          test -n "$(git status --short)"
+          if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/|CLEAN-DESIGN-MANUAL.md|CLEAN-TECHNICAL-MANUAL.md|clean-release-notes.html|docs/clean-backlog-v0100.md|docs/v0167-status.md|\.github/scripts/v0165_elements_model_qa.php)'; then
+            echo 'Unexpected v0.1.67 modified path.' >&2
+            exit 1
+          fi
+
+      - name: Commit v0.1.67 implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-apply-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager CLEAN-DESIGN-MANUAL.md CLEAN-TECHNICAL-MANUAL.md clean-release-notes.html docs/clean-backlog-v0100.md docs/v0167-status.md .github/scripts/v0165_elements_model_qa.php
+          if git diff --cached --quiet; then
+            echo 'v0.1.67 implementation already current.'
+            exit 0
+          fi
+          git commit -m 'Implement Visual Designer Manager v0.1.67 module foundation'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          echo 'Unable to push v0.1.67 implementation.' >&2
+          exit 1
