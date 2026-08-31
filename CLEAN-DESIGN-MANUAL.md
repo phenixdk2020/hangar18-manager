@@ -642,3 +642,7 @@ Når et eksisterende legacy-layout har et element direkte på root, opretter nor
 Fra v0.1.68 bliver denne normalisering også persisteret automatisk for eksisterende Designer-sider. Hver berørt side får en rå pre-migration-backup og en ny Designer-version. Migreringen må kun committe, hvis alle oprindelige element-ID'er stadig findes og den nye model består canonical hierarchy-validering.
 
 I editoren er lagløft under redigering en **ren UI-egenskab**: markeret element, drag og resize må midlertidigt ligge foran andre elementer og løfte nødvendige ancestor stacking contexts. Det må aldrig ændre elementets canonical `zIndex` eller frontendens lagrækkefølge.
+
+## Canvas Auto Height
+
+Websiden er den yderste Designer-ramme omkring alle Sektioner. Den skal automatisk udvide sig til mindst 32 px under den nederste root-Sektion og må tilsvarende krympe igen, når indhold flyttes op eller slettes. Kun Sektioner ligger direkte på Websiden; derfor beregnes Webside-højden ud fra disse og ikke ud fra hvert enkelt child-element.

@@ -1,8 +1,7 @@
-<h4>0.1.68 – Canvas/Section Structure</h4>
+<h4>0.1.69 – Canvas Auto Height</h4>
 <ul>
-<li>Alle Designer-sider følger nu canonical Webside → Sektion → Kasse/Element.</li>
-<li>Eksisterende sider migreres automatisk med rå backup, ID-bevarelse, rollback og ny Designer-version.</li>
-<li>Nye root-elementer pakkes automatisk i en Sektion; Sektioner kan kun ligge direkte på websiden.</li>
-<li>Markerede, trukne og resized elementer ligger midlertidigt øverst i Designeren uden at ændre frontendens z-index.</li>
-<li>Køretøjsmodulet flyttes til næste version oven på den færdige Canvas/Section-kontrakt.</li>
+<li>Webside/canvas udvider sig automatisk under den nederste root-Sektion.</li>
+<li>Canvas krymper igen, når Sektioner flyttes op eller slettes.</li>
+<li>Synkronisering gælder flytning, resize, add, paste/duplicate, delete, Undo/Redo og responsive skift.</li>
+<li>Ingen canonical geometri eller frontend z-index ændres af auto-height.</li>
 </ul>

@@ -1054,3 +1054,9 @@ Visual Designer har canonical leaf-typerne `spacer`, `divider`, `icon`, `badge`,
 ## VD-SELECTION-LAYER-001 – Editor-only active layer
 
 Markeret element og element under drag/resize skal ligge øverst i Designerens stacking context. Ancestor wrappers løftes samtidig, så et markeret child ikke kan skjules bag en sibling-Kasse/Sektion. Lagløftet implementeres kun i editor-CSS og må ikke persistére eller ændre frontendens canonical `zIndex`.
+
+## VD-CANVAS-AUTOHEIGHT-001 – Automatisk Webside-højde
+
+Visual Designerens Webside/canvas er en visuel editor-ramme og må aldrig ende over eller midt i en canonical root-Sektion. `editor-v0169-canvas-height.js` måler kun direkte `Sektion`-børn af `#h18-clean-canvas` og sætter canvas `min-height` til nederste sektionskant + 32 px, dog mindst 650 px.
+
+Kontrakten er dynamisk og tovejs: højden skal både kunne vokse og krympe efter flytning, resize, tilføjelse, paste/duplicate, sletning, Undo/Redo, indlæsning og responsive/viewport-skift. Beregningen er DOM-baseret, så den følger den aktive responsive editorvisning uden at ændre canonical node-geometri. Viewport-stage følger via den eksisterende ResizeObserver. Header/Footer bruger samme runtime.

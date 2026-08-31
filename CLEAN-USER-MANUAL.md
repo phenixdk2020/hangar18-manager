@@ -1030,3 +1030,7 @@ Når nye brugerfunktioner bliver frigivet, skal denne brugermanual opdateres sam
 Visual Designer sørger automatisk for, at en side er bygget som **Webside → Sektion → Kasse/Element**. Du behøver ikke selv åbne gamle sider og flytte løse elementer ind i Sektioner. Ved opdatering konverteres berørte Designer-sider automatisk med backup og en ny sideversion.
 
 Hvis du trækker et almindeligt element ud på selve websiden, opretter Designer den nødvendige Sektion automatisk. En Sektion kan kun ligge direkte på websiden. Når et element er markeret, flyttes det visuelt øverst under redigering/drag/resize; dette ændrer ikke den publicerede sides lagrækkefølge.
+
+## Websiden følger Sektionerne automatisk
+
+Når du flytter eller ændrer størrelse på en Sektion, udvider den blå Webside/canvas sig automatisk, så Sektionen fortsat ligger inde på Websiden. Flytter du den nederste Sektion op eller sletter den, bliver Websiden tilsvarende kortere igen. Du skal ikke selv ændre Websidens højde.

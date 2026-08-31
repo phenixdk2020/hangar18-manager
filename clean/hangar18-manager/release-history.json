@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.69",
+      "date": "2026-08-31",
+      "items": [
+        "VD-CANVAS-AUTOHEIGHT-001: Webside-canvas følger automatisk nederste kant på root-Sektionerne.",
+        "Canvas vokser og krymper igen efter flytning, resize, add, paste/duplicate, delete, Undo/Redo og responsive skift.",
+        "Kun direkte root-Sektioner bestemmer sidehøjden; child-elementer påvirker siden gennem deres Sektion.",
+        "Viewport-stage følger via eksisterende ResizeObserver uden at skrive layoutgeometri eller frontend z-index."
+      ]
+    },
+    {
       "version": "0.1.68",
       "date": "2026-08-31",
       "items": [
