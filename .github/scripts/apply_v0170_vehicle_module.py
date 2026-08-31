@@ -777,8 +777,15 @@ inspector_vehicle = r'''        } else if (node.type === 'vehiclelist') {
             if (CFG.vehicleAdminUrl) { html += '<p><a class="button" href="'+escapeAttr(String(CFG.vehicleAdminUrl))+'">Administrér køretøjer</a></p>'; }
 '''
 # Find the inspector image branch specifically: it contains the media pick button in its first statement.
-regex_once(js_path, r"(\n        \} else if \(node\.type === 'image'\) \{\n            html \+= '<button type=\\\"button\\\" class=\\\"button\\\" id=\\\"h18-clean-pick-image\\\")", "\n" + inspector_vehicle + r"        } else if (node.type === 'image') {
-            html += '<button type=\"button\" class=\"button\" id=\"h18-clean-pick-image\"")
+value = read(js_path)
+button_pos = value.find('h18-clean-pick-image')
+if button_pos < 0:
+    raise RuntimeError(f'{js_path}: image Inspector marker missing')
+branch_marker = "        } else if (node.type === 'image') {\n"
+branch_pos = value.rfind(branch_marker, 0, button_pos)
+if branch_pos < 0:
+    raise RuntimeError(f'{js_path}: image Inspector branch missing')
+write(js_path, value[:branch_pos] + inspector_vehicle + value[branch_pos:])
 
 # Inspector field handlers.
 handler_marker = "                else if (field === 'buttonText') { current.props.text = String(control.value || 'Knap'); }\n"
