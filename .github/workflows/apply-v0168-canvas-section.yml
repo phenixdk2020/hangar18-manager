@@ -51,6 +51,7 @@ jobs:
       - name: Verify scoped diff
         run: |
           set -euo pipefail
+          rm -rf .github/scripts/__pycache__
           git status --short
           test -n "$(git status --short)"
           if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/hangar18-manager.php|clean/hangar18-manager/src/Model/HierarchyNormalizer.php|clean/hangar18-manager/src/Migration/CanvasSectionMigration.php|clean/hangar18-manager/assets/editor-v018-core.js|clean/hangar18-manager/assets/editor.css|clean/hangar18-manager/release-history.json|CLEAN-DESIGN-MANUAL.md|CLEAN-TECHNICAL-MANUAL.md|CLEAN-USER-MANUAL.md|clean-release-notes.html|docs/clean-backlog-v0100.md|docs/v0168-status.md)'; then
