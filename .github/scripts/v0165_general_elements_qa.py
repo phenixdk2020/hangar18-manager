@@ -115,10 +115,10 @@ try:
     require('CLEAN-TECHNICAL-MANUAL.md', 'VD-ELEMENTS-001')
     require('docs/v0165-status.md', 'Status: TESTKANDIDAT')
     require('docs/v0165-status.md', 'Dynamisk datasource/binding')
-    require('clean-release-notes.html', '0.1.65 – General Designer Elements · testversion')
     require('clean/hangar18-manager/release-history.json', '"version": "0.1.65"')
 
-    # Explicit architectural boundary: this release must not introduce the Vehicle module.
+    # This QA validates the v0.1.65 element contract on any later release.
+    # Current release notes are intentionally not version-locked here.
     forbidden_paths = [
         ROOT / 'clean/hangar18-manager/src/Vehicle',
         ROOT / 'clean/hangar18-manager/src/Vehicles',
