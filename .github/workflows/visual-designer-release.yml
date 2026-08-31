@@ -42,6 +42,8 @@ jobs:
           python3 .github/scripts/v0165_general_elements_qa.py
           python3 .github/scripts/v0166_foundation_qa.py
           php .github/scripts/v0167_module_foundation_qa.php
+          php .github/scripts/v0168_canvas_section_qa.php
+          python3 .github/scripts/v0168_canvas_section_static_qa.py
           grep -Fq 'VD-KEYBOARD-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-CLIPBOARD-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-PAGE-DUPLICATE-001' CLEAN-TECHNICAL-MANUAL.md
@@ -52,6 +54,8 @@ jobs:
           grep -Fq 'VD-MENU-PREVIEW-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-ADMIN-STATUS-002' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq 'VD-MODULE-DATA-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-CANVAS-SECTION-001' CLEAN-TECHNICAL-MANUAL.md
+          grep -Fq 'VD-SELECTION-LAYER-001' CLEAN-TECHNICAL-MANUAL.md
           grep -Fq "const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u'" clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function nudgeSelected' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function pastePayload' clean/hangar18-manager/assets/editor-v018-core.js
@@ -59,10 +63,14 @@ jobs:
           grep -Fq 'window.H18VDProductivity = {' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function openIconLibrary()' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq 'function applyTableBorderAction' clean/hangar18-manager/assets/editor-v018-core.js
+          grep -Fq 'function normalizeCanvasHierarchy(nodes)' clean/hangar18-manager/assets/editor-v018-core.js
           grep -Fq "'offsetX' => self::clamp" clean/hangar18-manager/src/Model/LayoutModel.php
           grep -Fq 'transform:translate(' clean/hangar18-manager/src/Frontend/Renderer.php
           grep -Fq 'IconRegistry::svg(' clean/hangar18-manager/src/Frontend/Renderer.php
           grep -Fq 'public static function resolveChoiceId' clean/hangar18-manager/src/Model/TemplateLayoutModel.php
+          grep -Fq 'public static function isCanonical(array $nodes): bool' clean/hangar18-manager/src/Model/HierarchyNormalizer.php
+          grep -Fq 'final class CanvasSectionMigration' clean/hangar18-manager/src/Migration/CanvasSectionMigration.php
+          grep -Fq "BACKUP_META = '_h18_clean_layout_pre_section_v0168'" clean/hangar18-manager/src/Migration/CanvasSectionMigration.php
           grep -Fq 'final class ModuleRegistry' clean/hangar18-manager/src/Modules/ModuleRegistry.php
           grep -Fq 'final class ModuleRecord' clean/hangar18-manager/src/Modules/ModuleRecord.php
           grep -Fq 'final class ModuleBinding' clean/hangar18-manager/src/Modules/ModuleBinding.php
@@ -98,9 +106,11 @@ jobs:
           test -s docs/v0165-status.md
           test -s docs/v0166-status.md
           test -s docs/v0167-status.md
+          test -s docs/v0168-status.md
           test -s clean/hangar18-manager/assets/editor-v0165-elements.css
           test -s clean/hangar18-manager/assets/editor-v0166-foundation.css
           test -s clean/hangar18-manager/src/Icons/IconRegistry.php
+          test -s clean/hangar18-manager/src/Migration/CanvasSectionMigration.php
           test -s clean/hangar18-manager/src/Modules/ModuleRegistry.php
           test -s clean/hangar18-manager/src/Modules/ModuleRecord.php
           test -s clean/hangar18-manager/src/Modules/ModuleBinding.php
@@ -129,6 +139,7 @@ jobs:
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Model/LayoutModel.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Frontend/Renderer.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Icons/IconRegistry.php$')" = '1'
+          test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Migration/CanvasSectionMigration.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Modules/ModuleRegistry.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Modules/ModuleRecord.php$')" = '1'
           test "$(unzip -Z1 "$VERSIONED" | grep -c '^hangar18-manager/src/Modules/ModuleBinding.php$')" = '1'
