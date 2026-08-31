@@ -8,6 +8,7 @@ on:
       - '.github/scripts/v0167_module_foundation_qa.php'
       - '.github/scripts/v0165_elements_model_qa.php'
       - '.github/scripts/v0165_general_elements_qa.py'
+      - '.github/scripts/v0166_foundation_qa.py'
       - '.github/workflows/apply-v0167-module-foundation.yml'
       - 'clean/hangar18-manager/src/Modules/**'
 
