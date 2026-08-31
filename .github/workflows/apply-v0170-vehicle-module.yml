@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/scripts/apply_v0170_vehicle_module.py'
+      - '.github/scripts/v0169_canvas_autoheight_qa.py'
       - '.github/scripts/v0170_vehicle_module_qa.py'
       - '.github/workflows/apply-v0170-vehicle-module.yml'
 
