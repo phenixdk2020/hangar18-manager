@@ -23,7 +23,11 @@ if (!function_exists('esc_url_raw')) {
 if (!function_exists('wp_json_encode')) {
     function wp_json_encode($value, int $flags = 0, int $depth = 512) { return json_encode($value, $flags, $depth); }
 }
+if (!function_exists('apply_filters')) {
+    function apply_filters($hook, $value) { return $value; }
+}
 
+require_once __DIR__ . '/../../clean/hangar18-manager/src/Icons/IconRegistry.php';
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/HierarchyNormalizer.php';
 require_once __DIR__ . '/../../clean/hangar18-manager/src/Model/LayoutModel.php';
 
