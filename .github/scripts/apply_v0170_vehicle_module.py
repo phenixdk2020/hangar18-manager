@@ -97,7 +97,7 @@ final class VehicleFieldRegistry
                 'type' => $type,
                 'unit' => sanitize_text_field((string) ($row['unit'] ?? '')),
                 'enabled' => array_key_exists('enabled', $row) ? (bool) $row['enabled'] : true,
-                'order' => max(0, min(100000, (int) ($row['order'] ?? (($index + 1) * 10))),
+                'order' => max(0, min(100000, (int) ($row['order'] ?? (($index + 1) * 10)))),
             ];
         }
         usort($out, static function (array $a, array $b): int {
