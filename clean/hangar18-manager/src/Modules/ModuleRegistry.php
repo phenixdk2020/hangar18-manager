@@ -22,6 +22,7 @@ final class ModuleRegistry
                 'fields' => [
                     'description' => ['label' => 'Beskrivelse', 'type' => 'richtext', 'required' => false],
                     'category' => ['label' => 'Kategori', 'type' => 'text', 'required' => false],
+                    'imageIds' => ['label' => 'Galleri', 'type' => 'media_list', 'required' => false],
                 ],
             ],
             'events' => [

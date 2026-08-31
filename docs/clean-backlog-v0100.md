@@ -1,149 +1,79 @@
-# Hangar18 Manager Clean v0.1.x – canonical clean backlog
+# Visual Designer Manager v0.1.x – canonical backlog
 
 **Statusdato:** 31. august 2026  
+**Aktuel release:** v0.1.70  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
-**Legacy-reference:** eksisterende root-plugin v0.9.x må bruges som specifikation/migrationskilde, men ingen gammel editor-runtime må kopieres ind i clean-pluginet.
+**Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.68
+## Aktuel milepælsstatus · v0.1.70
 
-- **HEADER/FOOTER — FÆRDIG:** multi-template baseline, side-overrides, `Ingen`, standardvalg, migration, versionshistorik og delt Preview/frontend-resolver er lukket som regression-gate.
-- **VD-KEYBOARD-001 — IMPLEMENTERET:** markeret element kan finjusteres 1 px med piletaster og 10 px med `Shift + pil`; offset X/Y er canonical og kan nulstilles i Inspector.
-- **VD-CLIPBOARD-001 — IMPLEMENTERET:** `Ctrl/Cmd+C`, `Ctrl/Cmd+V` og `Ctrl/Cmd+D`, subtree-kopi af Kasse/Sektion, nye IDs/parentId-remap og clipboard mellem Designer-sider.
-- **VD-PAGE-DUPLICATE-001 — IMPLEMENTERET:** Sider kan kopieres med nyt navn som selvstændig kladde, nyt WordPress-ID, unik slug og egen Designer-v1-historik.
-- **VD-ELEMENTS-001 / VD-ICON-LIBRARY-001 / VD-TABLE-BORDERS-001 — IMPLEMENTERET:** generelle elementer, ikonbibliotek og Excel-lignende tabelkanter er nu canonical Designer-funktioner.
-- **VD-MODULE-DATA-001 — IMPLEMENTERET I v0.1.67:** fælles ModuleRegistry, ModuleRecord, ModuleBinding og privat ModuleStore er fundamentet for Køretøjer, Events og Billedgalleri.
-- **VD-CANVAS-SECTION-001 / VD-SELECTION-LAYER-001 — IMPLEMENTERET I v0.1.68:** root er kun Sektioner, eksisterende sider migreres automatisk, og markeret/drag/resize løftes kun i editorlaget.
-- **Næste modul:** Køretøjer bygges i v0.1.69 oven på den fælles modularkitektur og den låste Canvas/Section-kontrakt; derefter Events og Billedgalleri.
+- **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
+- **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
+- **GENERELLE ELEMENTER — IMPLEMENTERET:** Tekst, Billede, Knap, Menu, Link, Mellemrum, Skillelinje, Ikon, Badge, Data List og Tabel inkl. tabelkanter.
+- **VD-MODULE-DATA-001 — IMPLEMENTERET:** fælles ModuleRegistry, ModuleRecord, ModuleBinding og privat ModuleStore.
+- **VD-CANVAS-SECTION-001 — IMPLEMENTERET:** Webside-root indeholder kun Sektioner; eksisterende Designer-sider migreres sikkert.
+- **VD-SELECTION-LAYER-001 — IMPLEMENTERET:** selected/drag/resize løftes kun visuelt i editoren.
+- **VD-CANVAS-AUTOHEIGHT-001 — IMPLEMENTERET I v0.1.69:** Webside/canvas vokser og krymper automatisk efter nederste root-Sektion.
+- **VD-VEHICLE-MODULE-001 — IMPLEMENTERET I v0.1.70:** Køretøjer har Manager-CRUD, fleksible tekniske felter, billeder, sortering og Designer-list/detail-binding.
 
-## Formål
+## Roadmap
 
-Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent subdomæne. Clean-pluginet starter med en ny datamodel og ny editor. Gamle Hangar18-sider konverteres først, når clean-editorens Save/Reload/Restore og frontend-paritet er QA-godkendt.
+1. **v0.1.69 – Canvas Auto Height — FÆRDIG.**
+2. **v0.1.70 – Køretøjsmodul — FÆRDIG.**
+3. **v0.1.71 – Events — NÆSTE:** CRUD på fælles ModuleStore, dato/tid, sted, status, automatisk kommende/afholdte visninger og Designer list/detail-elementer.
+4. **v0.1.72 – Billedgalleri — PLANLAGT:** album, Media Library-referencer, sortering, cover og genbrugeligt Designer galleri/album-element.
+5. **Efter modulerne:** samlet data-/module-migrering fra legacy, med side-by-side QA før cutover.
 
-## Implementeret – manuel QA mangler
+## Åben backlog
 
-### CLEAN-ARCH-001 — IMPLEMENTERET / MANUEL QA
-- Én canonical JSON-model pr. WordPress-side i `_h18_clean_layout_v1`.
-- Elementer har `id`, `type`, `parentId`, `order`, `geometry` og `props`.
-- Serveren normaliserer IDs, typer, parents, cycles, geometry og props før persistens.
-- Ingen DOM/proxy bruges som Save-kilde.
+### VD-EVENT-MODULE-001 — NÆSTE
+- Manager-CRUD på `events`-modulet.
+- Start/slut, sted, kort/længere beskrivelse, status og billeder.
+- Sortering samt kommende/afholdte regler uden at slette historiske events.
+- Canonical Designer-elementer til Eventliste og Eventdetalje.
+- Frontend må kun vise records efter den valgte status-/datoregel.
 
-### CLEAN-CANVAS-002 — IMPLEMENTERET / MANUEL QA
-- 120 horisontale layout-units.
-- 8 px lodret snap.
-- Fysisk editorboks bruger samme `x/y/w/h` som modellen.
-- 8 resize-håndtag: N, NE, E, SE, S, SW, W, NW.
-- Venstre/top-resize flytter origin, så modsatte kant forbliver forankret.
+### VD-GALLERY-MODULE-001 — PLANLAGT
+- Album-CRUD på `galleries`.
+- Cover, beskrivelse og sorteret Media Library-liste.
+- Designer-element til albumoversigt og albumvisning.
+- Ingen billedbytes i layout-JSON eller module JSON; kun attachment IDs.
 
-### CLEAN-HISTORY-003 — IMPLEMENTERET / MANUEL QA
-- Fortryd/Gentag knapper.
-- Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z og Ctrl+Y.
-- Én resize/re-parent/Inspector-ændring bliver én history-transaktion.
-- Ny ændring efter Undo rydder redo-stakken.
+### CLEAN-RESPONSIVE-009 — DELVIST / MANUEL QA
+- Canonical model har Desktop/Laptop/Tablet/Mobil geometri og arv.
+- Desktop/Laptop/Mobil kan previewes i den nuværende viewport-runtime.
+- Tablet skal have samme fulde, eksplicitte toolbar/preview-flow som de øvrige, før punktet lukkes.
+- Breakpointændringer skal fortsat være Undo/Redo-sikre og må ikke mutere andre breakpoints.
 
-### CLEAN-REPARENT-004 — IMPLEMENTERET / MANUEL QA
-- Et allerede deployet element kan trækkes ind i `Sektion` eller `Kasse`.
-- Elementet kan trækkes ud mod root; Designer opretter automatisk en neutral Sektion, så root fortsat kun indeholder Sektioner.
-- Self/descendant-drop afvises for at forhindre cycles.
-- Re-parent ændrer modellen først og renderer derefter canvas fra modellen.
-- Nye palette-elementer kan slippes på websiden, Sektion eller Kasse; drop på websiden auto-wrapper ikke-Sektioner i en neutral Sektion.
+### CLEAN-THEME-010 — IMPLEMENTERET BASELINE / REGRESSION FORTSÆTTER
+- Theme shell og Header/Footer bruges på Visual Designer-sider.
+- Banner, menu, farver, typografi og sitebredde skal fortsat regressionskontrolleres ved ændringer i fælles Designer/CSS.
 
-### CLEAN-IMAGE-005 — IMPLEMENTERET / MANUEL QA
-- Billede vælges via WordPress Media Library.
-- Standard `Cover`: proportioner bevares, og billedet beskæres automatisk til den fysiske elementkasse.
-- `Contain`: hele billedet vises uden deformation.
-- `Stretch`: bredde/højde må afvige, så billedet kan deformeres frit.
-- Focal X/Y styrer crop-position.
-- Editor-preview og frontend bruger samme fit/focal-værdier.
+### CLEAN-PREVIEW-013 — IMPLEMENTERET
+- Ugemt canonical state kan previewes gennem samme PHP Renderer-kontrakt.
+- Samlet preview kan vise Header + side + Footer uden at publicere.
+- Admin-DOM klones ikke som frontend-kilde.
 
-### CLEAN-SAVE-RESTORE-006 — IMPLEMENTERET / MANUEL QA
-- Gem opretter en ny clean-version med normalized model og strukturel SHA-256 digest.
-- Op til 50 clean-versioner bevares pr. side.
-- Restore af en tidligere version gemmer den valgte model som en ny version; den nuværende version forbliver i historikken som sikkerhed.
-- Save/Restore bruger nonce og `edit_pages` capability.
+### CLEAN-MIGRATOR-014 — DELVIST / BLOKERET FOR MODULE-CUTOVER
+- Eksisterende sidekonvertering er implementeret som ikke-destruktiv kandidat/QA-flow.
+- Køretøjer, Events og Galleri migreres først, når de respektive nye moduler er færdige.
+- Legacy-data læses read-only og originalen må ikke overskrives automatisk.
 
-### CLEAN-DIAG-007 — IMPLEMENTERET / MANUEL QA
-- Strukturelle klientevents: boot, add, delete, resize begin/commit, re-parent begin/commit, palette drag/drop, Undo/Redo, Inspector, image select, Save-intent og Restore-intent.
-- Serverevents: Save begin/result/error og Restore begin/result/error.
-- Logs indeholder IDs/type/parent/order/geometry/image-fit, men ikke rå tekstindhold, credentials, nonce eller tokens.
-- Privat 256-bit read-only support-link via REST for den valgte side.
+## v0.1.70 Køretøjsmodul – QA-gate
 
-### CLEAN-FRONTEND-008 — IMPLEMENTERET / MANUEL QA
-- Sider med clean-model renderes direkte fra samme model på frontend.
-- Hver surface bruger 120-unit CSS Grid.
-- Text, Image, Section og Container renderes rekursivt.
-- Fysisk width/height og image fit/focal følger modellen.
-- Sider uden clean-model røres ikke.
+1. Opret et nyt køretøj som Kladde med primært billede, galleri og mindst tre tekniske felter.
+2. Reload Manager og verificér identisk record, stabile field IDs og korrekt Media-ID-reference.
+3. Redigér felt-navnet i Køretøjsfelter og verificér at recordets værdi stadig ligger under samme interne felt-ID.
+4. Sæt record til Publiceret og opret mindst to yderligere publicerede records med forskellige sorteringsværdier.
+5. Tilføj Køretøjsliste i Designer; test kolonner, sortering, vis/skjul billede/kategori/beskrivelse og kortdesign.
+6. Opret en detaljeside med Køretøjsdetalje i “Fra URL”-tilstand og vælg den som detaljeside i listen.
+7. Klik hvert listekort på frontend og verificér at `?h18_vehicle=<record-id>` viser korrekt record, billeder og tekniske data.
+8. Sæt et record tilbage til Kladde/Arkiveret; det må ikke længere kunne vises offentligt via en direkte detail-URL.
+9. Test et fast record-ID i Køretøjsdetalje Inspector.
+10. Gem/reload/Undo/Redo Designer-sider med begge køretøjselementer og verificér canonical modelparitet.
 
-### CLEAN-UPDATE-015 — IMPLEMENTERET / MANUEL QA
-- Fra v0.1.2 anvendes GitHub som update-kilde via `clean-update.json`.
-- WordPress' normale plugin-update-system viser nyere clean-versioner og bruger `Opdater nu`.
-- Hangar18 Designer har `Tjek GitHub-opdatering`, som rydder update-cache og laver et nyt check med det samme.
-- GitHub-manifestet peger på en versionslåst ZIP i `dist/`.
-- Update-pakken SHA-256-verificeres mod manifestet før WordPress får lov at installere den.
-- Plugin-headeren bruger `Update URI`, så clean-pluginet ikke kan kollidere med en eventuel WordPress.org-plugin med samme slug.
+## Global release-gate
 
-## Roadmap fra v0.1.68
-
-1. **v0.1.67 – Module/Data Foundation:** registry, canonical recordmodel, private datastore og binding-kontrakt.
-2. **v0.1.68 – Canvas/Section Structure:** root kun Sektioner, automatisk persist-migration og editor-only active layer.
-3. **v0.1.69 – Køretøjsmodul:** Manager-CRUD, fleksible tekniske datafelter, billeder, sortering og Designer-modul-elementer til liste/detail.
-4. **Derefter – Events:** samme data-/bindingarkitektur med dato, sted, status og eventvisninger.
-5. **Derefter – Billedgalleri:** album/medier på samme modulstore og genbrugelige Designer-visninger.
-6. Dynamisk binding aktiveres først i de konkrete modulelementer; v0.1.67 ændrede ikke eksisterende statiske Data List/Tabel-renderinger.
-
-## Næste backlog
-
-### CLEAN-RESPONSIVE-009 — ÅBEN / NÆSTE
-- Desktop, Tablet og Mobil får hver fysisk `x/y/w/h` override med tydelig `Arv fra Desktop`.
-- Editor-toolbar skifter fysisk canvas-breakpoint uden at mutere de andre breakpoints.
-- Mobil må som standard arve Desktop men kan sættes til 120/120 og egen højde/position.
-- Undo/Redo omfatter breakpointændringer.
-
-### CLEAN-THEME-010 — ÅBEN
-- Installer Hangar18 Base Theme 1.2.0 som visuel baseline.
-- Lav eksport/import af site-specifik Custom CSS og relevante theme settings fra den gamle installation.
-- Importen må kun indeholde theme/frontend-konfiguration; ingen gammel editor-state eller editor-JavaScript.
-- Header, footer, banner, menu, farver, typografi og 90%-desktopbredde regressionskontrolleres.
-
-### CLEAN-ELEMENTS-011 — ÅBEN
-- Button, Spacer, Heading, Divider og Gallery som native clean-elementer.
-- Elementdefinitioner registreres centralt og får schema/Inspector/Renderer i samme kontrakt.
-
-### CLEAN-ORDERING-012 — ÅBEN
-- Drop før/efter eksisterende sibling, ikke kun append til parent.
-- Visuel insertion-line.
-- `order` normaliseres deterministisk uden DOM som canonical state.
-
-### CLEAN-PREVIEW-013 — ÅBEN
-- Live preview af ugemte canonical state gennem samme renderer-kontrakt.
-- Må ikke klone admin-DOM.
-- Desktop/Tablet/Mobil viewport.
-
-### CLEAN-MIGRATOR-014 — BLOKERET INDTIL CLEAN-QA PASS
-- Læs gamle Hangar18-sider read-only.
-- Konverter til clean-model som kladde/kopi.
-- Vis gammel side ↔ clean konvertering side om side.
-- Ingen gammel side overskrives automatisk.
-- Vehicle/Event/Gallery migreres først efter de generelle sider.
-
-## QA-gate for clean v0.1.x
-
-1. Opret en tom WordPress-side og åbn Hangar18 Designer.
-2. Tilføj Sektion, Kasse, to Tekst-elementer og ét Billede.
-3. Træk mindst ét nyt palette-element direkte ind i Kasse uden først at oprette det på root.
-4. Resize alle elementtyper fra E/W/N/S og mindst to hjørner.
-5. Træk eksisterende Tekst ind i Kasse og ud mod websiden igen; verificér at Designer automatisk opretter en Sektion omkring elementet.
-6. Træk Billede ind i Kasse.
-7. Test Cover, Contain og Stretch samt focal X/Y.
-8. Undo/Redo både resize, re-parent, palette-drop, image-fit og Inspectorændring.
-9. Gem som v1, reload editor og verificér identisk model/geometri.
-10. Lav ændringer og gem som v2/v3.
-11. Restore v1; resultatet skal blive en ny version og v3 skal stadig ligge i historikken.
-12. Åbn offentlig side og sammenlign Text/Image/Container-geometri med editor.
-13. Kopiér diagnose-link og verificér Save/Restore/re-parent/resize/palette events uden rå tekst eller secrets.
-14. Tryk `Tjek GitHub-opdatering`; v0.1.2 skal rapportere at den er aktuel. Når en nyere testversion publiceres, skal WordPress vise `Opdater nu`, hente GitHub-ZIP'en og bestå SHA-256-kontrollen.
-15. Side uden clean-model skal fortsat vises fra normal WordPress content.
-
-## Definition of Done
-
-Clean v0.1.x må først markeres PASS efter QA-gaten på det nye rene subdomæne. Først derefter implementeres responsive overrides og senere migratoren til de gamle webpages.
+- PHP/JavaScript syntax QA skal være grøn.
+- Historiske regression-gates fra Header/Footer, clipboard, generelle elementer, Module Foundation, Canvas/Section og Canvas Auto Height skal forblive grønne.
+- Release-ZIP bygges kun af central `visual-designer-release.yml`, SHA-256 skrives til `clean-update.json`, og versionen anses først for frigivet efter successful workflow + manifestkontrol.

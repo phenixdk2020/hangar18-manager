@@ -1060,3 +1060,11 @@ Markeret element og element under drag/resize skal ligge øverst i Designerens s
 Visual Designerens Webside/canvas er en visuel editor-ramme og må aldrig ende over eller midt i en canonical root-Sektion. `editor-v0169-canvas-height.js` måler kun direkte `Sektion`-børn af `#h18-clean-canvas` og sætter canvas `min-height` til nederste sektionskant + 32 px, dog mindst 650 px.
 
 Kontrakten er dynamisk og tovejs: højden skal både kunne vokse og krympe efter flytning, resize, tilføjelse, paste/duplicate, sletning, Undo/Redo, indlæsning og responsive/viewport-skift. Beregningen er DOM-baseret, så den følger den aktive responsive editorvisning uden at ændre canonical node-geometri. Viewport-stage følger via den eksisterende ResizeObserver. Header/Footer bruger samme runtime.
+
+## VD-VEHICLE-MODULE-001 – Køretøjsmodul v0.1.70
+
+Køretøjer er første konkrete modul på `VD-MODULE-DATA-001`. Data gemmes som `h18_module_item` gennem `ModuleStore`, mens `VehicleFieldRegistry` ejer den fælles definition af fleksible tekniske felter. Et record består af stabilt record-ID, titel, status (`draft|publish|archive`), sortering, kort beskrivelse, kategori, beskrivelse, primært Media-ID, galleriets Media-IDer og canonical `attributes` for tekniske data. Felt-IDer er stabile ved omdøbning.
+
+Visual Designer har to canonical leaf-typer: `vehiclelist` og `vehicledetail`. Begge normaliseres med `ModuleBinding` til modulet `vehicles`. `vehiclelist` forespørger kun publicerede records og kan linke til en valgt detaljeside med query-parameteren `h18_vehicle=<record-id>`. `vehicledetail` kan enten bindes til et fast record-ID eller, når `recordId` er tomt, resolve det samme ID fra query-parameteren. Offentlig rendering må aldrig vise `draft` eller `archive`; Designerens standalone preview må vise ikke-publicerede records for en bruger med `edit_pages`.
+
+`ModuleStore::META_RECORD_ID` giver deterministisk detail-lookup. `findByRecordId()` har fallback til v0.1.67-records uden denne indeks-meta. Medier refereres kun som WordPress attachment IDs; frontend og Designer resolver URL ved rendering. Moduldata må ikke kopieres ind i side-layoutets JSON.

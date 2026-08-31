@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.70",
+      "date": "2026-08-31",
+      "items": [
+        "VD-VEHICLE-MODULE-001: Køretøjer er nu første fulde modul oven på Module/Data Foundation.",
+        "Manager har CRUD, publiceringsstatus, sortering, primært billede, galleri og fælles fleksible tekniske felter.",
+        "Designer har canonical Køretøjsliste og Køretøjsdetalje med dynamisk ModuleStore-binding.",
+        "Listekort kan linke til én genbrugelig detaljeside via ?h18_vehicle=<record-id>.",
+        "Designmanual, teknisk manual, brugermanual og backlog er synkroniseret til v0.1.70."
+      ]
+    },
+    {
       "version": "0.1.69",
       "date": "2026-08-31",
       "items": [

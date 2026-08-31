@@ -9,6 +9,7 @@ final class ModuleStore
     public const POST_TYPE = 'h18_module_item';
     public const META_MODULE = '_h18_module_key';
     public const META_RECORD = '_h18_module_record_v1';
+    public const META_RECORD_ID = '_h18_module_record_id';
     public const META_DIGEST = '_h18_module_digest';
     public const META_STATUS = '_h18_module_status';
     public const META_SORT = '_h18_module_sort_order';
@@ -109,6 +110,7 @@ final class ModuleStore
         $json = ModuleRecord::canonicalJson($record);
         update_post_meta($postId, self::META_MODULE, $module);
         update_post_meta($postId, self::META_RECORD, $json);
+        update_post_meta($postId, self::META_RECORD_ID, (string) ($record['id'] ?? ''));
         update_post_meta($postId, self::META_DIGEST, hash('sha256', $json));
         update_post_meta($postId, self::META_STATUS, (string) ($record['status'] ?? 'draft'));
         update_post_meta($postId, self::META_SORT, (int) ($record['sortOrder'] ?? 0));
@@ -203,6 +205,39 @@ final class ModuleStore
         });
 
         return array_slice($out, 0, $limit);
+    }
+
+    /** @return array{postId:int,record:array<string,mixed>}|null */
+    public static function findByRecordId(string $module, string $recordId): ?array
+    {
+        $module = ModuleRegistry::key($module);
+        $recordId = strtolower(trim($recordId));
+        if (!ModuleRegistry::supports($module) || !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) {
+            return null;
+        }
+        $ids = get_posts([
+            'post_type' => self::POST_TYPE,
+            'post_status' => 'publish',
+            'fields' => 'ids',
+            'posts_per_page' => 1,
+            'no_found_rows' => true,
+            'suppress_filters' => true,
+            'meta_query' => [
+                ['key' => self::META_MODULE, 'value' => $module, 'compare' => '='],
+                ['key' => self::META_RECORD_ID, 'value' => $recordId, 'compare' => '='],
+            ],
+        ]);
+        if (is_array($ids) && !empty($ids)) {
+            $postId = (int) $ids[0];
+            $record = self::get($postId);
+            return $record !== null ? ['postId' => $postId, 'record' => $record] : null;
+        }
+        // Compatibility fallback for any records written by the v0.1.67 foundation
+        // before META_RECORD_ID existed.
+        foreach (self::listRecords($module, ['status' => 'all', 'limit' => 100]) as $item) {
+            if ((string) ($item['record']['id'] ?? '') === $recordId) { return $item; }
+        }
+        return null;
     }
 
     /** @return bool|\WP_Error */

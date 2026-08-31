@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Model;
 
 use VisualDesignerManager\Icons\IconRegistry;
+use VisualDesignerManager\Modules\ModuleBinding;
 
 final class LayoutModel
 {
@@ -60,7 +61,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -418,6 +419,55 @@ final class LayoutModel
                 'fontSize' => self::clamp($raw['fontSize'] ?? 14, 8, 80, 14),
                 'headerWeight' => self::clamp($raw['headerWeight'] ?? 700, 100, 900, 700),
                 'mobileMode' => $mobileMode,
+            ], $border);
+        }
+        if ($type === 'vehiclelist') {
+            $orderBy = in_array((string) ($raw['orderBy'] ?? 'sortOrder'), ['sortOrder', 'title', 'updatedAt'], true) ? (string) ($raw['orderBy'] ?? 'sortOrder') : 'sortOrder';
+            $order = strtoupper((string) ($raw['order'] ?? 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
+            $limit = self::clamp($raw['limit'] ?? 50, 1, 100, 50);
+            $binding = ModuleBinding::normalize([
+                'mode' => 'module', 'module' => 'vehicles', 'view' => 'list',
+                'query' => ['status' => 'publish', 'orderBy' => $orderBy, 'order' => $order, 'limit' => $limit],
+            ]);
+            return array_merge([
+                'binding' => $binding,
+                'limit' => $limit,
+                'orderBy' => $orderBy,
+                'order' => $order,
+                'detailPageId' => absint($raw['detailPageId'] ?? 0),
+                'columns' => self::clamp($raw['columns'] ?? 3, 1, 4, 3),
+                'cardGap' => self::clamp($raw['cardGap'] ?? 18, 0, 80, 18),
+                'cardPadding' => self::clamp($raw['cardPadding'] ?? 12, 0, 60, 12),
+                'imageHeight' => self::clamp($raw['imageHeight'] ?? 180, 60, 600, 180),
+                'showImage' => array_key_exists('showImage', $raw) ? (bool) $raw['showImage'] : true,
+                'showCategory' => array_key_exists('showCategory', $raw) ? (bool) $raw['showCategory'] : true,
+                'showSummary' => array_key_exists('showSummary', $raw) ? (bool) $raw['showSummary'] : true,
+                'linkCards' => array_key_exists('linkCards', $raw) ? (bool) $raw['linkCards'] : true,
+                'cardBackground' => sanitize_hex_color((string) ($raw['cardBackground'] ?? '#ffffff')) ?: '#ffffff',
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a',
+                'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83',
+                'cardRadius' => self::clamp($raw['cardRadius'] ?? 4, 0, 60, 4),
+            ], $border);
+        }
+        if ($type === 'vehicledetail') {
+            $recordId = strtolower(trim((string) ($raw['recordId'] ?? '')));
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            $binding = ModuleBinding::normalize(['mode' => 'module', 'module' => 'vehicles', 'view' => 'detail', 'recordId' => $recordId]);
+            return array_merge([
+                'binding' => $binding,
+                'recordId' => $recordId,
+                'showGallery' => array_key_exists('showGallery', $raw) ? (bool) $raw['showGallery'] : true,
+                'showCategory' => array_key_exists('showCategory', $raw) ? (bool) $raw['showCategory'] : true,
+                'showSummary' => array_key_exists('showSummary', $raw) ? (bool) $raw['showSummary'] : true,
+                'showDescription' => array_key_exists('showDescription', $raw) ? (bool) $raw['showDescription'] : true,
+                'showAttributes' => array_key_exists('showAttributes', $raw) ? (bool) $raw['showAttributes'] : true,
+                'imageHeight' => self::clamp($raw['imageHeight'] ?? 360, 80, 900, 360),
+                'labelWidth' => self::clamp($raw['labelWidth'] ?? 34, 20, 60, 34),
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a',
+                'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83',
+                'padding' => self::clamp($raw['padding'] ?? 16, 0, 80, 16),
+                'radius' => self::clamp($raw['radius'] ?? 4, 0, 60, 4),
             ], $border);
         }
         if ($type === 'image') {

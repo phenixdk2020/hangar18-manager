@@ -7,6 +7,7 @@ namespace VisualDesignerManager\Frontend;
 use VisualDesignerManager\Icons\IconRegistry;
 use VisualDesignerManager\Model\LayoutModel;
 use VisualDesignerManager\Model\TemplateLayoutModel;
+use VisualDesignerManager\Modules\ModuleStore;
 
 final class Renderer
 {
@@ -110,6 +111,7 @@ final class Renderer
         echo '.h18-clean-front-link{display:flex;align-items:center;box-sizing:border-box}.h18-clean-front-link a{color:var(--h18-link-color);text-decoration:var(--h18-link-decoration);font:inherit}.h18-clean-front-link a:hover,.h18-clean-front-link a:focus-visible{color:var(--h18-link-hover)}';
         echo '.h18-clean-front-datalist{width:100%;box-sizing:border-box}.h18-clean-front-datalist-row{display:grid;grid-template-columns:var(--h18-data-label-width) minmax(0,1fr);box-sizing:border-box}.h18-clean-front-datalist.is-stacked .h18-clean-front-datalist-row{grid-template-columns:1fr}';
         echo '.h18-clean-front-table-wrap{width:100%;overflow-x:auto;box-sizing:border-box}.h18-clean-front-table{width:100%;border-collapse:collapse;table-layout:auto}.h18-clean-front-table th,.h18-clean-front-table td{text-align:left;vertical-align:top;box-sizing:border-box}@media(max-width:782px){.h18-clean-front-table-wrap[data-mobile-mode="cards"]{overflow:visible}.h18-clean-front-table-wrap[data-mobile-mode="cards"] .h18-clean-front-table,.h18-clean-front-table-wrap[data-mobile-mode="cards"] tbody,.h18-clean-front-table-wrap[data-mobile-mode="cards"] tr,.h18-clean-front-table-wrap[data-mobile-mode="cards"] td{display:block;width:100%}.h18-clean-front-table-wrap[data-mobile-mode="cards"] thead{display:none}.h18-clean-front-table-wrap[data-mobile-mode="cards"] tr{margin-bottom:12px;border:1px solid var(--h18-table-border)}.h18-clean-front-table-wrap[data-mobile-mode="cards"] td{display:grid;grid-template-columns:minmax(100px,40%) minmax(0,1fr);gap:10px;border-width:0 0 1px!important}.h18-clean-front-table-wrap[data-mobile-mode="cards"] td:last-child{border-bottom:0!important}.h18-clean-front-table-wrap[data-mobile-mode="cards"] td:before{content:attr(data-label);font-weight:700}}';
+        echo '.h18-clean-front-vehicle-list{display:grid;width:100%;box-sizing:border-box}.h18-clean-front-vehicle-card{display:flex;flex-direction:column;gap:8px;min-width:0;box-sizing:border-box;text-decoration:none;color:inherit;overflow:hidden}.h18-clean-front-vehicle-card img{display:block;width:100%;max-width:none;object-fit:cover}.h18-clean-front-vehicle-card h3,.h18-clean-front-vehicle-card p{margin:0}.h18-clean-front-vehicle-detail{box-sizing:border-box}.h18-clean-front-vehicle-hero{display:block;width:100%;max-width:none;object-fit:cover}.h18-clean-front-vehicle-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}.h18-clean-front-vehicle-gallery img{display:block;width:100%;height:140px;object-fit:cover}.h18-clean-front-vehicle-specs{display:grid;margin:16px 0 0}.h18-clean-front-vehicle-specs dt,.h18-clean-front-vehicle-specs dd{margin:0;padding:7px 10px;border-bottom:1px solid #dcdcde}.h18-clean-front-vehicle-description{margin-top:16px}@media(max-width:782px){.h18-clean-front-vehicle-list{grid-template-columns:1fr!important}.h18-clean-front-vehicle-specs{grid-template-columns:1fr!important}.h18-clean-front-vehicle-specs dt{font-weight:700}.h18-clean-front-vehicle-specs dd{padding-top:0}}';
         echo '.h18-vd-live-shell,.h18-vd-live-shell-part{display:block;width:100%;max-width:none;margin:0;padding:0;box-sizing:border-box}.h18-vd-live-shell{position:relative}';
         echo '</style>';
     }
@@ -492,6 +494,98 @@ final class Renderer
             $mobileMode = (string) ($props['mobileMode'] ?? 'scroll') === 'cards' ? 'cards' : 'scroll';
             $outerStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . '--h18-table-border:' . $cellBorderColor . ';font-family:' . self::fontCss((string) ($props['fontFamily'] ?? 'system')) . ';font-size:' . $fontSize . 'px;overflow:hidden;';
             return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($outerStyle) . '"><div class="h18-clean-front-table-wrap" data-mobile-mode="' . esc_attr($mobileMode) . '"><table class="h18-clean-front-table">' . $thead . $tbody . '</table></div></div>';
+        }
+
+        if ($type === 'vehiclelist') {
+            $binding = isset($props['binding']) && is_array($props['binding']) ? $props['binding'] : [];
+            $query = isset($binding['query']) && is_array($binding['query']) ? $binding['query'] : [];
+            $query['status'] = 'publish';
+            $query['limit'] = max(1, min(100, (int) ($props['limit'] ?? ($query['limit'] ?? 50))));
+            $query['orderBy'] = in_array((string) ($props['orderBy'] ?? ($query['orderBy'] ?? 'sortOrder')), ['sortOrder', 'title', 'updatedAt'], true) ? (string) ($props['orderBy'] ?? ($query['orderBy'] ?? 'sortOrder')) : 'sortOrder';
+            $query['order'] = strtoupper((string) ($props['order'] ?? ($query['order'] ?? 'ASC'))) === 'DESC' ? 'DESC' : 'ASC';
+            $records = ModuleStore::listRecords('vehicles', $query);
+            $columns = max(1, min(4, (int) ($props['columns'] ?? 3)));
+            $gap = max(0, min(80, (int) ($props['cardGap'] ?? 18)));
+            $padding = max(0, min(60, (int) ($props['cardPadding'] ?? 12)));
+            $imageHeight = max(60, min(600, (int) ($props['imageHeight'] ?? 180)));
+            $cardBg = sanitize_hex_color((string) ($props['cardBackground'] ?? '#ffffff')) ?: '#ffffff';
+            $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#30382a')) ?: '#30382a';
+            $accent = sanitize_hex_color((string) ($props['accentColor'] ?? '#c3ae83')) ?: '#c3ae83';
+            $cardRadius = max(0, min(60, (int) ($props['cardRadius'] ?? 4)));
+            $detailPageId = absint($props['detailPageId'] ?? 0);
+            $detailBase = $detailPageId > 0 ? get_permalink($detailPageId) : false;
+            $cards = '';
+            foreach ($records as $item) {
+                $record = isset($item['record']) && is_array($item['record']) ? $item['record'] : [];
+                if ((string) ($record['status'] ?? '') !== 'publish') { continue; }
+                $fields = isset($record['fields']) && is_array($record['fields']) ? $record['fields'] : [];
+                $recordId = (string) ($record['id'] ?? '');
+                $href = is_string($detailBase) && $detailBase !== '' && !empty($props['linkCards']) ? add_query_arg('h18_vehicle', rawurlencode($recordId), $detailBase) : '';
+                $tag = $href !== '' ? 'a' : 'article';
+                $hrefAttr = $href !== '' ? ' href="' . esc_url($href) . '"' : '';
+                $image = '';
+                $featuredId = absint($record['featuredMediaId'] ?? 0);
+                if (!empty($props['showImage']) && $featuredId > 0) {
+                    $url = wp_get_attachment_image_url($featuredId, 'large');
+                    if (is_string($url) && $url !== '') { $image = '<img src="' . esc_url($url) . '" alt="' . esc_attr((string) ($record['title'] ?? '')) . '" style="height:' . esc_attr((string) $imageHeight) . 'px">'; }
+                }
+                $category = !empty($props['showCategory']) && trim((string) ($fields['category'] ?? '')) !== '' ? '<small style="color:' . esc_attr($accent) . '">' . esc_html((string) $fields['category']) . '</small>' : '';
+                $summary = !empty($props['showSummary']) && trim((string) ($record['summary'] ?? '')) !== '' ? '<p>' . esc_html((string) $record['summary']) . '</p>' : '';
+                $cardStyle = 'background:' . $cardBg . ';color:' . $textColor . ';padding:' . $padding . 'px;border-radius:' . $cardRadius . 'px;';
+                $cards .= '<' . $tag . ' class="h18-clean-front-vehicle-card"' . $hrefAttr . ' style="' . esc_attr($cardStyle) . '">' . $image . '<h3>' . esc_html((string) ($record['title'] ?? 'Køretøj')) . '</h3>' . $category . $summary . '</' . $tag . '>';
+            }
+            if ($cards === '' && self::$forceStandaloneCss) { $cards = '<p>Ingen publicerede køretøjer endnu.</p>'; }
+            $listStyle = $style . $borderStyle . $spacingStyle . 'grid-template-columns:repeat(' . $columns . ',minmax(0,1fr));gap:' . $gap . 'px;';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-vehicle-list" style="' . esc_attr($listStyle) . '">' . $cards . '</div>';
+        }
+
+        if ($type === 'vehicledetail') {
+            $recordId = strtolower(trim((string) ($props['recordId'] ?? '')));
+            if ($recordId === '') { $recordId = strtolower(trim(sanitize_text_field((string) wp_unslash($_GET['h18_vehicle'] ?? '')))); }
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            if ($recordId === '') {
+                $message = self::$forceStandaloneCss ? 'Vælg et køretøj i Inspector eller brug ?h18_vehicle=record-id.' : 'Vælg et køretøj fra oversigten.';
+                return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-vehicle-detail" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '"><p>' . esc_html($message) . '</p></div>';
+            }
+            $found = ModuleStore::findByRecordId('vehicles', $recordId);
+            $record = is_array($found) && isset($found['record']) && is_array($found['record']) ? $found['record'] : null;
+            $allowDraft = self::$forceStandaloneCss && current_user_can('edit_pages');
+            if ($record === null || ((string) ($record['status'] ?? 'draft') !== 'publish' && !$allowDraft)) {
+                return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-vehicle-detail" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '"><p>Køretøjet findes ikke eller er ikke publiceret.</p></div>';
+            }
+            $fields = isset($record['fields']) && is_array($record['fields']) ? $record['fields'] : [];
+            $background = sanitize_hex_color((string) ($props['background'] ?? '#ffffff')) ?: '#ffffff';
+            $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#30382a')) ?: '#30382a';
+            $accent = sanitize_hex_color((string) ($props['accentColor'] ?? '#c3ae83')) ?: '#c3ae83';
+            $padding = max(0, min(80, (int) ($props['padding'] ?? 16)));
+            $imageHeight = max(80, min(900, (int) ($props['imageHeight'] ?? 360)));
+            $labelWidth = max(20, min(60, (int) ($props['labelWidth'] ?? 34)));
+            $featuredId = absint($record['featuredMediaId'] ?? 0);
+            $hero = '';
+            if ($featuredId > 0) { $url = wp_get_attachment_image_url($featuredId, 'large'); if (is_string($url) && $url !== '') { $hero = '<img class="h18-clean-front-vehicle-hero" src="' . esc_url($url) . '" alt="' . esc_attr((string) ($record['title'] ?? '')) . '" style="height:' . esc_attr((string) $imageHeight) . 'px">'; } }
+            $category = !empty($props['showCategory']) && trim((string) ($fields['category'] ?? '')) !== '' ? '<p><strong style="color:' . esc_attr($accent) . '">' . esc_html((string) $fields['category']) . '</strong></p>' : '';
+            $summary = !empty($props['showSummary']) && trim((string) ($record['summary'] ?? '')) !== '' ? '<p>' . esc_html((string) $record['summary']) . '</p>' : '';
+            $description = !empty($props['showDescription']) && trim((string) ($fields['description'] ?? '')) !== '' ? '<div class="h18-clean-front-vehicle-description">' . wp_kses_post((string) $fields['description']) . '</div>' : '';
+            $specs = '';
+            if (!empty($props['showAttributes'])) {
+                foreach ((array) ($record['attributes'] ?? []) as $attribute) {
+                    if (!is_array($attribute) || empty($attribute['enabled'])) { continue; }
+                    $value = $attribute['value'] ?? '';
+                    if (is_bool($value)) { $value = $value ? 'Ja' : 'Nej'; }
+                    if ($value === '' || $value === null) { continue; }
+                    $specs .= '<dt>' . esc_html((string) ($attribute['label'] ?? $attribute['key'] ?? 'Felt')) . '</dt><dd>' . esc_html((string) $value) . '</dd>';
+                }
+                if ($specs !== '') { $specs = '<dl class="h18-clean-front-vehicle-specs" style="grid-template-columns:' . esc_attr((string) $labelWidth) . '% minmax(0,1fr)">' . $specs . '</dl>'; }
+            }
+            $gallery = '';
+            if (!empty($props['showGallery'])) {
+                $ids = array_values(array_unique(array_filter(array_merge([$featuredId], array_map('absint', is_array($fields['imageIds'] ?? null) ? $fields['imageIds'] : [])))));
+                $images = '';
+                foreach ($ids as $mediaId) { $url = wp_get_attachment_image_url($mediaId, 'large'); if (is_string($url) && $url !== '') { $images .= '<img src="' . esc_url($url) . '" alt="' . esc_attr((string) ($record['title'] ?? '')) . '">'; } }
+                if ($images !== '') { $gallery = '<div class="h18-clean-front-vehicle-gallery">' . $images . '</div>'; }
+            }
+            $detailStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . 'background:' . $background . ';color:' . $textColor . ';padding:' . $padding . 'px;';
+            return '<article id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-vehicle-detail" style="' . esc_attr($detailStyle) . '">' . $hero . '<h2>' . esc_html((string) ($record['title'] ?? 'Køretøj')) . '</h2>' . $category . $summary . $description . $specs . $gallery . '</article>';
         }
 
         if ($type === 'image') {

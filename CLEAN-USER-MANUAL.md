@@ -1034,3 +1034,11 @@ Hvis du trækker et almindeligt element ud på selve websiden, opretter Designer
 ## Websiden følger Sektionerne automatisk
 
 Når du flytter eller ændrer størrelse på en Sektion, udvider den blå Webside/canvas sig automatisk, så Sektionen fortsat ligger inde på Websiden. Flytter du den nederste Sektion op eller sletter den, bliver Websiden tilsvarende kortere igen. Du skal ikke selv ændre Websidens højde.
+
+## Sådan bruger du Køretøjsmodulet
+
+Gå til **Visual Designer Manager → Køretøjer**. Vælg **Nyt køretøj**, skriv navn, kategori, status og sortering, tilføj en kort og en længere beskrivelse, vælg primært billede og eventuelle galleribilleder, og udfyld de tekniske data. **Publiceret** betyder, at recordet kan vises på den offentlige side; **Kladde** og **Arkiveret** vises ikke offentligt.
+
+Under **Køretøjsfelter** kan du tilføje eller omdøbe de tekniske felter, vælge datatype, enhed og rækkefølge. Feltets interne ID bevares, så eksisterende data fortsat hører til det rigtige felt.
+
+På en side i Visual Designer kan du tilføje **Køretøjsliste**. Her vælger du antal kolonner, sortering, hvilke oplysninger der vises, kortets udseende og den WordPress-side, som skal bruges til detaljer. Opret derefter en detaljeside med elementet **Køretøjsdetalje** og lad feltet **Køretøj** stå på **Fra URL**. Når en besøgende klikker et kort, åbnes detaljesiden med `?h18_vehicle=...`, og det rigtige køretøj vises automatisk. Du kan også vælge et fast køretøj i Inspector, hvis en side altid skal vise det samme record.

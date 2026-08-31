@@ -68,8 +68,8 @@ final class AdminController
         );
 
         add_submenu_page(self::MENU, 'Dashboard', 'Dashboard', $cap, self::MENU, [self::class, 'dashboard']);
-        add_submenu_page(self::MENU, 'Køretøjer', 'Køretøjer', $cap, 'h18-clean-vehicles', [self::class, 'vehicles']);
-        add_submenu_page(self::MENU, 'Køretøjsfelter', 'Køretøjsfelter', $cap, 'h18-clean-vehicle-fields', [self::class, 'vehicleFields']);
+        add_submenu_page(self::MENU, 'Køretøjer', 'Køretøjer', $cap, 'h18-clean-vehicles', [VehicleAdminController::class, 'render']);
+        add_submenu_page(self::MENU, 'Køretøjsfelter', 'Køretøjsfelter', $cap, 'h18-clean-vehicle-fields', [VehicleAdminController::class, 'renderFields']);
         add_submenu_page(self::MENU, 'Events', 'Events', $cap, 'h18-clean-events', [self::class, 'events']);
         add_submenu_page(self::MENU, 'Billedgalleri', 'Billedgalleri', $cap, 'h18-clean-gallery', [self::class, 'gallery']);
         add_submenu_page(self::MENU, 'Data', 'Data', $cap, 'h18-clean-data', [self::class, 'data']);

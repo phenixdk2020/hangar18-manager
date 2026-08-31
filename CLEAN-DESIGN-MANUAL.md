@@ -646,3 +646,11 @@ I editoren er lagløft under redigering en **ren UI-egenskab**: markeret element
 ## Canvas Auto Height
 
 Websiden er den yderste Designer-ramme omkring alle Sektioner. Den skal automatisk udvide sig til mindst 32 px under den nederste root-Sektion og må tilsvarende krympe igen, når indhold flyttes op eller slettes. Kun Sektioner ligger direkte på Websiden; derfor beregnes Webside-højden ud fra disse og ikke ud fra hvert enkelt child-element.
+
+## Køretøjsmodul – designprincip
+
+Køretøjsdata og sidedesign holdes adskilt. Et køretøj oprettes én gang under **Manager → Køretøjer** og kan derefter vises mange steder. **Køretøjsliste** er et layout-element til oversigter; det styrer kolonner, afstand, kortfarver, billede, kategori og kort beskrivelse. **Køretøjsdetalje** er et layout-element til den fulde visning og styrer hero-billede, galleri, beskrivelse og tekniske data.
+
+Standardmønstret er én oversigtsside plus én genbrugelig detaljeside. Køretøjslisten peger på detaljesiden, og hvert kort sender sit stabile record-ID som `?h18_vehicle=...`. Detalje-elementet står i **Fra URL**-tilstand og viser dermed det valgte record uden at der skal oprettes en separat WordPress-side for hvert køretøj.
+
+Tekniske felter defineres centralt. En ændring af feltets synlige navn må ikke ændre det stabile felt-ID. Billeder bliver i WordPress Media Library; modulrecords gemmer kun attachment IDs.

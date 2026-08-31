@@ -8,7 +8,7 @@
     const USER_ID = Math.max(0, parseInt(CFG.userId || 0, 10) || 0);
     const CONTEXT_LABEL = String(CFG.contextLabel || (POST_ID ? ('Side ' + POST_ID) : 'Global Designer'));
     const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u' + String(USER_ID);
-    const TYPES = ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table'];
+    const TYPES = ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail'];
     const PARENT_TYPES = ['section', 'container'];
     const undoStack = [];
     const redoStack = [];
@@ -65,7 +65,7 @@
         if (explicit > 0) { return explicit; }
         return ({h2:32,h3:28,h4:24,h5:20,h6:18})[String(props.headingLevel || 'h2')] || 32;
     }
-    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap',menu:'Menu',spacer:'Mellemrum',divider:'Skillelinje',icon:'Ikon',badge:'Badge',link:'Link',datalist:'Data List',table:'Tabel'})[String(type || '')] || String(type || 'Element'); }
+    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap',menu:'Menu',spacer:'Mellemrum',divider:'Skillelinje',icon:'Ikon',badge:'Badge',link:'Link',datalist:'Data List',table:'Tabel',vehiclelist:'Køretøjsliste',vehicledetail:'Køretøjsdetalje'})[String(type || '')] || String(type || 'Element'); }
     function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }
     function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',verticalAlign:'lodret justering',fontFamily:'skrifttype',fontSize:'skriftstørrelse',fontWeight:'skrifttykkelse',lineHeight:'linjeafstand',letterSpacing:'bogstavafstand',headingFontFamily:'overskriftsskrifttype',headingFontSize:'overskriftsstørrelse',headingFontWeight:'overskriftstykkelse',headingLineHeight:'overskriftens linjeafstand',headingLetterSpacing:'overskriftens bogstavafstand',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',offsetX:'finjustering X',offsetY:'finjustering Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding',autoSize:'automatisk størrelse',placementMode:'placering',zIndex:'lag',menuId:'WordPress-menu',orientation:'menuretning',mobileMode:'mobilmenu',mobilePresentation:'mobilmenu-visning',mobileCloseOnSelect:'luk efter valg',mobileCloseOutside:'luk ved klik udenfor',activeTextColor:'aktiv menufarve',backgroundTransparent:'gennemsigtig baggrund',menuGap:'menuafstand'})[String(field || '')] || String(field || 'felt'); }
     function richPreviewHtml(value) {
@@ -155,6 +155,17 @@
         const rows = String(value || '').split(/\r?\n/).slice(0,50).map(function (line) { return line.split('|').map(function (cell) { return cell.trim(); }); });
         return normalizeMatrixRows(rows, columns);
     }
+    function vehicleRecords() {
+        return Array.isArray(CFG.vehicleRecords) ? CFG.vehicleRecords.filter(function (record) { return record && record.id; }) : [];
+    }
+    function vehicleRecordById(recordId) {
+        recordId = String(recordId || '');
+        return vehicleRecords().find(function (record) { return String(record.id || '') === recordId; }) || null;
+    }
+    function vehicleCategory(record) {
+        return record && record.fields && typeof record.fields === 'object' ? String(record.fields.category || '') : '';
+    }
+
     function iconLibrarySets() {
         const library = CFG.iconLibrary && typeof CFG.iconLibrary === 'object' ? CFG.iconLibrary : {};
         return Array.isArray(library.sets) ? library.sets : [];
@@ -524,6 +535,39 @@
                 fontSize: clamp(parseInt(raw.fontSize || 14, 10) || 14, 8, 80),
                 headerWeight: clamp(parseInt(raw.headerWeight || 700, 10) || 700, 100, 900),
                 mobileMode: ['scroll','cards'].includes(String(raw.mobileMode || '').toLowerCase()) ? String(raw.mobileMode).toLowerCase() : 'scroll'
+            });
+        }
+        if (type === 'vehiclelist') {
+            const orderBy = ['sortOrder','title','updatedAt'].includes(String(raw.orderBy || 'sortOrder')) ? String(raw.orderBy || 'sortOrder') : 'sortOrder';
+            const order = String(raw.order || 'ASC').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+            const limit = clamp(parseInt(raw.limit || 50,10) || 50,1,100);
+            return Object.assign(common, {
+                binding:{schema:1,mode:'module',module:'vehicles',view:'list',recordId:'',query:{status:'publish',orderBy:orderBy,order:order,limit:limit},fieldMap:{}},
+                limit:limit, orderBy:orderBy, order:order,
+                detailPageId:parseInt(raw.detailPageId || 0,10) || 0,
+                columns:clamp(parseInt(raw.columns || 3,10) || 3,1,4),
+                cardGap:clamp(parseInt(raw.cardGap || 18,10) || 18,0,80),
+                cardPadding:clamp(parseInt(raw.cardPadding || 12,10) || 12,0,60),
+                imageHeight:clamp(parseInt(raw.imageHeight || 180,10) || 180,60,600),
+                showImage:raw.showImage !== false, showCategory:raw.showCategory !== false, showSummary:raw.showSummary !== false, linkCards:raw.linkCards !== false,
+                cardBackground:/^#[0-9a-f]{6}$/i.test(String(raw.cardBackground || '')) ? String(raw.cardBackground).toLowerCase() : '#ffffff',
+                textColor:/^#[0-9a-f]{6}$/i.test(String(raw.textColor || '')) ? String(raw.textColor).toLowerCase() : '#30382a',
+                accentColor:/^#[0-9a-f]{6}$/i.test(String(raw.accentColor || '')) ? String(raw.accentColor).toLowerCase() : '#c3ae83',
+                cardRadius:clamp(parseInt(raw.cardRadius || 4,10) || 4,0,60)
+            });
+        }
+        if (type === 'vehicledetail') {
+            let recordId = String(raw.recordId || '').toLowerCase().trim();
+            if (recordId && !/^[a-z0-9][a-z0-9._:-]{0,127}$/.test(recordId)) { recordId = ''; }
+            return Object.assign(common, {
+                binding:{schema:1,mode:'module',module:'vehicles',view:'detail',recordId:recordId,query:{status:'publish',orderBy:'sortOrder',order:'ASC',limit:50},fieldMap:{}},
+                recordId:recordId,
+                showGallery:raw.showGallery !== false, showCategory:raw.showCategory !== false, showSummary:raw.showSummary !== false, showDescription:raw.showDescription !== false, showAttributes:raw.showAttributes !== false,
+                imageHeight:clamp(parseInt(raw.imageHeight || 360,10) || 360,80,900), labelWidth:clamp(parseInt(raw.labelWidth || 34,10) || 34,20,60),
+                background:/^#[0-9a-f]{6}$/i.test(String(raw.background || '')) ? String(raw.background).toLowerCase() : '#ffffff',
+                textColor:/^#[0-9a-f]{6}$/i.test(String(raw.textColor || '')) ? String(raw.textColor).toLowerCase() : '#30382a',
+                accentColor:/^#[0-9a-f]{6}$/i.test(String(raw.accentColor || '')) ? String(raw.accentColor).toLowerCase() : '#c3ae83',
+                padding:clamp(parseInt(raw.padding || 16,10) || 16,0,80), radius:clamp(parseInt(raw.radius || 4,10) || 4,0,60)
             });
         }
         if (type === 'image') {
@@ -1413,7 +1457,7 @@
         const id = makeId(type);
         const defaultW = defaultWidth(type, parentId);
         const p = placement || { parentId: parentId, x: 0, y: nextFreeY(parentId), w: defaultW, targetId: '', zone: 'free', bandIds: [], bandH: MIN_SPLIT_H };
-        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10, spacer: 4, divider: 6, icon: 10, badge: 8, link: 8, datalist: 18, table: 22 };
+        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10, spacer: 4, divider: 6, icon: 10, badge: 8, link: 8, datalist: 18, table: 22, vehiclelist: 42, vehicledetail: 54 };
         const defaultH = Math.max(MIN_SPLIT_H, parseInt(defaultRows[type] || MIN_SPLIT_H, 10) || MIN_SPLIT_H);
         const newProps = normalizeProps(type, {});
         if (type === 'button' && p.zone === 'overlay') { newProps.placementMode = 'overlay'; }
@@ -1722,6 +1766,32 @@
             grid.headers.forEach(function (value,col) { const th = document.createElement('th'); th.textContent = value; th.style.background = node.props.headerBackground || '#30382a'; th.style.color = node.props.headerTextColor || '#ffffff'; th.style.fontWeight = String(node.props.headerWeight || 700); th.style.padding = String(node.props.cellPadding || 8) + 'px'; configureCell(th,'h'+col); hr.appendChild(th); }); head.appendChild(hr); table.appendChild(head);
             const body = document.createElement('tbody');
             grid.rows.forEach(function (row,rowIndex) { const tr = document.createElement('tr'); row.forEach(function (value,col) { const td = document.createElement('td'); td.textContent = value; td.style.background = node.props.zebra && rowIndex % 2 ? (node.props.zebraBackground || '#f6f7f7') : (node.props.cellBackground || '#ffffff'); td.style.color = node.props.cellTextColor || '#30382a'; td.style.padding = String(node.props.cellPadding || 8) + 'px'; configureCell(td,'r'+rowIndex+'c'+col); tr.appendChild(td); }); body.appendChild(tr); }); table.appendChild(body); wrap.appendChild(table);
+        } else if (node.type === 'vehiclelist') {
+            wrap.classList.add('h18-clean-node-preview--vehiclelist');
+            const records = vehicleRecords().filter(function (record) { return String(record.status || '') === 'publish'; }).slice(0, node.props.limit || 50);
+            const grid = document.createElement('div'); grid.className = 'h18-vd-vehicle-list-preview'; grid.style.gridTemplateColumns = 'repeat(' + String(node.props.columns || 3) + ',minmax(0,1fr))'; grid.style.gap = String(node.props.cardGap || 18) + 'px';
+            if (!records.length) { grid.textContent = 'Ingen publicerede køretøjer endnu · opret dem under Manager → Køretøjer'; }
+            records.forEach(function (record) {
+                const card = document.createElement('article'); card.className = 'h18-vd-vehicle-card-preview'; card.style.background = node.props.cardBackground || '#ffffff'; card.style.color = node.props.textColor || '#30382a'; card.style.padding = String(node.props.cardPadding || 12) + 'px'; card.style.borderRadius = String(node.props.cardRadius || 4) + 'px';
+                if (node.props.showImage && record.featuredUrl) { const img = document.createElement('img'); img.src = String(record.featuredUrl); img.alt = ''; img.style.height = String(node.props.imageHeight || 180) + 'px'; card.appendChild(img); }
+                const title = document.createElement('strong'); title.textContent = String(record.title || 'Køretøj'); card.appendChild(title);
+                const category = vehicleCategory(record); if (node.props.showCategory && category) { const meta = document.createElement('small'); meta.textContent = category; meta.style.color = node.props.accentColor || '#c3ae83'; card.appendChild(meta); }
+                if (node.props.showSummary && record.summary) { const summary = document.createElement('p'); summary.textContent = String(record.summary); card.appendChild(summary); }
+                grid.appendChild(card);
+            }); wrap.appendChild(grid);
+        } else if (node.type === 'vehicledetail') {
+            wrap.classList.add('h18-clean-node-preview--vehicledetail');
+            const record = vehicleRecordById(node.props.recordId) || vehicleRecords().find(function (item) { return String(item.status || '') === 'publish'; }) || null;
+            if (!record) { wrap.textContent = 'Ingen køretøjer at vise · opret data under Manager → Køretøjer'; }
+            else {
+                const detail = document.createElement('div'); detail.className = 'h18-vd-vehicle-detail-preview'; detail.style.background = node.props.background || '#ffffff'; detail.style.color = node.props.textColor || '#30382a'; detail.style.padding = String(node.props.padding || 16) + 'px'; detail.style.borderRadius = String(node.props.radius || 4) + 'px';
+                if (record.featuredUrl) { const img = document.createElement('img'); img.src = String(record.featuredUrl); img.alt = ''; img.style.height = String(node.props.imageHeight || 360) + 'px'; detail.appendChild(img); }
+                const title = document.createElement('h3'); title.textContent = String(record.title || 'Køretøj'); detail.appendChild(title);
+                const category = vehicleCategory(record); if (node.props.showCategory && category) { const meta = document.createElement('strong'); meta.textContent = category; meta.style.color = node.props.accentColor || '#c3ae83'; detail.appendChild(meta); }
+                if (node.props.showSummary && record.summary) { const summary = document.createElement('p'); summary.textContent = String(record.summary); detail.appendChild(summary); }
+                if (node.props.showAttributes && Array.isArray(record.attributes)) { const dl = document.createElement('dl'); record.attributes.filter(function (a) { return a && a.enabled !== false && String(a.value == null ? '' : a.value) !== ''; }).slice(0,12).forEach(function (a) { const dt=document.createElement('dt');dt.textContent=String(a.label||a.key||'Felt');const dd=document.createElement('dd');dd.textContent=String(a.value);dl.appendChild(dt);dl.appendChild(dd); }); detail.appendChild(dl); }
+                wrap.appendChild(detail);
+            }
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
             const alignX = ['left', 'center', 'right'].includes(node.props.imageAlignX) ? node.props.imageAlignX : 'center';
@@ -1944,7 +2014,7 @@
             });
             move.addEventListener('dragend', function () { card.classList.remove('is-dragging'); clearDragState(); });
             const title = document.createElement('strong');
-            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
+            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL',vehiclelist:'KØRETØJSLISTE',vehicledetail:'KØRETØJSDETALJE'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
             header.appendChild(move);
             header.appendChild(title);
             card.appendChild(header);
@@ -2067,7 +2137,7 @@
         const node = nodeById(selectedId);
         if (!node) { host.innerHTML = '<p class="description">Vælg et element på canvas.</p>'; return; }
         const g = node.geometry.desktop;
-        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
+        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL',vehiclelist:'KØRETØJSLISTE',vehicledetail:'KØRETØJSDETALJE'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
         html += '<div class="h18-clean-field-grid"><label>X / 120<input data-field="gx" type="number" min="0" max="119" value="' + g.x + '"></label><label>Bredde / 120<input data-field="gw" type="number" min="1" max="120" value="' + g.w + '"></label><label>Y · 8px<input data-field="gy" type="number" value="' + g.y + '"></label><label>Højde · 8px<input data-field="gh" type="number" min="0" value="' + g.h + '"></label></div>';
         html += '<div class="h18-vd-nudge-inspector"><strong>Finjustering · pixels</strong><div class="h18-clean-field-grid"><label>Offset X px<input data-field="offsetX" type="number" min="-2000" max="2000" value="' + (node.props.offsetX || 0) + '"></label><label>Offset Y px<input data-field="offsetY" type="number" min="-2000" max="2000" value="' + (node.props.offsetY || 0) + '"></label></div><button type="button" class="button" id="h18-clean-reset-offset">Nulstil finjustering</button><p class="description">Piletaster flytter 1 px. Shift + piletast flytter 10 px. Grid-positionen ændres ikke.</p></div>';
         if (node.type === 'text') {
@@ -2124,6 +2194,18 @@
                 html += '<div class="h18-vd-table-selection-note"><strong>' + selectedCells.length + ' celle' + (selectedCells.length === 1 ? '' : 'r') + ' markeret.</strong><div class="h18-vd-table-selection-help">Klik = ny markering · Ctrl/Cmd+klik = til/fra · Shift+klik = rektangulært område.</div></div><div class="h18-vd-table-border-designer"><h4>Kantværktøj</h4><div class="h18-vd-table-pen"><label>Tykkelse px<input id="h18-vd-table-pen-width" type="number" min="0" max="10" value="' + (node.props.cellBorderWidth || 1) + '"></label><label>Farve<input id="h18-vd-table-pen-color" type="color" value="' + escapeAttr(node.props.cellBorderColor || '#dcdcde') + '"></label><label>Stil<select id="h18-vd-table-pen-style"><option value="solid">Solid</option><option value="dashed">Stiplet</option><option value="dotted">Prikket</option></select></label></div><div class="h18-vd-table-border-actions"><button type="button" class="button" data-table-border-action="outer">Yderramme</button><button type="button" class="button" data-table-border-action="inner">Indvendige</button><button type="button" class="button" data-table-border-action="all">Alle</button><button type="button" class="button" data-table-border-action="horizontal">Vandret</button><button type="button" class="button" data-table-border-action="vertical">Lodret</button><button type="button" class="button" data-table-border-action="top">Top</button><button type="button" class="button" data-table-border-action="right">Højre</button><button type="button" class="button" data-table-border-action="bottom">Bund</button><button type="button" class="button" data-table-border-action="left">Venstre</button><button type="button" class="button" data-table-border-action="none">Ingen</button></div></div>';
             } else { html += '<div class="h18-vd-table-selection-note">Klik en eller flere celler i tabel-previewet for at tegne kanter på det valgte område.</div>'; }
             html += '</div>';
+        } else if (node.type === 'vehiclelist') {
+            html += '<div class="h18-vd-menu-group"><h3>Køretøjsliste</h3><p class="description">Data kommer fra Manager → Køretøjer. Listen viser kun publicerede records.</p>';
+            html += '<label>Detaljeside<select data-field="vehicleDetailPageId"><option value="0">Ingen link / vælg senere</option>' + (Array.isArray(CFG.pages) ? CFG.pages.map(function (page) { const id=parseInt(page.id||0,10)||0; return '<option value="'+id+'"'+(parseInt(node.props.detailPageId||0,10)===id?' selected':'')+'>'+escapeHtml(String(page.title||('Side '+id)))+'</option>'; }).join('') : '') + '</select></label>';
+            html += '<div class="h18-clean-field-grid"><label>Kolonner<input data-field="vehicleColumns" type="number" min="1" max="4" value="'+(node.props.columns||3)+'"></label><label>Max. records<input data-field="vehicleLimit" type="number" min="1" max="100" value="'+(node.props.limit||50)+'"></label><label>Sortér efter<select data-field="vehicleOrderBy"><option value="sortOrder"'+(node.props.orderBy==='sortOrder'?' selected':'')+'>Sortering</option><option value="title"'+(node.props.orderBy==='title'?' selected':'')+'>Titel</option><option value="updatedAt"'+(node.props.orderBy==='updatedAt'?' selected':'')+'>Senest ændret</option></select></label><label>Retning<select data-field="vehicleOrder"><option value="ASC"'+(node.props.order!=='DESC'?' selected':'')+'>Stigende</option><option value="DESC"'+(node.props.order==='DESC'?' selected':'')+'>Faldende</option></select></label><label>Kortafstand px<input data-field="vehicleCardGap" type="number" min="0" max="80" value="'+(node.props.cardGap||18)+'"></label><label>Kortpadding px<input data-field="vehicleCardPadding" type="number" min="0" max="60" value="'+(node.props.cardPadding||12)+'"></label><label>Billedhøjde px<input data-field="vehicleImageHeight" type="number" min="60" max="600" value="'+(node.props.imageHeight||180)+'"></label><label>Hjørner px<input data-field="vehicleCardRadius" type="number" min="0" max="60" value="'+(node.props.cardRadius||4)+'"></label></div>';
+            html += '<label class="h18-clean-checkbox"><input data-field="vehicleShowImage" type="checkbox"'+(node.props.showImage!==false?' checked':'')+'> Vis billede</label><label class="h18-clean-checkbox"><input data-field="vehicleShowCategory" type="checkbox"'+(node.props.showCategory!==false?' checked':'')+'> Vis kategori</label><label class="h18-clean-checkbox"><input data-field="vehicleShowSummary" type="checkbox"'+(node.props.showSummary!==false?' checked':'')+'> Vis kort beskrivelse</label><label class="h18-clean-checkbox"><input data-field="vehicleLinkCards" type="checkbox"'+(node.props.linkCards!==false?' checked':'')+'> Link kort til detaljeside med ?h18_vehicle=record-id</label>';
+            html += '<div class="h18-clean-field-grid"><label>Kortbaggrund<input data-field="vehicleCardBackground" type="color" value="'+escapeAttr(node.props.cardBackground||'#ffffff')+'"></label><label>Tekst<input data-field="textColor" type="color" value="'+escapeAttr(node.props.textColor||'#30382a')+'"></label><label>Accent<input data-field="vehicleAccentColor" type="color" value="'+escapeAttr(node.props.accentColor||'#c3ae83')+'"></label></div></div>';
+            if (CFG.vehicleAdminUrl) { html += '<p><a class="button" href="'+escapeAttr(String(CFG.vehicleAdminUrl))+'">Administrér køretøjer</a></p>'; }
+        } else if (node.type === 'vehicledetail') {
+            html += '<div class="h18-vd-menu-group"><h3>Køretøjsdetalje</h3><label>Køretøj<select data-field="vehicleRecordId"><option value="">Fra URL · ?h18_vehicle=record-id</option>'+vehicleRecords().map(function (record) { return '<option value="'+escapeAttr(String(record.id||''))+'"'+(String(node.props.recordId||'')===String(record.id||'')?' selected':'')+'>'+escapeHtml(String(record.title||record.id||'Køretøj'))+' · '+escapeHtml(String(record.status||''))+'</option>'; }).join('')+'</select></label><p class="description">Lad feltet stå på “Fra URL”, når samme detaljeside skal bruges af alle kort i en Køretøjsliste.</p>';
+            html += '<label class="h18-clean-checkbox"><input data-field="vehicleShowGallery" type="checkbox"'+(node.props.showGallery!==false?' checked':'')+'> Vis galleri</label><label class="h18-clean-checkbox"><input data-field="vehicleShowCategory" type="checkbox"'+(node.props.showCategory!==false?' checked':'')+'> Vis kategori</label><label class="h18-clean-checkbox"><input data-field="vehicleShowSummary" type="checkbox"'+(node.props.showSummary!==false?' checked':'')+'> Vis kort beskrivelse</label><label class="h18-clean-checkbox"><input data-field="vehicleShowDescription" type="checkbox"'+(node.props.showDescription!==false?' checked':'')+'> Vis beskrivelse</label><label class="h18-clean-checkbox"><input data-field="vehicleShowAttributes" type="checkbox"'+(node.props.showAttributes!==false?' checked':'')+'> Vis tekniske data</label>';
+            html += '<div class="h18-clean-field-grid"><label>Billedhøjde px<input data-field="vehicleImageHeight" type="number" min="80" max="900" value="'+(node.props.imageHeight||360)+'"></label><label>Labelbredde %<input data-field="vehicleLabelWidth" type="number" min="20" max="60" value="'+(node.props.labelWidth||34)+'"></label><label>Padding px<input data-field="padding" type="number" min="0" max="80" value="'+(node.props.padding||16)+'"></label><label>Hjørner px<input data-field="radius" type="number" min="0" max="60" value="'+(node.props.radius||4)+'"></label><label>Baggrund<input data-field="background" type="color" value="'+escapeAttr(node.props.background||'#ffffff')+'"></label><label>Tekst<input data-field="textColor" type="color" value="'+escapeAttr(node.props.textColor||'#30382a')+'"></label><label>Accent<input data-field="vehicleAccentColor" type="color" value="'+escapeAttr(node.props.accentColor||'#c3ae83')+'"></label></div></div>';
+            if (CFG.vehicleAdminUrl) { html += '<p><a class="button" href="'+escapeAttr(String(CFG.vehicleAdminUrl))+'">Administrér køretøjer</a></p>'; }
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button><p class="description">PNG, JPG/JPEG, WebP, GIF og andre image/*-formater som WordPress tillader. PNG-transparens bevares.</p>';
             html += '<label>Billede i boksen<select data-field="fit"><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet</option><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld boksen · beskær</option><option value="original"' + (node.props.fit === 'original' ? ' selected' : '') + '>Original størrelse</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Stræk til boks</option></select></label>';
@@ -2206,6 +2288,26 @@
                 else if (field === 'tableBorderMode') { current.props.borderMode = ['all','outer','inner','none'].includes(control.value) ? control.value : 'all'; }
                 else if (field === 'headerWeight') { current.props.headerWeight = clamp(parseInt(control.value || 700, 10) || 700, 100, 900); }
                 else if (field === 'mobileTableMode') { current.props.mobileMode = ['scroll','cards'].includes(control.value) ? control.value : 'scroll'; }
+                else if (field === 'vehicleDetailPageId') { current.props.detailPageId = parseInt(control.value || 0,10) || 0; }
+                else if (field === 'vehicleColumns') { current.props.columns = clamp(parseInt(control.value || 3,10) || 3,1,4); }
+                else if (field === 'vehicleLimit') { current.props.limit = clamp(parseInt(control.value || 50,10) || 50,1,100); if (current.props.binding && current.props.binding.query) { current.props.binding.query.limit = current.props.limit; } }
+                else if (field === 'vehicleOrderBy') { current.props.orderBy = ['sortOrder','title','updatedAt'].includes(control.value) ? control.value : 'sortOrder'; if (current.props.binding && current.props.binding.query) { current.props.binding.query.orderBy = current.props.orderBy; } }
+                else if (field === 'vehicleOrder') { current.props.order = control.value === 'DESC' ? 'DESC' : 'ASC'; if (current.props.binding && current.props.binding.query) { current.props.binding.query.order = current.props.order; } }
+                else if (field === 'vehicleCardGap') { current.props.cardGap = clamp(parseInt(control.value || 18,10) || 18,0,80); }
+                else if (field === 'vehicleCardPadding') { current.props.cardPadding = clamp(parseInt(control.value || 12,10) || 12,0,60); }
+                else if (field === 'vehicleImageHeight') { current.props.imageHeight = clamp(parseInt(control.value || 180,10) || 180,current.type === 'vehicledetail' ? 80 : 60,current.type === 'vehicledetail' ? 900 : 600); }
+                else if (field === 'vehicleCardRadius') { current.props.cardRadius = clamp(parseInt(control.value || 4,10) || 4,0,60); }
+                else if (field === 'vehicleShowImage') { current.props.showImage = !!control.checked; }
+                else if (field === 'vehicleShowCategory') { current.props.showCategory = !!control.checked; }
+                else if (field === 'vehicleShowSummary') { current.props.showSummary = !!control.checked; }
+                else if (field === 'vehicleLinkCards') { current.props.linkCards = !!control.checked; }
+                else if (field === 'vehicleCardBackground') { current.props.cardBackground = normalizeColor(control.value || '#ffffff'); }
+                else if (field === 'vehicleAccentColor') { current.props.accentColor = normalizeColor(control.value || '#c3ae83'); }
+                else if (field === 'vehicleRecordId') { current.props.recordId = String(control.value || ''); if (current.props.binding) { current.props.binding.recordId = current.props.recordId; } }
+                else if (field === 'vehicleShowGallery') { current.props.showGallery = !!control.checked; }
+                else if (field === 'vehicleShowDescription') { current.props.showDescription = !!control.checked; }
+                else if (field === 'vehicleShowAttributes') { current.props.showAttributes = !!control.checked; }
+                else if (field === 'vehicleLabelWidth') { current.props.labelWidth = clamp(parseInt(control.value || 34,10) || 34,20,60); }
                 else if (field === 'buttonText') { current.props.text = String(control.value || 'Knap'); }
                 else if (field === 'linkType') { current.props.linkType = ['page', 'url', 'anchor', 'email', 'phone'].includes(control.value) ? control.value : 'url'; }
                 else if (field === 'pageId') { current.props.pageId = parseInt(control.value || 0, 10) || 0; }
