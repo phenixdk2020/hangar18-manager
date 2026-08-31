@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.67",
+      "date": "2026-08-31",
+      "items": [
+        "VD-MODULE-DATA-001: fælles modulregistry for Køretøjer, Events og Billedgalleri.",
+        "Canonical ModuleRecord v1 med stabile record-IDer, standardfelter, dynamiske attributter, media-referencer og SHA-256 digest.",
+        "Privat WordPress-native ModuleStore på h18_module_item med canonical JSON og separate indeks-meta til modul, status og sortering.",
+        "ModuleBinding v1 definerer statisk/modul, liste/detail, query og field-map uden endnu at aktivere dynamisk rendering.",
+        "Den gamle v0.1.65 elementmodel-QA indlæser nu IconRegistry og er forward-kompatibel med 0.1.66+."
+      ]
+    },
+    {
       "version": "0.1.66",
       "date": "2026-08-31",
       "items": [

@@ -1,16 +1,18 @@
 # Hangar18 Manager Clean v0.1.x – canonical clean backlog
 
-**Statusdato:** 30. august 2026  
+**Statusdato:** 31. august 2026  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** eksisterende root-plugin v0.9.x må bruges som specifikation/migrationskilde, men ingen gammel editor-runtime må kopieres ind i clean-pluginet.
 
-## Aktuel milepælsstatus · v0.1.62
+## Aktuel milepælsstatus · v0.1.67
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template baseline, side-overrides, `Ingen`, standardvalg, migration, versionshistorik og delt Preview/frontend-resolver er lukket som regression-gate.
 - **VD-KEYBOARD-001 — IMPLEMENTERET:** markeret element kan finjusteres 1 px med piletaster og 10 px med `Shift + pil`; offset X/Y er canonical og kan nulstilles i Inspector.
 - **VD-CLIPBOARD-001 — IMPLEMENTERET:** `Ctrl/Cmd+C`, `Ctrl/Cmd+V` og `Ctrl/Cmd+D`, subtree-kopi af Kasse/Sektion, nye IDs/parentId-remap og clipboard mellem Designer-sider.
 - **VD-PAGE-DUPLICATE-001 — IMPLEMENTERET:** Sider kan kopieres med nyt navn som selvstændig kladde, nyt WordPress-ID, unik slug og egen Designer-v1-historik.
-- **Næste generelle elementpakke:** Spacer, Divider, Ikon og Tabel/Dataliste. Dynamiske Køretøjer/Events/Billedgalleri følger derefter den separate modularkitektur.
+- **VD-ELEMENTS-001 / VD-ICON-LIBRARY-001 / VD-TABLE-BORDERS-001 — IMPLEMENTERET:** generelle elementer, ikonbibliotek og Excel-lignende tabelkanter er nu canonical Designer-funktioner.
+- **VD-MODULE-DATA-001 — IMPLEMENTERET I v0.1.67:** fælles ModuleRegistry, ModuleRecord, ModuleBinding og privat ModuleStore er fundamentet for Køretøjer, Events og Billedgalleri.
+- **Næste modul:** Køretøjer bygges først oven på den fælles modularkitektur; derefter Events og Billedgalleri.
 
 ## Formål
 
@@ -78,6 +80,14 @@ Denne backlog er arbejdsplanen for den nye WordPress-installation på et rent su
 - GitHub-manifestet peger på en versionslåst ZIP i `dist/`.
 - Update-pakken SHA-256-verificeres mod manifestet før WordPress får lov at installere den.
 - Plugin-headeren bruger `Update URI`, så clean-pluginet ikke kan kollidere med en eventuel WordPress.org-plugin med samme slug.
+
+## Roadmap fra v0.1.67
+
+1. **v0.1.67 – Module/Data Foundation:** registry, canonical recordmodel, private datastore og binding-kontrakt.
+2. **Næste – Køretøjsmodul:** Manager-CRUD, fleksible tekniske datafelter, billeder, sortering og Designer-modul-elementer til liste/detail.
+3. **Derefter – Events:** samme data-/bindingarkitektur med dato, sted, status og eventvisninger.
+4. **Derefter – Billedgalleri:** album/medier på samme modulstore og genbrugelige Designer-visninger.
+5. Dynamisk binding aktiveres først i de konkrete modulelementer; v0.1.67 ændrer ikke eksisterende statiske Data List/Tabel-renderinger.
 
 ## Næste backlog
 

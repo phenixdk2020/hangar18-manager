@@ -1029,3 +1029,14 @@ Visual Designer har canonical leaf-typerne `spacer`, `divider`, `icon`, `badge`,
 ### VD-ADMIN-STATUS-002
 
 - `Log` og `Konvertering` vises som `Klar` i Visual Designer Manager-menuen.
+
+## VD-MODULE-DATA-001 – Fælles modul- og dataarkitektur (v0.1.67)
+
+- `ModuleRegistry` er den eneste registry for modulnøglerne `vehicles`, `events` og `galleries`.
+- `ModuleRecord` schema 1 normaliserer den fælles record-envelope: stabilt ID, titel, slug, status, sortering, featured media, summary, module-specifikke standardfelter, dynamiske attributter samt created/updated timestamps.
+- Dynamiske attributter er ordnede key/label/type/value-records. De er bevidst generiske, så Køretøjer kan få brugerdefinerede tekniske felter uden et nyt databaseformat.
+- `ModuleStore` bruger det private WordPress post type `h18_module_item`. Canonical record gemmes som JSON i `_h18_module_record_v1`; modul, status og sortering har egne meta-indekser.
+- Storage er `public=false`, `show_ui=false` og `show_in_rest=false`. Manager-UI skal altid gå gennem modulets egne kontrollerede actions/services.
+- `ModuleBinding` schema 1 beskriver `static|module`, `list|detail`, record-ID, query og field-map. Kontrakten er foundation i v0.1.67; eksisterende statiske Designer-elementer skifter ikke datasource automatisk.
+- Records har canonical SHA-256 digest, så senere import/migration og QA kan verificere strukturel identitet.
+- Modulrækkefølge: Køretøjer først, derefter Events og Billedgalleri.

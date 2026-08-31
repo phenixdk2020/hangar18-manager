@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.66
+ * Version: 0.1.67
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.66');
+define('H18_CLEAN_VERSION', '0.1.67');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -40,6 +40,10 @@ if (!class_exists('Hangar18_Manager', false)) {
 }
 
 require_once H18_CLEAN_DIR . 'src/Icons/IconRegistry.php';
+require_once H18_CLEAN_DIR . 'src/Modules/ModuleRegistry.php';
+require_once H18_CLEAN_DIR . 'src/Modules/ModuleRecord.php';
+require_once H18_CLEAN_DIR . 'src/Modules/ModuleBinding.php';
+require_once H18_CLEAN_DIR . 'src/Modules/ModuleStore.php';
 require_once H18_CLEAN_DIR . 'src/Model/HierarchyNormalizer.php';
 require_once H18_CLEAN_DIR . 'src/Model/LayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Model/GlobalLayoutModel.php';
@@ -64,6 +68,7 @@ require_once H18_CLEAN_DIR . 'src/Frontend/ThemeShell.php';
 require_once H18_CLEAN_DIR . 'src/Update/GitHubUpdater.php';
 
 add_action('plugins_loaded', static function (): void {
+    \VisualDesignerManager\Modules\ModuleStore::register();
     \VisualDesignerManager\Diagnostics\DiagnosticStore::register();
     \VisualDesignerManager\Admin\EditorController::register();
     \VisualDesignerManager\Admin\AdminController::register();
@@ -149,6 +154,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'userId' => get_current_user_id(),
         'contextLabel' => $contextLabel,
         'iconLibrary' => \VisualDesignerManager\Icons\IconRegistry::editorCatalog(),
+        'moduleCatalog' => \VisualDesignerManager\Modules\ModuleRegistry::editorCatalog(),
         'initialModel' => $model,
         'pages' => array_values(array_map(static function ($page): array { return ['id' => (int) $page->ID, 'title' => (string) $page->post_title]; }, get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC', 'post_status' => ['publish', 'draft', 'pending', 'private', 'future']]))),
         'menus' => $menuPayload,

@@ -624,3 +624,11 @@ Core-biblioteket skal være lokalt, SVG-baseret og uden eksterne font-/ikonafhæ
 ## 26. Tabel – kantdesign
 
 Tabel er et struktureret Designer-element og skal understøtte Excel-lignende kantstyring. En eller flere celler kan markeres, og kantværktøjet kan anvende Yderramme, Indvendige, Alle, Vandret, Lodret, Top, Højre, Bund, Venstre eller Ingen. Stregens tykkelse, farve og stil (`solid`, `dashed`, `dotted`) er canonical data. Celle-overrides gemmes separat fra tabelstandarden og skal fungere med Copy/Paste, Undo/Redo, Save/Reload, Preview og frontend.
+
+## Module/Data Foundation v0.1.67
+
+Visual Designer Manager skelner nu mellem **statiske elementdata** og **genbrugelige moduldata**. Køretøjer, Events og Billedgalleri skal ikke gemmes som kopier inde i hver side. De får en fælles central datastore og kan senere vises gennem dynamiske Designer-elementer.
+
+Et modulrecord har fælles titel/status/billede/sortering samt modul-specifikke standardfelter. Derudover findes ordnede, brugerdefinerede attributter. Det er især grundlaget for Køretøjer, hvor tekniske datafelter skal kunne tilføjes, skjules og sorteres uden at ændre datamodellen.
+
+v0.1.67 indeholder **ikke** den endelige Køretøjer-Manager eller dynamisk frontendbinding. Den etablerer den datakontrakt, som næste version bygger UI og visninger oven på.
