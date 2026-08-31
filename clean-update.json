@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.68",
+  "version": "0.1.69",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.68.zip",
-  "sha256": "d610d52f6e588a86a5f6423901ebffb1830964a5ee336829f9a266912ca8e8b8",
-  "source_commit": "351dcba434cd4bdb11434249b16831aa896818bc",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.69.zip",
+  "sha256": "be57fff0a3cf0352f944ff12e2fd6dad70da60dad31fe8f57d397277fa7be8d2",
+  "source_commit": "8e47798e034382b1a67dd9b24cddc16aefb28d1b",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.68 – Canvas/Section Structure</h4>\n<ul>\n<li>Alle Designer-sider følger nu canonical Webside → Sektion → Kasse/Element.</li>\n<li>Eksisterende sider migreres automatisk med rå backup, ID-bevarelse, rollback og ny Designer-version.</li>\n<li>Nye root-elementer pakkes automatisk i en Sektion; Sektioner kan kun ligge direkte på websiden.</li>\n<li>Markerede, trukne og resized elementer ligger midlertidigt øverst i Designeren uden at ændre frontendens z-index.</li>\n<li>Køretøjsmodulet flyttes til næste version oven på den færdige Canvas/Section-kontrakt.</li>\n</ul>"
+    "changelog": "<h4>0.1.69 – Canvas Auto Height</h4>\n<ul>\n<li>Webside/canvas udvider sig automatisk under den nederste root-Sektion.</li>\n<li>Canvas krymper igen, når Sektioner flyttes op eller slettes.</li>\n<li>Synkronisering gælder flytning, resize, add, paste/duplicate, delete, Undo/Redo og responsive skift.</li>\n<li>Ingen canonical geometri eller frontend z-index ændres af auto-height.</li>\n</ul>"
   }
 }
