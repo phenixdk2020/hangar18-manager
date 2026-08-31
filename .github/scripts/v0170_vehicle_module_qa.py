@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+# Authenticated re-trigger after guarded apply-script repair.
 from pathlib import Path
 import json
 import re
