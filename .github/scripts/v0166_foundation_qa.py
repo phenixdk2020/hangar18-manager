@@ -124,8 +124,10 @@ try:
         '- solid/dashed/dotted.',
     ])
     require('docs/v0166-status.md', ['Status: TESTKANDIDAT', 'Custom icon upload', 'Køretøjsmodulet'])
-    require('clean-release-notes.html', ['0.1.66 – Icon Library, Tabelkanter og Menu-preview'])
     require('clean/hangar18-manager/release-history.json', ['"version": "0.1.66"'])
+
+    # This QA validates the persistent v0.1.66 contract on later releases.
+    # Current release notes are intentionally not version-locked here.
 
 except AssertionError as exc:
     print(f'V0166 FOUNDATION QA FAIL: {exc}', file=sys.stderr)
