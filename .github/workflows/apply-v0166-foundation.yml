@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/scripts/apply_v0166_foundation.py'
       - '.github/scripts/fix_v0165_qa_forward.py'
+      - '.github/scripts/fix_v0166_history_apply.py'
       - '.github/scripts/v0166_foundation_qa.py'
       - '.github/workflows/apply-v0166-foundation.yml'
       - 'clean/hangar18-manager/src/Icons/IconRegistry.php'
@@ -25,6 +26,7 @@ jobs:
       - name: Apply v0.1.66 source changes
         run: |
           set -euo pipefail
+          python3 .github/scripts/fix_v0166_history_apply.py
           python3 .github/scripts/apply_v0166_foundation.py
           python3 .github/scripts/fix_v0165_qa_forward.py
 
