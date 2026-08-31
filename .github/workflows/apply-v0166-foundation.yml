@@ -52,7 +52,7 @@ jobs:
           set -euo pipefail
           git status --short
           test -n "$(git status --short)"
-          if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/|CLEAN-DESIGN-MANUAL.md|CLEAN-TECHNICAL-MANUAL.md|clean-release-notes.html|docs/v0166-status.md|\.github/scripts/v0165_general_elements_qa.py)'; then
+          if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/|CLEAN-DESIGN-MANUAL.md|CLEAN-TECHNICAL-MANUAL.md|clean-release-notes.html|docs/v0166-status.md|\.github/scripts/v0165_general_elements_qa.py|\.github/scripts/apply_v0166_foundation.py)'; then
             echo 'Unexpected v0.1.66 modified path.' >&2
             exit 1
           fi
