@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path('.')
 PLUGIN = (ROOT / 'clean/hangar18-manager/hangar18-manager.php').read_text(encoding='utf-8')
@@ -13,7 +14,10 @@ def require(condition: bool, label: str) -> None:
     print('PASS: ' + label)
 
 
-require('Version: 0.1.64' in PLUGIN and "H18_CLEAN_VERSION', '0.1.64'" in PLUGIN, 'plugin/runtime version 0.1.64')
+version_match = re.search(r'Version:\s*([0-9]+)\.([0-9]+)\.([0-9]+)', PLUGIN)
+version_tuple = tuple(int(part) for part in version_match.groups()) if version_match else (0, 0, 0)
+version_text = '.'.join(str(part) for part in version_tuple)
+require(version_tuple >= (0, 1, 64) and f"H18_CLEAN_VERSION', '{version_text}'" in PLUGIN, f'plugin/runtime version {version_text} is 0.1.64 or newer')
 require("wp_dequeue_script('h18-clean-editor')" in PLUGIN, 'legacy editor runtime is explicitly dequeued')
 require("H18_CLEAN_URL . 'assets/editor-v018-core.js'" in PLUGIN, 'shared current core runtime is enqueued')
 require("$isPageDesigner = strpos($hook, 'h18-clean-editor') !== false;" in PLUGIN, 'shared core applies to Page Designer')
@@ -40,4 +44,4 @@ require('mobile: normalizeDevice(item.geometry && item.geometry.mobile, true)' i
 require('### BUG-23 / VD-CLIPBOARD-002' in TECH, 'technical clipboard contract documented')
 require(STATUS.is_file() and STATUS.stat().st_size > 0, 'v0.1.64 status file exists')
 
-print('v0.1.64 Designer clipboard runtime QA PASS')
+print('v0.1.64 Designer clipboard runtime QA PASS (forward-compatible)')
