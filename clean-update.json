@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.67",
+  "version": "0.1.68",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.67.zip",
-  "sha256": "e1e860c120d4eea7efb28676694143b87ab7583a8093c2b2daf8cbf61277587c",
-  "source_commit": "41bf709b642f7df86c88fd8fc265d21db4ca7c6f",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.68.zip",
+  "sha256": "d610d52f6e588a86a5f6423901ebffb1830964a5ee336829f9a266912ca8e8b8",
+  "source_commit": "351dcba434cd4bdb11434249b16831aa896818bc",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.67 – Module/Data Foundation</h4>\n<ul>\n<li>Fælles ModuleRegistry for Køretøjer, Events og Billedgalleri.</li>\n<li>Canonical ModuleRecord v1 med fleksible, ordnede attributter til bl.a. tekniske køretøjsdata.</li>\n<li>Privat WordPress ModuleStore med canonical JSON, indeks-meta og SHA-256 digest.</li>\n<li>ModuleBinding v1 for kommende liste/detail-elementer og dynamisk datasource.</li>\n<li>Release-QA er forward-kompatibel med Icon Library fra v0.1.66.</li>\n</ul>"
+    "changelog": "<h4>0.1.68 – Canvas/Section Structure</h4>\n<ul>\n<li>Alle Designer-sider følger nu canonical Webside → Sektion → Kasse/Element.</li>\n<li>Eksisterende sider migreres automatisk med rå backup, ID-bevarelse, rollback og ny Designer-version.</li>\n<li>Nye root-elementer pakkes automatisk i en Sektion; Sektioner kan kun ligge direkte på websiden.</li>\n<li>Markerede, trukne og resized elementer ligger midlertidigt øverst i Designeren uden at ændre frontendens z-index.</li>\n<li>Køretøjsmodulet flyttes til næste version oven på den færdige Canvas/Section-kontrakt.</li>\n</ul>"
   }
 }
