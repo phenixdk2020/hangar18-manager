@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Repair malformed Inspector insertion block
+      - name: Repair VehicleFieldRegistry generator syntax
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -25,17 +25,11 @@ jobs:
 
           path = Path('.github/scripts/apply_v0170_vehicle_module.py')
           value = path.read_text(encoding='utf-8')
-          lines = value.splitlines(keepends=True)
-          start = next((i for i, line in enumerate(lines) if line.startswith('regex_once(js_path, r"(') and 'h18-clean-pick-image' in line), None)
-          if start is None:
-              raise SystemExit('Malformed v0.1.70 block was not found')
-          end = start + 1
-          while end < len(lines) and not lines[end].startswith('# Inspector field handlers.'):
-              end += 1
-          if end >= len(lines):
-              raise SystemExit('Inspector field handler boundary was not found')
-          replacement = '''value = read(js_path)\nbutton_pos = value.find('h18-clean-pick-image')\nif button_pos < 0:\n    raise RuntimeError(f'{js_path}: image Inspector marker missing')\nbranch_marker = "        } else if (node.type === 'image') {\\n"\nbranch_pos = value.rfind(branch_marker, 0, button_pos)\nif branch_pos < 0:\n    raise RuntimeError(f'{js_path}: image Inspector branch missing')\nwrite(js_path, value[:branch_pos] + inspector_vehicle + value[branch_pos:])\n\n'''
-          path.write_text(''.join(lines[:start]) + replacement + ''.join(lines[end:]), encoding='utf-8')
+          broken = "                'order' => max(0, min(100000, (int) ($row['order'] ?? (($index + 1) * 10))),\n"
+          fixed = "                'order' => max(0, min(100000, (int) ($row['order'] ?? (($index + 1) * 10)))),\n"
+          if value.count(broken) != 1:
+              raise SystemExit(f'Expected exactly one broken VehicleFieldRegistry order expression, found {value.count(broken)}')
+          path.write_text(value.replace(broken, fixed, 1), encoding='utf-8')
           PY
           python3 -m py_compile .github/scripts/apply_v0170_vehicle_module.py
 
@@ -46,7 +40,7 @@ jobs:
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
           git add .github/scripts/apply_v0170_vehicle_module.py
           git diff --cached --check
-          git commit -m 'Fix v0.1.70 apply script syntax'
+          git commit -m 'Fix v0.1.70 VehicleFieldRegistry generator syntax'
           for attempt in 1 2 3; do
             git fetch origin main
             git rebase origin/main
