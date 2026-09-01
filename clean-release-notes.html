@@ -1,8 +1,9 @@
-<h2>0.1.76 – Modulvisning og _old-paritet</h2>
+<h2>0.1.77 – Redigerbart moduldesign</h2>
 <ul>
-<li><strong>Designer/frontend-paritet:</strong> Events, Billedgalleri og Køretøjer bruger nu den samme canonical <code>CollectionPageRenderer</code> i Designer-preview og på den offentlige side.</li>
-<li>Designer viser de tre dynamiske samlingssider i en same-origin frontend-iframe i stedet for separate JS-efterligninger, så kort, typografi, søgning/sortering og responsive regler ikke kan drive fra frontend.</li>
-<li><strong>Visuel _old-paritet:</strong> 90 % sideframe uden kunstigt max-width-loft, 3/2/1 responsive kolonner, fuldbredde 16:9 coverbilleder, beige kortkrop, kompakt spacing og ingen kunstig kortskygge.</li>
-<li>WordPress admin-bar skjules kun i Designerens modul-preview, så preview-geometrien svarer til offentlig visning for redaktører.</li>
-<li>Funktionerne fra v0.1.75 bevares: Kontakt/Bliv medlem-formularer, eventarkiv, event→album samt søgning/sortering på de tre modulsider.</li>
+<li><strong>Events, Billedgalleri og Køretøjer:</strong> de tre canonical modulsider kan nu designes direkte i Visual Designer uden at opgive Designer/frontend-paritet.</li>
+<li>Nyt <strong>Moduldesign</strong> styrer sidebredde, kolonner pr. breakpoint, kortafstand/maksbredde, baggrund, tekstfarve, padding, radius, billedformat, typografi, accentfarve og sektionsafstand.</li>
+<li>Designændringer vises live i den samme <code>CollectionPageRenderer</code> som frontend via en autoriseret same-origin preview-override.</li>
+<li><code>_old</code>-udseendet er fortsat standardprofil: 90% frame, 3/2/1 kolonner, 22px gap, beige kortkrop og 16:9 coverbilleder.</li>
+<li>Moduldesign gemmes versionsstyret og følger restore af tidligere Designer-versioner.</li>
+<li>Alle funktioner fra v0.1.76 bevares, herunder søgning/sortering, eventarkiv, event→album samt Kontakt/Bliv medlem-formularer.</li>
 </ul>

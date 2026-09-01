@@ -1,11 +1,11 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
 **Statusdato:** 1. september 2026  
-**Aktuel release:** v0.1.76  
+**Aktuel release:** v0.1.77  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.76
+## Aktuel milepælsstatus · v0.1.77
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
 - **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
@@ -20,6 +20,7 @@
 - **VD-SITE-DESIGN-HARMONY-001 — IMPLEMENTERET I v0.1.72:** de seks øvrige hovedsider harmoniseres sikkert med Hjem med backup og versionering.
 - **VD-EDITOR-FRONTEND-PARITY-001 — IMPLEMENTERET I v0.1.73:** editor-chrome ligger som overlay og påvirker ikke længere den visuelle nodegeometri for sider, Header eller Footer.
 - **VD-MODULE-CUTOVER-001 — IMPLEMENTERET I v0.1.74:** Events, Billedgalleri og Køretøjer/materiel bruger dynamisk flow-rendering og naturlig indholdshøjde; `_old` er reference, mens den endelige visuelle paritet håndteres særskilt.
+- **VD-MODULE-DESIGN-001 — IMPLEMENTERET I v0.1.77:** Events, Billedgalleri og Køretøjer har redigerbart Moduldesign med live canonical preview og versionsstyrede design-snapshots.
 - **VD-EVENT-MODULE-001 — IMPLEMENTERET I v0.1.71:** Events har Manager-CRUD, dato/tid, sted, billede, kommende/afholdte regler og Designer list/detail-binding.
 - **VD-GALLERY-MODULE-001 — IMPLEMENTERET I v0.1.72:** Album har CRUD, cover, Media Library-liste og Designer oversigt/detail.
 - **VD-SITE-DESIGN-HARMONY-001 — IMPLEMENTERET I v0.1.72:** de seks øvrige hovedsider harmoniseres sikkert med Hjem med backup og versionering.
@@ -34,6 +35,7 @@
 6. **v0.1.74 – Modul-cutover — FÆRDIG FUNKTIONELT:** de tre dynamiske samlingssider fik data-flow og naturlig flow-højde; 1:1-visuel `_old`-paritet var ikke afsluttet her.
 7. **v0.1.75 – Formularer, søgning og eventarkiv — FÆRDIG:** Kontakt/Bliv medlem-formularer, sideprovisionering, søgning/sortering, event→album og end-of-day arkivregel.
 8. **v0.1.76 – VD-MODULE-VISUAL-PARITY-002 — FÆRDIG:** Events, Billedgalleri og Køretøjer bruger samme canonical frontend-rendering i Designer-preview; kortgeometri, billeder, beige kortkrop, spacing og responsive regler er justeret mod `_old`.
+9. **v0.1.77 – VD-MODULE-DESIGN-001 — FÆRDIG:** de tre canonical modulsider har redigerbar side-/kortgeometri, typografi og farver med live preview i samme frontend-renderer.
 
 ## Åben backlog
 
@@ -56,6 +58,14 @@
 - Dermed er kort, billeder, typografi, søgning/sortering og responsive regler den samme rendering i Designer og frontend.
 - Frontend-kort er justeret mod `_old`: 90% frame uden kunstigt max-width-loft, 3/2/1 kolonner, fuldbredde 16:9 cover, beige kortkrop, ingen kunstig skygge og mere kompakt spacing.
 - Opgaven er inkluderet i v0.1.76; ZIP og updater-manifest bygges og verificeres af den centrale release-workflow.
+
+### VD-MODULE-DESIGN-001 — FÆRDIG I v0.1.77
+- Gælder `events`, `billedgalleri` og `koeretoejer-og-materiel`.
+- Moduldesign ligger i separat canonical post-meta med validerede defaults og max-grænser.
+- Designer viser et Moduldesign-panel ved siden af canonical iframe-preview og opdaterer preview live.
+- Frontend bruger kun gemt design; preview-override accepteres kun for brugere med `edit_pages`.
+- Designændringer opretter en Designer-version og snapshot, som versions-restore kan gendanne.
+- Standardprofilen bevarer v0.1.76/_old-paritet.
 
 ### CLEAN-RESPONSIVE-009 — DELVIST / MANUEL QA
 - Canonical model har Desktop/Laptop/Tablet/Mobil geometri og arv.

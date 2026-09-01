@@ -1,0 +1,11 @@
+/* VD-MODULE-DESIGN-001 · v0.1.77 */
+.h18-vd-module-designer-layout{display:grid;grid-template-columns:minmax(270px,330px) minmax(0,1fr);gap:20px;align-items:start;margin-top:18px}
+.h18-vd-module-design-panel{position:sticky;top:32px;background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:16px;box-sizing:border-box}
+.h18-vd-module-design-panel h2{margin:0 0 6px;font-size:18px}.h18-vd-module-design-panel>p{margin:0 0 16px;color:#646970}
+.h18-vd-module-design-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.h18-vd-module-design-grid label{display:flex;flex-direction:column;gap:5px;font-weight:600;min-width:0}
+.h18-vd-module-design-grid input,.h18-vd-module-design-grid select{width:100%;min-width:0;box-sizing:border-box}.h18-vd-module-design-grid input[type=color]{min-height:38px;padding:2px}
+.h18-vd-module-design-span-2{grid-column:1/-1}.h18-vd-module-design-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.h18-vd-module-design-help{margin-top:12px!important;font-size:12px}
+.h18-vd-module-designer-layout .h18-vd-module-canonical-preview{margin:0;min-width:0}.h18-vd-module-designer-layout .h18-vd-module-canonical-frame{min-height:760px}
+@media(max-width:1100px){.h18-vd-module-designer-layout{grid-template-columns:1fr}.h18-vd-module-design-panel{position:static}.h18-vd-module-design-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.h18-vd-module-design-span-2{grid-column:auto}}
+@media(max-width:782px){.h18-vd-module-design-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.h18-vd-module-design-grid{grid-template-columns:1fr}}

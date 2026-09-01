@@ -8,6 +8,7 @@ use VisualDesignerManager\Diagnostics\DiagnosticStore;
 use VisualDesignerManager\Frontend\CollectionPageRenderer;
 use VisualDesignerManager\Frontend\Renderer;
 use VisualDesignerManager\Model\LayoutModel;
+use VisualDesignerManager\Model\ModuleDesignModel;
 use VisualDesignerManager\Model\TemplateLayoutModel;
 use VisualDesignerManager\Update\GitHubUpdater;
 
@@ -61,6 +62,8 @@ final class EditorController
         wp_enqueue_media();
         wp_enqueue_style('h18-clean-editor', H18_CLEAN_URL . 'assets/editor.css', [], H18_CLEAN_VERSION);
         wp_enqueue_script('h18-clean-editor', H18_CLEAN_URL . 'assets/editor.js', ['jquery'], H18_CLEAN_VERSION, true);
+        wp_enqueue_style('h18-vd-module-design-v0177', H18_CLEAN_URL . 'assets/module-design-v0177.css', [], H18_CLEAN_VERSION);
+        wp_enqueue_script('h18-vd-module-design-v0177', H18_CLEAN_URL . 'assets/module-design-v0177.js', [], H18_CLEAN_VERSION, true);
 
         $postId = isset($_GET['post']) ? absint($_GET['post']) : 0;
         $model = $postId > 0 && get_post_type($postId) === 'page' ? LayoutModel::get($postId) : LayoutModel::empty();
@@ -95,6 +98,8 @@ final class EditorController
         }
         TemplateLayoutModel::ensureMigrated();
         $isCollectionPage = CollectionPageRenderer::supports($postId);
+        $moduleDesign = $isCollectionPage ? ModuleDesignModel::get($postId) : [];
+        $moduleDesignDefaults = $isCollectionPage ? ModuleDesignModel::defaults() : [];
         $model = LayoutModel::get($postId);
         $headerTemplates = TemplateLayoutModel::all('header');
         $footerTemplates = TemplateLayoutModel::all('footer');
@@ -124,6 +129,7 @@ final class EditorController
         echo '<input type="hidden" name="post_id" value="' . esc_attr((string) $postId) . '">';
         echo '<input type="hidden" id="h18-clean-model-json" name="model_json" value="' . esc_attr((string) wp_json_encode($model)) . '">';
         echo '<input type="hidden" id="h18-clean-change-note" name="change_note" value="">';
+        echo '<input type="hidden" id="h18-module-design-json" name="module_design_json" value="' . esc_attr((string) wp_json_encode($moduleDesign)) . '">';
 
         echo '<section class="h18-clean-page-shell"><strong>Header / Footer på denne side</strong><label>Header <select name="header_template_choice">';
         echo '<option value="auto"' . selected($headerChoice, 'auto', false) . '>Automatisk / standard</option><option value="none"' . selected($headerChoice, 'none', false) . '>Ingen Header</option>';
@@ -159,14 +165,54 @@ final class EditorController
             $moduleLabel = $moduleSlug === 'events'
                 ? 'Events'
                 : ($moduleSlug === 'billedgalleri' ? 'Billedgalleri' : 'Køretøjer');
+            $permalink = get_permalink($postId);
+            $previewBaseUrl = is_string($permalink) ? $permalink : '';
             $previewUrl = add_query_arg([
                 'h18_vd_module_preview' => '1',
                 'h18_vd_module_preview_version' => H18_CLEAN_VERSION,
-            ], get_permalink($postId));
+                'h18_vd_module_design' => (string) wp_json_encode($moduleDesign),
+            ], $previewBaseUrl);
+
+            echo '<div class="h18-vd-module-designer-layout">';
+            echo '<aside class="h18-vd-module-design-panel" data-defaults="' . esc_attr((string) wp_json_encode($moduleDesignDefaults)) . '">';
+            echo '<h2>Moduldesign</h2><p>Ændringer vises direkte i den samme renderer som den offentlige side.</p>';
+            echo '<div class="h18-vd-module-design-grid">';
+            $numberFields = [
+                'pageWidth' => ['Sidebredde (%)', 60, 100, 1],
+                'columnsDesktop' => ['Kolonner · Desktop', 1, 4, 1],
+                'columnsTablet' => ['Kolonner · Tablet', 1, 3, 1],
+                'columnsMobile' => ['Kolonner · Mobil', 1, 2, 1],
+                'cardGap' => ['Afstand mellem kort (px)', 0, 64, 1],
+                'cardMaxWidth' => ['Maks. kortbredde (px · 0=auto)', 0, 900, 10],
+                'cardPaddingX' => ['Kort padding vandret (px)', 0, 64, 1],
+                'cardPaddingY' => ['Kort padding lodret (px)', 0, 64, 1],
+                'cardRadius' => ['Hjørneradius (px)', 0, 40, 1],
+                'sectionGap' => ['Afstand mellem sektioner (px)', 12, 100, 1],
+                'h1Size' => ['H1 størrelse (px)', 24, 72, 1],
+                'h2Size' => ['H2 størrelse (px)', 18, 56, 1],
+                'h3Size' => ['Korttitel/H3 (px)', 14, 40, 1],
+                'bodySize' => ['Brødtekst (px)', 12, 24, 1],
+            ];
+            foreach ($numberFields as $key => $field) {
+                echo '<label>' . esc_html((string) $field[0]) . '<input type="number" min="' . esc_attr((string) $field[1]) . '" max="' . esc_attr((string) $field[2]) . '" step="' . esc_attr((string) $field[3]) . '" value="' . esc_attr((string) ($moduleDesign[$key] ?? '')) . '" data-module-design-key="' . esc_attr($key) . '"></label>';
+            }
+            echo '<label>Kortbillede format<select data-module-design-key="imageRatio">';
+            foreach (['16/9' => '16:9', '3/2' => '3:2', '4/3' => '4:3', '1/1' => '1:1'] as $value => $label) {
+                echo '<option value="' . esc_attr($value) . '"' . selected((string) ($moduleDesign['imageRatio'] ?? '16/9'), $value, false) . '>' . esc_html($label) . '</option>';
+            }
+            echo '</select></label>';
+            echo '<label>Kortbaggrund<input type="color" value="' . esc_attr((string) ($moduleDesign['cardBackground'] ?? '#eee8dc')) . '" data-module-design-key="cardBackground"></label>';
+            echo '<label>Tekstfarve<input type="color" value="' . esc_attr((string) ($moduleDesign['cardTextColor'] ?? '#30382a')) . '" data-module-design-key="cardTextColor"></label>';
+            echo '<label>Accent/linkfarve<input type="color" value="' . esc_attr((string) ($moduleDesign['accentColor'] ?? '#536243')) . '" data-module-design-key="accentColor"></label>';
+            echo '</div>';
+            echo '<div class="h18-vd-module-design-actions"><button type="button" class="button" data-module-design-reset>Nulstil til _old-standard</button></div>';
+            echo '<p class="h18-vd-module-design-help">Gem som ny version gemmer også Moduldesign. Versions-restore gendanner designet sammen med siden.</p>';
+            echo '</aside>';
+
             echo '<section class="h18-vd-module-canonical-preview">';
-            echo '<div class="h18-vd-module-canonical-preview-head"><div><strong>Canonical modul-preview · ' . esc_html($moduleLabel) . '</strong><p>Dette er den samme frontend-rendering som den offentlige side. Moduldata redigeres i Manageren, så Designer og frontend ikke kan drive visuelt fra hinanden.</p></div><div class="h18-vd-module-canonical-preview-actions"><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=' . $moduleAdminPage)) . '">Redigér ' . esc_html($moduleLabel) . '</a><a class="button" target="_blank" rel="noopener" href="' . esc_url(get_permalink($postId)) . '">Åbn offentlig side</a></div></div>';
-            echo '<iframe class="h18-vd-module-canonical-frame" title="Canonical frontend-preview" src="' . esc_url($previewUrl) . '" loading="eager"></iframe>';
-            echo '</section>';
+            echo '<div class="h18-vd-module-canonical-preview-head"><div><strong>Canonical modul-preview · ' . esc_html($moduleLabel) . '</strong><p>Preview og frontend bruger samme CollectionPageRenderer. Moduldata redigeres fortsat i Manageren.</p></div><div class="h18-vd-module-canonical-preview-actions"><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=' . $moduleAdminPage)) . '">Redigér ' . esc_html($moduleLabel) . '</a><a class="button" target="_blank" rel="noopener" href="' . esc_url($previewBaseUrl) . '">Åbn offentlig side</a></div></div>';
+            echo '<iframe class="h18-vd-module-canonical-frame" title="Canonical frontend-preview" data-base-url="' . esc_attr($previewBaseUrl) . '" src="' . esc_url($previewUrl) . '" loading="eager"></iframe>';
+            echo '</section></div>';
         } else {
         echo '<div class="h18-clean-workspace">';
         echo '<aside class="h18-clean-palette"><h2>Elementer</h2>';
@@ -267,6 +313,18 @@ final class EditorController
             $sameModel = hash_equals(LayoutModel::structuralDigest(LayoutModel::get($postId)), LayoutModel::structuralDigest($normalized));
             $sameShell = TemplateLayoutModel::pageChoice($postId, 'header') === ($headerChoice !== '' ? $headerChoice : 'auto')
                 && TemplateLayoutModel::pageChoice($postId, 'footer') === ($footerChoice !== '' ? $footerChoice : 'auto');
+            $isCollectionPage = CollectionPageRenderer::supports($postId);
+            $moduleDesign = $isCollectionPage ? ModuleDesignModel::get($postId) : [];
+            $sameModuleDesign = true;
+            if ($isCollectionPage) {
+                $moduleDesignJson = isset($_POST['module_design_json']) ? (string) wp_unslash($_POST['module_design_json']) : '';
+                $moduleDesignRaw = json_decode($moduleDesignJson, true);
+                if (!is_array($moduleDesignRaw)) {
+                    throw new \RuntimeException('Moduldesign mangler eller er ugyldigt.');
+                }
+                $moduleDesign = ModuleDesignModel::normalize($moduleDesignRaw);
+                $sameModuleDesign = hash_equals(ModuleDesignModel::digest(ModuleDesignModel::get($postId)), ModuleDesignModel::digest($moduleDesign));
+            }
             $statusAction = sanitize_key((string) wp_unslash($_POST['post_status_action'] ?? ''));
             $desiredStatus = in_array($statusAction, ['publish', 'draft'], true) ? $statusAction : '';
             $currentPostStatus = (string) get_post_status($postId);
@@ -274,20 +332,23 @@ final class EditorController
             if ($desiredStatus === 'publish' && !current_user_can('publish_pages')) {
                 throw new \RuntimeException('Du har ikke rettighed til at publicere sider.');
             }
-            if ($currentVersion > 0 && $sameModel && $sameShell && !$statusChanged) {
+            if ($currentVersion > 0 && $sameModel && $sameShell && $sameModuleDesign && !$statusChanged) {
                 // A previous Designer save may already be canonical while a page cache still
                 // contains older frontend HTML. Touching the page is therefore intentional
                 // even on a canonical no-op save.
                 self::touchFrontendPage($postId, '', $currentVersion);
-                DiagnosticStore::append($postId, 'save_noop', ['version' => $currentVersion, 'reason' => 'canonical-model-and-shell-unchanged']);
+                DiagnosticStore::append($postId, 'save_noop', ['version' => $currentVersion, 'reason' => 'canonical-model-and-shell-unchanged; module-design-unchanged']);
                 self::redirect($postId, 'info', 'Ingen ændringer at gemme.');
             }
-            if ($currentVersion > 0 && $sameModel && $sameShell) {
+            if ($currentVersion > 0 && $sameModel && $sameShell && $sameModuleDesign) {
                 $version = $currentVersion;
             } else {
-                $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : 'Gemt Visual Designer-layout');
+                $version = LayoutModel::saveVersion($postId, $normalized, get_current_user_id(), $note !== '' ? $note : ($isCollectionPage ? 'Gemt Moduldesign' : 'Gemt Visual Designer-layout'));
                 TemplateLayoutModel::setPageChoice($postId, 'header', $headerChoice);
                 TemplateLayoutModel::setPageChoice($postId, 'footer', $footerChoice);
+                if ($isCollectionPage) {
+                    ModuleDesignModel::save($postId, $moduleDesign, $version);
+                }
             }
             // LayoutModel::saveVersion() writes canonical Designer data to post meta.
             // Touch the WordPress page only AFTER those writes so conventional WordPress,
@@ -461,6 +522,8 @@ final class EditorController
                 set_post_thumbnail($copyId, $thumb);
             }
             $copyVersion = LayoutModel::saveVersion($copyId, $target, get_current_user_id(), 'Kopi fra side ' . $postId . ' · v' . $targetVersion);
+            $copyDesign = ModuleDesignModel::historyDesign($postId, $targetVersion);
+            if ($copyDesign !== null) { ModuleDesignModel::save($copyId, $copyDesign, $copyVersion); }
             DiagnosticStore::append($postId, 'restore_copy_result', ['targetVersion' => $targetVersion, 'copyPostId' => $copyId, 'copyVersion' => $copyVersion]);
             self::redirect($copyId, 'success', 'Kopi oprettet som kladde fra v' . $targetVersion . '. Kopien starter sin egen historik ved v' . $copyVersion . '.');
         } catch (\Throwable $error) {
@@ -498,6 +561,8 @@ final class EditorController
                 get_current_user_id(),
                 'Restore fra v' . $targetVersion
             );
+            $restoredDesign = ModuleDesignModel::historyDesign($postId, $targetVersion);
+            if ($restoredDesign !== null) { ModuleDesignModel::save($postId, $restoredDesign, $newVersion); }
             self::touchFrontendPage($postId, '', $newVersion);
             DiagnosticStore::append($postId, 'restore_result', [
                 'targetVersion' => $targetVersion,

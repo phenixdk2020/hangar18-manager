@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.77",
+      "date": "2026-09-01",
+      "items": [
+        "VD-MODULE-DESIGN-001: Events, Billedgalleri og Køretøjer får redigerbart Moduldesign uden separat frontend-implementation.",
+        "Sidebredde, responsive kolonner, kort-gap/maksbredde, farver, padding, radius, billedformat, typografi og sektionsafstand kan justeres.",
+        "Designerens live preview sender en autoriseret design-override til samme CollectionPageRenderer som den offentlige side.",
+        "_old-profilen er standard: 90% frame, 3/2/1 kolonner, 22px gap, #eee8dc og 16:9.",
+        "Moduldesign snapshots kobles til Designer-versioner og følger versions-restore."
+      ]
+    },
+    {
       "version": "0.1.76",
       "date": "2026-09-01",
       "items": [
