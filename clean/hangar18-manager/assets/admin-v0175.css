@@ -9,3 +9,10 @@
 .h18-vd-palette-group>summary{cursor:pointer;padding:8px 10px;font-weight:700;color:#30382a}
 .h18-vd-palette-group-items{display:grid;gap:6px;padding:0 8px 8px}.h18-vd-palette-group-items .button{width:100%;text-align:left}
 .h18-vd-form-preview{display:flex;flex-direction:column;gap:9px;width:100%;height:100%;box-sizing:border-box;overflow:hidden}.h18-vd-form-preview h3,.h18-vd-form-preview p{margin:0}.h18-vd-form-preview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.h18-vd-form-preview-grid span{border:1px solid #c9c9c3;border-radius:3px;padding:7px;font-size:11px}.h18-vd-form-preview-submit{align-self:flex-start;color:#fff;border-radius:3px;padding:7px 12px}
+
+/* VD-MODULE-VISUAL-PARITY-002 - collection pages use the actual frontend renderer in Designer. */
+.h18-vd-module-canonical-preview{margin:18px 0 24px;background:#fff;border:1px solid #c3c4c7;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.h18-vd-module-canonical-preview-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px;border-bottom:1px solid #dcdcde;background:#f6f7f7}
+.h18-vd-module-canonical-preview-head p{margin:4px 0 0;color:#50575e}.h18-vd-module-canonical-preview-actions{display:flex;gap:8px;flex-wrap:wrap;flex:0 0 auto}
+.h18-vd-module-canonical-frame{display:block;width:100%;height:min(900px,75vh);min-height:680px;border:0;background:#fff}
+@media(max-width:782px){.h18-vd-module-canonical-preview-head{align-items:flex-start;flex-direction:column}.h18-vd-module-canonical-preview-actions{width:100%}.h18-vd-module-canonical-frame{min-height:560px;height:70vh}}

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace VisualDesignerManager\Admin;
 
 use VisualDesignerManager\Diagnostics\DiagnosticStore;
+use VisualDesignerManager\Frontend\CollectionPageRenderer;
 use VisualDesignerManager\Frontend\Renderer;
 use VisualDesignerManager\Model\LayoutModel;
 use VisualDesignerManager\Model\TemplateLayoutModel;
@@ -36,6 +37,7 @@ final class EditorController
         add_action('admin_post_' . self::PREVIEW_ACTION, [self::class, 'preview']);
         add_action('admin_post_' . self::COMPOSITE_PREVIEW_ACTION, [self::class, 'compositePreview']);
         add_action('admin_post_' . self::VERSION_PREVIEW_ACTION, [self::class, 'previewVersion']);
+        add_filter('show_admin_bar', [self::class, 'hideModulePreviewAdminBar']);
     }
 
     public static function menu(): void
@@ -92,6 +94,7 @@ final class EditorController
             return;
         }
         TemplateLayoutModel::ensureMigrated();
+        $isCollectionPage = CollectionPageRenderer::supports($postId);
         $model = LayoutModel::get($postId);
         $headerTemplates = TemplateLayoutModel::all('header');
         $footerTemplates = TemplateLayoutModel::all('footer');
@@ -148,6 +151,23 @@ final class EditorController
         echo '<button type="submit" class="button button-primary h18-clean-save">Gem som ny version</button>';
         echo '</div>';
 
+        if ($isCollectionPage) {
+            $moduleSlug = sanitize_title((string) get_post_field('post_name', $postId));
+            $moduleAdminPage = $moduleSlug === 'events'
+                ? 'h18-clean-events'
+                : ($moduleSlug === 'billedgalleri' ? 'h18-clean-gallery' : 'h18-clean-vehicles');
+            $moduleLabel = $moduleSlug === 'events'
+                ? 'Events'
+                : ($moduleSlug === 'billedgalleri' ? 'Billedgalleri' : 'Køretøjer');
+            $previewUrl = add_query_arg([
+                'h18_vd_module_preview' => '1',
+                'h18_vd_module_preview_version' => H18_CLEAN_VERSION,
+            ], get_permalink($postId));
+            echo '<section class="h18-vd-module-canonical-preview">';
+            echo '<div class="h18-vd-module-canonical-preview-head"><div><strong>Canonical modul-preview · ' . esc_html($moduleLabel) . '</strong><p>Dette er den samme frontend-rendering som den offentlige side. Moduldata redigeres i Manageren, så Designer og frontend ikke kan drive visuelt fra hinanden.</p></div><div class="h18-vd-module-canonical-preview-actions"><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=' . $moduleAdminPage)) . '">Redigér ' . esc_html($moduleLabel) . '</a><a class="button" target="_blank" rel="noopener" href="' . esc_url(get_permalink($postId)) . '">Åbn offentlig side</a></div></div>';
+            echo '<iframe class="h18-vd-module-canonical-frame" title="Canonical frontend-preview" src="' . esc_url($previewUrl) . '" loading="eager"></iframe>';
+            echo '</section>';
+        } else {
         echo '<div class="h18-clean-workspace">';
         echo '<aside class="h18-clean-palette"><h2>Elementer</h2>';
         $paletteGroups = [
@@ -180,6 +200,7 @@ final class EditorController
 
         echo '<aside class="h18-clean-inspector"><h2>Inspector</h2><div id="h18-clean-inspector"><p class="description">Vælg et element på canvas.</p></div></aside>';
         echo '</div>';
+        }
         echo '</form>';
 
         echo '<section class="h18-clean-history"><h2>Gemte versioner</h2>';
@@ -563,4 +584,13 @@ final class EditorController
         wp_safe_redirect($url);
         exit;
     }
+
+    public static function hideModulePreviewAdminBar(bool $show): bool
+    {
+        if (isset($_GET['h18_vd_module_preview']) && current_user_can('edit_pages')) {
+            return false;
+        }
+        return $show;
+    }
+
 }

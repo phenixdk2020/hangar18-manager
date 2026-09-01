@@ -5,7 +5,7 @@
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.74
+## Aktuel milepælsstatus · v0.1.75 + efterfølgende source-opgaver
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
 - **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
@@ -19,7 +19,7 @@
 - **VD-GALLERY-MODULE-001 — IMPLEMENTERET I v0.1.72:** Album har CRUD, cover, Media Library-liste og Designer oversigt/detail.
 - **VD-SITE-DESIGN-HARMONY-001 — IMPLEMENTERET I v0.1.72:** de seks øvrige hovedsider harmoniseres sikkert med Hjem med backup og versionering.
 - **VD-EDITOR-FRONTEND-PARITY-001 — IMPLEMENTERET I v0.1.73:** editor-chrome ligger som overlay og påvirker ikke længere den visuelle nodegeometri for sider, Header eller Footer.
-- **VD-MODULE-CUTOVER-001 — IMPLEMENTERET I v0.1.74:** Events, Billedgalleri og Køretøjer/materiel bruger dynamisk flow-rendering efter `_old`-referencerne; Header/Footer forbliver globale.
+- **VD-MODULE-CUTOVER-001 — IMPLEMENTERET I v0.1.74:** Events, Billedgalleri og Køretøjer/materiel bruger dynamisk flow-rendering og naturlig indholdshøjde; `_old` er reference, mens den endelige visuelle paritet håndteres særskilt.
 - **VD-EVENT-MODULE-001 — IMPLEMENTERET I v0.1.71:** Events har Manager-CRUD, dato/tid, sted, billede, kommende/afholdte regler og Designer list/detail-binding.
 - **VD-GALLERY-MODULE-001 — IMPLEMENTERET I v0.1.72:** Album har CRUD, cover, Media Library-liste og Designer oversigt/detail.
 - **VD-SITE-DESIGN-HARMONY-001 — IMPLEMENTERET I v0.1.72:** de seks øvrige hovedsider harmoniseres sikkert med Hjem med backup og versionering.
@@ -31,8 +31,9 @@
 3. **v0.1.71 – Events — FÆRDIG:** CRUD på fælles ModuleStore, dato/tid, sted, status, automatisk kommende/afholdte visninger og Designer list/detail-elementer.
 4. **v0.1.72 – Billedgalleri + site-design — FÆRDIG:** album, Media Library-referencer, sortering, cover, Designer oversigt/detail og sikker Hjem-baseret designharmonisering.
 5. **v0.1.73 – Editor/frontend visuel paritet — FÆRDIG:** editorens hjælpe-UI er overlay og ændrer ikke canonical mål.
-6. **v0.1.74 – Modul-cutover — FÆRDIG:** de tre dynamiske samlingssider følger `_old`-layoutet og har flow-højde; versionshistorik og Save-feedback er rettet.
+6. **v0.1.74 – Modul-cutover — FÆRDIG FUNKTIONELT:** de tre dynamiske samlingssider fik data-flow og naturlig flow-højde; 1:1-visuel `_old`-paritet var ikke afsluttet her.
 7. **v0.1.75 – Formularer, søgning og eventarkiv — FÆRDIG:** Kontakt/Bliv medlem-formularer, sideprovisionering, søgning/sortering, event→album og end-of-day arkivregel.
+8. **VD-MODULE-VISUAL-PARITY-002 — IMPLEMENTERET EFTER v0.1.75 / AFVENTER NÆSTE RELEASE:** Events, Billedgalleri og Køretøjer bruger samme canonical frontend-rendering i Designer-preview; kortgeometri, billeder, beige kortkrop, spacing og responsive regler er justeret mod `_old`.
 
 ## Åben backlog
 
@@ -48,6 +49,13 @@
 - Cover, beskrivelse og sorteret Media Library-liste.
 - Designer-element til albumoversigt og albumvisning.
 - Ingen billedbytes i layout-JSON eller module JSON; kun attachment IDs.
+
+### VD-MODULE-VISUAL-PARITY-002 — IMPLEMENTERET EFTER v0.1.75 / AFVENTER NÆSTE RELEASE
+- Gælder `events`, `billedgalleri` og `koeretoejer-og-materiel`.
+- Designer viser en same-origin iframe med den rigtige offentlige CollectionPageRenderer i stedet for tre separate JS-efterligninger.
+- Dermed er kort, billeder, typografi, søgning/sortering og responsive regler den samme rendering i Designer og frontend.
+- Frontend-kort er justeret mod `_old`: 90% frame uden kunstigt max-width-loft, 3/2/1 kolonner, fuldbredde 16:9 cover, beige kortkrop, ingen kunstig skygge og mere kompakt spacing.
+- Opgaven ændrer ikke plugin-version eller updater-manifest; den skal med i næste eksplicit bestilte release.
 
 ### CLEAN-RESPONSIVE-009 — DELVIST / MANUEL QA
 - Canonical model har Desktop/Laptop/Tablet/Mobil geometri og arv.
