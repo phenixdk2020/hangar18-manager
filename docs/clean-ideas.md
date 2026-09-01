@@ -78,6 +78,17 @@
 - Vis antal fund, fx **12 køretøjer** eller **3 events**.
 - Knap til **Nulstil** når søgning/filter er aktivt.
 
+### IDEA-IMAGE-TAGS-001 — Tags og søgning på billeder på tværs af album
+- Hvert WordPress-billede/attachment kan få 0..n tags, fx **PMV**, **M113**, **Centurion**, **Panserdag 2026**.
+- Tags skal ligge på selve billedet/attachmentet, ikke kun på albummet, så samme billede bevarer sine tags uanset hvor det vises.
+- Billedgalleriet kan have en søgning, der matcher billedtitel, billedtekst/alt-tekst og tags.
+- Brugeren kan klikke på et tag, fx **PMV**, og få en samlet visning med alle publicerede billeder med dette tag på tværs af alle album.
+- Resultaterne skal kunne linke tilbage til det album/event, billedet kommer fra, når relationen er kendt.
+- Samme billede må kunne have flere tags.
+- Manageren bør have en enkel tag-editor med autocomplete/genbrug af eksisterende tags, så stavemåder ikke splittes i dubletter.
+- Tags kan senere bruges til automatiske tema-gallerier som **Alle PMV-billeder**, **M113**, **Restaurering** eller **Events** uden at kopiere billeder mellem album.
+- Implementationen bør bygge på WordPress attachment-metadata/taxonomi og fortsat kun gemme attachment-IDer i albumrecords.
+
 ### IDEA-VEHICLE-CATEGORIES-001 — Valgfrit kategorifilter
 - Bevar kategori som data allerede nu.
 - Senere mulighed for kategorifilter som chips/dropdown, fx pansret, hjulkøretøj, trailer, materiel mv.
