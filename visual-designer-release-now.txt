@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.76
-Trigger: module-visual-parity-002 2026-09-01
+Release Visual Designer Manager v0.1.77
+Trigger: module-design 2026-09-01
 Publish: requested 2026-09-01
-QA: prepare run 33540846547 PASS
-Source candidate: 17d884cb9567a53dda79b0b4fa01bcc74bb31d4f
+QA: apply run 33543412133 PASS
+Source candidate: c63524f32aa7f71855c60be43eb2783e18f612fd
