@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.72",
+  "version": "0.1.73",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.72.zip",
-  "sha256": "a2ad8775d54ea1742d3f931b4d11289d5f22008db98227317c4e6ff2d9a91a28",
-  "source_commit": "a5b11f322e0798711892e3f77fbb4b085746b7be",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.73.zip",
+  "sha256": "a00664cfe65b8d3521acdecab3f7c805888c85b3dd01eb703518b9ad44763dcf",
+  "source_commit": "bb56ed5ad35eeef114bbedb3a860a3512cdb4845",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h2>0.1.72 – Billedgalleri + Site Design Harmony</h2>\n<ul>\n<li><strong>VD-GALLERY-MODULE-001:</strong> Billedgalleri har nu album-CRUD, cover, beskrivelse og Media Library-billeder.</li>\n<li>Designer har Gallerioversigt og Albumvisning med detailrouting via <code>?h18_gallery=&lt;record-id&gt;</code>.</li>\n<li><strong>VD-SITE-DESIGN-HARMONY-001:</strong> Om, Køretøjer, Events, Billedgalleri, Bliv medlem og Kontakt harmoniseres automatisk med Hjems tema.</li>\n<li>Harmonisering ændrer ikke indhold eller geometri og gemmer backup + ny Designer-version.</li>\n<li>Næste planlagte version er v0.1.73 – modul-cutover/migrering.</li>\n</ul>"
+    "changelog": "<h2>0.1.73 – Editor/frontend visuel paritet</h2>\n<ul>\n<li><strong>VD-EDITOR-FRONTEND-PARITY-001:</strong> editorens elementheader er nu et overlay og optager ikke layoutplads.</li>\n<li>Standard-preview padding og minimumshøjde er fjernet, så gemte bredder/højder vises uden editor-tillæg.</li>\n<li>Sektion/Kasse-hjælperammer bruger outline i stedet for margin/border og forskyder ikke indhold.</li>\n<li>Rettelsen gælder den fælles canvas-runtime for almindelige sider, Header og Footer og ændrer ikke eksisterende gemte layouts.</li>\n<li>Canonical PHP-preview/frontend-renderer er fortsat reference for den endelige visning.</li>\n</ul>"
   }
 }
