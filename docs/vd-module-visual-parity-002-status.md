@@ -1,7 +1,7 @@
 # VD-MODULE-VISUAL-PARITY-002 – status
 
 **Dato:** 1. september 2026  
-**Status:** Implementeret i source efter v0.1.75; afventer næste eksplicit bestilte release.
+**Status:** Inkluderet i Visual Designer Manager v0.1.76.
 
 ## Scope
 - Events, Billedgalleri og Køretøjer og materiel.
@@ -11,7 +11,7 @@
 - Designer bruger den faktiske offentlige CollectionPageRenderer i en same-origin iframe i stedet for en separat JS-approximation.
 - WordPress admin-bar skjules kun i iframe-previewet for redaktører, så preview-geometrien svarer til offentlig visning.
 
-## Releasegrænse
-- Plugin header/runtime forbliver `0.1.75`.
-- `clean-update.json` forbliver `0.1.75`.
-- Ingen ZIP, manifest eller release-trigger ændres af denne opgave.
+## Release
+- Plugin header/runtime er `0.1.76` efter releaseforberedelsen.
+- ZIP og `clean-update.json` genereres kun af den centrale release-workflow.
+- Historiske v0.1.75-funktioner er fortsat regression-gates.

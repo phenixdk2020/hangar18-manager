@@ -1,10 +1,8 @@
-<h2>0.1.75 – Formularer, søgning og eventarkiv</h2>
+<h2>0.1.76 – Modulvisning og _old-paritet</h2>
 <ul>
-<li><strong>Formularer:</strong> Kontaktformular og Bliv medlem-formular er canonical Visual Designer-elementer med validering, samtykke, spam-honeypot, <code>wp_mail()</code> og kvittering.</li>
-<li>Siderne <strong>Kontakt</strong> (<code>kontakt</code>) og <strong>Bliv medlem</strong> (<code>bliv-medlem</code>) oprettes/klargøres automatisk uden at overskrive eksisterende Designer-elementer.</li>
-<li><strong>Events:</strong> standard er tidligste dato først. Eventet flytter automatisk til Tidligere arrangementer efter sluttid; uden sluttid først ved dagens udløb.</li>
-<li>Et event kan valgfrit kobles til et publiceret billedalbum og vise <strong>Se billeder →</strong>, også efter eventet er afholdt.</li>
-<li><strong>Søgning:</strong> Events og Køretøjer kan søges på navn; Billedgalleri kan søges på albumnavn. Køretøjer og album sorterer A–Å som standard.</li>
-<li>Elementpaletten er opdelt i <strong>Basic</strong>, <strong>Moduler</strong> og <strong>Formularer</strong>. Handlinger-kolonnen på Sider har mere desktop-plads.</li>
-<li>Events, Billedgalleri og Køretøjer har et mere ensartet tre-kolonne kortlayout tættere på de originale <code>_old</code>-referencer.</li>
+<li><strong>Designer/frontend-paritet:</strong> Events, Billedgalleri og Køretøjer bruger nu den samme canonical <code>CollectionPageRenderer</code> i Designer-preview og på den offentlige side.</li>
+<li>Designer viser de tre dynamiske samlingssider i en same-origin frontend-iframe i stedet for separate JS-efterligninger, så kort, typografi, søgning/sortering og responsive regler ikke kan drive fra frontend.</li>
+<li><strong>Visuel _old-paritet:</strong> 90 % sideframe uden kunstigt max-width-loft, 3/2/1 responsive kolonner, fuldbredde 16:9 coverbilleder, beige kortkrop, kompakt spacing og ingen kunstig kortskygge.</li>
+<li>WordPress admin-bar skjules kun i Designerens modul-preview, så preview-geometrien svarer til offentlig visning for redaktører.</li>
+<li>Funktionerne fra v0.1.75 bevares: Kontakt/Bliv medlem-formularer, eventarkiv, event→album samt søgning/sortering på de tre modulsider.</li>
 </ul>

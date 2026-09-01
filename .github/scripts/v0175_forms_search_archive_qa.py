@@ -38,7 +38,7 @@ history = json.loads(text('clean/hangar18-manager/release-history.json'))
 
 header = re.search(r'\* Version:\s*([0-9.]+)', plugin)
 const = re.search(r"H18_CLEAN_VERSION',\s*'([0-9.]+)'", plugin)
-require(header is not None and const is not None and header.group(1) == '0.1.75' and const.group(1) == '0.1.75', 'plugin/runtime version is exactly 0.1.75')
+require(header is not None and const is not None and header.group(1) == const.group(1) and tuple(map(int, header.group(1).split('.'))) >= (0, 1, 75), 'plugin/runtime version is v0.1.75 or newer')
 
 require("src/Forms/FormService.php" in plugin and 'FormService::register()' in plugin, 'form runtime is bootstrapped and registered')
 require("src/Migration/FormPageProvisioner.php" in plugin and 'FormPageProvisioner::register()' in plugin, 'Kontakt/Bliv medlem page provisioner is bootstrapped')
@@ -74,9 +74,9 @@ require('repeat(3,minmax(0,1fr))' in collection, 'desktop module cards use the i
 require('← Tilbage til Events' in collection and '← Tilbage til Billedgalleri' in collection and '← Tilbage til Køretøjer' in collection, 'detail pages use explicit back-links')
 
 versions = history.get('versions', []) if isinstance(history, dict) else []
-require(bool(versions) and str(versions[0].get('version', '')) == '0.1.75', 'release history starts with v0.1.75')
-require('0.1.75' in notes and 'Kontakt' in notes and 'Bliv medlem' in notes, 'release notes describe v0.1.75 forms')
-require('**Aktuel release:** v0.1.75' in backlog, 'canonical backlog points at v0.1.75')
+require(any(isinstance(row, dict) and str(row.get('version', '')) == '0.1.75' for row in versions), 'release history retains v0.1.75')
+require(any(isinstance(row, dict) and str(row.get('version', '')) == '0.1.75' and any('kontakt' in str(item).lower() for item in row.get('items', [])) for row in versions), 'release history retains v0.1.75 form scope')
+require('**Aktuel release:** v' in backlog, 'canonical backlog carries an active release marker')
 require((ROOT / 'docs/v0175-status.md').is_file(), 'v0.1.75 status document exists')
 
 print('v0.1.75 forms + search/sort + event archive QA: PASS')

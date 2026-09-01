@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.76",
+      "date": "2026-09-01",
+      "items": [
+        "VD-MODULE-VISUAL-PARITY-002: Events, Billedgalleri og Køretøjer bruger samme canonical CollectionPageRenderer i Designer-preview og frontend.",
+        "Designerens samlingsside-preview bruger en same-origin frontend-iframe i stedet for separate JS-kortimplementeringer.",
+        "_old-paritet er strammet med 90% frame uden max-width-loft, 3/2/1 grid, 16:9 coverbilleder, beige kortkrop og kompakt spacing.",
+        "WordPress admin-bar skjules kun i modul-previewet, så redaktørpreviewet bevarer offentlig frontend-geometri.",
+        "v0.1.75-funktionalitet for formularer, søgning/sortering, eventarkiv og event→album er bevaret og regressionstestet."
+      ]
+    },
+    {
       "version": "0.1.75",
       "date": "2026-09-01",
       "items": [

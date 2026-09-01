@@ -30,8 +30,8 @@ status = text('docs/vd-module-visual-parity-002-status.md')
 
 header = re.search(r'\* Version:\s*([0-9.]+)', plugin)
 const = re.search(r"H18_CLEAN_VERSION',\s*'([0-9.]+)'", plugin)
-require(header is not None and const is not None and header.group(1) == '0.1.75' and const.group(1) == '0.1.75', 'task does not bump plugin/runtime beyond released v0.1.75')
-require(str(manifest.get('version', '')) == '0.1.75', 'task does not mutate updater manifest/released version')
+require(header is not None and const is not None and header.group(1) == const.group(1) and tuple(map(int, header.group(1).split('.'))) >= (0, 1, 75), 'parity task remains present in v0.1.75 or newer runtime')
+require(tuple(map(int, str(manifest.get('version', '0.0.0')).split('.'))) <= tuple(map(int, header.group(1).split('.'))), 'updater manifest never points beyond runtime version')
 
 for slug in ('events', 'billedgalleri', 'koeretoejer-og-materiel'):
     require(slug in collection, f'collection renderer still owns {slug}')
@@ -57,9 +57,9 @@ require("<h2>Køretøjer</h2>" in collection, 'gallery old-site subheading remai
 require('VD-MODULE-VISUAL-PARITY-002' in admin_css, 'Designer iframe chrome has dedicated parity CSS')
 require('.h18-vd-module-canonical-frame' in admin_css and 'min-height:680px' in admin_css, 'canonical module preview has usable desktop viewport')
 
-require('VD-MODULE-VISUAL-PARITY-002 — IMPLEMENTERET EFTER v0.1.75 / AFVENTER NÆSTE RELEASE' in backlog, 'backlog records parity implementation without pretending it is released')
+require('VD-MODULE-VISUAL-PARITY-002' in backlog, 'backlog records parity implementation/release state')
 require('1:1-visuel `_old`-paritet var ikke afsluttet' in backlog, 'backlog corrects the historical v0.1.74 overstatement')
-require('Implementeret i source efter v0.1.75' in status, 'status document records source-only completion')
-require('Ingen ZIP, manifest eller release-trigger ændres' in status, 'status document preserves explicit release boundary')
+require('v0.1.76' in status or 'Implementeret i source efter v0.1.75' in status, 'status document records parity completion/release state')
+require('centrale release-workflow' in status or 'Ingen ZIP, manifest eller release-trigger ændres' in status, 'status document preserves central release boundary')
 
 print('VD-MODULE-VISUAL-PARITY-002 QA: PASS')

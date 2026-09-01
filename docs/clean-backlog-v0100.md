@@ -1,11 +1,11 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
 **Statusdato:** 1. september 2026  
-**Aktuel release:** v0.1.75  
+**Aktuel release:** v0.1.76  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.75 + efterfølgende source-opgaver
+## Aktuel milepælsstatus · v0.1.76
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
 - **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
@@ -33,7 +33,7 @@
 5. **v0.1.73 – Editor/frontend visuel paritet — FÆRDIG:** editorens hjælpe-UI er overlay og ændrer ikke canonical mål.
 6. **v0.1.74 – Modul-cutover — FÆRDIG FUNKTIONELT:** de tre dynamiske samlingssider fik data-flow og naturlig flow-højde; 1:1-visuel `_old`-paritet var ikke afsluttet her.
 7. **v0.1.75 – Formularer, søgning og eventarkiv — FÆRDIG:** Kontakt/Bliv medlem-formularer, sideprovisionering, søgning/sortering, event→album og end-of-day arkivregel.
-8. **VD-MODULE-VISUAL-PARITY-002 — IMPLEMENTERET EFTER v0.1.75 / AFVENTER NÆSTE RELEASE:** Events, Billedgalleri og Køretøjer bruger samme canonical frontend-rendering i Designer-preview; kortgeometri, billeder, beige kortkrop, spacing og responsive regler er justeret mod `_old`.
+8. **v0.1.76 – VD-MODULE-VISUAL-PARITY-002 — FÆRDIG:** Events, Billedgalleri og Køretøjer bruger samme canonical frontend-rendering i Designer-preview; kortgeometri, billeder, beige kortkrop, spacing og responsive regler er justeret mod `_old`.
 
 ## Åben backlog
 
@@ -50,12 +50,12 @@
 - Designer-element til albumoversigt og albumvisning.
 - Ingen billedbytes i layout-JSON eller module JSON; kun attachment IDs.
 
-### VD-MODULE-VISUAL-PARITY-002 — IMPLEMENTERET EFTER v0.1.75 / AFVENTER NÆSTE RELEASE
+### VD-MODULE-VISUAL-PARITY-002 — FÆRDIG I v0.1.76
 - Gælder `events`, `billedgalleri` og `koeretoejer-og-materiel`.
 - Designer viser en same-origin iframe med den rigtige offentlige CollectionPageRenderer i stedet for tre separate JS-efterligninger.
 - Dermed er kort, billeder, typografi, søgning/sortering og responsive regler den samme rendering i Designer og frontend.
 - Frontend-kort er justeret mod `_old`: 90% frame uden kunstigt max-width-loft, 3/2/1 kolonner, fuldbredde 16:9 cover, beige kortkrop, ingen kunstig skygge og mere kompakt spacing.
-- Opgaven ændrer ikke plugin-version eller updater-manifest; den skal med i næste eksplicit bestilte release.
+- Opgaven er inkluderet i v0.1.76; ZIP og updater-manifest bygges og verificeres af den centrale release-workflow.
 
 ### CLEAN-RESPONSIVE-009 — DELVIST / MANUEL QA
 - Canonical model har Desktop/Laptop/Tablet/Mobil geometri og arv.
