@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.74",
+  "version": "0.1.75",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.74.zip",
-  "sha256": "e23a321b9c1e2e6f97a01d0d578db31b7eeda717998c93d70d0d4df491fe5b19",
-  "source_commit": "376b7dae002626d127a940b5882db364421ba621",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.75.zip",
+  "sha256": "2d0f2b30b2d6bbb7863bcc7eb7790c6806251f360e7c53abc0f85e38be9e8e57",
+  "source_commit": "96f918c3f374939357387aa02bf9279630274077",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h2>0.1.74 – Modul-cutover</h2>\n<ul>\n<li><strong>VD-MODULE-CUTOVER-001:</strong> Events, Billedgalleri og Køretøjer og materiel er nu tre indholdsdrevne flow-modulsider efter de originale <code>_old</code>-referencer.</li>\n<li>Events opdeles automatisk i kommende og tidligere arrangementer med kompakte kort, billeder, dato/sted og Læs mere.</li>\n<li>Billedgalleri viser kompakte albumkort med cover, beskrivelse og billedantal; Køretøjer viser billede, tekniske data og Se køretøjet.</li>\n<li>De tre modulsider bruger naturlig indholdshøjde i stedet for faste 8-px canvas-rækker; global Header/Footer kommer fortsat fra Visual Designer Manager.</li>\n<li><strong>BUG-23:</strong> Versionshistorikken kan igen læses. <strong>BUG-24:</strong> Gem viser særskilt status for gemt, ingen ændringer og fejl.</li>\n</ul>"
+    "changelog": "<h2>0.1.75 – Formularer, søgning og eventarkiv</h2>\n<ul>\n<li><strong>Formularer:</strong> Kontaktformular og Bliv medlem-formular er canonical Visual Designer-elementer med validering, samtykke, spam-honeypot, <code>wp_mail()</code> og kvittering.</li>\n<li>Siderne <strong>Kontakt</strong> (<code>kontakt</code>) og <strong>Bliv medlem</strong> (<code>bliv-medlem</code>) oprettes/klargøres automatisk uden at overskrive eksisterende Designer-elementer.</li>\n<li><strong>Events:</strong> standard er tidligste dato først. Eventet flytter automatisk til Tidligere arrangementer efter sluttid; uden sluttid først ved dagens udløb.</li>\n<li>Et event kan valgfrit kobles til et publiceret billedalbum og vise <strong>Se billeder →</strong>, også efter eventet er afholdt.</li>\n<li><strong>Søgning:</strong> Events og Køretøjer kan søges på navn; Billedgalleri kan søges på albumnavn. Køretøjer og album sorterer A–Å som standard.</li>\n<li>Elementpaletten er opdelt i <strong>Basic</strong>, <strong>Moduler</strong> og <strong>Formularer</strong>. Handlinger-kolonnen på Sider har mere desktop-plads.</li>\n<li>Events, Billedgalleri og Køretøjer har et mere ensartet tre-kolonne kortlayout tættere på de originale <code>_old</code>-referencer.</li>\n</ul>"
   }
 }
