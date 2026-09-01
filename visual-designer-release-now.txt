@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.73
-Trigger: editor-frontend-parity 2026-09-01
+Release Visual Designer Manager v0.1.74
+Trigger: module-cutover 2026-09-01
 Publish: requested 2026-09-01
-QA: apply run 33502697456 PASS
-Source candidate: 63cd3cdda313cf212502d89832f89b4bf6b74545
+QA: apply run 33507251585 PASS
+Source candidate: e15ee534770d6befd03e615a5dbe30bc8b49555b
