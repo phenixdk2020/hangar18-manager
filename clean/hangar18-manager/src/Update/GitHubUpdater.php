@@ -166,6 +166,9 @@ final class GitHubUpdater
         }
 
         $postId = absint($_POST['post_id'] ?? 0);
+        if ($postId > 0 && self::isNoopDesignerSave($postId)) {
+            return;
+        }
         $url = admin_url('admin.php?page=h18-clean-editor');
         if ($postId > 0) {
             $url = add_query_arg('post', $postId, $url);
@@ -176,6 +179,33 @@ final class GitHubUpdater
         ], $url);
         wp_safe_redirect($url);
         exit;
+    }
+
+
+    private static function isNoopDesignerSave(int $postId): bool
+    {
+        try {
+            $json = (string) wp_unslash($_POST['model_json'] ?? '');
+            $decoded = json_decode($json, true);
+            if (!is_array($decoded)) { return false; }
+            $normalized = \VisualDesignerManager\Model\LayoutModel::normalize($decoded);
+            $currentVersion = max(0, (int) get_post_meta($postId, \VisualDesignerManager\Model\LayoutModel::VERSION_META, true));
+            if ($currentVersion <= 0) { return false; }
+            $sameModel = hash_equals(
+                \VisualDesignerManager\Model\LayoutModel::structuralDigest(\VisualDesignerManager\Model\LayoutModel::get($postId)),
+                \VisualDesignerManager\Model\LayoutModel::structuralDigest($normalized)
+            );
+            \VisualDesignerManager\Model\TemplateLayoutModel::ensureMigrated();
+            $headerChoice = sanitize_key((string) wp_unslash($_POST['header_template_choice'] ?? 'auto')) ?: 'auto';
+            $footerChoice = sanitize_key((string) wp_unslash($_POST['footer_template_choice'] ?? 'auto')) ?: 'auto';
+            $sameShell = \VisualDesignerManager\Model\TemplateLayoutModel::pageChoice($postId, 'header') === $headerChoice
+                && \VisualDesignerManager\Model\TemplateLayoutModel::pageChoice($postId, 'footer') === $footerChoice;
+            $statusAction = sanitize_key((string) wp_unslash($_POST['post_status_action'] ?? ''));
+            $statusChanged = in_array($statusAction, ['publish', 'draft'], true) && $statusAction !== (string) get_post_status($postId);
+            return $sameModel && $sameShell && !$statusChanged;
+        } catch (\Throwable $error) {
+            return false;
+        }
     }
 
     public static function manualCheck(): void
@@ -285,8 +315,9 @@ final class GitHubUpdater
         if (!is_array($decoded)) {
             return [];
         }
+        $sourceRows = isset($decoded['versions']) && is_array($decoded['versions']) ? $decoded['versions'] : $decoded;
         $rows = [];
-        foreach ($decoded as $row) {
+        foreach ($sourceRows as $row) {
             if (!is_array($row)) {
                 continue;
             }

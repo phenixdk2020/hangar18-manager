@@ -105,7 +105,7 @@ final class EditorController
         echo '<h1>Visual Designer · ' . esc_html((string) $post->post_title) . '</h1>';
         echo '<p class="description">Visual Designer ' . esc_html(H18_CLEAN_VERSION) . ' · 120 layout-units · modeldrevet Save/Reload · ingen legacy editor-runtime.</p>';
         if ($message !== '') {
-            echo '<div class="notice ' . ($status === 'error' ? 'notice-error' : 'notice-success') . ' is-dismissible"><p>' . esc_html($message) . '</p></div>';
+            echo '<div class="notice ' . ($status === 'error' ? 'notice-error' : ($status === 'info' ? 'notice-info' : 'notice-success')) . ' is-dismissible"><p>' . esc_html($message) . '</p></div>';
         }
 
         echo '<div class="h18-clean-topbar">';
@@ -259,7 +259,7 @@ final class EditorController
                 // even on a canonical no-op save.
                 self::touchFrontendPage($postId, '', $currentVersion);
                 DiagnosticStore::append($postId, 'save_noop', ['version' => $currentVersion, 'reason' => 'canonical-model-and-shell-unchanged']);
-                self::redirect($postId, 'success', 'Ingen layoutændringer siden seneste gemte version. Frontend-cache er blevet invalideret.');
+                self::redirect($postId, 'info', 'Ingen ændringer at gemme.');
             }
             if ($currentVersion > 0 && $sameModel && $sameShell) {
                 $version = $currentVersion;
@@ -296,10 +296,10 @@ final class EditorController
                 }
             }
             $statusMessage = $statusChanged ? ($desiredStatus === 'publish' ? ' Siden er publiceret.' : ' Siden er nu kladde og ikke længere offentligt publiceret.') : '';
-            self::redirect($postId, 'success', 'Visual Designer-layout gemt og verificeret som version v' . $version . '.' . $statusMessage);
+            self::redirect($postId, 'success', 'Siden er gemt. Version v' . $version . ' er oprettet.' . $statusMessage);
         } catch (\Throwable $error) {
             DiagnosticStore::append($postId, 'save_error', ['errorType' => get_class($error), 'message' => $error->getMessage()]);
-            self::redirect($postId, 'error', 'Gem fejlede: ' . $error->getMessage());
+            self::redirect($postId, 'error', 'Siden kunne ikke gemmes: ' . $error->getMessage());
         }
     }
 

@@ -27,6 +27,10 @@ final class Renderer
             return $content;
         }
         $postId = get_the_ID();
+        $collectionPage = CollectionPageRenderer::render($postId);
+        if ($collectionPage !== null) {
+            return ThemeShell::enabled() ? self::renderLiveShell($postId, $collectionPage) : $collectionPage;
+        }
         if ($postId <= 0) {
             return $content;
         }

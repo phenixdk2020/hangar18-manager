@@ -1,8 +1,8 @@
-<h2>0.1.73 – Editor/frontend visuel paritet</h2>
+<h2>0.1.74 – Modul-cutover</h2>
 <ul>
-<li><strong>VD-EDITOR-FRONTEND-PARITY-001:</strong> editorens elementheader er nu et overlay og optager ikke layoutplads.</li>
-<li>Standard-preview padding og minimumshøjde er fjernet, så gemte bredder/højder vises uden editor-tillæg.</li>
-<li>Sektion/Kasse-hjælperammer bruger outline i stedet for margin/border og forskyder ikke indhold.</li>
-<li>Rettelsen gælder den fælles canvas-runtime for almindelige sider, Header og Footer og ændrer ikke eksisterende gemte layouts.</li>
-<li>Canonical PHP-preview/frontend-renderer er fortsat reference for den endelige visning.</li>
+<li><strong>VD-MODULE-CUTOVER-001:</strong> Events, Billedgalleri og Køretøjer og materiel er nu tre indholdsdrevne flow-modulsider efter de originale <code>_old</code>-referencer.</li>
+<li>Events opdeles automatisk i kommende og tidligere arrangementer med kompakte kort, billeder, dato/sted og Læs mere.</li>
+<li>Billedgalleri viser kompakte albumkort med cover, beskrivelse og billedantal; Køretøjer viser billede, tekniske data og Se køretøjet.</li>
+<li>De tre modulsider bruger naturlig indholdshøjde i stedet for faste 8-px canvas-rækker; global Header/Footer kommer fortsat fra Visual Designer Manager.</li>
+<li><strong>BUG-23:</strong> Versionshistorikken kan igen læses. <strong>BUG-24:</strong> Gem viser særskilt status for gemt, ingen ændringer og fejl.</li>
 </ul>
