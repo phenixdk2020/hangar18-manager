@@ -1,0 +1,7 @@
+/* v0.1.75 - desktop page action row. */
+.h18-manager-table th:last-child{min-width:500px}
+.h18-manager-table .h18-manager-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;min-width:500px}
+.h18-manager-table .h18-manager-actions>form{display:inline-flex!important;align-items:center;margin:0;flex:0 0 auto}
+.h18-manager-table .h18-manager-actions>.button,.h18-manager-table .h18-manager-actions>.h18-manager-copy-page{flex:0 0 auto}
+@media(max-width:1250px){.h18-manager-table th:last-child{min-width:370px}.h18-manager-table .h18-manager-actions{min-width:370px;flex-wrap:wrap;white-space:normal}}
+@media(max-width:782px){.h18-manager-table th:last-child{min-width:190px}.h18-manager-table .h18-manager-actions{min-width:190px;flex-wrap:wrap}}
