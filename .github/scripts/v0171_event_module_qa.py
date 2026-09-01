@@ -28,9 +28,20 @@ def require_compact(path: str, needle: str) -> None:
         raise SystemExit(f'{path}: missing compact contract marker: {needle}')
 
 
+def version_tuple(value: str) -> tuple[int, int, int]:
+    match = re.search(r"Version:\s*([0-9]+\.[0-9]+\.[0-9]+)", value)
+    if not match:
+        raise SystemExit('Plugin version missing')
+    return tuple(int(part) for part in match.group(1).split('.'))
+
+
+plugin = text('clean/hangar18-manager/hangar18-manager.php')
+current = version_tuple(plugin)
+if current < (0, 1, 71):
+    raise SystemExit(f'Plugin/runtime {current} is older than 0.1.71')
+if f"define('H18_CLEAN_VERSION', '{'.'.join(map(str, current))}');" not in plugin:
+    raise SystemExit('Plugin header/runtime version mismatch')
 require('clean/hangar18-manager/hangar18-manager.php',
-        ' * Version: 0.1.71',
-        "define('H18_CLEAN_VERSION', '0.1.71');",
         "src/Admin/EventAdminController.php",
         'EventAdminController::register()',
         "'eventRecords' => $eventRecords",
@@ -80,11 +91,8 @@ for manual in ('CLEAN-DESIGN-MANUAL.md', 'CLEAN-USER-MANUAL.md', 'CLEAN-TECHNICA
 require('CLEAN-TECHNICAL-MANUAL.md', 'VD-EVENT-MODULE-001')
 require('CLEAN-DESIGN-MANUAL.md', 'Eventmodul – designprincip')
 require('CLEAN-USER-MANUAL.md', 'Sådan bruger du Eventmodulet')
-require('docs/clean-backlog-v0100.md',
-        'Aktuel release:** v0.1.71', 'VD-EVENT-MODULE-001',
-        'v0.1.71 – Events — FÆRDIG', 'v0.1.72 – Billedgalleri — NÆSTE')
-require('docs/v0171-status.md', 'VD-EVENT-MODULE-001', 'release candidate')
-require('clean-release-notes.html', '0.1.71 – Events')
+require('docs/clean-backlog-v0100.md', 'VD-EVENT-MODULE-001', 'v0.1.71 – Events — FÆRDIG')
+require('docs/v0171-status.md', 'VD-EVENT-MODULE-001')
 
 history = json.loads(text('clean/hangar18-manager/release-history.json'))
 versions = history.get('versions', []) if isinstance(history, dict) else []
@@ -95,4 +103,4 @@ admin = text('clean/hangar18-manager/src/Admin/AdminController.php')
 if re.search(r"h18-clean-events'.*\[self::class,\s*'events'\]", admin):
     raise SystemExit('Events submenu still points at placeholder AdminController::events')
 
-print('v0.1.71 event module QA: PASS')
+print(f'v0.1.71 event module QA: PASS (runtime {".".join(map(str, current))})')
