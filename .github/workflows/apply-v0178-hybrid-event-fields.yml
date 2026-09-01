@@ -61,7 +61,7 @@ jobs:
           find .github/scripts -type d -name __pycache__ -prune -exec rm -rf {} +
           git status --short
           test -n "$(git status --short)"
-          if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/hangar18-manager.php|clean/hangar18-manager/src/Modules/EventFieldRegistry.php|clean/hangar18-manager/src/Frontend/HybridModuleSlots.php|clean/hangar18-manager/src/Migration/HybridModulePageMigration.php|clean/hangar18-manager/src/Model/LayoutModel.php|clean/hangar18-manager/src/Frontend/Renderer.php|clean/hangar18-manager/src/Frontend/CollectionPageRenderer.php|clean/hangar18-manager/src/Admin/EventAdminController.php|clean/hangar18-manager/src/Admin/AdminController.php|clean/hangar18-manager/src/Admin/EditorController.php|clean/hangar18-manager/assets/editor-v018-core.js|clean/hangar18-manager/assets/admin-v0178-events.js|clean/hangar18-manager/release-history.json|clean-release-notes.html|docs/clean-backlog-v0100.md|docs/v0178-status.md)'; then
+          if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/hangar18-manager.php|clean/hangar18-manager/src/Modules/EventFieldRegistry.php|clean/hangar18-manager/src/Frontend/HybridModuleSlots.php|clean/hangar18-manager/src/Migration/HybridModulePageMigration.php|clean/hangar18-manager/src/Model/LayoutModel.php|clean/hangar18-manager/src/Model/HierarchyNormalizer.php|clean/hangar18-manager/src/Frontend/Renderer.php|clean/hangar18-manager/src/Frontend/CollectionPageRenderer.php|clean/hangar18-manager/src/Admin/EventAdminController.php|clean/hangar18-manager/src/Admin/AdminController.php|clean/hangar18-manager/src/Admin/EditorController.php|clean/hangar18-manager/assets/editor-v018-core.js|clean/hangar18-manager/assets/admin-v0178-events.js|clean/hangar18-manager/release-history.json|clean-release-notes.html|docs/clean-backlog-v0100.md|docs/v0178-status.md)'; then
             echo 'Unexpected v0.1.78 modified path.' >&2
             exit 1
           fi
@@ -78,6 +78,7 @@ jobs:
                   clean/hangar18-manager/src/Frontend/HybridModuleSlots.php \
                   clean/hangar18-manager/src/Migration/HybridModulePageMigration.php \
                   clean/hangar18-manager/src/Model/LayoutModel.php \
+                  clean/hangar18-manager/src/Model/HierarchyNormalizer.php \
                   clean/hangar18-manager/src/Frontend/Renderer.php \
                   clean/hangar18-manager/src/Frontend/CollectionPageRenderer.php \
                   clean/hangar18-manager/src/Admin/EventAdminController.php \
