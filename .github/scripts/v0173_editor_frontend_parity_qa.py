@@ -30,7 +30,6 @@ css = text('clean/hangar18-manager/assets/editor-v0166-foundation.css')
 renderer = text('clean/hangar18-manager/src/Frontend/Renderer.php')
 controller = text('clean/hangar18-manager/src/Admin/EditorController.php')
 backlog = text('docs/clean-backlog-v0100.md')
-notes = text('clean-release-notes.html')
 history = json.loads(text('clean/hangar18-manager/release-history.json'))
 
 header_match = re.search(r'\* Version:\s*([0-9.]+)', plugin)
@@ -59,10 +58,9 @@ require('self::renderModel(LayoutModel::normalize($pageModel))' in renderer, 'ca
 require('self::renderModel(LayoutModel::normalize($footerModel))' in renderer, 'canonical preview renders Footer through frontend renderer')
 require('Renderer::standaloneDocument($pageModel, $headerModel, $footerModel' in controller, 'composite preview still uses canonical renderer')
 
-require('**Aktuel release:** v0.1.73' in backlog, 'canonical backlog points at v0.1.73')
-require('VD-EDITOR-FRONTEND-PARITY-001 — IMPLEMENTERET I v0.1.73' in backlog, 'parity work is recorded as implemented')
-require('v0.1.74 – Modul-cutover/migrering — NÆSTE' in backlog, 'module cutover is moved to the next release instead of being lost')
-require('0.1.73 – Editor/frontend visuel paritet' in notes, 'release notes describe v0.1.73')
+# Historical feature QA must remain valid after newer releases. It verifies
+# the v0.1.73 parity contract, not which version is currently latest.
+require('VD-EDITOR-FRONTEND-PARITY-001 — IMPLEMENTERET I v0.1.73' in backlog, 'parity work remains recorded as implemented in v0.1.73')
 require((ROOT / 'docs/v0173-status.md').is_file(), 'v0.1.73 status document exists')
 require(any(isinstance(row, dict) and str(row.get('version', '')) == '0.1.73' for row in history.get('versions', [])), 'release history contains v0.1.73')
 
