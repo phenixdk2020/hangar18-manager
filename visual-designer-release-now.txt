@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.72
-Trigger: gallery-site-design-harmony 2026-09-01
+Release Visual Designer Manager v0.1.73
+Trigger: editor-frontend-parity 2026-09-01
 Publish: requested 2026-09-01
-QA: apply run 33476848278 PASS
-Source candidate: 48e5275528ce1dbf40159c6f3a495ab0c1f29e2e
+QA: apply run 33502697456 PASS
+Source candidate: 63cd3cdda313cf212502d89832f89b4bf6b74545
