@@ -1,0 +1,102 @@
+name: Apply Visual Designer Manager 0.1.75 Forms Search Archive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0175_forms_search_archive.py'
+      - '.github/scripts/apply_v0175_fixups.py'
+      - '.github/scripts/v0175_forms_search_archive_qa.py'
+      - '.github/workflows/apply-v0175-forms-search-archive.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply v0.1.75 source changes
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/apply_v0175_forms_search_archive.py
+          python3 .github/scripts/apply_v0175_fixups.py
+
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/apply_v0175_forms_search_archive.py .github/scripts/apply_v0175_fixups.py .github/scripts/v0175_forms_search_archive_qa.py
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression QA
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+          python3 .github/scripts/v0162_page_duplicate_qa.py
+          python3 .github/scripts/v0164_clipboard_qa.py
+          php .github/scripts/v0165_elements_model_qa.php
+          python3 .github/scripts/v0165_general_elements_qa.py
+          python3 .github/scripts/v0166_foundation_qa.py
+          php .github/scripts/v0167_module_foundation_qa.php
+          php .github/scripts/v0168_canvas_section_qa.php
+          python3 .github/scripts/v0168_canvas_section_static_qa.py
+          python3 .github/scripts/v0169_canvas_autoheight_qa.py
+          python3 .github/scripts/v0170_vehicle_module_qa.py
+          python3 .github/scripts/v0171_event_module_qa.py
+          python3 .github/scripts/v0172_gallery_design_qa.py
+          python3 .github/scripts/v0173_editor_frontend_parity_qa.py
+          python3 .github/scripts/v0174_module_cutover_qa.py
+          python3 .github/scripts/v0175_forms_search_archive_qa.py
+
+      - name: Verify scoped diff
+        run: |
+          set -euo pipefail
+          find .github/scripts -type d -name __pycache__ -prune -exec rm -rf {} +
+          git status --short
+          test -n "$(git status --short)"
+          if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/hangar18-manager.php|clean/hangar18-manager/src/Model/LayoutModel.php|clean/hangar18-manager/src/Frontend/Renderer.php|clean/hangar18-manager/src/Frontend/CollectionPageRenderer.php|clean/hangar18-manager/src/Forms/FormService.php|clean/hangar18-manager/src/Migration/FormPageProvisioner.php|clean/hangar18-manager/src/Admin/EditorController.php|clean/hangar18-manager/src/Admin/AdminController.php|clean/hangar18-manager/src/Admin/EventAdminController.php|clean/hangar18-manager/src/Modules/ModuleRegistry.php|clean/hangar18-manager/assets/editor-v018-core.js|clean/hangar18-manager/assets/admin-v0175.css|clean/hangar18-manager/release-history.json|clean-release-notes.html|docs/clean-backlog-v0100.md|docs/v0175-status.md)'; then
+            echo 'Unexpected v0.1.75 modified path.' >&2
+            exit 1
+          fi
+
+      - name: Commit v0.1.75 implementation
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-apply-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php \
+                  clean/hangar18-manager/src/Model/LayoutModel.php \
+                  clean/hangar18-manager/src/Frontend/Renderer.php \
+                  clean/hangar18-manager/src/Frontend/CollectionPageRenderer.php \
+                  clean/hangar18-manager/src/Forms/FormService.php \
+                  clean/hangar18-manager/src/Migration/FormPageProvisioner.php \
+                  clean/hangar18-manager/src/Admin/EditorController.php \
+                  clean/hangar18-manager/src/Admin/AdminController.php \
+                  clean/hangar18-manager/src/Admin/EventAdminController.php \
+                  clean/hangar18-manager/src/Modules/ModuleRegistry.php \
+                  clean/hangar18-manager/assets/editor-v018-core.js \
+                  clean/hangar18-manager/assets/admin-v0175.css \
+                  clean/hangar18-manager/release-history.json \
+                  clean-release-notes.html \
+                  docs/clean-backlog-v0100.md \
+                  docs/v0175-status.md
+          if git diff --cached --quiet; then
+            echo 'v0.1.75 implementation already current.'
+            exit 0
+          fi
+          git commit -m 'Implement Visual Designer Manager v0.1.75 forms search and archive'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          echo 'Unable to push v0.1.75 implementation.' >&2
+          exit 1
