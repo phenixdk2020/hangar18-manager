@@ -14,7 +14,19 @@ if new not in s:
     s=s.replace(old,new,1)
 p.write_text(s,encoding='utf-8')
 
-# 2) Eventdetail is the fixed/system event block. Flexible fields are separate
+# 2) Wrappers created *inside* HierarchyNormalizer occur after LayoutModel has
+# normalized props. Give those generated Sections the same canonical default
+# immediately so normalize(normalize(model)) cannot add a new property.
+p=ROOT/'clean/hangar18-manager/src/Model/HierarchyNormalizer.php'
+s=p.read_text(encoding='utf-8')
+old="            'minHeightRows' => 0,\n            'borderWidth' => 0,"
+new="            'minHeightRows' => 0,\n            'moduleSlot' => 'before',\n            'borderWidth' => 0,"
+if new not in s:
+    if old not in s: raise SystemExit('HierarchyNormalizer neutral Section props anchor missing')
+    s=s.replace(old,new,1)
+p.write_text(s,encoding='utf-8')
+
+# 3) Eventdetail is the fixed/system event block. Flexible fields are separate
 # Eventfelt nodes in the Designer detail template, so do not render the same
 # values a second time from inside eventdetail.
 p=ROOT/'clean/hangar18-manager/src/Frontend/Renderer.php'
