@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.73",
+      "date": "2026-09-01",
+      "items": [
+        "VD-EDITOR-FRONTEND-PARITY-001: editorens værktøjsheader er nu overlay og optager ikke canonical højde.",
+        "Generisk editor-preview padding/min-height er fjernet, så gemte node-mål svarer til frontendens renderede bokse.",
+        "Sektion/Kasse-hjælperammen bruger outline uden margin/border og ændrer derfor ikke child-grid geometri.",
+        "Rettelsen gælder samme fælles canvas-runtime for sider, Header og Footer og ændrer ikke gemte layouts."
+      ]
+    },
+    {
       "version": "0.1.72",
       "date": "2026-09-01",
       "items": [

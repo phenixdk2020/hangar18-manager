@@ -30,8 +30,6 @@ def require_compact(path: str, needle: str) -> None:
 
 plugin = text('clean/hangar18-manager/hangar18-manager.php')
 require('clean/hangar18-manager/hangar18-manager.php',
-        ' * Version: 0.1.72',
-        "define('H18_CLEAN_VERSION', '0.1.72');",
         "src/Admin/GalleryAdminController.php",
         "src/Migration/SiteDesignHarmonizer.php",
         'GalleryAdminController::register()',
@@ -116,12 +114,9 @@ require('CLEAN-DESIGN-MANUAL.md', 'VD-GALLERY-MODULE-001', 'VD-SITE-DESIGN-HARMO
 require('CLEAN-TECHNICAL-MANUAL.md', 'VD-GALLERY-MODULE-001', 'VD-SITE-DESIGN-HARMONY-001')
 require('CLEAN-USER-MANUAL.md', 'Sådan bruger du Billedgalleriet', 'Automatisk designharmonisering i v0.1.72')
 require('docs/clean-backlog-v0100.md',
-        '**Aktuel release:** v0.1.72',
         'VD-GALLERY-MODULE-001 — FÆRDIG I v0.1.72',
-        'VD-SITE-DESIGN-HARMONY-001 — FÆRDIG I v0.1.72',
-        'v0.1.73 – Modul-cutover/migrering — NÆSTE')
+        'VD-SITE-DESIGN-HARMONY-001 — FÆRDIG I v0.1.72')
 require('docs/v0172-status.md', 'VD-GALLERY-MODULE-001', 'VD-SITE-DESIGN-HARMONY-001')
-require('clean-release-notes.html', '0.1.72 – Billedgalleri + Site Design Harmony')
 
 history = json.loads(text('clean/hangar18-manager/release-history.json'))
 versions = history.get('versions', []) if isinstance(history, dict) else []

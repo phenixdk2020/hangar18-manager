@@ -9,3 +9,14 @@
 .h18-vd-event-list-preview{display:grid;width:100%;box-sizing:border-box}.h18-vd-event-card-preview{display:flex;flex-direction:column;gap:6px;min-width:0;border:1px solid #dcdcde;box-sizing:border-box;overflow:hidden}.h18-vd-event-card-preview img,.h18-vd-event-detail-preview>img{display:block;width:100%;object-fit:cover;max-width:none}.h18-vd-event-card-preview p,.h18-vd-event-detail-preview p,.h18-vd-event-detail-preview h3{margin:0}.h18-vd-event-detail-preview{display:flex;flex-direction:column;gap:10px;width:100%;box-sizing:border-box}.h18-clean-node-preview--eventlist,.h18-clean-node-preview--eventdetail{overflow:auto}
 
 .h18-vd-gallery-list-preview{display:grid;width:100%;box-sizing:border-box}.h18-vd-gallery-card-preview{display:flex;flex-direction:column;gap:6px;min-width:0;border:1px solid #dcdcde;box-sizing:border-box;overflow:hidden}.h18-vd-gallery-card-preview img{display:block;width:100%;object-fit:cover;max-width:none}.h18-vd-gallery-card-preview p,.h18-vd-gallery-detail-preview p,.h18-vd-gallery-detail-preview h3{margin:0}.h18-vd-gallery-detail-preview{display:flex;flex-direction:column;gap:12px;width:100%;box-sizing:border-box}.h18-vd-gallery-images-preview{display:grid;width:100%;box-sizing:border-box}.h18-vd-gallery-images-preview img{display:block;width:100%;object-fit:cover;max-width:none}.h18-clean-node-preview--gallerylist,.h18-clean-node-preview--gallerydetail{overflow:auto}
+
+/* Visual Designer Manager 0.1.73 · VD-EDITOR-FRONTEND-PARITY-001
+ * Editor chrome is an overlay and must never participate in canonical geometry.
+ */
+.h18-clean-surface{align-items:stretch}
+.h18-clean-node-header{position:absolute;top:0;left:0;right:0;z-index:80;height:28px;margin:0;opacity:0;pointer-events:none;transform:translateY(-100%);transition:opacity .12s ease,transform .12s ease}
+.h18-clean-node:hover>.h18-clean-node-header,.h18-clean-node.is-selected>.h18-clean-node-header,.h18-clean-node.is-dragging>.h18-clean-node-header,.h18-clean-node.is-resizing>.h18-clean-node-header{opacity:.96;pointer-events:auto;transform:translateY(0)}
+.h18-clean-node-preview{min-height:0;padding:0}
+.h18-clean-node[data-h18-explicit-grid="1"]>.h18-clean-node-preview{height:100%}
+.h18-clean-node-preview--image{min-height:0;height:100%}
+.h18-clean-inner-surface{margin-top:0;min-height:0;border:0;outline:1px dashed #a7aaad;outline-offset:-1px}
