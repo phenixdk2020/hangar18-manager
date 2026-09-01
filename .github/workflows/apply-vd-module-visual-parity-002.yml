@@ -1,0 +1,78 @@
+name: Apply VD Module Visual Parity 002
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_vd_module_visual_parity_002.py'
+      - '.github/scripts/vd_module_visual_parity_002_qa.py'
+      - '.github/workflows/apply-vd-module-visual-parity-002.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply module visual parity task
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/apply_vd_module_visual_parity_002.py
+
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/apply_vd_module_visual_parity_002.py .github/scripts/vd_module_visual_parity_002_qa.py
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Relevant regression QA
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/v0173_editor_frontend_parity_qa.py
+          python3 .github/scripts/v0174_module_cutover_qa.py
+          python3 .github/scripts/v0175_forms_search_archive_qa.py
+          python3 .github/scripts/vd_module_visual_parity_002_qa.py
+
+      - name: Verify scoped diff and release boundary
+        run: |
+          set -euo pipefail
+          find .github/scripts -type d -name __pycache__ -prune -exec rm -rf {} +
+          git status --short
+          test -n "$(git status --short)"
+          if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/src/Admin/EditorController.php|clean/hangar18-manager/src/Frontend/CollectionPageRenderer.php|clean/hangar18-manager/assets/admin-v0175.css|docs/clean-backlog-v0100.md|docs/vd-module-visual-parity-002-status.md)'; then
+            echo 'Unexpected VD-MODULE-VISUAL-PARITY-002 modified path.' >&2
+            exit 1
+          fi
+          grep -q 'Version: 0.1.75' clean/hangar18-manager/hangar18-manager.php
+          grep -q '"version": "0.1.75"' clean-update.json
+          git diff --exit-code -- clean-update.json clean/hangar18-manager/hangar18-manager.php visual-designer-release-now.txt
+
+      - name: Commit parity task source
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-apply-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/src/Admin/EditorController.php \
+                  clean/hangar18-manager/src/Frontend/CollectionPageRenderer.php \
+                  clean/hangar18-manager/assets/admin-v0175.css \
+                  docs/clean-backlog-v0100.md \
+                  docs/vd-module-visual-parity-002-status.md
+          if git diff --cached --quiet; then
+            echo 'VD-MODULE-VISUAL-PARITY-002 already current.'
+            exit 0
+          fi
+          git commit -m 'Implement VD-MODULE-VISUAL-PARITY-002'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          echo 'Unable to push parity implementation.' >&2
+          exit 1
