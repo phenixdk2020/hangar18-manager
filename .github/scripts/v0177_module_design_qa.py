@@ -20,6 +20,13 @@ def require(condition: bool, message: str) -> None:
     print('PASS:', message)
 
 
+def version_tuple(value: str) -> tuple[int, ...]:
+    try:
+        return tuple(int(part) for part in value.split('.'))
+    except ValueError:
+        return (0,)
+
+
 plugin = text('clean/hangar18-manager/hangar18-manager.php')
 model = text('clean/hangar18-manager/src/Model/ModuleDesignModel.php')
 collection = text('clean/hangar18-manager/src/Frontend/CollectionPageRenderer.php')
@@ -34,7 +41,13 @@ manifest = json.loads(text('clean-update.json'))
 
 header = re.search(r'\* Version:\s*([0-9.]+)', plugin)
 const = re.search(r"H18_CLEAN_VERSION',\s*'([0-9.]+)'", plugin)
-require(header is not None and const is not None and header.group(1) == '0.1.77' and const.group(1) == '0.1.77', 'plugin/runtime version is exactly v0.1.77')
+runtime = header.group(1) if header is not None else ''
+require(
+    header is not None and const is not None
+    and runtime == const.group(1)
+    and version_tuple(runtime) >= version_tuple('0.1.77'),
+    'plugin/runtime version is v0.1.77 or newer',
+)
 require("src/Model/ModuleDesignModel.php" in plugin, 'ModuleDesignModel is bootstrapped')
 
 require("META = '_h18_vd_module_design_v1'" in model and "HISTORY_META = '_h18_vd_module_design_history_v1'" in model, 'module design uses dedicated canonical current/history meta')
@@ -73,13 +86,22 @@ require('data-module-design-reset' in js and 'defaults' in js, 'live controls su
 require('.h18-vd-module-designer-layout' in css and '.h18-vd-module-design-panel' in css, 'module design panel has dedicated responsive admin layout')
 
 versions = history.get('versions', []) if isinstance(history, dict) else []
-require(bool(versions) and str(versions[0].get('version', '')) == '0.1.77', 'release history starts with v0.1.77')
-require('0.1.77' in notes and 'Moduldesign' in notes and 'CollectionPageRenderer' in notes, 'release notes describe editable canonical module design')
-require('**Aktuel release:** v0.1.77' in backlog and 'VD-MODULE-DESIGN-001 — FÆRDIG I v0.1.77' in backlog, 'canonical backlog closes module design in v0.1.77')
+require(any(isinstance(row, dict) and str(row.get('version', '')) == '0.1.77' for row in versions), 'release history retains v0.1.77')
+require('VD-MODULE-DESIGN-001 — FÆRDIG I v0.1.77' in backlog, 'canonical backlog retains completed v0.1.77 module design milestone')
 require('Release candidate' in status and 'central ZIP/manifest-build' in status, 'v0.1.77 status preserves central release gate')
 
-# Release artifacts must still be the last verified version until the central release workflow runs.
-require(str(manifest.get('version', '')) == '0.1.76', 'pre-release updater manifest remains on verified v0.1.76')
-require(not (ROOT / 'dist/visual-designer-manager-v0.1.77.zip').is_file(), 'pre-release source does not contain a v0.1.77 ZIP yet')
+# The original v0.1.77 gate also verified its pre-release boundary. Preserve that
+# behavior when testing a 0.1.77 candidate, but make the regression forward-
+# compatible once a later version is under development.
+manifest_version = str(manifest.get('version', ''))
+if runtime == '0.1.77':
+    require(version_tuple(manifest_version) in {version_tuple('0.1.76'), version_tuple('0.1.77')}, 'v0.1.77 updater boundary is valid')
+    if manifest_version == '0.1.76':
+        require(not (ROOT / 'dist/visual-designer-manager-v0.1.77.zip').is_file(), 'pre-release source does not contain a v0.1.77 ZIP yet')
+    else:
+        require((ROOT / 'dist/visual-designer-manager-v0.1.77.zip').is_file(), 'released v0.1.77 ZIP exists')
+else:
+    require(version_tuple(manifest_version) >= version_tuple('0.1.77'), 'later source retains at least the verified v0.1.77 updater baseline')
+    require((ROOT / 'dist/visual-designer-manager-v0.1.77.zip').is_file(), 'later source retains the verified v0.1.77 ZIP')
 
-print('Visual Designer Manager v0.1.77 module design QA: PASS')
+print('Visual Designer Manager v0.1.77 module design QA: PASS (forward-compatible)')
