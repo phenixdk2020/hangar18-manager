@@ -56,9 +56,12 @@
 - Ved ingen søgeresultater vises en venlig tekst og **Nulstil søgning**.
 - Ved ingen kommende events kan seneste tidligere events stadig være let tilgængelige.
 
-### IDEA-BREADCRUMBS-001 — Navigation på detaljesider
-- Kompakt breadcrumb/back-link, fx **Events → Panserdag 2026**.
-- Samme mønster for Køretøjer og Billedgalleri.
+### IDEA-BACK-LINK-001 — Tilbage-link på detaljesider
+- Brug et enkelt tilbage-link i stedet for breadcrumbs.
+- Events: **← Tilbage til Events**.
+- Køretøjer: **← Tilbage til Køretøjer**.
+- Billedgalleri: **← Tilbage til Billedgalleri**.
+- Ingen breadcrumbs på forsiden.
 
 ### IDEA-SHARE-001 — Deling
 - Valgfri **Del**-funktion på events, køretøjer og album med kopier-link og native share på understøttede enheder.
