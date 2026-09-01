@@ -21,7 +21,7 @@ def write(rel: str, value: str) -> None:
 
 def replace_once(rel: str, old: str, new: str) -> None:
     value = read(rel)
-    if new in value:
+    if new and new in value:
         return
     count = value.count(old)
     if count != 1:
