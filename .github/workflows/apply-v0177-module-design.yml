@@ -66,11 +66,7 @@ jobs:
           fi
           grep -q 'Version: 0.1.77' clean/hangar18-manager/hangar18-manager.php
           grep -q "H18_CLEAN_VERSION', '0.1.77'" clean/hangar18-manager/hangar18-manager.php
-          test "$(python3 - <<'PY'
-import json
-print(json.load(open('clean-update.json', encoding='utf-8'))['version'])
-PY
-)" = '0.1.76'
+          python3 -c "import json; assert json.load(open('clean-update.json', encoding='utf-8'))['version'] == '0.1.76'"
 
       - name: Commit v0.1.77 release candidate
         run: |
