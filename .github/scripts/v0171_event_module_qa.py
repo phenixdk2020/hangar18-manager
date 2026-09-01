@@ -21,6 +21,13 @@ def require(path: str, *needles: str) -> None:
             raise SystemExit(f'{path}: missing contract marker: {needle}')
 
 
+def require_compact(path: str, needle: str) -> None:
+    value = re.sub(r'\s+', '', text(path))
+    compact = re.sub(r'\s+', '', needle)
+    if compact not in value:
+        raise SystemExit(f'{path}: missing compact contract marker: {needle}')
+
+
 require('clean/hangar18-manager/hangar18-manager.php',
         ' * Version: 0.1.71',
         "define('H18_CLEAN_VERSION', '0.1.71');",
@@ -65,8 +72,8 @@ require('clean/hangar18-manager/src/Frontend/Renderer.php',
         "if ($type === 'eventlist')", "if ($type === 'eventdetail')",
         "ModuleStore::listRecords('events'", "ModuleStore::findByRecordId('events'",
         "$_GET['h18_event']", "(string) ($record['status'] ?? 'draft') !== 'publish'",
-        "['all', 'upcoming', 'past']", 'h18-clean-front-event-list',
-        'h18-clean-front-event-detail', 'eventDateLabel')
+        'h18-clean-front-event-list', 'h18-clean-front-event-detail', 'eventDateLabel')
+require_compact('clean/hangar18-manager/src/Frontend/Renderer.php', "['all', 'upcoming', 'past']")
 
 for manual in ('CLEAN-DESIGN-MANUAL.md', 'CLEAN-USER-MANUAL.md', 'CLEAN-TECHNICAL-MANUAL.md'):
     require(manual, 'Event')
