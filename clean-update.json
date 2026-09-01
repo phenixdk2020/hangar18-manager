@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.73",
+  "version": "0.1.74",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.73.zip",
-  "sha256": "a00664cfe65b8d3521acdecab3f7c805888c85b3dd01eb703518b9ad44763dcf",
-  "source_commit": "bb56ed5ad35eeef114bbedb3a860a3512cdb4845",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.74.zip",
+  "sha256": "e23a321b9c1e2e6f97a01d0d578db31b7eeda717998c93d70d0d4df491fe5b19",
+  "source_commit": "376b7dae002626d127a940b5882db364421ba621",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h2>0.1.73 – Editor/frontend visuel paritet</h2>\n<ul>\n<li><strong>VD-EDITOR-FRONTEND-PARITY-001:</strong> editorens elementheader er nu et overlay og optager ikke layoutplads.</li>\n<li>Standard-preview padding og minimumshøjde er fjernet, så gemte bredder/højder vises uden editor-tillæg.</li>\n<li>Sektion/Kasse-hjælperammer bruger outline i stedet for margin/border og forskyder ikke indhold.</li>\n<li>Rettelsen gælder den fælles canvas-runtime for almindelige sider, Header og Footer og ændrer ikke eksisterende gemte layouts.</li>\n<li>Canonical PHP-preview/frontend-renderer er fortsat reference for den endelige visning.</li>\n</ul>"
+    "changelog": "<h2>0.1.74 – Modul-cutover</h2>\n<ul>\n<li><strong>VD-MODULE-CUTOVER-001:</strong> Events, Billedgalleri og Køretøjer og materiel er nu tre indholdsdrevne flow-modulsider efter de originale <code>_old</code>-referencer.</li>\n<li>Events opdeles automatisk i kommende og tidligere arrangementer med kompakte kort, billeder, dato/sted og Læs mere.</li>\n<li>Billedgalleri viser kompakte albumkort med cover, beskrivelse og billedantal; Køretøjer viser billede, tekniske data og Se køretøjet.</li>\n<li>De tre modulsider bruger naturlig indholdshøjde i stedet for faste 8-px canvas-rækker; global Header/Footer kommer fortsat fra Visual Designer Manager.</li>\n<li><strong>BUG-23:</strong> Versionshistorikken kan igen læses. <strong>BUG-24:</strong> Gem viser særskilt status for gemt, ingen ændringer og fejl.</li>\n</ul>"
   }
 }
