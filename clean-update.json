@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.71",
+  "version": "0.1.72",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.71.zip",
-  "sha256": "83cc8aa5bc6af8ae61e9143bae41507c8c3a3f36e79088b5b9f6a08b2556cd43",
-  "source_commit": "75b3d88d601e2fa4480e282d319c2d2f8fb156df",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.72.zip",
+  "sha256": "a2ad8775d54ea1742d3f931b4d11289d5f22008db98227317c4e6ff2d9a91a28",
+  "source_commit": "a5b11f322e0798711892e3f77fbb4b085746b7be",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h2>0.1.71 – Events</h2>\n<ul>\n<li><strong>VD-EVENT-MODULE-001:</strong> Events har nu Manager-CRUD på den fælles ModuleStore.</li>\n<li>Start/slut, sted, beskrivelser, status og primært billede understøttes.</li>\n<li>Designer har Eventliste og Eventdetalje med genbrugelig detailrouting via <code>?h18_event=&lt;record-id&gt;</code>.</li>\n<li>Eventliste kan vise kommende, afholdte eller alle publicerede events uden at slette historiske records.</li>\n<li>Næste modulrelease er v0.1.72 – Billedgalleri.</li>\n</ul>"
+    "changelog": "<h2>0.1.72 – Billedgalleri + Site Design Harmony</h2>\n<ul>\n<li><strong>VD-GALLERY-MODULE-001:</strong> Billedgalleri har nu album-CRUD, cover, beskrivelse og Media Library-billeder.</li>\n<li>Designer har Gallerioversigt og Albumvisning med detailrouting via <code>?h18_gallery=&lt;record-id&gt;</code>.</li>\n<li><strong>VD-SITE-DESIGN-HARMONY-001:</strong> Om, Køretøjer, Events, Billedgalleri, Bliv medlem og Kontakt harmoniseres automatisk med Hjems tema.</li>\n<li>Harmonisering ændrer ikke indhold eller geometri og gemmer backup + ny Designer-version.</li>\n<li>Næste planlagte version er v0.1.73 – modul-cutover/migrering.</li>\n</ul>"
   }
 }
