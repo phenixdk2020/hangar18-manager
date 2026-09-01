@@ -35,6 +35,13 @@
 - Mulighed for at markere et event, køretøj eller album som **Fremhævet**.
 - Et fremhævet element kan vises større øverst uden at ændre den normale sortering.
 
+### IDEA-HOME-MEMBERSHIP-CTA-001 — Bred “Bliv medlem”-CTA på forsiden
+- Placer en bred CTA-sektion **under de tre teaser-kort** på forsiden.
+- CTA'en skal ikke være et fjerde almindeligt teaser-kort; den skal visuelt fungere som en tydelig afsluttende handlingsbjælke.
+- Forslag til indhold: kort tekst om medlemskab + tydelig **Bliv medlem**-knap til siden `bliv-medlem`.
+- Designet skal følge samme farver, typografi og spacing som resten af sitet, men have nok kontrast til at være let at få øje på.
+- På mobil vises CTA'en i fuld bredde under de stablede teaser-kort.
+
 ### IDEA-EVENT-CALENDAR-001 — Kalenderfunktioner
 - **Tilføj til kalender** på eventdetaljer med ICS-download.
 - Eventkort kan vise et lille dato-badge med dag/måned for hurtigere scanning.
