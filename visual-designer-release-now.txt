@@ -1,3 +1,5 @@
-Release Visual Designer Manager v0.1.70
-Trigger: vehicle-module 2026-08-31
-Publish: requested 2026-08-31
+Release Visual Designer Manager v0.1.71
+Trigger: event-module 2026-09-01
+Publish: requested 2026-09-01
+QA: apply run 33469614171 PASS
+Source candidate: 27a28c4a67325a72b338b409f77d1097d376c9b5
