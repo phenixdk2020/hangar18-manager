@@ -6,6 +6,8 @@ namespace VisualDesignerManager\Frontend;
 
 use VisualDesignerManager\Modules\ModuleStore;
 use VisualDesignerManager\Model\ModuleDesignModel;
+use VisualDesignerManager\Modules\EventFieldRegistry;
+use VisualDesignerManager\Migration\HybridModulePageMigration;
 
 final class CollectionPageRenderer
 {
@@ -48,10 +50,11 @@ final class CollectionPageRenderer
             $edge = self::eventArchiveEdge($record);
             if ($edge > 0 && $edge < $now) { $past[] = $record; } else { $upcoming[] = $record; }
         }
-        $html = self::openPage('events', $title) . self::controls('events', $query, $sort);
+        $html = self::openPage('events', $title) . HybridModuleSlots::render($postId, 'before') . self::controls('events', $query, $sort);
         $html .= '<section class="h18-module-section"><h2>Kommende arrangementer</h2>' . self::eventGrid($postId, $upcoming, false, 'Ingen kommende arrangementer matcher søgningen.') . '</section>';
+        $html .= HybridModuleSlots::render($postId, 'between');
         $html .= '<section class="h18-module-section"><h2>Tidligere arrangementer</h2>' . self::eventGrid($postId, $past, true, 'Ingen tidligere arrangementer matcher søgningen.') . '</section>';
-        return $html . '</main>';
+        return $html . HybridModuleSlots::render($postId, 'after') . '</main>';
     }
 
     /** @param array<int,array<string,mixed>> $records */
@@ -62,13 +65,14 @@ final class CollectionPageRenderer
         foreach ($records as $record) {
             $fields = isset($record['fields']) && is_array($record['fields']) ? $record['fields'] : [];
             $id = (string) ($record['id'] ?? '');
-            $url = add_query_arg('h18_event', rawurlencode($id), get_permalink($postId));
+            $detailPageId = HybridModulePageMigration::detailPageId('events'); $base = $detailPageId > 0 ? get_permalink($detailPageId) : get_permalink($postId); $url = add_query_arg('h18_event', rawurlencode($id), $base);
             $html .= '<article class="h18-module-card h18-module-event-card">' . self::image($record, 'h18-module-card-image', 480, 285);
             $html .= '<div class="h18-module-card-body"><h3>' . esc_html((string) ($record['title'] ?? 'Event')) . '</h3>';
             $meta = self::eventDateLabel((string) ($fields['start'] ?? ''), (string) ($fields['end'] ?? ''));
             $location = trim((string) ($fields['location'] ?? ''));
             if ($meta !== '' || $location !== '') { $html .= '<p class="h18-module-meta"><strong>' . esc_html($meta) . '</strong>' . ($location !== '' ? ' · ' . esc_html($location) : '') . '</p>'; }
             $summary = trim((string) ($record['summary'] ?? '')); if ($summary !== '') { $html .= '<p>' . esc_html($summary) . '</p>'; }
+            $defs = EventFieldRegistry::byId(); foreach ((array) ($record['attributes'] ?? []) as $attribute) { if (!is_array($attribute) || empty($attribute['enabled'])) { continue; } $key=(string)($attribute['key']??''); $def=$defs[$key]??null; if(!is_array($def)||empty($def['enabled'])||empty($def['showCard'])){continue;} $value=$attribute['value']??''; if(is_bool($value)?!$value:trim((string)$value)===''){continue;} $label=(string)($def['label']??($attribute['label']??$key)); $html .= '<p class="h18-module-event-extra"><strong>'.esc_html($label).':</strong> '.esc_html(is_bool($value)?($value?'Ja':'Nej'):(string)$value).'</p>'; }
             $html .= '<div class="h18-module-card-actions"><a class="h18-module-more" href="' . esc_url($url) . '">Læs mere →</a>';
             if ($past) { $html .= self::eventGalleryLink($fields); }
             $html .= '</div></div></article>';
@@ -81,20 +85,20 @@ final class CollectionPageRenderer
         $records = self::records(ModuleStore::listRecords('galleries', ['status' => 'publish', 'limit' => 100, 'orderBy' => 'title', 'order' => 'ASC']));
         $query = self::query(); if ($query !== '') { $records = self::searchTitle($records, $query); }
         $sort = self::sortMode('galleries'); self::sortByTitle($records, $sort === 'name-desc');
-        $html = self::openPage('galleries', $title) . self::controls('galleries', $query, $sort) . '<section class="h18-module-section"><h2>Køretøjer</h2>';
+        $html = self::openPage('galleries', $title) . HybridModuleSlots::render($postId, 'before') . self::controls('galleries', $query, $sort) . HybridModuleSlots::render($postId, 'between') . '<section class="h18-module-section"><h2>Køretøjer</h2>';
         if (!$records) { return $html . '<p class="h18-module-empty">Ingen album matcher søgningen.</p></section></main>'; }
         $html .= '<div class="h18-module-card-grid h18-module-gallery-grid">';
         foreach ($records as $record) {
             $fields = isset($record['fields']) && is_array($record['fields']) ? $record['fields'] : [];
             $imageIds = isset($fields['imageIds']) && is_array($fields['imageIds']) ? array_values(array_filter(array_map('absint', $fields['imageIds']))) : [];
             $cover = absint($record['featuredMediaId'] ?? 0); if ($cover <= 0 && $imageIds) { $cover = (int) $imageIds[0]; }
-            $url = add_query_arg('h18_gallery', rawurlencode((string) ($record['id'] ?? '')), get_permalink($postId));
+            $detailPageId = HybridModulePageMigration::detailPageId('galleries'); $base = $detailPageId > 0 ? get_permalink($detailPageId) : get_permalink($postId); $url = add_query_arg('h18_gallery', rawurlencode((string) ($record['id'] ?? '')), $base);
             $html .= '<article class="h18-module-card h18-module-gallery-card">' . self::imageId($cover, (string) ($record['title'] ?? ''), 'h18-module-card-image', 480, 285);
             $html .= '<div class="h18-module-card-body"><h3><a href="' . esc_url($url) . '">' . esc_html((string) ($record['title'] ?? 'Album')) . '</a></h3>';
             $description = trim((string) ($fields['description'] ?? '')); if ($description !== '') { $html .= '<div class="h18-module-description">' . wp_kses_post($description) . '</div>'; }
             $count = count($imageIds); $html .= '<p class="h18-module-count"><strong>' . esc_html((string) $count) . ' ' . ($count === 1 ? 'billede' : 'billeder') . '</strong></p></div></article>';
         }
-        return $html . '</div></section></main>';
+        return $html . '</div></section>' . HybridModuleSlots::render($postId, 'after') . '</main>';
     }
 
     private static function vehicles(int $postId, string $title): string
@@ -102,13 +106,13 @@ final class CollectionPageRenderer
         $records = self::records(ModuleStore::listRecords('vehicles', ['status' => 'publish', 'limit' => 100, 'orderBy' => 'title', 'order' => 'ASC']));
         $query = self::query(); if ($query !== '') { $records = self::searchTitle($records, $query); }
         $sort = self::sortMode('vehicles'); self::sortByTitle($records, $sort === 'name-desc');
-        $html = self::openPage('vehicles', $title) . self::controls('vehicles', $query, $sort);
+        $html = self::openPage('vehicles', $title) . HybridModuleSlots::render($postId, 'before') . self::controls('vehicles', $query, $sort) . HybridModuleSlots::render($postId, 'between');
         $html .= '<section class="h18-module-section"><h2>Historisk materiel</h2><p class="h18-module-intro">Her finder du foreningens dokumenterede køretøjer og øvrige militærhistoriske materiel.</p>';
         if (!$records) { return $html . '<p class="h18-module-empty">Ingen køretøjer matcher søgningen.</p></section></main>'; }
         $html .= '<div class="h18-module-card-grid h18-module-vehicle-grid">';
         foreach ($records as $record) {
             $fields = isset($record['fields']) && is_array($record['fields']) ? $record['fields'] : [];
-            $url = add_query_arg('h18_vehicle', rawurlencode((string) ($record['id'] ?? '')), get_permalink($postId));
+            $detailPageId = HybridModulePageMigration::detailPageId('vehicles'); $base = $detailPageId > 0 ? get_permalink($detailPageId) : get_permalink($postId); $url = add_query_arg('h18_vehicle', rawurlencode((string) ($record['id'] ?? '')), $base);
             $html .= '<article class="h18-module-card h18-module-vehicle-card">' . self::image($record, 'h18-module-card-image', 480, 285);
             $html .= '<div class="h18-module-card-body"><h3>' . esc_html((string) ($record['title'] ?? 'Køretøj')) . '</h3>';
             $rows = []; $category = trim((string) ($fields['category'] ?? '')); if ($category !== '') { $rows[] = ['Type', $category]; }
@@ -121,7 +125,7 @@ final class CollectionPageRenderer
             if ($rows) { $html .= '<table class="h18-module-spec-table"><tbody>'; foreach (array_slice($rows, 0, 10) as $row) { $html .= '<tr><th>' . esc_html($row[0]) . '</th><td>' . esc_html($row[1]) . '</td></tr>'; } $html .= '</tbody></table>'; }
             $html .= '<a class="h18-module-more" href="' . esc_url($url) . '">Se køretøjet →</a></div></article>';
         }
-        return $html . '</div></section></main>';
+        return $html . '</div></section>' . HybridModuleSlots::render($postId, 'after') . '</main>';
     }
 
     private static function eventDetail(int $postId, string $id, string $pageTitle): string
@@ -134,6 +138,7 @@ final class CollectionPageRenderer
         $meta = self::eventDateLabel((string) ($fields['start'] ?? ''), (string) ($fields['end'] ?? '')); $location = trim((string) ($fields['location'] ?? ''));
         if ($meta !== '' || $location !== '') { $html .= '<p class="h18-module-meta"><strong>' . esc_html($meta) . '</strong>' . ($location !== '' ? ' · ' . esc_html($location) : '') . '</p>'; }
         $description = trim((string) ($fields['description'] ?? '')); if ($description !== '') { $html .= '<div class="h18-module-detail-text">' . wp_kses_post($description) . '</div>'; }
+        $defs=EventFieldRegistry::byId(); foreach((array)($record['attributes']??[]) as $attribute){if(!is_array($attribute)||empty($attribute['enabled'])){continue;}$key=(string)($attribute['key']??'');$def=$defs[$key]??null;if(!is_array($def)||empty($def['enabled'])||empty($def['showDetail'])){continue;}$value=$attribute['value']??'';if(is_bool($value)?!$value:trim((string)$value)===''){continue;}$label=(string)($def['label']??($attribute['label']??$key));$type=(string)($def['type']??($attribute['type']??'text'));$rendered=$type==='richtext'?wp_kses_post((string)$value):($type==='boolean'?($value?'Ja':'Nej'):nl2br(esc_html((string)$value)));$html.='<section class="h18-module-event-custom"><h2>'.esc_html($label).'</h2><div>'.$rendered.'</div></section>';}
         $html .= self::eventGalleryLink($fields);
         return $html . '</main>';
     }

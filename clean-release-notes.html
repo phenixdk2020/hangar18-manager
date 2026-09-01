@@ -1,9 +1,10 @@
-<h2>0.1.77 – Redigerbart moduldesign</h2>
+<h2>0.1.78 – Hybrid modulsider og fleksible Eventfelter</h2>
 <ul>
-<li><strong>Events, Billedgalleri og Køretøjer:</strong> de tre canonical modulsider kan nu designes direkte i Visual Designer uden at opgive Designer/frontend-paritet.</li>
-<li>Nyt <strong>Moduldesign</strong> styrer sidebredde, kolonner pr. breakpoint, kortafstand/maksbredde, baggrund, tekstfarve, padding, radius, billedformat, typografi, accentfarve og sektionsafstand.</li>
-<li>Designændringer vises live i den samme <code>CollectionPageRenderer</code> som frontend via en autoriseret same-origin preview-override.</li>
-<li><code>_old</code>-udseendet er fortsat standardprofil: 90% frame, 3/2/1 kolonner, 22px gap, beige kortkrop og 16:9 coverbilleder.</li>
-<li>Moduldesign gemmes versionsstyret og følger restore af tidligere Designer-versioner.</li>
-<li>Alle funktioner fra v0.1.76 bevares, herunder søgning/sortering, eventarkiv, event→album samt Kontakt/Bliv medlem-formularer.</li>
+<li><strong>Events, Billedgalleri og Køretøjer:</strong> almindelige Visual Designer-elementer kan placeres før, mellem og efter det dynamiske modulindhold.</li>
+<li>Den eksisterende flow-baserede CollectionPageRenderer bevares, så søgning, sortering, eventarkiv og automatisk indholdshøjde fortsat fungerer.</li>
+<li>Moduldesign fra 0.1.77 ligger fortsat som en separat tilstand; Indholdselementer er nu standardtilstanden.</li>
+<li>Eventdetalje, Albumdetalje og Køretøjsdetalje er genbrugelige Visual Designer-sider, hvor almindelige elementer kan sættes omkring de dynamiske detailblokke.</li>
+<li><strong>Eventfelter:</strong> opret, fjern, omdøb og sorter felter med type, aktiv/påkrævet og visning på kort/detalje.</li>
+<li>Standard Eventfelter: <strong>Om arrangementet</strong>, <strong>Program</strong> og <strong>Praktiske oplysninger</strong>.</li>
+<li>Nyt Designer-element <strong>Eventfelt</strong> kan vise et bestemt fleksibelt Eventfelt separat på detail-skabelonen.</li>
 </ul>

@@ -98,6 +98,7 @@ final class EditorController
         }
         TemplateLayoutModel::ensureMigrated();
         $isCollectionPage = CollectionPageRenderer::supports($postId);
+        $collectionMode = $isCollectionPage && sanitize_key((string) ($_GET['h18_collection_mode'] ?? 'content')) === 'module' ? 'module' : 'content';
         $moduleDesign = $isCollectionPage ? ModuleDesignModel::get($postId) : [];
         $moduleDesignDefaults = $isCollectionPage ? ModuleDesignModel::defaults() : [];
         $model = LayoutModel::get($postId);
@@ -119,6 +120,7 @@ final class EditorController
         echo '<div class="h18-clean-topbar">';
         echo '<a class="button" href="' . esc_url(admin_url('admin.php?page=' . self::MENU)) . '">← Vælg side</a>';
         echo '<a class="button" target="_blank" rel="noopener" href="' . esc_url(get_permalink($postId)) . '">Vis offentlig side</a>';
+        if ($isCollectionPage) { echo '<a class="button ' . ($collectionMode === 'content' ? 'button-primary' : '') . '" href="' . esc_url(add_query_arg(['page'=>self::MENU,'post'=>$postId,'h18_collection_mode'=>'content'], admin_url('admin.php'))) . '">Indholdselementer</a><a class="button ' . ($collectionMode === 'module' ? 'button-primary' : '') . '" href="' . esc_url(add_query_arg(['page'=>self::MENU,'post'=>$postId,'h18_collection_mode'=>'module'], admin_url('admin.php'))) . '">Moduldesign</a>'; }
         echo '<button type="button" class="button" id="h18-clean-copy-diag" data-url="' . esc_attr(DiagnosticStore::supportUrl($postId)) . '">Kopiér diagnose-link</button>';
         echo GitHubUpdater::checkButtonHtml();
         echo '</div>';
@@ -157,7 +159,7 @@ final class EditorController
         echo '<button type="submit" class="button button-primary h18-clean-save">Gem som ny version</button>';
         echo '</div>';
 
-        if ($isCollectionPage) {
+        if ($isCollectionPage && $collectionMode === 'module') {
             $moduleSlug = sanitize_title((string) get_post_field('post_name', $postId));
             $moduleAdminPage = $moduleSlug === 'events'
                 ? 'h18-clean-events'
@@ -225,7 +227,7 @@ final class EditorController
             'Moduler' => [
                 'vehiclelist' => 'Køretøjsliste', 'vehicledetail' => 'Køretøjsdetalje',
                 'eventlist' => 'Eventliste', 'eventdetail' => 'Eventdetalje',
-                'gallerylist' => 'Gallerioversigt', 'gallerydetail' => 'Albumvisning',
+                'gallerylist' => 'Gallerioversigt', 'gallerydetail' => 'Albumvisning', 'eventfield' => 'Eventfelt',
             ],
             'Formularer' => [
                 'contactform' => 'Kontaktformular', 'membershipform' => 'Bliv medlem-formular',

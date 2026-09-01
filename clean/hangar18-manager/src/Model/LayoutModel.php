@@ -61,7 +61,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'gallerylist', 'gallerydetail', 'contactform', 'membershipform'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'gallerylist', 'gallerydetail', 'eventfield', 'contactform', 'membershipform'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -484,6 +484,20 @@ final class LayoutModel
             return array_merge(['binding' => $binding, 'recordId' => $recordId, 'showImage' => array_key_exists('showImage', $raw) ? (bool) $raw['showImage'] : true, 'showDate' => array_key_exists('showDate', $raw) ? (bool) $raw['showDate'] : true, 'showLocation' => array_key_exists('showLocation', $raw) ? (bool) $raw['showLocation'] : true, 'showSummary' => array_key_exists('showSummary', $raw) ? (bool) $raw['showSummary'] : true, 'showDescription' => array_key_exists('showDescription', $raw) ? (bool) $raw['showDescription'] : true, 'imageHeight' => self::clamp($raw['imageHeight'] ?? 360, 80, 900, 360), 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff', 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a', 'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83', 'padding' => self::clamp($raw['padding'] ?? 16, 0, 80, 16), 'radius' => self::clamp($raw['radius'] ?? 4, 0, 60, 4)], $border);
         }
 
+        if ($type === 'eventfield') {
+            $fieldKey = sanitize_key((string) ($raw['fieldKey'] ?? 'about'));
+            $recordId = strtolower(trim((string) ($raw['recordId'] ?? '')));
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            return array_merge([
+                'fieldKey' => $fieldKey !== '' ? $fieldKey : 'about',
+                'recordId' => $recordId,
+                'showHeading' => array_key_exists('showHeading', $raw) ? (bool) $raw['showHeading'] : true,
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '')) ?: '',
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a',
+                'padding' => self::clamp($raw['padding'] ?? 0, 0, 80, 0),
+                'radius' => self::clamp($raw['radius'] ?? 0, 0, 60, 0),
+            ], $border);
+        }
         if ($type === 'gallerylist') {
             $orderBy = in_array((string) ($raw['orderBy'] ?? 'sortOrder'), ['sortOrder', 'title', 'updatedAt'], true) ? (string) ($raw['orderBy'] ?? 'sortOrder') : 'sortOrder';
             $order = strtoupper((string) ($raw['order'] ?? 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
@@ -551,6 +565,7 @@ final class LayoutModel
                 'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
                 'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
                 'minHeightRows' => self::clamp($raw['minHeightRows'] ?? 0, 0, 4000, 0),
+                'moduleSlot' => in_array((string) ($raw['moduleSlot'] ?? 'before'), ['before','between','after'], true) ? (string) ($raw['moduleSlot'] ?? 'before') : 'before',
             ], $border);
         }
         return $border;

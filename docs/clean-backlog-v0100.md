@@ -1,11 +1,11 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
 **Statusdato:** 1. september 2026  
-**Aktuel release:** v0.1.77  
+**Aktuel release:** v0.1.78  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.77
+## Aktuel milepælsstatus · v0.1.78
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
 - **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
@@ -35,6 +35,8 @@
 6. **v0.1.74 – Modul-cutover — FÆRDIG FUNKTIONELT:** de tre dynamiske samlingssider fik data-flow og naturlig flow-højde; 1:1-visuel `_old`-paritet var ikke afsluttet her.
 7. **v0.1.75 – Formularer, søgning og eventarkiv — FÆRDIG:** Kontakt/Bliv medlem-formularer, sideprovisionering, søgning/sortering, event→album og end-of-day arkivregel.
 8. **v0.1.76 – VD-MODULE-VISUAL-PARITY-002 — FÆRDIG:** Events, Billedgalleri og Køretøjer bruger samme canonical frontend-rendering i Designer-preview; kortgeometri, billeder, beige kortkrop, spacing og responsive regler er justeret mod `_old`.
+9. **v0.1.77 – Redigerbart moduldesign — FÆRDIG:** Moduldesign kan ændres for de tre dynamiske sider med canonical frontend-preview.
+10. **v0.1.78 – Hybrid modulsider + Eventfelter — FÆRDIG:** almindelige Designer-elementer i før/mellem/efter-slots, Designer-detailpages og fleksible Eventfelter.
 9. **v0.1.77 – VD-MODULE-DESIGN-001 — FÆRDIG:** de tre canonical modulsider har redigerbar side-/kortgeometri, typografi og farver med live preview i samme frontend-renderer.
 
 ## Åben backlog
@@ -128,3 +130,10 @@
 5. Efter opdatering: verificér backup + ny Designer-version for hver målside der blev harmoniseret.
 6. Sammenlign node-ID, hierarchy og Desktop/Laptop/Tablet/Mobil-geometri før/efter; de skal være identiske.
 7. Vis alle seks sider og kontrollér visuelt samme farver, typografi, sektion/kasse-stil og knapper som Hjem.
+
+### VD-HYBRID-MODULE-PAGES-001 — FÆRDIG I v0.1.78
+- Events, Billedgalleri og Køretøjer beholder flow-rendereren og får Designer-slots før/mellem/efter.
+- Moduldesign bevares som separat tilstand.
+- Detailvisninger provisioneres som normale Designer-sider.
+- EVENT-FIELDS-001 giver fleksible felter med standarderne Om arrangementet, Program og Praktiske oplysninger.
+- Eventfelt er et selvstændigt dynamisk Designer-element.

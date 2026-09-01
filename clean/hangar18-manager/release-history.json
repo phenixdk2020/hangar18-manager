@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "0.1.78",
+      "date": "2026-09-01",
+      "items": [
+        "VD-HYBRID-MODULE-PAGES-001: Events, Billedgalleri og Køretøjer har Designer-slots før/mellem/efter den dynamiske flow-renderer.",
+        "Moduldesign fra v0.1.77 bevares som separat Designer-tilstand, mens Indholdselementer er standardtilstand.",
+        "Eventdetalje, Albumdetalje og Køretøjsdetalje provisioneres som normale Visual Designer-sider og bruges som nye detailmål.",
+        "EVENT-FIELDS-001: fleksible Eventfelter med stabile IDer, typer, rækkefølge, aktiv/påkrævet og kort/detalje-visning.",
+        "Standardfelter er Om arrangementet, Program og Praktiske oplysninger; Eventfelt kan placeres selvstændigt i Designer.",
+        "Eksisterende modulrecords bevares; tidligere layouts sikkerhedskopieres før hybrid-slot migration."
+      ]
+    },
+    {
       "version": "0.1.77",
       "date": "2026-09-01",
       "items": [

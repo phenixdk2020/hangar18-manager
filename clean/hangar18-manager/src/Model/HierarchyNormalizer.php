@@ -217,6 +217,7 @@ final class HierarchyNormalizer
             'radius' => 0,
             'padding' => 0,
             'minHeightRows' => 0,
+            'moduleSlot' => 'before',
             'borderWidth' => 0,
             'borderColor' => '#000000',
             'gapX' => $gapX,
