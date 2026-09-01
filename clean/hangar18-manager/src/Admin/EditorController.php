@@ -150,27 +150,27 @@ final class EditorController
 
         echo '<div class="h18-clean-workspace">';
         echo '<aside class="h18-clean-palette"><h2>Elementer</h2>';
-        foreach ([
-            'section' => 'Sektion',
-            'container' => 'Kasse',
-            'text' => 'Tekst',
-            'image' => 'Billede',
-            'button' => 'Knap',
-            'link' => 'Link',
-            'spacer' => 'Mellemrum',
-            'divider' => 'Skillelinje',
-            'icon' => 'Ikon',
-            'badge' => 'Badge',
-            'datalist' => 'Data List',
-            'table' => 'Tabel',
-            'vehiclelist' => 'Køretøjsliste',
-            'vehicledetail' => 'Køretøjsdetalje',
-            'eventlist' => 'Eventliste',
-            'eventdetail' => 'Eventdetalje',
-            'gallerylist' => 'Gallerioversigt',
-            'gallerydetail' => 'Albumvisning',
-        ] as $type => $label) {
-            echo '<button type="button" draggable="true" class="button h18-clean-add" data-type="' . esc_attr($type) . '">+ ' . esc_html($label) . '</button>';
+        $paletteGroups = [
+            'Basic' => [
+                'section' => 'Sektion', 'container' => 'Kasse', 'text' => 'Tekst', 'image' => 'Billede',
+                'button' => 'Knap', 'link' => 'Link', 'spacer' => 'Mellemrum', 'divider' => 'Skillelinje',
+                'icon' => 'Ikon', 'badge' => 'Badge', 'datalist' => 'Data List', 'table' => 'Tabel',
+            ],
+            'Moduler' => [
+                'vehiclelist' => 'Køretøjsliste', 'vehicledetail' => 'Køretøjsdetalje',
+                'eventlist' => 'Eventliste', 'eventdetail' => 'Eventdetalje',
+                'gallerylist' => 'Gallerioversigt', 'gallerydetail' => 'Albumvisning',
+            ],
+            'Formularer' => [
+                'contactform' => 'Kontaktformular', 'membershipform' => 'Bliv medlem-formular',
+            ],
+        ];
+        foreach ($paletteGroups as $groupLabel => $elements) {
+            echo '<details class="h18-vd-palette-group" open><summary>' . esc_html($groupLabel) . '</summary><div class="h18-vd-palette-group-items">';
+            foreach ($elements as $type => $label) {
+                echo '<button type="button" draggable="true" class="button h18-clean-add" data-type="' . esc_attr($type) . '">+ ' . esc_html($label) . '</button>';
+            }
+            echo '</div></details>';
         }
         echo '<p class="description">Klik tilføjer på root. Træk et palette-element direkte til root, Sektion eller Kasse. Eksisterende elementer flyttes med ✥.</p></aside>';
 

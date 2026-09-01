@@ -37,6 +37,7 @@ final class ModuleRegistry
                     'end' => ['label' => 'Slut', 'type' => 'datetime', 'required' => false],
                     'location' => ['label' => 'Sted', 'type' => 'text', 'required' => false],
                     'description' => ['label' => 'Beskrivelse', 'type' => 'richtext', 'required' => false],
+                    'galleryRecordId' => ['label' => 'Tilknyttet album', 'type' => 'text', 'required' => false],
                 ],
             ],
             'galleries' => [

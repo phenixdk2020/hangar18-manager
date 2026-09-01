@@ -1,7 +1,7 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
 **Statusdato:** 1. september 2026  
-**Aktuel release:** v0.1.74  
+**Aktuel release:** v0.1.75  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
@@ -32,6 +32,7 @@
 4. **v0.1.72 – Billedgalleri + site-design — FÆRDIG:** album, Media Library-referencer, sortering, cover, Designer oversigt/detail og sikker Hjem-baseret designharmonisering.
 5. **v0.1.73 – Editor/frontend visuel paritet — FÆRDIG:** editorens hjælpe-UI er overlay og ændrer ikke canonical mål.
 6. **v0.1.74 – Modul-cutover — FÆRDIG:** de tre dynamiske samlingssider følger `_old`-layoutet og har flow-højde; versionshistorik og Save-feedback er rettet.
+7. **v0.1.75 – Formularer, søgning og eventarkiv — FÆRDIG:** Kontakt/Bliv medlem-formularer, sideprovisionering, søgning/sortering, event→album og end-of-day arkivregel.
 
 ## Åben backlog
 

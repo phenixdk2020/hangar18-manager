@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "0.1.75",
+      "date": "2026-09-01",
+      "items": [
+        "FORM-001..006: fælles kontakt-/medlemsformularer, validering, spam-honeypot, wp_mail og kvitteringsmail.",
+        "Kontakt og Bliv medlem klargøres automatisk som Visual Designer-sider med de relevante formularer.",
+        "Events har tidligste dato først som standard, automatisk tidligere-event regel efter sluttid eller kl. 23:59:59 samt valgfri albumkobling.",
+        "Events og Køretøjer kan søges på navn; Billedgalleri kan søges på albumnavn; køretøjer og album sorterer A–Å som standard.",
+        "Designer-paletten er opdelt i Basic, Moduler og Formularer, og Sider/Handlinger har mere plads på desktop.",
+        "Modulkort er visuelt harmoniseret tættere på _old-referencerne med ens spacing, billeder og tre-kolonne desktop-flow."
+      ]
+    },
+    {
       "version": "0.1.74",
       "date": "2026-09-01",
       "items": [

@@ -1,8 +1,10 @@
-<h2>0.1.74 – Modul-cutover</h2>
+<h2>0.1.75 – Formularer, søgning og eventarkiv</h2>
 <ul>
-<li><strong>VD-MODULE-CUTOVER-001:</strong> Events, Billedgalleri og Køretøjer og materiel er nu tre indholdsdrevne flow-modulsider efter de originale <code>_old</code>-referencer.</li>
-<li>Events opdeles automatisk i kommende og tidligere arrangementer med kompakte kort, billeder, dato/sted og Læs mere.</li>
-<li>Billedgalleri viser kompakte albumkort med cover, beskrivelse og billedantal; Køretøjer viser billede, tekniske data og Se køretøjet.</li>
-<li>De tre modulsider bruger naturlig indholdshøjde i stedet for faste 8-px canvas-rækker; global Header/Footer kommer fortsat fra Visual Designer Manager.</li>
-<li><strong>BUG-23:</strong> Versionshistorikken kan igen læses. <strong>BUG-24:</strong> Gem viser særskilt status for gemt, ingen ændringer og fejl.</li>
+<li><strong>Formularer:</strong> Kontaktformular og Bliv medlem-formular er canonical Visual Designer-elementer med validering, samtykke, spam-honeypot, <code>wp_mail()</code> og kvittering.</li>
+<li>Siderne <strong>Kontakt</strong> (<code>kontakt</code>) og <strong>Bliv medlem</strong> (<code>bliv-medlem</code>) oprettes/klargøres automatisk uden at overskrive eksisterende Designer-elementer.</li>
+<li><strong>Events:</strong> standard er tidligste dato først. Eventet flytter automatisk til Tidligere arrangementer efter sluttid; uden sluttid først ved dagens udløb.</li>
+<li>Et event kan valgfrit kobles til et publiceret billedalbum og vise <strong>Se billeder →</strong>, også efter eventet er afholdt.</li>
+<li><strong>Søgning:</strong> Events og Køretøjer kan søges på navn; Billedgalleri kan søges på albumnavn. Køretøjer og album sorterer A–Å som standard.</li>
+<li>Elementpaletten er opdelt i <strong>Basic</strong>, <strong>Moduler</strong> og <strong>Formularer</strong>. Handlinger-kolonnen på Sider har mere desktop-plads.</li>
+<li>Events, Billedgalleri og Køretøjer har et mere ensartet tre-kolonne kortlayout tættere på de originale <code>_old</code>-referencer.</li>
 </ul>

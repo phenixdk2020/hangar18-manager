@@ -8,7 +8,7 @@
     const USER_ID = Math.max(0, parseInt(CFG.userId || 0, 10) || 0);
     const CONTEXT_LABEL = String(CFG.contextLabel || (POST_ID ? ('Side ' + POST_ID) : 'Global Designer'));
     const CLIPBOARD_KEY = 'h18-vd-clipboard-v1-u' + String(USER_ID);
-    const TYPES = ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'gallerylist', 'gallerydetail'];
+    const TYPES = ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'gallerylist', 'gallerydetail', 'contactform', 'membershipform'];
     const PARENT_TYPES = ['section', 'container'];
     const undoStack = [];
     const redoStack = [];
@@ -65,7 +65,7 @@
         if (explicit > 0) { return explicit; }
         return ({h2:32,h3:28,h4:24,h5:20,h6:18})[String(props.headingLevel || 'h2')] || 32;
     }
-    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap',menu:'Menu',spacer:'Mellemrum',divider:'Skillelinje',icon:'Ikon',badge:'Badge',link:'Link',datalist:'Data List',table:'Tabel',vehiclelist:'Køretøjsliste',vehicledetail:'Køretøjsdetalje',eventlist:'Eventliste',eventdetail:'Eventdetalje',gallerylist:'Gallerioversigt',gallerydetail:'Albumvisning'})[String(type || '')] || String(type || 'Element'); }
+    function typeLabel(type) { return ({section:'Sektion',container:'Kasse',text:'Tekst',image:'Billede',button:'Knap',menu:'Menu',spacer:'Mellemrum',divider:'Skillelinje',icon:'Ikon',badge:'Badge',link:'Link',datalist:'Data List',table:'Tabel',vehiclelist:'Køretøjsliste',vehicledetail:'Køretøjsdetalje',eventlist:'Eventliste',eventdetail:'Eventdetalje',gallerylist:'Gallerioversigt',gallerydetail:'Albumvisning',contactform:'Kontaktformular',membershipform:'Bliv medlem-formular'})[String(type || '')] || String(type || 'Element'); }
     function isFloatingButton(node) { return !!(node && node.type === 'button' && node.props && node.props.placementMode === 'overlay'); }
     function fieldLabel(field) { return ({gx:'X-position',gw:'bredde',gy:'Y-position',gh:'højde',heading:'overskrift',headingLevel:'overskrifttype',text:'tekstindhold',align:'tekstjustering',verticalAlign:'lodret justering',fontFamily:'skrifttype',fontSize:'skriftstørrelse',fontWeight:'skrifttykkelse',lineHeight:'linjeafstand',letterSpacing:'bogstavafstand',headingFontFamily:'overskriftsskrifttype',headingFontSize:'overskriftsstørrelse',headingFontWeight:'overskriftstykkelse',headingLineHeight:'overskriftens linjeafstand',headingLetterSpacing:'overskriftens bogstavafstand',fit:'billedtilpasning',imageAlignX:'vandret billedplacering',imageAlignY:'lodret billedplacering',boxTransparent:'boksbaggrund',boxBackground:'boksbaggrundsfarve',focalX:'billedfokus X',focalY:'billedfokus Y',alt:'alt-tekst',background:'baggrund',radius:'hjørner',padding:'padding',borderWidth:'ramme',borderColor:'rammefarve',gapX:'Afstand X',gapY:'Afstand Y',offsetX:'finjustering X',offsetY:'finjustering Y',buttonText:'knaptekst',linkType:'linktype',pageId:'intern side',url:'linkdestination',targetBlank:'ny fane',textColor:'tekstfarve',hoverBackground:'hover-baggrund',hoverTextColor:'hover-tekstfarve',focusColor:'focus-farve',paddingX:'vandret padding',paddingY:'lodret padding',autoSize:'automatisk størrelse',placementMode:'placering',zIndex:'lag',menuId:'WordPress-menu',orientation:'menuretning',mobileMode:'mobilmenu',mobilePresentation:'mobilmenu-visning',mobileCloseOnSelect:'luk efter valg',mobileCloseOutside:'luk ved klik udenfor',activeTextColor:'aktiv menufarve',backgroundTransparent:'gennemsigtig baggrund',menuGap:'menuafstand'})[String(field || '')] || String(field || 'felt'); }
     function richPreviewHtml(value) {
@@ -168,7 +168,7 @@
     function eventRecords() { return Array.isArray(CFG.eventRecords) ? CFG.eventRecords.filter(function (record) { return record && record.id; }) : []; }
     function eventRecordById(recordId) { recordId = String(recordId || ''); return eventRecords().find(function (record) { return String(record.id || '') === recordId; }) || null; }
     function eventDateLabel(record) { const fields=record&&record.fields&&typeof record.fields==='object'?record.fields:{}; const start=String(fields.start||'').replace('T',' '), end=String(fields.end||'').replace('T',' '); return start&&end?(start+' – '+end):start; }
-    function eventIsPast(record) { const fields=record&&record.fields&&typeof record.fields==='object'?record.fields:{}; const edge=String(fields.end||fields.start||''); if(!edge){return false;} const timestamp=Date.parse(edge); return Number.isFinite(timestamp)&&timestamp<Date.now(); }
+    function eventIsPast(record) { const fields=record&&record.fields&&typeof record.fields==='object'?record.fields:{}; let edge=String(fields.end||''); if(!edge){const start=String(fields.start||''); if(!start){return false;} edge=start.slice(0,10)+'T23:59:59';} const timestamp=Date.parse(edge); return Number.isFinite(timestamp)&&timestamp<Date.now(); }
     function galleryRecords() { return Array.isArray(CFG.galleryRecords) ? CFG.galleryRecords.filter(function (record) { return record && record.id; }) : []; }
     function galleryRecordById(recordId) { recordId=String(recordId||''); return galleryRecords().find(function(record){return String(record.id||'')===recordId;})||null; }
     function galleryImageCount(record) { const fields=record&&record.fields&&typeof record.fields==='object'?record.fields:{}; return Array.isArray(fields.imageIds)?fields.imageIds.length:(Array.isArray(record&&record.imageUrls)?record.imageUrls.length:0); }
@@ -595,6 +595,19 @@
             return Object.assign(common,{binding:{schema:1,mode:'module',module:'galleries',view:'detail',recordId:recordId,query:{status:'publish',orderBy:'sortOrder',order:'ASC',limit:50},fieldMap:{}},recordId:recordId,showDescription:raw.showDescription!==false,columns:clamp(parseInt(raw.columns||4,10)||4,1,6),gap:clamp(parseInt(raw.gap||12,10)||12,0,80),imageHeight:clamp(parseInt(raw.imageHeight||220,10)||220,80,700),background:normalizeColor(raw.background||'#ffffff'),textColor:normalizeColor(raw.textColor||'#30382a'),accentColor:normalizeColor(raw.accentColor||'#c3ae83'),padding:clamp(parseInt(raw.padding||16,10)||16,0,80),radius:clamp(parseInt(raw.radius||4,10)||4,0,60)});
         }
 
+        if (type === 'contactform' || type === 'membershipform') {
+            const membership = type === 'membershipform';
+            return Object.assign(common, {
+                heading:String(raw.heading || (membership ? 'Bliv medlem' : 'Kontakt os')),
+                intro:String(raw.intro || (membership ? 'Udfyld formularen, så kontakter vi dig om medlemskab.' : 'Har du spørgsmål, er du velkommen til at kontakte os.')),
+                buttonText:String(raw.buttonText || (membership ? 'Send indmeldelse' : 'Send besked')),
+                recipient:String(raw.recipient || ''),
+                background:normalizeColor(raw.background || '#f4f1e8'), fieldBackground:normalizeColor(raw.fieldBackground || '#ffffff'),
+                textColor:normalizeColor(raw.textColor || '#30382a'), accentColor:normalizeColor(raw.accentColor || '#30382a'),
+                padding:clamp(parseInt(raw.padding || 24,10)||24,0,80), radius:clamp(parseInt(raw.radius || 6,10)||6,0,60),
+                showPhone:raw.showPhone !== false, requireConsent:raw.requireConsent !== false
+            });
+        }
         if (type === 'image') {
             const fit = ['cover', 'contain', 'original', 'stretch', 'manual'].includes(String(raw.fit || '').toLowerCase()) ? String(raw.fit).toLowerCase() : 'contain';
             return Object.assign(common, {
@@ -1482,7 +1495,7 @@
         const id = makeId(type);
         const defaultW = defaultWidth(type, parentId);
         const p = placement || { parentId: parentId, x: 0, y: nextFreeY(parentId), w: defaultW, targetId: '', zone: 'free', bandIds: [], bandH: MIN_SPLIT_H };
-        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10, spacer: 4, divider: 6, icon: 10, badge: 8, link: 8, datalist: 18, table: 22, vehiclelist: 42, vehicledetail: 54, eventlist: 38, eventdetail: 46, gallerylist: 40, gallerydetail: 52 };
+        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10, spacer: 4, divider: 6, icon: 10, badge: 8, link: 8, datalist: 18, table: 22, vehiclelist: 42, vehicledetail: 54, eventlist: 38, eventdetail: 46, gallerylist: 40, gallerydetail: 52, contactform: 54, membershipform: 74 };
         const defaultH = Math.max(MIN_SPLIT_H, parseInt(defaultRows[type] || MIN_SPLIT_H, 10) || MIN_SPLIT_H);
         const newProps = normalizeProps(type, {});
         if (type === 'button' && p.zone === 'overlay') { newProps.placementMode = 'overlay'; }
@@ -1829,6 +1842,19 @@
         } else if (node.type === 'gallerydetail') {
             wrap.classList.add('h18-clean-node-preview--gallerydetail'); const record=galleryRecordById(node.props.recordId)||galleryRecords().find(function(item){return String(item.status||'')==='publish';})||null; const box=document.createElement('article');box.className='h18-vd-gallery-detail-preview';box.style.background=node.props.background||'#ffffff';box.style.color=node.props.textColor||'#30382a';box.style.padding=String(node.props.padding||16)+'px';box.style.borderRadius=String(node.props.radius||4)+'px';if(!record){box.textContent='Vælg et album i Inspector eller opret et under Manager → Billedgalleri';wrap.appendChild(box);}else{const h=document.createElement('h3');h.textContent=String(record.title||'Album');box.appendChild(h);const images=document.createElement('div');images.className='h18-vd-gallery-images-preview';images.style.gridTemplateColumns='repeat('+String(node.props.columns||4)+',minmax(0,1fr))';images.style.gap=String(node.props.gap||12)+'px';(Array.isArray(record.imageUrls)?record.imageUrls:[]).forEach(function(item){const img=document.createElement('img');img.src=String(item&&item.url||'');img.alt='';img.style.height=String(node.props.imageHeight||220)+'px';if(img.src){images.appendChild(img);}});box.appendChild(images);const fields=record.fields&&typeof record.fields==='object'?record.fields:{};if(node.props.showDescription!==false&&fields.description){const desc=document.createElement('div');desc.innerHTML=richPreviewHtml(String(fields.description));box.appendChild(desc);}wrap.appendChild(box);}
 
+        } else if (node.type === 'contactform' || node.type === 'membershipform') {
+            wrap.classList.add('h18-clean-node-preview--form');
+            const membership = node.type === 'membershipform';
+            const box = document.createElement('div'); box.className = 'h18-vd-form-preview';
+            box.style.background = node.props.background || '#f4f1e8'; box.style.color = node.props.textColor || '#30382a'; box.style.padding = String(node.props.padding || 24) + 'px'; box.style.borderRadius = String(node.props.radius || 6) + 'px';
+            const h = document.createElement('h3'); h.textContent = String(node.props.heading || (membership ? 'Bliv medlem' : 'Kontakt os')); box.appendChild(h);
+            const intro = document.createElement('p'); intro.textContent = String(node.props.intro || ''); if (intro.textContent) { box.appendChild(intro); }
+            const fields = membership ? ['Navn *','E-mail *','Telefon *','Adresse *','Postnr. *','By *','Kommentar'] : ['Navn *','E-mail *','Telefon','Emne *','Besked *'];
+            const grid = document.createElement('div'); grid.className = 'h18-vd-form-preview-grid';
+            fields.forEach(function(label){const f=document.createElement('span');f.textContent=label;f.style.background=node.props.fieldBackground||'#ffffff';grid.appendChild(f);}); box.appendChild(grid);
+            if (node.props.requireConsent !== false) { const consent=document.createElement('small'); consent.textContent='☐ Samtykke'; box.appendChild(consent); }
+            const submit=document.createElement('strong'); submit.className='h18-vd-form-preview-submit'; submit.textContent=String(node.props.buttonText || (membership?'Send indmeldelse':'Send besked')); submit.style.background=node.props.accentColor||'#30382a'; box.appendChild(submit);
+            wrap.appendChild(box);
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
             const alignX = ['left', 'center', 'right'].includes(node.props.imageAlignX) ? node.props.imageAlignX : 'center';
@@ -2051,7 +2077,7 @@
             });
             move.addEventListener('dragend', function () { card.classList.remove('is-dragging'); clearDragState(); });
             const title = document.createElement('strong');
-            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL',vehiclelist:'KØRETØJSLISTE',vehicledetail:'KØRETØJSDETALJE'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
+            title.textContent = ({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL',vehiclelist:'KØRETØJSLISTE',vehicledetail:'KØRETØJSDETALJE',eventlist:'EVENTLISTE',eventdetail:'EVENTDETALJE',gallerylist:'GALLERIOVERSIGT',gallerydetail:'ALBUMVISNING',contactform:'KONTAKTFORMULAR',membershipform:'BLIV MEDLEM-FORMULAR'}[node.type] || node.type.toUpperCase()) + ' · ' + node.id.slice(-8);
             header.appendChild(move);
             header.appendChild(title);
             card.appendChild(header);
@@ -2174,7 +2200,7 @@
         const node = nodeById(selectedId);
         if (!node) { host.innerHTML = '<p class="description">Vælg et element på canvas.</p>'; return; }
         const g = node.geometry.desktop;
-        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL',vehiclelist:'KØRETØJSLISTE',vehicledetail:'KØRETØJSDETALJE'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
+        let html = '<div class="h18-clean-inspector-head"><strong>' + escapeHtml(({section:'SEKTION',container:'KASSE',text:'TEKST',image:'BILLEDE',button:'KNAP',menu:'MENU',spacer:'MELLEMRUM',divider:'SKILLELINJE',icon:'IKON',badge:'BADGE',link:'LINK',datalist:'DATA LIST',table:'TABEL',vehiclelist:'KØRETØJSLISTE',vehicledetail:'KØRETØJSDETALJE',eventlist:'EVENTLISTE',eventdetail:'EVENTDETALJE',gallerylist:'GALLERIOVERSIGT',gallerydetail:'ALBUMVISNING',contactform:'KONTAKTFORMULAR',membershipform:'BLIV MEDLEM-FORMULAR'}[node.type] || node.type.toUpperCase())) + '</strong><code>' + escapeHtml(node.id) + '</code></div>';
         html += '<div class="h18-clean-field-grid"><label>X / 120<input data-field="gx" type="number" min="0" max="119" value="' + g.x + '"></label><label>Bredde / 120<input data-field="gw" type="number" min="1" max="120" value="' + g.w + '"></label><label>Y · 8px<input data-field="gy" type="number" value="' + g.y + '"></label><label>Højde · 8px<input data-field="gh" type="number" min="0" value="' + g.h + '"></label></div>';
         html += '<div class="h18-vd-nudge-inspector"><strong>Finjustering · pixels</strong><div class="h18-clean-field-grid"><label>Offset X px<input data-field="offsetX" type="number" min="-2000" max="2000" value="' + (node.props.offsetX || 0) + '"></label><label>Offset Y px<input data-field="offsetY" type="number" min="-2000" max="2000" value="' + (node.props.offsetY || 0) + '"></label></div><button type="button" class="button" id="h18-clean-reset-offset">Nulstil finjustering</button><p class="description">Piletaster flytter 1 px. Shift + piletast flytter 10 px. Grid-positionen ændres ikke.</p></div>';
         if (node.type === 'text') {
@@ -2254,6 +2280,10 @@
         } else if (node.type === 'gallerydetail') {
             const records=galleryRecords(); html += '<div class="h18-vd-menu-group"><h3>Albumvisning</h3><label>Preview-album<select data-field="galleryRecordId"><option value="">Fra URL / første publicerede</option>'+records.map(function(record){return '<option value="'+escapeHtml(String(record.id||''))+'"'+(String(node.props.recordId||'')===String(record.id||'')?' selected':'')+'>'+escapeHtml(String(record.title||record.id||'Album'))+'</option>';}).join('')+'</select></label><p class="description">Frontend kan vælge album via <code>?h18_gallery=record-id</code>.</p><div class="h18-clean-field-grid"><label>Kolonner<input data-field="galleryColumns" type="number" min="1" max="6" value="'+String(node.props.columns||4)+'"></label><label>Afstand<input data-field="galleryGap" type="number" min="0" max="80" value="'+String(node.props.gap||12)+'"></label><label>Billedhøjde<input data-field="galleryImageHeight" type="number" min="80" max="700" value="'+String(node.props.imageHeight||220)+'"></label><label>Padding<input data-field="galleryPadding" type="number" min="0" max="80" value="'+String(node.props.padding||16)+'"></label></div><div class="h18-clean-field-grid"><label>Baggrund<input data-field="galleryBackground" type="color" value="'+escapeHtml(node.props.background||'#ffffff')+'"></label><label>Tekst<input data-field="galleryTextColor" type="color" value="'+escapeHtml(node.props.textColor||'#30382a')+'"></label><label>Accent<input data-field="galleryAccentColor" type="color" value="'+escapeHtml(node.props.accentColor||'#c3ae83')+'"></label></div><label class="h18-clean-checkbox"><input data-field="galleryShowDescription" type="checkbox"'+(node.props.showDescription!==false?' checked':'')+'> Vis albumbeskrivelse</label><p><a class="button" href="'+escapeHtml(String(CFG.galleryAdminUrl||'#'))+'">Åbn Billedgalleri</a></p></div>';
 
+        } else if (node.type === 'contactform' || node.type === 'membershipform') {
+            const membership = node.type === 'membershipform';
+            html += '<div class="h18-vd-menu-group"><h3>Formular</h3><label>Overskrift<input data-field="formHeading" type="text" value="' + escapeAttr(node.props.heading || (membership ? 'Bliv medlem' : 'Kontakt os')) + '"></label><label>Intro<textarea data-field="formIntro" rows="4">' + escapeHtml(node.props.intro || '') + '</textarea></label><label>Knaptekst<input data-field="formButtonText" type="text" value="' + escapeAttr(node.props.buttonText || (membership ? 'Send indmeldelse' : 'Send besked')) + '"></label><label>Modtager-e-mail <span class="description">(tom = WordPress admin-e-mail)</span><input data-field="formRecipient" type="email" value="' + escapeAttr(node.props.recipient || '') + '"></label><label class="h18-clean-checkbox"><input data-field="formShowPhone" type="checkbox"' + (node.props.showPhone !== false ? ' checked' : '') + '> Vis telefonfelt</label><label class="h18-clean-checkbox"><input data-field="formRequireConsent" type="checkbox"' + (node.props.requireConsent !== false ? ' checked' : '') + '> Kræv samtykke</label></div>';
+            html += '<div class="h18-vd-menu-group"><h3>Design</h3><div class="h18-clean-field-grid"><label>Baggrund<input data-field="formBackground" type="color" value="' + escapeAttr(node.props.background || '#f4f1e8') + '"></label><label>Feltbaggrund<input data-field="formFieldBackground" type="color" value="' + escapeAttr(node.props.fieldBackground || '#ffffff') + '"></label><label>Tekst<input data-field="formTextColor" type="color" value="' + escapeAttr(node.props.textColor || '#30382a') + '"></label><label>Knap/accent<input data-field="formAccentColor" type="color" value="' + escapeAttr(node.props.accentColor || '#30382a') + '"></label><label>Padding<input data-field="formPadding" type="number" min="0" max="80" value="' + (node.props.padding || 24) + '"></label><label>Hjørner<input data-field="formRadius" type="number" min="0" max="60" value="' + (node.props.radius || 6) + '"></label></div></div>';
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button><p class="description">PNG, JPG/JPEG, WebP, GIF og andre image/*-formater som WordPress tillader. PNG-transparens bevares.</p>';
             html += '<label>Billede i boksen<select data-field="fit"><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet</option><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld boksen · beskær</option><option value="original"' + (node.props.fit === 'original' ? ' selected' : '') + '>Original størrelse</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Stræk til boks</option></select></label>';
@@ -2396,6 +2426,18 @@
                 else if (field === 'galleryAccentColor') { current.props.accentColor=normalizeColor(control.value||'#c3ae83'); }
                 else if (field === 'galleryRecordId') { current.props.recordId=String(control.value||''); if(current.props.binding){current.props.binding.recordId=current.props.recordId;} }
                 else if (field === 'galleryShowDescription') { current.props.showDescription=!!control.checked; }
+                else if (field === 'formHeading') { current.props.heading=String(control.value||''); }
+                else if (field === 'formIntro') { current.props.intro=String(control.value||''); }
+                else if (field === 'formButtonText') { current.props.buttonText=String(control.value||'Send'); }
+                else if (field === 'formRecipient') { current.props.recipient=String(control.value||'').trim(); }
+                else if (field === 'formShowPhone') { current.props.showPhone=!!control.checked; }
+                else if (field === 'formRequireConsent') { current.props.requireConsent=!!control.checked; }
+                else if (field === 'formBackground') { current.props.background=normalizeColor(control.value||'#f4f1e8'); }
+                else if (field === 'formFieldBackground') { current.props.fieldBackground=normalizeColor(control.value||'#ffffff'); }
+                else if (field === 'formTextColor') { current.props.textColor=normalizeColor(control.value||'#30382a'); }
+                else if (field === 'formAccentColor') { current.props.accentColor=normalizeColor(control.value||'#30382a'); }
+                else if (field === 'formPadding') { current.props.padding=clamp(parseInt(control.value||24,10)||24,0,80); }
+                else if (field === 'formRadius') { current.props.radius=clamp(parseInt(control.value||6,10)||6,0,60); }
                 else if (field === 'buttonText') { current.props.text = String(control.value || 'Knap'); }
                 else if (field === 'linkType') { current.props.linkType = ['page', 'url', 'anchor', 'email', 'phone'].includes(control.value) ? control.value : 'url'; }
                 else if (field === 'pageId') { current.props.pageId = parseInt(control.value || 0, 10) || 0; }

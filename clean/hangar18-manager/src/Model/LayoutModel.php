@@ -61,7 +61,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'gallerylist', 'gallerydetail'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'gallerylist', 'gallerydetail', 'contactform', 'membershipform'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -497,6 +497,23 @@ final class LayoutModel
             return array_merge(['binding' => $binding, 'recordId' => $recordId, 'showDescription' => array_key_exists('showDescription', $raw) ? (bool) $raw['showDescription'] : true, 'columns' => self::clamp($raw['columns'] ?? 4, 1, 6, 4), 'gap' => self::clamp($raw['gap'] ?? 12, 0, 80, 12), 'imageHeight' => self::clamp($raw['imageHeight'] ?? 220, 80, 700, 220), 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff', 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a', 'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83', 'padding' => self::clamp($raw['padding'] ?? 16, 0, 80, 16), 'radius' => self::clamp($raw['radius'] ?? 4, 0, 60, 4)], $border);
         }
 
+        if (in_array($type, ['contactform', 'membershipform'], true)) {
+            $membership = $type === 'membershipform';
+            return array_merge([
+                'heading' => sanitize_text_field((string) ($raw['heading'] ?? ($membership ? 'Bliv medlem' : 'Kontakt os'))),
+                'intro' => sanitize_textarea_field((string) ($raw['intro'] ?? ($membership ? 'Udfyld formularen, så kontakter vi dig om medlemskab.' : 'Har du spørgsmål, er du velkommen til at kontakte os.'))),
+                'buttonText' => sanitize_text_field((string) ($raw['buttonText'] ?? ($membership ? 'Send indmeldelse' : 'Send besked'))),
+                'recipient' => sanitize_email((string) ($raw['recipient'] ?? '')),
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#f4f1e8')) ?: '#f4f1e8',
+                'fieldBackground' => sanitize_hex_color((string) ($raw['fieldBackground'] ?? '#ffffff')) ?: '#ffffff',
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a',
+                'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#30382a')) ?: '#30382a',
+                'padding' => self::clamp($raw['padding'] ?? 24, 0, 80, 24),
+                'radius' => self::clamp($raw['radius'] ?? 6, 0, 60, 6),
+                'showPhone' => array_key_exists('showPhone', $raw) ? (bool) $raw['showPhone'] : true,
+                'requireConsent' => array_key_exists('requireConsent', $raw) ? (bool) $raw['requireConsent'] : true,
+            ], $border);
+        }
         if ($type === 'image') {
             $fit = strtolower((string) ($raw['fit'] ?? 'contain'));
             if (!in_array($fit, ['cover', 'contain', 'original', 'stretch', 'manual'], true)) {

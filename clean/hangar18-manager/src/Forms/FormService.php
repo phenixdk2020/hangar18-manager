@@ -41,7 +41,7 @@ final class FormService
             . 'background:' . $background . ';color:' . $textColor . ';padding:' . $padding . 'px;'
             . '--h18-form-field-bg:' . $fieldBackground . ';--h18-form-accent:' . $accent . ';';
 
-        $html = '<section id="h18-clean-' . esc_attr($nodeId) . '" class="h18-clean-front-node h18-vd-form h18-vd-form--' . esc_attr($kind) . '" style="' . esc_attr($style) . '">';
+        $html = self::style() . '<section id="h18-clean-' . esc_attr($nodeId) . '" class="h18-clean-front-node h18-vd-form h18-vd-form--' . esc_attr($kind) . '" style="' . esc_attr($style) . '">';
         if ($heading !== '') {
             $html .= '<h2>' . esc_html($heading) . '</h2>';
         }
@@ -254,6 +254,25 @@ final class FormService
         ], $base);
         wp_safe_redirect($url . '#h18-form-' . rawurlencode($nodeId));
         exit;
+    }
+
+    private static function style(): string
+    {
+        static $done = false;
+        if ($done) { return ''; }
+        $done = true;
+        return '<style id="h18-vd-form-style-v0175">'
+            . '.h18-vd-form{box-sizing:border-box;width:100%;border-radius:6px}.h18-vd-form h2{margin:0 0 8px}.h18-vd-form-intro{margin:0 0 20px}'
+            . '.h18-vd-form-body{display:block}.h18-vd-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}'
+            . '.h18-vd-form-field{display:flex;flex-direction:column;gap:6px;font-weight:600}.h18-vd-form-field.is-wide{grid-column:1/-1}'
+            . '.h18-vd-form input,.h18-vd-form textarea{box-sizing:border-box;width:100%;border:1px solid #b8b8b2;border-radius:4px;background:var(--h18-form-field-bg);color:inherit;padding:11px 12px;font:inherit}'
+            . '.h18-vd-form input:focus,.h18-vd-form textarea:focus{outline:2px solid var(--h18-form-accent);outline-offset:1px}'
+            . '.h18-vd-form-consent{display:flex;gap:9px;align-items:flex-start;margin:18px 0}.h18-vd-form-consent input{width:auto;margin-top:3px}'
+            . '.h18-vd-form-submit{border:0;border-radius:4px;background:var(--h18-form-accent);color:#fff;padding:11px 20px;font:inherit;font-weight:700;cursor:pointer}'
+            . '.h18-vd-form-submit:hover{filter:brightness(1.12)}.h18-vd-form-message{padding:10px 12px;border-radius:4px;font-weight:600}.h18-vd-form-message.is-success{background:#e9f5e7}.h18-vd-form-message.is-error{background:#f9e4e2}'
+            . '.h18-vd-form-hp{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}'
+            . '@media(max-width:782px){.h18-vd-form-grid{grid-template-columns:1fr}.h18-vd-form-field.is-wide{grid-column:auto}}'
+            . '</style>';
     }
 
     private function __construct()

@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.74
+ * Version: 0.1.75
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.74');
+define('H18_CLEAN_VERSION', '0.1.75');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -45,10 +45,12 @@ require_once H18_CLEAN_DIR . 'src/Modules/ModuleRecord.php';
 require_once H18_CLEAN_DIR . 'src/Modules/ModuleBinding.php';
 require_once H18_CLEAN_DIR . 'src/Modules/ModuleStore.php';
 require_once H18_CLEAN_DIR . 'src/Modules/VehicleFieldRegistry.php';
+require_once H18_CLEAN_DIR . 'src/Forms/FormService.php';
 require_once H18_CLEAN_DIR . 'src/Model/HierarchyNormalizer.php';
 require_once H18_CLEAN_DIR . 'src/Model/LayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Migration/CanvasSectionMigration.php';
 require_once H18_CLEAN_DIR . 'src/Migration/SiteDesignHarmonizer.php';
+require_once H18_CLEAN_DIR . 'src/Migration/FormPageProvisioner.php';
 require_once H18_CLEAN_DIR . 'src/Model/GlobalLayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Model/TemplateLayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Migration/LegacyHeaderConverter.php';
@@ -76,8 +78,10 @@ require_once H18_CLEAN_DIR . 'src/Update/GitHubUpdater.php';
 
 add_action('plugins_loaded', static function (): void {
     \VisualDesignerManager\Modules\ModuleStore::register();
+    \VisualDesignerManager\Forms\FormService::register();
     \VisualDesignerManager\Migration\CanvasSectionMigration::register();
     \VisualDesignerManager\Migration\SiteDesignHarmonizer::register();
+    \VisualDesignerManager\Migration\FormPageProvisioner::register();
     \VisualDesignerManager\Diagnostics\DiagnosticStore::register();
     \VisualDesignerManager\Admin\EditorController::register();
     \VisualDesignerManager\Admin\AdminController::register();
