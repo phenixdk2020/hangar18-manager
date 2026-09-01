@@ -48,10 +48,19 @@ if "node.type === 'eventfield'" not in js:
             classified['inspector']=idx
     if set(classified)!={'preview','inspector'}:
         raise SystemExit(f'Could not classify gallerylist JS branches: {sorted(classified)}')
-    # Insert from right to left so positions remain valid.
     for kind,idx in sorted(classified.items(), key=lambda item:item[1], reverse=True):
         code=preview_code if kind=='preview' else inspector_code
         js=js[:idx]+code+js[idx:]
-    js_path.write_text(js,encoding='utf-8')
 
+# Section uses the generic Inspector branch. Add a real slot selector there and
+# expose the section's minimum height using the existing canonical gh handler.
+slot_marker="<label>Placering på modulside<select data-field=\"moduleSlot\"><option value=\"before\"'+(node.props.moduleSlot==='before'?' selected':'')+'>Før modulindhold</option><option value=\"between\"'+(node.props.moduleSlot==='between'?' selected':'')+'>Mellem modulsektioner</option><option value=\"after\"'+(node.props.moduleSlot==='after'?' selected':'')+'>Efter modulindhold</option></select></label><label>Minimumshøjde"
+if slot_marker not in js:
+    anchor="        } else {\n            html += '<label>Baggrund<input data-field=\"background\" type=\"color\" value=\"' + escapeAttr(node.props.background || '#ffffff') + '\"></label>';"
+    replacement="        } else {\n            if (node.type === 'section') { html += '<label>Placering på modulside<select data-field=\"moduleSlot\"><option value=\"before\"'+(node.props.moduleSlot==='before'?' selected':'')+'>Før modulindhold</option><option value=\"between\"'+(node.props.moduleSlot==='between'?' selected':'')+'>Mellem modulsektioner</option><option value=\"after\"'+(node.props.moduleSlot==='after'?' selected':'')+'>Efter modulindhold</option></select></label><label>Minimumshøjde · 8px<input data-field=\"gh\" type=\"number\" min=\"0\" value=\"'+String(node.props.minHeightRows||node.geometry.desktop.h||0)+'\"></label>'; }\n            html += '<label>Baggrund<input data-field=\"background\" type=\"color\" value=\"' + escapeAttr(node.props.background || '#ffffff') + '\"></label>';"
+    if anchor not in js:
+        raise SystemExit('Section generic Inspector anchor missing')
+    js=js.replace(anchor,replacement,1)
+
+js_path.write_text(js,encoding='utf-8')
 print('v0.1.78 pre-apply anchors ready')
