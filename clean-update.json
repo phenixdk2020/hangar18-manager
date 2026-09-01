@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.70",
+  "version": "0.1.71",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.70.zip",
-  "sha256": "d275f0c2cf24023f75d341ec35ef96b12b222db52683099a813e47a53986953e",
-  "source_commit": "d4323398622991e0fa69046a195f75682f730fe5",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.71.zip",
+  "sha256": "83cc8aa5bc6af8ae61e9143bae41507c8c3a3f36e79088b5b9f6a08b2556cd43",
+  "source_commit": "75b3d88d601e2fa4480e282d319c2d2f8fb156df",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h4>0.1.70 – Køretøjsmodul</h4>\n<ul>\n<li>Manager → Køretøjer har CRUD, status, sortering, primært billede og galleri.</li>\n<li>Køretøjsfelter er fleksible og bruger stabile felt-IDer.</li>\n<li>Visual Designer har Køretøjsliste og Køretøjsdetalje med dynamisk ModuleStore-binding.</li>\n<li>Én detaljeside kan genbruges via <code>?h18_vehicle=&lt;record-id&gt;</code>.</li>\n<li>Designmanual, Brugermanual, Teknisk manual og backlog er opdateret til v0.1.70.</li>\n</ul>"
+    "changelog": "<h2>0.1.71 – Events</h2>\n<ul>\n<li><strong>VD-EVENT-MODULE-001:</strong> Events har nu Manager-CRUD på den fælles ModuleStore.</li>\n<li>Start/slut, sted, beskrivelser, status og primært billede understøttes.</li>\n<li>Designer har Eventliste og Eventdetalje med genbrugelig detailrouting via <code>?h18_event=&lt;record-id&gt;</code>.</li>\n<li>Eventliste kan vise kommende, afholdte eller alle publicerede events uden at slette historiske records.</li>\n<li>Næste modulrelease er v0.1.72 – Billedgalleri.</li>\n</ul>"
   }
 }
