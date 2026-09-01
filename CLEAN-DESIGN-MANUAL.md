@@ -658,3 +658,11 @@ Tekniske felter defineres centralt. En ændring af feltets synlige navn må ikke
 ## Eventmodul – designprincip
 
 **VD-EVENT-MODULE-001** gør Events til dynamiske data i den fælles ModuleStore. Eventliste og Eventdetalje gemmer kun binding/design, ikke kopier af eventdata. Eventliste kan vise kommende, afholdte eller alle publicerede events, så historiske events bevares.
+
+## Billedgalleri – designprincip
+
+**VD-GALLERY-MODULE-001** gør album til dynamiske records i den fælles ModuleStore. `Gallerioversigt` viser publicerede album, mens `Albumvisning` viser ét album fra et fast record-ID eller `?h18_gallery=<record-id>`. Layout-JSON indeholder aldrig billedbytes; kun modulbinding og design. Billeder forbliver WordPress Media Library attachments.
+
+## Site-design harmonisering
+
+**VD-SITE-DESIGN-HARMONY-001** bruger den aktive Designer-Hjem-side som visuel reference for `Om foreningen`, `Køretøjer og materiel`, `Events`, `Billedgalleri`, `Bliv medlem` og `Kontakt`. Harmonisering må kun ændre designprops: root-Sektion/Kasse-baggrund, padding, hjørner og rammer samt typografi, farver, knap- og billedstyling. Node-ID, type, hierarchy, order, geometri og indhold må ikke ændres. Hjems sektionstyper genbruges i rækkefølge, så de øvrige sider får samme tema uden at blive identiske kopier af Hjem.

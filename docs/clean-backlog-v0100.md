@@ -1,11 +1,11 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
-**Statusdato:** 31. august 2026  
-**Aktuel release:** v0.1.71  
+**Statusdato:** 1. september 2026  
+**Aktuel release:** v0.1.72  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.71
+## Aktuel milepælsstatus · v0.1.72
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
 - **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
@@ -16,15 +16,19 @@
 - **VD-CANVAS-AUTOHEIGHT-001 — IMPLEMENTERET I v0.1.69:** Webside/canvas vokser og krymper automatisk efter nederste root-Sektion.
 - **VD-VEHICLE-MODULE-001 — IMPLEMENTERET I v0.1.70:** Køretøjer har Manager-CRUD, fleksible tekniske felter, billeder, sortering og Designer-list/detail-binding.
 - **VD-EVENT-MODULE-001 — IMPLEMENTERET I v0.1.71:** Events har Manager-CRUD, dato/tid, sted, billede, kommende/afholdte regler og Designer list/detail-binding.
+- **VD-GALLERY-MODULE-001 — IMPLEMENTERET I v0.1.72:** Album har CRUD, cover, Media Library-liste og Designer oversigt/detail.
+- **VD-SITE-DESIGN-HARMONY-001 — IMPLEMENTERET I v0.1.72:** de seks øvrige hovedsider harmoniseres sikkert med Hjem med backup og versionering.
 - **VD-EVENT-MODULE-001 — IMPLEMENTERET I v0.1.71:** Events har Manager-CRUD, dato/tid, sted, billede, kommende/afholdte regler og Designer list/detail-binding.
+- **VD-GALLERY-MODULE-001 — IMPLEMENTERET I v0.1.72:** Album har CRUD, cover, Media Library-liste og Designer oversigt/detail.
+- **VD-SITE-DESIGN-HARMONY-001 — IMPLEMENTERET I v0.1.72:** de seks øvrige hovedsider harmoniseres sikkert med Hjem med backup og versionering.
 
 ## Roadmap
 
 1. **v0.1.69 – Canvas Auto Height — FÆRDIG.**
 2. **v0.1.70 – Køretøjsmodul — FÆRDIG.**
 3. **v0.1.71 – Events — FÆRDIG:** CRUD på fælles ModuleStore, dato/tid, sted, status, automatisk kommende/afholdte visninger og Designer list/detail-elementer.
-4. **v0.1.72 – Billedgalleri — NÆSTE:** album, Media Library-referencer, sortering, cover og genbrugeligt Designer galleri/album-element.
-5. **Efter modulerne:** samlet data-/module-migrering fra legacy, med side-by-side QA før cutover.
+4. **v0.1.72 – Billedgalleri + site-design — FÆRDIG:** album, Media Library-referencer, sortering, cover, Designer oversigt/detail og sikker Hjem-baseret designharmonisering.
+5. **v0.1.73 – Modul-cutover/migrering — NÆSTE:** samlet legacy data-/module-migrering med side-by-side QA før cutover.
 
 ## Åben backlog
 
@@ -35,7 +39,7 @@
 - Canonical Designer-elementer til Eventliste og Eventdetalje.
 - Frontend må kun vise records efter den valgte status-/datoregel.
 
-### VD-GALLERY-MODULE-001 — NÆSTE
+### VD-GALLERY-MODULE-001 — FÆRDIG I v0.1.72
 - Album-CRUD på `galleries`.
 - Cover, beskrivelse og sorteret Media Library-liste.
 - Designer-element til albumoversigt og albumvisning.
@@ -87,3 +91,18 @@
 - PHP/JavaScript syntax QA skal være grøn.
 - Historiske regression-gates fra Header/Footer, clipboard, generelle elementer, Module Foundation, Canvas/Section og Canvas Auto Height skal forblive grønne.
 - Release-ZIP bygges kun af central `visual-designer-release.yml`, SHA-256 skrives til `clean-update.json`, og versionen anses først for frigivet efter successful workflow + manifestkontrol.
+
+
+### VD-SITE-DESIGN-HARMONY-001 — FÆRDIG I v0.1.72
+- Hjem er visuel reference; seks navngivne hovedsider er mål.
+- Kun designprops ændres; indhold, hierarchy og geometri bevares byte-/fingerprint-logisk.
+- Backup-meta + ny Designer-version fører til reversibel migration.
+
+## v0.1.72 Billedgalleri/design – QA-gate
+1. Opret et album som Kladde med cover, mindst 5 billeder og beskrivelse; reload og verificér stabile attachment-IDer.
+2. Publicér mindst tre album og test sortering samt Gallerioversigt.
+3. Test Albumvisning via `?h18_gallery=<record-id>`; Kladde/Arkiveret må ikke vises offentligt.
+4. Verificér at albumdata kun indeholder attachment-IDer, ikke billedbytes.
+5. Efter opdatering: verificér backup + ny Designer-version for hver målside der blev harmoniseret.
+6. Sammenlign node-ID, hierarchy og Desktop/Laptop/Tablet/Mobil-geometri før/efter; de skal være identiske.
+7. Vis alle seks sider og kontrollér visuelt samme farver, typografi, sektion/kasse-stil og knapper som Hjem.

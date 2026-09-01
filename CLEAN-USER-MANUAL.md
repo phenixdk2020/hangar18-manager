@@ -1050,3 +1050,13 @@ På en side i Visual Designer kan du tilføje **Køretøjsliste**. Her vælger d
 3. Tilføj **Eventliste** i Designer og vælg Kommende, Afholdte eller Alle publicerede samt en detaljeside.
 4. Indsæt **Eventdetalje** på detaljesiden og behold *Fra URL* for routing via `?h18_event=<record-id>`.
 5. Arkivér frem for at slette, når historikken skal bevares.
+
+## Sådan bruger du Billedgalleriet
+1. Gå til **Visual Designer Manager → Billedgalleri** og opret et album.
+2. Vælg cover, flere billeder fra Media Library, titel, beskrivelse, sortering og status.
+3. Tilføj **Gallerioversigt** på Billedgalleri-siden og vælg kolonner, kortdesign og en detaljeside.
+4. Tilføj **Albumvisning** på detaljesiden. Frontend vælger album via `?h18_gallery=<record-id>`; Inspector kan vælge et fast preview-album.
+5. Kladder og arkiverede album vises ikke offentligt.
+
+## Automatisk designharmonisering i v0.1.72
+Når v0.1.72 indlæses i WordPress Admin, bruger Visual Designer Manager den aktive **Hjem**-side som designreference for Om foreningen, Køretøjer og materiel, Events, Billedgalleri, Bliv medlem og Kontakt. Tekster, billeder, elementplacering og størrelser bevares. Kun tema-/designværdier synkroniseres. Før hver ændring gemmes en backup, og harmoniseringen bliver en ny Designer-version, så siden kan gendannes fra versionshistorikken.

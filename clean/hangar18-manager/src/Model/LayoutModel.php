@@ -61,7 +61,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'gallerylist', 'gallerydetail'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -482,6 +482,19 @@ final class LayoutModel
             $recordId = strtolower(trim((string) ($raw['recordId'] ?? ''))); if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
             $binding = ModuleBinding::normalize(['mode' => 'module', 'module' => 'events', 'view' => 'detail', 'recordId' => $recordId]);
             return array_merge(['binding' => $binding, 'recordId' => $recordId, 'showImage' => array_key_exists('showImage', $raw) ? (bool) $raw['showImage'] : true, 'showDate' => array_key_exists('showDate', $raw) ? (bool) $raw['showDate'] : true, 'showLocation' => array_key_exists('showLocation', $raw) ? (bool) $raw['showLocation'] : true, 'showSummary' => array_key_exists('showSummary', $raw) ? (bool) $raw['showSummary'] : true, 'showDescription' => array_key_exists('showDescription', $raw) ? (bool) $raw['showDescription'] : true, 'imageHeight' => self::clamp($raw['imageHeight'] ?? 360, 80, 900, 360), 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff', 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a', 'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83', 'padding' => self::clamp($raw['padding'] ?? 16, 0, 80, 16), 'radius' => self::clamp($raw['radius'] ?? 4, 0, 60, 4)], $border);
+        }
+
+        if ($type === 'gallerylist') {
+            $orderBy = in_array((string) ($raw['orderBy'] ?? 'sortOrder'), ['sortOrder', 'title', 'updatedAt'], true) ? (string) ($raw['orderBy'] ?? 'sortOrder') : 'sortOrder';
+            $order = strtoupper((string) ($raw['order'] ?? 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
+            $limit = self::clamp($raw['limit'] ?? 50, 1, 100, 50);
+            $binding = ModuleBinding::normalize(['mode' => 'module', 'module' => 'galleries', 'view' => 'list', 'query' => ['status' => 'publish', 'orderBy' => $orderBy, 'order' => $order, 'limit' => $limit]]);
+            return array_merge(['binding' => $binding, 'limit' => $limit, 'orderBy' => $orderBy, 'order' => $order, 'detailPageId' => absint($raw['detailPageId'] ?? 0), 'columns' => self::clamp($raw['columns'] ?? 3, 1, 4, 3), 'cardGap' => self::clamp($raw['cardGap'] ?? 18, 0, 80, 18), 'cardPadding' => self::clamp($raw['cardPadding'] ?? 12, 0, 60, 12), 'imageHeight' => self::clamp($raw['imageHeight'] ?? 220, 80, 600, 220), 'showImage' => array_key_exists('showImage', $raw) ? (bool) $raw['showImage'] : true, 'showSummary' => array_key_exists('showSummary', $raw) ? (bool) $raw['showSummary'] : true, 'showCount' => array_key_exists('showCount', $raw) ? (bool) $raw['showCount'] : true, 'linkCards' => array_key_exists('linkCards', $raw) ? (bool) $raw['linkCards'] : true, 'cardBackground' => sanitize_hex_color((string) ($raw['cardBackground'] ?? '#ffffff')) ?: '#ffffff', 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a', 'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83', 'cardRadius' => self::clamp($raw['cardRadius'] ?? 4, 0, 60, 4)], $border);
+        }
+        if ($type === 'gallerydetail') {
+            $recordId = strtolower(trim((string) ($raw['recordId'] ?? ''))); if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            $binding = ModuleBinding::normalize(['mode' => 'module', 'module' => 'galleries', 'view' => 'detail', 'recordId' => $recordId]);
+            return array_merge(['binding' => $binding, 'recordId' => $recordId, 'showDescription' => array_key_exists('showDescription', $raw) ? (bool) $raw['showDescription'] : true, 'columns' => self::clamp($raw['columns'] ?? 4, 1, 6, 4), 'gap' => self::clamp($raw['gap'] ?? 12, 0, 80, 12), 'imageHeight' => self::clamp($raw['imageHeight'] ?? 220, 80, 700, 220), 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff', 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a', 'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83', 'padding' => self::clamp($raw['padding'] ?? 16, 0, 80, 16), 'radius' => self::clamp($raw['radius'] ?? 4, 0, 60, 4)], $border);
         }
 
         if ($type === 'image') {

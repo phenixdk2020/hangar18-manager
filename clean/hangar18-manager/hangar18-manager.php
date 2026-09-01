@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.71
+ * Version: 0.1.72
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.71');
+define('H18_CLEAN_VERSION', '0.1.72');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -48,6 +48,7 @@ require_once H18_CLEAN_DIR . 'src/Modules/VehicleFieldRegistry.php';
 require_once H18_CLEAN_DIR . 'src/Model/HierarchyNormalizer.php';
 require_once H18_CLEAN_DIR . 'src/Model/LayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Migration/CanvasSectionMigration.php';
+require_once H18_CLEAN_DIR . 'src/Migration/SiteDesignHarmonizer.php';
 require_once H18_CLEAN_DIR . 'src/Model/GlobalLayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Model/TemplateLayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Migration/LegacyHeaderConverter.php';
@@ -60,6 +61,7 @@ require_once H18_CLEAN_DIR . 'src/Admin/EditorController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/VehicleAdminController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/EventAdminController.php';
+require_once H18_CLEAN_DIR . 'src/Admin/GalleryAdminController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminMenuBridge.php';
 require_once H18_CLEAN_DIR . 'src/Admin/ConversionController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/ExportController.php';
@@ -74,11 +76,13 @@ require_once H18_CLEAN_DIR . 'src/Update/GitHubUpdater.php';
 add_action('plugins_loaded', static function (): void {
     \VisualDesignerManager\Modules\ModuleStore::register();
     \VisualDesignerManager\Migration\CanvasSectionMigration::register();
+    \VisualDesignerManager\Migration\SiteDesignHarmonizer::register();
     \VisualDesignerManager\Diagnostics\DiagnosticStore::register();
     \VisualDesignerManager\Admin\EditorController::register();
     \VisualDesignerManager\Admin\AdminController::register();
     \VisualDesignerManager\Admin\VehicleAdminController::register();
     \VisualDesignerManager\Admin\EventAdminController::register();
+    \VisualDesignerManager\Admin\GalleryAdminController::register();
     \VisualDesignerManager\Admin\AdminMenuBridge::register();
     \VisualDesignerManager\Admin\ConversionController::register();
     \VisualDesignerManager\Admin\ExportController::register();
@@ -173,6 +177,32 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ];
     }, \VisualDesignerManager\Modules\ModuleStore::listRecords('events', ['status' => 'all', 'limit' => 100, 'orderBy' => 'start', 'order' => 'ASC'])));
 
+    $galleryRecords = array_values(array_map(static function (array $item): array {
+        $record = isset($item['record']) && is_array($item['record']) ? $item['record'] : [];
+        $featuredId = absint($record['featuredMediaId'] ?? 0);
+        $fields = isset($record['fields']) && is_array($record['fields']) ? $record['fields'] : [];
+        $imageIds = isset($fields['imageIds']) && is_array($fields['imageIds']) ? array_values(array_filter(array_map('absint', $fields['imageIds']))) : [];
+        if ($featuredId <= 0 && $imageIds) { $featuredId = (int) $imageIds[0]; }
+        $featuredUrl = $featuredId > 0 ? wp_get_attachment_image_url($featuredId, 'large') : false;
+        $imageUrls = [];
+        foreach (array_slice($imageIds, 0, 100) as $imageId) {
+            $url = wp_get_attachment_image_url($imageId, 'large');
+            if (is_string($url) && $url !== '') { $imageUrls[] = ['id' => $imageId, 'url' => $url]; }
+        }
+        return [
+            'postId' => (int) ($item['postId'] ?? 0),
+            'id' => (string) ($record['id'] ?? ''),
+            'title' => (string) ($record['title'] ?? ''),
+            'status' => (string) ($record['status'] ?? 'draft'),
+            'sortOrder' => (int) ($record['sortOrder'] ?? 0),
+            'summary' => (string) ($record['summary'] ?? ''),
+            'featuredMediaId' => $featuredId,
+            'featuredUrl' => is_string($featuredUrl) ? $featuredUrl : '',
+            'fields' => $fields,
+            'imageUrls' => $imageUrls,
+        ];
+    }, \VisualDesignerManager\Modules\ModuleStore::listRecords('galleries', ['status' => 'all', 'limit' => 100, 'orderBy' => 'sortOrder', 'order' => 'ASC'])));
+
     wp_enqueue_script(
         'h18-clean-editor-v0144-viewport',
         H18_CLEAN_URL . 'assets/editor-v0144-viewport.js',
@@ -201,6 +231,8 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'vehicleAdminUrl' => admin_url('admin.php?page=h18-clean-vehicles'),
         'eventRecords' => $eventRecords,
         'eventAdminUrl' => admin_url('admin.php?page=h18-clean-events'),
+        'galleryRecords' => $galleryRecords,
+        'galleryAdminUrl' => admin_url('admin.php?page=h18-clean-gallery'),
         'initialModel' => $model,
         'pages' => array_values(array_map(static function ($page): array { return ['id' => (int) $page->ID, 'title' => (string) $page->post_title]; }, get_pages(['sort_column' => 'menu_order,post_title', 'sort_order' => 'ASC', 'post_status' => ['publish', 'draft', 'pending', 'private', 'future']]))),
         'menus' => $menuPayload,

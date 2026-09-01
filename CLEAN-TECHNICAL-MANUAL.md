@@ -1072,3 +1072,17 @@ Visual Designer har to canonical leaf-typer: `vehiclelist` og `vehicledetail`. B
 ## VD-EVENT-MODULE-001
 
 Events bruger `ModuleRegistry`, `ModuleRecord` og `ModuleStore`; der findes ingen parallel event-datasilo. `EventAdminController` skriver start/slut/sted/beskrivelse i canonical `fields` og billede som attachment-ID. `ModuleStore::listRecords()` understøtter `orderBy=start`. Designer-elementerne `eventlist` og `eventdetail` binder til `module=events`, og frontend tvinger publiceret status samt bruger stabilt record-ID via `h18_event`.
+
+### VD-GALLERY-MODULE-001
+- `galleries` bruger `ModuleRegistry`, `ModuleRecord`, `ModuleBinding` og `ModuleStore`.
+- `GalleryAdminController` gemmer cover som `featuredMediaId` og albumbilleder som `fields.imageIds`.
+- `gallerylist` og `gallerydetail` er canonical Designer-elementer i PHP/JS og frontend Renderer.
+- Public frontend accepterer kun `publish`; detailrouting bruger `?h18_gallery=<record-id>`.
+
+### VD-SITE-DESIGN-HARMONY-001
+- `SiteDesignHarmonizer` kører én gang pr. målside på `admin_init` efter Canvas/Section migration.
+- Reference er WordPress' aktive `page_on_front` og kun hvis siden har canonical Designer-layout.
+- Mål-slugs er eksplicit: `om-foreningen`, `koeretoejer-og-materiel`, `events`, `billedgalleri`, `bliv-medlem`, `kontakt`.
+- Før ændring gemmes `_h18_vd_layout_pre_theme_v0172`; efter ændring oprettes en normal `LayoutModel::saveVersion()`.
+- En fingerprint af ID/type/parent/order/geometri skal være identisk før og efter. Fejl ruller layout/historik/version tilbage.
+- `_h18_vd_theme_harmonized_v0172` gør migreringen idempotent.

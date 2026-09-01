@@ -167,6 +167,8 @@ final class EditorController
             'vehicledetail' => 'Køretøjsdetalje',
             'eventlist' => 'Eventliste',
             'eventdetail' => 'Eventdetalje',
+            'gallerylist' => 'Gallerioversigt',
+            'gallerydetail' => 'Albumvisning',
         ] as $type => $label) {
             echo '<button type="button" draggable="true" class="button h18-clean-add" data-type="' . esc_attr($type) . '">+ ' . esc_html($label) . '</button>';
         }

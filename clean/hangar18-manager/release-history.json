@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.72",
+      "date": "2026-09-01",
+      "items": [
+        "VD-GALLERY-MODULE-001: Billedgalleri er nu et fuldt modul oven på ModuleStore.",
+        "Album har cover, beskrivelse, sortering og Media Library attachment-IDer.",
+        "Designer har Gallerioversigt og Albumvisning med genbrugelig detailrouting via ?h18_gallery=<record-id>.",
+        "VD-SITE-DESIGN-HARMONY-001 harmoniserer de seks øvrige hovedsider ud fra Hjem uden at ændre indhold eller geometri.",
+        "Hver harmoniseret side får rå backup og en ny Designer-version med rollback via historikken."
+      ]
+    },
+    {
       "version": "0.1.71",
       "date": "2026-08-31",
       "items": [
