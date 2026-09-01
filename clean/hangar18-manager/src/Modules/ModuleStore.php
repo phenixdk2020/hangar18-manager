@@ -159,7 +159,7 @@ final class ModuleStore
         $limit = is_numeric($args['limit'] ?? null) ? (int) $args['limit'] : 50;
         $limit = max(1, min(100, $limit));
         $orderBy = (string) ($args['orderBy'] ?? 'sortOrder');
-        if (!in_array($orderBy, ['sortOrder', 'title', 'updatedAt'], true)) {
+        if (!in_array($orderBy, ['sortOrder', 'title', 'updatedAt', 'start'], true)) {
             $orderBy = 'sortOrder';
         }
         $order = strtoupper((string) ($args['order'] ?? 'ASC')) === 'DESC' ? 'DESC' : 'ASC';
@@ -195,6 +195,12 @@ final class ModuleStore
                 $cmp = strnatcasecmp((string) ($left['title'] ?? ''), (string) ($right['title'] ?? ''));
             } elseif ($orderBy === 'updatedAt') {
                 $cmp = strcmp((string) ($left['updatedAt'] ?? ''), (string) ($right['updatedAt'] ?? ''));
+            } elseif ($orderBy === 'start') {
+                $leftFields = isset($left['fields']) && is_array($left['fields']) ? $left['fields'] : [];
+                $rightFields = isset($right['fields']) && is_array($right['fields']) ? $right['fields'] : [];
+                $leftStart = (string) ($leftFields['start'] ?? ''); $rightStart = (string) ($rightFields['start'] ?? '');
+                if ($leftStart === '' && $rightStart !== '') { $cmp = 1; } elseif ($leftStart !== '' && $rightStart === '') { $cmp = -1; } else { $cmp = strcmp($leftStart, $rightStart); }
+                if ($cmp === 0) { $cmp = strnatcasecmp((string) ($left['title'] ?? ''), (string) ($right['title'] ?? '')); }
             } else {
                 $cmp = ((int) ($left['sortOrder'] ?? 0)) <=> ((int) ($right['sortOrder'] ?? 0));
                 if ($cmp === 0) {

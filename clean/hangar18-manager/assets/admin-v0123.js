@@ -21,7 +21,7 @@
         'h18-clean-header-footer': ['Klar', 'ready'],
         'h18-clean-vehicles': ['Klar', 'ready'],
         'h18-clean-vehicle-fields': ['Klar', 'ready'],
-        'h18-clean-events': ['Ikke færdig', 'planned'],
+        'h18-clean-events': ['Klar', 'ready'],
         'h18-clean-gallery': ['Ikke færdig', 'planned'],
         'h18-clean-data': ['Ikke færdig', 'planned']
     };

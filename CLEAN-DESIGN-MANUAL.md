@@ -654,3 +654,7 @@ Køretøjsdata og sidedesign holdes adskilt. Et køretøj oprettes én gang unde
 Standardmønstret er én oversigtsside plus én genbrugelig detaljeside. Køretøjslisten peger på detaljesiden, og hvert kort sender sit stabile record-ID som `?h18_vehicle=...`. Detalje-elementet står i **Fra URL**-tilstand og viser dermed det valgte record uden at der skal oprettes en separat WordPress-side for hvert køretøj.
 
 Tekniske felter defineres centralt. En ændring af feltets synlige navn må ikke ændre det stabile felt-ID. Billeder bliver i WordPress Media Library; modulrecords gemmer kun attachment IDs.
+
+## Eventmodul – designprincip
+
+**VD-EVENT-MODULE-001** gør Events til dynamiske data i den fælles ModuleStore. Eventliste og Eventdetalje gemmer kun binding/design, ikke kopier af eventdata. Eventliste kan vise kommende, afholdte eller alle publicerede events, så historiske events bevares.

@@ -1068,3 +1068,7 @@ Køretøjer er første konkrete modul på `VD-MODULE-DATA-001`. Data gemmes som 
 Visual Designer har to canonical leaf-typer: `vehiclelist` og `vehicledetail`. Begge normaliseres med `ModuleBinding` til modulet `vehicles`. `vehiclelist` forespørger kun publicerede records og kan linke til en valgt detaljeside med query-parameteren `h18_vehicle=<record-id>`. `vehicledetail` kan enten bindes til et fast record-ID eller, når `recordId` er tomt, resolve det samme ID fra query-parameteren. Offentlig rendering må aldrig vise `draft` eller `archive`; Designerens standalone preview må vise ikke-publicerede records for en bruger med `edit_pages`.
 
 `ModuleStore::META_RECORD_ID` giver deterministisk detail-lookup. `findByRecordId()` har fallback til v0.1.67-records uden denne indeks-meta. Medier refereres kun som WordPress attachment IDs; frontend og Designer resolver URL ved rendering. Moduldata må ikke kopieres ind i side-layoutets JSON.
+
+## VD-EVENT-MODULE-001
+
+Events bruger `ModuleRegistry`, `ModuleRecord` og `ModuleStore`; der findes ingen parallel event-datasilo. `EventAdminController` skriver start/slut/sted/beskrivelse i canonical `fields` og billede som attachment-ID. `ModuleStore::listRecords()` understøtter `orderBy=start`. Designer-elementerne `eventlist` og `eventdetail` binder til `module=events`, og frontend tvinger publiceret status samt bruger stabilt record-ID via `h18_event`.

@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.71",
+      "date": "2026-08-31",
+      "items": [
+        "VD-EVENT-MODULE-001: Events er nu et fuldt modul oven på den fælles ModuleStore.",
+        "Manager har CRUD, publiceringsstatus, start/slut, sted, beskrivelse og primært billede.",
+        "Designer har canonical Eventliste og Eventdetalje med kommende/afholdte/alle publicerede visninger.",
+        "Eventkort kan linke til én genbrugelig detaljeside via ?h18_event=<record-id>.",
+        "Designmanual, teknisk manual, brugermanual og backlog er synkroniseret til v0.1.71."
+      ]
+    },
+    {
       "version": "0.1.70",
       "date": "2026-08-31",
       "items": [

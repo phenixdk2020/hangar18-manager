@@ -1,11 +1,11 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
 **Statusdato:** 31. august 2026  
-**Aktuel release:** v0.1.70  
+**Aktuel release:** v0.1.71  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.70
+## Aktuel milepælsstatus · v0.1.71
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
 - **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
@@ -15,25 +15,26 @@
 - **VD-SELECTION-LAYER-001 — IMPLEMENTERET:** selected/drag/resize løftes kun visuelt i editoren.
 - **VD-CANVAS-AUTOHEIGHT-001 — IMPLEMENTERET I v0.1.69:** Webside/canvas vokser og krymper automatisk efter nederste root-Sektion.
 - **VD-VEHICLE-MODULE-001 — IMPLEMENTERET I v0.1.70:** Køretøjer har Manager-CRUD, fleksible tekniske felter, billeder, sortering og Designer-list/detail-binding.
+- **VD-EVENT-MODULE-001 — IMPLEMENTERET I v0.1.71:** Events har Manager-CRUD, dato/tid, sted, billede, kommende/afholdte regler og Designer list/detail-binding.
 
 ## Roadmap
 
 1. **v0.1.69 – Canvas Auto Height — FÆRDIG.**
 2. **v0.1.70 – Køretøjsmodul — FÆRDIG.**
-3. **v0.1.71 – Events — NÆSTE:** CRUD på fælles ModuleStore, dato/tid, sted, status, automatisk kommende/afholdte visninger og Designer list/detail-elementer.
-4. **v0.1.72 – Billedgalleri — PLANLAGT:** album, Media Library-referencer, sortering, cover og genbrugeligt Designer galleri/album-element.
+3. **v0.1.71 – Events — FÆRDIG:** CRUD på fælles ModuleStore, dato/tid, sted, status, automatisk kommende/afholdte visninger og Designer list/detail-elementer.
+4. **v0.1.72 – Billedgalleri — NÆSTE:** album, Media Library-referencer, sortering, cover og genbrugeligt Designer galleri/album-element.
 5. **Efter modulerne:** samlet data-/module-migrering fra legacy, med side-by-side QA før cutover.
 
 ## Åben backlog
 
-### VD-EVENT-MODULE-001 — NÆSTE
+### VD-EVENT-MODULE-001 — FÆRDIG I v0.1.71
 - Manager-CRUD på `events`-modulet.
 - Start/slut, sted, kort/længere beskrivelse, status og billeder.
 - Sortering samt kommende/afholdte regler uden at slette historiske events.
 - Canonical Designer-elementer til Eventliste og Eventdetalje.
 - Frontend må kun vise records efter den valgte status-/datoregel.
 
-### VD-GALLERY-MODULE-001 — PLANLAGT
+### VD-GALLERY-MODULE-001 — NÆSTE
 - Album-CRUD på `galleries`.
 - Cover, beskrivelse og sorteret Media Library-liste.
 - Designer-element til albumoversigt og albumvisning.
@@ -71,6 +72,14 @@
 8. Sæt et record tilbage til Kladde/Arkiveret; det må ikke længere kunne vises offentligt via en direkte detail-URL.
 9. Test et fast record-ID i Køretøjsdetalje Inspector.
 10. Gem/reload/Undo/Redo Designer-sider med begge køretøjselementer og verificér canonical modelparitet.
+
+## v0.1.71 Eventmodul – QA-gate
+
+1. Opret Kladde med start/slut, sted, beskrivelse og billede; reload og verificér stabilt record-ID.
+2. Publicér events før og efter aktuel dato og test Kommende, Afholdte og Alle publicerede.
+3. Test startdato-sortering, Eventliste-design og genbrugelig Eventdetalje via `?h18_event=<record-id>`.
+4. Kladde/Arkiveret må ikke kunne vises offentligt via direkte detail-URL.
+5. Gem/reload/Undo/Redo begge eventelementer; historiske events må ikke slettes automatisk.
 
 ## Global release-gate
 

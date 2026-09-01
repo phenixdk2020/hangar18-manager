@@ -1042,3 +1042,11 @@ Gå til **Visual Designer Manager → Køretøjer**. Vælg **Nyt køretøj**, sk
 Under **Køretøjsfelter** kan du tilføje eller omdøbe de tekniske felter, vælge datatype, enhed og rækkefølge. Feltets interne ID bevares, så eksisterende data fortsat hører til det rigtige felt.
 
 På en side i Visual Designer kan du tilføje **Køretøjsliste**. Her vælger du antal kolonner, sortering, hvilke oplysninger der vises, kortets udseende og den WordPress-side, som skal bruges til detaljer. Opret derefter en detaljeside med elementet **Køretøjsdetalje** og lad feltet **Køretøj** stå på **Fra URL**. Når en besøgende klikker et kort, åbnes detaljesiden med `?h18_vehicle=...`, og det rigtige køretøj vises automatisk. Du kan også vælge et fast køretøj i Inspector, hvis en side altid skal vise det samme record.
+
+## Sådan bruger du Eventmodulet
+
+1. Åbn **Manager → Events** og opret titel, start/slut, sted, beskrivelse og billede.
+2. Kun **Publiceret** kan vises offentligt; Kladde og Arkiveret er skjult.
+3. Tilføj **Eventliste** i Designer og vælg Kommende, Afholdte eller Alle publicerede samt en detaljeside.
+4. Indsæt **Eventdetalje** på detaljesiden og behold *Fra URL* for routing via `?h18_event=<record-id>`.
+5. Arkivér frem for at slette, når historikken skal bevares.
