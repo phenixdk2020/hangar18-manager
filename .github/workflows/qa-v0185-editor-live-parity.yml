@@ -12,6 +12,7 @@ on:
       - 'clean/hangar18-manager/src/Modules/ModuleRegistry.php'
       - 'clean/hangar18-manager/src/Modules/ModuleRecord.php'
       - 'clean/hangar18-manager/src/Admin/EventAdminController.php'
+      - '.github/scripts/v0184_portable_transfer_qa.py'
       - '.github/scripts/v0185_editor_live_box_qa.py'
       - '.github/scripts/v0185_event_facts_typography_qa.py'
       - '.github/scripts/v0185_semantic_qa.py'
