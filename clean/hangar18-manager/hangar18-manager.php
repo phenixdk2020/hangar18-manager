@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.83
+ * Version: 0.1.84
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,10 +15,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.83');
-define('H18_CLEAN_FILE', __FILE__);
-define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
-define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
+define('VDM_VERSION', '0.1.84');
+define('VDM_FILE', __FILE__);
+define('VDM_DIR', plugin_dir_path(__FILE__));
+define('VDM_URL', plugin_dir_url(__FILE__));
+
+/* Deprecated compatibility aliases. New code must use VDM_* constants. */
+define('H18_CLEAN_VERSION', '0.1.84');
+define('H18_CLEAN_FILE', VDM_FILE);
+define('H18_CLEAN_DIR', VDM_DIR);
+define('H18_CLEAN_URL', VDM_URL);
 
 /**
  * Compatibility marker for Hangar18 Base Theme 1.2.x.
@@ -39,6 +45,7 @@ if (!class_exists('Hangar18_Manager', false)) {
     }
 }
 
+require_once VDM_DIR . 'src/Compatibility/LegacyStorageBridge.php';
 require_once H18_CLEAN_DIR . 'src/Icons/IconRegistry.php';
 require_once H18_CLEAN_DIR . 'src/Modules/ModuleRegistry.php';
 require_once H18_CLEAN_DIR . 'src/Modules/ModuleRecord.php';
@@ -72,6 +79,7 @@ require_once H18_CLEAN_DIR . 'src/Admin/GalleryAdminController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminMenuBridge.php';
 require_once H18_CLEAN_DIR . 'src/Admin/ConversionController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/ExportController.php';
+require_once VDM_DIR . 'src/Admin/PortableTransferController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/NavigationController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/ThemeController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/GlobalDesignerController.php';
@@ -100,6 +108,7 @@ add_action('plugins_loaded', static function (): void {
     \VisualDesignerManager\Admin\AdminMenuBridge::register();
     \VisualDesignerManager\Admin\ConversionController::register();
     \VisualDesignerManager\Admin\ExportController::register();
+    \VisualDesignerManager\Admin\PortableTransferController::register();
     \VisualDesignerManager\Admin\NavigationController::register();
     \VisualDesignerManager\Admin\ThemeController::register();
     \VisualDesignerManager\Admin\GlobalDesignerController::register();
