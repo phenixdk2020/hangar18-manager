@@ -48,6 +48,7 @@
 }
 .h18-vd-viewport-stage>.h18-clean-root[data-h18-device="desktop"],
 .h18-vd-viewport-stage>.h18-clean-root[data-h18-device="laptop"],
+.h18-vd-viewport-stage>.h18-clean-root[data-h18-device="tablet"],
 .h18-vd-viewport-stage>.h18-clean-root[data-h18-device="mobile"]{
     max-width:none!important;
 }

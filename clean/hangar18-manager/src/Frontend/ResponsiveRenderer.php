@@ -15,6 +15,7 @@ use VisualDesignerManager\Model\LayoutModel;
 final class ResponsiveRenderer
 {
     public const LAPTOP_MAX = 1180;
+    public const TABLET_MAX = 980;
     public const MOBILE_MAX = 782;
 
     public static function register(): void
@@ -51,23 +52,28 @@ final class ResponsiveRenderer
         }
 
         $laptop = '';
+        $tablet = '';
         $mobile = '';
         foreach ($byId as $id => $node) {
             $lg = self::effectiveGeometry($node, 'laptop');
+            $tg = self::effectiveGeometry($node, 'tablet');
             $mg = self::effectiveGeometry($node, 'mobile');
             $laptopRows = self::effectiveRows($id, 'laptop', $byId, $byParent, []);
+            $tabletRows = self::effectiveRows($id, 'tablet', $byId, $byParent, []);
             $mobileRows = self::effectiveRows($id, 'mobile', $byId, $byParent, []);
             $selector = '#h18-clean-' . self::cssId($id);
             $props = is_array($node['props'] ?? null) ? $node['props'] : [];
             $floating = (string) ($node['type'] ?? '') === 'button' && (string) ($props['placementMode'] ?? 'normal') === 'overlay';
             $zIndex = max(1, min(200, (int) ($props['zIndex'] ?? 20)));
             $laptop .= self::geometryCss($selector, $lg, $laptopRows, $floating, $zIndex);
+            $tablet .= self::geometryCss($selector, $tg, $tabletRows, $floating, $zIndex);
             $mobile .= self::geometryCss($selector, $mg, $mobileRows, $floating, $zIndex);
         }
 
         echo '<style id="h18-clean-responsive-css">';
         echo '.h18-clean-page{max-width:100%;overflow-x:clip}';
         echo '@media(max-width:' . esc_attr((string) self::LAPTOP_MAX) . 'px){' . $laptop . '}';
+        echo '@media(max-width:' . esc_attr((string) self::TABLET_MAX) . 'px){' . $tablet . '}';
         echo '@media(max-width:' . esc_attr((string) self::MOBILE_MAX) . 'px){' . $mobile . '}';
         echo '</style>';
     }
@@ -121,10 +127,16 @@ final class ResponsiveRenderer
             return $laptop;
         }
 
+        $tabletRaw = is_array($geometry['tablet'] ?? null) ? $geometry['tablet'] : [];
+        $tablet = !empty($tabletRaw['inheritDesktop']) ? $laptop : self::geometry($tabletRaw, $laptop);
+        if ($device === 'tablet') {
+            return $tablet;
+        }
+
         $mobileRaw = is_array($geometry['mobile'] ?? null) ? $geometry['mobile'] : [];
-        // Responsive inheritance is cascading in the UI: Mobile inherits the
-        // effective Laptop layout (which itself may inherit Desktop).
-        return !empty($mobileRaw['inheritDesktop']) ? $laptop : self::geometry($mobileRaw, $laptop);
+        // Responsive inheritance is cascading: Mobile inherits Tablet, Tablet
+        // inherits Laptop, and Laptop may inherit Desktop.
+        return !empty($mobileRaw['inheritDesktop']) ? $tablet : self::geometry($mobileRaw, $tablet);
     }
 
     /** @param mixed $raw @param array{x:int,y:int,w:int,h:int}|null $fallback @return array{x:int,y:int,w:int,h:int} */

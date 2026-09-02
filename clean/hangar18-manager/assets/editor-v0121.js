@@ -4,7 +4,7 @@
     var CFG = window.H18CleanEditor || {};
     var UNITS = Math.max(12, parseInt(CFG.units || 120, 10) || 120);
     var ROW_PX = Math.max(2, parseInt(CFG.rowPx || 8, 10) || 8);
-    var DEVICES = ['desktop', 'laptop', 'mobile'];
+    var DEVICES = ['desktop', 'laptop', 'tablet', 'mobile'];
     var activeDevice = 'desktop';
     var responsive = Object.create(null);
     var undo = [];
@@ -70,12 +70,15 @@
             var desktop = normalizeGeometry(node.geometry && node.geometry.desktop, null, false);
             if (!responsive[id]) {
                 var laptopRaw = source.geometry && source.geometry.laptop;
+                var tabletRaw = source.geometry && source.geometry.tablet;
                 var mobileRaw = source.geometry && source.geometry.mobile;
                 responsive[id] = {
                     laptop: normalizeGeometry(laptopRaw, desktop, true),
+                    tablet: normalizeGeometry(tabletRaw, desktop, true),
                     mobile: normalizeGeometry(mobileRaw, desktop, true)
                 };
                 if (!laptopRaw) { responsive[id].laptop.inheritDesktop = true; }
+                if (!tabletRaw) { responsive[id].tablet.inheritDesktop = true; }
                 if (!mobileRaw) { responsive[id].mobile.inheritDesktop = true; }
             }
         });
@@ -88,8 +91,11 @@
         var laptop = state.laptop || normalizeGeometry(null, desktop, true);
         var effectiveLaptop = laptop.inheritDesktop !== false ? desktop : normalizeGeometry(laptop, desktop, false);
         if (device === 'laptop') { return effectiveLaptop; }
-        var mobile = state.mobile || normalizeGeometry(null, effectiveLaptop, true);
-        return mobile.inheritDesktop !== false ? effectiveLaptop : normalizeGeometry(mobile, effectiveLaptop, false);
+        var tablet = state.tablet || normalizeGeometry(null, effectiveLaptop, true);
+        var effectiveTablet = tablet.inheritDesktop !== false ? effectiveLaptop : normalizeGeometry(tablet, effectiveLaptop, false);
+        if (device === 'tablet') { return effectiveTablet; }
+        var mobile = state.mobile || normalizeGeometry(null, effectiveTablet, true);
+        return mobile.inheritDesktop !== false ? effectiveTablet : normalizeGeometry(mobile, effectiveTablet, false);
     }
     function ownGeometry(node, device) {
         if (device === 'desktop') { return node.geometry.desktop; }
@@ -119,6 +125,7 @@
             var node = map[id];
             node.geometry = node.geometry || {};
             node.geometry.laptop = clone(responsive[id].laptop);
+            node.geometry.tablet = clone(responsive[id].tablet);
             node.geometry.mobile = clone(responsive[id].mobile);
         });
         field.value = JSON.stringify(model);
@@ -199,7 +206,7 @@
         updateButtons();
     }
     function labelDevice(device) {
-        return ({ desktop: 'Desktop', laptop: 'Laptop', mobile: 'Mobil' })[device] || device;
+        return ({ desktop: 'Desktop', laptop: 'Laptop', tablet: 'Tablet', mobile: 'Mobil' })[device] || device;
     }
 
     function installToolbar() {
@@ -213,6 +220,8 @@
             button.type = 'button';
             button.className = 'button h18-clean-device-button';
             button.setAttribute('data-device', device);
+            button.setAttribute('aria-pressed', device === activeDevice ? 'true' : 'false');
+            button.setAttribute('aria-label', 'Redigér ' + labelDevice(device) + '-layout');
             button.textContent = labelDevice(device);
             button.addEventListener('click', function () {
                 mergeResponsive();
@@ -247,7 +256,7 @@
         var panel = document.createElement('div');
         panel.className = 'h18-clean-responsive-panel';
         panel.innerHTML = '<div class="h18-clean-responsive-panel-head"><strong>' + labelDevice(activeDevice) + ' layout</strong><span class="h18-clean-responsive-state">' + (inherited ? 'Arver' : 'Egen layout') + '</span></div>'
-            + '<label class="h18-clean-checkbox"><input type="checkbox" data-responsive-field="inherit"' + (inherited ? ' checked' : '') + '> Arv fra ' + (activeDevice === 'mobile' ? 'Laptop/Desktop' : 'Desktop') + '</label>'
+            + '<label class="h18-clean-checkbox"><input type="checkbox" data-responsive-field="inherit"' + (inherited ? ' checked' : '') + '> Arv fra ' + (activeDevice === 'mobile' ? 'Tablet/Laptop/Desktop' : (activeDevice === 'tablet' ? 'Laptop/Desktop' : 'Desktop')) + '</label>'
             + '<div class="h18-clean-field-grid">'
             + '<label>X / 120<input type="number" data-responsive-field="x" min="0" max="119" value="' + resolved.x + '"' + (inherited ? ' disabled' : '') + '></label>'
             + '<label>Bredde / 120<input type="number" data-responsive-field="w" min="1" max="120" value="' + resolved.w + '"' + (inherited ? ' disabled' : '') + '></label>'
@@ -296,7 +305,9 @@
     }
     function updateButtons() {
         document.querySelectorAll('.h18-clean-device-button').forEach(function (button) {
-            button.classList.toggle('button-primary', button.getAttribute('data-device') === activeDevice);
+            var isActive = button.getAttribute('data-device') === activeDevice;
+            button.classList.toggle('button-primary', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
         if (activeDevice === 'desktop') { return; }
         var undoButton = document.getElementById('h18-clean-undo');

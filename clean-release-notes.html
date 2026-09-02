@@ -1,10 +1,9 @@
-<h2>0.1.78 – Hybrid modulsider og fleksible Eventfelter</h2>
+<h2>0.1.79 – Fuld Tablet- og responsive Designer-understøttelse</h2>
 <ul>
-<li><strong>Events, Billedgalleri og Køretøjer:</strong> almindelige Visual Designer-elementer kan placeres før, mellem og efter det dynamiske modulindhold.</li>
-<li>Den eksisterende flow-baserede CollectionPageRenderer bevares, så søgning, sortering, eventarkiv og automatisk indholdshøjde fortsat fungerer.</li>
-<li>Moduldesign fra 0.1.77 ligger fortsat som en separat tilstand; Indholdselementer er nu standardtilstanden.</li>
-<li>Eventdetalje, Albumdetalje og Køretøjsdetalje er genbrugelige Visual Designer-sider, hvor almindelige elementer kan sættes omkring de dynamiske detailblokke.</li>
-<li><strong>Eventfelter:</strong> opret, fjern, omdøb og sorter felter med type, aktiv/påkrævet og visning på kort/detalje.</li>
-<li>Standard Eventfelter: <strong>Om arrangementet</strong>, <strong>Program</strong> og <strong>Praktiske oplysninger</strong>.</li>
-<li>Nyt Designer-element <strong>Eventfelt</strong> kan vise et bestemt fleksibelt Eventfelt separat på detail-skabelonen.</li>
+<li><strong>Tablet er nu et fuldt breakpoint</strong> i Visual Designer på samme niveau som Desktop, Laptop og Mobil.</li>
+<li>Den responsive kaskade er Desktop → Laptop (1180 px) → Tablet (980 px) → Mobil (782 px).</li>
+<li>Tablet får egen canonical geometri, arv/override, Inspector-redigering, flyt/resize samt Fit/Zoom-preview.</li>
+<li>Frontendens ResponsiveRenderer bruger nu den gemte Tablet-geometri i intervallet 783–980 px.</li>
+<li>Responsive ændringer er fortsat Undo/Redo-sikre og isoleret til det valgte breakpoint.</li>
+<li>Breakpoint-knapper har aktiv tilstand via <code>aria-pressed</code> og tydelige tilgængelighedslabels.</li>
 </ul>

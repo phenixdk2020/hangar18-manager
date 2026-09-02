@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var WIDTHS = { desktop: 1920, laptop: 1180, mobile: 390 };
+    var WIDTHS = { desktop: 1920, laptop: 1180, tablet: 980, mobile: 390 };
     var MIN_FIT_SCALE = 0.15;
     var MIN_MANUAL_SCALE = 0.25;
     var MAX_MANUAL_SCALE = 2.0;
@@ -62,7 +62,7 @@
     }
     function statusText() {
         var device = activeDevice();
-        var label = ({ desktop: 'Desktop', laptop: 'Laptop', mobile: 'Mobil' })[device] || device;
+        var label = ({ desktop: 'Desktop', laptop: 'Laptop', tablet: 'Tablet', mobile: 'Mobil' })[device] || device;
         return label + ' · ' + currentWidth + ' px · ' + (mode === 'fit' ? 'Fit ' : 'Zoom ') + Math.round(currentScale * 100) + '%';
     }
     function ensureControls() {

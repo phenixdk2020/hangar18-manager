@@ -1,12 +1,14 @@
-/* Clean 0.1.21 – Desktop / Laptop / Mobil responsive Designer. */
+/* Visual Designer Manager 0.1.79 – Desktop / Laptop / Tablet / Mobil responsive Designer. */
 .h18-clean-device-switcher{display:inline-flex;gap:4px;align-items:center;padding:3px;border:1px solid #c3c4c7;border-radius:7px;background:#f6f7f7}
 .h18-clean-device-switcher .button{min-width:76px;text-align:center}
 .h18-clean-device-switcher .button-primary{box-shadow:none}
 .h18-clean-root{width:100%;max-width:100%;margin-left:auto!important;margin-right:auto!important;transition:max-width .18s ease,box-shadow .18s ease}
 .h18-clean-root[data-h18-device="desktop"]{max-width:100%}
-.h18-clean-root[data-h18-device="laptop"]{max-width:1024px;box-shadow:0 0 0 1px #c3c4c7,0 6px 24px rgba(0,0,0,.06)}
+.h18-clean-root[data-h18-device="laptop"]{max-width:1180px;box-shadow:0 0 0 1px #c3c4c7,0 6px 24px rgba(0,0,0,.06)}
+.h18-clean-root[data-h18-device="tablet"]{max-width:980px;box-shadow:0 0 0 1px #c3c4c7,0 6px 24px rgba(0,0,0,.07)}
 .h18-clean-root[data-h18-device="mobile"]{max-width:390px;box-shadow:0 0 0 1px #c3c4c7,0 6px 24px rgba(0,0,0,.08)}
 body[data-h18-clean-device="laptop"] .h18-clean-canvas-column,
+body[data-h18-clean-device="tablet"] .h18-clean-canvas-column,
 body[data-h18-clean-device="mobile"] .h18-clean-canvas-column{overflow-x:auto;padding-left:12px;padding-right:12px}
 .h18-clean-core-geometry-hidden{display:none!important}
 .h18-clean-responsive-panel{margin:10px 0 16px;padding:12px;border:1px solid #c3c4c7;border-left:4px solid #2271b1;border-radius:6px;background:#f6f7f7}
@@ -14,10 +16,13 @@ body[data-h18-clean-device="mobile"] .h18-clean-canvas-column{overflow-x:auto;pa
 .h18-clean-responsive-state{display:inline-flex;align-items:center;min-height:22px;padding:1px 8px;border-radius:999px;background:#fff;border:1px solid #c3c4c7;color:#50575e;font-size:11px;font-weight:700}
 .h18-clean-responsive-panel .h18-clean-checkbox{margin:0 0 10px}
 body[data-h18-clean-device="laptop"] .h18-clean-node.is-selected,
+body[data-h18-clean-device="tablet"] .h18-clean-node.is-selected,
 body[data-h18-clean-device="mobile"] .h18-clean-node.is-selected{outline-color:#00a32a!important}
 body[data-h18-clean-device="laptop"] .h18-clean-move,
+body[data-h18-clean-device="tablet"] .h18-clean-move,
 body[data-h18-clean-device="mobile"] .h18-clean-move{cursor:move}
 body[data-h18-clean-device="laptop"] .h18-clean-v018-drop-overlay,
+body[data-h18-clean-device="tablet"] .h18-clean-v018-drop-overlay,
 body[data-h18-clean-device="mobile"] .h18-clean-v018-drop-overlay{display:none!important}
 
 /* Collapsible Elementer / Inspector panels. */

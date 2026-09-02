@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.79",
+      "date": "2026-09-02",
+      "items": [
+        "CLEAN-RESPONSIVE-009: Tablet er nu et fuldt breakpoint i Designer, viewport og offentlig ResponsiveRenderer.",
+        "Responsive kaskade er Desktop → Laptop (1180) → Tablet (980) → Mobil (782), med canonical geometry pr. breakpoint.",
+        "Tablet har samme toolbar, Inspector, arv/override, flyt/resize og viewport Fit/Zoom som Laptop og Mobil.",
+        "Responsive Undo/Redo snapshots omfatter Laptop/Tablet/Mobil og ændrer ikke de øvrige breakpoint-geometrier.",
+        "Device-knapper opdaterer aria-pressed og har eksplicitte labels for tastatur/skærmlæserbrugere."
+      ]
+    },
+    {
       "version": "0.1.78",
       "date": "2026-09-01",
       "items": [

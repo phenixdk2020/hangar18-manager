@@ -1,11 +1,11 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
-**Statusdato:** 1. september 2026  
-**Aktuel release:** v0.1.78  
+**Statusdato:** 2. september 2026  
+**Aktuel release:** v0.1.79  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.78
+## Aktuel milepælsstatus · v0.1.79
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
 - **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
@@ -37,6 +37,7 @@
 8. **v0.1.76 – VD-MODULE-VISUAL-PARITY-002 — FÆRDIG:** Events, Billedgalleri og Køretøjer bruger samme canonical frontend-rendering i Designer-preview; kortgeometri, billeder, beige kortkrop, spacing og responsive regler er justeret mod `_old`.
 9. **v0.1.77 – Redigerbart moduldesign — FÆRDIG:** Moduldesign kan ændres for de tre dynamiske sider med canonical frontend-preview.
 10. **v0.1.78 – Hybrid modulsider + Eventfelter — FÆRDIG:** almindelige Designer-elementer i før/mellem/efter-slots, Designer-detailpages og fleksible Eventfelter.
+11. **v0.1.79 – CLEAN-RESPONSIVE-009 — FÆRDIG:** Tablet er et fuldt canonical breakpoint i toolbar, Inspector, viewport og frontend med isoleret Undo/Redo.
 9. **v0.1.77 – VD-MODULE-DESIGN-001 — FÆRDIG:** de tre canonical modulsider har redigerbar side-/kortgeometri, typografi og farver med live preview i samme frontend-renderer.
 
 ## Åben backlog
@@ -69,11 +70,11 @@
 - Designændringer opretter en Designer-version og snapshot, som versions-restore kan gendanne.
 - Standardprofilen bevarer v0.1.76/_old-paritet.
 
-### CLEAN-RESPONSIVE-009 — DELVIST / MANUEL QA
-- Canonical model har Desktop/Laptop/Tablet/Mobil geometri og arv.
-- Desktop/Laptop/Mobil kan previewes i den nuværende viewport-runtime.
-- Tablet skal have samme fulde, eksplicitte toolbar/preview-flow som de øvrige, før punktet lukkes.
-- Breakpointændringer skal fortsat være Undo/Redo-sikre og må ikke mutere andre breakpoints.
+### CLEAN-RESPONSIVE-009 — FÆRDIG I v0.1.79
+- Canonical model har Desktop/Laptop/Tablet/Mobil geometri og kaskaderende arv.
+- Alle fire breakpoints har eksplicit toolbar, Inspector og viewport Fit/Zoom.
+- Tablet bruger 980 px som canonical preview/frontend-breakpoint mellem Laptop 1180 px og Mobil 782 px.
+- Responsive ændringer snapshots i Undo/Redo og muterer kun det valgte breakpoint; øvrige breakpoint-geometrier bevares.
 
 ### CLEAN-THEME-010 — IMPLEMENTERET BASELINE / REGRESSION FORTSÆTTER
 - Theme shell og Header/Footer bruges på Visual Designer-sider.
