@@ -15,6 +15,9 @@ def req(cond:bool,msg:str)->None:
     if not cond: raise SystemExit('FAIL: '+msg)
     print('PASS:',msg)
 
+def version_tuple(value:str)->tuple[int,...]:
+    return tuple(int(part) for part in value.split('.'))
+
 plugin=text('clean/hangar18-manager/hangar18-manager.php')
 layout=text('clean/hangar18-manager/src/Model/LayoutModel.php')
 renderer=text('clean/hangar18-manager/src/Frontend/Renderer.php')
@@ -31,7 +34,8 @@ backlog=text('docs/clean-backlog-v0100.md')
 history=json.loads(text('clean/hangar18-manager/release-history.json'))
 
 h=re.search(r'\* Version:\s*([0-9.]+)',plugin); c=re.search(r"H18_CLEAN_VERSION',\s*'([0-9.]+)'",plugin)
-req(h is not None and c is not None and h.group(1)==c.group(1)=='0.1.78','runtime version is exactly 0.1.78')
+current = h.group(1) if h is not None else ''
+req(h is not None and c is not None and h.group(1)==c.group(1) and version_tuple(current)>=version_tuple('0.1.78'),'runtime version is v0.1.78 or newer')
 req('EventFieldRegistry.php' in plugin and 'HybridModulePageMigration.php' in plugin and 'HybridModuleSlots.php' in plugin,'new v0.1.78 runtime classes are bootstrapped')
 req('HybridModulePageMigration::register()' in plugin,'hybrid migration is registered')
 req("'eventfield'" in layout and 'moduleSlot' in layout,'LayoutModel supports Eventfelt and module slots')
@@ -54,9 +58,9 @@ req('h18_collection_mode' in editor and 'Indholdselementer' in editor and 'Modul
 req("collectionMode === 'module'" in editor,'collection page defaults to normal content canvas and only special-cases module design mode')
 req('EventFieldRegistry::byId' in renderer and 'h18-clean-front-event-field' in renderer,'frontend renders standalone Eventfelt nodes')
 req('showCard' in collection and 'showDetail' in collection,'collection/direct detail rendering honors Event field visibility')
-req('0.1.78' in notes and 'Hybrid modulsider' in notes,'release notes describe v0.1.78')
-req('**Aktuel release:** v0.1.78' in backlog,'backlog active release is v0.1.78')
+req(current != '0.1.78' or ('0.1.78' in notes and 'Hybrid modulsider' in notes),'v0.1.78 release notes are required while v0.1.78 is current')
+req('v0.1.78 – Hybrid modulsider + Eventfelter — FÆRDIG' in backlog,'canonical backlog retains completed v0.1.78 milestone')
 versions=history.get('versions',[]) if isinstance(history,dict) else []
 req(any(isinstance(row,dict) and row.get('version')=='0.1.78' for row in versions),'release history contains v0.1.78')
 req((ROOT/'docs/v0178-status.md').is_file(),'v0.1.78 status document exists')
-print('v0.1.78 hybrid module pages + Event fields QA: PASS')
+print('v0.1.78 hybrid module pages + Event fields QA: PASS (forward-compatible)')
