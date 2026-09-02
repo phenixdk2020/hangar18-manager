@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import re
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -24,7 +25,6 @@ manual_controller = text('clean/hangar18-manager/src/Admin/ManualController.php'
 admin_js = text('clean/hangar18-manager/assets/admin-v0123.js')
 manual_css = text('clean/hangar18-manager/assets/manual-v0183.css')
 manual = text('CLEAN-USER-MANUAL.md')
-workflow = text('.github/workflows/visual-designer-release.yml')
 history = json.loads(text('clean/hangar18-manager/release-history.json'))
 notes = text('clean-release-notes.html')
 status = text('docs/v0183-status.md')
@@ -42,23 +42,32 @@ req("'h18-clean-manual': ['Klar', 'ready']" in admin_js, 'Brugermanual menu stat
 req("public const PAGE_SLUG = 'visual-designer-brugermanual';" in manual_controller, 'manual has stable public page slug')
 req("public const SHORTCODE = 'visual_designer_manager_manual';" in manual_controller, 'manual page uses a dedicated shortcode')
 req("wp_insert_post" in manual_controller and "'post_status' => 'publish'" in manual_controller, 'manual WordPress page is auto-provisioned as published')
-req("docs/user-manual.html" in manual_controller, 'website renderer uses the generated HTML artifact')
+req("docs/user-manual.html" in manual_controller, 'website renderer uses the packaged HTML artifact')
 req("docs/visual-designer-manager-brugermanual.docx" in manual_controller, 'Word download uses the packaged DOCX artifact')
 req('Download som Word (.docx)' in manual_controller, 'website/admin manual exposes Word download action')
 req('Åbn Visual Designer Manager' in manual_controller, 'website manual links back to the Manager')
-req('user-manual-assets' in manual_controller, 'manual rewrites bundled illustration URLs')
+req("str_replace('src=\"docs/user-manual-assets/" in manual_controller, 'manual rewrites bundled illustration URLs')
+req("str_replace('src=\\\"docs/user-manual-assets/" not in manual_controller, 'manual image rewrite does not look for escaped HTML quotes')
 req('.h18-vd-manual' in manual_css and '.h18-vd-manual-toolbar' in manual_css, 'manual has responsive website styling')
 
 req('Brugermanualen på websitet' in manual, 'canonical user manual documents website access')
 req('Download som Word (.docx)' in manual, 'canonical user manual documents Word download')
 req('CLEAN-USER-MANUAL.md' in manual, 'canonical manual names its single source of truth')
 
-req('Build user manual artifacts' in workflow, 'release workflow builds manual artifacts')
-req('pandoc CLEAN-USER-MANUAL.md' in workflow, 'release workflow generates outputs from the canonical Markdown manual')
-req('visual-designer-manager-brugermanual.docx' in workflow, 'release workflow generates Word DOCX')
-req('user-manual.html' in workflow and 'user-manual-assets' in workflow, 'release workflow packages website HTML and illustrations')
-req("hangar18-manager/src/Admin/ManualController.php" in workflow, 'release package verifies ManualController')
-req("hangar18-manager/docs/visual-designer-manager-brugermanual.docx" in workflow, 'release package verifies Word artifact')
+artifact_md = ROOT / 'clean/hangar18-manager/docs/user-manual.md'
+artifact_html = ROOT / 'clean/hangar18-manager/docs/user-manual.html'
+artifact_docx = ROOT / 'clean/hangar18-manager/docs/visual-designer-manager-brugermanual.docx'
+artifact_assets = ROOT / 'clean/hangar18-manager/docs/user-manual-assets'
+req(artifact_md.is_file() and artifact_md.read_text(encoding='utf-8') == manual, 'packaged Markdown is byte-for-byte the canonical user manual')
+req(artifact_html.is_file() and artifact_html.stat().st_size > 1000, 'packaged website HTML exists')
+html = artifact_html.read_text(encoding='utf-8')
+req('Visual Designer Manager' in html and 'Brugermanual' in html, 'packaged website HTML contains the manual')
+req(artifact_docx.is_file() and artifact_docx.stat().st_size > 1000, 'packaged Word DOCX exists')
+req(zipfile.is_zipfile(artifact_docx), 'Word artifact is a valid OOXML ZIP container')
+with zipfile.ZipFile(artifact_docx) as zf:
+    req('word/document.xml' in zf.namelist(), 'Word artifact contains word/document.xml')
+for asset in ['page-anatomy.svg', 'lego-hierarchy.svg', 'table-borders.svg']:
+    req((artifact_assets / asset).is_file(), 'packaged manual illustration exists: ' + asset)
 
 versions = history.get('versions', []) if isinstance(history, dict) else []
 req(bool(versions) and isinstance(versions[0], dict) and str(versions[0].get('version', '')) == '0.1.83', 'release history starts with v0.1.83')
