@@ -85,7 +85,7 @@ jobs:
         run: |
           set -euo pipefail
           find .github/scripts -type d -name __pycache__ -prune -exec rm -rf {} +
-          git status --short
+          git status --short --untracked-files=all
           python3 - <<'PY'
           import subprocess
           allowed_exact = {
@@ -99,7 +99,7 @@ jobs:
               'clean-release-notes.html',
               'docs/v0183-status.md',
           }
-          lines = subprocess.check_output(['git', 'status', '--porcelain'], text=True).splitlines()
+          lines = subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], text=True).splitlines()
           changed = {line[3:] for line in lines if len(line) >= 4}
           unexpected = sorted(p for p in changed if p not in allowed_exact and not p.startswith('clean/hangar18-manager/docs/'))
           if unexpected:
