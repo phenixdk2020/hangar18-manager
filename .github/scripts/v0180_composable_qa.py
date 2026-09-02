@@ -71,7 +71,7 @@ req('final class ModuleStore' in text('clean/hangar18-manager/src/Modules/Module
 versions = history.get('versions', []) if isinstance(history, dict) else []
 req(any(isinstance(row, dict) and str(row.get('version','')) == '0.1.80' for row in versions), 'release history retains v0.1.80')
 req('0.1.80' in notes and 'Eventværdi' in notes and 'Data' in notes, 'release notes describe composable detail and Data-menu cleanup')
-req('**Aktuel release:** v0.1.80' in backlog and 'VD-COMPOSABLE-MODULE-PAGES-002 — FÆRDIG I v0.1.80' in backlog, 'canonical backlog records v0.1.80 completion')
+req('VD-COMPOSABLE-MODULE-PAGES-002 — FÆRDIG I v0.1.80' in backlog, 'canonical backlog retains completed v0.1.80 milestone')
 req((ROOT / 'docs/v0180-status.md').is_file(), 'v0.1.80 status document exists')
 
 # Historical gate is forward-compatible: the updater must be at least the verified v0.1.80 release.
