@@ -6,7 +6,7 @@ on:
     paths:
       - '.github/workflows/apply-v0183-user-manual-web.yml'
       - '.github/scripts/apply_v0183_user_manual_web.py'
-      - '.github/scripts/apply_v0183_user_manual_package_fix.py'
+      - '.github/scripts/apply_v0183_user_manual_runtime_fix.py'
       - '.github/scripts/v0183_user_manual_qa.py'
 
 permissions:
@@ -24,12 +24,38 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/apply_v0183_user_manual_web.py
-          python3 .github/scripts/apply_v0183_user_manual_package_fix.py
+          python3 .github/scripts/apply_v0183_user_manual_runtime_fix.py
+          # The existing central release workflow already packages the complete
+          # clean/hangar18-manager tree. Keep that workflow unchanged and place
+          # the generated manual artifacts directly in the plugin source tree.
+          git restore .github/workflows/visual-designer-release.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('docs/v0183-status.md')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('i den centrale release-workflow', 'i v0.1.83-buildet før pluginpakken frigives')
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Build synchronized manual artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends pandoc
+          rm -rf clean/hangar18-manager/docs
+          mkdir -p clean/hangar18-manager/docs/user-manual-assets
+          cp CLEAN-USER-MANUAL.md clean/hangar18-manager/docs/user-manual.md
+          cp -R docs/user-manual-assets/. clean/hangar18-manager/docs/user-manual-assets/
+          pandoc CLEAN-USER-MANUAL.md --from=gfm --to=html5 --resource-path=. -o clean/hangar18-manager/docs/user-manual.html
+          pandoc CLEAN-USER-MANUAL.md --from=gfm --resource-path=. -o clean/hangar18-manager/docs/visual-designer-manager-brugermanual.docx
+          test -s clean/hangar18-manager/docs/user-manual.html
+          test -s clean/hangar18-manager/docs/visual-designer-manager-brugermanual.docx
 
       - name: Syntax and static QA
         run: |
           set -euo pipefail
-          python3 -m py_compile .github/scripts/apply_v0183_user_manual_web.py .github/scripts/apply_v0183_user_manual_package_fix.py .github/scripts/v0183_user_manual_qa.py
+          python3 -m py_compile .github/scripts/apply_v0183_user_manual_web.py .github/scripts/apply_v0183_user_manual_runtime_fix.py .github/scripts/v0183_user_manual_qa.py
           find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
           find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           python3 .github/scripts/v0183_user_manual_qa.py
@@ -62,7 +88,7 @@ jobs:
           git status --short
           python3 - <<'PY'
           import subprocess
-          allowed = {
+          allowed_exact = {
               'clean/hangar18-manager/hangar18-manager.php',
               'clean/hangar18-manager/src/Admin/ManualController.php',
               'clean/hangar18-manager/src/Admin/AdminController.php',
@@ -72,11 +98,10 @@ jobs:
               'CLEAN-USER-MANUAL.md',
               'clean-release-notes.html',
               'docs/v0183-status.md',
-              '.github/workflows/visual-designer-release.yml',
           }
           lines = subprocess.check_output(['git', 'status', '--porcelain'], text=True).splitlines()
           changed = {line[3:] for line in lines if len(line) >= 4}
-          unexpected = sorted(changed - allowed)
+          unexpected = sorted(p for p in changed if p not in allowed_exact and not p.startswith('clean/hangar18-manager/docs/'))
           if unexpected:
               raise SystemExit('Unexpected v0.1.83 modified paths: ' + ', '.join(unexpected))
           required = {
@@ -85,7 +110,9 @@ jobs:
               'clean/hangar18-manager/src/Admin/AdminController.php',
               'clean/hangar18-manager/assets/manual-v0183.css',
               'CLEAN-USER-MANUAL.md',
-              '.github/workflows/visual-designer-release.yml',
+              'clean/hangar18-manager/docs/user-manual.md',
+              'clean/hangar18-manager/docs/user-manual.html',
+              'clean/hangar18-manager/docs/visual-designer-manager-brugermanual.docx',
           }
           missing = sorted(required - changed)
           if missing:
@@ -94,8 +121,8 @@ jobs:
           grep -q 'Version: 0.1.83' clean/hangar18-manager/hangar18-manager.php
           grep -q "H18_CLEAN_VERSION', '0.1.83'" clean/hangar18-manager/hangar18-manager.php
           grep -Fq 'Download som Word (.docx)' clean/hangar18-manager/src/Admin/ManualController.php
-          grep -Fq 'Build user manual artifacts' .github/workflows/visual-designer-release.yml
-          grep -Fq '^hangar18-manager/src/Admin/ManualController.php$' .github/workflows/visual-designer-release.yml
+          test -s clean/hangar18-manager/docs/user-manual.html
+          test -s clean/hangar18-manager/docs/visual-designer-manager-brugermanual.docx
           test "$(python3 -c "import json; print(json.load(open('clean-update.json',encoding='utf-8'))['version'])")" = '0.1.82'
 
       - name: Commit v0.1.83 release candidate
@@ -111,10 +138,10 @@ jobs:
             clean/hangar18-manager/assets/manual-v0183.css \
             clean/hangar18-manager/assets/admin-v0123.js \
             clean/hangar18-manager/release-history.json \
+            clean/hangar18-manager/docs \
             CLEAN-USER-MANUAL.md \
             clean-release-notes.html \
-            docs/v0183-status.md \
-            .github/workflows/visual-designer-release.yml
+            docs/v0183-status.md
           git diff --cached --quiet && exit 0 || true
           git commit -m 'Implement Visual Designer Manager v0.1.83 web and Word manual'
           for attempt in 1 2 3; do
