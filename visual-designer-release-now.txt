@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.85
-Trigger: editor-live-parity-event-facts 2026-09-02
+Release Visual Designer Manager v0.1.86
+Trigger: site-identity-settings 2026-09-02
 Publish: requested 2026-09-02
-QA: run 33663632396 PASS
-Source candidate: cb948624f016d0f4d61dbdf323e2d301730f2b47
+QA: apply run 33666786764 PASS
+Source candidate: 43da9ba1e7be1fb83cb11530c7f062fd5ce44936
