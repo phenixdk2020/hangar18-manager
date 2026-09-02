@@ -23,7 +23,9 @@ jobs:
           fetch-depth: 0
 
       - name: Apply v0.1.86 candidate
-        run: python3 .github/scripts/apply_v0186_site_settings.py
+        run: |
+          python3 .github/scripts/apply_v0186_site_settings.py
+          git restore .github/workflows/visual-designer-release.yml
 
       - name: PHP syntax
         shell: bash
@@ -81,8 +83,7 @@ jobs:
                   clean/hangar18-manager/release-history.json \
                   clean-release-notes.html \
                   docs/v0186-status.md \
-                  .github/scripts/v0186_site_settings_qa.py \
-                  .github/workflows/visual-designer-release.yml
+                  .github/scripts/v0186_site_settings_qa.py
           if git diff --cached --quiet; then
             echo 'No candidate changes to commit.'
             exit 0
