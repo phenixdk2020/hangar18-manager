@@ -21,8 +21,22 @@ jobs:
 
       - name: Apply v0.1.85 Eventfaktabånd and typography
         run: |
+          set +e
+          python3 .github/scripts/apply_v0185_event_facts_typography.py > /tmp/v0185-apply.log 2>&1
+          code=$?
+          cat /tmp/v0185-apply.log
+          if [ "$code" -ne 0 ]; then
+            git config user.name 'visual-designer-apply-bot'
+            git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+            git checkout -B vdm-v0185-debug
+            mkdir -p docs
+            cp /tmp/v0185-apply.log docs/v0185-ci-debug.txt
+            git add docs/v0185-ci-debug.txt
+            git commit -m 'Capture v0.1.85 apply failure'
+            git push --force origin HEAD:vdm-v0185-debug
+            exit "$code"
+          fi
           set -euo pipefail
-          python3 .github/scripts/apply_v0185_event_facts_typography.py
 
       - name: Syntax and v0.1.85 QA
         run: |
