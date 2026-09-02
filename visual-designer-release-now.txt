@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.77
-Trigger: module-design 2026-09-01
-Publish: requested 2026-09-01
-QA: apply run 33543412133 PASS
-Source candidate: c63524f32aa7f71855c60be43eb2783e18f612fd
+Release Visual Designer Manager v0.1.78
+Trigger: hybrid-module-pages-event-fields 2026-09-02
+Publish: requested 2026-09-02
+QA: apply run 33558693461 PASS
+Source candidate: cacb785df23c92bba1bd93ffdbed71590fa33a78
