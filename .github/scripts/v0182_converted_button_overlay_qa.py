@@ -37,7 +37,7 @@ req('\\VisualDesignerManager\\Migration\\ConvertedButtonOverlayMigration::regist
 button_factory = converter.split('private static function buttonNode', 1)[1].split('private static function geometry', 1)[0]
 req("'placementMode' => 'overlay'" in button_factory, 'future converted buttons are created as overlay')
 req("'placementMode' => 'normal'" not in button_factory, 'converter no longer emits normal-flow buttons')
-req("node.props.placementMode==='overlay'" in editor, 'Designer floating-button contract still uses overlay placement')
+req(re.search(r"node\.props\.placementMode\s*===\s*['\"]overlay['\"]", editor) is not None, 'Designer floating-button contract still uses overlay placement')
 
 req("MARKER_META = '_h18_vd_converted_button_overlay_v0182'" in migration, 'one-time migration marker exists')
 req("BACKUP_META = '_h18_vd_converted_button_overlay_backup_v0182'" in migration, 'pre-migration backup marker exists')
