@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.80
-Trigger: composable-module-pages 2026-09-02
+Release Visual Designer Manager v0.1.81
+Trigger: color-picker-form-wysiwyg-docs 2026-09-02
 Publish: requested 2026-09-02
-QA: apply run 33611527069 PASS
-Source candidate: dbe2fd03ad678c2c142c443377fb4d8f2bab5b0e
+QA: apply run 33618758739 PASS
+Source candidate: 51a675b665d1fa0acd568d589981ffdaf5cb2110
