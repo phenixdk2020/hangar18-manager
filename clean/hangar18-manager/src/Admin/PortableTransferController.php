@@ -310,6 +310,15 @@ final class PortableTransferController
                 'language' => (string) get_bloginfo('language'),
             ],
             'settings' => [
+                'siteIdentity' => [
+                    'siteTitle' => (string) get_option('blogname', ''),
+                    'tagline' => (string) get_option('blogdescription', ''),
+                    'customLogoSourceId' => (int) get_theme_mod('custom_logo', 0),
+                    'siteIconSourceId' => (int) get_option('site_icon', 0),
+                    'organizationName' => (string) get_option(SiteSettingsController::OPTION_ORGANIZATION, ''),
+                    'contactEmail' => (string) get_option(SiteSettingsController::OPTION_CONTACT_EMAIL, ''),
+                    'contactPhone' => (string) get_option(SiteSettingsController::OPTION_CONTACT_PHONE, ''),
+                ],
                 'showOnFront' => (string) get_option('show_on_front', 'posts'),
                 'pageOnFrontSourceId' => (int) get_option('page_on_front', 0),
                 'pageForPostsSourceId' => (int) get_option('page_for_posts', 0),
@@ -636,6 +645,7 @@ final class PortableTransferController
                 }
             }
 
+            $site = self::readJson($zip, 'site.json');
             $pages = self::readJson($zip, 'pages/pages.json');
             $templates = self::readJson($zip, 'templates/templates.json');
             $modules = self::readJson($zip, 'modules/modules.json');
@@ -643,6 +653,10 @@ final class PortableTransferController
             $navigation = self::readJson($zip, 'navigation/navigation.json');
             $media = self::readJson($zip, 'media/media-index.json');
             $warnings = [];
+            $siteSettings = isset($site['settings']) && is_array($site['settings']) ? $site['settings'] : [];
+            if (!isset($siteSettings['siteIdentity']) || !is_array($siteSettings['siteIdentity'])) {
+                $warnings[] = 'Pakken har ikke eksplicit site-identitet (VDM 0.1.85 eller ældre). Målsitets webstedstitel, slogan, logo, site-ikon og VDM-kontaktfelter bevares ved import.';
+            }
             $sourceSite = (string) ($manifest['sourceSite'] ?? '');
             if ($sourceSite !== '' && untrailingslashit($sourceSite) !== untrailingslashit(home_url('/'))) {
                 $warnings[] = 'Kildesitet er forskelligt fra målsitet. Side-, menu- og mediereferencer remappes hvor muligt.';
@@ -712,7 +726,7 @@ final class PortableTransferController
             VehicleFieldRegistry::save((array) ($fields['vehicleFields'] ?? []));
             EventFieldRegistry::save((array) ($fields['eventFields'] ?? []));
             $moduleCount = self::importModules((array) ($modules['records'] ?? []), $maps);
-            self::applySiteSettings($site, $pageMap);
+            self::applySiteSettings($site, $pageMap, $mediaMap);
             flush_rewrite_rules(false);
 
             return [
@@ -1091,10 +1105,36 @@ final class PortableTransferController
         return $count;
     }
 
-    /** @param array<string,mixed> $site @param array<int,int> $pageMap */
-    private static function applySiteSettings(array $site, array $pageMap): void
+    /** @param array<string,mixed> $site @param array<int,int> $pageMap @param array<int,int> $mediaMap */
+    private static function applySiteSettings(array $site, array $pageMap, array $mediaMap): void
     {
         $settings = isset($site['settings']) && is_array($site['settings']) ? $site['settings'] : [];
+        $identity = isset($settings['siteIdentity']) && is_array($settings['siteIdentity']) ? $settings['siteIdentity'] : null;
+        if (is_array($identity)) {
+            if (array_key_exists('siteTitle', $identity)) { update_option('blogname', sanitize_text_field((string) $identity['siteTitle'])); }
+            if (array_key_exists('tagline', $identity)) { update_option('blogdescription', sanitize_text_field((string) $identity['tagline'])); }
+            if (array_key_exists('organizationName', $identity)) { update_option(SiteSettingsController::OPTION_ORGANIZATION, sanitize_text_field((string) $identity['organizationName'])); }
+            if (array_key_exists('contactEmail', $identity)) { update_option(SiteSettingsController::OPTION_CONTACT_EMAIL, sanitize_email((string) $identity['contactEmail'])); }
+            if (array_key_exists('contactPhone', $identity)) { update_option(SiteSettingsController::OPTION_CONTACT_PHONE, sanitize_text_field((string) $identity['contactPhone'])); }
+
+            if (array_key_exists('customLogoSourceId', $identity)) {
+                $sourceLogo = absint($identity['customLogoSourceId']);
+                if ($sourceLogo === 0) {
+                    remove_theme_mod('custom_logo');
+                } elseif (isset($mediaMap[$sourceLogo])) {
+                    set_theme_mod('custom_logo', (int) $mediaMap[$sourceLogo]);
+                }
+            }
+            if (array_key_exists('siteIconSourceId', $identity)) {
+                $sourceIcon = absint($identity['siteIconSourceId']);
+                if ($sourceIcon === 0) {
+                    delete_option('site_icon');
+                } elseif (isset($mediaMap[$sourceIcon])) {
+                    update_option('site_icon', (int) $mediaMap[$sourceIcon]);
+                }
+            }
+        }
+
         $show = (string) ($settings['showOnFront'] ?? 'posts');
         update_option('show_on_front', $show === 'page' ? 'page' : 'posts');
         $frontSource = absint($settings['pageOnFrontSourceId'] ?? 0);

@@ -127,6 +127,7 @@ final class AdminController
 
         echo '<div class="h18-manager-card-grid">';
         self::card('Designer', 'Byg sider med 120-unit / 8-px grid, Undo/Redo og versionshistorik.', self::designerUrl(), 'Åbn Designer');
+        self::card('Siteindstillinger', 'Ret webstedstitel, slogan, virksomhed/forening, kontaktoplysninger, logo og site-ikon.', admin_url('admin.php?page=vdm-site-settings'), 'Åbn Siteindstillinger');
         self::card('Sider', 'Se Visual Designer-status, nodeantal og seneste version for alle WordPress-sider.', self::url('h18-clean-pages'), 'Vis sider');
         self::card('Konvertering', 'Forbered eksisterende WordPress-sider som ikke-destruktive Visual Designer-kandidater, QA dem og aktivér én side ad gangen.', self::url('h18-clean-conversion'), 'Konvertér sider');
         self::card('Backup', 'Download én samlet JSON-backup af alle Visual Designer-layouts og deres versionshistorik.', self::url('h18-clean-backup'), 'Åbn Backup');

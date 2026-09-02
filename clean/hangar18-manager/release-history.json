@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.86",
+      "date": "2026-09-02",
+      "items": [
+        "VDM-SITE-IDENTITY-001: ny Siteindstillinger-side i Visual Designer Manager med webstedstitel, slogan, virksomhed/forening og kontaktoplysninger.",
+        "Logo og WordPress site-ikon/favicon kan vælges direkte fra mediebiblioteket og fjernes igen.",
+        "Site-identitet eksporteres nu eksplicit i den portable sitepakke og logo/site-ikon remappes via medie-ID ved import.",
+        "VDM 0.1.85 og ældre portable pakker overskriver ikke målsitets identitet, fordi de ikke har et eksplicit siteIdentity-afsnit.",
+        "Den uploadede 0.1.85-eksport er valideret som schema 1.0 med intakte SHA-256-signaturer og kan bruges som migrationsbackup."
+      ]
+    },
+    {
       "version": "0.1.85",
       "date": "2026-09-02",
       "items": [
