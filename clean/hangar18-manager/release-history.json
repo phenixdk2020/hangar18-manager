@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.84",
+      "date": "2026-09-02",
+      "items": [
+        "VD-PORTABLE-TRANSFER-001: komplet portabel siteeksport og verificeret ZIP-import med schema 1.0.",
+        "Eksporten indeholder sider/layouts og historik, Header/Footer-templates, modulrecords, køretøjs-/eventfelter, navigation og originale mediefiler.",
+        "Import har read-only forhåndskontrol, SHA-256-verifikation, ZIP path-traversal-beskyttelse og ID/URL-remapping mellem sites.",
+        "Nye runtime-identifikatorer bruger VDM-navngivning; historiske H18/Clean storage-nøgler er isoleret i Compatibility-laget.",
+        "VDM_VERSION/VDM_FILE/VDM_DIR/VDM_URL er nye kanoniske konstanter; H18_CLEAN_* bevares midlertidigt som deprecated compatibility-aliases."
+      ]
+    },
+    {
       "version": "0.1.83",
       "date": "2026-09-02",
       "items": [
