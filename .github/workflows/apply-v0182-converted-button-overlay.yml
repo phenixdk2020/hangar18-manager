@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/apply-v0182-converted-button-overlay.yml'
       - '.github/scripts/apply_v0182_converted_button_overlay.py'
+      - '.github/scripts/v0180_composable_qa.py'
       - '.github/scripts/v0182_converted_button_overlay_qa.py'
       - '.github/scripts/v0182_converted_button_overlay_qa.php'
 
