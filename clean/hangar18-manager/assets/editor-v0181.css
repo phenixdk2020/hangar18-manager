@@ -28,3 +28,24 @@
 .h18-vd-form-preview-consent input{width:auto!important;min-height:0!important;margin-top:3px;opacity:1}
 .h18-vd-form-preview-submit{display:inline-block;border:0;border-radius:4px;background:var(--h18-form-preview-accent);color:#fff;padding:11px 20px;font:700 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;cursor:default}
 @media(max-width:782px){.h18-vd-form-preview-grid{grid-template-columns:1fr}.h18-vd-form-preview-field.is-wide{grid-column:auto}}
+
+/* Visual Designer Manager v0.1.85 · VD-EDITOR-LIVE-BOX-PARITY-002
+ * A Section/Box with explicit grid geometry must occupy exactly the same
+ * outer grid area in the editor as Renderer.php uses on preview/live.
+ * Editor chrome and the nested editing surface are contained inside that box.
+ */
+.h18-clean-node--section[data-h18-explicit-grid="1"],
+.h18-clean-node--container[data-h18-explicit-grid="1"]{
+    height:100%!important;
+    min-height:0!important;
+    box-sizing:border-box
+}
+.h18-clean-node--section[data-h18-explicit-grid="1"]>.h18-clean-inner-surface,
+.h18-clean-node--container[data-h18-explicit-grid="1"]>.h18-clean-inner-surface{
+    width:100%;
+    height:100%;
+    min-height:0;
+    margin:0;
+    box-sizing:border-box;
+    align-self:stretch
+}
