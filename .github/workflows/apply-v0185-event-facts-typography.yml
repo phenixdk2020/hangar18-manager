@@ -7,7 +7,9 @@ on:
       - '.github/workflows/apply-v0185-event-facts-typography.yml'
       - '.github/scripts/apply_v0185_event_facts_typography.py'
       - '.github/scripts/v0185_preapply_fix.py'
+      - '.github/scripts/v0185_postapply_fix.py'
       - '.github/scripts/v0185_event_facts_typography_qa.py'
+      - '.github/scripts/v0185_semantic_qa.py'
 
 permissions:
   contents: write
@@ -32,6 +34,10 @@ jobs:
             printf 'Preapply fix failed with code %s\n' "$pre_code" > /tmp/v0185-apply.log
             code=$pre_code
           fi
+          if [ "$code" -eq 0 ]; then
+            python3 .github/scripts/v0185_postapply_fix.py >> /tmp/v0185-apply.log 2>&1
+            code=$?
+          fi
           cat /tmp/v0185-apply.log
           if [ "$code" -ne 0 ]; then
             git config user.name 'visual-designer-apply-bot'
@@ -50,10 +56,16 @@ jobs:
       - name: Syntax and v0.1.85 QA
         run: |
           set -euo pipefail
-          python3 -m py_compile .github/scripts/apply_v0185_event_facts_typography.py .github/scripts/v0185_preapply_fix.py .github/scripts/v0185_event_facts_typography_qa.py
+          python3 -m py_compile \
+            .github/scripts/apply_v0185_event_facts_typography.py \
+            .github/scripts/v0185_preapply_fix.py \
+            .github/scripts/v0185_postapply_fix.py \
+            .github/scripts/v0185_event_facts_typography_qa.py \
+            .github/scripts/v0185_semantic_qa.py
           find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
           find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           python3 .github/scripts/v0185_event_facts_typography_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
 
       - name: Regression QA
         run: |
@@ -86,22 +98,27 @@ jobs:
               'clean/hangar18-manager/src/Model/LayoutModel.php',
               'clean/hangar18-manager/src/Frontend/Renderer.php',
               'clean/hangar18-manager/src/Admin/EventAdminController.php',
-              'clean/hangar18-manager/assets/admin-v0178-events.js',
               'clean/hangar18-manager/src/Admin/EditorController.php',
+              'clean/hangar18-manager/src/Modules/ModuleRegistry.php',
+              'clean/hangar18-manager/assets/admin-v0178-events.js',
               'clean/hangar18-manager/assets/editor-v018-core.js',
               'clean/hangar18-manager/src/Migration/EventDetailFactsMigration.php',
               'clean/hangar18-manager/release-history.json',
               'clean-release-notes.html',
               'docs/v0185-status.md',
           }
+          required = {
+              'clean/hangar18-manager/src/Frontend/Renderer.php',
+              'clean/hangar18-manager/src/Modules/ModuleRegistry.php',
+          }
           lines = subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], text=True).splitlines()
           changed = {line[3:] for line in lines if len(line) >= 4}
           unexpected = sorted(changed - allowed)
           if unexpected:
               raise SystemExit('Unexpected v0.1.85 apply paths: ' + ', '.join(unexpected))
-          missing = sorted(allowed - changed)
+          missing = sorted(required - changed)
           if missing:
-              raise SystemExit('Expected v0.1.85 apply paths missing: ' + ', '.join(missing))
+              raise SystemExit('Expected v0.1.85 persistence fixes missing: ' + ', '.join(missing))
           PY
           grep -q 'Version: 0.1.85' clean/hangar18-manager/hangar18-manager.php
           grep -Fq "define('VDM_VERSION', '0.1.85');" clean/hangar18-manager/hangar18-manager.php
@@ -110,6 +127,8 @@ jobs:
           grep -Fq "Eventfaktabånd" clean/hangar18-manager/src/Admin/EditorController.php
           grep -Fq "name=\"address\"" clean/hangar18-manager/src/Admin/EventAdminController.php
           grep -Fq "name=\"contact\"" clean/hangar18-manager/src/Admin/EventAdminController.php
+          grep -Fq "'address' => ['label' => 'Adresse'" clean/hangar18-manager/src/Modules/ModuleRegistry.php
+          grep -Fq "'contact' => ['label' => 'Kontakt'" clean/hangar18-manager/src/Modules/ModuleRegistry.php
           test "$(python3 -c "import json; print(json.load(open('clean-update.json',encoding='utf-8'))['version'])")" = '0.1.84'
 
       - name: Commit verified v0.1.85 candidate to main
@@ -122,15 +141,16 @@ jobs:
             clean/hangar18-manager/src/Model/LayoutModel.php \
             clean/hangar18-manager/src/Frontend/Renderer.php \
             clean/hangar18-manager/src/Admin/EventAdminController.php \
-            clean/hangar18-manager/assets/admin-v0178-events.js \
             clean/hangar18-manager/src/Admin/EditorController.php \
+            clean/hangar18-manager/src/Modules/ModuleRegistry.php \
+            clean/hangar18-manager/assets/admin-v0178-events.js \
             clean/hangar18-manager/assets/editor-v018-core.js \
             clean/hangar18-manager/src/Migration/EventDetailFactsMigration.php \
             clean/hangar18-manager/release-history.json \
             clean-release-notes.html \
             docs/v0185-status.md
           git diff --cached --quiet && exit 0 || true
-          git commit -m 'Implement Visual Designer Manager v0.1.85 event facts and typography'
+          git commit -m 'Complete Visual Designer Manager v0.1.85 event persistence'
           for attempt in 1 2 3; do
             git fetch origin main
             git rebase origin/main
