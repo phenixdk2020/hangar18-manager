@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.84
+ * Version: 0.1.85
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,13 +15,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('VDM_VERSION', '0.1.84');
+define('VDM_VERSION', '0.1.85');
 define('VDM_FILE', __FILE__);
 define('VDM_DIR', plugin_dir_path(__FILE__));
 define('VDM_URL', plugin_dir_url(__FILE__));
 
 /* Deprecated compatibility aliases. New code must use VDM_* constants. */
-define('H18_CLEAN_VERSION', '0.1.84');
+define('H18_CLEAN_VERSION', '0.1.85');
 define('H18_CLEAN_FILE', VDM_FILE);
 define('H18_CLEAN_DIR', VDM_DIR);
 define('H18_CLEAN_URL', VDM_URL);
@@ -61,6 +61,7 @@ require_once H18_CLEAN_DIR . 'src/Migration/CanvasSectionMigration.php';
 require_once H18_CLEAN_DIR . 'src/Migration/SiteDesignHarmonizer.php';
 require_once H18_CLEAN_DIR . 'src/Migration/FormPageProvisioner.php';
 require_once H18_CLEAN_DIR . 'src/Migration/HybridModulePageMigration.php';
+require_once H18_CLEAN_DIR . 'src/Migration/EventDetailFactsMigration.php';
 require_once H18_CLEAN_DIR . 'src/Model/GlobalLayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Model/TemplateLayoutModel.php';
 require_once H18_CLEAN_DIR . 'src/Migration/LegacyHeaderConverter.php';
@@ -97,6 +98,7 @@ add_action('plugins_loaded', static function (): void {
     \VisualDesignerManager\Migration\SiteDesignHarmonizer::register();
     \VisualDesignerManager\Migration\FormPageProvisioner::register();
     \VisualDesignerManager\Migration\HybridModulePageMigration::register();
+    \VisualDesignerManager\Migration\EventDetailFactsMigration::register();
     \VisualDesignerManager\Migration\ConvertedButtonOverlayMigration::register();
     \VisualDesignerManager\Diagnostics\DiagnosticStore::register();
     \VisualDesignerManager\Admin\EditorController::register();

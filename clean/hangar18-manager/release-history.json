@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.85",
+      "date": "2026-09-02",
+      "items": [
+        "EVENT-FACTS-001: nyt Eventfaktabånd i Visual Designer med Dato, Tid, Sted, Adresse og Kontakt i responsive accentkort.",
+        "Events har nu kanoniske Adresse- og Kontaktfelter, som gemmes sammen med Start/Slut og Sted.",
+        "Eventfelt har justerbar overskrifts- og brødteksttypografi samt valgfri visning af overskrift ved tomt felt.",
+        "Den kendte v0.1.80 Eventdetalje migreres sikkert til faktabåndet med layoutbackup og ny Designer-version.",
+        "Eventfelter-admin bruger stabile rækkenøgler, så Aktiv/Påkrævet/På kort/På detalje virker korrekt allerede ved første gem af nye felter."
+      ]
+    },
+    {
       "version": "0.1.84",
       "date": "2026-09-02",
       "items": [

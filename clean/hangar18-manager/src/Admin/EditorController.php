@@ -226,7 +226,7 @@ final class EditorController
             ],
             'Moduler' => [
                 'vehiclelist' => 'Køretøjsliste', 'vehicledetail' => 'Køretøjsdetalje',
-                'eventlist' => 'Eventliste', 'eventvalue' => 'Eventværdi', 'eventimage' => 'Eventbillede',
+                'eventlist' => 'Eventliste', 'eventvalue' => 'Eventværdi', 'eventimage' => 'Eventbillede', 'eventfacts' => 'Eventfaktabånd',
                 'gallerylist' => 'Gallerioversigt', 'gallerydetail' => 'Albumvisning', 'eventfield' => 'Eventfelt',
             ],
             'Formularer' => [

@@ -673,6 +673,51 @@ final class Renderer
             return '<figure id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-event-image" style="' . esc_attr($imageStyle) . '"><img src="' . esc_url($url) . '" alt="' . esc_attr((string) ($record['title'] ?? '')) . '" style="display:block;width:100%;height:' . esc_attr((string) $height) . 'px;object-fit:' . esc_attr($fit) . ';object-position:' . esc_attr((string) $focalX) . '% ' . esc_attr((string) $focalY) . '%"></figure>';
         }
 
+        if ($type === 'eventfacts') {
+            $recordId = strtolower(trim((string) ($props['recordId'] ?? '')));
+            if ($recordId === '') { $recordId = strtolower(trim(sanitize_text_field((string) wp_unslash($_GET['h18_event'] ?? '')))); }
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            $found = $recordId !== '' ? ModuleStore::findByRecordId('events', $recordId) : null;
+            $record = is_array($found) && isset($found['record']) && is_array($found['record']) ? $found['record'] : null;
+            $allowDraft = self::$forceStandaloneCss && current_user_can('edit_pages');
+            if ($record === null || ((string) ($record['status'] ?? 'draft') !== 'publish' && !$allowDraft)) {
+                return self::$forceStandaloneCss ? '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '">Eventfaktabånd · vælg event eller brug ?h18_event=record-id</div>' : '';
+            }
+            $fields = isset($record['fields']) && is_array($record['fields']) ? $record['fields'] : [];
+            $facts = [];
+            if (!empty($props['showDate'])) { $facts[] = ['Dato', self::eventFactDateLabel((string) ($fields['start'] ?? ''), (string) ($fields['end'] ?? ''))]; }
+            if (!empty($props['showTime'])) { $facts[] = ['Tid', self::eventFactTimeLabel((string) ($fields['start'] ?? ''), (string) ($fields['end'] ?? ''))]; }
+            if (!empty($props['showLocation'])) { $facts[] = ['Sted', (string) ($fields['location'] ?? '')]; }
+            if (!empty($props['showAddress'])) { $facts[] = ['Adresse', (string) ($fields['address'] ?? '')]; }
+            if (!empty($props['showContact'])) { $facts[] = ['Kontakt', (string) ($fields['contact'] ?? '')]; }
+            if (!$facts) { return ''; }
+            $gap = max(0, min(80, (int) ($props['gap'] ?? 12)));
+            $minCardWidth = max(100, min(360, (int) ($props['minCardWidth'] ?? 150)));
+            $cardBackground = sanitize_hex_color((string) ($props['cardBackground'] ?? '#f4f1e8')) ?: '#f4f1e8';
+            $accentColor = sanitize_hex_color((string) ($props['accentColor'] ?? '#c3ae83')) ?: '#c3ae83';
+            $labelColor = sanitize_hex_color((string) ($props['labelColor'] ?? '#30382a')) ?: '#30382a';
+            $valueColor = sanitize_hex_color((string) ($props['valueColor'] ?? '#30382a')) ?: '#30382a';
+            $paddingX = max(0, min(80, (int) ($props['paddingX'] ?? 16)));
+            $paddingY = max(0, min(80, (int) ($props['paddingY'] ?? 16)));
+            $radius = max(0, min(60, (int) ($props['radius'] ?? 0)));
+            $labelSize = max(8, min(80, (int) ($props['labelFontSize'] ?? 16)));
+            $labelWeight = max(100, min(900, (int) ($props['labelFontWeight'] ?? 700)));
+            $valueSize = max(8, min(80, (int) ($props['valueFontSize'] ?? 16)));
+            $valueWeight = max(100, min(900, (int) ($props['valueFontWeight'] ?? 400)));
+            $lineHeight = max(0.8, min(3.0, (float) ($props['lineHeight'] ?? 1.35)));
+            $labelFamily = self::fontCss((string) ($props['labelFontFamily'] ?? 'system'));
+            $valueFamily = self::fontCss((string) ($props['valueFontFamily'] ?? 'system'));
+            $cards = '';
+            foreach ($facts as $fact) {
+                $cardStyle = 'min-width:0;background:' . $cardBackground . ';border-left:4px solid ' . $accentColor . ';border-radius:' . $radius . 'px;padding:' . $paddingY . 'px ' . $paddingX . 'px;';
+                $labelStyle = 'display:block;color:' . $labelColor . ';font-family:' . $labelFamily . ';font-size:' . $labelSize . 'px;font-weight:' . $labelWeight . ';line-height:' . $lineHeight . ';margin:0 0 4px;';
+                $valueStyle = 'display:block;color:' . $valueColor . ';font-family:' . $valueFamily . ';font-size:' . $valueSize . 'px;font-weight:' . $valueWeight . ';line-height:' . $lineHeight . ';overflow-wrap:anywhere;';
+                $cards .= '<div class="h18-clean-front-event-fact" style="' . esc_attr($cardStyle) . '"><strong style="' . esc_attr($labelStyle) . '">' . esc_html((string) $fact[0]) . '</strong><span style="' . esc_attr($valueStyle) . '">' . esc_html((string) $fact[1]) . '</span></div>';
+            }
+            $gridStyle = $style . $borderStyle . $spacingStyle . 'display:grid;grid-template-columns:repeat(auto-fit,minmax(' . $minCardWidth . 'px,1fr));gap:' . $gap . 'px;align-items:stretch;';
+            return '<div id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-event-facts" style="' . esc_attr($gridStyle) . '">' . $cards . '</div>';
+        }
+
         if ($type === 'eventfield') {
             $recordId=strtolower(trim((string)($props['recordId']??''))); if($recordId===''){$recordId=strtolower(trim(sanitize_text_field((string)wp_unslash($_GET['h18_event']??''))));}
             if($recordId!==''&&!preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/',$recordId)){$recordId='';}
@@ -680,10 +725,11 @@ final class Renderer
             if($record===null){$message=self::$forceStandaloneCss?'Eventfelt · vælg record via ?h18_event=record-id.':'';return '<div id="h18-clean-'.$id.'" class="h18-clean-front-node h18-clean-front-event-field" style="'.esc_attr($style.$borderStyle.$spacingStyle).'">'.esc_html($message).'</div>';}
             $attribute=null;foreach((array)($record['attributes']??[]) as $row){if(is_array($row)&&(string)($row['key']??'')===$fieldKey){$attribute=$row;break;}}
             $defs=EventFieldRegistry::byId();$def=$defs[$fieldKey]??null;if(!is_array($attribute)||empty($attribute['enabled'])||!is_array($def)||empty($def['enabled'])){return '';}
-            $value=$attribute['value']??'';if(is_bool($value)){$empty=!$value;}else{$empty=trim((string)$value)==='';}if($empty){return '';}
-            $label=(string)($def['label']??($attribute['label']??$fieldKey));$type=(string)($def['type']??($attribute['type']??'text'));$content=$type==='richtext'?wp_kses_post((string)$value):($type==='boolean'?($value?'Ja':'Nej'):nl2br(esc_html((string)$value)));
-            $heading=!empty($props['showHeading'])?'<h3 class="h18-clean-front-event-field-heading">'.esc_html($label).'</h3>':'';$bg=sanitize_hex_color((string)($props['background']??''))?:'';$color=sanitize_hex_color((string)($props['textColor']??'#30382a'))?:'#30382a';$padding=max(0,min(80,(int)($props['padding']??0)));$radius=max(0,min(60,(int)($props['radius']??0)));$extra=($bg!==''?'background:'.$bg.';':'').'color:'.$color.';padding:'.$padding.'px;border-radius:'.$radius.'px;';
-            return '<section id="h18-clean-'.$id.'" class="h18-clean-front-node h18-clean-front-event-field" style="'.esc_attr($style.$borderStyle.$spacingStyle.$extra).'">'.$heading.'<div class="h18-clean-front-event-field-value">'.$content.'</div></section>';
+            $value=$attribute['value']??'';if(is_bool($value)){$empty=!$value;}else{$empty=trim((string)$value)==='';}if($empty&&empty($props['showWhenEmpty'])){return '';}
+            $label=(string)($def['label']??($attribute['label']??$fieldKey));$type=(string)($def['type']??($attribute['type']??'text'));$content=$empty?'':($type==='richtext'?wp_kses_post((string)$value):($type==='boolean'?($value?'Ja':'Nej'):nl2br(esc_html((string)$value))));
+            $bg=sanitize_hex_color((string)($props['background']??''))?:'';$color=sanitize_hex_color((string)($props['textColor']??'#30382a'))?:'#30382a';$headingColor=sanitize_hex_color((string)($props['headingColor']??'#30382a'))?:'#30382a';$padding=max(0,min(80,(int)($props['padding']??0)));$radius=max(0,min(60,(int)($props['radius']??0)));$fontSize=max(8,min(120,(int)($props['fontSize']??16)));$fontWeight=max(100,min(900,(int)($props['fontWeight']??400)));$lineHeight=max(0.8,min(3.0,(float)($props['lineHeight']??1.5)));$headingSize=max(8,min(160,(int)($props['headingFontSize']??40)));$headingWeight=max(100,min(900,(int)($props['headingFontWeight']??400)));$headingLineHeight=max(0.8,min(3.0,(float)($props['headingLineHeight']??1.15)));$headingGap=max(0,min(80,(int)($props['headingGap']??12)));$extra=($bg!==''?'background:'.$bg.';':'').'color:'.$color.';font-family:'.self::fontCss((string)($props['fontFamily']??'system')).';font-size:'.$fontSize.'px;font-weight:'.$fontWeight.';line-height:'.$lineHeight.';padding:'.$padding.'px;border-radius:'.$radius.'px;';
+            $headingStyle='margin:0 0 '.$headingGap.'px;color:'.$headingColor.';font-family:'.self::fontCss((string)($props['headingFontFamily']??'body')).';font-size:'.$headingSize.'px;font-weight:'.$headingWeight.';line-height:'.$headingLineHeight.';';$heading=!empty($props['showHeading'])?'<h3 class="h18-clean-front-event-field-heading" style="'.esc_attr($headingStyle).'">'.esc_html($label).'</h3>':'';$valueHtml=$content!==''?'<div class="h18-clean-front-event-field-value">'.$content.'</div>':'';
+            return '<section id="h18-clean-'.$id.'" class="h18-clean-front-node h18-clean-front-event-field" style="'.esc_attr($style.$borderStyle.$spacingStyle.$extra).'">'.$heading.$valueHtml.'</section>';
         }
         if ($type === 'gallerylist') {
             $binding=isset($props['binding'])&&is_array($props['binding'])?$props['binding']:[];$query=isset($binding['query'])&&is_array($binding['query'])?$binding['query']:[];$query['status']='publish';$query['limit']=max(1,min(100,(int)($props['limit']??($query['limit']??50))));$query['orderBy']=in_array((string)($props['orderBy']??($query['orderBy']??'sortOrder')),['sortOrder','title','updatedAt'],true)?(string)($props['orderBy']??($query['orderBy']??'sortOrder')):'sortOrder';$query['order']=strtoupper((string)($props['order']??($query['order']??'ASC')))==='DESC'?'DESC':'ASC';
@@ -753,6 +799,29 @@ final class Renderer
         }
         $boxStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . 'background:' . $background . ';padding:' . $padding . 'px;';
         return '<section id="h18-clean-' . $id . '" class="h18-clean-front-node ' . esc_attr($classes) . '" style="' . esc_attr($boxStyle) . '">' . self::children((string) $node['id'], $byParent, $byId) . '</section>';
+    }
+
+    private static function eventFactDateLabel(string $start, string $end = ''): string
+    {
+        $render = static function (string $value): string {
+            $value = trim($value);
+            if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}/', $value, $m) !== 1) { return ''; }
+            return $m[3] . '-' . $m[2] . '-' . $m[1];
+        };
+        $startLabel = $render($start); $endLabel = $render($end);
+        if ($startLabel === '') { return $endLabel; }
+        return $endLabel !== '' && $endLabel !== $startLabel ? ($startLabel . ' – ' . $endLabel) : $startLabel;
+    }
+
+    private static function eventFactTimeLabel(string $start, string $end = ''): string
+    {
+        $render = static function (string $value): string {
+            $value = trim($value);
+            return preg_match('/^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2})/', $value, $m) === 1 ? $m[1] : '';
+        };
+        $startLabel = $render($start); $endLabel = $render($end);
+        if ($startLabel === '') { return $endLabel; }
+        return $endLabel !== '' ? ($startLabel . ' – ' . $endLabel) : $startLabel;
     }
 
     private static function eventDateLabel(string $start, string $end = ''): string

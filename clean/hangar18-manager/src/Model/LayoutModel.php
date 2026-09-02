@@ -61,7 +61,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'eventvalue', 'eventimage', 'gallerylist', 'gallerydetail', 'eventfield', 'contactform', 'membershipform'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'eventvalue', 'eventimage', 'eventfacts', 'gallerylist', 'gallerydetail', 'eventfield', 'contactform', 'membershipform'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -524,6 +524,35 @@ final class LayoutModel
             ], $border);
         }
 
+        if ($type === 'eventfacts') {
+            $recordId = strtolower(trim((string) ($raw['recordId'] ?? '')));
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            return array_merge([
+                'recordId' => $recordId,
+                'showDate' => array_key_exists('showDate', $raw) ? (bool) $raw['showDate'] : true,
+                'showTime' => array_key_exists('showTime', $raw) ? (bool) $raw['showTime'] : true,
+                'showLocation' => array_key_exists('showLocation', $raw) ? (bool) $raw['showLocation'] : true,
+                'showAddress' => array_key_exists('showAddress', $raw) ? (bool) $raw['showAddress'] : true,
+                'showContact' => array_key_exists('showContact', $raw) ? (bool) $raw['showContact'] : true,
+                'gap' => self::clamp($raw['gap'] ?? 12, 0, 80, 12),
+                'minCardWidth' => self::clamp($raw['minCardWidth'] ?? 150, 100, 360, 150),
+                'cardBackground' => sanitize_hex_color((string) ($raw['cardBackground'] ?? '#f4f1e8')) ?: '#f4f1e8',
+                'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83',
+                'labelColor' => sanitize_hex_color((string) ($raw['labelColor'] ?? '#30382a')) ?: '#30382a',
+                'valueColor' => sanitize_hex_color((string) ($raw['valueColor'] ?? '#30382a')) ?: '#30382a',
+                'paddingX' => self::clamp($raw['paddingX'] ?? 16, 0, 80, 16),
+                'paddingY' => self::clamp($raw['paddingY'] ?? 16, 0, 80, 16),
+                'radius' => self::clamp($raw['radius'] ?? 0, 0, 60, 0),
+                'labelFontFamily' => self::fontToken($raw['labelFontFamily'] ?? 'system', false),
+                'labelFontSize' => self::clamp($raw['labelFontSize'] ?? 16, 8, 80, 16),
+                'labelFontWeight' => self::clamp($raw['labelFontWeight'] ?? 700, 100, 900, 700),
+                'valueFontFamily' => self::fontToken($raw['valueFontFamily'] ?? 'system', false),
+                'valueFontSize' => self::clamp($raw['valueFontSize'] ?? 16, 8, 80, 16),
+                'valueFontWeight' => self::clamp($raw['valueFontWeight'] ?? 400, 100, 900, 400),
+                'lineHeight' => self::clampFloat($raw['lineHeight'] ?? 1.35, 0.8, 3.0, 1.35),
+            ], $border);
+        }
+
         if ($type === 'eventfield') {
             $fieldKey = sanitize_key((string) ($raw['fieldKey'] ?? 'about'));
             $recordId = strtolower(trim((string) ($raw['recordId'] ?? '')));
@@ -532,8 +561,19 @@ final class LayoutModel
                 'fieldKey' => $fieldKey !== '' ? $fieldKey : 'about',
                 'recordId' => $recordId,
                 'showHeading' => array_key_exists('showHeading', $raw) ? (bool) $raw['showHeading'] : true,
+                'showWhenEmpty' => array_key_exists('showWhenEmpty', $raw) ? (bool) $raw['showWhenEmpty'] : false,
                 'background' => sanitize_hex_color((string) ($raw['background'] ?? '')) ?: '',
                 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a',
+                'fontFamily' => self::fontToken($raw['fontFamily'] ?? 'system', false),
+                'fontSize' => self::clamp($raw['fontSize'] ?? 16, 8, 120, 16),
+                'fontWeight' => self::clamp($raw['fontWeight'] ?? 400, 100, 900, 400),
+                'lineHeight' => self::clampFloat($raw['lineHeight'] ?? 1.5, 0.8, 3.0, 1.5),
+                'headingColor' => sanitize_hex_color((string) ($raw['headingColor'] ?? '#30382a')) ?: '#30382a',
+                'headingFontFamily' => self::fontToken($raw['headingFontFamily'] ?? 'body', true),
+                'headingFontSize' => self::clamp($raw['headingFontSize'] ?? 40, 8, 160, 40),
+                'headingFontWeight' => self::clamp($raw['headingFontWeight'] ?? 400, 100, 900, 400),
+                'headingLineHeight' => self::clampFloat($raw['headingLineHeight'] ?? 1.15, 0.8, 3.0, 1.15),
+                'headingGap' => self::clamp($raw['headingGap'] ?? 12, 0, 80, 12),
                 'padding' => self::clamp($raw['padding'] ?? 0, 0, 80, 0),
                 'radius' => self::clamp($raw['radius'] ?? 0, 0, 60, 0),
             ], $border);
