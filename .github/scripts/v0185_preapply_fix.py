@@ -17,4 +17,11 @@ if old in s:
 elif new not in s:
     raise SystemExit('v0.1.85 inspector anchor definition not found')
 
+old = 'if "eventFieldRow($row,$index)" not in event_admin:'
+new = 'if "data-event-field-index" not in event_admin:'
+if old in s:
+    s = s.replace(old, new, 1)
+elif new not in s:
+    raise SystemExit('v0.1.85 EventField idempotence guard not found')
+
 path.write_text(s, encoding='utf-8')
