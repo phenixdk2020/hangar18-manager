@@ -70,8 +70,14 @@ require('clean/hangar18-manager/src/Model/LayoutModel.php',
         "'module' => 'events'",
         "'view' => 'list'", "'view' => 'detail'",
         "'dateFilter'", "['all', 'upcoming', 'past']")
-require('clean/hangar18-manager/src/Admin/EditorController.php',
-        "'eventlist' => 'Eventliste'", "'eventdetail' => 'Eventdetalje'")
+if current < (0, 1, 80):
+    require('clean/hangar18-manager/src/Admin/EditorController.php',
+            "'eventlist' => 'Eventliste'", "'eventdetail' => 'Eventdetalje'")
+else:
+    # v0.1.80 keeps eventdetail canonical/runtime compatibility but replaces the
+    # old all-in-one palette entry with composable Eventværdi/Eventbillede pieces.
+    require('clean/hangar18-manager/src/Admin/EditorController.php',
+            "'eventlist' => 'Eventliste'", "'eventvalue' => 'Eventværdi'", "'eventimage' => 'Eventbillede'")
 require('clean/hangar18-manager/assets/editor-v018-core.js',
         "'eventlist'", "'eventdetail'", 'Eventliste', 'Eventdetalje',
         'eventRecords()', 'eventRecordById', 'eventDateLabel', 'eventDateFilter',

@@ -42,6 +42,24 @@ def insert_before(rel: str, anchor: str, payload: str, marker: str) -> None:
     write(rel, value.replace(anchor, payload + anchor, 1))
 
 
+def insert_before_nth(rel: str, anchor: str, payload: str, marker: str, occurrence: int) -> None:
+    value = read(rel)
+    if marker in value:
+        return
+    positions = []
+    start = 0
+    while True:
+        pos = value.find(anchor, start)
+        if pos < 0:
+            break
+        positions.append(pos)
+        start = pos + len(anchor)
+    if occurrence < 1 or occurrence > len(positions):
+        raise SystemExit(f'{rel}: insertion anchor occurrence {occurrence} missing; found {len(positions)}: {anchor[:180]!r}')
+    pos = positions[occurrence - 1]
+    write(rel, value[:pos] + payload + value[pos:])
+
+
 # Runtime version.
 replace_once('clean/hangar18-manager/hangar18-manager.php', ' * Version: 0.1.79', ' * Version: 0.1.80')
 replace_once('clean/hangar18-manager/hangar18-manager.php', "define('H18_CLEAN_VERSION', '0.1.79');", "define('H18_CLEAN_VERSION', '0.1.80');")
@@ -366,7 +384,7 @@ EVENT_JS_PREVIEW = r'''        } else if (node.type === 'eventvalue') {
             wrap.classList.add('h18-clean-node-preview--eventimage'); const record=eventRecordById(node.props.recordId)||eventRecords().find(function(item){return String(item.status||'')==='publish';})||null; if(!record||!record.featuredUrl){wrap.textContent='Eventbillede · eventet har intet billede';}else{const img=document.createElement('img');img.src=String(record.featuredUrl);img.alt=String(record.title||'');img.style.display='block';img.style.width='100%';img.style.height=String(node.props.imageHeight||360)+'px';img.style.objectFit=node.props.fit==='contain'?'contain':'cover';img.style.objectPosition=String(node.props.focalX||50)+'% '+String(node.props.focalY||50)+'%';img.style.background=node.props.background||'#ffffff';img.style.borderRadius=String(node.props.radius||4)+'px';wrap.appendChild(img);}
 
 '''
-insert_before(p, "        } else if (node.type === 'eventfield') {", EVENT_JS_PREVIEW, "node.type === 'eventvalue'")
+insert_before_nth(p, "        } else if (node.type === 'eventfield') {", EVENT_JS_PREVIEW, "node.type === 'eventvalue'", 1)
 
 # Inspector heading map and H1 option.
 replace_once(
@@ -387,7 +405,7 @@ EVENT_JS_INSPECTOR = r'''        } else if (node.type === 'eventvalue') {
             html += '<div class="h18-vd-menu-group"><h3>Eventbillede</h3><label>Preview-event<select data-field="eventRecordId"><option value="">Fra URL / første publicerede</option>'+eventRecords().map(function(record){return '<option value="'+escapeAttr(String(record.id||''))+'"'+(String(node.props.recordId||'')===String(record.id||'')?' selected':'')+'>'+escapeHtml(String(record.title||record.id||'Event'))+'</option>';}).join('')+'</select></label><div class="h18-clean-field-grid"><label>Højde px<input data-field="eventDynamicImageHeight" type="number" min="80" max="1000" value="'+String(node.props.imageHeight||360)+'"></label><label>Tilpasning<select data-field="eventDynamicImageFit"><option value="cover"'+(node.props.fit!=='contain'?' selected':'')+'>Fyld / beskær</option><option value="contain"'+(node.props.fit==='contain'?' selected':'')+'>Vis hele billedet</option></select></label><label>Fokus X %<input data-field="eventDynamicImageFocalX" type="number" min="0" max="100" value="'+String(node.props.focalX||50)+'"></label><label>Fokus Y %<input data-field="eventDynamicImageFocalY" type="number" min="0" max="100" value="'+String(node.props.focalY||50)+'"></label><label>Hjørner<input data-field="radius" type="number" min="0" max="100" value="'+String(node.props.radius||4)+'"></label><label>Baggrund<input data-field="background" type="color" value="'+escapeAttr(node.props.background||'#ffffff')+'"></label></div><p class="description">Viser eventets primære billede. Elementet kan flyttes eller slettes frit.</p></div>';
 
 '''
-insert_before(p, "        } else if (node.type === 'eventfield') {", EVENT_JS_INSPECTOR, "<h3>Eventværdi</h3>")
+insert_before_nth(p, "        } else if (node.type === 'eventfield') {", EVENT_JS_INSPECTOR, "<h3>Eventværdi</h3>", 2)
 
 # Inspector handlers for the new event nodes.
 replace_once(

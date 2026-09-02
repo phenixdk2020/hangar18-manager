@@ -61,7 +61,7 @@ final class LayoutModel
                 throw new \RuntimeException('Element-ID mangler eller er dubleret.');
             }
             $type = sanitize_key((string) ($nodeRaw['type'] ?? 'text'));
-            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'gallerylist', 'gallerydetail', 'eventfield', 'contactform', 'membershipform'], true)) {
+            if (!in_array($type, ['section', 'container', 'text', 'image', 'button', 'menu', 'spacer', 'divider', 'icon', 'badge', 'link', 'datalist', 'table', 'vehiclelist', 'vehicledetail', 'eventlist', 'eventdetail', 'eventvalue', 'eventimage', 'gallerylist', 'gallerydetail', 'eventfield', 'contactform', 'membershipform'], true)) {
                 throw new \RuntimeException('Ukendt elementtype: ' . $type);
             }
             $nodes[$id] = [
@@ -213,7 +213,7 @@ final class LayoutModel
         $border = self::borderProps($raw);
         if ($type === 'text') {
             $headingLevel = strtolower((string) ($raw['headingLevel'] ?? 'h2'));
-            if (!in_array($headingLevel, ['h2', 'h3', 'h4', 'h5', 'h6'], true)) {
+            if (!in_array($headingLevel, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true)) {
                 $headingLevel = 'h2';
             }
             $align = strtolower((string) ($raw['align'] ?? 'left'));
@@ -482,6 +482,46 @@ final class LayoutModel
             $recordId = strtolower(trim((string) ($raw['recordId'] ?? ''))); if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
             $binding = ModuleBinding::normalize(['mode' => 'module', 'module' => 'events', 'view' => 'detail', 'recordId' => $recordId]);
             return array_merge(['binding' => $binding, 'recordId' => $recordId, 'showImage' => array_key_exists('showImage', $raw) ? (bool) $raw['showImage'] : true, 'showDate' => array_key_exists('showDate', $raw) ? (bool) $raw['showDate'] : true, 'showLocation' => array_key_exists('showLocation', $raw) ? (bool) $raw['showLocation'] : true, 'showSummary' => array_key_exists('showSummary', $raw) ? (bool) $raw['showSummary'] : true, 'showDescription' => array_key_exists('showDescription', $raw) ? (bool) $raw['showDescription'] : true, 'imageHeight' => self::clamp($raw['imageHeight'] ?? 360, 80, 900, 360), 'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff', 'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a', 'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#c3ae83')) ?: '#c3ae83', 'padding' => self::clamp($raw['padding'] ?? 16, 0, 80, 16), 'radius' => self::clamp($raw['radius'] ?? 4, 0, 60, 4)], $border);
+        }
+
+        if ($type === 'eventvalue') {
+            $valueKey = strtolower((string) ($raw['valueKey'] ?? 'title'));
+            if (!in_array($valueKey, ['title','date','location','summary','description'], true)) { $valueKey = 'title'; }
+            $recordId = strtolower(trim((string) ($raw['recordId'] ?? '')));
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            $tag = strtolower((string) ($raw['tag'] ?? ($valueKey === 'title' ? 'h1' : ($valueKey === 'description' ? 'div' : 'p'))));
+            if (!in_array($tag, ['div','p','h1','h2','h3','h4','h5','h6'], true)) { $tag = 'div'; }
+            return array_merge([
+                'valueKey' => $valueKey,
+                'recordId' => $recordId,
+                'tag' => $tag,
+                'align' => in_array((string) ($raw['align'] ?? 'left'), ['left','center','right'], true) ? (string) $raw['align'] : 'left',
+                'fontFamily' => self::fontToken($raw['fontFamily'] ?? 'system', false),
+                'fontSize' => self::clamp($raw['fontSize'] ?? ($valueKey === 'title' ? 44 : 16), 8, 160, $valueKey === 'title' ? 44 : 16),
+                'fontWeight' => self::clamp($raw['fontWeight'] ?? ($valueKey === 'title' || $valueKey === 'summary' ? 700 : 400), 100, 900, $valueKey === 'title' || $valueKey === 'summary' ? 700 : 400),
+                'lineHeight' => self::clampFloat($raw['lineHeight'] ?? ($valueKey === 'title' ? 1.1 : 1.5), 0.8, 3.0, $valueKey === 'title' ? 1.1 : 1.5),
+                'letterSpacing' => self::clampFloat($raw['letterSpacing'] ?? 0, -10.0, 30.0, 0.0),
+                'textColor' => sanitize_hex_color((string) ($raw['textColor'] ?? '#30382a')) ?: '#30382a',
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
+                'backgroundTransparent' => array_key_exists('backgroundTransparent', $raw) ? (bool) $raw['backgroundTransparent'] : true,
+                'padding' => self::clamp($raw['padding'] ?? 0, 0, 120, 0),
+                'radius' => self::clamp($raw['radius'] ?? 0, 0, 100, 0),
+            ], $border);
+        }
+        if ($type === 'eventimage') {
+            $recordId = strtolower(trim((string) ($raw['recordId'] ?? '')));
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            $fit = strtolower((string) ($raw['fit'] ?? 'cover'));
+            if (!in_array($fit, ['cover','contain'], true)) { $fit = 'cover'; }
+            return array_merge([
+                'recordId' => $recordId,
+                'fit' => $fit,
+                'imageHeight' => self::clamp($raw['imageHeight'] ?? 360, 80, 1000, 360),
+                'focalX' => self::clamp($raw['focalX'] ?? 50, 0, 100, 50),
+                'focalY' => self::clamp($raw['focalY'] ?? 50, 0, 100, 50),
+                'background' => sanitize_hex_color((string) ($raw['background'] ?? '#ffffff')) ?: '#ffffff',
+                'radius' => self::clamp($raw['radius'] ?? 4, 0, 100, 4),
+            ], $border);
         }
 
         if ($type === 'eventfield') {

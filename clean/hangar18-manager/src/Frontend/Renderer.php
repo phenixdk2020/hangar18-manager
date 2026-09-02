@@ -263,7 +263,7 @@ final class Renderer
 
         if ($type === 'text') {
             $heading = trim((string) ($props['heading'] ?? ''));
-            $headingLevel = in_array((string) ($props['headingLevel'] ?? 'h2'), ['h2', 'h3', 'h4', 'h5', 'h6'], true) ? (string) $props['headingLevel'] : 'h2';
+            $headingLevel = in_array((string) ($props['headingLevel'] ?? 'h2'), ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true) ? (string) $props['headingLevel'] : 'h2';
             $headingColor = sanitize_hex_color((string) ($props['headingColor'] ?? '#000000')) ?: '#000000';
             $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#000000')) ?: '#000000';
             $verticalAlign = in_array((string) ($props['verticalAlign'] ?? 'top'), ['top', 'center', 'bottom'], true) ? (string) $props['verticalAlign'] : 'top';
@@ -280,7 +280,7 @@ final class Renderer
             $lineHeight = max(0.8, min(3.0, (float) ($props['lineHeight'] ?? 1.5)));
             $letterSpacing = max(-10.0, min(30.0, (float) ($props['letterSpacing'] ?? 0)));
             $headingSize = max(0, min(160, (int) ($props['headingFontSize'] ?? 0)));
-            if ($headingSize === 0) { $headingSize = ['h2' => 32, 'h3' => 28, 'h4' => 24, 'h5' => 20, 'h6' => 18][$headingLevel] ?? 32; }
+            if ($headingSize === 0) { $headingSize = ['h1' => 44, 'h2' => 32, 'h3' => 28, 'h4' => 24, 'h5' => 20, 'h6' => 18][$headingLevel] ?? 32; }
             $headingWeight = max(100, min(900, (int) ($props['headingFontWeight'] ?? 700)));
             $headingLineHeight = max(0.8, min(3.0, (float) ($props['headingLineHeight'] ?? 1.2)));
             $headingLetterSpacing = max(-10.0, min(30.0, (float) ($props['headingLetterSpacing'] ?? 0)));
@@ -611,6 +611,66 @@ final class Renderer
         if ($type === 'eventdetail') {
             $recordId=strtolower(trim((string)($props['recordId']??'')));if($recordId===''){$recordId=strtolower(trim(sanitize_text_field((string)wp_unslash($_GET['h18_event']??''))));}if($recordId!==''&&!preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/',$recordId)){$recordId='';}if($recordId===''){$message=self::$forceStandaloneCss?'Vælg et event i Inspector eller brug ?h18_event=record-id.':'Vælg et event fra oversigten.';return '<div id="h18-clean-'.$id.'" class="h18-clean-front-node h18-clean-front-event-detail" style="'.esc_attr($style.$borderStyle.$spacingStyle).'"><p>'.esc_html($message).'</p></div>';}
             $found=ModuleStore::findByRecordId('events',$recordId);$record=is_array($found)&&isset($found['record'])&&is_array($found['record'])?$found['record']:null;$allowDraft=self::$forceStandaloneCss&&current_user_can('edit_pages');if($record===null||((string)($record['status']??'draft')!=='publish'&&!$allowDraft)){return '<div id="h18-clean-'.$id.'" class="h18-clean-front-node h18-clean-front-event-detail" style="'.esc_attr($style.$borderStyle.$spacingStyle).'"><p>Eventet findes ikke eller er ikke publiceret.</p></div>';}$fields=isset($record['fields'])&&is_array($record['fields'])?$record['fields']:[];$background=sanitize_hex_color((string)($props['background']??'#ffffff'))?:'#ffffff';$textColor=sanitize_hex_color((string)($props['textColor']??'#30382a'))?:'#30382a';$accent=sanitize_hex_color((string)($props['accentColor']??'#c3ae83'))?:'#c3ae83';$padding=max(0,min(80,(int)($props['padding']??16)));$imageHeight=max(80,min(900,(int)($props['imageHeight']??360)));$featuredId=absint($record['featuredMediaId']??0);$hero='';if(!empty($props['showImage'])&&$featuredId>0){$url=wp_get_attachment_image_url($featuredId,'large');if(is_string($url)&&$url!==''){$hero='<img class="h18-clean-front-event-hero" src="'.esc_url($url).'" alt="'.esc_attr((string)($record['title']??'')).'" style="height:'.esc_attr((string)$imageHeight).'px">';}}$meta='';if(!empty($props['showDate'])){$dateLabel=self::eventDateLabel((string)($fields['start']??''),(string)($fields['end']??''));if($dateLabel!==''){$meta.='<span style="color:'.esc_attr($accent).'">'.esc_html($dateLabel).'</span>';}}if(!empty($props['showLocation'])&&trim((string)($fields['location']??''))!==''){$meta.='<span>'.esc_html((string)$fields['location']).'</span>';}$meta=$meta!==''?'<div class="h18-clean-front-event-meta">'.$meta.'</div>':'';$summary=!empty($props['showSummary'])&&trim((string)($record['summary']??''))!==''?'<p><strong>'.esc_html((string)$record['summary']).'</strong></p>':'';$description=!empty($props['showDescription'])&&trim((string)($fields['description']??''))!==''?'<div class="h18-clean-front-event-description">'.wp_kses_post((string)$fields['description']).'</div>':'';$custom='';$defs=EventFieldRegistry::byId();foreach((array)($record['attributes']??[]) as $attribute){if(!is_array($attribute)||empty($attribute['enabled'])){continue;}$key=(string)($attribute['key']??'');$def=$defs[$key]??null;if(!is_array($def)||empty($def['enabled'])||empty($def['showDetail'])){continue;}$value=$attribute['value']??'';$empty=is_bool($value)?!$value:trim((string)$value)==='';if($empty){continue;}$label=(string)($def['label']??($attribute['label']??$key));$atype=(string)($def['type']??($attribute['type']??'text'));$rendered=$atype==='richtext'?wp_kses_post((string)$value):($atype==='boolean'?($value?'Ja':'Nej'):nl2br(esc_html((string)$value)));$custom.='<section class="h18-clean-front-event-custom"><h3>'.esc_html($label).'</h3><div>'.$rendered.'</div></section>';}$detailStyle=$style.$borderStyle.$spacingStyle.$radiusStyle.'background:'.$background.';color:'.$textColor.';padding:'.$padding.'px;';return '<article id="h18-clean-'.$id.'" class="h18-clean-front-node h18-clean-front-event-detail" style="'.esc_attr($detailStyle).'">'.$hero.'<h2>'.esc_html((string)($record['title']??'Event')).'</h2>'.$meta.$summary.$description.'</article>';
+        }
+
+        if ($type === 'eventvalue') {
+            $recordId = strtolower(trim((string) ($props['recordId'] ?? '')));
+            if ($recordId === '') { $recordId = strtolower(trim(sanitize_text_field((string) wp_unslash($_GET['h18_event'] ?? '')))); }
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            $found = $recordId !== '' ? ModuleStore::findByRecordId('events', $recordId) : null;
+            $record = is_array($found) && isset($found['record']) && is_array($found['record']) ? $found['record'] : null;
+            $allowDraft = self::$forceStandaloneCss && current_user_can('edit_pages');
+            $valueKey = (string) ($props['valueKey'] ?? 'title');
+            $placeholder = ['title'=>'Eventtitel','date'=>'Dato / tid','location'=>'Sted','summary'=>'Kort beskrivelse','description'=>'Beskrivelse'][$valueKey] ?? 'Eventværdi';
+            if ($record === null || ((string) ($record['status'] ?? 'draft') !== 'publish' && !$allowDraft)) {
+                if (!self::$forceStandaloneCss) { return ''; }
+                $value = $placeholder;
+                $rich = false;
+            } else {
+                $fields = isset($record['fields']) && is_array($record['fields']) ? $record['fields'] : [];
+                $rich = false;
+                if ($valueKey === 'date') { $value = self::eventDateLabel((string) ($fields['start'] ?? ''), (string) ($fields['end'] ?? '')); }
+                elseif ($valueKey === 'location') { $value = trim((string) ($fields['location'] ?? '')); }
+                elseif ($valueKey === 'summary') { $value = trim((string) ($record['summary'] ?? '')); }
+                elseif ($valueKey === 'description') { $value = trim((string) ($fields['description'] ?? '')); $rich = true; }
+                else { $value = trim((string) ($record['title'] ?? '')); }
+                if ($value === '') {
+                    if (!self::$forceStandaloneCss) { return ''; }
+                    $value = $placeholder;
+                    $rich = false;
+                }
+            }
+            $tag = in_array((string) ($props['tag'] ?? 'div'), ['div','p','h1','h2','h3','h4','h5','h6'], true) ? (string) $props['tag'] : 'div';
+            $fontSize = max(8, min(160, (int) ($props['fontSize'] ?? 16)));
+            $fontWeight = max(100, min(900, (int) ($props['fontWeight'] ?? 400)));
+            $lineHeight = max(0.8, min(3.0, (float) ($props['lineHeight'] ?? 1.5)));
+            $letterSpacing = max(-10.0, min(30.0, (float) ($props['letterSpacing'] ?? 0)));
+            $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#30382a')) ?: '#30382a';
+            $background = !empty($props['backgroundTransparent']) ? 'transparent' : (sanitize_hex_color((string) ($props['background'] ?? '#ffffff')) ?: '#ffffff');
+            $padding = max(0, min(120, (int) ($props['padding'] ?? 0)));
+            $valueStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . 'background:' . $background . ';color:' . $textColor . ';padding:' . $padding . 'px;text-align:' . (in_array((string) ($props['align'] ?? 'left'), ['left','center','right'], true) ? (string) $props['align'] : 'left') . ';font-family:' . self::fontCss((string) ($props['fontFamily'] ?? 'system')) . ';font-size:' . $fontSize . 'px;font-weight:' . $fontWeight . ';line-height:' . $lineHeight . ';letter-spacing:' . $letterSpacing . 'px;';
+            $content = $rich ? wp_kses_post((string) $value) : esc_html((string) $value);
+            return '<' . $tag . ' id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-event-value h18-clean-front-event-value--' . esc_attr($valueKey) . '" style="' . esc_attr($valueStyle) . '">' . $content . '</' . $tag . '>';
+        }
+        if ($type === 'eventimage') {
+            $recordId = strtolower(trim((string) ($props['recordId'] ?? '')));
+            if ($recordId === '') { $recordId = strtolower(trim(sanitize_text_field((string) wp_unslash($_GET['h18_event'] ?? '')))); }
+            if ($recordId !== '' && !preg_match('/^[a-z0-9][a-z0-9._:-]{0,127}$/', $recordId)) { $recordId = ''; }
+            $found = $recordId !== '' ? ModuleStore::findByRecordId('events', $recordId) : null;
+            $record = is_array($found) && isset($found['record']) && is_array($found['record']) ? $found['record'] : null;
+            $allowDraft = self::$forceStandaloneCss && current_user_can('edit_pages');
+            if ($record === null || ((string) ($record['status'] ?? 'draft') !== 'publish' && !$allowDraft)) {
+                return self::$forceStandaloneCss ? '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '">Eventbillede · vælg event eller brug ?h18_event=record-id</div>' : '';
+            }
+            $featuredId = absint($record['featuredMediaId'] ?? 0);
+            $url = $featuredId > 0 ? wp_get_attachment_image_url($featuredId, 'large') : false;
+            if (!is_string($url) || $url === '') { return self::$forceStandaloneCss ? '<div id="h18-clean-' . $id . '" class="h18-clean-front-node" style="' . esc_attr($style . $borderStyle . $spacingStyle) . '">Eventet har intet billede</div>' : ''; }
+            $height = max(80, min(1000, (int) ($props['imageHeight'] ?? 360)));
+            $fit = (string) ($props['fit'] ?? 'cover') === 'contain' ? 'contain' : 'cover';
+            $focalX = max(0, min(100, (int) ($props['focalX'] ?? 50))); $focalY = max(0, min(100, (int) ($props['focalY'] ?? 50)));
+            $background = sanitize_hex_color((string) ($props['background'] ?? '#ffffff')) ?: '#ffffff';
+            $imageStyle = $style . $borderStyle . $spacingStyle . $radiusStyle . 'background:' . $background . ';overflow:hidden;';
+            return '<figure id="h18-clean-' . $id . '" class="h18-clean-front-node h18-clean-front-event-image" style="' . esc_attr($imageStyle) . '"><img src="' . esc_url($url) . '" alt="' . esc_attr((string) ($record['title'] ?? '')) . '" style="display:block;width:100%;height:' . esc_attr((string) $height) . 'px;object-fit:' . esc_attr($fit) . ';object-position:' . esc_attr((string) $focalX) . '% ' . esc_attr((string) $focalY) . '%"></figure>';
         }
 
         if ($type === 'eventfield') {

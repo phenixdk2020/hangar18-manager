@@ -35,7 +35,7 @@ legacy_v0178_qa = text('.github/scripts/v0178_hybrid_event_fields_qa.py')
 
 header = re.search(r'\* Version:\s*([0-9.]+)', plugin)
 const = re.search(r"H18_CLEAN_VERSION',\s*'([0-9.]+)'", plugin)
-req(header is not None and const is not None and header.group(1) == const.group(1) == '0.1.79', 'runtime version is exactly v0.1.79')
+req(header is not None and const is not None and header.group(1) == const.group(1) and tuple(map(int, header.group(1).split('.'))) >= (0,1,79), 'runtime version is v0.1.79 or newer')
 req('v0.1.78 or newer' in legacy_v0178_qa, 'historical v0.1.78 gate is forward-compatible')
 
 # Canonical model already has all four geometries; v0.1.79 closes runtime parity.
@@ -63,13 +63,13 @@ req("$tabletRaw = is_array($geometry['tablet']" in frontend and "if ($device ===
 req("return !empty($mobileRaw['inheritDesktop']) ? $tablet" in frontend, 'frontend Mobile inheritance cascades through Tablet')
 
 versions = history.get('versions', []) if isinstance(history, dict) else []
-req(bool(versions) and str(versions[0].get('version', '')) == '0.1.79', 'release history starts with v0.1.79')
-req('0.1.79' in notes and 'Tablet' in notes and 'ResponsiveRenderer' in notes, 'release notes describe responsive Tablet completion')
-req('**Aktuel release:** v0.1.79' in backlog and 'CLEAN-RESPONSIVE-009 — FÆRDIG I v0.1.79' in backlog, 'canonical backlog closes CLEAN-RESPONSIVE-009 in v0.1.79')
+req(any(isinstance(row, dict) and str(row.get('version','')) == '0.1.79' for row in versions), 'release history retains v0.1.79')
+req(any(isinstance(row, dict) and str(row.get('version','')) == '0.1.79' and any('Tablet' in str(item) for item in row.get('items', [])) for row in versions), 'release history documents responsive Tablet completion')
+req('CLEAN-RESPONSIVE-009 — FÆRDIG I v0.1.79' in backlog, 'canonical backlog closes CLEAN-RESPONSIVE-009 in v0.1.79')
 req((ROOT / 'docs/v0179-status.md').is_file(), 'v0.1.79 status document exists')
 
 # Until central release runs, updater must stay on the last verified release.
-req(str(manifest.get('version', '')) == '0.1.78', 'pre-release updater manifest remains on verified v0.1.78')
-req((ROOT / 'dist/visual-designer-manager-v0.1.78.zip').is_file(), 'verified v0.1.78 ZIP remains present before release')
+req(tuple(map(int, str(manifest.get('version','0.0.0')).split('.'))) >= (0,1,79), 'updater manifest is v0.1.79 or newer')
+req((ROOT / 'dist/visual-designer-manager-v0.1.79.zip').is_file(), 'verified v0.1.79 ZIP remains present')
 
 print('Visual Designer Manager v0.1.79 responsive QA: PASS')

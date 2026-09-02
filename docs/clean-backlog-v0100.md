@@ -1,7 +1,7 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
 **Statusdato:** 2. september 2026  
-**Aktuel release:** v0.1.79  
+**Aktuel release:** v0.1.80  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
@@ -38,6 +38,7 @@
 9. **v0.1.77 – Redigerbart moduldesign — FÆRDIG:** Moduldesign kan ændres for de tre dynamiske sider med canonical frontend-preview.
 10. **v0.1.78 – Hybrid modulsider + Eventfelter — FÆRDIG:** almindelige Designer-elementer i før/mellem/efter-slots, Designer-detailpages og fleksible Eventfelter.
 11. **v0.1.79 – CLEAN-RESPONSIVE-009 — FÆRDIG:** Tablet er et fuldt canonical breakpoint i toolbar, Inspector, viewport og frontend med isoleret Undo/Redo.
+12. **v0.1.80 – VD-COMPOSABLE-MODULE-PAGES-002 — FÆRDIG:** collection-overskrifter og Eventdetaljens kernefelter er selvstændige Designer-elementer; Data-menuen er skjult.
 9. **v0.1.77 – VD-MODULE-DESIGN-001 — FÆRDIG:** de tre canonical modulsider har redigerbar side-/kortgeometri, typografi og farver med live preview i samme frontend-renderer.
 
 ## Åben backlog
@@ -75,6 +76,14 @@
 - Alle fire breakpoints har eksplicit toolbar, Inspector og viewport Fit/Zoom.
 - Tablet bruger 980 px som canonical preview/frontend-breakpoint mellem Laptop 1180 px og Mobil 782 px.
 - Responsive ændringer snapshots i Undo/Redo og muterer kun det valgte breakpoint; øvrige breakpoint-geometrier bevares.
+
+### VD-COMPOSABLE-MODULE-PAGES-002 — FÆRDIG I v0.1.80
+- Events, Billedgalleri og Køretøjer viser ikke længere en hardcoded collection-H1; migrationen opretter den som almindeligt H1-Tekst-element i før-slotten.
+- Eventdetalje bruger selvstændige Eventværdi-elementer til titel, dato/tid, sted, kort beskrivelse og beskrivelse samt et separat Eventbillede-element.
+- Om arrangementet, Program og Praktiske oplysninger forbliver separate Eventfelt-elementer og starter på samme gridlinje som de øvrige eventtekster.
+- Den tidligere Eventdetalje-node forbliver understøttet til gamle layouts, men er skjult fra paletten for nye designs.
+- Data-menuen er ikke længere en synlig administrationsdestination; ModuleBinding og ModuleStore er fortsat canonical intern datainfrastruktur.
+- Der gemmes pre-migration backup-meta før collection- og eventdetail-layouts ændres.
 
 ### CLEAN-THEME-010 — IMPLEMENTERET BASELINE / REGRESSION FORTSÆTTER
 - Theme shell og Header/Footer bruges på Visual Designer-sider.

@@ -1,9 +1,10 @@
-<h2>0.1.79 – Fuld Tablet- og responsive Designer-understøttelse</h2>
+<h2>0.1.80 – Komponérbare modulsider og Eventdetalje</h2>
 <ul>
-<li><strong>Tablet er nu et fuldt breakpoint</strong> i Visual Designer på samme niveau som Desktop, Laptop og Mobil.</li>
-<li>Den responsive kaskade er Desktop → Laptop (1180 px) → Tablet (980 px) → Mobil (782 px).</li>
-<li>Tablet får egen canonical geometri, arv/override, Inspector-redigering, flyt/resize samt Fit/Zoom-preview.</li>
-<li>Frontendens ResponsiveRenderer bruger nu den gemte Tablet-geometri i intervallet 783–980 px.</li>
-<li>Responsive ændringer er fortsat Undo/Redo-sikre og isoleret til det valgte breakpoint.</li>
-<li>Breakpoint-knapper har aktiv tilstand via <code>aria-pressed</code> og tydelige tilgængelighedslabels.</li>
+<li><strong>Events, Billedgalleri og Køretøjer:</strong> den faste H1 er flyttet ind i Visual Designer som et normalt Tekst-element. Overskriften kan nu flyttes og styles frit.</li>
+<li><strong>Eventdetalje:</strong> titel, dato/tid, sted, kort beskrivelse og længere beskrivelse er selvstændige <em>Eventværdi</em>-elementer.</li>
+<li><strong>Eventbillede</strong> er et selvstændigt dynamisk Designer-element med højde, crop/contain, fokuspunkt og radius.</li>
+<li>Om arrangementet, Program og Praktiske oplysninger fortsætter som selvstændige Eventfelt-elementer og flugter med de øvrige eventtekster.</li>
+<li>Alle de nye dynamiske elementer bruger samme Desktop/Laptop/Tablet/Mobil-geometri som resten af Visual Designer.</li>
+<li>Den tekniske <strong>Data</strong>-menu er fjernet fra den normale Manager-navigation. Den interne data-/bindingmodel er bevaret.</li>
+<li>Migrationsbackup gemmes før både collection-overskrifter og Eventdetalje opgraderes.</li>
 </ul>

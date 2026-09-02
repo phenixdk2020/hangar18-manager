@@ -50,7 +50,7 @@ final class CollectionPageRenderer
             $edge = self::eventArchiveEdge($record);
             if ($edge > 0 && $edge < $now) { $past[] = $record; } else { $upcoming[] = $record; }
         }
-        $html = self::openPage('events', $title) . HybridModuleSlots::render($postId, 'before') . self::controls('events', $query, $sort);
+        $html = self::openPage('events', $title, false) . HybridModuleSlots::render($postId, 'before') . self::controls('events', $query, $sort);
         $html .= '<section class="h18-module-section"><h2>Kommende arrangementer</h2>' . self::eventGrid($postId, $upcoming, false, 'Ingen kommende arrangementer matcher søgningen.') . '</section>';
         $html .= HybridModuleSlots::render($postId, 'between');
         $html .= '<section class="h18-module-section"><h2>Tidligere arrangementer</h2>' . self::eventGrid($postId, $past, true, 'Ingen tidligere arrangementer matcher søgningen.') . '</section>';
@@ -85,7 +85,7 @@ final class CollectionPageRenderer
         $records = self::records(ModuleStore::listRecords('galleries', ['status' => 'publish', 'limit' => 100, 'orderBy' => 'title', 'order' => 'ASC']));
         $query = self::query(); if ($query !== '') { $records = self::searchTitle($records, $query); }
         $sort = self::sortMode('galleries'); self::sortByTitle($records, $sort === 'name-desc');
-        $html = self::openPage('galleries', $title) . HybridModuleSlots::render($postId, 'before') . self::controls('galleries', $query, $sort) . HybridModuleSlots::render($postId, 'between') . '<section class="h18-module-section"><h2>Køretøjer</h2>';
+        $html = self::openPage('galleries', $title, false) . HybridModuleSlots::render($postId, 'before') . self::controls('galleries', $query, $sort) . HybridModuleSlots::render($postId, 'between') . '<section class="h18-module-section"><h2>Køretøjer</h2>';
         if (!$records) { return $html . '<p class="h18-module-empty">Ingen album matcher søgningen.</p></section></main>'; }
         $html .= '<div class="h18-module-card-grid h18-module-gallery-grid">';
         foreach ($records as $record) {
@@ -106,7 +106,7 @@ final class CollectionPageRenderer
         $records = self::records(ModuleStore::listRecords('vehicles', ['status' => 'publish', 'limit' => 100, 'orderBy' => 'title', 'order' => 'ASC']));
         $query = self::query(); if ($query !== '') { $records = self::searchTitle($records, $query); }
         $sort = self::sortMode('vehicles'); self::sortByTitle($records, $sort === 'name-desc');
-        $html = self::openPage('vehicles', $title) . HybridModuleSlots::render($postId, 'before') . self::controls('vehicles', $query, $sort) . HybridModuleSlots::render($postId, 'between');
+        $html = self::openPage('vehicles', $title, false) . HybridModuleSlots::render($postId, 'before') . self::controls('vehicles', $query, $sort) . HybridModuleSlots::render($postId, 'between');
         $html .= '<section class="h18-module-section"><h2>Historisk materiel</h2><p class="h18-module-intro">Her finder du foreningens dokumenterede køretøjer og øvrige militærhistoriske materiel.</p>';
         if (!$records) { return $html . '<p class="h18-module-empty">Ingen køretøjer matcher søgningen.</p></section></main>'; }
         $html .= '<div class="h18-module-card-grid h18-module-vehicle-grid">';
@@ -285,7 +285,7 @@ final class CollectionPageRenderer
     }
 
     private static function notFound(int $postId, string $pageTitle): string { return self::openPage('detail', $pageTitle) . '<p>Indholdet findes ikke eller er ikke publiceret.</p><p><a class="h18-module-back" href="' . esc_url(get_permalink($postId)) . '">← Tilbage</a></p></main>'; }
-    private static function openPage(string $class, string $title): string { return '<main class="h18-module-page h18-module-page--' . esc_attr(sanitize_html_class($class)) . '"><h1>' . esc_html($title) . '</h1>'; }
+    private static function openPage(string $class, string $title, bool $showTitle = true): string { return '<main class="h18-module-page h18-module-page--' . esc_attr(sanitize_html_class($class)) . '">' . ($showTitle ? '<h1>' . esc_html($title) . '</h1>' : ''); }
 
     /** @param array<string,mixed> $design */
     private static function style(array $design): string

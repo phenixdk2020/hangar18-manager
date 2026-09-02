@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "0.1.80",
+      "date": "2026-09-02",
+      "items": [
+        "VD-COMPOSABLE-MODULE-PAGES-002: Events, Billedgalleri og Køretøjer får sideoverskriften som normalt flytbart/stylbart Designer-element.",
+        "Eventdetalje opdeles i Eventtitel, Dato/tid, Sted, Kort beskrivelse, Beskrivelse, Eventbillede og de eksisterende Eventfelter.",
+        "Nye Designer-elementer Eventværdi og Eventbillede kan flyttes og styles pr. Desktop/Laptop/Tablet/Mobil.",
+        "Standard Eventfelter flugter nu med de øvrige eventtekster uden skjult ekstra padding fra den tidligere samlede detailblok.",
+        "Den gamle samlede Eventdetalje-node bevares for bagudkompatibilitet, men vises ikke længere i paletten.",
+        "Manager-menuen Data skjules; den interne ModuleBinding/datamodel bevares og bruges fortsat automatisk af dynamiske moduler."
+      ]
+    },
+    {
       "version": "0.1.79",
       "date": "2026-09-02",
       "items": [
