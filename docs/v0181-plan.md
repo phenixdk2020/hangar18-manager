@@ -1,6 +1,6 @@
 # Visual Designer Manager v0.1.81 – plan
 
-**Status:** Planlagt – ikke frigivet  
+**Status:** Implementeret kandidat – afventer verificeret release  
 **Grundlag:** v0.1.80
 
 ## Scope
@@ -55,3 +55,17 @@ Krav:
 7. Verificér at ingen af de testede Designer-farvefelter falder tilbage til en separat Windows/system-farvedialog som den normale redigeringsvej.
 8. Verificér at eksisterende layouts med gemte HEX-farver er byte-/værdi-kompatible efter opdatering.
 9. PHP/JavaScript syntax og alle eksisterende regression-gates skal forblive grønne.
+
+
+### FORM-WYSIWYG-001 — Kontakt og Bliv medlem
+
+- Designer-preview skal bruge samme feltorden og layoutkontrakt som frontend.
+- Preview skal vise labels, inputs, textarea, samtykke og knap – ikke simplificerede labelbokse.
+- Kontakt respekterer `showPhone`; medlemsformularen viser altid Telefon som obligatorisk.
+- Mobil skifter til én kolonne ved 782 px.
+- Previewfelter er deaktiverede og må aldrig indsende data fra Designer.
+
+### DOC-VISUAL-001 — Grafiske manualer
+
+- `CLEAN-USER-MANUAL.md` og `CLEAN-DESIGN-MANUAL.md` opdateres i samme release.
+- Manualerne indeholder SVG-illustrationer, elementtabel, arbejdsgange, responsive regler samt godt/dårligt-eksempler.

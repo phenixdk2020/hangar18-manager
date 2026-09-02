@@ -1867,16 +1867,53 @@
         } else if (node.type === 'contactform' || node.type === 'membershipform') {
             wrap.classList.add('h18-clean-node-preview--form');
             const membership = node.type === 'membershipform';
-            const box = document.createElement('div'); box.className = 'h18-vd-form-preview';
-            box.style.background = node.props.background || '#f4f1e8'; box.style.color = node.props.textColor || '#30382a'; box.style.padding = String(node.props.padding || 24) + 'px'; box.style.borderRadius = String(node.props.radius || 6) + 'px';
-            const h = document.createElement('h3'); h.textContent = String(node.props.heading || (membership ? 'Bliv medlem' : 'Kontakt os')); box.appendChild(h);
-            const intro = document.createElement('p'); intro.textContent = String(node.props.intro || ''); if (intro.textContent) { box.appendChild(intro); }
-            const fields = membership ? ['Navn *','E-mail *','Telefon *','Adresse *','Postnr. *','By *','Kommentar'] : ['Navn *','E-mail *','Telefon','Emne *','Besked *'];
+            const box = document.createElement('div'); box.className = 'h18-vd-form-preview h18-vd-form-preview--' + node.type;
+            box.style.background = node.props.background || '#f4f1e8';
+            box.style.color = node.props.textColor || '#30382a';
+            box.style.padding = String(node.props.padding || 24) + 'px';
+            box.style.borderRadius = String(node.props.radius || 6) + 'px';
+            box.style.setProperty('--h18-form-preview-field-bg', node.props.fieldBackground || '#ffffff');
+            box.style.setProperty('--h18-form-preview-accent', node.props.accentColor || '#30382a');
+
+            const heading = document.createElement('h2');
+            heading.textContent = String(node.props.heading || (membership ? 'Bliv medlem' : 'Kontakt os'));
+            if (heading.textContent) { box.appendChild(heading); }
+            const intro = document.createElement('p'); intro.className = 'h18-vd-form-preview-intro';
+            intro.textContent = String(node.props.intro || ''); if (intro.textContent) { box.appendChild(intro); }
+
+            const form = document.createElement('div'); form.className = 'h18-vd-form-preview-body';
             const grid = document.createElement('div'); grid.className = 'h18-vd-form-preview-grid';
-            fields.forEach(function(label){const f=document.createElement('span');f.textContent=label;f.style.background=node.props.fieldBackground||'#ffffff';grid.appendChild(f);}); box.appendChild(grid);
-            if (node.props.requireConsent !== false) { const consent=document.createElement('small'); consent.textContent='☐ Samtykke'; box.appendChild(consent); }
-            const submit=document.createElement('strong'); submit.className='h18-vd-form-preview-submit'; submit.textContent=String(node.props.buttonText || (membership?'Send indmeldelse':'Send besked')); submit.style.background=node.props.accentColor||'#30382a'; box.appendChild(submit);
-            wrap.appendChild(box);
+            const addField = function (labelText, kind, wide) {
+                const field = document.createElement('label'); field.className = 'h18-vd-form-preview-field' + (wide ? ' is-wide' : '');
+                const label = document.createElement('span'); label.textContent = labelText; field.appendChild(label);
+                const control = kind === 'textarea' ? document.createElement('textarea') : document.createElement('input');
+                if (kind !== 'textarea') { control.type = kind || 'text'; }
+                else { control.rows = 5; }
+                control.disabled = true; control.tabIndex = -1; control.setAttribute('aria-hidden', 'true');
+                field.appendChild(control); grid.appendChild(field);
+            };
+            addField('Navn *', 'text', false);
+            addField('E-mail *', 'email', false);
+            if (membership || node.props.showPhone !== false) { addField('Telefon' + (membership ? ' *' : ''), 'tel', false); }
+            if (membership) {
+                addField('Adresse *', 'text', false);
+                addField('Postnr. *', 'text', false);
+                addField('By *', 'text', false);
+                addField('Kommentar', 'textarea', true);
+            } else {
+                addField('Emne *', 'text', false);
+                addField('Besked *', 'textarea', true);
+            }
+            form.appendChild(grid);
+            if (node.props.requireConsent !== false) {
+                const consent = document.createElement('label'); consent.className = 'h18-vd-form-preview-consent';
+                const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.disabled = true; checkbox.tabIndex = -1;
+                const consentText = document.createElement('span'); consentText.textContent = 'Jeg accepterer, at oplysningerne bruges til at besvare min henvendelse.';
+                consent.appendChild(checkbox); consent.appendChild(consentText); form.appendChild(consent);
+            }
+            const submit = document.createElement('button'); submit.type = 'button'; submit.disabled = true; submit.className = 'h18-vd-form-preview-submit';
+            submit.textContent = String(node.props.buttonText || (membership ? 'Send indmeldelse' : 'Send besked'));
+            form.appendChild(submit); box.appendChild(form); wrap.appendChild(box);
         } else if (node.type === 'image') {
             wrap.classList.add('h18-clean-node-preview--image');
             const alignX = ['left', 'center', 'right'].includes(node.props.imageAlignX) ? node.props.imageAlignX : 'center';
@@ -2338,6 +2375,8 @@
 
         host.querySelectorAll('[data-field]').forEach(function (control) {
             control.addEventListener('change', function () {
+                if (control.getAttribute('data-h18-vd-color-managed') === '1' && control.getAttribute('data-h18-vd-color-commit') !== '1') { return; }
+                if (control.getAttribute('data-h18-vd-color-commit') === '1') { control.removeAttribute('data-h18-vd-color-commit'); }
                 const current = nodeById(selectedId);
                 if (!current) { return; }
                 const before = clone(state);

@@ -1,0 +1,30 @@
+/* Visual Designer Manager v0.1.81: unified color picker + form WYSIWYG parity. */
+.h18-clean-inspector .wp-picker-container{display:block;margin-top:4px}
+.h18-clean-inspector .wp-picker-container .wp-color-result.button{margin:0;min-height:32px}
+.h18-clean-inspector .wp-picker-container .wp-color-result-text{min-width:78px;text-transform:uppercase;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.h18-clean-inspector .wp-picker-input-wrap{display:inline-flex;gap:6px;align-items:center}
+.h18-clean-inspector .wp-picker-input-wrap input.h18-vd-color-source{width:96px!important;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;text-transform:uppercase}
+.h18-clean-inspector .wp-picker-holder{position:relative;z-index:1000;max-width:320px}
+.h18-vd-color-picker-extra{box-sizing:border-box;width:255px;max-width:100%;padding:9px 0 0}
+.h18-vd-color-shortcuts{margin:0 0 9px}
+.h18-vd-color-shortcuts>strong{display:block;margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#50575e}
+.h18-vd-color-shortcut-list{display:flex;flex-wrap:wrap;gap:5px}
+.h18-vd-color-shortcut{width:24px;height:24px;border:1px solid #8c8f94;border-radius:3px;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.h18-vd-color-shortcut:focus-visible{outline:2px solid #2271b1;outline-offset:2px}
+.h18-vd-color-note{margin:7px 0 9px!important;font-size:11px!important;line-height:1.35!important}
+.h18-vd-color-actions{display:flex;justify-content:flex-end;gap:7px;padding-top:8px;border-top:1px solid #dcdcde}
+
+.h18-clean-node-preview--form{overflow:auto!important}
+.h18-vd-form-preview{box-sizing:border-box;width:100%;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;text-align:left}
+.h18-vd-form-preview h2{margin:0 0 8px!important;padding:0!important;color:inherit;font:700 32px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif}
+.h18-vd-form-preview-intro{margin:0 0 20px!important;padding:0!important;color:inherit;font:400 16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.h18-vd-form-preview-body{display:block}
+.h18-vd-form-preview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.h18-vd-form-preview-field{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:14px;font-weight:600;line-height:1.35;color:inherit}
+.h18-vd-form-preview-field.is-wide{grid-column:1/-1}
+.h18-vd-form-preview-field input,.h18-vd-form-preview-field textarea{box-sizing:border-box;width:100%;min-height:42px;border:1px solid #b8b8b2;border-radius:4px;background:var(--h18-form-preview-field-bg);color:inherit;padding:11px 12px;font:400 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1}
+.h18-vd-form-preview-field textarea{height:112px;resize:none}
+.h18-vd-form-preview-consent{display:flex;gap:9px;align-items:flex-start;margin:18px 0;font-size:14px;font-weight:400;line-height:1.4;color:inherit}
+.h18-vd-form-preview-consent input{width:auto!important;min-height:0!important;margin-top:3px;opacity:1}
+.h18-vd-form-preview-submit{display:inline-block;border:0;border-radius:4px;background:var(--h18-form-preview-accent);color:#fff;padding:11px 20px;font:700 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;cursor:default}
+@media(max-width:782px){.h18-vd-form-preview-grid{grid-template-columns:1fr}.h18-vd-form-preview-field.is-wide{grid-column:auto}}

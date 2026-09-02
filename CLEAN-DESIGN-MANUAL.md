@@ -666,3 +666,40 @@ Tekniske felter defineres centralt. En ændring af feltets synlige navn må ikke
 ## Site-design harmonisering
 
 **VD-SITE-DESIGN-HARMONY-001** bruger den aktive Designer-Hjem-side som visuel reference for `Om foreningen`, `Køretøjer og materiel`, `Events`, `Billedgalleri`, `Bliv medlem` og `Kontakt`. Harmonisering må kun ændre designprops: root-Sektion/Kasse-baggrund, padding, hjørner og rammer samt typografi, farver, knap- og billedstyling. Node-ID, type, hierarchy, order, geometri og indhold må ikke ændres. Hjems sektionstyper genbruges i rækkefølge, så de øvrige sider får samme tema uden at blive identiske kopier af Hjem.
+
+
+---
+
+## v0.1.81 – visuelle Designer-regler
+
+### Farvesystem
+
+![Farvevælger med temafarver og fri HEX](docs/user-manual-assets/v0181-color-picker.svg)
+
+| Regel | Krav |
+|---|---|
+| Temafarver | Hentes dynamisk fra aktivt WordPress-tema/Designer-kontekst og vises som genveje |
+| Frie farver | Skal altid være mulige; HEX kan indtastes direkte |
+| Canonical værdi | Gemmes fortsat som eksisterende HEX-prop – ingen layoutmigration |
+| Transparens | Styres af eksisterende transparens-prop/checkbox hvor elementet understøtter det |
+| Genbrug | Samme webbaserede picker anvendes på baggrund, tekst, ramme, knap, hover/focus og modulfarver |
+| Platform | Primær Designer-oplevelse må ikke afhænge af Windows/macOS native farvedialog |
+
+### Formular-paritet
+
+Kontaktformular og Bliv medlem-formular skal i Designer bruge samme visuelle struktur som frontend. En forenklet mockup med tekstbokse er ikke acceptabel som WYSIWYG-reference.
+
+![Formularparitet](docs/user-manual-assets/v0181-form-wysiwyg.svg)
+
+**Paritetskontrakt:**
+- samme feltorden og 2-kolonne grid på store breakpoints;
+- samme wide textarea;
+- telefon følger formularens `showPhone`-regel for Kontakt og er obligatorisk på medlemsformularen;
+- samtykke vises/skjules efter `requireConsent`;
+- baggrund, feltbaggrund, tekst, accent, padding og radius kommer fra samme node-props;
+- ved mobil breakpoint vises én kolonne;
+- Designerens previewfelter er ikke interaktive og kan ikke indsende data.
+
+### Elementdesign
+
+Brugeren skal kunne forstå elementets formål ud fra paletten/Inspector. Manualen skal derfor ved nye elementer dokumentere **formål, typiske anvendelser, centrale indstillinger, responsive regler og et visuelt eksempel**. v0.1.81-elementoversigten i brugermanualen er minimumsstandarden for kommende elementer.

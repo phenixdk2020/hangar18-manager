@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.81",
+      "date": "2026-09-02",
+      "items": [
+        "STATUS-READY-001: Sider og Eventfelter markeres Klar i Manager-status.",
+        "VD-COLOR-PICKER-001: fælles webbaseret WordPress/Iris-farvevælger med dynamiske temafarver, fri HEX/farve og senest brugte farver.",
+        "Kontaktformular og Bliv medlem-formular viser nu labels, inputs, textarea, samtykke og knap i Designer med samme feltstruktur som frontend.",
+        "Brugermanual og designmanual er opdateret med grafiske SVG-illustrationer, elementtabel, arbejdsvejledning, responsive/designregler og formular-/farveeksempler."
+      ]
+    },
+    {
       "version": "0.1.80",
       "date": "2026-09-02",
       "items": [

@@ -1060,3 +1060,72 @@ På en side i Visual Designer kan du tilføje **Køretøjsliste**. Her vælger d
 
 ## Automatisk designharmonisering i v0.1.72
 Når v0.1.72 indlæses i WordPress Admin, bruger Visual Designer Manager den aktive **Hjem**-side som designreference for Om foreningen, Køretøjer og materiel, Events, Billedgalleri, Bliv medlem og Kontakt. Tekster, billeder, elementplacering og størrelser bevares. Kun tema-/designværdier synkroniseres. Før hver ændring gemmes en backup, og harmoniseringen bliver en ny Designer-version, så siden kan gendannes fra versionshistorikken.
+
+
+---
+
+## Visual Designer v0.1.81 – sådan arbejder du visuelt
+
+![Visual Designer – arbejdsfladen](docs/user-manual-assets/v0181-designer-overview.svg)
+
+### Elementguide
+
+| Element | Hvad bruges det til? | Typisk brug | Vigtigste indstillinger |
+|---|---|---|---|
+| Sektion | Samler et område af siden | Hero, indholdsblok, modulslot | baggrund, padding, højde, responsive placering |
+| Kasse | Grupperer elementer inde i en sektion | kort, infoboks, kolonne | baggrund, ramme, radius, padding |
+| Tekst | Overskrift og brødtekst | H1/H2, intro, artikler | typografi, farve, justering, spacing |
+| Billede | Viser WordPress-medie | hero, køretøj, illustration | contain/cover, fokuspunkt, alt-tekst |
+| Knap | Handling eller navigation | Bliv medlem, Læs mere | destination, farver, hover/focus, radius |
+| Menu | WordPress-navigation | header/mobilmenu | menuvalg, retning, responsive mobilvisning |
+| Tabel | Strukturerede rækker/kolonner | specifikationer, oversigter | kanter, zebra, mobilkort/scroll |
+| Eventliste | Dynamiske events | Events-side | sortering, dato-filter, kortdesign |
+| Eventværdi | Én dynamisk eventværdi | titel, dato, sted, beskrivelse | værdi, HTML-tag, typografi |
+| Eventfelt | Fleksibelt eventfelt | Program, Om arrangementet, Praktisk info | feltvalg, overskrift, design |
+| Køretøjsliste | Dynamiske køretøjer | Køretøjer og materiel | sortering, kolonner, kortdesign |
+| Gallerioversigt | Dynamiske album | Billedgalleri | kolonner, cover, antal billeder |
+| Kontaktformular | Kontakt fra besøgende | Kontakt-side | intro, modtager, telefon, samtykke, design |
+| Bliv medlem-formular | Medlemsforespørgsler | Bliv medlem | intro, modtager, samtykke, design |
+
+### Kontaktformular og Bliv medlem – WYSIWYG
+
+Fra v0.1.81 viser Designer formularerne med samme struktur som frontend: labels, rigtige inputfelter, textarea, samtykke og knap. Det betyder, at højde, kolonner og spacing kan vurderes direkte i Designeren.
+
+![Formular – Designer og frontend](docs/user-manual-assets/v0181-form-wysiwyg.svg)
+
+**Arbejdsgang:**
+1. Træk formularen ind på siden.
+2. Vælg formularen og skriv overskrift/intro i Inspector.
+3. Vælg modtager-e-mail eller lad feltet være tomt for WordPress admin-e-mail.
+4. Slå telefon og samtykke til/fra efter behov.
+5. Tilpas baggrund, feltbaggrund, tekst og accent med den fælles farvevælger.
+6. Kontroller Desktop, Laptop, Tablet og Mobil før Gem.
+
+### Fælles farvevælger
+
+![Visual Designer – farvevælger](docs/user-manual-assets/v0181-color-picker.svg)
+
+Farvevælgeren har **temafarver som hurtigvalg**, men du kan altid vælge en helt fri farve eller skrive en HEX-kode direkte. Temafarver er altså genveje – ikke en begrænsning. De senest anvendte farver huskes lokalt i browseren.
+
+Hvis et element har en særskilt indstilling **Gennemsigtig**, bruges den fortsat til gennemsigtighed; farvefeltet beholder sin normale HEX-værdi.
+
+### Godt og dårligt eksempel
+
+| God praksis | Undgå |
+|---|---|
+| Brug temafarver til de gennemgående brandfarver | Næsten-identiske specialfarver på hver side |
+| Brug H1 én gang som sidens hovedoverskrift | Flere konkurrerende H1-overskrifter |
+| Kontroller alle fire breakpoints | Kun at designe Desktop |
+| Brug Sektion/Kasse til struktur | Tilfældige overlap som er svære at vedligeholde |
+| Brug dynamiske Event/Køretøj/Galleri-elementer til data | At kopiere dynamiske data ind som statisk tekst |
+
+### Byg en enkel side fra bunden
+
+1. Opret/åbn siden i Visual Designer.
+2. Træk en **Sektion** ind som hovedområde.
+3. Tilføj **Tekst** og vælg H1 til sidens hovedtitel.
+4. Tilføj brødtekst og evt. **Billede**.
+5. Tilføj en **Knap** med intern side eller URL.
+6. Brug **Kasse** når flere elementer skal høre visuelt sammen.
+7. Skift til Laptop, Tablet og Mobil og justér kun de breakpoints, der kræver det.
+8. Brug Preview og Gem; sammenlign derefter den offentlige side.

@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.80
+ * Version: 0.1.81
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.80');
+define('H18_CLEAN_VERSION', '0.1.81');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -214,6 +214,38 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ];
     }, \VisualDesignerManager\Modules\ModuleStore::listRecords('galleries', ['status' => 'all', 'limit' => 100, 'orderBy' => 'sortOrder', 'order' => 'ASC'])));
 
+    /* v0.1.81: collect an active theme/Designer palette without restricting free color choice. */
+    $themePalette = [];
+    $collectPaletteColor = static function ($value) use (&$themePalette): void {
+        if (!is_scalar($value)) { return; }
+        $hex = sanitize_hex_color((string) $value);
+        if (!is_string($hex) || $hex === '') { return; }
+        $hex = strtolower($hex);
+        if (strlen($hex) === 4) {
+            $hex = '#' . $hex[1] . $hex[1] . $hex[2] . $hex[2] . $hex[3] . $hex[3];
+        }
+        if (!in_array($hex, $themePalette, true)) { $themePalette[] = $hex; }
+    };
+    $collectPaletteTree = null;
+    $collectPaletteTree = static function ($value) use (&$collectPaletteTree, $collectPaletteColor): void {
+        if (is_array($value)) {
+            if (isset($value['color'])) { $collectPaletteColor($value['color']); }
+            foreach ($value as $child) { $collectPaletteTree($child); }
+            return;
+        }
+        $collectPaletteColor($value);
+    };
+    if (function_exists('wp_get_global_settings')) {
+        foreach (['theme', 'custom', 'default'] as $origin) {
+            $candidate = wp_get_global_settings(['color', 'palette', $origin]);
+            if (is_array($candidate)) { $collectPaletteTree($candidate); }
+        }
+    }
+    $themeMods = get_theme_mods();
+    if (is_array($themeMods)) { $collectPaletteTree($themeMods); }
+    $collectPaletteTree($model);
+    $themePalette = array_slice(array_values(array_unique($themePalette)), 0, 24);
+
     wp_enqueue_script(
         'h18-clean-editor-v0144-viewport',
         H18_CLEAN_URL . 'assets/editor-v0144-viewport.js',
@@ -236,6 +268,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'postId' => $postId,
         'userId' => get_current_user_id(),
         'contextLabel' => $contextLabel,
+        'themePalette' => $themePalette,
         'iconLibrary' => \VisualDesignerManager\Icons\IconRegistry::editorCatalog(),
         'moduleCatalog' => \VisualDesignerManager\Modules\ModuleRegistry::editorCatalog(),
         'vehicleRecords' => $vehicleRecords,
@@ -386,6 +419,13 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ['h18-clean-editor-v0165-elements'],
         H18_CLEAN_VERSION
     );
+    wp_enqueue_style('wp-color-picker');
+    wp_enqueue_style(
+        'h18-clean-editor-v0181',
+        H18_CLEAN_URL . 'assets/editor-v0181.css',
+        ['h18-clean-editor-v0166-foundation', 'wp-color-picker'],
+        H18_CLEAN_VERSION
+    );
 
     wp_enqueue_script(
         'h18-clean-editor-v0114',
@@ -468,6 +508,13 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'h18-clean-editor-v0169-canvas-height',
         H18_CLEAN_URL . 'assets/editor-v0169-canvas-height.js',
         ['h18-clean-editor-v0148-layers'],
+        H18_CLEAN_VERSION,
+        true
+    );
+    wp_enqueue_script(
+        'h18-clean-editor-v0181-color-picker',
+        H18_CLEAN_URL . 'assets/editor-v0181-color-picker.js',
+        ['jquery', 'wp-color-picker', 'h18-clean-editor-v0169-canvas-height'],
         H18_CLEAN_VERSION,
         true
     );

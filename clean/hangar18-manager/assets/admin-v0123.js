@@ -10,7 +10,7 @@
     var STATUS = {
         'h18-clean-manager': ['Under udvikling', 'partial'],
         'h18-clean-editor': ['Under udvikling', 'partial'],
-        'h18-clean-pages': ['Under udvikling', 'partial'],
+        'h18-clean-pages': ['Klar', 'ready'],
         'h18-clean-conversion': ['Klar', 'ready'],
         'h18-clean-backup': ['Under udvikling', 'partial'],
         'h18-clean-updates': ['Klar', 'ready'],
@@ -22,6 +22,7 @@
         'h18-clean-vehicles': ['Klar', 'ready'],
         'h18-clean-vehicle-fields': ['Klar', 'ready'],
         'h18-clean-events': ['Klar', 'ready'],
+        'h18-clean-event-fields': ['Klar', 'ready'],
         'h18-clean-gallery': ['Klar', 'ready'],
         'h18-clean-data': ['Ikke færdig', 'planned']
     };

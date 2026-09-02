@@ -36,7 +36,7 @@ backlog = text('docs/clean-backlog-v0100.md')
 
 header = re.search(r'\* Version:\s*([0-9.]+)', plugin)
 const = re.search(r"H18_CLEAN_VERSION',\s*'([0-9.]+)'", plugin)
-req(header is not None and const is not None and header.group(1) == const.group(1) == '0.1.80', 'runtime version is exactly v0.1.80')
+req(header is not None and const is not None and header.group(1) == const.group(1) and tuple(map(int, header.group(1).split('.'))) >= (0,1,80), 'runtime version is v0.1.80 or newer')
 req('runtime version is v0.1.79 or newer' in legacy79, 'historical v0.1.79 gate is forward-compatible')
 
 req("'eventvalue'" in layout and "'eventimage'" in layout, 'canonical LayoutModel supports Eventværdi and Eventbillede')
@@ -69,13 +69,13 @@ req('final class ModuleBinding' in text('clean/hangar18-manager/src/Modules/Modu
 req('final class ModuleStore' in text('clean/hangar18-manager/src/Modules/ModuleStore.php'), 'internal ModuleStore remains intact')
 
 versions = history.get('versions', []) if isinstance(history, dict) else []
-req(bool(versions) and str(versions[0].get('version','')) == '0.1.80', 'release history starts with v0.1.80')
+req(any(isinstance(row, dict) and str(row.get('version','')) == '0.1.80' for row in versions), 'release history retains v0.1.80')
 req('0.1.80' in notes and 'Eventværdi' in notes and 'Data' in notes, 'release notes describe composable detail and Data-menu cleanup')
 req('**Aktuel release:** v0.1.80' in backlog and 'VD-COMPOSABLE-MODULE-PAGES-002 — FÆRDIG I v0.1.80' in backlog, 'canonical backlog records v0.1.80 completion')
 req((ROOT / 'docs/v0180-status.md').is_file(), 'v0.1.80 status document exists')
 
-# Until central release runs, updater must remain on verified v0.1.79.
-req(str(manifest.get('version','')) == '0.1.79', 'pre-release updater manifest remains on verified v0.1.79')
-req((ROOT / 'dist/visual-designer-manager-v0.1.79.zip').is_file(), 'verified v0.1.79 ZIP remains present before release')
+# Historical gate is forward-compatible: the updater must be at least the verified v0.1.80 release.
+req(tuple(map(int, str(manifest.get('version','0.0.0')).split('.'))) >= (0,1,80), 'updater manifest is v0.1.80 or newer')
+req((ROOT / 'dist/visual-designer-manager-v0.1.80.zip').is_file(), 'verified v0.1.80 ZIP remains present')
 
 print('Visual Designer Manager v0.1.80 composable module QA: PASS')
