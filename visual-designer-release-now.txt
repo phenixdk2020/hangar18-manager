@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.79
-Trigger: responsive-tablet 2026-09-02
+Release Visual Designer Manager v0.1.80
+Trigger: composable-module-pages 2026-09-02
 Publish: requested 2026-09-02
-QA: apply run 33604168936 PASS
-Source candidate: 35e35bf62070bff83a0ede51eb3b53e29bce64e0
+QA: apply run 33611527069 PASS
+Source candidate: dbe2fd03ad678c2c142c443377fb4d8f2bab5b0e
