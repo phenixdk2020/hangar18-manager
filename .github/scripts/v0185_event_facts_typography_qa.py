@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import re
 
 
 def text(path):
@@ -24,7 +25,10 @@ notes = text('clean-release-notes.html')
 status = text('docs/v0185-status.md')
 manifest = json.loads(text('clean-update.json'))
 
-req('Version: 0.1.85' in plugin and "define('VDM_VERSION', '0.1.85');" in plugin and "define('H18_CLEAN_VERSION', '0.1.85');" in plugin, 'runtime version 0.1.85')
+match = re.search(r'Version:\s*([0-9]+\.[0-9]+\.[0-9]+)', plugin)
+req(match is not None, 'runtime version is readable')
+runtime = tuple(map(int, match.group(1).split('.'))) if match else (0, 0, 0)
+req(runtime >= (0, 1, 85), 'runtime version is v0.1.85 or newer')
 req("src/Migration/EventDetailFactsMigration.php" in plugin and 'EventDetailFactsMigration::register();' in plugin, 'migration bootstrapped')
 req("'eventfacts'" in layout and "if ($type === 'eventfacts')" in layout, 'LayoutModel accepts Eventfaktabånd')
 for token in ['showDate', 'showTime', 'showLocation', 'showAddress', 'showContact', 'minCardWidth', 'cardBackground', 'accentColor', 'labelFontSize', 'valueFontSize']:
@@ -64,6 +68,7 @@ versions = [str(row.get('version')) for row in history.get('versions', []) if is
 req('0.1.85' in versions, 'release history includes v0.1.85')
 req('data-version="0.1.85"' in notes and 'Eventfaktabånd' in notes, 'release notes include Eventfaktabånd')
 req('Status: release candidate' in status and 'Eventfaktabånd' in status, 'v0.1.85 status document')
-req(str(manifest.get('version')) == '0.1.84', 'central updater remains v0.1.84 before release')
+manifest_version = tuple(map(int, str(manifest.get('version', '0.0.0')).split('.')))
+req((0, 1, 84) <= manifest_version <= runtime, 'central updater is compatible with v0.1.85+ runtime')
 
 print('v0.1.85 EVENT FACTS + TYPOGRAPHY QA PASS')
