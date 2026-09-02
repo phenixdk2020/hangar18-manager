@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.79",
+  "version": "0.1.80",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.79.zip",
-  "sha256": "ae0e89938e0e181fcc78dee10527f95991638739fc80adfd6fde7a30eb31517d",
-  "source_commit": "e13f9601753d115f6b9bcb52fd3a89de763966d4",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.80.zip",
+  "sha256": "ba182981df37e59aa6e1c0b7cfc9980488da9e6b30c6c1568226387c28e26797",
+  "source_commit": "92a61f7e0854622a84c3ef173a780a579badcbcb",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h2>0.1.79 – Fuld Tablet- og responsive Designer-understøttelse</h2>\n<ul>\n<li><strong>Tablet er nu et fuldt breakpoint</strong> i Visual Designer på samme niveau som Desktop, Laptop og Mobil.</li>\n<li>Den responsive kaskade er Desktop → Laptop (1180 px) → Tablet (980 px) → Mobil (782 px).</li>\n<li>Tablet får egen canonical geometri, arv/override, Inspector-redigering, flyt/resize samt Fit/Zoom-preview.</li>\n<li>Frontendens ResponsiveRenderer bruger nu den gemte Tablet-geometri i intervallet 783–980 px.</li>\n<li>Responsive ændringer er fortsat Undo/Redo-sikre og isoleret til det valgte breakpoint.</li>\n<li>Breakpoint-knapper har aktiv tilstand via <code>aria-pressed</code> og tydelige tilgængelighedslabels.</li>\n</ul>"
+    "changelog": "<h2>0.1.80 – Komponérbare modulsider og Eventdetalje</h2>\n<ul>\n<li><strong>Events, Billedgalleri og Køretøjer:</strong> den faste H1 er flyttet ind i Visual Designer som et normalt Tekst-element. Overskriften kan nu flyttes og styles frit.</li>\n<li><strong>Eventdetalje:</strong> titel, dato/tid, sted, kort beskrivelse og længere beskrivelse er selvstændige <em>Eventværdi</em>-elementer.</li>\n<li><strong>Eventbillede</strong> er et selvstændigt dynamisk Designer-element med højde, crop/contain, fokuspunkt og radius.</li>\n<li>Om arrangementet, Program og Praktiske oplysninger fortsætter som selvstændige Eventfelt-elementer og flugter med de øvrige eventtekster.</li>\n<li>Alle de nye dynamiske elementer bruger samme Desktop/Laptop/Tablet/Mobil-geometri som resten af Visual Designer.</li>\n<li>Den tekniske <strong>Data</strong>-menu er fjernet fra den normale Manager-navigation. Den interne data-/bindingmodel er bevaret.</li>\n<li>Migrationsbackup gemmes før både collection-overskrifter og Eventdetalje opgraderes.</li>\n</ul>"
   }
 }
