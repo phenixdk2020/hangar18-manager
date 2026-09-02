@@ -1,0 +1,123 @@
+name: Apply Visual Designer Manager 0.1.83 User Manual Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0183-user-manual-web.yml'
+      - '.github/scripts/apply_v0183_user_manual_web.py'
+      - '.github/scripts/v0183_user_manual_qa.py'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply v0.1.83 user manual web and Word support
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/apply_v0183_user_manual_web.py
+
+      - name: Syntax and static QA
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/apply_v0183_user_manual_web.py .github/scripts/v0183_user_manual_qa.py
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0183_user_manual_qa.py
+
+      - name: Regression QA
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+          python3 .github/scripts/v0162_page_duplicate_qa.py
+          python3 .github/scripts/v0164_clipboard_qa.py
+          php .github/scripts/v0165_elements_model_qa.php
+          python3 .github/scripts/v0165_general_elements_qa.py
+          python3 .github/scripts/v0166_foundation_qa.py
+          php .github/scripts/v0167_module_foundation_qa.php
+          php .github/scripts/v0168_canvas_section_qa.php
+          python3 .github/scripts/v0168_canvas_section_static_qa.py
+          python3 .github/scripts/v0169_canvas_autoheight_qa.py
+          python3 .github/scripts/v0170_vehicle_module_qa.py
+          python3 .github/scripts/v0171_event_module_qa.py
+          python3 .github/scripts/v0172_gallery_design_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
+
+      - name: Verify scoped diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          find .github/scripts -type d -name __pycache__ -prune -exec rm -rf {} +
+          git status --short
+          python3 - <<'PY'
+          import subprocess
+          allowed = {
+              'clean/hangar18-manager/hangar18-manager.php',
+              'clean/hangar18-manager/src/Admin/ManualController.php',
+              'clean/hangar18-manager/src/Admin/AdminController.php',
+              'clean/hangar18-manager/assets/manual-v0183.css',
+              'clean/hangar18-manager/assets/admin-v0123.js',
+              'clean/hangar18-manager/release-history.json',
+              'CLEAN-USER-MANUAL.md',
+              'clean-release-notes.html',
+              'docs/v0183-status.md',
+              '.github/workflows/visual-designer-release.yml',
+          }
+          lines = subprocess.check_output(['git', 'status', '--porcelain'], text=True).splitlines()
+          changed = {line[3:] for line in lines if len(line) >= 4}
+          unexpected = sorted(changed - allowed)
+          if unexpected:
+              raise SystemExit('Unexpected v0.1.83 modified paths: ' + ', '.join(unexpected))
+          required = {
+              'clean/hangar18-manager/hangar18-manager.php',
+              'clean/hangar18-manager/src/Admin/ManualController.php',
+              'clean/hangar18-manager/src/Admin/AdminController.php',
+              'clean/hangar18-manager/assets/manual-v0183.css',
+              'CLEAN-USER-MANUAL.md',
+              '.github/workflows/visual-designer-release.yml',
+          }
+          missing = sorted(required - changed)
+          if missing:
+              raise SystemExit('Expected v0.1.83 changes missing: ' + ', '.join(missing))
+          PY
+          grep -q 'Version: 0.1.83' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.83'" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq 'Download som Word (.docx)' clean/hangar18-manager/src/Admin/ManualController.php
+          grep -Fq 'Build user manual artifacts' .github/workflows/visual-designer-release.yml
+          test "$(python3 -c "import json; print(json.load(open('clean-update.json',encoding='utf-8'))['version'])")" = '0.1.82'
+
+      - name: Commit v0.1.83 release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-apply-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Admin/ManualController.php \
+            clean/hangar18-manager/src/Admin/AdminController.php \
+            clean/hangar18-manager/assets/manual-v0183.css \
+            clean/hangar18-manager/assets/admin-v0123.js \
+            clean/hangar18-manager/release-history.json \
+            CLEAN-USER-MANUAL.md \
+            clean-release-notes.html \
+            docs/v0183-status.md \
+            .github/workflows/visual-designer-release.yml
+          git diff --cached --quiet && exit 0 || true
+          git commit -m 'Implement Visual Designer Manager v0.1.83 web and Word manual'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
