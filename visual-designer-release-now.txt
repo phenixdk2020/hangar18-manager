@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.78
-Trigger: hybrid-module-pages-event-fields 2026-09-02
+Release Visual Designer Manager v0.1.79
+Trigger: responsive-tablet 2026-09-02
 Publish: requested 2026-09-02
-QA: apply run 33558693461 PASS
-Source candidate: cacb785df23c92bba1bd93ffdbed71590fa33a78
+QA: apply run 33604168936 PASS
+Source candidate: 35e35bf62070bff83a0ede51eb3b53e29bce64e0
