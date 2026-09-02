@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.84
-Trigger: portable-site-export-import 2026-09-02
+Release Visual Designer Manager v0.1.85
+Trigger: editor-live-parity-event-facts 2026-09-02
 Publish: requested 2026-09-02
-QA: apply run 33648270731 PASS
-Source candidate: eeb1aebad901a4b4ee64f2f1b81b9f687b78c5aa
+QA: run 33663632396 PASS
+Source candidate: cb948624f016d0f4d61dbdf323e2d301730f2b47
