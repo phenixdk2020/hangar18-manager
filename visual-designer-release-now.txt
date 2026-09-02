@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.81
-Trigger: color-picker-form-wysiwyg-docs 2026-09-02
+Release Visual Designer Manager v0.1.82
+Trigger: converted-button-overlay 2026-09-02
 Publish: requested 2026-09-02
-QA: apply run 33618758739 PASS
-Source candidate: 51a675b665d1fa0acd568d589981ffdaf5cb2110
+QA: apply run 33626031569 PASS
+Source candidate: 7a2ea0f68a4172c1cc2ecb0a2b14d513133cdbb2
