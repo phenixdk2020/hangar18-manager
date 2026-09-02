@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.82",
+      "date": "2026-09-02",
+      "items": [
+        "VD-CONVERTED-BUTTON-FLOATING-001: knapper oprettet af sidekonverteringen bruger nu samme flydende overlay-kontrakt som nye Designer-knapper.",
+        "Eksisterende eksternt konverterede sider migreres selektivt via deres deterministiske converter-ID; almindelige Designer-knapper ændres ikke.",
+        "Aktive layouts får rå backup og ny LayoutModel-version før ændring; eksisterende konverteringskandidater repareres uden at godkende dem automatisk.",
+        "Migrationen er idempotent og markerer hver konverteret side efter kontrol."
+      ]
+    },
+    {
       "version": "0.1.81",
       "date": "2026-09-02",
       "items": [

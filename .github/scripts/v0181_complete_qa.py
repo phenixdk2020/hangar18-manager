@@ -70,8 +70,8 @@ versions = history.get('versions', []) if isinstance(history, dict) else []
 req(any(isinstance(row, dict) and str(row.get('version', '')) == '0.1.81' for row in versions), 'release history contains v0.1.81 candidate')
 req((ROOT / 'docs/v0181-status.md').is_file(), 'v0.1.81 status document exists')
 
-# Pre-release contract: updater stays on last verified release until central packaging runs.
-req(str(manifest.get('version', '')) == '0.1.80', 'pre-release updater manifest remains on verified v0.1.80')
-req((ROOT / 'dist/visual-designer-manager-v0.1.80.zip').is_file(), 'verified v0.1.80 ZIP remains present before v0.1.81 release')
+# Historical gate: v0.1.81 is now a verified published baseline.
+req(tuple(map(int, str(manifest.get('version', '0.0.0')).split('.'))) >= (0, 1, 81), 'updater manifest is v0.1.81 or newer')
+req((ROOT / 'dist/visual-designer-manager-v0.1.81.zip').is_file(), 'verified v0.1.81 ZIP remains present')
 
 print('Visual Designer Manager v0.1.81 complete QA: PASS')

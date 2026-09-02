@@ -484,7 +484,7 @@ final class VisualBlockConversionService
                 'targetBlank' => false, 'background' => $background, 'textColor' => $textColor,
                 'hoverBackground' => '#525a5f', 'hoverTextColor' => '#ffffff', 'focusColor' => self::SAND,
                 'paddingX' => 22, 'paddingY' => 11, 'autoSize' => true,
-                'placementMode' => 'normal', 'zIndex' => 20,
+                'placementMode' => 'overlay', 'zIndex' => 20,
                 'borderWidth' => 0, 'borderColor' => $background, 'radius' => 32,
                 'gapX' => 0, 'gapY' => 0,
             ],

@@ -1,11 +1,11 @@
 # Visual Designer Manager v0.1.x – canonical backlog
 
 **Statusdato:** 2. september 2026  
-**Aktuel release:** v0.1.80  
+**Aktuel release:** v0.1.82  
 **Arkitekturgrænse:** `clean/hangar18-manager/`  
 **Legacy-reference:** gammel Manager må bruges som read-only specifikation/migrationskilde; legacy editor-runtime må ikke blandes ind i Visual Designer Manager.
 
-## Aktuel milepælsstatus · v0.1.79
+## Aktuel milepælsstatus · v0.1.82
 
 - **HEADER/FOOTER — FÆRDIG:** multi-template, website-standarder, side-overrides, `Ingen`, migration, historik og fælles Preview/frontend-resolver er permanent regression-gate.
 - **DESIGNER PRODUKTIVITET — IMPLEMENTERET:** keyboard nudge, clipboard/copy/paste/duplicate, sidekopi, Undo/Redo, versionshistorik og restore/kopi.
@@ -39,6 +39,8 @@
 10. **v0.1.78 – Hybrid modulsider + Eventfelter — FÆRDIG:** almindelige Designer-elementer i før/mellem/efter-slots, Designer-detailpages og fleksible Eventfelter.
 11. **v0.1.79 – CLEAN-RESPONSIVE-009 — FÆRDIG:** Tablet er et fuldt canonical breakpoint i toolbar, Inspector, viewport og frontend med isoleret Undo/Redo.
 12. **v0.1.80 – VD-COMPOSABLE-MODULE-PAGES-002 — FÆRDIG:** collection-overskrifter og Eventdetaljens kernefelter er selvstændige Designer-elementer; Data-menuen er skjult.
+13. **v0.1.81 – Farvevælger + formularparitet — FÆRDIG:** fælles farvevælger, formular-preview og udvidet dokumentation.
+14. **v0.1.82 – VD-CONVERTED-BUTTON-FLOATING-001 — FÆRDIG:** konverterede knapper er flydende og eksisterende konverteringer migreres selektivt.
 9. **v0.1.77 – VD-MODULE-DESIGN-001 — FÆRDIG:** de tre canonical modulsider har redigerbar side-/kortgeometri, typografi og farver med live preview i samme frontend-renderer.
 
 ## Åben backlog
