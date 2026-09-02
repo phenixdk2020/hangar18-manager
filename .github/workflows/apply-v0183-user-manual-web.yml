@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/apply-v0183-user-manual-web.yml'
       - '.github/scripts/apply_v0183_user_manual_web.py'
+      - '.github/scripts/apply_v0183_user_manual_package_fix.py'
       - '.github/scripts/v0183_user_manual_qa.py'
 
 permissions:
@@ -23,11 +24,12 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/apply_v0183_user_manual_web.py
+          python3 .github/scripts/apply_v0183_user_manual_package_fix.py
 
       - name: Syntax and static QA
         run: |
           set -euo pipefail
-          python3 -m py_compile .github/scripts/apply_v0183_user_manual_web.py .github/scripts/v0183_user_manual_qa.py
+          python3 -m py_compile .github/scripts/apply_v0183_user_manual_web.py .github/scripts/apply_v0183_user_manual_package_fix.py .github/scripts/v0183_user_manual_qa.py
           find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
           find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           python3 .github/scripts/v0183_user_manual_qa.py
@@ -93,6 +95,7 @@ jobs:
           grep -q "H18_CLEAN_VERSION', '0.1.83'" clean/hangar18-manager/hangar18-manager.php
           grep -Fq 'Download som Word (.docx)' clean/hangar18-manager/src/Admin/ManualController.php
           grep -Fq 'Build user manual artifacts' .github/workflows/visual-designer-release.yml
+          grep -Fq '^hangar18-manager/src/Admin/ManualController.php$' .github/workflows/visual-designer-release.yml
           test "$(python3 -c "import json; print(json.load(open('clean-update.json',encoding='utf-8'))['version'])")" = '0.1.82'
 
       - name: Commit v0.1.83 release candidate
