@@ -1,0 +1,117 @@
+name: Apply Visual Designer Manager 0.1.85 Event Facts Typography
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-v0185-event-facts-typography.yml'
+      - '.github/scripts/apply_v0185_event_facts_typography.py'
+      - '.github/scripts/v0185_event_facts_typography_qa.py'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply v0.1.85 Eventfaktabånd and typography
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/apply_v0185_event_facts_typography.py
+
+      - name: Syntax and v0.1.85 QA
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/apply_v0185_event_facts_typography.py .github/scripts/v0185_event_facts_typography_qa.py
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0185_event_facts_typography_qa.py
+
+      - name: Regression QA
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+          python3 .github/scripts/v0162_page_duplicate_qa.py
+          python3 .github/scripts/v0164_clipboard_qa.py
+          php .github/scripts/v0165_elements_model_qa.php
+          python3 .github/scripts/v0165_general_elements_qa.py
+          python3 .github/scripts/v0166_foundation_qa.py
+          php .github/scripts/v0167_module_foundation_qa.php
+          php .github/scripts/v0168_canvas_section_qa.php
+          python3 .github/scripts/v0168_canvas_section_static_qa.py
+          python3 .github/scripts/v0169_canvas_autoheight_qa.py
+          python3 .github/scripts/v0170_vehicle_module_qa.py
+          python3 .github/scripts/v0171_event_module_qa.py
+          python3 .github/scripts/v0172_gallery_design_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
+
+      - name: Verify scoped patch
+        run: |
+          set -euo pipefail
+          find .github/scripts -type d -name __pycache__ -prune -exec rm -rf {} +
+          python3 - <<'PY'
+          import subprocess
+          allowed = {
+              'clean/hangar18-manager/hangar18-manager.php',
+              'clean/hangar18-manager/src/Model/LayoutModel.php',
+              'clean/hangar18-manager/src/Frontend/Renderer.php',
+              'clean/hangar18-manager/src/Admin/EventAdminController.php',
+              'clean/hangar18-manager/assets/admin-v0178-events.js',
+              'clean/hangar18-manager/src/Admin/EditorController.php',
+              'clean/hangar18-manager/assets/editor-v018-core.js',
+              'clean/hangar18-manager/src/Migration/EventDetailFactsMigration.php',
+              'clean/hangar18-manager/release-history.json',
+              'clean-release-notes.html',
+              'docs/v0185-status.md',
+          }
+          lines = subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], text=True).splitlines()
+          changed = {line[3:] for line in lines if len(line) >= 4}
+          unexpected = sorted(changed - allowed)
+          if unexpected:
+              raise SystemExit('Unexpected v0.1.85 apply paths: ' + ', '.join(unexpected))
+          missing = sorted(allowed - changed)
+          if missing:
+              raise SystemExit('Expected v0.1.85 apply paths missing: ' + ', '.join(missing))
+          PY
+          grep -q 'Version: 0.1.85' clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "define('VDM_VERSION', '0.1.85');" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "define('H18_CLEAN_VERSION', '0.1.85');" clean/hangar18-manager/hangar18-manager.php
+          grep -Fq "'eventfacts'" clean/hangar18-manager/src/Model/LayoutModel.php
+          grep -Fq "Eventfaktabånd" clean/hangar18-manager/src/Admin/EditorController.php
+          grep -Fq "name=\"address\"" clean/hangar18-manager/src/Admin/EventAdminController.php
+          grep -Fq "name=\"contact\"" clean/hangar18-manager/src/Admin/EventAdminController.php
+          test "$(python3 -c "import json; print(json.load(open('clean-update.json',encoding='utf-8'))['version'])")" = '0.1.84'
+
+      - name: Commit verified v0.1.85 candidate to main
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-apply-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/src/Model/LayoutModel.php \
+            clean/hangar18-manager/src/Frontend/Renderer.php \
+            clean/hangar18-manager/src/Admin/EventAdminController.php \
+            clean/hangar18-manager/assets/admin-v0178-events.js \
+            clean/hangar18-manager/src/Admin/EditorController.php \
+            clean/hangar18-manager/assets/editor-v018-core.js \
+            clean/hangar18-manager/src/Migration/EventDetailFactsMigration.php \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html \
+            docs/v0185-status.md
+          git diff --cached --quiet && exit 0 || true
+          git commit -m 'Implement Visual Designer Manager v0.1.85 event facts and typography'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
