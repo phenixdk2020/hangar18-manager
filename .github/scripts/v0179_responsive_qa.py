@@ -31,10 +31,12 @@ notes = text('clean-release-notes.html')
 backlog = text('docs/clean-backlog-v0100.md')
 history = json.loads(text('clean/hangar18-manager/release-history.json'))
 manifest = json.loads(text('clean-update.json'))
+legacy_v0178_qa = text('.github/scripts/v0178_hybrid_event_fields_qa.py')
 
 header = re.search(r'\* Version:\s*([0-9.]+)', plugin)
 const = re.search(r"H18_CLEAN_VERSION',\s*'([0-9.]+)'", plugin)
 req(header is not None and const is not None and header.group(1) == const.group(1) == '0.1.79', 'runtime version is exactly v0.1.79')
+req('v0.1.78 or newer' in legacy_v0178_qa, 'historical v0.1.78 gate is forward-compatible')
 
 # Canonical model already has all four geometries; v0.1.79 closes runtime parity.
 req("'desktop' => $desktop, 'laptop' => $laptop, 'tablet' => $tablet, 'mobile' => $mobile" in layout, 'LayoutModel canonical geometry contains Desktop/Laptop/Tablet/Mobile')
