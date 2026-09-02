@@ -1,0 +1,78 @@
+name: QA Visual Designer Manager v0.1.85 Editor Live Parity
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'clean/hangar18-manager/assets/editor-v0181.css'
+      - 'clean/hangar18-manager/assets/editor-v018-core.js'
+      - 'clean/hangar18-manager/src/Frontend/Renderer.php'
+      - '.github/scripts/v0185_editor_live_box_qa.py'
+      - '.github/scripts/v0185_event_facts_typography_qa.py'
+      - '.github/scripts/v0185_semantic_qa.py'
+      - '.github/workflows/qa-v0185-editor-live-parity.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do
+            php -l "$file" >/dev/null
+          done
+          echo 'PHP syntax: OK'
+
+      - name: JavaScript syntax
+        run: node --check clean/hangar18-manager/assets/editor-v018-core.js
+
+      - name: v0.1.85 editor/live box parity
+        run: python3 .github/scripts/v0185_editor_live_box_qa.py
+
+      - name: v0.1.85 Event facts and typography
+        run: python3 .github/scripts/v0185_event_facts_typography_qa.py
+
+      - name: v0.1.85 semantic regression
+        run: python3 .github/scripts/v0185_semantic_qa.py
+
+      - name: Editor/frontend parity regression
+        run: python3 .github/scripts/v0173_editor_frontend_parity_qa.py
+
+      - name: Canvas auto-height regression
+        run: python3 .github/scripts/v0169_canvas_autoheight_qa.py
+
+      - name: Responsive regression
+        run: python3 .github/scripts/v0179_responsive_qa.py
+
+      - name: Composable module regression
+        run: python3 .github/scripts/v0180_composable_qa.py
+
+      - name: v0.1.81 regression
+        run: python3 .github/scripts/v0181_complete_qa.py
+
+      - name: Portable transfer regression
+        run: python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Verify candidate version and unreleased updater
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "Version: 0.1.85" clean/hangar18-manager/hangar18-manager.php
+          grep -q "define('VDM_VERSION', '0.1.85')" clean/hangar18-manager/hangar18-manager.php
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('clean-update.json').read_text(encoding='utf-8'))
+          assert data['version']=='0.1.84', f"Updater must remain 0.1.84 before release, got {data['version']}"
+          print('Candidate/release separation: OK')
+          PY
