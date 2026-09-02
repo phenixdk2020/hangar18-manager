@@ -1,7 +1,8 @@
-name: Apply Visual Designer Manager 0.1.81 Status Ready
+name: Apply Visual Designer Manager 0.1.81 Complete
 
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/apply-v0181-status-ready.yml'
 
@@ -16,108 +17,87 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply v0.1.81 status changes
-        shell: bash
+      - name: Prepare historical v0.1.80 QA
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import json
+          python3 .github/scripts/pre_v0181_v0180_qa_fix.py
 
-          js_path = Path('clean/hangar18-manager/assets/admin-v0123.js')
-          js = js_path.read_text(encoding='utf-8')
-          old_pages = "        'h18-clean-pages': ['Under udvikling', 'partial'],"
-          new_pages = "        'h18-clean-pages': ['Klar', 'ready'],"
-          if old_pages not in js:
-              raise SystemExit('Expected Sider status anchor not found')
-          js = js.replace(old_pages, new_pages, 1)
-
-          event_anchor = "        'h18-clean-events': ['Klar', 'ready'],\n"
-          event_fields = "        'h18-clean-event-fields': ['Klar', 'ready'],\n"
-          if event_fields not in js:
-              if event_anchor not in js:
-                  raise SystemExit('Expected Events status anchor not found')
-              js = js.replace(event_anchor, event_anchor + event_fields, 1)
-          js_path.write_text(js, encoding='utf-8')
-
-          plugin_path = Path('clean/hangar18-manager/hangar18-manager.php')
-          plugin = plugin_path.read_text(encoding='utf-8')
-          if ' * Version: 0.1.80' not in plugin or "define('H18_CLEAN_VERSION', '0.1.80');" not in plugin:
-              raise SystemExit('Expected v0.1.80 plugin version anchors not found')
-          plugin = plugin.replace(' * Version: 0.1.80', ' * Version: 0.1.81', 1)
-          plugin = plugin.replace("define('H18_CLEAN_VERSION', '0.1.80');", "define('H18_CLEAN_VERSION', '0.1.81');", 1)
-          plugin_path.write_text(plugin, encoding='utf-8')
-
-          history_path = Path('clean/hangar18-manager/release-history.json')
-          history = json.loads(history_path.read_text(encoding='utf-8'))
-          versions = history.get('versions', [])
-          if versions and versions[0].get('version') == '0.1.81':
-              pass
-          else:
-              versions.insert(0, {
-                  'version': '0.1.81',
-                  'date': '2026-09-02',
-                  'items': [
-                      'Manager-status: Sider er markeret Klar, fordi sideadministration, duplikering, publiceringsstatus, Hjem-valg og Designer-integration er implementeret.',
-                      'Manager-status: Eventfelter er markeret Klar, fordi feltdefinitioner, værdier, synlighed/påkrævet, Manager-redigering og Designer-elementet Eventfelt er implementeret.',
-                      'Ingen funktionel datamodel er ændret; dette er en status-/releaseopdatering af eksisterende færdig funktionalitet.'
-                  ]
-              })
-              history['versions'] = versions
-          history_path.write_text(json.dumps(history, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-
-          notes = '''<h2>0.1.81 – Modulstatus for Sider og Eventfelter</h2>
-          <ul>
-          <li><strong>Sider</strong> vises nu som <strong>Klar</strong> i Manager-menuen.</li>
-          <li><strong>Eventfelter</strong> vises nu som <strong>Klar</strong> i Manager-menuen.</li>
-          <li>Statusændringen afspejler den allerede implementerede funktionalitet; datamodel og frontend-adfærd er uændret.</li>
-          </ul>'''
-          Path('clean-release-notes.html').write_text(notes + '\n', encoding='utf-8')
-
-          status = '''# Visual Designer Manager v0.1.81 – status
-
-## Scope
-
-- Sider: Manager-badge ændret fra **Under udvikling** til **Klar**.
-- Eventfelter: Manager-badge tilføjet som **Klar**.
-- Ingen ændring af event-/sidedata eller frontend-rendering.
-
-## Begrundelse
-
-Sider har allerede sideadministration, Designer-status, duplikering, publicering/kladde, Hjem-valg og Designer-integration. Eventfelter har feltdefinitioner, værdier, aktiv/påkrævet, kort/detail-visning, Manager-redigering og selvstændigt Designer-element.
-'''
-          Path('docs/v0181-status.md').write_text(status, encoding='utf-8')
-          PY
-
-      - name: Syntax and status QA
-        shell: bash
+      - name: Apply complete v0.1.81 candidate
         run: |
           set -euo pipefail
-          php -l clean/hangar18-manager/hangar18-manager.php
-          node --check clean/hangar18-manager/assets/admin-v0123.js
-          grep -Fq "'h18-clean-pages': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
-          grep -Fq "'h18-clean-event-fields': ['Klar', 'ready']" clean/hangar18-manager/assets/admin-v0123.js
-          grep -q 'Version: 0.1.81' clean/hangar18-manager/hangar18-manager.php
-          grep -q "H18_CLEAN_VERSION', '0.1.81'" clean/hangar18-manager/hangar18-manager.php
-          test "$(python3 -c "import json; print(json.load(open('clean/hangar18-manager/release-history.json',encoding='utf-8'))['versions'][0]['version'])")" = '0.1.81'
+          python3 .github/scripts/apply_v0181_complete.py
+
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/pre_v0181_v0180_qa_fix.py .github/scripts/apply_v0181_complete.py .github/scripts/v0180_composable_qa.py .github/scripts/v0181_complete_qa.py
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Regression QA
+        run: |
+          set -euo pipefail
+          php .github/scripts/hierarchy_normalizer_qa.php
+          php .github/scripts/v0125_model_qa.php
+          php .github/scripts/v0161_header_footer_qa.php
+          python3 .github/scripts/v0162_page_duplicate_qa.py
+          python3 .github/scripts/v0164_clipboard_qa.py
+          php .github/scripts/v0165_elements_model_qa.php
+          python3 .github/scripts/v0165_general_elements_qa.py
+          python3 .github/scripts/v0166_foundation_qa.py
+          php .github/scripts/v0167_module_foundation_qa.php
+          php .github/scripts/v0168_canvas_section_qa.php
+          python3 .github/scripts/v0168_canvas_section_static_qa.py
+          python3 .github/scripts/v0169_canvas_autoheight_qa.py
+          python3 .github/scripts/v0170_vehicle_module_qa.py
+          python3 .github/scripts/v0171_event_module_qa.py
+          python3 .github/scripts/v0172_gallery_design_qa.py
+          python3 .github/scripts/v0173_editor_frontend_parity_qa.py
+          python3 .github/scripts/v0174_module_cutover_qa.py
+          python3 .github/scripts/v0175_forms_search_archive_qa.py
+          python3 .github/scripts/v0177_module_design_qa.py
+          python3 .github/scripts/v0178_hybrid_event_fields_qa.py
+          python3 .github/scripts/v0179_responsive_qa.py
+          python3 .github/scripts/v0180_composable_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
 
       - name: Verify scoped diff
-        shell: bash
         run: |
           set -euo pipefail
+          find .github/scripts -type d -name __pycache__ -prune -exec rm -rf {} +
           git status --short
           test -n "$(git status --short)"
-          if git status --short | grep -Ev '^( M|M |A |\?\?) (clean/hangar18-manager/assets/admin-v0123.js|clean/hangar18-manager/hangar18-manager.php|clean/hangar18-manager/release-history.json|clean-release-notes.html|docs/v0181-status.md)$'; then
+          if git status --short | grep -Ev '^( M|M |A |\?\?) (\.github/scripts/v0180_composable_qa.py|clean/hangar18-manager/hangar18-manager.php|clean/hangar18-manager/assets/admin-v0123.js|clean/hangar18-manager/assets/editor-v018-core.js|clean/hangar18-manager/assets/editor-v0181-color-picker.js|clean/hangar18-manager/assets/editor-v0181.css|clean/hangar18-manager/release-history.json|clean-release-notes.html|CLEAN-USER-MANUAL.md|CLEAN-DESIGN-MANUAL.md|docs/v0181-plan.md|docs/v0181-status.md|docs/user-manual-assets/v0181-designer-overview.svg|docs/user-manual-assets/v0181-color-picker.svg|docs/user-manual-assets/v0181-form-wysiwyg.svg)$'; then
             echo 'Unexpected v0.1.81 modified path.' >&2
             exit 1
           fi
+          grep -q 'Version: 0.1.81' clean/hangar18-manager/hangar18-manager.php
+          grep -q "H18_CLEAN_VERSION', '0.1.81'" clean/hangar18-manager/hangar18-manager.php
+          test "$(python3 -c "import json; print(json.load(open('clean-update.json',encoding='utf-8'))['version'])")" = '0.1.80'
 
-      - name: Commit v0.1.81 candidate
-        shell: bash
+      - name: Commit v0.1.81 release candidate
         run: |
           set -euo pipefail
           git config user.name 'visual-designer-apply-bot'
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
-          git add clean/hangar18-manager/assets/admin-v0123.js clean/hangar18-manager/hangar18-manager.php clean/hangar18-manager/release-history.json clean-release-notes.html docs/v0181-status.md
-          git commit -m 'Mark Sider and Eventfelter ready in v0.1.81'
-          git push origin HEAD:main
+          git add .github/scripts/v0180_composable_qa.py \
+            clean/hangar18-manager/hangar18-manager.php \
+            clean/hangar18-manager/assets/admin-v0123.js \
+            clean/hangar18-manager/assets/editor-v018-core.js \
+            clean/hangar18-manager/assets/editor-v0181-color-picker.js \
+            clean/hangar18-manager/assets/editor-v0181.css \
+            clean/hangar18-manager/release-history.json \
+            clean-release-notes.html CLEAN-USER-MANUAL.md CLEAN-DESIGN-MANUAL.md \
+            docs/v0181-plan.md docs/v0181-status.md \
+            docs/user-manual-assets/v0181-designer-overview.svg \
+            docs/user-manual-assets/v0181-color-picker.svg \
+            docs/user-manual-assets/v0181-form-wysiwyg.svg
+          git diff --cached --quiet && exit 0 || true
+          git commit -m 'Implement Visual Designer Manager v0.1.81 color and form parity'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
