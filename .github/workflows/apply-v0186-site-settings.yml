@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - '.github/scripts/apply_v0186_site_settings.py'
+      - '.github/scripts/v0185_event_facts_typography_qa.py'
       - '.github/workflows/apply-v0186-site-settings.yml'
   workflow_dispatch:
 
