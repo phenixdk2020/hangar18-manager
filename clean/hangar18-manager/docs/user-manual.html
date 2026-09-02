@@ -1,0 +1,1310 @@
+<h1 id="visual-designer-manager--brugermanual">Visual Designer Manager –
+Brugermanual</h1>
+<p>Senest opdateret: 2. september 2026<br />
+Gælder for: Visual Designer Manager 0.1.83 og nyere; planlagte
+funktioner er mærket <strong>Planlagt</strong><br />
+Målgruppe: Redaktører og administratorer, der bygger og vedligeholder
+sider i WordPress</p>
+<blockquote>
+<p>Denne manual beskriver <strong>hvordan Visual Designer Manager bruges
+i praksis</strong>. Den tekniske arkitektur er beskrevet separat i
+<code>CLEAN-DESIGN-MANUAL.md</code>.</p>
+</blockquote>
+<hr />
+<h2 id="brugermanualen-på-websitet">Brugermanualen på websitet</h2>
+<p>Fra Visual Designer Manager 0.1.83 findes brugermanualen også som en
+almindelig side på websitet med adressen
+<strong><code>/visual-designer-brugermanual/</code></strong>. Siden
+oprettes automatisk, når en administrator åbner WordPress efter
+opdateringen.</p>
+<p>Du kan åbne den fra <strong>Visual Designer Manager →
+Brugermanual</strong> eller fra kortet <strong>Brugermanual</strong> på
+Managerens Dashboard. På websiden kan du vælge <strong>Åbn Visual
+Designer Manager</strong> for at gå tilbage til administrationen.</p>
+<p>Knappen <strong>Download som Word (.docx)</strong> henter den samme
+manual som en rigtig Word-fil. Webvisningen og Word-filen genereres
+begge fra den kanoniske kilde
+<strong><code>CLEAN-USER-MANUAL.md</code></strong> ved release, så de
+ikke vedligeholdes som to forskellige manualer.</p>
+<hr />
+<h2 id="1-hvad-er-visual-designer-manager">1. Hvad er Visual Designer
+Manager?</h2>
+<p>Visual Designer Manager er en visuel sidebygger til WordPress. Ideen
+er, at en side bygges som LEGO-klodser:</p>
+<ul>
+<li><strong>Sektioner</strong> opdeler siden i større områder.</li>
+<li><strong>Kasser</strong> bruges til lokale grupper og kolonner.</li>
+<li><strong>Tekst</strong> bruges til overskrift og brødtekst.</li>
+<li><strong>Billede</strong> bruges til billeder med en selvstændig
+billedboks.</li>
+</ul>
+<p>Elementer kan flyttes med drag-and-drop, placeres
+over/under/venstre/højre for hinanden og lægges ind i Kasser og
+Sektioner.</p>
+<p>Visual Designer gemmer siden i sin egen model og ændrer først den
+offentlige Visual Designer-side, når du vælger <strong>Gem som ny
+version</strong>.</p>
+<h3 id="11-opret-en-ny-side-direkte-i-manageren">1.1 Opret en ny side
+direkte i Manageren</h3>
+<p>Åbn <strong>Visual Designer Manager → Sider</strong>. Under
+<strong>Ny side</strong> kan du angive titel, valgfri slug, overordnet
+side og om siden skal starte som Kladde eller Publiceret. Vælg
+<strong>Opret og åbn Designer</strong>; WordPress-siden oprettes, og
+Visual Designer åbner den med et tomt layout. Første <strong>Gem som ny
+version</strong> opretter Visual Designer-version v1.</p>
+<p>Du kan gentage dette for alle de sider, du skal bygge. Eksisterende
+WordPress-sider bliver fortsat vist i samme Sider-oversigt og kan åbnes
+i Designer.</p>
+<hr />
+<h2 id="2-sådan-er-en-webside-bygget-op">2. Sådan er en webside bygget
+op</h2>
+<p>Visual Designer bygger en webside som LEGO. Nogle elementer skaber
+<strong>struktur</strong>, mens andre er <strong>indhold</strong>.
+Header og Footer er globale, mens den enkelte sides indhold bygges af
+Sektioner, Kasser og indholdselementer.</p>
+<p><img src="docs/user-manual-assets/page-anatomy.svg"
+alt="Grafisk oversigt over Header, Hero, sideindhold og Footer" /></p>
+<p><em>Figur 1 – En typisk Visual Designer-side. Header og Footer er
+globale. Hero/Topbanner og resten af indholdet tilhører selve
+siden.</em></p>
+<h3 id="21-det-overordnede-princip">2.1 Det overordnede princip</h3>
+<pre class="text"><code>WORDPRESS
+└── TEMA / SHELL
+    ├── GLOBAL HEADER
+    │   ├── Logo
+    │   ├── Menu
+    │   ├── Knap
+    │   └── Icon/Tekst
+    │
+    ├── SIDE
+    │   ├── Hero / Topbanner
+    │   ├── Sektion
+    │   │   ├── Kasse
+    │   │   │   ├── Billede
+    │   │   │   └── Tekst
+    │   │   └── Kasse
+    │   │       ├── Tekst
+    │   │       └── Knap
+    │   ├── Divider
+    │   ├── Sektion → Tabel
+    │   ├── Sektion → Galleri
+    │   └── Sektion → Formular / FAQ
+    │
+    └── GLOBAL FOOTER
+        ├── Logo
+        ├── Menu / Links
+        ├── Kontakt
+        ├── Icons
+        └── Copyright</code></pre>
+<h3 id="22-tema--shell">2.2 Tema / Shell</h3>
+<p>Temaet er den tekniske WordPress-ramme omkring Visual Designer. Det
+skal primært håndtere WordPress-lifecycle, hooks,
+<code>wp_head()</code>, <code>wp_footer()</code>, nødvendige wrappers,
+integration og fallback. Det visuelle design skal ligge i Visual
+Designer frem for i parallelle theme-regler.</p>
+<p><strong>Status:</strong> Theme Shell-konverteringen er under
+udvikling. Hangar18 Base Theme bruges fortsat som fallback/baseline,
+indtil visuel parity er godkendt.</p>
+<h3 id="23-header">2.3 Header</h3>
+<p>Header er et <strong>globalt design</strong> over den enkelte side.
+Den kan indeholde Logo, Menu, Tekst, Knap og Icon og har sin egen
+globale model og versionshistorik.</p>
+<pre class="text"><code>┌──────────────────────────────────────────────────────┐
+│ [LOGO]   Hjem  Køretøjer  Events  Galleri  [Kontakt]│
+└──────────────────────────────────────────────────────┘</code></pre>
+<h3 id="24-menu">2.4 Menu</h3>
+<p>Menu er fra 0.1.39 et selvstændigt visuelt element i Header/Footer
+Designer. Vælg <strong>+ Menu</strong>, placer elementet i en
+Sektion/Kasse og vælg derefter en eksisterende WordPress-menu i
+Inspector. Menupunkterne vedligeholdes fortsat centralt i WordPress;
+Visual Designer gemmer kun menuens ID og præsentationen.</p>
+<p>I Inspector kan du styre vandret/lodret retning, venstre/center/højre
+alignment, tekst-, hover- og aktiv-farve, baggrund, typografi, afstand
+mellem punkter, padding og mobilvisning. Mobilvisning kan være
+<strong>Hamburger</strong>, <strong>Lodret menu</strong> eller
+<strong>Ombryd menupunkter</strong>.</p>
+<p>Header/Footer-preview kan bruges uden at Theme Shell overtager den
+offentlige side. Live cutover sker først, når Headeren er godkendt 1:1
+på Desktop, Laptop og Mobil.</p>
+<h3 id="25-hero--topbanner">2.5 Hero / Topbanner</h3>
+<p>Hero/Topbanner er normalt den første store <strong>Sektion inde i
+selve siden</strong> og er derfor ikke det samme som Headeren. Hero er
+typisk stor og markant; Topbanner er samme idé i en lavere variant.</p>
+<pre class="text"><code>GLOBAL HEADER
+────────────────────────
+HERO / TOPBANNER
+  Baggrundsbillede
+  Overskrift
+  Undertekst
+  [ Knap ]
+────────────────────────
+RESTEN AF SIDEN
+────────────────────────
+GLOBAL FOOTER</code></pre>
+<p>Hero/Topbanner bør være en Sektion-preset/specialisering med fx
+baggrundsbillede, focal point, overlay, højde og responsive overrides –
+ikke en separat layoutmotor.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="26-sektion-kasse-og-lego-hierarkiet">2.6 Sektion, Kasse og
+LEGO-hierarkiet</h3>
+<p><img src="docs/user-manual-assets/lego-hierarchy.svg"
+alt="Grafisk illustration af Side, Sektion, Kasse og indholdselementer" /></p>
+<p><em>Figur 2 – Sektion er sidens hovedblok. Kasse er den fleksible
+lokale container. Kasser kan indeholde Kasser, men Sektioner nestes ikke
+som almindelige Kasser.</em></p>
+<pre class="text"><code>SIDE
+└── SEKTION
+    ├── KASSE
+    │   ├── Billede
+    │   └── Tekst
+    └── KASSE
+        ├── Tekst
+        └── Knap</code></pre>
+<p><strong>Huskeregel:</strong> Sektion = stort område. Kasse = lokal
+LEGO-klods.</p>
+<h3 id="27-tekst">2.7 Tekst</h3>
+<p>Tekst bruges til overskrift, brødtekst, lister og links. Et
+Tekst-element kan have H2-H6 og brødtekst i samme fysiske boks og kan
+styles med typografi, farver, alignment, baggrund, padding, ramme,
+radius og Afstand X/Y.</p>
+<h3 id="28-billede">2.8 Billede</h3>
+<p>Billede består af <strong>billedboksen</strong> og <strong>selve
+billedet</strong>. Billedet kan fx vises som Contain, Cover, Original,
+Stretch eller Manuel inde i boksen.</p>
+<p>Billede skal også kunne fungere som link med samme fælles linkmodel
+som Knap og Icon: Ingen, Intern side, Ekstern URL, Anker, E-mail eller
+Telefon samt <em>Åbn i ny fane</em> hvor relevant.</p>
+<p><strong>Status for billede som link: Planlagt udvidelse.</strong></p>
+<h3 id="29-knap">2.9 Knap</h3>
+<p>Knap er et selvstændigt element og skal ikke behandles som Tekst. Når
+<strong>Knap trækkes fra paletten</strong>, starter den som
+<strong>Flydende Knap</strong>, så den kan placeres frit på Side-root, i
+en Sektion eller Kasse uden at dele den celle, den ligger oven på.
+Derfor bruges der ikke Over/Under/Venstre/Højre cell-split under selve
+indsættelsen.</p>
+<p>I Inspector kan Knap efterfølgende skiftes til
+<strong>Normal</strong>, hvis den i stedet skal deltage i det
+almindelige LEGO/grid-layout. En Flydende Knap er et parent-relativt
+overlay, reserverer ingen normal grid-celle og skubber ikke
+naboelementer. I editoren ligger Flydende Knap altid visuelt over
+normale elementer, også når et andet element markeres; feltet
+<strong>Lag</strong> bruges fortsat til rækkefølgen mellem flere
+flydende elementer og på frontend.</p>
+<h3 id="210-icon">2.10 Icon</h3>
+<p>Icon bruges fx til telefon, mail, lokation, sociale medier, pil,
+download eller information og skal kunne styles og eventuelt fungere som
+link.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="211-divider">2.11 Divider</h3>
+<p>Divider er en visuel skillelinje med fx bredde, tykkelse, farve,
+alignment, afstand og solid/dashed/dotted streg.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="212-spacer">2.12 Spacer</h3>
+<p>Spacer er en bevidst tom layoutblok. Den bruges kun, når fysisk tom
+plads skal være et selvstændigt element; normal afstand styres ellers
+med Afstand X/Y.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="213-tabel">2.13 Tabel</h3>
+<p>Tabel bruges til strukturerede data med rækker, kolonner,
+overskriftsrække, kolonnebredder, tekst, links, farver, padding og
+alignment.</p>
+<p><img src="docs/user-manual-assets/table-borders.svg"
+alt="Grafisk eksempel på cellemarkering og Excel-lignende tabelrammer" /></p>
+<p><em>Figur 3 – Planlagt Tabel-element. En eller flere celler kan
+markeres, hvorefter rammer vælges på samme måde som i et
+regneark.</em></p>
+<p>Rammer skal kunne vælges som <strong>Ydre, Indre, Vandret, Lodret,
+Top, Bund, Venstre, Højre, Alle eller Ingen</strong>. For valgte rammer
+skal tykkelse, farve og senere stregtype kunne styres. Flere celler skal
+kunne markeres samtidig. På mobil skal relevante strategier som vandret
+scroll, skjulte kolonner eller stablet label/værdi-visning kunne
+vælges.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="214-galleri">2.14 Galleri</h3>
+<p>Galleri kan senere tilbyde Grid, Masonry, Slider/Carousel og Lightbox
+og kan efter fælles dataarkitektur kobles til Managerens
+galleri-data.</p>
+<p><strong>Status: Native Visual Designer-element er
+planlagt.</strong></p>
+<h3 id="215-video">2.15 Video</h3>
+<p>Video kan bruges til fx YouTube, Vimeo eller lokal video med URL,
+controls, autoplay/mute, poster og aspect ratio.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="216-accordion--faq">2.16 Accordion / FAQ</h3>
+<p>Accordion/FAQ bruges til indhold, der åbnes og lukkes efter behov, fx
+ofte stillede spørgsmål.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="217-tabs">2.17 Tabs</h3>
+<p>Tabs opdeler beslægtet indhold i faner, fx <em>Tekniske data</em>,
+<em>Historie</em> og <em>Billeder</em>.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="218-formular">2.18 Formular</h3>
+<p>Formular bruges til fx Kontakt, Bliv medlem og eventtilmelding og kan
+bestå af tekst-, e-mail-, telefon-, textarea-, valg- og
+submit-felter.</p>
+<p><strong>Status: Planlagt.</strong></p>
+<h3 id="219-dynamiske-elementer">2.19 Dynamiske elementer</h3>
+<p>Dynamiske elementer kombinerer Manager-data med Visual
+Designer-layout. Planlagte typer omfatter Køretøj, Event og dynamisk
+Billedgalleri.</p>
+<p><strong>Status: Planlagt efter fælles dataarkitektur.</strong></p>
+<h3 id="220-footer">2.20 Footer</h3>
+<p>Footer er ligesom Header et <strong>globalt design</strong> uden for
+den enkelte sides model. Den kan indeholde Logo, Tekst, Menu/Links,
+Kasser, Icons, kontaktinformation og copyright og har sin egen
+versionshistorik.</p>
+<pre class="text"><code>┌────────────────────────────────────────────────────────┐
+│ [LOGO]     LINKS             KONTAKT                   │
+│             Hjem              Telefon                  │
+│ Foreningen  Køretøjer         E-mail                   │
+│             Events            Sociale ikoner           │
+│                                                        │
+│ © Foreningen                                           │
+└────────────────────────────────────────────────────────┘</code></pre>
+<h3 id="221-et-komplet-sideeksempel">2.21 Et komplet sideeksempel</h3>
+<pre class="text"><code>GLOBAL HEADER
+├── Logo
+├── Menu
+└── Knap &quot;Bliv medlem&quot;
+
+SIDE: Køretøjer og materiel
+├── HERO / TOPBANNER
+│   ├── Baggrundsbillede
+│   ├── Tekst &quot;Køretøjer og materiel&quot;
+│   └── Knap &quot;Se samlingen&quot;
+├── SEKTION
+│   ├── Kasse → Billede som link
+│   └── Kasse → Tekst + Knap
+├── Divider
+├── SEKTION → Tekst + Tabel
+├── Spacer
+├── SEKTION → Tekst + Galleri
+├── SEKTION → Accordion / FAQ
+└── SEKTION → Formular
+
+GLOBAL FOOTER
+├── Logo
+├── Menu / Links
+├── Kontakt
+├── Icons
+└── Copyright</code></pre>
+<h3 id="222-globalt-kontra-sideindhold">2.22 Globalt kontra
+sideindhold</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Del</th>
+<th style="text-align: right;">Global</th>
+<th style="text-align: right;">Del af den enkelte side</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tema/Shell</td>
+<td style="text-align: right;">Ja, teknisk ramme</td>
+<td style="text-align: right;">Nej</td>
+</tr>
+<tr class="even">
+<td>Header</td>
+<td style="text-align: right;">Ja</td>
+<td style="text-align: right;">Nej</td>
+</tr>
+<tr class="odd">
+<td>Menu i Header/Footer</td>
+<td style="text-align: right;">Global placering</td>
+<td style="text-align: right;">Nej</td>
+</tr>
+<tr class="even">
+<td>Hero/Topbanner</td>
+<td style="text-align: right;">Nej</td>
+<td style="text-align: right;">Ja</td>
+</tr>
+<tr class="odd">
+<td>Sektion</td>
+<td style="text-align: right;">Nej</td>
+<td style="text-align: right;">Ja</td>
+</tr>
+<tr class="even">
+<td>Kasse</td>
+<td style="text-align: right;">Nej</td>
+<td style="text-align: right;">Ja</td>
+</tr>
+<tr class="odd">
+<td>Tekst/Billede/Knap</td>
+<td style="text-align: right;">Normalt nej</td>
+<td style="text-align: right;">Ja</td>
+</tr>
+<tr class="even">
+<td>Footer</td>
+<td style="text-align: right;">Ja</td>
+<td style="text-align: right;">Nej</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Den vigtigste regel:</strong> Header og Footer er globale.
+Selve siden består af Sektioner. Sektioner indeholder Kasser og
+indholdselementer. Kasser kan igen indeholde andre Kasser og elementer.
+Hero/Topbanner er en særlig Sektion øverst på selve siden.</p>
+<hr />
+<h2 id="3-hvor-findes-funktionerne">3. Hvor findes funktionerne?</h2>
+<p>Når pluginet <strong>Visual Designer Manager</strong> er aktivt,
+findes hovedmenuen:</p>
+<p><strong>WordPress → Visual Designer Manager</strong></p>
+<p>Her findes bl.a.:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Menupunkt</th>
+<th>Formål</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Dashboard</td>
+<td>Samlet status for Visual Designer-sider og Manager</td>
+</tr>
+<tr class="even">
+<td>Designer</td>
+<td>Åbn den visuelle sidebygger</td>
+</tr>
+<tr class="odd">
+<td>Køretøjer</td>
+<td>Administration af køretøjsindhold</td>
+</tr>
+<tr class="even">
+<td>Køretøjsfelter</td>
+<td>Feltopsætning for køretøjsdata</td>
+</tr>
+<tr class="odd">
+<td>Events</td>
+<td>Administration af events</td>
+</tr>
+<tr class="even">
+<td>Billedgalleri</td>
+<td>Administration af galleri/album</td>
+</tr>
+<tr class="odd">
+<td>Data</td>
+<td>Datafunktioner og fremtidige datamoduler</td>
+</tr>
+<tr class="even">
+<td>Sider</td>
+<td>Oversigt over WordPress-sider og Visual Designer-status</td>
+</tr>
+<tr class="odd">
+<td>Menu</td>
+<td>WordPress-menuer og menuplaceringer</td>
+</tr>
+<tr class="even">
+<td>Header / Footer</td>
+<td>Global header/footer-administration</td>
+</tr>
+<tr class="odd">
+<td>Backup</td>
+<td>Backup af Visual Designer-layouts og versionshistorik</td>
+</tr>
+<tr class="even">
+<td>Opdateringer</td>
+<td>Tjek og installer nye Manager-versioner</td>
+</tr>
+<tr class="odd">
+<td>Log</td>
+<td>Diagnose- og fejllog</td>
+</tr>
+</tbody>
+</table>
+<p>Nogle af de specialiserede adminområder udbygges fortsat i Visual
+Designer-serien.</p>
+<hr />
+<h2 id="4-åbn-en-side-i-designer">4. Åbn en side i Designer</h2>
+<ol type="1">
+<li>Gå til <strong>Visual Designer Manager → Designer</strong>.</li>
+<li>Find den WordPress-side, du vil redigere.</li>
+<li>Klik <strong>Åbn designer</strong>.</li>
+</ol>
+<p>Designerens skærm består af tre hovedområder:</p>
+<pre class="text"><code>┌──────────────┬─────────────────────────────┬──────────────────┐
+│ ELEMENTER    │           CANVAS            │    INSPECTOR     │
+│              │                             │                  │
+│ Sektion      │   Den side du bygger        │ Indstillinger    │
+│ Kasse        │                             │ for valgt        │
+│ Tekst        │                             │ element          │
+│ Billede      │                             │                  │
+└──────────────┴─────────────────────────────┴──────────────────┘</code></pre>
+<h3 id="venstre-elementer">Venstre: Elementer</h3>
+<p>Herfra kan du tilføje nye elementer.</p>
+<h3 id="midten-canvas">Midten: Canvas</h3>
+<p>Her bygges siden visuelt.</p>
+<h3 id="højre-inspector">Højre: Inspector</h3>
+<p>Her ændres egenskaberne for det valgte element.</p>
+<hr />
+<h2 id="5-forstå-sektion-og-kasse">5. Forstå Sektion og Kasse</h2>
+<h3 id="sektion">Sektion</h3>
+<p>En <strong>Sektion</strong> er et stort hovedområde på siden.</p>
+<p>Eksempel:</p>
+<pre class="text"><code>SIDE
+├── SEKTION: Om foreningen
+├── SEKTION: Køretøjer
+├── SEKTION: Events
+└── SEKTION: Kontakt</code></pre>
+<p>En Sektion bruges normalt i fuld sidebredde og fungerer som den
+overordnede ramme for et område.</p>
+<h3 id="kasse">Kasse</h3>
+<p>En <strong>Kasse</strong> er en mindre layoutcontainer inde i en
+Sektion eller en anden Kasse.</p>
+<p>Eksempel:</p>
+<pre class="text"><code>SEKTION
+├── KASSE
+│   ├── Billede
+│   └── Tekst
+└── KASSE
+    └── Tekst</code></pre>
+<p>Kasser er især nyttige til:</p>
+<ul>
+<li>to eller tre kolonner;</li>
+<li>kort med billede og tekst;</li>
+<li>farvede felter;</li>
+<li>grupper af elementer;</li>
+<li>nested layout.</li>
+</ul>
+<h3 id="praktisk-huskeregel">Praktisk huskeregel</h3>
+<p><strong>Sektion = stort område på siden.</strong><br />
+<strong>Kasse = lokal LEGO-klods inde i området.</strong></p>
+<hr />
+<h2 id="6-tilføj-et-element">6. Tilføj et element</h2>
+<p>Et element kan tilføjes på to måder.</p>
+<h3 id="klik">Klik</h3>
+<p>Klik på fx <strong>+ Tekst</strong>. Elementet lægges på
+root/canvas.</p>
+<h3 id="drag-and-drop">Drag-and-drop</h3>
+<p>Træk elementet fra venstre palette til den ønskede position.</p>
+<p>Det anbefales at bruge drag-and-drop, når du vil placere elementet
+direkte i en Kasse eller ved siden af et andet element.</p>
+<hr />
+<h2 id="7-flyt-elementer">7. Flyt elementer</h2>
+<p>Eksisterende elementer flyttes ved at trække i elementets <strong>✥
+flyttehåndtag</strong>.</p>
+<p>Når du trækker over et andet element, vises drop-zoner.</p>
+<h3 id="drop-zoner">Drop-zoner</h3>
+<ul>
+<li><strong>↑ OVER</strong> – del den valgte celle over elementet.</li>
+<li><strong>↓ UNDER</strong> – del den valgte celle under
+elementet.</li>
+<li><strong>← VENSTRE</strong> – del cellen og placer det nye element
+til venstre.</li>
+<li><strong>HØJRE →</strong> – del cellen og placer det nye element til
+højre.</li>
+<li><strong>IND I</strong> – vises på Kasse/Sektion og lægger elementet
+ind i containeren.</li>
+</ul>
+<h3 id="eksempel-to-elementer-side-om-side">Eksempel: to elementer side
+om side</h3>
+<pre class="text"><code>┌───────────────┬───────────────┐
+│    Billede    │     Tekst     │
+└───────────────┴───────────────┘</code></pre>
+<h3 id="eksempel-del-kun-venstre-celle-lodret">Eksempel: del kun venstre
+celle lodret</h3>
+<pre class="text"><code>┌───────────────┬───────────────┐
+│    Billede    │               │
+├───────────────┤     Tekst     │
+│     Tekst     │               │
+└───────────────┴───────────────┘</code></pre>
+<p>Elementet til højre kan altså spænde over begge rækker.</p>
+<hr />
+<h2 id="8-farverne-i-designer">8. Farverne i Designer</h2>
+<h3 id="farvevælger-i-inspector">Farvevælger i Inspector</h3>
+<p>Fra <strong>0.1.35</strong> bruger Visual Designer sin egen
+farvevælger i stedet for Windows/browserens native farvedialog. Du kan
+vælge farve i saturation/brightness-feltet, flytte Hue-slideren, skrive
+en præcis HEX-værdi eller bruge en farvechip. Klik
+<strong>Anvend</strong> for at gemme valget eller
+<strong>Annuller</strong> for at beholde den tidligere farve. Canonical
+farve gemmes fortsat som <code>#RRGGBB</code>.</p>
+<h3 id="statusfarver-i-editoren">Statusfarver i editoren</h3>
+<p>Designer bruger farver til at vise status.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Farve</th>
+<th>Betydning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Grøn</strong></td>
+<td>Elementet er valgt/aktivt</td>
+</tr>
+<tr class="even">
+<td><strong>Blå</strong></td>
+<td>Hover, drop-zone eller element under markøren</td>
+</tr>
+<tr class="odd">
+<td><strong>Rød</strong></td>
+<td>Reel overlap-advarsel</td>
+</tr>
+</tbody>
+</table>
+<p>En Kasse eller Sektion tæller ikke som overlap blot fordi dens egne
+børn ligger inde i den.</p>
+<hr />
+<h2 id="9-labels-over-elementerne">9. Labels over elementerne</h2>
+<p>Elementer kan have labels som:</p>
+<ul>
+<li><code>SEKTION · id</code></li>
+<li><code>KASSE · id</code></li>
+<li><code>TEKST · id</code></li>
+<li><code>BILLEDE · id</code></li>
+</ul>
+<p>Labelen er kun en del af editoren.</p>
+<p>Den tæller <strong>ikke</strong> med i:</p>
+<ul>
+<li>elementets fysiske højde;</li>
+<li>elementets bredde;</li>
+<li>frontend-layoutet;</li>
+<li>Kasse/Sektions auto-grow.</li>
+</ul>
+<p>Det betyder, at den offentlige side ikke får ekstra højde på grund af
+editor-labels.</p>
+<hr />
+<h2 id="10-ændr-størrelse-på-et-element">10. Ændr størrelse på et
+element</h2>
+<p>Når et element er valgt, vises grønne resize-punkter.</p>
+<p>Du kan trække i sider eller hjørner for at ændre:</p>
+<ul>
+<li>bredde;</li>
+<li>højde;</li>
+<li>placering i forhold til gridet.</li>
+</ul>
+<p>Visual Designer bruger:</p>
+<ul>
+<li><strong>120 vandrette units</strong>;</li>
+<li><strong>8 px lodret snap/grid</strong>.</li>
+</ul>
+<p>Inspector viser de tilsvarende værdier for X, Y, bredde og højde.</p>
+<hr />
+<h2 id="11-kasse-og-sektion-vokser-med-indholdet">11. Kasse og Sektion
+vokser med indholdet</h2>
+<p>Kasse og Sektion har <strong>auto-grow</strong>.</p>
+<p>Hvis du lægger elementer under hinanden inde i en Kasse, skal Kassen
+vokse, så alt indhold kan være inde i den.</p>
+<p>Hvis du selv gør Kassen højere end nødvendigt, behandles den valgte
+højde som en <strong>minimumshøjde</strong>.</p>
+<p>Eksempel:</p>
+<pre class="text"><code>KASSE
+├── Tekst
+├── Billede
+└── Tekst</code></pre>
+<p>Kassen skal automatisk være høj nok til alle tre elementer.</p>
+<hr />
+<h2 id="12-tekst-element">12. Tekst-element</h2>
+<p>Et Tekst-element kan indeholde både overskrift og brødtekst.</p>
+<h3 id="inspector">Inspector</h3>
+<p>For Tekst kan du bl.a. vælge:</p>
+<ul>
+<li><strong>Overskrift</strong> – valgfri;</li>
+<li><strong>Overskrifttype</strong> – H2, H3, H4, H5 eller H6;</li>
+<li><strong>Tekst</strong> – brødtekst;</li>
+<li><strong>Justering</strong> – venstre, center eller højre;</li>
+<li>ramme/border;</li>
+<li>afstand X/Y.</li>
+</ul>
+<p>Hvis Overskrift er tom, vises kun brødteksten.</p>
+<h3 id="på-vej-i-næste-stylingtrin">På vej i næste stylingtrin</h3>
+<p>Tekst-elementet skal desuden kunne styre:</p>
+<ul>
+<li>baggrundsfarve eller gennemsigtig;</li>
+<li>brødtekstfarve;</li>
+<li>separat overskriftsfarve.</li>
+</ul>
+<p>Disse stylingfelter er godkendt som næste Visual
+Designer-udvidelse.</p>
+<hr />
+<h2 id="13-billede-element">13. Billede-element</h2>
+<p>I Visual Designer 0.1.18 er <strong>billedboksen</strong> og
+<strong>selve billedet</strong> adskilt.</p>
+<p>Det betyder, at boksen godt kan være større end selve billedet.</p>
+<h3 id="billedboksen">Billedboksen</h3>
+<p>Boksen styrer:</p>
+<ul>
+<li>X/Y;</li>
+<li>bredde/højde;</li>
+<li>border;</li>
+<li>afstand X/Y;</li>
+<li>baggrundsfarve.</li>
+</ul>
+<h3 id="billedet-inde-i-boksen">Billedet inde i boksen</h3>
+<p>I Inspector kan du vælge, hvordan billedet skal opføre sig.</p>
+<h4 id="vis-hele-billedet">Vis hele billedet</h4>
+<p>Hele billedet vises med bevarede proportioner. Der kan være tom plads
+rundt om billedet.</p>
+<p>Dette er standard for nye billeder.</p>
+<h4 id="fyld-boksen--beskær">Fyld boksen / beskær</h4>
+<p>Billedet fylder hele boksen. Noget af billedet kan blive
+beskåret.</p>
+<h4 id="original-størrelse">Original størrelse</h4>
+<p>Billedet beholder sin naturlige størrelse inde i boksen.</p>
+<h4 id="stræk">Stræk</h4>
+<p>Billedet fylder boksens bredde og højde, også hvis proportionerne
+ændres.</p>
+<h3 id="placering">Placering</h3>
+<p>Billedet kan placeres:</p>
+<ul>
+<li>vandret: venstre / center / højre;</li>
+<li>lodret: top / center / bund.</li>
+</ul>
+<p>Ved beskæring kan fokus desuden styres med Fokus X/Y.</p>
+<hr />
+<h2 id="14-border--ramme">14. Border / ramme</h2>
+<p>Alle relevante elementer kan have en ramme.</p>
+<h3 id="indstillinger">Indstillinger</h3>
+<ul>
+<li><strong>Ramme px</strong> – standard <code>0</code>;</li>
+<li><strong>Rammefarve</strong>.</li>
+</ul>
+<p><code>0 px</code> betyder ingen synlig ramme.</p>
+<p>Rammen følger selve elementets fysiske boks og vises også på
+frontend.</p>
+<hr />
+<h2 id="15-afstand-x-og-afstand-y">15. Afstand X og Afstand Y</h2>
+<p>Elementer kan have individuel afstand til næste element.</p>
+<h3 id="afstand-x">Afstand X</h3>
+<p>Vandret luft mod næste element til højre.</p>
+<h3 id="afstand-y">Afstand Y</h3>
+<p>Lodret luft mod næste element nedenunder.</p>
+<p>Standard er <code>0</code>.</p>
+<p>Afstanden er en del af Visual Designer-layoutet og indgår derfor også
+i auto-grow og Save/Reload.</p>
+<hr />
+<h2 id="16-overlap">16. Overlap</h2>
+<p>Hvis to indholdselementer fysisk ligger oven i hinanden, viser
+Designer en rød <strong>OVERLAP</strong>-advarsel.</p>
+<p>Overlap bruges foreløbig som en advarsel og er ikke en normal
+layoutmetode.</p>
+<p>Hvis overlap senere skal bruges bevidst til fx lag, badges eller
+grafiske overlays, bør det ske gennem en særskilt fri/layer-funktion i
+stedet for almindeligt grid-layout.</p>
+<hr />
+<h2 id="17-fortryd-og-gentag">17. Fortryd og Gentag</h2>
+<p>Designer har:</p>
+<ul>
+<li><strong>↶ Fortryd</strong></li>
+<li><strong>↷ Gentag</strong></li>
+</ul>
+<p>De arbejder på den aktuelle usavede Designer-session.</p>
+<p>Fortryd/Gentag erstatter ikke de gemte versionshistorikker. Når siden
+gemmes, bruges versionsstyringen beskrevet senere i manualen.</p>
+<hr />
+<h2 id="18-forhåndsvis-uden-at-gemme">18. Forhåndsvis uden at gemme</h2>
+<p>Klik <strong>Forhåndsvis</strong> for at se den aktuelle usavede
+Designer-model i den rigtige frontend med tema/header/footer.</p>
+<p>Denne forhåndsvisning:</p>
+<ul>
+<li>gemmer ikke siden;</li>
+<li>er midlertidig;</li>
+<li>er knyttet til den aktuelle bruger;</li>
+<li>viser en markering om, at det er en ikke-gemt forhåndsvisning.</li>
+</ul>
+<p>Brug den, før du gemmer større ændringer.</p>
+<hr />
+<h2 id="19-gem-som-ny-version">19. Gem som ny version</h2>
+<p>Når du er tilfreds med layoutet, klik:</p>
+<p><strong>Gem som ny version</strong></p>
+<p>Visual Designer:</p>
+<ol type="1">
+<li>normaliserer layoutmodellen;</li>
+<li>gemmer en ny versionspost;</li>
+<li>læser modellen tilbage;</li>
+<li>verificerer at den gemte model matcher det indsendte layout;</li>
+<li>beholder tidligere versioner i historikken.</li>
+</ol>
+<p>Den offentlige Visual Designer-side bruger den senest gemte
+version.</p>
+<hr />
+<h2 id="20-gem--vis">20. Gem &amp; vis</h2>
+<p><strong>Gem &amp; vis</strong> gør to ting:</p>
+<ol type="1">
+<li>gemmer siden som ny Visual Designer-version;</li>
+<li>åbner den rigtige offentlige side.</li>
+</ol>
+<p>Brug denne funktion, når du både vil gemme og straks kontrollere
+frontend-resultatet.</p>
+<hr />
+<h2 id="21-gemte-versioner">21. Gemte versioner</h2>
+<p>Nederst i Designer findes området <strong>Gemte
+versioner</strong>.</p>
+<p>Fra Visual Designer 0.1.18 kan en tidligere version bruges på tre
+måder.</p>
+<h3 id="forhåndsvis-version">Forhåndsvis version</h3>
+<p>Åbner den valgte historiske version uden at ændre den aktuelle
+side.</p>
+<h3 id="gendan-original">Gendan original</h3>
+<p>Gør den valgte gamle version til den aktive model på
+originalsiden.</p>
+<p>Det er <strong>ikke destruktivt</strong>:</p>
+<ul>
+<li>den gamle historik slettes ikke;</li>
+<li>restore oprettes som en ny version;</li>
+<li>du kan derfor altid gå tilbage igen.</li>
+</ul>
+<h3 id="opret-kopi">Opret kopi</h3>
+<p>Opretter en ny WordPress-side som kladde ud fra den valgte
+version.</p>
+<p>Kopien:</p>
+<ul>
+<li>ændrer ikke originalsiden;</li>
+<li>får sin egen Visual Designer-model;</li>
+<li>starter sin egen Visual Designer-historik ved v1;</li>
+<li>kan åbnes separat i Designer.</li>
+</ul>
+<p>Dette er nyttigt, hvis du vil eksperimentere med et gammelt layout
+uden risiko for den aktive side.</p>
+<hr />
+<h2 id="22-opdater-visual-designer-manager">22. Opdater Visual Designer
+Manager</h2>
+<p>Gå til:</p>
+<p><strong>Visual Designer Manager → Opdateringer</strong></p>
+<p>Her kan du:</p>
+<ol type="1">
+<li>klikke <strong>Tjek for opdatering</strong>;</li>
+<li>se om en nyere Visual Designer-version findes;</li>
+<li>vælge <strong>Opdater nu</strong>.</li>
+</ol>
+<p>Updateren verificerer den versionerede pakke og
+SHA-256-kontrolsummen.</p>
+<p>Fra 0.1.16 er updateren desuden ændret, så pluginets aktive
+WordPress-status skal bevares under self-update.</p>
+<hr />
+<h2 id="23-backup">23. Backup</h2>
+<p>Under:</p>
+<p><strong>Visual Designer Manager → Backup</strong></p>
+<p>kan Visual Designer-layouts og versionshistorik eksporteres som
+backup.</p>
+<p>Backup bør bruges før større ændringer af:</p>
+<ul>
+<li>tema;</li>
+<li>globale designindstillinger;</li>
+<li>Header/Footer;</li>
+<li>større konverteringer af eksisterende sider.</li>
+</ul>
+<hr />
+<h2 id="24-diagnose-og-log">24. Diagnose og Log</h2>
+<p>Hvis noget opfører sig forkert, kan Designerens diagnosefunktion
+bruges.</p>
+<h3 id="kopiér-diagnose-link">Kopiér diagnose-link</h3>
+<p>I Designer findes knappen:</p>
+<p><strong>Kopiér diagnose-link</strong></p>
+<p>Loggen kan bl.a. indeholde hændelser som:</p>
+<ul>
+<li>palette drag/drop;</li>
+<li>reparent/flytning;</li>
+<li>resize;</li>
+<li>Undo/Redo;</li>
+<li>Save;</li>
+<li>Preview;</li>
+<li>restore;</li>
+<li>billedevalg.</li>
+</ul>
+<p>Under <strong>Visual Designer Manager → Log</strong> kan
+diagnoseoplysninger ses og ryddes.</p>
+<p>Ved fejl er det nyttigt at notere:</p>
+<ol type="1">
+<li>hvad du gjorde;</li>
+<li>hvad du forventede;</li>
+<li>hvad der skete;</li>
+<li>screenshot;</li>
+<li>diagnose-link.</li>
+</ol>
+<hr />
+<h2 id="25-globalt-design--planlagt-næste-lag">25. Globalt design –
+planlagt næste lag</h2>
+<p>Visual Designer skal have et globalt designområde, så de samme
+grundværdier ikke skal sættes manuelt på hver side.</p>
+<p>Planlagte globale indstillinger omfatter:</p>
+<ul>
+<li>farvepalette;</li>
+<li>skrifttype;</li>
+<li>standard tekstfarve;</li>
+<li>standard overskriftsfarve;</li>
+<li>sidebaggrund;</li>
+<li>desktopbredde;</li>
+<li>mobilbredde;</li>
+<li>standardafstande.</li>
+</ul>
+<p>Et element kan senere enten <strong>arve global stil</strong> eller
+<strong>overskrive den lokalt</strong>.</p>
+<hr />
+<h2 id="26-header-og-footer--planlagt-designer">26. Header og Footer –
+planlagt Designer</h2>
+<p>Header og Footer skal ikke være almindelige elementer på hver
+side.</p>
+<p>De skal have egne globale Designer-modeller.</p>
+<h3 id="header-designer">Header Designer</h3>
+<p>Skal kunne arbejde med fx:</p>
+<ul>
+<li>Logo;</li>
+<li>Menu;</li>
+<li>Tekst;</li>
+<li>Knap;</li>
+<li>Kasser/layout.</li>
+</ul>
+<h3 id="footer-designer">Footer Designer</h3>
+<p>Skal kunne arbejde med fx:</p>
+<ul>
+<li>Tekst;</li>
+<li>Menu;</li>
+<li>Logo;</li>
+<li>Links;</li>
+<li>Kasser/layout.</li>
+</ul>
+<p>Header/Footer får deres egen versionshistorik og skal bruge samme
+grundlæggende drag-and-drop-motor som Side Designer.</p>
+<hr />
+<h2 id="27-temaets-rolle">27. Temaets rolle</h2>
+<p>På sigt skal <strong>Hangar18 Base Theme</strong> primært fungere som
+WordPress-shell/runtime.</p>
+<p>Det betyder:</p>
+<ul>
+<li>WordPress står fortsat for sider, URL'er, templates og
+frontend-hook;</li>
+<li>Manageren står for det visuelle design;</li>
+<li>Header/Footer og globale designvalg styres fra Manager;</li>
+<li>almindelige sider bygges i Visual Designer.</li>
+</ul>
+<p>Header og Footer ligger uden for en almindelig sides model og kan
+derfor ikke slettes ved at redigere en side.</p>
+<hr />
+<h2 id="28-kommende-elementtyper">28. Kommende elementtyper</h2>
+<p>Når det nuværende layout-, styling- og tema-fundament er låst, kan
+Designer udvides med flere LEGO-klodser.</p>
+<p>Mulige næste elementer:</p>
+<ul>
+<li>Knap;</li>
+<li>Divider/skillelinje;</li>
+<li>Spacer/afstand;</li>
+<li>Ikon;</li>
+<li>Logo;</li>
+<li>Menu;</li>
+<li>Galleri;</li>
+<li>video;</li>
+<li>kort/map;</li>
+<li>formular;</li>
+<li>dynamiske Køretøj-, Event- og Galleri-elementer.</li>
+</ul>
+<p>Målet er, at alle nye elementer bruger de samme grundprincipper
+for:</p>
+<ul>
+<li>placering;</li>
+<li>resize;</li>
+<li>border;</li>
+<li>afstand;</li>
+<li>baggrund;</li>
+<li>responsive regler;</li>
+<li>Save/Preview/versionering.</li>
+</ul>
+<hr />
+<h2 id="29-anbefalet-arbejdsgang">29. Anbefalet arbejdsgang</h2>
+<p>Ved almindelig sideredigering anbefales:</p>
+<ol type="1">
+<li>Åbn siden i Designer.</li>
+<li>Brug <strong>Forhåndsvis</strong> hvis du vil se den aktuelle gemte
+eller usavede retning.</li>
+<li>Tilføj eller flyt Sektion/Kasse/elementer.</li>
+<li>Rediger indhold og styling i Inspector.</li>
+<li>Kontrollér for røde overlap-advarsler.</li>
+<li>Brug <strong>Forhåndsvis</strong> uden at gemme.</li>
+<li>Ret eventuelle fejl.</li>
+<li>Klik <strong>Gem som ny version</strong>.</li>
+<li>Brug <strong>Gem &amp; vis</strong> eller åbn den offentlige
+side.</li>
+<li>Kontrollér desktop og mobil.</li>
+</ol>
+<p>Ved større ændringer anbefales desuden at tage en Backup først.</p>
+<hr />
+<h2 id="30-hurtigt-eksempel--byg-en-sektion-med-billede-og-tekst">30.
+Hurtigt eksempel – byg en sektion med billede og tekst</h2>
+<h3 id="målet">Målet</h3>
+<pre class="text"><code>SEKTION
+└── KASSE
+    ┌───────────────┬───────────────┐
+    │    Billede    │     Tekst     │
+    └───────────────┴───────────────┘</code></pre>
+<h3 id="fremgangsmåde">Fremgangsmåde</h3>
+<ol type="1">
+<li>Træk <strong>Sektion</strong> ind på siden.</li>
+<li>Træk <strong>Kasse</strong> ind i Sektionen.</li>
+<li>Træk <strong>Billede</strong> ind i Kassen.</li>
+<li>Vælg billedet i Inspector.</li>
+<li>Træk <strong>Tekst</strong> over Billede-elementet og slip i
+<strong>HØJRE</strong>-zonen.</li>
+<li>Vælg Tekst-elementet.</li>
+<li>Indtast valgfri overskrift og brødtekst.</li>
+<li>Tilpas bredde, border og afstand.</li>
+<li>Klik <strong>Forhåndsvis</strong>.</li>
+<li>Klik <strong>Gem som ny version</strong>, når resultatet er
+korrekt.</li>
+</ol>
+<hr />
+<h2
+id="31-hurtigt-eksempel--to-rækker-til-venstre-og-ét-højt-element-til-højre">31.
+Hurtigt eksempel – to rækker til venstre og ét højt element til
+højre</h2>
+<p>Start med:</p>
+<pre class="text"><code>┌───────────────┬───────────────┐
+│    Billede    │     Tekst     │
+└───────────────┴───────────────┘</code></pre>
+<p>Træk et nyt Tekst-element ind og slip det <strong>UNDER
+Billede</strong>.</p>
+<p>Resultatet kan blive:</p>
+<pre class="text"><code>┌───────────────┬───────────────┐
+│    Billede    │               │
+├───────────────┤     Tekst     │
+│     Tekst     │               │
+└───────────────┴───────────────┘</code></pre>
+<p>Her deles kun venstre celle. Højre Tekst-element fortsætter over
+begge rækker.</p>
+<hr />
+<h2 id="32-hvis-noget-ser-forkert-ud">32. Hvis noget ser forkert ud</h2>
+<p>Kontrollér først:</p>
+<ul>
+<li>Er det rigtige element valgt? Grøn markering betyder valgt.</li>
+<li>Er der en rød <strong>OVERLAP</strong>-advarsel?</li>
+<li>Ligger elementet inde i den rigtige Kasse/Sektion?</li>
+<li>Har elementet stor Afstand X/Y?</li>
+<li>Har Kassen en manuelt valgt minimumshøjde?</li>
+<li>Er billedets visning sat til <code>Vis hele</code>,
+<code>Fyld</code>, <code>Original</code> eller <code>Stræk</code> som
+ønsket?</li>
+<li>Er du i en usavet Preview eller på den rigtige gemte frontend?</li>
+</ul>
+<p>Hvis problemet fortsætter, brug <strong>Kopiér diagnose-link</strong>
+og tag et screenshot af Designer.</p>
+<hr />
+<h2 id="33-versionshistorik-for-denne-manual">33. Versionshistorik for
+denne manual</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Manualversion</th>
+<th>Ændring</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1.0</td>
+<td>Første Visual Designer-brugermanual baseret på funktionerne gennem
+0.1.18 og den godkendte målarkitektur.</td>
+</tr>
+<tr class="even">
+<td>1.1</td>
+<td>Nyt kapitel om websides anatomi, Header/Footer kontra Hero,
+elementoversigt samt grafiske illustrationer og tydelig markering af
+planlagt funktionalitet.</td>
+</tr>
+<tr class="odd">
+<td>1.2</td>
+<td>Opdateret til Visual Designer Manager 0.1.32 med rich-text
+selection-kontrakt, tydelig Knap-drop-feedback og ekstra
+Inspector-scrollplads.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="34-relaterede-dokumenter">34. Relaterede dokumenter</h2>
+<ul>
+<li><code>CLEAN-DESIGN-MANUAL.md</code> – teknisk design- og
+arkitekturmanual for Clean.</li>
+<li><code>CLEAN-TECHNICAL-MANUAL.md</code> – konkrete UX-kontrakter,
+tekniske adfærdsregler, beslutningsregister og reviewforslag.</li>
+<li><code>DESIGN-MANUAL.md</code> – historisk/visuel manual fra den
+tidligere 0.4.x Manager-serie.</li>
+<li><code>README.md</code> – overordnet
+repository-/projektinformation.</li>
+</ul>
+<p>Når nye brugerfunktioner bliver frigivet, skal denne brugermanual
+opdateres sammen med den relevante Visual Designer-version.</p>
+<h2 id="0123--headerfooter-designer-og-ux-rettelser">0.1.23 –
+Header/Footer Designer og UX-rettelser</h2>
+<ul>
+<li><strong>Header / Footer</strong> i Manager åbner nu en global Visual
+Designer med fanerne Header og Footer.</li>
+<li>Header og Footer har hver sin canonical model, indstillinger og
+versionshistorik og ændrer ikke sideversionerne.</li>
+<li>Fase 1 bruger Sektion, Kasse, Tekst og Billede samt
+Desktop/Laptop/Mobil. Menu/Knap/Ikon kommer efter layout-QA.</li>
+<li>Manager-menuen viser <strong>Klar</strong> (grøn) og <strong>Under
+udvikling / Ikke færdig</strong> (gul).</li>
+<li>Menu-redigeringen er ikke redesignet endnu; den afventer
+Header/Footer og det kommende Menu-element.</li>
+<li>Nye elementer starter større; ny Tekst får 12 px padding.</li>
+<li>Grøn selection er tykkere, Gem-note er valgfri/automatisk,
+tekst-preview bevarer linjeskift, og billed-reset rydder manuel
+billedramme korrekt.</li>
+</ul>
+<h2 id="0132--rich-text-knap-drop-og-inspector">0.1.32 – Rich text,
+Knap-drop og Inspector</h2>
+<ul>
+<li>Markeret rich text skal forblive markeret efter
+<strong>Fed</strong>, <strong>Kursiv</strong> og
+<strong>Understregning</strong>, så flere formatteringer kan anvendes
+uden ny markering.</li>
+<li><strong>Knap</strong> er et selvstændigt canonical element. Hvis
+Knap forsøges sluppet direkte på root, oprettes den ikke; Designer viser
+tydeligt, at den skal trækkes ind i en <strong>Sektion eller
+Kasse</strong>.</li>
+<li>Inspector har ekstra tom scrollplads nederst, så sidste kontrol kan
+rulles komfortabelt op fra vinduets nederste kant.</li>
+<li>Flydende Knap forbliver et parent-relativt overlay og påvirker ikke
+normal grid-autogrow alene på grund af floating-position.</li>
+</ul>
+<h3 id="automatisk-section-struktur-fra-v0168">Automatisk
+Section-struktur fra v0.1.68</h3>
+<p>Visual Designer sørger automatisk for, at en side er bygget som
+<strong>Webside → Sektion → Kasse/Element</strong>. Du behøver ikke selv
+åbne gamle sider og flytte løse elementer ind i Sektioner. Ved
+opdatering konverteres berørte Designer-sider automatisk med backup og
+en ny sideversion.</p>
+<p>Hvis du trækker et almindeligt element ud på selve websiden, opretter
+Designer den nødvendige Sektion automatisk. En Sektion kan kun ligge
+direkte på websiden. Når et element er markeret, flyttes det visuelt
+øverst under redigering/drag/resize; dette ændrer ikke den publicerede
+sides lagrækkefølge.</p>
+<h2 id="websiden-følger-sektionerne-automatisk">Websiden følger
+Sektionerne automatisk</h2>
+<p>Når du flytter eller ændrer størrelse på en Sektion, udvider den blå
+Webside/canvas sig automatisk, så Sektionen fortsat ligger inde på
+Websiden. Flytter du den nederste Sektion op eller sletter den, bliver
+Websiden tilsvarende kortere igen. Du skal ikke selv ændre Websidens
+højde.</p>
+<h2 id="sådan-bruger-du-køretøjsmodulet">Sådan bruger du
+Køretøjsmodulet</h2>
+<p>Gå til <strong>Visual Designer Manager → Køretøjer</strong>. Vælg
+<strong>Nyt køretøj</strong>, skriv navn, kategori, status og sortering,
+tilføj en kort og en længere beskrivelse, vælg primært billede og
+eventuelle galleribilleder, og udfyld de tekniske data.
+<strong>Publiceret</strong> betyder, at recordet kan vises på den
+offentlige side; <strong>Kladde</strong> og <strong>Arkiveret</strong>
+vises ikke offentligt.</p>
+<p>Under <strong>Køretøjsfelter</strong> kan du tilføje eller omdøbe de
+tekniske felter, vælge datatype, enhed og rækkefølge. Feltets interne ID
+bevares, så eksisterende data fortsat hører til det rigtige felt.</p>
+<p>På en side i Visual Designer kan du tilføje
+<strong>Køretøjsliste</strong>. Her vælger du antal kolonner, sortering,
+hvilke oplysninger der vises, kortets udseende og den WordPress-side,
+som skal bruges til detaljer. Opret derefter en detaljeside med
+elementet <strong>Køretøjsdetalje</strong> og lad feltet
+<strong>Køretøj</strong> stå på <strong>Fra URL</strong>. Når en
+besøgende klikker et kort, åbnes detaljesiden med
+<code>?h18_vehicle=...</code>, og det rigtige køretøj vises automatisk.
+Du kan også vælge et fast køretøj i Inspector, hvis en side altid skal
+vise det samme record.</p>
+<h2 id="sådan-bruger-du-eventmodulet">Sådan bruger du Eventmodulet</h2>
+<ol type="1">
+<li>Åbn <strong>Manager → Events</strong> og opret titel, start/slut,
+sted, beskrivelse og billede.</li>
+<li>Kun <strong>Publiceret</strong> kan vises offentligt; Kladde og
+Arkiveret er skjult.</li>
+<li>Tilføj <strong>Eventliste</strong> i Designer og vælg Kommende,
+Afholdte eller Alle publicerede samt en detaljeside.</li>
+<li>Indsæt <strong>Eventdetalje</strong> på detaljesiden og behold
+<em>Fra URL</em> for routing via
+<code>?h18_event=&lt;record-id&gt;</code>.</li>
+<li>Arkivér frem for at slette, når historikken skal bevares.</li>
+</ol>
+<h2 id="sådan-bruger-du-billedgalleriet">Sådan bruger du
+Billedgalleriet</h2>
+<ol type="1">
+<li>Gå til <strong>Visual Designer Manager → Billedgalleri</strong> og
+opret et album.</li>
+<li>Vælg cover, flere billeder fra Media Library, titel, beskrivelse,
+sortering og status.</li>
+<li>Tilføj <strong>Gallerioversigt</strong> på Billedgalleri-siden og
+vælg kolonner, kortdesign og en detaljeside.</li>
+<li>Tilføj <strong>Albumvisning</strong> på detaljesiden. Frontend
+vælger album via <code>?h18_gallery=&lt;record-id&gt;</code>; Inspector
+kan vælge et fast preview-album.</li>
+<li>Kladder og arkiverede album vises ikke offentligt.</li>
+</ol>
+<h2 id="automatisk-designharmonisering-i-v0172">Automatisk
+designharmonisering i v0.1.72</h2>
+<p>Når v0.1.72 indlæses i WordPress Admin, bruger Visual Designer
+Manager den aktive <strong>Hjem</strong>-side som designreference for Om
+foreningen, Køretøjer og materiel, Events, Billedgalleri, Bliv medlem og
+Kontakt. Tekster, billeder, elementplacering og størrelser bevares. Kun
+tema-/designværdier synkroniseres. Før hver ændring gemmes en backup, og
+harmoniseringen bliver en ny Designer-version, så siden kan gendannes
+fra versionshistorikken.</p>
+<hr />
+<h2 id="visual-designer-v0181--sådan-arbejder-du-visuelt">Visual
+Designer v0.1.81 – sådan arbejder du visuelt</h2>
+<p><img src="docs/user-manual-assets/v0181-designer-overview.svg"
+alt="Visual Designer – arbejdsfladen" /></p>
+<h3 id="elementguide">Elementguide</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Element</th>
+<th>Hvad bruges det til?</th>
+<th>Typisk brug</th>
+<th>Vigtigste indstillinger</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sektion</td>
+<td>Samler et område af siden</td>
+<td>Hero, indholdsblok, modulslot</td>
+<td>baggrund, padding, højde, responsive placering</td>
+</tr>
+<tr class="even">
+<td>Kasse</td>
+<td>Grupperer elementer inde i en sektion</td>
+<td>kort, infoboks, kolonne</td>
+<td>baggrund, ramme, radius, padding</td>
+</tr>
+<tr class="odd">
+<td>Tekst</td>
+<td>Overskrift og brødtekst</td>
+<td>H1/H2, intro, artikler</td>
+<td>typografi, farve, justering, spacing</td>
+</tr>
+<tr class="even">
+<td>Billede</td>
+<td>Viser WordPress-medie</td>
+<td>hero, køretøj, illustration</td>
+<td>contain/cover, fokuspunkt, alt-tekst</td>
+</tr>
+<tr class="odd">
+<td>Knap</td>
+<td>Handling eller navigation</td>
+<td>Bliv medlem, Læs mere</td>
+<td>destination, farver, hover/focus, radius</td>
+</tr>
+<tr class="even">
+<td>Menu</td>
+<td>WordPress-navigation</td>
+<td>header/mobilmenu</td>
+<td>menuvalg, retning, responsive mobilvisning</td>
+</tr>
+<tr class="odd">
+<td>Tabel</td>
+<td>Strukturerede rækker/kolonner</td>
+<td>specifikationer, oversigter</td>
+<td>kanter, zebra, mobilkort/scroll</td>
+</tr>
+<tr class="even">
+<td>Eventliste</td>
+<td>Dynamiske events</td>
+<td>Events-side</td>
+<td>sortering, dato-filter, kortdesign</td>
+</tr>
+<tr class="odd">
+<td>Eventværdi</td>
+<td>Én dynamisk eventværdi</td>
+<td>titel, dato, sted, beskrivelse</td>
+<td>værdi, HTML-tag, typografi</td>
+</tr>
+<tr class="even">
+<td>Eventfelt</td>
+<td>Fleksibelt eventfelt</td>
+<td>Program, Om arrangementet, Praktisk info</td>
+<td>feltvalg, overskrift, design</td>
+</tr>
+<tr class="odd">
+<td>Køretøjsliste</td>
+<td>Dynamiske køretøjer</td>
+<td>Køretøjer og materiel</td>
+<td>sortering, kolonner, kortdesign</td>
+</tr>
+<tr class="even">
+<td>Gallerioversigt</td>
+<td>Dynamiske album</td>
+<td>Billedgalleri</td>
+<td>kolonner, cover, antal billeder</td>
+</tr>
+<tr class="odd">
+<td>Kontaktformular</td>
+<td>Kontakt fra besøgende</td>
+<td>Kontakt-side</td>
+<td>intro, modtager, telefon, samtykke, design</td>
+</tr>
+<tr class="even">
+<td>Bliv medlem-formular</td>
+<td>Medlemsforespørgsler</td>
+<td>Bliv medlem</td>
+<td>intro, modtager, samtykke, design</td>
+</tr>
+</tbody>
+</table>
+<h3 id="kontaktformular-og-bliv-medlem--wysiwyg">Kontaktformular og Bliv
+medlem – WYSIWYG</h3>
+<p>Fra v0.1.81 viser Designer formularerne med samme struktur som
+frontend: labels, rigtige inputfelter, textarea, samtykke og knap. Det
+betyder, at højde, kolonner og spacing kan vurderes direkte i
+Designeren.</p>
+<p><img src="docs/user-manual-assets/v0181-form-wysiwyg.svg"
+alt="Formular – Designer og frontend" /></p>
+<p><strong>Arbejdsgang:</strong></p>
+<ol type="1">
+<li>Træk formularen ind på siden.</li>
+<li>Vælg formularen og skriv overskrift/intro i Inspector.</li>
+<li>Vælg modtager-e-mail eller lad feltet være tomt for WordPress
+admin-e-mail.</li>
+<li>Slå telefon og samtykke til/fra efter behov.</li>
+<li>Tilpas baggrund, feltbaggrund, tekst og accent med den fælles
+farvevælger.</li>
+<li>Kontroller Desktop, Laptop, Tablet og Mobil før Gem.</li>
+</ol>
+<h3 id="fælles-farvevælger">Fælles farvevælger</h3>
+<p><img src="docs/user-manual-assets/v0181-color-picker.svg"
+alt="Visual Designer – farvevælger" /></p>
+<p>Farvevælgeren har <strong>temafarver som hurtigvalg</strong>, men du
+kan altid vælge en helt fri farve eller skrive en HEX-kode direkte.
+Temafarver er altså genveje – ikke en begrænsning. De senest anvendte
+farver huskes lokalt i browseren.</p>
+<p>Hvis et element har en særskilt indstilling
+<strong>Gennemsigtig</strong>, bruges den fortsat til gennemsigtighed;
+farvefeltet beholder sin normale HEX-værdi.</p>
+<h3 id="godt-og-dårligt-eksempel">Godt og dårligt eksempel</h3>
+<table>
+<thead>
+<tr class="header">
+<th>God praksis</th>
+<th>Undgå</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Brug temafarver til de gennemgående brandfarver</td>
+<td>Næsten-identiske specialfarver på hver side</td>
+</tr>
+<tr class="even">
+<td>Brug H1 én gang som sidens hovedoverskrift</td>
+<td>Flere konkurrerende H1-overskrifter</td>
+</tr>
+<tr class="odd">
+<td>Kontroller alle fire breakpoints</td>
+<td>Kun at designe Desktop</td>
+</tr>
+<tr class="even">
+<td>Brug Sektion/Kasse til struktur</td>
+<td>Tilfældige overlap som er svære at vedligeholde</td>
+</tr>
+<tr class="odd">
+<td>Brug dynamiske Event/Køretøj/Galleri-elementer til data</td>
+<td>At kopiere dynamiske data ind som statisk tekst</td>
+</tr>
+</tbody>
+</table>
+<h3 id="byg-en-enkel-side-fra-bunden">Byg en enkel side fra bunden</h3>
+<ol type="1">
+<li>Opret/åbn siden i Visual Designer.</li>
+<li>Træk en <strong>Sektion</strong> ind som hovedområde.</li>
+<li>Tilføj <strong>Tekst</strong> og vælg H1 til sidens hovedtitel.</li>
+<li>Tilføj brødtekst og evt. <strong>Billede</strong>.</li>
+<li>Tilføj en <strong>Knap</strong> med intern side eller URL.</li>
+<li>Brug <strong>Kasse</strong> når flere elementer skal høre visuelt
+sammen.</li>
+<li>Skift til Laptop, Tablet og Mobil og justér kun de breakpoints, der
+kræver det.</li>
+<li>Brug Preview og Gem; sammenlign derefter den offentlige side.</li>
+</ol>

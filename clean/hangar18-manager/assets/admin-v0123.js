@@ -24,6 +24,7 @@
         'h18-clean-events': ['Klar', 'ready'],
         'h18-clean-event-fields': ['Klar', 'ready'],
         'h18-clean-gallery': ['Klar', 'ready'],
+        'h18-clean-manual': ['Klar', 'ready'],
         'h18-clean-data': ['Ikke færdig', 'planned']
     };
 

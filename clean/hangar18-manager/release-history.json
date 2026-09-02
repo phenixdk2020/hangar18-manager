@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.83",
+      "date": "2026-09-02",
+      "items": [
+        "VD-USER-MANUAL-WEB-001: brugermanualen provisioneres automatisk som offentlig WordPress-side og kan åbnes fra Visual Designer Manager.",
+        "Webvisning og Word-download genereres fra samme kanoniske CLEAN-USER-MANUAL.md ved release.",
+        "Brugermanual-siden linker tilbage til Visual Designer Manager og tilbyder direkte download som .docx.",
+        "Manualens SVG-illustrationer pakkes sammen med pluginet og vises responsivt på websitet."
+      ]
+    },
+    {
       "version": "0.1.82",
       "date": "2026-09-02",
       "items": [

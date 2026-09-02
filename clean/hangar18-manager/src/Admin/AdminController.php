@@ -82,6 +82,7 @@ final class AdminController
         add_submenu_page(self::MENU, 'Backup', 'Backup', $cap, 'h18-clean-backup', [self::class, 'backup']);
         add_submenu_page(self::MENU, 'Opdateringer', 'Opdateringer', $cap, 'h18-clean-updates', [self::class, 'updates']);
         add_submenu_page(self::MENU, 'Log', 'Log', $cap, 'h18-clean-log', [self::class, 'log']);
+        add_submenu_page(self::MENU, 'Brugermanual', 'Brugermanual', $cap, 'h18-clean-manual', [ManualController::class, 'adminPage']);
     }
 
     public static function enqueue(string $hook): void
@@ -132,6 +133,7 @@ final class AdminController
         self::card('Log / diagnostics', 'Læs de strukturelle Visual Designer-logs pr. side og kopiér diagnose-link.', self::url('h18-clean-log'), 'Åbn Log');
         self::card('Opdateringer', 'Brug den SHA-256-verificerede GitHub-opdateringskanal.', self::url('h18-clean-updates'), 'Tjek version');
         self::card('Menu', 'Redigér WordPress-menuens punkter og rækkefølge i en brugervenlig VDM-visning. Samme menu bruges direkte af Visual Designer.', self::url('h18-clean-menu'), 'Redigér Menu');
+        self::card('Brugermanual', 'Læs den komplette brugermanual på websitet eller download den som Word-fil.', ManualController::websiteUrl(), 'Åbn brugermanual');
         echo '</div>';
         self::close();
     }

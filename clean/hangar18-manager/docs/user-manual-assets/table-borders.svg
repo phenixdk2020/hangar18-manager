@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Excel-lignende tabelrammer i Visual Designer</title>
+  <desc id="desc">Illustration af tabel med markering af enkelte celler samt valg af ydre, indre, vandrette og lodrette rammer.</desc>
+  <rect width="1200" height="760" fill="#ffffff"/>
+  <text x="600" y="55" text-anchor="middle" font-family="Arial,sans-serif" font-size="32" font-weight="700" fill="#1d2327">Tabel – rammer som i Excel</text>
+
+  <g transform="translate(90 120)">
+    <rect x="0" y="0" width="660" height="360" fill="#ffffff" stroke="#1d2327" stroke-width="4"/>
+    <rect x="220" y="120" width="220" height="120" fill="#eef4fb"/>
+    <line x1="220" y1="0" x2="220" y2="360" stroke="#50575e" stroke-width="2"/>
+    <line x1="440" y1="0" x2="440" y2="360" stroke="#50575e" stroke-width="2"/>
+    <line x1="0" y1="120" x2="660" y2="120" stroke="#50575e" stroke-width="2"/>
+    <line x1="0" y1="240" x2="660" y2="240" stroke="#50575e" stroke-width="2"/>
+    <rect x="220" y="120" width="220" height="120" fill="none" stroke="#2271b1" stroke-width="5"/>
+    <text x="110" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#1d2327">Kolonne A</text>
+    <text x="330" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#1d2327">Kolonne B</text>
+    <text x="550" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#1d2327">Kolonne C</text>
+    <text x="330" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#2271b1">Markeret celle</text>
+  </g>
+
+  <g transform="translate(810 120)" font-family="Arial,sans-serif">
+    <text x="0" y="0" font-size="23" font-weight="700" fill="#1d2327">Rammevalg</text>
+    <rect x="0" y="35" width="300" height="330" rx="12" fill="#f6f7f7" stroke="#8c8f94" stroke-width="2"/>
+    <text x="25" y="85" font-size="20" fill="#1d2327">□ Ydre</text>
+    <text x="25" y="125" font-size="20" fill="#1d2327">□ Indre</text>
+    <text x="25" y="165" font-size="20" fill="#1d2327">□ Vandret</text>
+    <text x="25" y="205" font-size="20" fill="#1d2327">□ Lodret</text>
+    <text x="25" y="245" font-size="20" fill="#1d2327">□ Top / Bund</text>
+    <text x="25" y="285" font-size="20" fill="#1d2327">□ Venstre / Højre</text>
+    <text x="25" y="325" font-size="20" fill="#1d2327">□ Ingen ramme</text>
+  </g>
+
+  <rect x="90" y="540" width="1020" height="150" rx="12" fill="#f6f0e2" stroke="#9a7b36" stroke-width="2"/>
+  <text x="120" y="585" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#1d2327">For den valgte ramme kan redaktøren styre:</text>
+  <text x="120" y="625" font-family="Arial,sans-serif" font-size="20" fill="#3c434a">Tykkelse · Farve · Stregtype (solid / dashed / dotted)</text>
+  <text x="120" y="660" font-family="Arial,sans-serif" font-size="18" fill="#646970">Når flere celler markeres, anvendes rammevalget på hele markeringen – ligesom i et regneark.</text>
+</svg>

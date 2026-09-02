@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.82
+ * Version: 0.1.83
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('H18_CLEAN_VERSION', '0.1.82');
+define('H18_CLEAN_VERSION', '0.1.83');
 define('H18_CLEAN_FILE', __FILE__);
 define('H18_CLEAN_DIR', plugin_dir_path(__FILE__));
 define('H18_CLEAN_URL', plugin_dir_url(__FILE__));
@@ -65,6 +65,7 @@ require_once H18_CLEAN_DIR . 'src/Migration/ConvertedButtonOverlayMigration.php'
 require_once H18_CLEAN_DIR . 'src/Diagnostics/DiagnosticStore.php';
 require_once H18_CLEAN_DIR . 'src/Admin/EditorController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/AdminController.php';
+require_once H18_CLEAN_DIR . 'src/Admin/ManualController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/VehicleAdminController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/EventAdminController.php';
 require_once H18_CLEAN_DIR . 'src/Admin/GalleryAdminController.php';
@@ -92,6 +93,7 @@ add_action('plugins_loaded', static function (): void {
     \VisualDesignerManager\Diagnostics\DiagnosticStore::register();
     \VisualDesignerManager\Admin\EditorController::register();
     \VisualDesignerManager\Admin\AdminController::register();
+    \VisualDesignerManager\Admin\ManualController::register();
     \VisualDesignerManager\Admin\VehicleAdminController::register();
     \VisualDesignerManager\Admin\EventAdminController::register();
     \VisualDesignerManager\Admin\GalleryAdminController::register();
