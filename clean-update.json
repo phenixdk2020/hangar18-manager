@@ -1,16 +1,16 @@
 {
   "name": "Visual Designer Manager",
   "slug": "hangar18-manager",
-  "version": "0.1.78",
+  "version": "0.1.79",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.78.zip",
-  "sha256": "00e86bb5d4ddb7683ae3dab745e9c5da05c6942390e04d0050c40557596b371c",
-  "source_commit": "5de5d5a3e554c0a6568f87605f217dd905b52d4f",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/dist/visual-designer-manager-v0.1.79.zip",
+  "sha256": "ae0e89938e0e181fcc78dee10527f95991638739fc80adfd6fde7a30eb31517d",
+  "source_commit": "e13f9601753d115f6b9bcb52fd3a89de763966d4",
   "sections": {
     "description": "Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.",
-    "changelog": "<h2>0.1.78 – Hybrid modulsider og fleksible Eventfelter</h2>\n<ul>\n<li><strong>Events, Billedgalleri og Køretøjer:</strong> almindelige Visual Designer-elementer kan placeres før, mellem og efter det dynamiske modulindhold.</li>\n<li>Den eksisterende flow-baserede CollectionPageRenderer bevares, så søgning, sortering, eventarkiv og automatisk indholdshøjde fortsat fungerer.</li>\n<li>Moduldesign fra 0.1.77 ligger fortsat som en separat tilstand; Indholdselementer er nu standardtilstanden.</li>\n<li>Eventdetalje, Albumdetalje og Køretøjsdetalje er genbrugelige Visual Designer-sider, hvor almindelige elementer kan sættes omkring de dynamiske detailblokke.</li>\n<li><strong>Eventfelter:</strong> opret, fjern, omdøb og sorter felter med type, aktiv/påkrævet og visning på kort/detalje.</li>\n<li>Standard Eventfelter: <strong>Om arrangementet</strong>, <strong>Program</strong> og <strong>Praktiske oplysninger</strong>.</li>\n<li>Nyt Designer-element <strong>Eventfelt</strong> kan vise et bestemt fleksibelt Eventfelt separat på detail-skabelonen.</li>\n</ul>"
+    "changelog": "<h2>0.1.79 – Fuld Tablet- og responsive Designer-understøttelse</h2>\n<ul>\n<li><strong>Tablet er nu et fuldt breakpoint</strong> i Visual Designer på samme niveau som Desktop, Laptop og Mobil.</li>\n<li>Den responsive kaskade er Desktop → Laptop (1180 px) → Tablet (980 px) → Mobil (782 px).</li>\n<li>Tablet får egen canonical geometri, arv/override, Inspector-redigering, flyt/resize samt Fit/Zoom-preview.</li>\n<li>Frontendens ResponsiveRenderer bruger nu den gemte Tablet-geometri i intervallet 783–980 px.</li>\n<li>Responsive ændringer er fortsat Undo/Redo-sikre og isoleret til det valgte breakpoint.</li>\n<li>Breakpoint-knapper har aktiv tilstand via <code>aria-pressed</code> og tydelige tilgængelighedslabels.</li>\n</ul>"
   }
 }
