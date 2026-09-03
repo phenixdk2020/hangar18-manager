@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.93",
+      "date": "2026-09-03",
+      "items": [
+        "VDM-RELEASE-GATE-003: den centrale release-workflow kræver nu de aktuelle QA-gates for v0.1.92 eksportintegritet, v0.1.91 formulardesign, v0.1.90 WYSIWYG, v0.1.89 Manager-oprydning samt site/event/portable regressioner.",
+        "En release kan derfor ikke længere publiceres alene på de ældre foundation-tests.",
+        "Eksport-siden bruger nu konsekvent dansk terminologi: Eksport, Eksporter plugin/tema/websider/navigation/billeder/dokumenter/videoer/medier.",
+        "Canonical backlog-pointeren er opdateret til Visual Designer Manager og markerer 0.1.93 som vedligeholdelsesbaseline før den kontrollerede v0.2.0 navne-/basename-migration."
+      ]
+    },
+    {
       "version": "0.1.92",
       "date": "2026-09-03",
       "items": [

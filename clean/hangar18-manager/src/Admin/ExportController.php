@@ -17,11 +17,11 @@ final class ExportController
         'all' => 'Alt',
         'plugin' => 'Plugin',
         'theme' => 'Tema',
-        'pages' => 'Webpages',
+        'pages' => 'Websider',
         'navigation' => 'Navigation',
         'images' => 'Billeder',
         'documents' => 'Dokumenter',
-        'videos' => 'Video',
+        'videos' => 'Videoer',
         'media' => 'Alle medier',
     ];
 
@@ -35,8 +35,8 @@ final class ExportController
     {
         add_submenu_page(
             AdminController::MENU,
-            'Export',
-            'Export',
+            'Eksport',
+            'Eksport',
             'manage_options',
             'h18-clean-export',
             [self::class, 'render']
@@ -51,7 +51,7 @@ final class ExportController
         $parent = $theme->parent();
 
         echo '<div class="wrap h18-manager-admin">';
-        echo '<h1>Export</h1>';
+        echo '<h1>Eksport</h1>';
         echo '<p class="h18-manager-description">Eksportér hele installationens VDM-indhold eller vælg enkelte dele. <strong>Eksporter alt</strong> samler plugin, aktivt tema og en komplet portabel sitepakke i én ZIP og verificerer begge ZIP-lag før download.</p>';
 
         if (!$zipReady) {
@@ -60,25 +60,25 @@ final class ExportController
 
         echo '<div class="h18-manager-card-grid">';
         self::card('all', 'Eksporter alt', 'Komplet arkiv med Visual Designer Manager-plugin, aktivt tema/parent-theme og en direkte importerbar portabel VDM-sitepakke med sider/layouts/historik, Header/Footer, Events, Køretøjer, Billedgalleri, feltdefinitioner, navigation, medier og Siteindstillinger.', $zipReady);
-        self::card('plugin', 'Export Plugin', 'Hele den installerede Visual Designer Manager-pluginmappe med filmanifest og SHA-256 pr. fil.', $zipReady);
+        self::card('plugin', 'Eksporter plugin', 'Hele den installerede Visual Designer Manager-pluginmappe med filmanifest og SHA-256 pr. fil.', $zipReady);
 
         $themeText = 'Aktivt tema: ' . esc_html((string) $theme->get('Name')) . ' ' . esc_html((string) $theme->get('Version')) . '.';
         if ($parent instanceof \WP_Theme) {
             $themeText .= ' Parent-theme <strong>' . esc_html((string) $parent->get('Name')) . '</strong> inkluderes også, så child-theme pakken kan flyttes samlet.';
         }
-        self::card('theme', 'Export Tema', $themeText, $zipReady);
+        self::card('theme', 'Eksporter tema', $themeText, $zipReady);
 
-        self::card('pages', 'Export Webpages', 'Alle WordPress-sider som struktureret JSON inklusive canonical Visual Designer-model, versionshistorik og kendte mediereferencer.', $zipReady);
-        self::card('navigation', 'Export Navigation', 'WordPress-menuer, menupunkter, parent-hierarki og aktive theme-locations som struktureret JSON.', $zipReady);
-        self::card('images', 'Export Billeder', 'Billeder fra Media Library med filer, attachment-metadata, alt-tekst og checksums.', $zipReady);
-        self::card('documents', 'Export Dokumenter', 'Dokumenter som PDF, Word, Excel, tekst/CSV m.fl. fra Media Library.', $zipReady);
-        self::card('videos', 'Export Video', 'Uploadede videofiler fra Media Library med metadata og checksums.', $zipReady);
-        self::card('media', 'Export Alle medier', 'Alle uploadede Media Library-filer samlet i én ZIP.', $zipReady);
+        self::card('pages', 'Eksporter websider', 'Alle WordPress-sider som struktureret JSON inklusive canonical Visual Designer-model, versionshistorik og kendte mediereferencer.', $zipReady);
+        self::card('navigation', 'Eksporter navigation', 'WordPress-menuer, menupunkter, parent-hierarki og aktive theme-locations som struktureret JSON.', $zipReady);
+        self::card('images', 'Eksporter billeder', 'Billeder fra Media Library med filer, attachment-metadata, alt-tekst og checksums.', $zipReady);
+        self::card('documents', 'Eksporter dokumenter', 'Dokumenter som PDF, Word, Excel, tekst/CSV m.fl. fra Media Library.', $zipReady);
+        self::card('videos', 'Eksporter videoer', 'Uploadede videofiler fra Media Library med metadata og checksums.', $zipReady);
+        self::card('media', 'Eksporter alle medier', 'Alle uploadede Media Library-filer samlet i én ZIP.', $zipReady);
 
         echo '</div>';
 
         echo '<section class="h18-manager-card"><h2>Integritet og sikkerhed</h2><ul class="h18-manager-list">';
-        echo '<li>Kun administratorer med <code>manage_options</code> kan køre Export.</li>';
+        echo '<li>Kun administratorer med <code>manage_options</code> kan køre eksport.</li>';
         echo '<li>ZIP-filer oprettes i et midlertidigt område og slettes efter download.</li>';
         echo '<li>Hver pakke indeholder <code>visual-designer-export.json</code> med filmanifest, content-digest og SHA-256 pr. fil.</li>';
         echo '<li><strong>Eksporter alt</strong> indeholder desuden <code>export-summary.json</code> og <code>README.txt</code> med indhold, antal og præcis sti til den portable recovery-ZIP.</li>';
@@ -94,7 +94,7 @@ final class ExportController
         self::guard();
         $kind = sanitize_key((string) ($_POST['export_kind'] ?? ''));
         if (!isset(self::LABELS[$kind])) {
-            wp_die(esc_html__('Ukendt exporttype.', 'visual-designer-manager'));
+            wp_die(esc_html__('Ukendt eksporttype.', 'visual-designer-manager'));
         }
         check_admin_referer(self::NONCE . '_' . $kind);
         if (!class_exists('ZipArchive')) {
@@ -107,14 +107,14 @@ final class ExportController
 
         $tmp = wp_tempnam('visual-designer-export-' . $kind . '.zip');
         if (!is_string($tmp) || $tmp === '') {
-            wp_die(esc_html__('Kunne ikke oprette midlertidig exportfil.', 'visual-designer-manager'));
+            wp_die(esc_html__('Kunne ikke oprette midlertidig eksportfil.', 'visual-designer-manager'));
         }
 
         $zip = new \ZipArchive();
         $opened = $zip->open($tmp, \ZipArchive::OVERWRITE);
         if ($opened !== true) {
             @unlink($tmp);
-            wp_die(esc_html__('Kunne ikke oprette ZIP-export.', 'visual-designer-manager'));
+            wp_die(esc_html__('Kunne ikke oprette ZIP-eksport.', 'visual-designer-manager'));
         }
 
         $files = [];
@@ -258,14 +258,14 @@ final class ExportController
             $zip->close();
             if (is_string($portableTmp) && $portableTmp !== '') { @unlink($portableTmp); }
             @unlink($tmp);
-            wp_die(esc_html('Export fejlede: ' . $error->getMessage()));
+            wp_die(esc_html('Eksport fejlede: ' . $error->getMessage()));
         }
 
         if (is_string($portableTmp) && $portableTmp !== '') { @unlink($portableTmp); }
 
         if (!is_file($tmp) || filesize($tmp) === 0) {
             @unlink($tmp);
-            wp_die(esc_html__('Exportpakken blev ikke oprettet korrekt.', 'visual-designer-manager'));
+            wp_die(esc_html__('Eksportpakken blev ikke oprettet korrekt.', 'visual-designer-manager'));
         }
 
         try {
@@ -300,7 +300,7 @@ final class ExportController
         echo '<input type="hidden" name="action" value="' . esc_attr(self::ACTION) . '">';
         echo '<input type="hidden" name="export_kind" value="' . esc_attr($kind) . '">';
         wp_nonce_field(self::NONCE . '_' . $kind);
-        echo '<button class="button button-primary" type="submit"' . ($enabled ? '' : ' disabled') . '>Export ' . esc_html(self::LABELS[$kind]) . '</button>';
+        echo '<button class="button button-primary" type="submit"' . ($enabled ? '' : ' disabled') . '>Eksporter ' . esc_html(self::LABELS[$kind]) . '</button>';
         echo '</form></section>';
     }
 
