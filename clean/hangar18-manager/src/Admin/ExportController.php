@@ -14,6 +14,7 @@ final class ExportController
 
     /** @var array<string,string> */
     private const LABELS = [
+        'all' => 'Alt',
         'plugin' => 'Plugin',
         'theme' => 'Tema',
         'pages' => 'Webpages',
@@ -51,13 +52,14 @@ final class ExportController
 
         echo '<div class="wrap h18-manager-admin">';
         echo '<h1>Export</h1>';
-        echo '<p class="h18-manager-description">Eksportér program, tema, sider, navigation og mediefiler som transportable pakker. Export er adskilt fra automatisk backup før opdatering.</p>';
+        echo '<p class="h18-manager-description">Eksportér hele installationens VDM-indhold eller vælg enkelte dele. <strong>Eksporter alt</strong> samler plugin, aktivt tema og en komplet portabel sitepakke i én ZIP.</p>';
 
         if (!$zipReady) {
             echo '<div class="notice notice-error"><p><strong>ZIP er ikke tilgængelig.</strong> PHP-udvidelsen <code>ZipArchive</code> skal være aktiv, før eksport kan køres.</p></div>';
         }
 
         echo '<div class="h18-manager-card-grid">';
+        self::card('all', 'Eksporter alt', 'Komplet arkiv med Visual Designer Manager-plugin, aktivt tema/parent-theme og en direkte importerbar portabel VDM-sitepakke med sider/layouts/historik, Header/Footer, Events, Køretøjer, Billedgalleri, feltdefinitioner, navigation, medier og Siteindstillinger.', $zipReady);
         self::card('plugin', 'Export Plugin', 'Hele den installerede Visual Designer Manager-pluginmappe med filmanifest og SHA-256 pr. fil.', $zipReady);
 
         $themeText = 'Aktivt tema: ' . esc_html((string) $theme->get('Name')) . ' ' . esc_html((string) $theme->get('Version')) . '.';
@@ -73,7 +75,6 @@ final class ExportController
         self::card('videos', 'Export Video', 'Uploadede videofiler fra Media Library med metadata og checksums.', $zipReady);
         self::card('media', 'Export Alle medier', 'Alle uploadede Media Library-filer samlet i én ZIP.', $zipReady);
 
-        echo '<section class="h18-manager-card h18-manager-module"><h2>Export hele sitet</h2><p>Planlagt samlet transportpakke med plugin, tema, globalt design, Header/Footer, sider, navigation, komponenter, data-moduler og medier.</p><button class="button" type="button" disabled>Kommer senere</button></section>';
         echo '</div>';
 
         echo '<section class="h18-manager-card"><h2>Integritet og sikkerhed</h2><ul class="h18-manager-list">';
@@ -116,9 +117,44 @@ final class ExportController
 
         $files = [];
         $recordCount = 0;
+        $portableTmp = null;
 
         try {
             switch ($kind) {
+                case 'all':
+                    $recordCount += self::addDirectory(
+                        $zip,
+                        H18_CLEAN_DIR,
+                        'plugin/' . basename(untrailingslashit(H18_CLEAN_DIR)),
+                        $files
+                    );
+                    self::addJson($zip, 'plugin.json', [
+                        'schemaVersion' => self::SCHEMA,
+                        'product' => 'Visual Designer Manager',
+                        'internalVersion' => H18_CLEAN_VERSION,
+                        'sourceDirectory' => basename(untrailingslashit(H18_CLEAN_DIR)),
+                    ], $files);
+                    $recordCount += self::addTheme($zip, $files);
+
+                    $portableTmp = tempnam(get_temp_dir(), 'vdm-portable-all-');
+                    if (!is_string($portableTmp) || $portableTmp === '') {
+                        throw new \RuntimeException('Kunne ikke oprette midlertidig portabel sitepakke.');
+                    }
+                    $portable = PortableTransferController::buildPortablePackage($portableTmp);
+                    self::addFile($zip, $portableTmp, 'portable-site/' . sanitize_file_name((string) $portable['filename']), $files);
+                    $portableCounts = isset($portable['counts']) && is_array($portable['counts']) ? $portable['counts'] : [];
+                    $recordCount += array_sum(array_map('intval', $portableCounts));
+                    self::addJson($zip, 'all.json', [
+                        'schemaVersion' => self::SCHEMA,
+                        'type' => 'all',
+                        'portableSite' => [
+                            'filename' => (string) $portable['filename'],
+                            'sha256' => (string) $portable['sha256'],
+                            'counts' => $portableCounts,
+                        ],
+                        'includes' => ['plugin', 'active-theme', 'parent-theme-when-used', 'portable-site'],
+                    ], $files);
+                    break;
                 case 'plugin':
                     $recordCount = self::addDirectory(
                         $zip,
@@ -180,9 +216,12 @@ final class ExportController
             }
         } catch (\Throwable $error) {
             $zip->close();
+            if (is_string($portableTmp) && $portableTmp !== '') { @unlink($portableTmp); }
             @unlink($tmp);
             wp_die(esc_html('Export fejlede: ' . $error->getMessage()));
         }
+
+        if (is_string($portableTmp) && $portableTmp !== '') { @unlink($portableTmp); }
 
         if (!is_file($tmp) || filesize($tmp) === 0) {
             @unlink($tmp);

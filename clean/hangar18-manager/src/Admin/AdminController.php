@@ -76,7 +76,8 @@ final class AdminController
         // Internal compatibility/diagnostic route only; module data is managed through Events, Køretøjer and Billedgalleri.
         add_submenu_page(null, 'Data (intern)', 'Data', $cap, 'h18-clean-data', [self::class, 'data']);
         add_submenu_page(self::MENU, 'Sider', 'Sider', $cap, 'h18-clean-pages', [self::class, 'pages']);
-        add_submenu_page(self::MENU, 'Konvertering af sider', 'Konvertering', $cap, 'h18-clean-conversion', [ConversionController::class, 'render']);
+        // Legacy conversion/recovery route: intentionally hidden from the normal Manager menu.
+        add_submenu_page(null, 'Konvertering (intern)', 'Konvertering', $cap, 'h18-clean-conversion', [ConversionController::class, 'render']);
         add_submenu_page(self::MENU, 'Menu', 'Menu', $cap, 'h18-clean-menu', [self::class, 'menus']);
         add_submenu_page(self::MENU, 'Header / Footer og design', 'Header / Footer', $cap, 'h18-clean-header-footer', [self::class, 'headerFooter']);
         add_submenu_page(self::MENU, 'Backup', 'Backup', $cap, 'h18-clean-backup', [self::class, 'backup']);
@@ -93,7 +94,7 @@ final class AdminController
         wp_enqueue_style('h18-clean-manager-admin', H18_CLEAN_URL . 'assets/admin-v019.css', [], H18_CLEAN_VERSION);
         wp_enqueue_style('h18-clean-manager-v0123', H18_CLEAN_URL . 'assets/admin-v0123.css', ['h18-clean-manager-admin'], H18_CLEAN_VERSION);
         wp_enqueue_style('h18-clean-manager-v0175', H18_CLEAN_URL . 'assets/admin-v0175.css', ['h18-clean-manager-v0123'], H18_CLEAN_VERSION);
-        wp_enqueue_script('h18-clean-manager-v0123', H18_CLEAN_URL . 'assets/admin-v0123.js', [], H18_CLEAN_VERSION, true);
+        // v0.1.89: development-status badges are no longer rendered in the user-facing Manager UI.
     }
 
     public static function dashboard(): void
@@ -129,7 +130,6 @@ final class AdminController
         self::card('Designer', 'Byg sider med 120-unit / 8-px grid, Undo/Redo og versionshistorik.', self::designerUrl(), 'Åbn Designer');
         self::card('Siteindstillinger', 'Ret webstedstitel, slogan, virksomhed/forening, kontaktoplysninger, logo og site-ikon.', admin_url('admin.php?page=vdm-site-settings'), 'Åbn Siteindstillinger');
         self::card('Sider', 'Se Visual Designer-status, nodeantal og seneste version for alle WordPress-sider.', self::url('h18-clean-pages'), 'Vis sider');
-        self::card('Konvertering', 'Forbered eksisterende WordPress-sider som ikke-destruktive Visual Designer-kandidater, QA dem og aktivér én side ad gangen.', self::url('h18-clean-conversion'), 'Konvertér sider');
         self::card('Backup', 'Download én samlet JSON-backup af alle Visual Designer-layouts og deres versionshistorik.', self::url('h18-clean-backup'), 'Åbn Backup');
         self::card('Log / diagnostics', 'Læs de strukturelle Visual Designer-logs pr. side og kopiér diagnose-link.', self::url('h18-clean-log'), 'Åbn Log');
         self::card('Opdateringer', 'Brug den SHA-256-verificerede GitHub-opdateringskanal.', self::url('h18-clean-updates'), 'Tjek version');

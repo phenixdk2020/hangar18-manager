@@ -195,7 +195,7 @@ replacement = r'''    public static function exportSite(): void
     }
 
     public static function preflightImport(): void'''
-transfer, count = export_block.subn(replacement, transfer, count=1)
+transfer, count = export_block.subn(lambda _match: replacement, transfer, count=1)
 if count != 1:
     raise SystemExit('Portable exportSite block not found for refactor')
 write(TRANSFER, transfer)

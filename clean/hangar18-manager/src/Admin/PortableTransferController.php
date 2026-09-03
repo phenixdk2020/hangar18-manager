@@ -39,10 +39,11 @@ final class PortableTransferController
 
     public static function menu(): void
     {
+        // Recovery/import route only. Normal users export from the unified Export page.
         add_submenu_page(
-            AdminController::MENU,
-            'Eksport / import',
-            'Eksport / import',
+            null,
+            'Import / recovery',
+            'Import / recovery',
             'manage_options',
             self::PAGE,
             [self::class, 'render']
@@ -142,11 +143,46 @@ final class PortableTransferController
             wp_die(esc_html__('Kunne ikke oprette midlertidig eksportfil.', 'visual-designer-manager'));
         }
 
-        $zip = new \ZipArchive();
-        $opened = $zip->open($tmp, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-        if ($opened !== true) {
+        try {
+            self::buildPortablePackage($tmp);
+        } catch (\Throwable $error) {
             @unlink($tmp);
-            wp_die(esc_html__('Kunne ikke oprette ZIP-pakken.', 'visual-designer-manager'));
+            wp_die(esc_html('Eksport fejlede: ' . $error->getMessage()));
+        }
+
+        $sha = hash_file('sha256', $tmp);
+        $name = self::downloadName();
+        nocache_headers();
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $name . '"');
+        header('Content-Length: ' . (string) filesize($tmp));
+        if (is_string($sha)) {
+            header('X-Visual-Designer-SHA256: ' . $sha);
+        }
+        readfile($tmp);
+        @unlink($tmp);
+        exit;
+    }
+
+    /**
+     * Build the canonical portable site ZIP at a caller-provided path.
+     * Used both by the hidden recovery route and Export > Eksporter alt.
+     *
+     * @return array{sha256:string,filename:string,counts:array<string,int>}
+     */
+    public static function buildPortablePackage(string $targetPath): array
+    {
+        if (!class_exists('ZipArchive')) {
+            throw new \RuntimeException('PHP ZipArchive mangler på serveren.');
+        }
+        if ($targetPath === '') {
+            throw new \RuntimeException('Målstien til portable sitepakken er tom.');
+        }
+
+        $zip = new \ZipArchive();
+        $opened = $zip->open($targetPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        if ($opened !== true) {
+            throw new \RuntimeException('Kunne ikke oprette den portable ZIP-pakke.');
         }
 
         $files = [];
@@ -185,27 +221,29 @@ final class PortableTransferController
             }
         } catch (\Throwable $error) {
             $zip->close();
-            @unlink($tmp);
-            wp_die(esc_html('Eksport fejlede: ' . $error->getMessage()));
+            @unlink($targetPath);
+            throw $error;
         }
 
         if (!$zip->close()) {
-            @unlink($tmp);
-            wp_die(esc_html__('ZIP-pakken kunne ikke afsluttes.', 'visual-designer-manager'));
+            @unlink($targetPath);
+            throw new \RuntimeException('ZIP-pakken kunne ikke afsluttes.');
+        }
+        if (!is_file($targetPath) || filesize($targetPath) === 0) {
+            @unlink($targetPath);
+            throw new \RuntimeException('Den portable sitepakke blev ikke oprettet korrekt.');
+        }
+        $sha = hash_file('sha256', $targetPath);
+        if (!is_string($sha) || $sha === '') {
+            @unlink($targetPath);
+            throw new \RuntimeException('SHA-256 kunne ikke beregnes for den portable sitepakke.');
         }
 
-        $sha = hash_file('sha256', $tmp);
-        $name = self::downloadName();
-        nocache_headers();
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="' . $name . '"');
-        header('Content-Length: ' . (string) filesize($tmp));
-        if (is_string($sha)) {
-            header('X-Visual-Designer-SHA256: ' . $sha);
-        }
-        readfile($tmp);
-        @unlink($tmp);
-        exit;
+        return [
+            'sha256' => $sha,
+            'filename' => self::downloadName(),
+            'counts' => $counts,
+        ];
     }
 
     public static function preflightImport(): void

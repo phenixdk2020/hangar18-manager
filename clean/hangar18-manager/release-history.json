@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.89",
+      "date": "2026-09-03",
+      "items": [
+        "VDM-MANAGER-CLEANUP-001: Konvertering og den gamle Eksport / import-side er fjernet fra den synlige Manager-menu og bevares kun som skjulte compatibility/recovery-ruter.",
+        "Eksport er nu den eneste normale eksportindgang og har en aktiv Eksporter alt-funktion.",
+        "Eksporter alt samler plugin, aktivt tema/parent-theme og en direkte importerbar portabel VDM-sitepakke i ét verificeret arkiv.",
+        "Den portable sitepakke indeholder sider/layouts og historik, Header/Footer, modulrecords, køretøjs-/eventfelter, navigation, medier og Siteindstillinger.",
+        "Udviklingsstatus-badges som Klar, Under udvikling og Ikke færdig er fjernet fra den brugerrettede Manager-menu og dashboard-legend."
+      ]
+    },
+    {
       "version": "0.1.88",
       "date": "2026-09-03",
       "items": [
