@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.86
-Trigger: site-identity-settings 2026-09-02
-Publish: requested 2026-09-02
-QA: apply run 33666786764 PASS
-Source candidate: 43da9ba1e7be1fb83cb11530c7f062fd5ce44936
+Release Visual Designer Manager v0.1.87
+Trigger: unified-color-picker 2026-09-03
+Publish: requested 2026-09-03
+QA: apply run 33725682974 PASS
+Source candidate: bd00022234ef00d71a39c5a6f27a8b5f2244606f
