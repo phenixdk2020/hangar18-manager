@@ -40,12 +40,23 @@ req("'h18-clean-event-fields': ['Klar', 'ready']" in admin_js, 'Eventfelter stat
 req("'themePalette' => $themePalette" in plugin, 'Designer receives dynamic theme palette')
 req("wp_get_global_settings(['color', 'palette', $origin])" in plugin, 'theme.json/global palette is collected dynamically')
 req("get_theme_mods()" in plugin, 'active theme mods can contribute palette colors')
-req("'wp-color-picker'" in plugin and "editor-v0181-color-picker.js" in plugin and "editor-v0181.css" in plugin, 'shared color picker assets are enqueued')
-req("input.type = 'text'" in color_js and "wpColorPicker" in color_js, 'native color input is enhanced to web-based WordPress picker')
-req("Temafarver" in color_js and "skrive HEX-koden direkte" in color_js, 'picker exposes theme shortcuts and free HEX guidance')
+
+# Forward-compatible color-picker contract.
+# v0.1.81 originally used WordPress/Iris. v0.1.88 intentionally restores the
+# compact VDM popup while preserving the same canonical color/theme/recent
+# behavior and broad dynamic input coverage.
+req("editor-v0181-color-picker.js" in plugin and "editor-v0181.css" in plugin, 'shared color picker assets are enqueued')
+wordpress_picker = "wpColorPicker" in color_js and "input.type = 'text'" in color_js
+vdm_popup_picker = "window.VDMColorPicker=api" in color_js and "input.type='hidden'" in color_js and "vdm-color-panel" in color_css
+req(wordpress_picker or vdm_popup_picker, 'native color input is replaced by a web-based Designer picker')
+req("themePalette" in color_js and ("hexInput" in color_js or "HEX-koden" in color_js), 'picker exposes theme shortcuts and free HEX entry')
 req("RECENT_KEY" in color_js and "Senest brugt" in color_js, 'picker stores and shows recent colors')
 req("data-h18-vd-color-managed" in editor and "data-h18-vd-color-commit" in editor, 'core commits picker values only through explicit picker Apply path')
-req("h18-vd-color-shortcut" in color_css and "wp-picker-input-wrap" in color_css, 'unified picker has Visual Designer styling')
+req(
+    ("h18-vd-color-shortcut" in color_css and "wp-picker-input-wrap" in color_css)
+    or ("vdm-color-panel" in color_css and "vdm-color-chip" in color_css and "vdm-color-actions" in color_css),
+    'unified picker has Visual Designer styling'
+)
 
 # Form preview parity.
 req("document.createElement('input')" in editor and "document.createElement('textarea')" in editor, 'Designer form preview uses real input/textarea controls')
