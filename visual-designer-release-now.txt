@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.87
-Trigger: unified-color-picker 2026-09-03
+Release Visual Designer Manager v0.1.88
+Trigger: popup-color-picker 2026-09-03
 Publish: requested 2026-09-03
-QA: apply run 33725682974 PASS
-Source candidate: bd00022234ef00d71a39c5a6f27a8b5f2244606f
+QA: apply run 33726962078 PASS
+Source candidate: 945cdff0d362776af2dd040255ff904c935b2ba6
