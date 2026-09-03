@@ -143,6 +143,21 @@ jobs:
             exit 1
           fi
 
+      - name: Verify current VDM release gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_event_facts_typography_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
+
       - name: Build package and manifest
         shell: bash
         env:
