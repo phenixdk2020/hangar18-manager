@@ -64,8 +64,19 @@ req("h18-vd-form-preview-field" in editor and "h18-vd-form-preview-consent" in e
 req("membership || node.props.showPhone !== false" in editor, 'Kontakt preview respects showPhone while membership keeps phone')
 req("addField('Kommentar', 'textarea', true)" in editor and "addField('Besked *', 'textarea', true)" in editor, 'membership/contact wide textarea structure is represented')
 req("fields.forEach(function(label){const f=document.createElement('span')" not in editor, 'legacy simplified form label-box mockup is removed')
-req("grid-template-columns:repeat(2,minmax(0,1fr));gap:16px" in color_css, 'Designer form grid matches frontend 2-column 16px contract')
-req("grid-template-columns:repeat(2,minmax(0,1fr));gap:16px" in forms, 'frontend form keeps matching 2-column 16px contract')
+
+# v0.1.81 established 2-column/16px parity. Newer versions may expose the
+# 16px value as a canonical CSS variable while retaining 16px as the fallback.
+designer_grid = (
+    "grid-template-columns:repeat(2,minmax(0,1fr));gap:16px" in color_css
+    or "grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--vdm-form-field-gap,16px)" in color_css
+)
+frontend_grid = (
+    "grid-template-columns:repeat(2,minmax(0,1fr));gap:16px" in forms
+    or "grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--vdm-form-field-gap,16px)" in forms
+)
+req(designer_grid, 'Designer form grid preserves 2-column 16px default contract')
+req(frontend_grid, 'frontend form preserves matching 2-column 16px default contract')
 req("@media(max-width:782px)" in color_css and "@media(max-width:782px)" in forms, 'Designer and frontend both switch forms at mobile breakpoint')
 
 for asset in ['v0181-designer-overview.svg', 'v0181-color-picker.svg', 'v0181-form-wysiwyg.svg']:
