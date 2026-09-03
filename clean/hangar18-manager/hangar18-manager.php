@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.87
+ * Version: 0.1.88
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,13 +15,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('VDM_VERSION', '0.1.87');
+define('VDM_VERSION', '0.1.88');
 define('VDM_FILE', __FILE__);
 define('VDM_DIR', plugin_dir_path(__FILE__));
 define('VDM_URL', plugin_dir_url(__FILE__));
 
 /* Deprecated compatibility aliases. New code must use VDM_* constants. */
-define('H18_CLEAN_VERSION', '0.1.87');
+define('H18_CLEAN_VERSION', '0.1.88');
 define('H18_CLEAN_FILE', VDM_FILE);
 define('H18_CLEAN_DIR', VDM_DIR);
 define('H18_CLEAN_URL', VDM_URL);
@@ -430,11 +430,10 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         ['h18-clean-editor-v0165-elements'],
         H18_CLEAN_VERSION
     );
-    wp_enqueue_style('wp-color-picker');
     wp_enqueue_style(
         'h18-clean-editor-v0181',
         H18_CLEAN_URL . 'assets/editor-v0181.css',
-        ['h18-clean-editor-v0166-foundation', 'wp-color-picker'],
+        ['h18-clean-editor-v0166-foundation'],
         H18_CLEAN_VERSION
     );
 
@@ -518,7 +517,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
     wp_enqueue_script(
         'h18-clean-editor-v0181-color-picker',
         H18_CLEAN_URL . 'assets/editor-v0181-color-picker.js',
-        ['jquery', 'wp-color-picker', 'h18-clean-editor-v0169-canvas-height'],
+        ['h18-clean-editor-v0169-canvas-height'],
         H18_CLEAN_VERSION,
         true
     );

@@ -1,18 +1,25 @@
-/* Visual Designer Manager v0.1.81: unified color picker + form WYSIWYG parity. */
-.h18-clean-inspector .wp-picker-container{display:block;margin-top:4px}
-.h18-clean-inspector .wp-picker-container .wp-color-result.button{margin:0;min-height:32px}
-.h18-clean-inspector .wp-picker-container .wp-color-result-text{min-width:78px;text-transform:uppercase;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-.h18-clean-inspector .wp-picker-input-wrap{display:inline-flex;gap:6px;align-items:center}
-.h18-clean-inspector .wp-picker-input-wrap input.h18-vd-color-source{width:96px!important;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;text-transform:uppercase}
-.h18-clean-inspector .wp-picker-holder{position:relative;z-index:1000;max-width:320px}
-.h18-vd-color-picker-extra{box-sizing:border-box;width:255px;max-width:100%;padding:9px 0 0}
-.h18-vd-color-shortcuts{margin:0 0 9px}
-.h18-vd-color-shortcuts>strong{display:block;margin-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#50575e}
-.h18-vd-color-shortcut-list{display:flex;flex-wrap:wrap;gap:5px}
-.h18-vd-color-shortcut{width:24px;height:24px;border:1px solid #8c8f94;border-radius:3px;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
-.h18-vd-color-shortcut:focus-visible{outline:2px solid #2271b1;outline-offset:2px}
-.h18-vd-color-note{margin:7px 0 9px!important;font-size:11px!important;line-height:1.35!important}
-.h18-vd-color-actions{display:flex;justify-content:flex-end;gap:7px;padding-top:8px;border-top:1px solid #dcdcde}
+/* Visual Designer Manager v0.1.88: compact popup color picker with optional theme view. */
+.vdm-color-control{position:relative;margin-top:4px;width:100%;font-weight:400}
+.vdm-color-button{display:flex;align-items:center;gap:8px;width:100%;min-height:34px;padding:4px 7px;border:1px solid #8c8f94;border-radius:4px;background:#fff;color:#1d2327;cursor:pointer;text-align:left}
+.vdm-color-button:focus{border-color:#2271b1;box-shadow:0 0 0 1px #2271b1;outline:2px solid transparent}
+.vdm-color-swatch{display:block;width:26px;height:22px;border:1px solid #646970;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}
+.vdm-color-value{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:600}
+.vdm-color-panel{position:fixed;z-index:120000;box-sizing:border-box;width:286px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;padding:12px;border:1px solid #8c8f94;border-radius:8px;background:#fff;box-shadow:0 10px 34px rgba(0,0,0,.24)}
+.vdm-color-panel[hidden],.vdm-color-view[hidden],.vdm-color-recent-block[hidden],.vdm-color-note[hidden]{display:none!important}
+.vdm-color-sv{position:relative;width:100%;height:150px;border:1px solid #646970;border-radius:5px;cursor:crosshair;touch-action:none;background-image:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent)}
+.vdm-color-marker{position:absolute;width:12px;height:12px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #000,0 1px 3px rgba(0,0,0,.45);transform:translate(-50%,-50%);pointer-events:none}
+.vdm-color-hue{width:100%!important;height:18px;margin:10px 0 8px!important;accent-color:#2271b1;background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.vdm-color-values,.vdm-color-theme-current{display:grid;grid-template-columns:38px 1fr;gap:8px;align-items:center}
+.vdm-color-preview{display:block;height:30px;border:1px solid #646970;border-radius:4px}
+.vdm-color-hex{width:100%!important;margin:0!important;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-transform:uppercase}
+.vdm-color-chip-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:10px}
+.vdm-color-chip{aspect-ratio:1;border:1px solid #8c8f94;border-radius:3px;cursor:pointer;padding:0;min-width:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.vdm-color-chip:focus-visible{outline:2px solid #2271b1;outline-offset:1px}
+.vdm-color-view.is-theme>strong,.vdm-color-recent-block>strong{display:block;margin-top:12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#50575e}
+.vdm-color-theme-value{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+.vdm-color-note{margin:10px 0 0!important;font-size:11px!important;line-height:1.35!important}
+.vdm-color-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:11px;padding-top:8px;border-top:1px solid #dcdcde}
+.vdm-color-theme-toggle[aria-pressed="true"]{border-color:#2271b1;box-shadow:0 0 0 1px #2271b1}
 
 .h18-clean-node-preview--form{overflow:auto!important}
 .h18-vd-form-preview{box-sizing:border-box;width:100%;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;text-align:left}
@@ -29,23 +36,8 @@
 .h18-vd-form-preview-submit{display:inline-block;border:0;border-radius:4px;background:var(--h18-form-preview-accent);color:#fff;padding:11px 20px;font:700 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;cursor:default}
 @media(max-width:782px){.h18-vd-form-preview-grid{grid-template-columns:1fr}.h18-vd-form-preview-field.is-wide{grid-column:auto}}
 
-/* Visual Designer Manager v0.1.85 · VD-EDITOR-LIVE-BOX-PARITY-002
- * A Section/Box with explicit grid geometry must occupy exactly the same
- * outer grid area in the editor as Renderer.php uses on preview/live.
- * Editor chrome and the nested editing surface are contained inside that box.
- */
+/* Visual Designer Manager v0.1.85 · VD-EDITOR-LIVE-BOX-PARITY-002 */
 .h18-clean-node--section[data-h18-explicit-grid="1"],
-.h18-clean-node--container[data-h18-explicit-grid="1"]{
-    height:100%!important;
-    min-height:0!important;
-    box-sizing:border-box
-}
+.h18-clean-node--container[data-h18-explicit-grid="1"]{height:100%!important;min-height:0!important;box-sizing:border-box}
 .h18-clean-node--section[data-h18-explicit-grid="1"]>.h18-clean-inner-surface,
-.h18-clean-node--container[data-h18-explicit-grid="1"]>.h18-clean-inner-surface{
-    width:100%;
-    height:100%;
-    min-height:0;
-    margin:0;
-    box-sizing:border-box;
-    align-self:stretch
-}
+.h18-clean-node--container[data-h18-explicit-grid="1"]>.h18-clean-inner-surface{width:100%;height:100%;min-height:0;margin:0;box-sizing:border-box;align-self:stretch}

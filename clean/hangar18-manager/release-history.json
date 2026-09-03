@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.88",
+      "date": "2026-09-03",
+      "items": [
+        "Farvevælgeren bruger igen den kompakte VDM-popup fra den tidligere adfærd i stedet for en statisk WordPress/Iris-palette i Inspector.",
+        "Farveflade, standardfarver og HEX vises kun efter klik på farvefeltet; Inspector optager derfor ikke ekstra højde.",
+        "Ny Tema/Farvevælger-knap i popupens handlingslinje skifter mellem almindelig farvevælger og Temafarver + Senest brugt.",
+        "Annuller/Escape/klik udenfor gendanner den oprindelige farve; Anvend laver fortsat én canonical ændring.",
+        "Alle dynamiske color-inputs dækkes fortsat, så Windows/native color dialog ikke genindføres."
+      ]
+    },
+    {
       "version": "0.1.87",
       "date": "2026-09-03",
       "items": [
