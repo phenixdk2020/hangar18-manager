@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path('.')
 plugin = (ROOT/'clean/hangar18-manager/hangar18-manager.php').read_text(encoding='utf-8')
@@ -7,7 +8,14 @@ form = (ROOT/'clean/hangar18-manager/src/Forms/FormService.php').read_text(encod
 editor = (ROOT/'clean/hangar18-manager/assets/editor-v018-core.js').read_text(encoding='utf-8')
 css = (ROOT/'clean/hangar18-manager/assets/editor-v0181.css').read_text(encoding='utf-8')
 
-assert 'Version: 0.1.91' in plugin
+
+def version_tuple(value):
+    parts=[int(p) for p in re.findall(r'\d+', str(value))[:3]]
+    while len(parts)<3: parts.append(0)
+    return tuple(parts)
+
+m=re.search(r"define\('VDM_VERSION',\s*'([^']+)'\);", plugin)
+assert m and version_tuple(m.group(1)) >= (0,1,91)
 for token in ['fieldGap','textareaHeight','consentMargin','buttonPaddingX','buttonPaddingY']:
     assert token in model, token
     assert token in editor, token
@@ -24,4 +32,4 @@ assert "?? 16" in model and "?? 168" in model and "?? 18" in model
 assert "?? 20" in model and "?? 11" in model
 assert 'var(--vdm-form-textarea-height,168px)' in form
 assert 'var(--vdm-form-textarea-height,168px)' in css
-print('v0.1.91 form design controls QA: PASS')
+print('v0.1.91 form design controls QA: PASS on runtime ' + m.group(1))
