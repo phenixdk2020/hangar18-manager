@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/scripts/apply_v0187_unified_color_picker.py'
       - '.github/scripts/v0187_unified_color_picker_qa.py'
+      - '.github/scripts/v0186_site_settings_qa.py'
       - '.github/workflows/apply-v0187-unified-color-picker.yml'
   workflow_dispatch:
 
