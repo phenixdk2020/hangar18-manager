@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.92",
+      "date": "2026-09-03",
+      "items": [
+        "VDM-EXPORT-INTEGRITY-002: alle nybyggede portable sitepakker kører fuld schema/path/SHA-256-inspektion før de returneres.",
+        "Eksporter alt får export-summary.json og README.txt med indhold, site, version, portable archive path, counts og SHA-256.",
+        "Den færdige ydre eksport-ZIP genåbnes før download; content digest, filstørrelser og SHA-256 verificeres for alle manifestposter.",
+        "Ved Eksporter alt udtrækkes den indlejrede portable ZIP til midlertidig kontrol og valideres med samme preflight-motor som import.",
+        "Download sendes kun efter bestået kontrol og mærkes med X-Visual-Designer-Verified: sha256."
+      ]
+    },
+    {
       "version": "0.1.91",
       "date": "2026-09-03",
       "items": [

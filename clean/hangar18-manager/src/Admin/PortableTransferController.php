@@ -239,11 +239,25 @@ final class PortableTransferController
             throw new \RuntimeException('SHA-256 kunne ikke beregnes for den portable sitepakke.');
         }
 
+        // v0.1.92: every newly built portable package passes the same full
+        // schema/path/hash inspection that is used before import.
+        $verification = self::inspectPackage($targetPath, true);
+
         return [
             'sha256' => $sha,
             'filename' => self::downloadName(),
             'counts' => $counts,
+            'verification' => $verification,
         ];
+    }
+
+    /** @return array<string,mixed> */
+    public static function verifyPortablePackage(string $path): array
+    {
+        if ($path === '' || !is_file($path)) {
+            throw new \RuntimeException('Den portable sitepakke findes ikke.');
+        }
+        return self::inspectPackage($path, true);
     }
 
     public static function preflightImport(): void

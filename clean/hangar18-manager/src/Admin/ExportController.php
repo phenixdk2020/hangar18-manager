@@ -52,7 +52,7 @@ final class ExportController
 
         echo '<div class="wrap h18-manager-admin">';
         echo '<h1>Export</h1>';
-        echo '<p class="h18-manager-description">Eksportér hele installationens VDM-indhold eller vælg enkelte dele. <strong>Eksporter alt</strong> samler plugin, aktivt tema og en komplet portabel sitepakke i én ZIP.</p>';
+        echo '<p class="h18-manager-description">Eksportér hele installationens VDM-indhold eller vælg enkelte dele. <strong>Eksporter alt</strong> samler plugin, aktivt tema og en komplet portabel sitepakke i én ZIP og verificerer begge ZIP-lag før download.</p>';
 
         if (!$zipReady) {
             echo '<div class="notice notice-error"><p><strong>ZIP er ikke tilgængelig.</strong> PHP-udvidelsen <code>ZipArchive</code> skal være aktiv, før eksport kan køres.</p></div>';
@@ -81,7 +81,9 @@ final class ExportController
         echo '<li>Kun administratorer med <code>manage_options</code> kan køre Export.</li>';
         echo '<li>ZIP-filer oprettes i et midlertidigt område og slettes efter download.</li>';
         echo '<li>Hver pakke indeholder <code>visual-designer-export.json</code> med filmanifest, content-digest og SHA-256 pr. fil.</li>';
-        echo '<li>Den færdige ZIPs SHA-256 sendes desuden i HTTP-headeren <code>X-Visual-Designer-SHA256</code>.</li>';
+        echo '<li><strong>Eksporter alt</strong> indeholder desuden <code>export-summary.json</code> og <code>README.txt</code> med indhold, antal og præcis sti til den portable recovery-ZIP.</li>';
+        echo '<li>Efter ZIP-oprettelsen genåbnes pakken og alle manifest-filer SHA-256-verificeres. Ved <strong>Eksporter alt</strong> verificeres den indlejrede portable ZIP også med den fulde import-preflight.</li>';
+        echo '<li>Den færdige ZIPs SHA-256 sendes desuden i HTTP-headeren <code>X-Visual-Designer-SHA256</code>, og <code>X-Visual-Designer-Verified: sha256</code> markerer bestået serverkontrol.</li>';
         echo '<li>Kendte secret-filer og filer uden for plugin/theme/upload-roden eksporteres ikke.</li>';
         echo '</ul></section>';
         echo '</div>';
@@ -141,19 +143,57 @@ final class ExportController
                         throw new \RuntimeException('Kunne ikke oprette midlertidig portabel sitepakke.');
                     }
                     $portable = PortableTransferController::buildPortablePackage($portableTmp);
-                    self::addFile($zip, $portableTmp, 'portable-site/' . sanitize_file_name((string) $portable['filename']), $files);
+                    $portableFilename = sanitize_file_name((string) $portable['filename']);
+                    $portableArchivePath = 'portable-site/' . $portableFilename;
+                    self::addFile($zip, $portableTmp, $portableArchivePath, $files);
                     $portableCounts = isset($portable['counts']) && is_array($portable['counts']) ? $portable['counts'] : [];
+                    $portableVerification = isset($portable['verification']) && is_array($portable['verification']) ? $portable['verification'] : [];
                     $recordCount += array_sum(array_map('intval', $portableCounts));
+                    $includes = ['plugin', 'active-theme', 'parent-theme-when-used', 'portable-site'];
                     self::addJson($zip, 'all.json', [
                         'schemaVersion' => self::SCHEMA,
                         'type' => 'all',
                         'portableSite' => [
-                            'filename' => (string) $portable['filename'],
+                            'filename' => $portableFilename,
+                            'archivePath' => $portableArchivePath,
                             'sha256' => (string) $portable['sha256'],
                             'counts' => $portableCounts,
+                            'verifiedSchema' => (string) ($portableVerification['schemaVersion'] ?? ''),
                         ],
-                        'includes' => ['plugin', 'active-theme', 'parent-theme-when-used', 'portable-site'],
+                        'includes' => $includes,
                     ], $files);
+                    self::addJson($zip, 'export-summary.json', [
+                        'format' => 'Visual Designer Manager Complete Export',
+                        'schemaVersion' => self::SCHEMA,
+                        'managerVersion' => VDM_VERSION,
+                        'createdUtc' => gmdate('c'),
+                        'site' => [
+                            'name' => (string) get_bloginfo('name'),
+                            'url' => home_url('/'),
+                        ],
+                        'includes' => $includes,
+                        'portableSite' => [
+                            'archivePath' => $portableArchivePath,
+                            'filename' => $portableFilename,
+                            'sha256' => (string) $portable['sha256'],
+                            'counts' => $portableCounts,
+                            'schemaVersion' => (string) ($portableVerification['schemaVersion'] ?? ''),
+                            'managerVersion' => (string) ($portableVerification['managerVersion'] ?? VDM_VERSION),
+                        ],
+                        'restoreHint' => 'Ved VDM recovery/import bruges ZIP-filen under portable-site/. Den ydre ZIP er et komplet arkiv og skal ikke uploades direkte til VDM-importen.',
+                    ], $files);
+                    $readme = "Visual Designer Manager - komplet eksport\n"
+                        . "==========================================\n\n"
+                        . "Site: " . (string) get_bloginfo('name') . "\n"
+                        . "URL: " . home_url('/') . "\n"
+                        . "VDM-version: " . VDM_VERSION . "\n"
+                        . "Oprettet UTC: " . gmdate('c') . "\n\n"
+                        . "Denne ZIP indeholder plugin, aktivt tema/parent-theme og en portabel VDM-sitepakke.\n"
+                        . "Recovery/import-fil: " . $portableArchivePath . "\n"
+                        . "Recovery SHA-256: " . (string) $portable['sha256'] . "\n\n"
+                        . "Brug den indlejrede ZIP under portable-site/ ved VDM recovery/import.\n"
+                        . "Alle filer i den ydre ZIP og den indlejrede portable ZIP verificeres før download.\n";
+                    self::addText($zip, 'README.txt', $readme, $files);
                     break;
                 case 'plugin':
                     $recordCount = self::addDirectory(
@@ -228,6 +268,13 @@ final class ExportController
             wp_die(esc_html__('Exportpakken blev ikke oprettet korrekt.', 'visual-designer-manager'));
         }
 
+        try {
+            self::verifyExportPackage($tmp, $kind);
+        } catch (\Throwable $error) {
+            @unlink($tmp);
+            wp_die(esc_html('Eksportens integritetskontrol fejlede: ' . $error->getMessage()));
+        }
+
         $filename = self::downloadName($kind);
         nocache_headers();
         header('Content-Type: application/zip');
@@ -239,6 +286,7 @@ final class ExportController
         if (is_string($packageSha) && $packageSha !== '') {
             header('X-Visual-Designer-SHA256: ' . $packageSha);
         }
+        header('X-Visual-Designer-Verified: sha256');
 
         readfile($tmp);
         @unlink($tmp);
@@ -614,6 +662,188 @@ final class ExportController
             'size' => strlen($payload),
             'sha256' => hash('sha256', $payload),
         ];
+    }
+
+    /** @param array<int,array<string,mixed>> $files */
+    private static function addText(\ZipArchive $zip, string $archivePath, string $payload, array &$files): void
+    {
+        if (!self::safeArchivePath($archivePath) || !$zip->addFromString($archivePath, $payload)) {
+            throw new \RuntimeException('Tekstfilen kunne ikke tilføjes: ' . $archivePath);
+        }
+        $files[] = [
+            'path' => $archivePath,
+            'size' => strlen($payload),
+            'sha256' => hash('sha256', $payload),
+        ];
+    }
+
+    /** @return array<string,mixed> */
+    private static function verifyExportPackage(string $path, string $kind): array
+    {
+        if ($path === '' || !is_file($path)) {
+            throw new \RuntimeException('Eksportpakken findes ikke.');
+        }
+        $zip = new \ZipArchive();
+        $opened = $zip->open($path, \ZipArchive::RDONLY);
+        if ($opened !== true) {
+            throw new \RuntimeException('Eksportpakken kan ikke genåbnes til kontrol.');
+        }
+        $nestedTmp = null;
+        try {
+            $manifest = self::readZipJson($zip, 'visual-designer-export.json');
+            if ((int) ($manifest['schemaVersion'] ?? 0) !== self::SCHEMA || (string) ($manifest['exportType'] ?? '') !== $kind) {
+                throw new \RuntimeException('Eksportmanifestets type/schema matcher ikke pakken.');
+            }
+            $manifestFiles = isset($manifest['files']) && is_array($manifest['files']) ? array_values($manifest['files']) : [];
+            $sortedFiles = $manifestFiles;
+            usort($sortedFiles, static fn(array $a, array $b): int => strcmp((string) ($a['path'] ?? ''), (string) ($b['path'] ?? '')));
+            $digestJson = wp_json_encode($sortedFiles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $actualDigest = is_string($digestJson) ? hash('sha256', $digestJson) : '';
+            $expectedDigest = strtolower((string) ($manifest['contentSha256'] ?? ''));
+            if ($expectedDigest === '' || !hash_equals($expectedDigest, $actualDigest)) {
+                throw new \RuntimeException('Eksportmanifestets content SHA-256 matcher ikke.');
+            }
+            foreach ($manifestFiles as $file) {
+                if (!is_array($file)) {
+                    throw new \RuntimeException('Ugyldig filpost i eksportmanifestet.');
+                }
+                $entry = (string) ($file['path'] ?? '');
+                $expectedHash = strtolower((string) ($file['sha256'] ?? ''));
+                $expectedSize = max(0, (int) ($file['size'] ?? 0));
+                if (!self::safeArchivePath($entry) || !preg_match('/^[a-f0-9]{64}$/', $expectedHash)) {
+                    throw new \RuntimeException('Ugyldig filsignatur i eksportmanifestet.');
+                }
+                $stat = $zip->statName($entry);
+                if (!is_array($stat)) {
+                    throw new \RuntimeException('Manifestfil mangler i ZIP: ' . $entry);
+                }
+                if ((int) ($stat['size'] ?? -1) !== $expectedSize) {
+                    throw new \RuntimeException('Filstørrelsen matcher ikke for ' . $entry . '.');
+                }
+                $actualHash = self::hashZipEntry($zip, $entry);
+                if (!hash_equals($expectedHash, $actualHash)) {
+                    throw new \RuntimeException('SHA-256 matcher ikke for ' . $entry . '.');
+                }
+            }
+
+            $result = [
+                'verified' => true,
+                'fileCount' => count($manifestFiles),
+                'contentSha256' => $actualDigest,
+            ];
+            if ($kind === 'all') {
+                $all = self::readZipJson($zip, 'all.json');
+                $summary = self::readZipJson($zip, 'export-summary.json');
+                if ($zip->locateName('README.txt') === false) {
+                    throw new \RuntimeException('README.txt mangler i komplet eksport.');
+                }
+                $portable = isset($all['portableSite']) && is_array($all['portableSite']) ? $all['portableSite'] : [];
+                $nestedPath = (string) ($portable['archivePath'] ?? '');
+                $expectedNestedHash = strtolower((string) ($portable['sha256'] ?? ''));
+                if (!self::safeArchivePath($nestedPath) || strpos($nestedPath, 'portable-site/') !== 0 || !preg_match('/^[a-f0-9]{64}$/', $expectedNestedHash)) {
+                    throw new \RuntimeException('Portable site-referencen i all.json er ugyldig.');
+                }
+                $summaryPath = (string) (($summary['portableSite']['archivePath'] ?? ''));
+                if ($summaryPath !== $nestedPath) {
+                    throw new \RuntimeException('export-summary.json peger ikke på samme portable sitepakke som all.json.');
+                }
+                $actualNestedHash = self::hashZipEntry($zip, $nestedPath);
+                if (!hash_equals($expectedNestedHash, $actualNestedHash)) {
+                    throw new \RuntimeException('Den indlejrede portable ZIP har forkert SHA-256.');
+                }
+
+                $nestedTmp = tempnam(get_temp_dir(), 'vdm-verify-portable-');
+                if (!is_string($nestedTmp) || $nestedTmp === '') {
+                    throw new \RuntimeException('Kunne ikke oprette midlertidig fil til nested ZIP-kontrol.');
+                }
+                self::copyZipEntryToFile($zip, $nestedPath, $nestedTmp);
+                $nestedVerification = PortableTransferController::verifyPortablePackage($nestedTmp);
+                $result['portableSite'] = [
+                    'archivePath' => $nestedPath,
+                    'sha256' => $actualNestedHash,
+                    'schemaVersion' => (string) ($nestedVerification['schemaVersion'] ?? ''),
+                    'managerVersion' => (string) ($nestedVerification['managerVersion'] ?? ''),
+                    'counts' => isset($nestedVerification['counts']) && is_array($nestedVerification['counts']) ? $nestedVerification['counts'] : [],
+                ];
+            }
+            return $result;
+        } finally {
+            $zip->close();
+            if (is_string($nestedTmp) && $nestedTmp !== '') { @unlink($nestedTmp); }
+        }
+    }
+
+    /** @return array<string,mixed> */
+    private static function readZipJson(\ZipArchive $zip, string $name): array
+    {
+        $payload = $zip->getFromName($name);
+        if (!is_string($payload) || $payload === '') {
+            throw new \RuntimeException($name . ' mangler eller er tom.');
+        }
+        $decoded = json_decode($payload, true);
+        if (!is_array($decoded)) {
+            throw new \RuntimeException($name . ' indeholder ugyldig JSON.');
+        }
+        return $decoded;
+    }
+
+    private static function hashZipEntry(\ZipArchive $zip, string $name): string
+    {
+        $stream = $zip->getStream($name);
+        if (!is_resource($stream)) {
+            throw new \RuntimeException('ZIP-filen mangler: ' . $name);
+        }
+        $hash = hash_init('sha256');
+        try {
+            while (!feof($stream)) {
+                $chunk = fread($stream, 1048576);
+                if ($chunk === false) {
+                    throw new \RuntimeException('ZIP-fil kunne ikke hashes: ' . $name);
+                }
+                if ($chunk !== '') { hash_update($hash, $chunk); }
+            }
+        } finally {
+            fclose($stream);
+        }
+        return hash_final($hash);
+    }
+
+    private static function copyZipEntryToFile(\ZipArchive $zip, string $name, string $target): void
+    {
+        $in = $zip->getStream($name);
+        if (!is_resource($in)) {
+            throw new \RuntimeException('ZIP-filen kan ikke læses: ' . $name);
+        }
+        $out = fopen($target, 'wb');
+        if (!is_resource($out)) {
+            fclose($in);
+            throw new \RuntimeException('Midlertidig kontrolfil kan ikke skrives.');
+        }
+        try {
+            while (!feof($in)) {
+                $chunk = fread($in, 1048576);
+                if ($chunk === false) {
+                    throw new \RuntimeException('Fejl under kopiering af ZIP-entry.');
+                }
+                if ($chunk !== '' && fwrite($out, $chunk) === false) {
+                    throw new \RuntimeException('Fejl under skrivning af ZIP-entry.');
+                }
+            }
+        } finally {
+            fclose($in);
+            fclose($out);
+        }
+    }
+
+    private static function safeArchivePath(string $path): bool
+    {
+        if ($path === '' || strpos($path, "\0") !== false || str_contains($path, '\\') || str_starts_with($path, '/') || preg_match('/^[A-Za-z]:/', $path)) {
+            return false;
+        }
+        foreach (explode('/', $path) as $part) {
+            if ($part === '..') { return false; }
+        }
+        return true;
     }
 
     /** @param array<int,array<string,mixed>> $files */
