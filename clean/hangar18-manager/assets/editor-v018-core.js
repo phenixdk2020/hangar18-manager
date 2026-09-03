@@ -625,6 +625,11 @@
                 background:normalizeColor(raw.background || '#f4f1e8'), fieldBackground:normalizeColor(raw.fieldBackground || '#ffffff'),
                 textColor:normalizeColor(raw.textColor || '#30382a'), accentColor:normalizeColor(raw.accentColor || '#30382a'),
                 padding:clamp(parseInt(raw.padding || 24,10)||24,0,80), radius:clamp(parseInt(raw.radius || 6,10)||6,0,60),
+                fieldGap:clamp(parseInt(raw.fieldGap == null ? 16 : raw.fieldGap,10)||0,0,80),
+                textareaHeight:clamp(parseInt(raw.textareaHeight || 168,10)||168,80,400),
+                consentMargin:clamp(parseInt(raw.consentMargin == null ? 18 : raw.consentMargin,10)||0,0,80),
+                buttonPaddingX:clamp(parseInt(raw.buttonPaddingX == null ? 20 : raw.buttonPaddingX,10)||0,0,80),
+                buttonPaddingY:clamp(parseInt(raw.buttonPaddingY == null ? 11 : raw.buttonPaddingY,10)||0,0,60),
                 showPhone:raw.showPhone !== false, requireConsent:raw.requireConsent !== false
             });
         }
@@ -1235,13 +1240,33 @@
         return changed;
     }
 
+    function fitOverflowingForms() {
+        let changed = false;
+        document.querySelectorAll('.h18-clean-node[data-node-id]').forEach(function (card) {
+            const node = nodeById(card.getAttribute('data-node-id') || '');
+            if (!node || !['contactform','membershipform'].includes(node.type) || node.geometry.desktop.h <= 0) { return; }
+            const preview = card.querySelector('.h18-vd-form-preview');
+            if (!preview) { return; }
+            const needed = Math.max(1, Math.ceil(preview.scrollHeight / ROW_PX));
+            if (needed > node.geometry.desktop.h) {
+                node.geometry.desktop.h = needed;
+                ['laptop','tablet','mobile'].forEach(function (key) {
+                    if (node.geometry[key] && node.geometry[key].inheritDesktop !== false) { node.geometry[key].h = needed; }
+                });
+                changed = true;
+            }
+        });
+        return changed;
+    }
+
     function reconcileLayoutAfterRender(canvas) {
         const autoButtons = autoFitButtons();
         const materialized = materializeNaturalLeafHeights();
         autoButtons.forEach(function (id) { const node = nodeById(id); if (!isFloatingButton(node)) { materialized.add(id); } });
         const collisionHealed = healMaterializationCollisions(materialized);
+        const formsChanged = fitOverflowingForms();
         const containersChanged = syncContainerHeights();
-        const changed = materialized.size > 0 || collisionHealed || containersChanged;
+        const changed = materialized.size > 0 || collisionHealed || formsChanged || containersChanged;
         if (changed && canvas) {
             renderSurface('', canvas);
             if (undoStack.length) { undoStack[undoStack.length - 1].after = clone(state); }
@@ -1882,6 +1907,11 @@
             box.style.borderRadius = String(node.props.radius || 6) + 'px';
             box.style.setProperty('--h18-form-preview-field-bg', node.props.fieldBackground || '#ffffff');
             box.style.setProperty('--h18-form-preview-accent', node.props.accentColor || '#30382a');
+            box.style.setProperty('--vdm-form-field-gap', String(node.props.fieldGap == null ? 16 : node.props.fieldGap) + 'px');
+            box.style.setProperty('--vdm-form-textarea-height', String(node.props.textareaHeight || 168) + 'px');
+            box.style.setProperty('--vdm-form-consent-margin', String(node.props.consentMargin == null ? 18 : node.props.consentMargin) + 'px');
+            box.style.setProperty('--vdm-form-button-padding-x', String(node.props.buttonPaddingX == null ? 20 : node.props.buttonPaddingX) + 'px');
+            box.style.setProperty('--vdm-form-button-padding-y', String(node.props.buttonPaddingY == null ? 11 : node.props.buttonPaddingY) + 'px');
 
             const heading = document.createElement('h2');
             heading.textContent = String(node.props.heading || (membership ? 'Bliv medlem' : 'Kontakt os'));
@@ -2360,7 +2390,7 @@
         } else if (node.type === 'contactform' || node.type === 'membershipform') {
             const membership = node.type === 'membershipform';
             html += '<div class="h18-vd-menu-group"><h3>Formular</h3><label>Overskrift<input data-field="formHeading" type="text" value="' + escapeAttr(node.props.heading || (membership ? 'Bliv medlem' : 'Kontakt os')) + '"></label><label>Intro<textarea data-field="formIntro" rows="4">' + escapeHtml(node.props.intro || '') + '</textarea></label><label>Knaptekst<input data-field="formButtonText" type="text" value="' + escapeAttr(node.props.buttonText || (membership ? 'Send indmeldelse' : 'Send besked')) + '"></label><label>Modtager-e-mail <span class="description">(tom = WordPress admin-e-mail)</span><input data-field="formRecipient" type="email" value="' + escapeAttr(node.props.recipient || '') + '"></label><label class="h18-clean-checkbox"><input data-field="formShowPhone" type="checkbox"' + (node.props.showPhone !== false ? ' checked' : '') + '> Vis telefonfelt</label><label class="h18-clean-checkbox"><input data-field="formRequireConsent" type="checkbox"' + (node.props.requireConsent !== false ? ' checked' : '') + '> Kræv samtykke</label></div>';
-            html += '<div class="h18-vd-menu-group"><h3>Design</h3><div class="h18-clean-field-grid"><label>Baggrund<input data-field="formBackground" type="color" value="' + escapeAttr(node.props.background || '#f4f1e8') + '"></label><label>Feltbaggrund<input data-field="formFieldBackground" type="color" value="' + escapeAttr(node.props.fieldBackground || '#ffffff') + '"></label><label>Tekst<input data-field="formTextColor" type="color" value="' + escapeAttr(node.props.textColor || '#30382a') + '"></label><label>Knap/accent<input data-field="formAccentColor" type="color" value="' + escapeAttr(node.props.accentColor || '#30382a') + '"></label><label>Padding<input data-field="formPadding" type="number" min="0" max="80" value="' + (node.props.padding || 24) + '"></label><label>Hjørner<input data-field="formRadius" type="number" min="0" max="60" value="' + (node.props.radius || 6) + '"></label></div></div>';
+            html += '<div class="h18-vd-menu-group"><h3>Design</h3><div class="h18-clean-field-grid"><label>Baggrund<input data-field="formBackground" type="color" value="' + escapeAttr(node.props.background || '#f4f1e8') + '"></label><label>Feltbaggrund<input data-field="formFieldBackground" type="color" value="' + escapeAttr(node.props.fieldBackground || '#ffffff') + '"></label><label>Tekst<input data-field="formTextColor" type="color" value="' + escapeAttr(node.props.textColor || '#30382a') + '"></label><label>Knap/accent<input data-field="formAccentColor" type="color" value="' + escapeAttr(node.props.accentColor || '#30382a') + '"></label><label>Padding<input data-field="formPadding" type="number" min="0" max="80" value="' + (node.props.padding || 24) + '"></label><label>Hjørner<input data-field="formRadius" type="number" min="0" max="60" value="' + (node.props.radius || 6) + '"></label><label>Feltafstand px<input data-field="formFieldGap" type="number" min="0" max="80" value="' + (node.props.fieldGap == null ? 16 : node.props.fieldGap) + '"></label><label>Kommentar/Besked højde px<input data-field="formTextareaHeight" type="number" min="80" max="400" value="' + (node.props.textareaHeight || 168) + '"></label><label>Samtykkeafstand px<input data-field="formConsentMargin" type="number" min="0" max="80" value="' + (node.props.consentMargin == null ? 18 : node.props.consentMargin) + '"></label><label>Knap padding X<input data-field="formButtonPaddingX" type="number" min="0" max="80" value="' + (node.props.buttonPaddingX == null ? 20 : node.props.buttonPaddingX) + '"></label><label>Knap padding Y<input data-field="formButtonPaddingY" type="number" min="0" max="60" value="' + (node.props.buttonPaddingY == null ? 11 : node.props.buttonPaddingY) + '"></label></div><p class="description">Alle mål bruges identisk i Designer, forhåndsvisning og live. Formularboksen vokser automatisk, hvis indholdet kræver mere højde.</p></div>';
         } else if (node.type === 'image') {
             html += '<button type="button" class="button" id="h18-clean-pick-image">Vælg / skift billede</button><p class="description">PNG, JPG/JPEG, WebP, GIF og andre image/*-formater som WordPress tillader. PNG-transparens bevares.</p>';
             html += '<label>Billede i boksen<select data-field="fit"><option value="contain"' + (node.props.fit === 'contain' ? ' selected' : '') + '>Vis hele billedet</option><option value="cover"' + (node.props.fit === 'cover' ? ' selected' : '') + '>Fyld boksen · beskær</option><option value="original"' + (node.props.fit === 'original' ? ' selected' : '') + '>Original størrelse</option><option value="stretch"' + (node.props.fit === 'stretch' ? ' selected' : '') + '>Stræk til boks</option></select></label>';
@@ -2556,6 +2586,11 @@
                 else if (field === 'formAccentColor') { current.props.accentColor=normalizeColor(control.value||'#30382a'); }
                 else if (field === 'formPadding') { current.props.padding=clamp(parseInt(control.value||24,10)||24,0,80); }
                 else if (field === 'formRadius') { current.props.radius=clamp(parseInt(control.value||6,10)||6,0,60); }
+                else if (field === 'formFieldGap') { current.props.fieldGap=clamp(parseInt(control.value||0,10)||0,0,80); }
+                else if (field === 'formTextareaHeight') { current.props.textareaHeight=clamp(parseInt(control.value||168,10)||168,80,400); }
+                else if (field === 'formConsentMargin') { current.props.consentMargin=clamp(parseInt(control.value||0,10)||0,0,80); }
+                else if (field === 'formButtonPaddingX') { current.props.buttonPaddingX=clamp(parseInt(control.value||0,10)||0,0,80); }
+                else if (field === 'formButtonPaddingY') { current.props.buttonPaddingY=clamp(parseInt(control.value||0,10)||0,0,60); }
                 else if (field === 'buttonText') { current.props.text = String(control.value || 'Knap'); }
                 else if (field === 'linkType') { current.props.linkType = ['page', 'url', 'anchor', 'email', 'phone'].includes(control.value) ? control.value : 'url'; }
                 else if (field === 'pageId') { current.props.pageId = parseInt(control.value || 0, 10) || 0; }

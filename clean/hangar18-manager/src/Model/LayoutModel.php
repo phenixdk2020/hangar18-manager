@@ -613,6 +613,11 @@ final class LayoutModel
                 'accentColor' => sanitize_hex_color((string) ($raw['accentColor'] ?? '#30382a')) ?: '#30382a',
                 'padding' => self::clamp($raw['padding'] ?? 24, 0, 80, 24),
                 'radius' => self::clamp($raw['radius'] ?? 6, 0, 60, 6),
+                'fieldGap' => self::clamp($raw['fieldGap'] ?? 16, 0, 80, 16),
+                'textareaHeight' => self::clamp($raw['textareaHeight'] ?? 168, 80, 400, 168),
+                'consentMargin' => self::clamp($raw['consentMargin'] ?? 18, 0, 80, 18),
+                'buttonPaddingX' => self::clamp($raw['buttonPaddingX'] ?? 20, 0, 80, 20),
+                'buttonPaddingY' => self::clamp($raw['buttonPaddingY'] ?? 11, 0, 60, 11),
                 'showPhone' => array_key_exists('showPhone', $raw) ? (bool) $raw['showPhone'] : true,
                 'requireConsent' => array_key_exists('requireConsent', $raw) ? (bool) $raw['requireConsent'] : true,
             ], $border);

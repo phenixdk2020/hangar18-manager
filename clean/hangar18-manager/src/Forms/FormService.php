@@ -33,13 +33,21 @@ final class FormService
         $textColor = sanitize_hex_color((string) ($props['textColor'] ?? '#30382a')) ?: '#30382a';
         $accent = sanitize_hex_color((string) ($props['accentColor'] ?? '#30382a')) ?: '#30382a';
         $padding = max(0, min(80, (int) ($props['padding'] ?? 24)));
+        $fieldGap = max(0, min(80, (int) ($props['fieldGap'] ?? 16)));
+        $textareaHeight = max(80, min(400, (int) ($props['textareaHeight'] ?? 168)));
+        $consentMargin = max(0, min(80, (int) ($props['consentMargin'] ?? 18)));
+        $buttonPaddingX = max(0, min(80, (int) ($props['buttonPaddingX'] ?? 20)));
+        $buttonPaddingY = max(0, min(60, (int) ($props['buttonPaddingY'] ?? 11)));
         $showPhone = !array_key_exists('showPhone', $props) || !empty($props['showPhone']);
         $requireConsent = !array_key_exists('requireConsent', $props) || !empty($props['requireConsent']);
         $postId = get_the_ID();
         $formId = 'h18-form-' . sanitize_html_class($nodeId);
         $style = $baseStyle
             . 'background:' . $background . ';color:' . $textColor . ';padding:' . $padding . 'px;'
-            . '--h18-form-field-bg:' . $fieldBackground . ';--h18-form-accent:' . $accent . ';';
+            . '--h18-form-field-bg:' . $fieldBackground . ';--h18-form-accent:' . $accent . ';'
+            . '--vdm-form-field-gap:' . $fieldGap . 'px;--vdm-form-textarea-height:' . $textareaHeight . 'px;'
+            . '--vdm-form-consent-margin:' . $consentMargin . 'px;--vdm-form-button-padding-x:' . $buttonPaddingX . 'px;'
+            . '--vdm-form-button-padding-y:' . $buttonPaddingY . 'px;';
 
         $html = self::style() . '<section id="h18-clean-' . esc_attr($nodeId) . '" class="h18-clean-front-node h18-vd-form h18-vd-form--' . esc_attr($kind) . '" style="' . esc_attr($style) . '">';
         if ($heading !== '') {
@@ -263,12 +271,12 @@ final class FormService
         $done = true;
         return '<style id="h18-vd-form-style-v0175">'
             . '.h18-vd-form{box-sizing:border-box;width:100%;border-radius:6px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.35;text-align:left}.h18-vd-form h2{margin:0 0 8px;padding:0;color:inherit;font:700 32px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif}.h18-vd-form-intro{margin:0 0 20px;padding:0;color:inherit;font:400 16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}'
-            . '.h18-vd-form-body{display:block}.h18-vd-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}'
+            . '.h18-vd-form-body{display:block}.h18-vd-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--vdm-form-field-gap,16px)}'
             . '.h18-vd-form-field{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:14px;font-weight:600;line-height:1.35;color:inherit}.h18-vd-form-field.is-wide{grid-column:1/-1}'
-            . '.h18-vd-form input,.h18-vd-form textarea{box-sizing:border-box;width:100%;min-height:42px;border:1px solid #b8b8b2;border-radius:4px;background:var(--h18-form-field-bg);color:inherit;padding:11px 12px;font:400 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif}.h18-vd-form textarea{height:168px;min-height:168px;resize:vertical}'
+            . '.h18-vd-form input,.h18-vd-form textarea{box-sizing:border-box;width:100%;min-height:42px;border:1px solid #b8b8b2;border-radius:4px;background:var(--h18-form-field-bg);color:inherit;padding:11px 12px;font:400 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif}.h18-vd-form textarea{height:var(--vdm-form-textarea-height,168px);min-height:var(--vdm-form-textarea-height,168px);resize:vertical}'
             . '.h18-vd-form input:focus,.h18-vd-form textarea:focus{outline:2px solid var(--h18-form-accent);outline-offset:1px}'
-            . '.h18-vd-form-consent{display:flex;gap:9px;align-items:flex-start;margin:18px 0;font-size:14px;font-weight:400;line-height:1.4;color:inherit}.h18-vd-form-consent input{width:auto;min-height:0;margin-top:3px}'
-            . '.h18-vd-form-submit{display:inline-block;border:0;border-radius:4px;background:var(--h18-form-accent);color:#fff;padding:11px 20px;font:700 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer}'
+            . '.h18-vd-form-consent{display:flex;gap:9px;align-items:flex-start;margin:var(--vdm-form-consent-margin,18px) 0;font-size:14px;font-weight:400;line-height:1.4;color:inherit}.h18-vd-form-consent input{width:auto;min-height:0;margin-top:3px}'
+            . '.h18-vd-form-submit{display:inline-block;border:0;border-radius:4px;background:var(--h18-form-accent);color:#fff;padding:var(--vdm-form-button-padding-y,11px) var(--vdm-form-button-padding-x,20px);font:700 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer}'
             . '.h18-vd-form-submit:hover{filter:brightness(1.12)}.h18-vd-form-message{padding:10px 12px;border-radius:4px;font-weight:600}.h18-vd-form-message.is-success{background:#e9f5e7}.h18-vd-form-message.is-error{background:#f9e4e2}'
             . '.h18-vd-form-hp{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}'
             . '@media(max-width:782px){.h18-vd-form-grid{grid-template-columns:1fr}.h18-vd-form-field.is-wide{grid-column:auto}}'

@@ -1,6 +1,16 @@
 {
   "versions": [
     {
+      "version": "0.1.91",
+      "date": "2026-09-03",
+      "items": [
+        "VDM-FORM-DESIGN-002: Bliv medlem/Kontaktformular har nu canonical designkontroller for feltafstand, textarea-højde, samtykkeafstand og submit-padding.",
+        "De nye formmål normaliseres identisk i PHP LayoutModel og JavaScript-editoren og bruges som CSS-variabler i både Designer-preview og frontend.",
+        "Formularnoder auto-vokser kun ved overflow, så større indhold ikke kan flyde ud af formularens baggrund.",
+        "Eksisterende 0.1.90-layouts beholder samme visuelle defaults: 16 px gap, 168 px textarea, 18 px samtykkeafstand og 20/11 px knap-padding."
+      ]
+    },
+    {
       "version": "0.1.90",
       "date": "2026-09-03",
       "items": [

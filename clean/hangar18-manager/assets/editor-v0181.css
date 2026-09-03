@@ -26,14 +26,14 @@
 .h18-vd-form-preview h2{margin:0 0 8px!important;padding:0!important;color:inherit;font:700 32px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif}
 .h18-vd-form-preview-intro{margin:0 0 20px!important;padding:0!important;color:inherit;font:400 16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 .h18-vd-form-preview-body{display:block}
-.h18-vd-form-preview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.h18-vd-form-preview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--vdm-form-field-gap,16px)}
 .h18-vd-form-preview-field{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:14px;font-weight:600;line-height:1.35;color:inherit}
 .h18-vd-form-preview-field.is-wide{grid-column:1/-1}
 .h18-vd-form-preview-field input,.h18-vd-form-preview-field textarea{box-sizing:border-box;width:100%;min-height:42px;border:1px solid #b8b8b2;border-radius:4px;background:var(--h18-form-preview-field-bg);color:inherit;padding:11px 12px;font:400 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1}
-.h18-vd-form-preview-field textarea{height:168px;min-height:168px;resize:none}
-.h18-vd-form-preview-consent{display:flex;gap:9px;align-items:flex-start;margin:18px 0;font-size:14px;font-weight:400;line-height:1.4;color:inherit}
+.h18-vd-form-preview-field textarea{height:var(--vdm-form-textarea-height,168px);min-height:var(--vdm-form-textarea-height,168px);resize:none}
+.h18-vd-form-preview-consent{display:flex;gap:9px;align-items:flex-start;margin:var(--vdm-form-consent-margin,18px) 0;font-size:14px;font-weight:400;line-height:1.4;color:inherit}
 .h18-vd-form-preview-consent input{width:auto!important;min-height:0!important;margin-top:3px;opacity:1}
-.h18-vd-form-preview-submit{display:inline-block;border:0;border-radius:4px;background:var(--h18-form-preview-accent);color:#fff;padding:11px 20px;font:700 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;cursor:default}
+.h18-vd-form-preview-submit{display:inline-block;border:0;border-radius:4px;background:var(--h18-form-preview-accent);color:#fff;padding:var(--vdm-form-button-padding-y,11px) var(--vdm-form-button-padding-x,20px);font:700 16px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;cursor:default}
 @media(max-width:782px){.h18-vd-form-preview-grid{grid-template-columns:1fr}.h18-vd-form-preview-field.is-wide{grid-column:auto}}
 
 /* Visual Designer Manager v0.1.85 · VD-EDITOR-LIVE-BOX-PARITY-002 */
