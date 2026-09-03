@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.91
-Trigger: form-design-controls 2026-09-03
+Release Visual Designer Manager v0.1.92
+Trigger: export-integrity 2026-09-03
 Publish: requested 2026-09-03
-QA: apply run 33734923737 PASS
-Source candidate: e1b05d2c09e47445bdf81fb07c523a4ca810f6eb
+QA: apply run 33735599274 PASS
+Source candidate: 546526fe6df33dd5320152cfad2f2d1c818bd4e2
