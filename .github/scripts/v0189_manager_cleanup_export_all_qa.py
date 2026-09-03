@@ -59,8 +59,12 @@ ok("self::card('all', 'Eksporter alt'" in export, 'Export All card is active')
 ok('Kommer senere' not in export, 'disabled whole-site placeholder removed')
 ok("case 'all':" in export, 'Export All execution path exists')
 ok("PortableTransferController::buildPortablePackage($portableTmp)" in export, 'Export All reuses canonical portable builder')
-ok("'portable-site/' . sanitize_file_name" in export, 'directly importable portable ZIP is nested in total bundle')
-ok("'includes' => ['plugin', 'active-theme', 'parent-theme-when-used', 'portable-site']" in export, 'total bundle declares full scope')
+nested_old = "'portable-site/' . sanitize_file_name" in export
+nested_new = "$portableArchivePath = 'portable-site/' . $portableFilename" in export and "self::addFile($zip, $portableTmp, $portableArchivePath, $files)" in export
+ok(nested_old or nested_new, 'directly importable portable ZIP is nested in total bundle')
+scope_old = "'includes' => ['plugin', 'active-theme', 'parent-theme-when-used', 'portable-site']" in export
+scope_new = "$includes = ['plugin', 'active-theme', 'parent-theme-when-used', 'portable-site']" in export and "'includes' => $includes" in export
+ok(scope_old or scope_new, 'total bundle declares full scope')
 ok("H18_CLEAN_DIR" in export and "self::addTheme($zip, $files)" in export, 'total bundle includes plugin and theme')
 ok("@unlink($portableTmp)" in export, 'temporary portable ZIP is cleaned up')
 
