@@ -75,6 +75,15 @@ final class LayoutModel
             if (in_array($type, ['section', 'container'], true) && (!isset($nodeRaw['props']) || !is_array($nodeRaw['props']) || !array_key_exists('minHeightRows', $nodeRaw['props']))) {
                 $nodes[$id]['props']['minHeightRows'] = (int) $nodes[$id]['geometry']['desktop']['h'];
             }
+            if (in_array($type, ['contactform', 'membershipform'], true)) {
+                // v0.1.90 FORM-WYSIWYG-002: form controls have canonical intrinsic geometry.
+                // Existing layouts created with the old 112px Designer textarea must not keep a too-short grid span.
+                $formMinRows = $type === 'membershipform' ? 87 : 76;
+                $currentRows = (int) ($nodes[$id]['geometry']['desktop']['h'] ?? 0);
+                if ($currentRows > 0 && $currentRows < $formMinRows) {
+                    $nodes[$id]['geometry']['desktop']['h'] = $formMinRows;
+                }
+            }
         }
 
         self::validateHierarchy($nodes);

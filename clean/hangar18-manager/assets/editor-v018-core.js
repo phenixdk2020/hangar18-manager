@@ -1515,7 +1515,7 @@
         const id = makeId(type);
         const defaultW = defaultWidth(type, parentId);
         const p = placement || { parentId: parentId, x: 0, y: nextFreeY(parentId), w: defaultW, targetId: '', zone: 'free', bandIds: [], bandH: MIN_SPLIT_H };
-        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10, spacer: 4, divider: 6, icon: 10, badge: 8, link: 8, datalist: 18, table: 22, vehiclelist: 42, vehicledetail: 54, eventlist: 38, eventdetail: 46, gallerylist: 40, gallerydetail: 52, eventvalue: 10, eventimage: 40, eventfacts: 12, eventfield: 18, contactform: 54, membershipform: 74 };
+        const defaultRows = { section: 20, container: 16, text: 14, image: 20, button: 8, menu: 10, spacer: 4, divider: 6, icon: 10, badge: 8, link: 8, datalist: 18, table: 22, vehiclelist: 42, vehicledetail: 54, eventlist: 38, eventdetail: 46, gallerylist: 40, gallerydetail: 52, eventvalue: 10, eventimage: 40, eventfacts: 12, eventfield: 18, contactform: 76, membershipform: 87 };
         const defaultH = Math.max(MIN_SPLIT_H, parseInt(defaultRows[type] || MIN_SPLIT_H, 10) || MIN_SPLIT_H);
         const newProps = normalizeProps(type, {});
         if (type === 'button' && p.zone === 'overlay') { newProps.placementMode = 'overlay'; }

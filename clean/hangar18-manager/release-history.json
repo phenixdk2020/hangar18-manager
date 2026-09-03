@@ -1,6 +1,17 @@
 {
   "versions": [
     {
+      "version": "0.1.90",
+      "date": "2026-09-03",
+      "items": [
+        "FORM-WYSIWYG-002: Designer og frontend bruger nu samme canonical formulargeometri.",
+        "Kommentar/Besked textarea er 168 px i både Designer og live i stedet for 112 px kun i Designer.",
+        "Formularfelter, labels, samtykke og submit-knap bruger samme eksplicitte typografi og spacing i Editor og frontend.",
+        "Eksisterende Kontaktformularer under 76 grid-rækker og Bliv medlem-formularer under 87 grid-rækker normaliseres til en sikker minimumshøjde, så submit-knappen ikke flyder uden for formularbaggrunden.",
+        "Nye formularer oprettes med de samme minimumshøjder, så Editor → Forhåndsvisning → Live starter med samme geometri."
+      ]
+    },
+    {
       "version": "0.1.89",
       "date": "2026-09-03",
       "items": [
