@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.92
-Trigger: export-integrity 2026-09-03
+Release Visual Designer Manager v0.1.93
+Trigger: release-ux-hardening 2026-09-03
 Publish: requested 2026-09-03
-QA: apply run 33735599274 PASS
-Source candidate: 546526fe6df33dd5320152cfad2f2d1c818bd4e2
+QA: apply run 33736075348 PASS
+Source candidate: c101aaa4dd726475ceb106e17f9a870fbdaabbd5
