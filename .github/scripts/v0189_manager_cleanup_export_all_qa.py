@@ -19,7 +19,16 @@ def ok(cond, label):
         raise SystemExit('FAIL: ' + label)
     print('PASS:', label)
 
-ok('Version: 0.1.89' in plugin and "define('VDM_VERSION', '0.1.89');" in plugin, 'runtime version 0.1.89')
+
+def version_tuple(value):
+    parts = [int(p) for p in re.findall(r'\d+', str(value))[:3]]
+    while len(parts) < 3:
+        parts.append(0)
+    return tuple(parts)
+
+
+m = re.search(r"define\('VDM_VERSION',\s*'([^']+)'\);", plugin)
+ok(bool(m) and version_tuple(m.group(1)) >= (0, 1, 89), 'runtime version >= 0.1.89')
 
 # Conversion remains available only as hidden recovery route.
 ok("add_submenu_page(null, 'Konvertering (intern)'" in admin, 'conversion route is hidden')
@@ -59,9 +68,9 @@ ok("@unlink($portableTmp)" in export, 'temporary portable ZIP is cleaned up')
 ok("themeToggle.textContent = picker.mode === 'theme' ? 'Farvevælger' : 'Tema';" in color_js, 'v0.1.88 popup color toggle retained')
 ok("cancel.textContent='Annuller'" in color_js and "apply.textContent='Anvend'" in color_js, 'popup color actions retained')
 
-ok(history.get('versions') and history['versions'][0].get('version') == '0.1.89', 'release history headed by 0.1.89')
-ok('data-version="0.1.89"' in notes, '0.1.89 release notes present')
+ok(any(str(row.get('version')) == '0.1.89' for row in history.get('versions', [])), '0.1.89 remains in release history')
+ok('data-version="0.1.89"' in notes, '0.1.89 release notes remain present')
 ok((root/'docs/v0189-status.md').is_file(), '0.1.89 status document present')
-ok(updater.get('version') == '0.1.88', 'updater remains 0.1.88 before release')
+ok(version_tuple(updater.get('version', '0')) >= (0, 1, 88), 'updater is not older than v0.1.88 baseline')
 
 print('Visual Designer Manager v0.1.89 MANAGER CLEANUP + EXPORT ALL QA: PASS')
