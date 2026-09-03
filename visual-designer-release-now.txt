@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.89
-Trigger: manager-cleanup-export-all 2026-09-03
+Release Visual Designer Manager v0.1.90
+Trigger: form-wysiwyg-parity 2026-09-03
 Publish: requested 2026-09-03
-QA: apply run 33727741473 PASS
-Source candidate: 6c19acf6e71c43053be3b1b8a2dfde7c828dd644
+QA: apply run 33730163548 PASS
+Source candidate: a44ee482a8e386083ed40eff8e5680550a55a498
