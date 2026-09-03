@@ -7,6 +7,7 @@ on:
       - '.github/scripts/apply_v0191_form_design_controls.py'
       - '.github/scripts/v0191_form_design_controls_qa.py'
       - '.github/scripts/v0190_form_wysiwyg_parity_qa.py'
+      - '.github/scripts/v0189_manager_cleanup_export_all_qa.py'
       - '.github/workflows/apply-v0191-form-design-controls.yml'
   workflow_dispatch:
 
