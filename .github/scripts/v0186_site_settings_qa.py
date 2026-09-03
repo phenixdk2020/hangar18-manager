@@ -7,9 +7,14 @@ plugin = (root / 'clean/hangar18-manager/hangar18-manager.php').read_text(encodi
 controller = (root / 'clean/hangar18-manager/src/Admin/SiteSettingsController.php').read_text(encoding='utf-8')
 transfer = (root / 'clean/hangar18-manager/src/Admin/PortableTransferController.php').read_text(encoding='utf-8')
 
+runtime_match = re.search(r"define\('VDM_VERSION',\s*'([0-9]+\.[0-9]+\.[0-9]+)'\);", plugin)
+if not runtime_match:
+    raise SystemExit('VDM runtime version is not readable')
+runtime_version = tuple(map(int, runtime_match.group(1).split('.')))
+if runtime_version < (0, 1, 86):
+    raise SystemExit(f'Runtime regressed below v0.1.86: {runtime_match.group(1)}')
+
 for needle in [
-    'Version: 0.1.86',
-    "define('VDM_VERSION', '0.1.86');",
     "src/Admin/SiteSettingsController.php",
     r'\VisualDesignerManager\Admin\SiteSettingsController::register();',
 ]:
@@ -60,17 +65,17 @@ if "['source']['name']" in apply_block or "['source'][\"name\"]" in apply_block:
     raise SystemExit('Legacy package source.name must not be used as implicit identity fallback')
 
 history = json.loads((root / 'clean/hangar18-manager/release-history.json').read_text(encoding='utf-8'))
-if not history.get('versions') or history['versions'][0].get('version') != '0.1.86':
-    raise SystemExit('release-history.json is not headed by v0.1.86')
+versions = [str(row.get('version')) for row in history.get('versions', []) if isinstance(row, dict)]
+if '0.1.86' not in versions:
+    raise SystemExit('release-history.json no longer contains v0.1.86')
 if 'data-version="0.1.86"' not in (root / 'clean-release-notes.html').read_text(encoding='utf-8'):
     raise SystemExit('v0.1.86 release notes missing')
 if not (root / 'docs/v0186-status.md').is_file():
     raise SystemExit('v0.1.86 status document missing')
 
 updater = json.loads((root / 'clean-update.json').read_text(encoding='utf-8'))
-if tuple(map(int, updater['version'].split('.'))) < (0, 1, 85):
+updater_version = tuple(map(int, updater['version'].split('.')))
+if updater_version < (0, 1, 85):
     raise SystemExit('Updater regressed below v0.1.85')
-if tuple(map(int, updater['version'].split('.'))) > (0, 1, 86):
-    raise SystemExit('Updater is unexpectedly ahead of candidate')
 
-print('Visual Designer Manager v0.1.86 SITE SETTINGS QA: PASS')
+print(f'Visual Designer Manager v0.1.86 SITE SETTINGS QA: PASS on runtime {runtime_match.group(1)}')
