@@ -7,6 +7,7 @@ on:
       - '.github/scripts/apply_v0192_export_integrity.py'
       - '.github/scripts/v0192_export_integrity_qa.py'
       - '.github/scripts/v0191_form_design_controls_qa.py'
+      - '.github/scripts/v0189_manager_cleanup_export_all_qa.py'
       - '.github/workflows/apply-v0192-export-integrity.yml'
   workflow_dispatch:
 
