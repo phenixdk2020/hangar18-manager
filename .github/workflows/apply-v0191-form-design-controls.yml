@@ -1,0 +1,77 @@
+name: Apply Visual Designer Manager v0.1.91 Form Design Controls
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_v0191_form_design_controls.py'
+      - '.github/scripts/v0191_form_design_controls_qa.py'
+      - '.github/workflows/apply-v0191-form-design-controls.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply v0.1.91 candidate
+        run: python3 .github/scripts/apply_v0191_form_design_controls.py
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do php -l "$file" >/dev/null; done
+          echo 'PHP syntax: OK'
+      - name: JavaScript syntax
+        run: node --check clean/hangar18-manager/assets/editor-v018-core.js
+      - name: v0.1.91 form design QA
+        run: python3 .github/scripts/v0191_form_design_controls_qa.py
+      - name: v0.1.90 form parity regression
+        run: python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+      - name: v0.1.89 Manager/export regression
+        run: python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+      - name: v0.1.86 site settings regression
+        run: python3 .github/scripts/v0186_site_settings_qa.py
+      - name: v0.1.85 editor/event regressions
+        run: |
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_event_facts_typography_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+      - name: Portable and responsive regressions
+        run: |
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          python3 .github/scripts/v0173_editor_frontend_parity_qa.py
+          python3 .github/scripts/v0169_canvas_autoheight_qa.py
+          python3 .github/scripts/v0179_responsive_qa.py
+          python3 .github/scripts/v0180_composable_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
+      - name: Verify updater remains v0.1.90
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('clean-update.json').read_text(encoding='utf-8'))
+          assert data['version']=='0.1.90', data['version']
+          print('Candidate/release separation: OK')
+          PY
+      - name: Commit verified candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-qa-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add clean/hangar18-manager/hangar18-manager.php \
+                  clean/hangar18-manager/src/Model/LayoutModel.php \
+                  clean/hangar18-manager/src/Forms/FormService.php \
+                  clean/hangar18-manager/assets/editor-v018-core.js \
+                  clean/hangar18-manager/assets/editor-v0181.css \
+                  clean/hangar18-manager/release-history.json \
+                  clean-release-notes.html docs/v0191-status.md
+          if git diff --cached --quiet; then echo 'No candidate changes.'; exit 0; fi
+          git commit -m 'Add canonical form design controls in v0.1.91'
+          git push origin HEAD:main
