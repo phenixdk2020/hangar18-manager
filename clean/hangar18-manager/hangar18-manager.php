@@ -4,7 +4,7 @@
  * Plugin URI: https://github.com/phenixdk2020/hangar18-manager
  * Update URI: https://github.com/phenixdk2020/hangar18-manager
  * Description: Modeldrevet visuel WordPress-designer med responsive layouts, versionshistorik og Manager-funktioner.
- * Version: 0.1.86
+ * Version: 0.1.87
  * Author: Visual Designer Manager
  * Requires at least: 6.4
  * Requires PHP: 8.0
@@ -15,13 +15,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('VDM_VERSION', '0.1.86');
+define('VDM_VERSION', '0.1.87');
 define('VDM_FILE', __FILE__);
 define('VDM_DIR', plugin_dir_path(__FILE__));
 define('VDM_URL', plugin_dir_url(__FILE__));
 
 /* Deprecated compatibility aliases. New code must use VDM_* constants. */
-define('H18_CLEAN_VERSION', '0.1.86');
+define('H18_CLEAN_VERSION', '0.1.87');
 define('H18_CLEAN_FILE', VDM_FILE);
 define('H18_CLEAN_DIR', VDM_DIR);
 define('H18_CLEAN_URL', VDM_URL);
@@ -395,15 +395,9 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         H18_CLEAN_VERSION
     );
     wp_enqueue_style(
-        'h18-clean-editor-v0135',
-        H18_CLEAN_URL . 'assets/editor-v0135.css',
-        ['h18-clean-editor-v0134'],
-        H18_CLEAN_VERSION
-    );
-    wp_enqueue_style(
         'h18-clean-editor-v0144',
         H18_CLEAN_URL . 'assets/editor-v0144.css',
-        ['h18-clean-editor-v0135'],
+        ['h18-clean-editor-v0134'],
         H18_CLEAN_VERSION
     );
     wp_enqueue_style(
@@ -508,16 +502,9 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         true
     );
     wp_enqueue_script(
-        'h18-clean-editor-v0135',
-        H18_CLEAN_URL . 'assets/editor-v0135.js',
-        ['h18-clean-editor-v0132'],
-        H18_CLEAN_VERSION,
-        true
-    );
-    wp_enqueue_script(
         'h18-clean-editor-v0148-layers',
         H18_CLEAN_URL . 'assets/editor-v0148-layers.js',
-        ['h18-clean-editor-v0135'],
+        ['h18-clean-editor-v0132'],
         H18_CLEAN_VERSION,
         true
     );

@@ -2383,6 +2383,12 @@
         html += '</div><p class="description">0 = ingen ramme/afstand. X er luft mod næste element til højre; Y er luft mod næste element under.</p></div>'; }
         html += '<button type="button" class="button button-link-delete" id="h18-clean-delete">Slet element' + (PARENT_TYPES.includes(node.type) ? ' + indhold' : '') + '</button>';
         host.innerHTML = html;
+        // v0.1.87: Inspector is rebuilt on every render. Refresh the one canonical
+        // VDM color picker synchronously when available instead of relying only on
+        // MutationObserver ordering. Initial render is still covered by picker init.
+        if (window.VDMColorPicker && typeof window.VDMColorPicker.refresh === 'function') {
+            window.VDMColorPicker.refresh(host);
+        }
 
         host.querySelectorAll('[data-field]').forEach(function (control) {
             control.addEventListener('change', function () {

@@ -1,6 +1,18 @@
 {
   "versions": [
     {
+      "version": "0.1.87",
+      "date": "2026-09-03",
+      "items": [
+        "Farvevælgeren er samlet til én canonical VDM-picker på både side-Designer og Header/Footer Designer.",
+        "Den historiske v0.1.35 custom picker er fjernet fra runtime, så den ikke længere konkurrerer med v0.1.81-pickeren.",
+        "Alle color-inputs på Designer-siden dækkes, inklusive Baggrund, Tekstfarve, Overskriftsfarve, Rammefarve, hover/focus, accent, formular-, event-, køretøjs-, galleri- og tabelfarver.",
+        "Temafarver og senest brugte farver vises som hurtige genveje, mens fri HEX/farve fortsat er mulig.",
+        "Inspector kalder nu picker-refresh direkte efter dynamisk genrendering; MutationObserver er kun fallback.",
+        "Farveændringer gemmes fortsat først ved Anvend, så Fortryd/Gentag og versionshistorik får én kontrolleret ændring."
+      ]
+    },
+    {
       "version": "0.1.86",
       "date": "2026-09-02",
       "items": [
