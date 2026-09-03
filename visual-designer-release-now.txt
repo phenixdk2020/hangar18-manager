@@ -1,5 +1,5 @@
-Release Visual Designer Manager v0.1.90
-Trigger: form-wysiwyg-parity 2026-09-03
+Release Visual Designer Manager v0.1.91
+Trigger: form-design-controls 2026-09-03
 Publish: requested 2026-09-03
-QA: apply run 33730163548 PASS
-Source candidate: a44ee482a8e386083ed40eff8e5680550a55a498
+QA: apply run 33734923737 PASS
+Source candidate: e1b05d2c09e47445bdf81fb07c523a4ca810f6eb
