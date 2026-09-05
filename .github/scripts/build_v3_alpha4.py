@@ -125,7 +125,6 @@ subprocess.run(['python3', '.github/scripts/build_v3_alpha3.py'], check=True)
 protected = [
     'assets/editor-v018-core.js',
     'assets/editor.css',
-    'assets/frontend.css',
     'src/Frontend/Renderer.php',
     'src/Frontend/ResponsiveRenderer.php',
     'src/Model/LayoutModel.php',
