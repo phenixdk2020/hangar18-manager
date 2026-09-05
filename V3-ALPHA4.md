@@ -46,3 +46,7 @@ Alpha.4 does not redesign or reimplement:
 - Alpha.3 copy-and-verify storage migration
 
 The V1 `0.1.93` runtime remains the behavioral baseline.
+
+## Release contract
+
+The V3 release workflow builds Alpha.4 with the same deterministic transformer used by QA, validates the canonical route map and compatibility redirect layer, creates the installable `visual-designer-manager` WordPress ZIP, publishes its SHA-256 in `v3-update.json`, and retains the Alpha.3 storage migration in the package.
