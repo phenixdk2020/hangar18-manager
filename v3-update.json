@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.1",
+  "version": "3.0.0-alpha.2",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.1.zip",
-  "sha256": "9b95ef4989f233a6b6c0d0fd0fbf35c0a0c03e9ca5d4bec9189d0add04434164",
-  "source_commit": "e57202bda653f900622ed93051bdfa9cf5f7ad0b",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.2.zip",
+  "sha256": "cf587a05df1c6a472c5bcb7d34739fa236fa5d43a981027917ac1cbeec1eac01",
+  "source_commit": "78e83fe6b72917653e7c68ab69798e1ccb228ab5",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.",
-    "changelog": "3.0.0-alpha.1: V1 Clean Identity Baseline. Designer, renderer og workflows er bevaret fra V1 0.1.93; package/plugin-identiteten er flyttet til visual-designer-manager."
+    "changelog": "3.0.0-alpha.2: Canonical Runtime Constants. V3 runtime bruger nu VDM_VERSION, VDM_FILE, VDM_DIR og VDM_URL. De historiske H18_CLEAN_* konstanter beholdes kun som bootstrap-kompatibilitetsaliaser. Designer, JS/CSS, rendererlogik og storage/action-identifikatorer er uændrede."
   }
 }
