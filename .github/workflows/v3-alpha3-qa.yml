@@ -1,0 +1,94 @@
+name: V3 Alpha.3 Storage Migration QA
+
+on:
+  push:
+    branches: [v3-alpha3-storage-migration]
+    paths:
+      - '.github/scripts/build_v3_alpha3.py'
+      - '.github/workflows/v3-alpha3-qa.yml'
+      - '.github/workflows/v3-alpha1-release.yml'
+      - 'V3-ALPHA3.md'
+
+jobs:
+  alpha3-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 source runtime remains byte-identical: PASS'
+
+      - name: Retained V1 release regression gates
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_event_facts_typography_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
+
+      - name: Build Alpha.3 deterministically
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha3.py
+
+      - name: Validate transformed runtime
+        run: |
+          set -euo pipefail
+          MAIN='build/visual-designer-manager/visual-designer-manager.php'
+          MIG='build/visual-designer-manager/src/Migration/V3StorageMigration.php'
+          grep -Fq 'Version: 3.0.0-alpha.3' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.3');" "$MAIN"
+          grep -Fq "V3StorageMigration.php" "$MAIN"
+          grep -Fq 'V3StorageMigration::register();' "$MAIN"
+          grep -Fq "public const META = '_vdm_layout_v1';" build/visual-designer-manager/src/Model/LayoutModel.php
+          grep -Fq "public const POST_TYPE = 'vdm_module_item';" build/visual-designer-manager/src/Modules/ModuleStore.php
+          grep -Fq "public const OPTION = 'vdm_vehicle_fields_v1';" build/visual-designer-manager/src/Modules/VehicleFieldRegistry.php
+          grep -Fq "public const OPTION = 'vdm_event_fields_v1';" build/visual-designer-manager/src/Modules/EventFieldRegistry.php
+          grep -Fq "private const HISTORY_OPTION = 'vdm_navigation_history_v1';" build/visual-designer-manager/src/Admin/NavigationController.php
+          grep -Fq "legacyDataRetained" "$MIG"
+          grep -Fq "copy-and-verify" "$MIG"
+          if grep -Eq 'delete_option\(|delete_post_meta\(|wp_delete_post\(' "$MIG"; then
+            echo 'Destructive migration operation detected.' >&2
+            exit 1
+          fi
+          find build/visual-designer-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find build/visual-designer-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Re-prove V1 Designer interaction code is unchanged
+        run: |
+          set -euo pipefail
+          SRC='clean/hangar18-manager/assets/editor-v018-core.js'
+          DST='build/visual-designer-manager/assets/editor-v018-core.js'
+          test "$(sha256sum "$SRC" | awk '{print $1}')" = "$(sha256sum "$DST" | awk '{print $1}')"
+          grep -Fq 'button.draggable = true;' "$DST"
+          grep -Fq "button.addEventListener('dragstart'" "$DST"
+          grep -Fq 'surface.ondrop = function' "$DST"
+          grep -Fq 'beginResize' "$DST"
+          grep -Fq 'function undo()' "$DST"
+          grep -Fq 'function redo()' "$DST"
+          echo 'Designer interaction runtime unchanged: PASS'
+
+      - name: Build and inspect installable ZIP
+        run: |
+          set -euo pipefail
+          mkdir -p qa-dist
+          (cd build && zip -qr ../qa-dist/visual-designer-manager-v3.0.0-alpha.3.zip visual-designer-manager)
+          unzip -tq qa-dist/visual-designer-manager-v3.0.0-alpha.3.zip
+          test "$(unzip -Z1 qa-dist/visual-designer-manager-v3.0.0-alpha.3.zip | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 qa-dist/visual-designer-manager-v3.0.0-alpha.3.zip | grep -c '^visual-designer-manager/src/Migration/V3StorageMigration.php$')" = '1'
+          echo 'Alpha.3 installable package contract: PASS'
