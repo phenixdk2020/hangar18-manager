@@ -1,0 +1,239 @@
+name: Visual Designer Manager V3 Alpha Release
+
+on:
+  push:
+    branches: [v3-clean-refactor]
+    paths:
+      - 'v3-release-now.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  v3-alpha1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 runtime baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          if ! git diff --quiet "$BASELINE" -- clean/hangar18-manager; then
+            echo 'V3 Alpha.1 refuses to build: V1 runtime source differs from released 0.1.93 baseline.' >&2
+            git diff --stat "$BASELINE" -- clean/hangar18-manager
+            exit 1
+          fi
+          echo 'V1 0.1.93 runtime baseline: byte-identical PASS'
+
+      - name: V1 syntax and current regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_event_facts_typography_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
+          echo 'V1 retained regression gates: PASS'
+
+      - name: Prove tested V1 Designer interaction baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          JS='clean/hangar18-manager/assets/editor-v018-core.js'
+          PHP='clean/hangar18-manager/src/Admin/EditorController.php'
+          grep -Fq 'button.draggable = true;' "$JS"
+          grep -Fq "button.addEventListener('dragstart'" "$JS"
+          grep -Fq 'surface.ondragover = function' "$JS"
+          grep -Fq 'surface.ondrop = function' "$JS"
+          grep -Fq "addNode(payload.type, parentId, 'palette_drop', placement)" "$JS"
+          grep -Fq "['above', 'left']" "$JS"
+          grep -Fq "['right', 'below']" "$JS"
+          grep -Fq "return 'inside';" "$JS"
+          grep -Fq 'beginResize' "$JS"
+          grep -Fq 'function undo()' "$JS"
+          grep -Fq 'function redo()' "$JS"
+          grep -Fq 'draggable="true" class="button h18-clean-add"' "$PHP"
+          echo 'V1 Designer drag/drop/resize/history baseline: PASS'
+
+      - name: Assemble V3 package from unchanged V1 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.1'
+          rm -rf build
+          mkdir -p build
+          cp -a clean/hangar18-manager build/visual-designer-manager
+          mv build/visual-designer-manager/hangar18-manager.php build/visual-designer-manager/visual-designer-manager.php
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          version = '3.0.0-alpha.1'
+          root = Path('build/visual-designer-manager')
+          main = root / 'visual-designer-manager.php'
+          text = main.read_text(encoding='utf-8')
+          replacements = {
+              ' * Version: 0.1.93': f' * Version: {version}',
+              "define('VDM_VERSION', '0.1.93');": f"define('VDM_VERSION', '{version}');",
+              "define('H18_CLEAN_VERSION', '0.1.93');": f"define('H18_CLEAN_VERSION', '{version}');",
+          }
+          for old, new in replacements.items():
+              if text.count(old) != 1:
+                  raise SystemExit(f'Expected exactly one main-file token: {old!r}')
+              text = text.replace(old, new)
+          main.write_text(text, encoding='utf-8')
+
+          updater = root / 'src/Update/GitHubUpdater.php'
+          text = updater.read_text(encoding='utf-8')
+          replacements = {
+              "private const MANIFEST_URL = 'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/main/clean-update.json';": "private const MANIFEST_URL = 'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/v3-update.json';",
+              "private const SLUG = 'hangar18-manager';": "private const SLUG = 'visual-designer-manager';",
+              "private const PLUGIN_FILE = 'hangar18-manager/hangar18-manager.php';": "private const PLUGIN_FILE = 'visual-designer-manager/visual-designer-manager.php';",
+              "'User-Agent' => 'Hangar18-Manager-Clean/' . H18_CLEAN_VERSION,": "'User-Agent' => 'Visual-Designer-Manager-V3/' . VDM_VERSION,",
+              "'hangar18-manager/' . str_replace('\\\\', '/', $relative)": "'visual-designer-manager/' . str_replace('\\\\', '/', $relative)",
+          }
+          for old, new in replacements.items():
+              if text.count(old) != 1:
+                  raise SystemExit(f'Expected exactly one updater token: {old!r}; count={text.count(old)}')
+              text = text.replace(old, new)
+          updater.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Prove runtime preservation after package refactor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          src = Path('clean/hangar18-manager')
+          dst = Path('build/visual-designer-manager')
+          allowed = {'hangar18-manager.php', 'src/Update/GitHubUpdater.php'}
+          failures = []
+
+          def digest(path):
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+
+          for path in sorted(p for p in src.rglob('*') if p.is_file()):
+              rel = path.relative_to(src).as_posix()
+              if rel in allowed:
+                  continue
+              other = dst / rel
+              if not other.is_file():
+                  failures.append(f'missing in V3 package: {rel}')
+                  continue
+              if digest(path) != digest(other):
+                  failures.append(f'V1 runtime changed unexpectedly: {rel}')
+
+          expected = {p.relative_to(src).as_posix() for p in src.rglob('*') if p.is_file() and p.relative_to(src).as_posix() not in allowed}
+          actual = {p.relative_to(dst).as_posix() for p in dst.rglob('*') if p.is_file() and p.relative_to(dst).as_posix() not in {'visual-designer-manager.php', 'src/Update/GitHubUpdater.php'}}
+          extra = sorted(actual - expected)
+          missing = sorted(expected - actual)
+          failures += [f'extra unexpected file: {x}' for x in extra]
+          failures += [f'missing expected file: {x}' for x in missing]
+
+          if failures:
+              print('V3 runtime preservation: FAIL')
+              for item in failures:
+                  print(' -', item)
+              raise SystemExit(1)
+          print('V3 runtime preservation: PASS — all Designer/renderer/admin runtime files are byte-identical to V1 0.1.93')
+          PY
+
+      - name: Validate V3 package identity and syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN='build/visual-designer-manager/visual-designer-manager.php'
+          UPDATER='build/visual-designer-manager/src/Update/GitHubUpdater.php'
+          test ! -e build/visual-designer-manager/hangar18-manager.php
+          grep -Fq 'Version: 3.0.0-alpha.1' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.1');" "$MAIN"
+          grep -Fq "private const SLUG = 'visual-designer-manager';" "$UPDATER"
+          grep -Fq "private const PLUGIN_FILE = 'visual-designer-manager/visual-designer-manager.php';" "$UPDATER"
+          grep -Fq '/v3-clean-refactor/v3-update.json' "$UPDATER"
+          grep -Fq "'visual-designer-manager/' . str_replace" "$UPDATER"
+          find build/visual-designer-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find build/visual-designer-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'V3 package identity and syntax: PASS'
+
+      - name: Package V3 alpha.1 and create updater manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.1'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/hangar18-manager.php$')" = '0'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/assets/editor-v018-core.js$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/Renderer.php$')" = '1'
+          SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          python3 - "$SHA" "$SOURCE_COMMIT" <<'PY'
+          import json, sys
+          from pathlib import Path
+          sha, source_commit = sys.argv[1:3]
+          version = '3.0.0-alpha.1'
+          data = {
+              'name': 'Visual Designer Manager',
+              'slug': 'visual-designer-manager',
+              'version': version,
+              'homepage': 'https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'tested': '6.8',
+              'package': f'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v{version}.zip',
+              'sha256': sha,
+              'source_commit': source_commit,
+              'source_baseline': 'dc3bad403c764f4ec123a526333a781d05dde491',
+              'source_version': '0.1.93',
+              'sections': {
+                  'description': 'V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.',
+                  'changelog': '3.0.0-alpha.1: V1 Clean Identity Baseline. Designer, renderer og workflows er bevaret fra V1 0.1.93; package/plugin-identiteten er flyttet til visual-designer-manager.'
+              }
+          }
+          Path('v3-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          echo "V3_PACKAGE_SHA256=$SHA" >> "$GITHUB_ENV"
+          echo "V3 package SHA-256: $SHA"
+
+      - name: Commit verified V3 package to V3 branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-v3-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.1.zip
+          if git diff --cached --quiet; then
+            echo 'Verified V3 package already current.'
+            exit 0
+          fi
+          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.1 [skip v3 release]'
+          git push origin HEAD:v3-clean-refactor
+
+      - name: Upload actual WordPress plugin ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.1
+          if-no-files-found: error
+          retention-days: 30
+          path: dist/visual-designer-manager-v3.0.0-alpha.1.zip
