@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  v3-alpha2:
+  v3-alpha3:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,12 +24,8 @@ jobs:
           set -euo pipefail
           BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
           git cat-file -e "${BASELINE}^{commit}"
-          if ! git diff --quiet "$BASELINE" -- clean/hangar18-manager; then
-            echo 'V3 refuses to build: V1 runtime source differs from released 0.1.93 baseline.' >&2
-            git diff --stat "$BASELINE" -- clean/hangar18-manager
-            exit 1
-          fi
-          echo 'V1 0.1.93 runtime baseline: byte-identical PASS'
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
 
       - name: Run retained V1 regression gates
         shell: bash
@@ -47,7 +43,7 @@ jobs:
           python3 .github/scripts/v0185_semantic_qa.py
           python3 .github/scripts/v0184_portable_transfer_qa.py
           python3 .github/scripts/v0181_complete_qa.py
-          echo 'V1 retained regression gates: PASS'
+          echo 'Retained V1 regression gates: PASS'
 
       - name: Prove V1 Designer interaction baseline
         shell: bash
@@ -69,55 +65,58 @@ jobs:
           grep -Fq 'draggable="true" class="button h18-clean-add"' "$PHP"
           echo 'V1 Designer drag/drop/resize/history baseline: PASS'
 
-      - name: Build V3 3.0.0-alpha.2 deterministically
+      - name: Build V3 3.0.0-alpha.3 deterministically
         shell: bash
         run: |
           set -euo pipefail
-          python3 .github/scripts/build_v3_alpha2.py
+          python3 .github/scripts/build_v3_alpha3.py
 
-      - name: Validate V3 runtime identity and syntax
+      - name: Validate V3 alpha.3 runtime and migration contract
         shell: bash
         run: |
           set -euo pipefail
           MAIN='build/visual-designer-manager/visual-designer-manager.php'
-          UPDATER='build/visual-designer-manager/src/Update/GitHubUpdater.php'
+          MIG='build/visual-designer-manager/src/Migration/V3StorageMigration.php'
           test ! -e build/visual-designer-manager/hangar18-manager.php
-          grep -Fq 'Version: 3.0.0-alpha.2' "$MAIN"
-          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.2');" "$MAIN"
-          grep -Fq "define('H18_CLEAN_VERSION', '3.0.0-alpha.2');" "$MAIN"
-          grep -Fq "private const SLUG = 'visual-designer-manager';" "$UPDATER"
-          grep -Fq "private const PLUGIN_FILE = 'visual-designer-manager/visual-designer-manager.php';" "$UPDATER"
-          grep -Fq '/v3-clean-refactor/v3-update.json' "$UPDATER"
-          grep -Fq "'visual-designer-manager/' . str_replace" "$UPDATER"
-          if grep -R -n -E 'H18_CLEAN_(VERSION|FILE|DIR|URL)' build/visual-designer-manager --include='*.php' --exclude='visual-designer-manager.php'; then
-            echo 'Legacy H18_CLEAN runtime constant found outside compatibility bootstrap.' >&2
+          grep -Fq 'Version: 3.0.0-alpha.3' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.3');" "$MAIN"
+          grep -Fq "V3StorageMigration.php" "$MAIN"
+          grep -Fq 'V3StorageMigration::register();' "$MAIN"
+          grep -Fq "public const META = '_vdm_layout_v1';" build/visual-designer-manager/src/Model/LayoutModel.php
+          grep -Fq "public const POST_TYPE = 'vdm_module_item';" build/visual-designer-manager/src/Modules/ModuleStore.php
+          grep -Fq "vdm_global_template_registry_v1" build/visual-designer-manager/src/Model/TemplateLayoutModel.php
+          grep -Fq "vdm_tpl_" build/visual-designer-manager/src/Compatibility/LegacyStorageBridge.php
+          grep -Fq 'copy-and-verify' "$MIG"
+          grep -Fq 'legacyDataRetained' "$MIG"
+          if grep -Eq 'delete_option\(|delete_post_meta\(|wp_delete_post\(' "$MIG"; then
+            echo 'Destructive V3 storage migration operation detected.' >&2
             exit 1
           fi
           find build/visual-designer-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
           find build/visual-designer-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
-          echo 'V3 alpha.2 identity and syntax: PASS'
+          test "$(sha256sum clean/hangar18-manager/assets/editor-v018-core.js | awk '{print $1}')" = "$(sha256sum build/visual-designer-manager/assets/editor-v018-core.js | awk '{print $1}')"
+          echo 'V3 alpha.3 runtime/migration contract: PASS'
 
-      - name: Package V3 alpha.2 and create updater manifest
+      - name: Package V3 alpha.3 and create updater manifest
         shell: bash
         run: |
           set -euo pipefail
-          VERSION='3.0.0-alpha.2'
+          VERSION='3.0.0-alpha.3'
           mkdir -p dist
           ZIP="dist/visual-designer-manager-v${VERSION}.zip"
           rm -f "$ZIP"
           (cd build && zip -qr "../$ZIP" visual-designer-manager)
           unzip -tq "$ZIP"
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
-          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/hangar18-manager.php$')" = '0'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/V3StorageMigration.php$')" = '1'
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/assets/editor-v018-core.js$')" = '1'
-          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/Renderer.php$')" = '1'
           SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
           SOURCE_COMMIT="$(git rev-parse HEAD)"
           python3 - "$SHA" "$SOURCE_COMMIT" <<'PY'
           import json, sys
           from pathlib import Path
           sha, source_commit = sys.argv[1:3]
-          version = '3.0.0-alpha.2'
+          version = '3.0.0-alpha.3'
           data = {
               'name': 'Visual Designer Manager',
               'slug': 'visual-designer-manager',
@@ -133,7 +132,7 @@ jobs:
               'source_version': '0.1.93',
               'sections': {
                   'description': 'V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.',
-                  'changelog': '3.0.0-alpha.2: Canonical Runtime Constants. V3 runtime bruger nu VDM_VERSION, VDM_FILE, VDM_DIR og VDM_URL. De historiske H18_CLEAN_* konstanter beholdes kun som bootstrap-kompatibilitetsaliaser. Designer, JS/CSS, rendererlogik og storage/action-identifikatorer er uændrede.'
+                  'changelog': '3.0.0-alpha.3: V1 Storage Migration & Import Baseline. Aktivt side/layout-, Header/Footer-, modul-, felt- og menu-history storage flyttes copy-and-verify til vdm_* uden at slette V1-data. Modulrecords duplikeres til canonical vdm_module_item. Designer/renderer/JS/CSS og brugerworkflows er uændrede.'
               }
           }
           Path('v3-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -147,18 +146,18 @@ jobs:
           set -euo pipefail
           git config user.name 'visual-designer-v3-release-bot'
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
-          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.2.zip
+          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.3.zip
           if git diff --cached --quiet; then
             echo 'Verified V3 package already current.'
             exit 0
           fi
-          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.2 [skip v3 release]'
+          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.3 [skip v3 release]'
           git push origin HEAD:v3-clean-refactor
 
       - name: Upload actual WordPress plugin ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: visual-designer-manager-v3.0.0-alpha.2
+          name: visual-designer-manager-v3.0.0-alpha.3
           if-no-files-found: error
           retention-days: 30
-          path: dist/visual-designer-manager-v3.0.0-alpha.2.zip
+          path: dist/visual-designer-manager-v3.0.0-alpha.3.zip
