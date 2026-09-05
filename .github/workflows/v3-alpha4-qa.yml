@@ -1,0 +1,113 @@
+name: V3 Alpha.4 Admin Route QA
+
+on:
+  push:
+    branches: [v3-alpha4-admin-routes]
+    paths:
+      - '.github/scripts/build_v3_alpha4.py'
+      - '.github/workflows/v3-alpha4-qa.yml'
+      - 'V3-ALPHA4.md'
+
+jobs:
+  alpha4-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --quiet "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 source runtime baseline: PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_event_facts_typography_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
+          echo 'Retained V1 gates: PASS'
+
+      - name: Build Alpha.4 deterministically
+        run: python3 .github/scripts/build_v3_alpha4.py
+
+      - name: Validate canonical admin routes and compatibility bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          COMPAT="$ROOT/src/Compatibility/AdminRouteCompatibility.php"
+          grep -Fq 'Version: 3.0.0-alpha.4' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.4');" "$MAIN"
+          grep -Fq "AdminRouteCompatibility.php" "$MAIN"
+          grep -Fq "AdminRouteCompatibility::register();" "$MAIN"
+          for slug in vdm-manager vdm-editor vdm-vehicles vdm-vehicle-fields vdm-events vdm-event-fields vdm-gallery vdm-data vdm-pages vdm-conversion vdm-menu vdm-header-footer vdm-backup vdm-updates vdm-log vdm-manual vdm-export vdm-theme; do
+            grep -Rq "$slug" "$ROOT" --include='*.php' --include='*.js'
+          done
+          grep -Fq "'h18-clean-editor' => 'vdm-editor'" "$COMPAT"
+          grep -Fq "'h18-clean-pages' => 'vdm-pages'" "$COMPAT"
+          grep -Fq "wp_safe_redirect" "$COMPAT"
+          grep -Fq "302" "$COMPAT"
+          if grep -RniE "(?<![A-Za-z0-9-])h18-clean-(manager|editor|vehicles|vehicle-fields|events|event-fields|gallery|data|pages|conversion|menu|header-footer|backup|updates|log|manual|export|theme)(?![A-Za-z0-9-])" "$ROOT" --include='*.php' --include='*.js' --exclude='AdminRouteCompatibility.php' -P; then
+            echo 'Legacy standalone admin route remains outside compatibility layer.' >&2
+            exit 1
+          fi
+          echo 'Canonical route contract: PASS'
+
+      - name: Re-prove Designer and storage behavior unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          JS='build/visual-designer-manager/assets/editor-v018-core.js'
+          grep -Fq 'button.draggable = true;' "$JS"
+          grep -Fq "button.addEventListener('dragstart'" "$JS"
+          grep -Fq 'surface.ondragover = function' "$JS"
+          grep -Fq 'surface.ondrop = function' "$JS"
+          grep -Fq "addNode(payload.type, parentId, 'palette_drop', placement)" "$JS"
+          grep -Fq 'function undo()' "$JS"
+          grep -Fq 'function redo()' "$JS"
+          MIG='build/visual-designer-manager/src/Migration/V3StorageMigration.php'
+          grep -Fq "legacyDataRetained" "$MIG"
+          grep -Fq "migratePrimaryStorage" "$MIG"
+          grep -Fq "migrateModulePosts" "$MIG"
+          echo 'Designer/storage preservation contract: PASS'
+
+      - name: PHP and JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find build/visual-designer-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find build/visual-designer-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Syntax: PASS'
+
+      - name: Build and inspect installable ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.4'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Compatibility/AdminRouteCompatibility.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/V3StorageMigration.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo 'Installable ZIP: PASS'
