@@ -1,0 +1,119 @@
+name: V3 Alpha.12 V1 Mobile Parity and Event QA
+
+on:
+  push:
+    branches: [v3-alpha12-v1-mobile-parity-events]
+    paths:
+      - '.github/scripts/build_v3_alpha12.py'
+      - '.github/workflows/v3-alpha12-qa.yml'
+      - '.github/workflows/v3-alpha12-release.yml'
+      - 'V3-ALPHA12.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha12-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          echo 'Retained V1 regression gates: PASS'
+
+      - name: Capture Alpha.9 responsive reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha9.py
+          cp build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php /tmp/alpha9-responsive.php
+          sha256sum /tmp/alpha9-responsive.php
+
+      - name: Build and validate V3 3.0.0-alpha.12
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha12.py
+          python3 .github/scripts/build_v3_alpha12.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RR="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          MODEL="$ROOT/src/Model/LayoutModel.php"
+          JS="$ROOT/assets/editor-v018-core.js"
+          grep -Fq 'Version: 3.0.0-alpha.12' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.12');" "$MAIN"
+          cmp -s /tmp/alpha9-responsive.php "$RR"
+          ! grep -Fq 'h18-vdm-mobile-flow-repair' "$RR"
+          ! grep -Fq 'mobileOrder' "$RR"
+          test ! -e "$ROOT/assets/v3-alpha10-mobile-reflow.js"
+          test ! -e "$ROOT/assets/v3-alpha11-mobile-reflow.js"
+          grep -Fq "\$fit = 'original';" "$MODEL"
+          grep -Fq "'imageMaxWidth' => self::clamp" "$MODEL"
+          grep -Fq 'max-width:900px' "$RENDERER"
+          grep -Fq 'renderStoredRichText' "$RENDERER"
+          grep -Fq 'renderPlainMultiline' "$RENDERER"
+          grep -Fq 'eventDynamicImageMaxWidth' "$JS"
+          grep -Fq 'Visning: Normal størrelse' "$JS"
+          grep -Fq "'fit'=>'original'" "$ROOT/src/Migration/HybridModulePageMigration.php"
+          php .github/scripts/v3_alpha9_padding_qa.php "$ROOT"
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Alpha.12 V1 mobile parity + event presentation contract: PASS'
+
+      - name: Unit-test preserved line breaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/alpha12-lines.php <<'PHP'
+          <?php
+          function esc_html($value) { return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+          function wp_kses_post($value) { return (string)$value; }
+          require 'build/visual-designer-manager/src/Frontend/Renderer.php';
+          $method = new ReflectionMethod('VisualDesignerManager\\Frontend\\Renderer', 'renderStoredRichText');
+          $method->setAccessible(true);
+          $plain = $method->invoke(null, "10.00 - 10.10 Kaffe\n10.10 - 10.15 Udstilling\n10.15 - 10.30 Afslutning");
+          if (substr_count($plain, '<br>') !== 2) { fwrite(STDERR, "Plain line breaks collapsed: $plain\n"); exit(1); }
+          $html = $method->invoke(null, '<p>Linje 1</p><p>Linje 2</p>');
+          if ($html !== '<p>Linje 1</p><p>Linje 2</p>') { fwrite(STDERR, "HTML rich text changed: $html\n"); exit(2); }
+          echo "Alpha.12 multiline renderer: PASS\n";
+          PHP
+          php /tmp/alpha12-lines.php
+
+      - name: Package Alpha.12 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.12'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c 'v3-alpha1[01]-mobile-reflow.js$' || true)" = '0'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo 'Alpha.12 installable ZIP: PASS'
