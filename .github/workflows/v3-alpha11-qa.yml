@@ -1,0 +1,145 @@
+name: V3 Alpha.11 Mobile Visual Order QA
+
+on:
+  push:
+    branches: [v3-alpha11-mobile-visual-order]
+    paths:
+      - '.github/scripts/build_v3_alpha11.py'
+      - '.github/workflows/v3-alpha11-qa.yml'
+      - '.github/workflows/v3-alpha11-release.yml'
+      - 'V3-ALPHA11.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha11-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          echo 'Retained V1 regression gates: PASS'
+
+      - name: Build and validate V3 3.0.0-alpha.11
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha11.py
+          python3 .github/scripts/build_v3_alpha11.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RR="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          JS="$ROOT/assets/v3-alpha11-mobile-reflow.js"
+          grep -Fq 'Version: 3.0.0-alpha.11' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.11');" "$MAIN"
+          grep -Fq 'assets/v3-alpha11-mobile-reflow.js' "$RR"
+          grep -Fq '$mobileOrder' "$RR"
+          grep -Fq "{order:' . \$mobileOrder" "$RR"
+          grep -Fq 'h18-vdm-mobile-flow-repair' "$RR"
+          grep -Fq "'.h18-vd-live-shell-page '" "$RR"
+          grep -Fq "'.h18-vd-live-shell-header '" "$RR"
+          grep -Fq "'.h18-vd-live-shell-footer '" "$RR"
+          grep -Fq 'public const MOBILE_MAX = 782;' "$RR"
+          grep -Fq 'horizontalOverflow(parentRect, childRect)' "$JS"
+          grep -Fq 'intrinsicOverflow(child)' "$JS"
+          grep -Fq 'gap > 160' "$JS"
+          grep -Fq 'document.fonts.ready.then(schedule)' "$JS"
+          test ! -e "$ROOT/assets/v3-alpha10-mobile-reflow.js"
+          php -l "$RR"
+          node --check "$JS"
+          echo 'Alpha.11 mobile visual-order contract: PASS'
+
+      - name: Unit-test visual y/x order beats DOM order
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/alpha11-order-test.php <<'PHP'
+          <?php
+          require 'build/visual-designer-manager/src/Model/LayoutModel.php';
+          require 'build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php';
+          $g = static function(int $x, int $y, int $w=120, int $h=8): array {
+              return [
+                  'desktop'=>['x'=>$x,'y'=>$y,'w'=>$w,'h'=>$h],
+                  'laptop'=>['x'=>$x,'y'=>$y,'w'=>$w,'h'=>$h,'inheritDesktop'=>true],
+                  'tablet'=>['x'=>$x,'y'=>$y,'w'=>$w,'h'=>$h,'inheritDesktop'=>true],
+                  'mobile'=>['x'=>$x,'y'=>$y,'w'=>$w,'h'=>$h,'inheritDesktop'=>false],
+              ];
+          };
+          // Deliberately wrong DOM order: late/right/early/left.
+          $model=['nodes'=>[
+              ['id'=>'root','type'=>'section','parentId'=>'','props'=>['padding'=>0],'geometry'=>$g(0,0,120,50)],
+              ['id'=>'late','type'=>'text','parentId'=>'root','props'=>[],'geometry'=>$g(0,30)],
+              ['id'=>'right','type'=>'text','parentId'=>'root','props'=>[],'geometry'=>$g(70,10,40)],
+              ['id'=>'early','type'=>'text','parentId'=>'root','props'=>[],'geometry'=>$g(0,4)],
+              ['id'=>'left','type'=>'text','parentId'=>'root','props'=>[],'geometry'=>$g(5,10,40)],
+          ]];
+          $m=new ReflectionMethod('VisualDesignerManager\\Frontend\\ResponsiveRenderer','appendModelCss');
+          $m->setAccessible(true);
+          $l=$t=$mo='';
+          $args=[$model,'.h18-vd-live-shell-page ',&$l,&$t,&$mo];
+          $m->invokeArgs(null,$args);
+          $orders=[];
+          foreach (['early','left','right','late'] as $id) {
+              if (!preg_match('/h18-vdm-mobile-flow-repair>#h18-clean-' . $id . '\\{order:(\\d+)!important;\\}/', $mo, $match)) {
+                  fwrite(STDERR, "Missing order rule for $id\n"); exit(1);
+              }
+              $orders[$id]=(int)$match[1];
+          }
+          if (!($orders['early'] < $orders['left'] && $orders['left'] < $orders['right'] && $orders['right'] < $orders['late'])) {
+              fwrite(STDERR, 'Visual y/x ordering failed: ' . json_encode($orders) . "\n"); exit(2);
+          }
+          echo 'Alpha.11 visual mobile order beats DOM order: PASS' . PHP_EOL;
+          PHP
+          php /tmp/alpha11-order-test.php
+
+      - name: Re-prove Alpha.10 and Alpha.9 safeguards plus package
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          JS="$ROOT/assets/v3-alpha11-mobile-reflow.js"
+          grep -Fq 'V3DetailLayoutRepair::register();' "$MAIN"
+          grep -Fq 'private static function galleryDetailRows' "$ROOT/src/Frontend/Renderer.php"
+          grep -Fq 'data-field="paddingBottom"' "$ROOT/assets/editor-v018-core.js"
+          grep -Fq '.h18-clean-node-preview--form{padding:0!important' "$ROOT/assets/admin-v0175.css"
+          grep -Fq 'overlaps(normal[i - 1].rect, normal[i].rect)' "$JS"
+          grep -Fq "window.addEventListener('resize', schedule" "$JS"
+          php .github/scripts/v3_alpha9_padding_qa.php "$ROOT"
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          VERSION='3.0.0-alpha.11'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/assets/v3-alpha11-mobile-reflow.js$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/assets/v3-alpha10-mobile-reflow.js$')" = '0'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo 'Alpha.11 installable ZIP: PASS'
