@@ -39,6 +39,16 @@ for old, new in [
     main = main.replace(old, new, 1)
 write('visual-designer-manager.php', main)
 
+# Persist explicit side padding through the canonical save/read normalizer.
+# Keep absent sides absent so legacy fallback and one-time repair defaults work.
+model_rel = 'src/Model/LayoutModel.php'
+replace_once(
+    model_rel,
+    "        if (in_array($type, ['section', 'container'], true)) {\n            return array_merge([",
+    "        if (in_array($type, ['section', 'container'], true)) {\n            $sidePadding = [];\n            foreach (['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'] as $side) {\n                if (isset($raw[$side])) {\n                    $sidePadding[$side] = self::clamp($raw[$side], 0, 240, 0);\n                }\n            }\n            return array_merge($sidePadding, [",
+    'canonical section side-padding persistence'
+)
+
 # ---------------------------------------------------------------------------
 # Designer: section side paddings + WYSIWYG form width parity.
 # ---------------------------------------------------------------------------

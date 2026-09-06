@@ -48,6 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/build_v3_alpha9.py
+          php .github/scripts/v3_alpha9_padding_qa.php
           ROOT='build/visual-designer-manager'
           MAIN="$ROOT/visual-designer-manager.php"
           RR="$ROOT/src/Frontend/ResponsiveRenderer.php"

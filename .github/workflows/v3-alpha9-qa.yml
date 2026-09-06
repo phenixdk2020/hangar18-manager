@@ -6,6 +6,7 @@ on:
     branches: [v3-alpha9-parity]
     paths:
       - '.github/scripts/build_v3_alpha9.py'
+      - '.github/scripts/v3_alpha9_padding_qa.php'
       - '.github/workflows/v3-alpha9-qa.yml'
       - 'V3-ALPHA9.md'
   pull_request:
@@ -50,6 +51,7 @@ jobs:
           set -euo pipefail
           python3 -m py_compile .github/scripts/build_v3_alpha9.py
           python3 .github/scripts/build_v3_alpha9.py
+          php .github/scripts/v3_alpha9_padding_qa.php
           ROOT='build/visual-designer-manager'
           MAIN="$ROOT/visual-designer-manager.php"
           JS="$ROOT/assets/editor-v018-core.js"
