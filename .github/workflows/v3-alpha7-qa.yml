@@ -1,33 +1,36 @@
-name: Visual Designer Manager V3 Alpha Release
+name: V3 Alpha.7 Style Recovery and Shared Menu QA
 
 on:
   push:
-    branches: [v3-clean-refactor]
+    branches: [v3-alpha7-style-menu-recovery]
     paths:
-      - 'v3-release-now.txt'
-  workflow_dispatch:
-
-permissions:
-  contents: write
+      - '.github/scripts/build_v3_alpha7.py'
+      - '.github/v3-runtime/V3StyleRecovery.php'
+      - '.github/v3-runtime/SharedPrimaryMenu.php'
+      - '.github/workflows/v3-alpha7-qa.yml'
+      - '.github/workflows/v3-alpha1-release.yml'
+      - 'V3-ALPHA7.md'
+  pull_request:
+    branches: [v3-clean-refactor]
 
 jobs:
-  v3-alpha7:
+  alpha7-qa:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Lock V1 0.1.93 runtime baseline
+      - name: Lock V1 0.1.93 source runtime
         shell: bash
         run: |
           set -euo pipefail
           BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
           git cat-file -e "${BASELINE}^{commit}"
-          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
-          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+          git diff --quiet "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 source runtime baseline: PASS'
 
-      - name: Run retained V1 regression gates
+      - name: Retained V1 regression gates
         shell: bash
         run: |
           set -euo pipefail
@@ -43,7 +46,7 @@ jobs:
           python3 .github/scripts/v0185_semantic_qa.py
           python3 .github/scripts/v0184_portable_transfer_qa.py
           python3 .github/scripts/v0181_complete_qa.py
-          echo 'Retained V1 regression gates: PASS'
+          echo 'Retained V1 gates: PASS'
 
       - name: Lint Alpha.7 runtime sources
         shell: bash
@@ -53,10 +56,10 @@ jobs:
           php -l .github/v3-runtime/SharedPrimaryMenu.php
           python3 -m py_compile .github/scripts/build_v3_alpha7.py
 
-      - name: Build V3 3.0.0-alpha.7 deterministically
+      - name: Build Alpha.7 deterministically
         run: python3 .github/scripts/build_v3_alpha7.py
 
-      - name: Validate Alpha.7 recovery and shared menu contract
+      - name: Validate Alpha.7 bootstrap and recovery contract
         shell: bash
         run: |
           set -euo pipefail
@@ -70,14 +73,18 @@ jobs:
           grep -Fq 'V3StyleRecovery::register();' "$MAIN"
           grep -Fq 'SharedPrimaryMenu::register();' "$MAIN"
           if grep -Fq 'SiteDesignHarmonizer::register();' "$MAIN"; then
-            echo 'Historical SiteDesignHarmonizer is still active.' >&2
+            echo 'Historical SiteDesignHarmonizer is still active in V3.' >&2
             exit 1
           fi
           grep -Fq "count(\$harmonized) < 2" "$STYLE"
+          grep -Fq 'restoreChangedProps($current, $before, $bad)' "$STYLE"
           grep -Fq '$currentValue !== $badValue' "$STYLE"
+          grep -Fq 'V3 Alpha.7: gendan V1-styling' "$STYLE"
           grep -Fq "FOOTER_MENU_NODE = 'menu-footer-shortcuts-v3'" "$MENU"
           grep -Fq "add_filter('wp_nav_menu_args'" "$MENU"
           grep -Fq "TemplateLayoutModel::resolveId(\$postId, 'header')" "$MENU"
+          grep -Fq "'orientation' => 'vertical'" "$MENU"
+          grep -Fq "'mobileMode' => 'vertical'" "$MENU"
           python3 - "$HISTORY" <<'PY'
           import json, sys
           rows=json.load(open(sys.argv[1], encoding='utf-8'))['versions']
@@ -85,6 +92,44 @@ jobs:
           assert rows[1]['version']=='3.0.0-alpha.6'
           assert any(r['version']=='0.1.93' for r in rows)
           PY
+          echo 'Alpha.7 bootstrap/recovery/shared menu contract: PASS'
+
+      - name: Unit-test surgical prop recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/alpha7-recovery-test.php <<'PHP'
+          <?php
+          require 'build/visual-designer-manager/src/Migration/V3StyleRecovery.php';
+          $before=['schemaVersion'=>1,'units'=>120,'rowPx'=>8,'nodes'=>[
+            ['id'=>'s','type'=>'section','parentId'=>'','order'=>10,'geometry'=>['desktop'=>['x'=>0,'y'=>0,'w'=>120,'h'=>20]],'props'=>['background'=>'#30382a','radius'=>0]],
+            ['id'=>'t','type'=>'text','parentId'=>'s','order'=>10,'geometry'=>['desktop'=>['x'=>2,'y'=>2,'w'=>116,'h'=>4]],'props'=>['textColor'=>'#ffffff','headingColor'=>'#ffffff','fontWeight'=>400]],
+          ]];
+          $bad=$before;
+          $bad['nodes'][0]['props']['background']='#ffffff';
+          $bad['nodes'][1]['props']['textColor']='#30382a';
+          $bad['nodes'][1]['props']['headingColor']='#30382a';
+          $current=$bad;
+          $current['nodes'][0]['geometry']['desktop']['y']=9; // later geometry edit must survive
+          $current['nodes'][0]['props']['radius']=7; // later style edit unrelated to bad pass must survive
+          $m=new ReflectionMethod('VisualDesignerManager\\Migration\\V3StyleRecovery','restoreChangedProps');
+          $m->setAccessible(true);
+          [$fixed,$count]=$m->invoke(null,$current,$before,$bad);
+          if ($count!==3) { fwrite(STDERR,"restored count=$count\n"); exit(1); }
+          if ($fixed['nodes'][0]['props']['background']!=='#30382a') exit(2);
+          if ($fixed['nodes'][1]['props']['textColor']!=='#ffffff') exit(3);
+          if ($fixed['nodes'][1]['props']['headingColor']!=='#ffffff') exit(4);
+          if ($fixed['nodes'][0]['geometry']['desktop']['y']!==9) exit(5);
+          if ($fixed['nodes'][0]['props']['radius']!==7) exit(6);
+          echo "Surgical recovery unit: PASS\n";
+          PHP
+          php /tmp/alpha7-recovery-test.php
+
+      - name: Re-prove Designer renderer and shell are unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
           cmp clean/hangar18-manager/assets/editor-v018-core.js "$ROOT/assets/editor-v018-core.js"
           cmp clean/hangar18-manager/assets/editor-v0144-viewport.js "$ROOT/assets/editor-v0144-viewport.js"
           cmp clean/hangar18-manager/src/Frontend/Renderer.php "$ROOT/src/Frontend/Renderer.php"
@@ -92,9 +137,9 @@ jobs:
           grep -Fq 'legacyDataRetained' "$ROOT/src/Migration/V3StorageMigration.php"
           find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
           find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
-          echo 'V3 alpha.7 release contract: PASS'
+          echo 'Designer/renderer/shell/storage preservation: PASS'
 
-      - name: Package V3 alpha.7 and create updater manifest
+      - name: Build and inspect installable ZIP
         shell: bash
         run: |
           set -euo pipefail
@@ -107,54 +152,5 @@ jobs:
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/V3StyleRecovery.php$')" = '1'
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/SharedPrimaryMenu.php$')" = '1'
-          SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
-          SOURCE_COMMIT="$(git rev-parse HEAD)"
-          python3 - "$SHA" "$SOURCE_COMMIT" <<'PY'
-          import json, sys
-          from pathlib import Path
-          sha, source_commit = sys.argv[1:3]
-          version = '3.0.0-alpha.7'
-          data = {
-              'name': 'Visual Designer Manager',
-              'slug': 'visual-designer-manager',
-              'version': version,
-              'homepage': 'https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor',
-              'requires': '6.4',
-              'requires_php': '8.0',
-              'tested': '6.8',
-              'package': f'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v{version}.zip',
-              'sha256': sha,
-              'source_commit': source_commit,
-              'source_baseline': 'dc3bad403c764f4ec123a526333a781d05dde491',
-              'source_version': '0.1.93',
-              'sections': {
-                  'description': 'V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.',
-                  'changelog': '3.0.0-alpha.7: V1 Style Recovery & Shared Main Menu. Den historiske v0.1.72 harmonizer deaktiveres i V3; importerede undersider får kirurgisk gendannet kun de style-props, som den dobbelte harmonisering ændrede, mens senere brugerændringer og geometri bevares. Footerens Genveje bliver et rigtigt menu-element, som følger Headerens hovedmenu automatisk.'
-              }
-          }
-          Path('v3-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          PY
-          echo "V3_PACKAGE_SHA256=$SHA" >> "$GITHUB_ENV"
-          echo "V3 package SHA-256: $SHA"
-
-      - name: Commit verified V3 package to V3 branch
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'visual-designer-v3-release-bot'
-          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
-          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.7.zip
-          if git diff --cached --quiet; then
-            echo 'Verified V3 package already current.'
-            exit 0
-          fi
-          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.7 [skip v3 release]'
-          git push origin HEAD:v3-clean-refactor
-
-      - name: Upload actual WordPress plugin ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-designer-manager-v3.0.0-alpha.7
-          if-no-files-found: error
-          retention-days: 30
-          path: dist/visual-designer-manager-v3.0.0-alpha.7.zip
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo 'Installable ZIP: PASS'
