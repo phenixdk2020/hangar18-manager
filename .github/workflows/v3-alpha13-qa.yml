@@ -1,0 +1,126 @@
+name: V3 Alpha.13 V1 Mobile Geometry Recovery QA
+
+on:
+  push:
+    branches: [v3-alpha13-v1-mobile-geometry-recovery]
+    paths:
+      - '.github/scripts/build_v3_alpha13.py'
+      - '.github/workflows/v3-alpha13-qa.yml'
+      - '.github/workflows/v3-alpha13-release.yml'
+      - 'V3-ALPHA13.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha13-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Capture Alpha.12 renderer reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha12.py
+          sha256sum build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php | awk '{print $1}' > /tmp/alpha12-responsive.sha
+
+      - name: Build and validate V3 3.0.0-alpha.13
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha13.py
+          python3 .github/scripts/build_v3_alpha13.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          REC="$ROOT/src/Migration/V1MobileGeometryRecovery.php"
+          RR="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq 'Version: 3.0.0-alpha.13' "$MAIN"
+          grep -Fq 'V1MobileGeometryRecovery::register();' "$MAIN"
+          grep -Fq "'_h18_clean_layout_v1'" "$REC"
+          grep -Fq "'_vdm_layout_v1'" "$REC"
+          grep -Fq "geometry']['mobile'] = \$wanted" "$REC"
+          grep -Fq 'PAGE_BACKUP_META' "$REC"
+          grep -Fq 'LayoutModel::saveVersion' "$REC"
+          grep -Fq 'TemplateLayoutModel::saveVersion' "$REC"
+          test ! -e "$ROOT/assets/v3-alpha10-mobile-reflow.js"
+          test ! -e "$ROOT/assets/v3-alpha11-mobile-reflow.js"
+          ! grep -Fq 'h18-vdm-mobile-flow-repair' "$RR"
+          test "$(sha256sum "$RR" | awk '{print $1}')" = "$(cat /tmp/alpha12-responsive.sha)"
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Alpha.13 keeps Alpha.12 responsive renderer byte-identical: PASS'
+
+      - name: Unit-test V1 mobile geometry recovery contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/alpha13-recovery-test.php <<'PHP'
+          <?php
+          require 'build/visual-designer-manager/src/Migration/V1MobileGeometryRecovery.php';
+          $legacy = ['nodes' => [
+              ['id'=>'same','type'=>'text','geometry'=>['desktop'=>['x'=>1,'y'=>2,'w'=>30,'h'=>5],'mobile'=>['x'=>3,'y'=>40,'w'=>114,'h'=>12,'inheritDesktop'=>false]],'props'=>['text'=>'V1']],
+              ['id'=>'type-change','type'=>'text','geometry'=>['mobile'=>['x'=>0,'y'=>60,'w'=>120,'h'=>10,'inheritDesktop'=>false]],'props'=>[]],
+          ]];
+          $canonical = ['schemaVersion'=>1,'nodes' => [
+              ['id'=>'same','type'=>'text','geometry'=>['desktop'=>['x'=>9,'y'=>99,'w'=>50,'h'=>9],'laptop'=>['x'=>2,'y'=>3,'w'=>40,'h'=>8,'inheritDesktop'=>false],'tablet'=>['x'=>4,'y'=>5,'w'=>60,'h'=>7,'inheritDesktop'=>false],'mobile'=>['x'=>0,'y'=>999,'w'=>120,'h'=>99,'inheritDesktop'=>true]],'props'=>['text'=>'V3']],
+              ['id'=>'type-change','type'=>'button','geometry'=>['desktop'=>['x'=>1],'mobile'=>['x'=>7,'y'=>70,'w'=>70,'h'=>7,'inheritDesktop'=>true]],'props'=>['text'=>'keep']],
+              ['id'=>'v3-only','type'=>'eventfacts','geometry'=>['desktop'=>['x'=>5],'mobile'=>['x'=>8,'y'=>80,'w'=>80,'h'=>8,'inheritDesktop'=>false]],'props'=>['new'=>true]],
+          ]];
+          $beforeDesktop = $canonical['nodes'][0]['geometry']['desktop'];
+          $beforeLaptop = $canonical['nodes'][0]['geometry']['laptop'];
+          $beforeTablet = $canonical['nodes'][0]['geometry']['tablet'];
+          $beforeProps = $canonical['nodes'][0]['props'];
+          $beforeTypeMismatch = $canonical['nodes'][1];
+          $beforeV3Only = $canonical['nodes'][2];
+          $result = \VisualDesignerManager\Migration\V1MobileGeometryRecovery::recoverModel($legacy, $canonical);
+          $same = $result['model']['nodes'][0];
+          $expectedMobile = $legacy['nodes'][0]['geometry']['mobile'];
+          if ($same['geometry']['mobile'] !== $expectedMobile) { fwrite(STDERR, "Mobile geometry was not copied exactly\n"); exit(1); }
+          if ($same['geometry']['desktop'] !== $beforeDesktop || $same['geometry']['laptop'] !== $beforeLaptop || $same['geometry']['tablet'] !== $beforeTablet) { fwrite(STDERR, "Non-mobile geometry changed\n"); exit(2); }
+          if ($same['props'] !== $beforeProps) { fwrite(STDERR, "Props changed\n"); exit(3); }
+          if ($result['model']['nodes'][1] !== $beforeTypeMismatch) { fwrite(STDERR, "Type-mismatched node changed\n"); exit(4); }
+          if ($result['model']['nodes'][2] !== $beforeV3Only) { fwrite(STDERR, "V3-only node changed\n"); exit(5); }
+          if ($result['matched'] !== 1 || $result['changed'] !== 1 || $result['unmatched'] !== 2) { fwrite(STDERR, 'Unexpected stats: '.json_encode($result)."\n"); exit(6); }
+          echo "Alpha.13 exact mobile-only recovery: PASS\n";
+          PHP
+          php /tmp/alpha13-recovery-test.php
+
+      - name: Package Alpha.13 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.13'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/V1MobileGeometryRecovery.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
