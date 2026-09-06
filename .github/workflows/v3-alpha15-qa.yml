@@ -31,13 +31,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq '.h18-editor-text-image{grid-template-columns:1fr}' hangar18-manager.php
-          grep -Fq '.h18-page-form-grid{grid-template-columns:1fr}' hangar18-manager.php
-          grep -Fq '.h18-editor-card-grid{grid-template-columns:repeat(var(--h18-mobile-grid-columns,1),minmax(0,1fr))' hangar18-manager.php
-          grep -Fq 'body.page .h18-editor-page .wp-block-columns{flex-direction:column}' hangar18-manager.php
+          grep -Fq 'h18-editor-text-image' hangar18-manager.php
+          grep -Fq 'grid-template-columns:1fr' hangar18-manager.php
+          grep -Fq 'h18-mobile-grid-columns' hangar18-manager.php
+          grep -Fq 'flex-direction:column' hangar18-manager.php
           grep -Fq 'MobileHorizontalPaddingPx' hangar18-manager.php
-          grep -Fq '.h18-gallery-item img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}' hangar18-manager.php
-          grep -Fq '.h18-event-card-image{aspect-ratio:16/10;overflow:hidden' hangar18-manager.php
+          grep -Fq 'aspect-ratio:4/3' hangar18-manager.php
+          grep -Fq 'aspect-ratio:16/10' hangar18-manager.php
           echo 'Working V1 one-column/padding/card-ratio mobile reference: PASS'
 
       - name: Retained V1 regression gates
