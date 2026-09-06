@@ -1,0 +1,4 @@
+V3 3.0.0-alpha.6 QA baseline
+Run: 34013442598
+Result: success
+Scope: V1 Updates UI parity + V3 release history + Alpha.5 shell preservation + V1 Designer/storage preservation.
