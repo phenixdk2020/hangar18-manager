@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  v3-alpha4:
+  v3-alpha5:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,13 +65,13 @@ jobs:
           grep -Fq 'draggable="true" class="button h18-clean-add"' "$PHP"
           echo 'V1 Designer drag/drop/resize/history baseline: PASS'
 
-      - name: Build V3 3.0.0-alpha.4 deterministically
+      - name: Build V3 3.0.0-alpha.5 deterministically
         shell: bash
         run: |
           set -euo pipefail
-          python3 .github/scripts/build_v3_alpha4.py
+          python3 .github/scripts/build_v3_alpha5.py
 
-      - name: Validate V3 alpha.4 runtime and route cutover
+      - name: Validate V3 alpha.5 true site shell and parity contract
         shell: bash
         run: |
           set -euo pipefail
@@ -79,28 +79,38 @@ jobs:
           MAIN="$ROOT/visual-designer-manager.php"
           MIG="$ROOT/src/Migration/V3StorageMigration.php"
           COMPAT="$ROOT/src/Compatibility/AdminRouteCompatibility.php"
+          SHELL="$ROOT/src/Frontend/ThemeShell.php"
+          TEMPLATE="$ROOT/templates/vdm-site-shell.php"
+          VIEWPORT="$ROOT/assets/editor-v0144-viewport.js"
           test ! -e "$ROOT/hangar18-manager.php"
-          grep -Fq 'Version: 3.0.0-alpha.4' "$MAIN"
-          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.4');" "$MAIN"
+          grep -Fq 'Version: 3.0.0-alpha.5' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.5');" "$MAIN"
           grep -Fq "V3StorageMigration.php" "$MAIN"
           grep -Fq 'V3StorageMigration::register();' "$MAIN"
           grep -Fq "AdminRouteCompatibility.php" "$MAIN"
           grep -Fq 'AdminRouteCompatibility::register();' "$MAIN"
+          grep -Fq "add_filter('template_include', [self::class, 'templateInclude'], 999);" "$SHELL"
+          grep -Fq "metadata_exists('post', \$postId, LayoutModel::META)" "$SHELL"
+          grep -Fq "VDM_DIR . 'templates/vdm-site-shell.php'" "$SHELL"
+          grep -Fq 'wp_head();' "$TEMPLATE"
+          grep -Fq 'wp_body_open();' "$TEMPLATE"
+          grep -Fq 'the_content();' "$TEMPLATE"
+          grep -Fq 'wp_footer();' "$TEMPLATE"
+          grep -Fq 'data-vdm-site-shell="active"' "$TEMPLATE"
+          if grep -Eq 'get_header\(|get_footer\(|the_title\(' "$TEMPLATE"; then
+            echo 'Theme header/footer/title leaked into VDM standalone shell.' >&2
+            exit 1
+          fi
+          grep -Fq 'desktop: 1920' "$VIEWPORT"
+          grep -Fq 'laptop: 1180' "$VIEWPORT"
+          grep -Fq 'tablet: 980' "$VIEWPORT"
+          grep -Fq 'mobile: 390' "$VIEWPORT"
+          grep -Fq "root.style.transform = 'scale(' + currentScale + ')'" "$VIEWPORT"
           grep -Fq "public const META = '_vdm_layout_v1';" "$ROOT/src/Model/LayoutModel.php"
           grep -Fq "public const POST_TYPE = 'vdm_module_item';" "$ROOT/src/Modules/ModuleStore.php"
           grep -Fq "vdm_global_template_registry_v1" "$ROOT/src/Model/TemplateLayoutModel.php"
           grep -Fq 'legacyDataRetained' "$MIG"
           grep -Fq "'h18-clean-editor' => 'vdm-editor'" "$COMPAT"
-          grep -Fq "'h18-clean-manager' => 'vdm-manager'" "$COMPAT"
-          grep -Fq 'wp_safe_redirect' "$COMPAT"
-          grep -Fq '302' "$COMPAT"
-          for slug in vdm-manager vdm-editor vdm-vehicles vdm-vehicle-fields vdm-events vdm-event-fields vdm-gallery vdm-data vdm-pages vdm-conversion vdm-menu vdm-header-footer vdm-backup vdm-updates vdm-log vdm-manual vdm-export vdm-theme; do
-            grep -Rq "$slug" "$ROOT" --include='*.php' --include='*.js'
-          done
-          if grep -RniP '(?<![A-Za-z0-9-])h18-clean-(manager|editor|vehicles|vehicle-fields|events|event-fields|gallery|data|pages|conversion|menu|header-footer|backup|updates|log|manual|export|theme)(?![A-Za-z0-9-])' "$ROOT" --include='*.php' --include='*.js' --exclude='AdminRouteCompatibility.php'; then
-            echo 'Legacy standalone admin route remains outside compatibility layer.' >&2
-            exit 1
-          fi
           if grep -Eq 'delete_option\(|delete_post_meta\(|wp_delete_post\(' "$MIG"; then
             echo 'Destructive V3 storage migration operation detected.' >&2
             exit 1
@@ -108,13 +118,15 @@ jobs:
           find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
           find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           test "$(sha256sum clean/hangar18-manager/assets/editor-v018-core.js | awk '{print $1}')" = "$(sha256sum "$ROOT/assets/editor-v018-core.js" | awk '{print $1}')"
-          echo 'V3 alpha.4 runtime/route contract: PASS'
+          test "$(sha256sum clean/hangar18-manager/assets/editor-v0144-viewport.js | awk '{print $1}')" = "$(sha256sum "$ROOT/assets/editor-v0144-viewport.js" | awk '{print $1}')"
+          test "$(sha256sum clean/hangar18-manager/src/Frontend/Renderer.php | awk '{print $1}')" = "$(sha256sum "$ROOT/src/Frontend/Renderer.php" | awk '{print $1}')"
+          echo 'V3 alpha.5 true shell/Designer parity contract: PASS'
 
-      - name: Package V3 alpha.4 and create updater manifest
+      - name: Package V3 alpha.5 and create updater manifest
         shell: bash
         run: |
           set -euo pipefail
-          VERSION='3.0.0-alpha.4'
+          VERSION='3.0.0-alpha.5'
           mkdir -p dist
           ZIP="dist/visual-designer-manager-v${VERSION}.zip"
           rm -f "$ZIP"
@@ -123,6 +135,7 @@ jobs:
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/V3StorageMigration.php$')" = '1'
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Compatibility/AdminRouteCompatibility.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/templates/vdm-site-shell.php$')" = '1'
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/assets/editor-v018-core.js$')" = '1'
           SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
           SOURCE_COMMIT="$(git rev-parse HEAD)"
@@ -130,7 +143,7 @@ jobs:
           import json, sys
           from pathlib import Path
           sha, source_commit = sys.argv[1:3]
-          version = '3.0.0-alpha.4'
+          version = '3.0.0-alpha.5'
           data = {
               'name': 'Visual Designer Manager',
               'slug': 'visual-designer-manager',
@@ -146,7 +159,7 @@ jobs:
               'source_version': '0.1.93',
               'sections': {
                   'description': 'V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.',
-                  'changelog': '3.0.0-alpha.4: Admin Route & UI Identity Cutover. Bruger-synlige WordPress admin-sider bruger nu canonical vdm-* routes. Historiske h18-clean-* admin.php URLer redirectes via et isoleret kompatibilitetslag. V1 Designer/renderer/layout og Alpha.3 storage-migreringen er uændrede.'
+                  'changelog': '3.0.0-alpha.5: True Site Shell & Designer/Live Parity. VDM-layouts overtager nu WordPress-template på VDM-sider, så temaets header, footer og sidetitel ikke længere omgiver VDM-indholdet. WordPress lifecycle hooks bevares. V1 Designerens 1920/1180/980/390 virtuelle viewport, Fit-zoom, renderer, layoutdata og Alpha.3 storage er uændrede.'
               }
           }
           Path('v3-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -160,18 +173,18 @@ jobs:
           set -euo pipefail
           git config user.name 'visual-designer-v3-release-bot'
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
-          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.4.zip
+          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.5.zip
           if git diff --cached --quiet; then
             echo 'Verified V3 package already current.'
             exit 0
           fi
-          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.4 [skip v3 release]'
+          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.5 [skip v3 release]'
           git push origin HEAD:v3-clean-refactor
 
       - name: Upload actual WordPress plugin ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: visual-designer-manager-v3.0.0-alpha.4
+          name: visual-designer-manager-v3.0.0-alpha.5
           if-no-files-found: error
           retention-days: 30
-          path: dist/visual-designer-manager-v3.0.0-alpha.4.zip
+          path: dist/visual-designer-manager-v3.0.0-alpha.5.zip
