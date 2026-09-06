@@ -349,7 +349,7 @@ final class V3DetailLayoutRepair
 write('src/Migration/V3DetailLayoutRepair.php', repair)
 
 main = read('visual-designer-manager.php')
-require_anchor = "require_once H18_CLEAN_DIR . 'src/Migration/SharedPrimaryMenu.php';"
+require_anchor = "require_once VDM_DIR . 'src/Migration/SharedPrimaryMenu.php';"
 register_anchor = "\\VisualDesignerManager\\Migration\\SharedPrimaryMenu::register();"
 if require_anchor not in main or register_anchor not in main:
     raise SystemExit('Alpha.9 migration registration anchors missing')
