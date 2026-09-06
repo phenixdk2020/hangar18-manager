@@ -1,0 +1,104 @@
+name: V3 Alpha.14 V1 Mobile Menu Parity QA
+
+on:
+  push:
+    branches: [v3-alpha14-v1-mobile-menu-parity]
+    paths:
+      - '.github/scripts/build_v3_alpha14.py'
+      - '.github/workflows/v3-alpha14-qa.yml'
+      - '.github/workflows/v3-alpha14-release.yml'
+      - 'V3-ALPHA14.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha14-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+
+      - name: Verify working V1 mobile menu reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq '<nav class="h18-mobile-nav" aria-label="Mobilmenu">' hangar18-manager.php
+          grep -Fq '<details>' hangar18-manager.php
+          grep -Fq '<summary aria-label="Åbn menu">' hangar18-manager.php
+          grep -Fq '<div class="h18-mobile-menu-panel">' hangar18-manager.php
+          grep -Fq '.h18-mobile-menu-panel .h18-submenu' hangar18-manager.php
+          echo 'Working V1 native details/mobile-panel reference: PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Capture Alpha.13 non-menu references
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha13.py
+          sha256sum build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php | awk '{print $1}' > /tmp/alpha13-responsive.sha
+          sha256sum build/visual-designer-manager/src/Migration/V1MobileGeometryRecovery.php | awk '{print $1}' > /tmp/alpha13-recovery.sha
+
+      - name: Build and validate V3 3.0.0-alpha.14
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha14.py
+          python3 .github/scripts/build_v3_alpha14.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          EDITOR="$ROOT/assets/editor-v018-core.js"
+          grep -Fq 'Version: 3.0.0-alpha.14' "$MAIN"
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
+          grep -Fq 'h18-clean-front-hamburger' "$RENDERER"
+          grep -Fq 'h18-clean-front-menu-details[open]>.h18-clean-front-menu-panel' "$RENDERER"
+          grep -Fq -- '--h18-menu-mobile-panel-bg:#f2f0e8' "$RENDERER"
+          grep -Fq 'h18-vd-menu-preview-details' "$EDITOR"
+          ! grep -Fq 'class="h18-clean-front-menu-toggle"' "$RENDERER"
+          ! grep -Fq 'classList.toggle("is-open"' "$RENDERER"
+          ! grep -Fq 'textContent=o?"✕ Luk":"☰ Menu"' "$RENDERER"
+          ! grep -Fq 'preventDefault()' "$RENDERER"
+          test "$(sha256sum "$ROOT/src/Frontend/ResponsiveRenderer.php" | awk '{print $1}')" = "$(cat /tmp/alpha13-responsive.sha)"
+          test "$(sha256sum "$ROOT/src/Migration/V1MobileGeometryRecovery.php" | awk '{print $1}')" = "$(cat /tmp/alpha13-recovery.sha)"
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Alpha.14 V1 mobile menu parity contract: PASS'
+
+      - name: Package Alpha.14 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.14'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/Renderer.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
