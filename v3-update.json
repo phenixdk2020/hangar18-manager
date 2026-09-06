@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.13",
+  "version": "3.0.0-alpha.14",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.13.zip",
-  "sha256": "98583d3cee4917df697b28adc4bd357127a2890c397832ffb9ab7f0f31bb4a79",
-  "source_commit": "35bba521b271f0f2f12a9450bab2a104f240615c",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.14.zip",
+  "sha256": "9df61be7278fc099be46b9121cf8bbbf82f3613261bec13e652d0409b842c051",
+  "source_commit": "66ceb293bd2871181a4f8bcb1aae783879f1e2c8",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
-    "description": "V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.",
-    "changelog": "3.0.0-alpha.13: V1 Mobile Geometry Recovery. Existing V3 pages/templates recover V1 geometry.mobile exactly for matching node ID+type, with backup/versioning and no new responsive workaround."
+    "description": "Visual Designer Manager V3 med V1 som funktionel og visuel reference.",
+    "changelog": "3.0.0-alpha.14: V1 Mobile Menu Parity. Native details/summary hamburger dropdown replaces the V3 grid-bound is-open runtime; links navigate normally and Designer/live use the same mobile interaction model."
   }
 }
