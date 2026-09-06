@@ -1,0 +1,164 @@
+name: V3 Alpha.6 Updates UI Parity QA
+
+on:
+  push:
+    branches: [v3-alpha6-update-ui]
+    paths:
+      - '.github/scripts/build_v3_alpha6.py'
+      - '.github/workflows/v3-alpha6-qa.yml'
+      - '.github/workflows/v3-alpha1-release.yml'
+      - 'V3-ALPHA6.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+    paths:
+      - '.github/scripts/build_v3_alpha6.py'
+      - '.github/workflows/v3-alpha6-qa.yml'
+      - '.github/workflows/v3-alpha1-release.yml'
+      - 'V3-ALPHA6.md'
+
+jobs:
+  alpha6-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --quiet "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 source runtime baseline: PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_event_facts_typography_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          python3 .github/scripts/v0181_complete_qa.py
+          echo 'Retained V1 gates: PASS'
+
+      - name: Build Alpha.6 deterministically
+        run: python3 .github/scripts/build_v3_alpha6.py
+
+      - name: Validate V1 Updates page styling on canonical V3 route
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          ADMIN="$ROOT/src/Admin/AdminController.php"
+          UPDATER="$ROOT/src/Update/GitHubUpdater.php"
+          grep -Fq 'Version: 3.0.0-alpha.6' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.6');" "$MAIN"
+          grep -Fq "strpos(\$hook, 'vdm-') === false" "$ADMIN"
+          if grep -Fq "strpos(\$hook, 'h18-clean-') === false" "$ADMIN"; then
+            echo 'Legacy admin style enqueue guard is still active.' >&2
+            exit 1
+          fi
+          grep -Fq "self::open('Opdateringer', 'Tjek, installer og se update-checkpoints for Visual Designer Manager');" "$ADMIN"
+          grep -Fq 'h18-manager-big-version' "$ADMIN"
+          grep -Fq 'h18-manager-badge is-progress' "$ADMIN"
+          grep -Fq 'h18-manager-badge is-ok' "$ADMIN"
+          grep -Fq 'h18-manager-toolbar' "$ADMIN"
+          grep -Fq 'Update-checkpoints' "$ADMIN"
+          grep -Fq 'widefat striped' "$ADMIN"
+          grep -Fq 'admin.php?page=vdm-updates' "$UPDATER"
+          grep -Fq 'Visual Designer Manager → Opdateringer' "$UPDATER"
+          if grep -Fq 'Hangar18 Manager → Opdateringer' "$UPDATER"; then
+            echo 'Old product label remains in updater notice.' >&2
+            exit 1
+          fi
+          cmp clean/hangar18-manager/assets/admin-v019.css "$ROOT/assets/admin-v019.css"
+          cmp clean/hangar18-manager/assets/admin-v0123.css "$ROOT/assets/admin-v0123.css"
+          cmp clean/hangar18-manager/assets/admin-v0175.css "$ROOT/assets/admin-v0175.css"
+          grep -Fq '.h18-manager-card{' "$ROOT/assets/admin-v019.css"
+          grep -Fq '.h18-manager-big-version{' "$ROOT/assets/admin-v019.css"
+          grep -Fq '.h18-manager-badge.is-ok{' "$ROOT/assets/admin-v019.css"
+          echo 'V1 Updates page UI parity: PASS'
+
+      - name: Validate V3 versions in release history
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
+          UPDATER="$ROOT/src/Update/GitHubUpdater.php"
+          HISTORY="$ROOT/release-history.json"
+          grep -Fq "(?:-[0-9A-Za-z.-]+)?" "$UPDATER"
+          python3 - "$HISTORY" <<'PY'
+          import json, sys
+          p = sys.argv[1]
+          rows = json.load(open(p, encoding='utf-8'))['versions']
+          expected = [f'3.0.0-alpha.{n}' for n in range(6, 0, -1)]
+          actual = [row['version'] for row in rows[:6]]
+          assert actual == expected, (actual, expected)
+          assert rows[6]['version'] == '0.1.93', rows[6]['version']
+          assert all(row.get('items') for row in rows[:6])
+          print('V3 alpha.1-alpha.6 history + retained V1 history: PASS')
+          PY
+
+      - name: Re-prove Alpha.5 shell and V1 Designer/storage unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
+          SHELL="$ROOT/src/Frontend/ThemeShell.php"
+          TEMPLATE="$ROOT/templates/vdm-site-shell.php"
+          VIEWPORT="$ROOT/assets/editor-v0144-viewport.js"
+          JS="$ROOT/assets/editor-v018-core.js"
+          MIG="$ROOT/src/Migration/V3StorageMigration.php"
+          grep -Fq "add_filter('template_include', [self::class, 'templateInclude'], 999);" "$SHELL"
+          grep -Fq 'data-vdm-site-shell="active"' "$TEMPLATE"
+          grep -Fq 'desktop: 1920' "$VIEWPORT"
+          grep -Fq 'laptop: 1180' "$VIEWPORT"
+          grep -Fq 'tablet: 980' "$VIEWPORT"
+          grep -Fq 'mobile: 390' "$VIEWPORT"
+          grep -Fq "root.style.transform = 'scale(' + currentScale + ')'" "$VIEWPORT"
+          grep -Fq 'button.draggable = true;' "$JS"
+          grep -Fq "button.addEventListener('dragstart'" "$JS"
+          grep -Fq 'surface.ondrop = function' "$JS"
+          grep -Fq 'function undo()' "$JS"
+          grep -Fq 'function redo()' "$JS"
+          grep -Fq 'legacyDataRetained' "$MIG"
+          cmp clean/hangar18-manager/assets/editor-v018-core.js "$JS"
+          cmp clean/hangar18-manager/assets/editor-v0144-viewport.js "$VIEWPORT"
+          cmp clean/hangar18-manager/src/Frontend/Renderer.php "$ROOT/src/Frontend/Renderer.php"
+          echo 'Designer/frontend/storage preservation: PASS'
+
+      - name: PHP and JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find build/visual-designer-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find build/visual-designer-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Syntax: PASS'
+
+      - name: Build and inspect installable ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.6'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/assets/admin-v019.css$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Admin/AdminController.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/release-history.json$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo 'Installable ZIP: PASS'
