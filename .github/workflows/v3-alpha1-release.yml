@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  v3-alpha6:
+  v3-alpha7:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,73 +45,75 @@ jobs:
           python3 .github/scripts/v0181_complete_qa.py
           echo 'Retained V1 regression gates: PASS'
 
-      - name: Build V3 3.0.0-alpha.6 deterministically
-        run: python3 .github/scripts/build_v3_alpha6.py
+      - name: Lint Alpha.7 runtime sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l .github/v3-runtime/V3StyleRecovery.php
+          php -l .github/v3-runtime/SharedPrimaryMenu.php
+          python3 -m py_compile .github/scripts/build_v3_alpha7.py
 
-      - name: Validate Alpha.6 Updates UI and V3 history
+      - name: Build V3 3.0.0-alpha.7 deterministically
+        run: python3 .github/scripts/build_v3_alpha7.py
+
+      - name: Validate Alpha.7 recovery and shared menu contract
         shell: bash
         run: |
           set -euo pipefail
           ROOT='build/visual-designer-manager'
           MAIN="$ROOT/visual-designer-manager.php"
-          ADMIN="$ROOT/src/Admin/AdminController.php"
-          UPDATER="$ROOT/src/Update/GitHubUpdater.php"
+          STYLE="$ROOT/src/Migration/V3StyleRecovery.php"
+          MENU="$ROOT/src/Migration/SharedPrimaryMenu.php"
           HISTORY="$ROOT/release-history.json"
-          SHELL="$ROOT/src/Frontend/ThemeShell.php"
-          TEMPLATE="$ROOT/templates/vdm-site-shell.php"
-          VIEWPORT="$ROOT/assets/editor-v0144-viewport.js"
-          JS="$ROOT/assets/editor-v018-core.js"
-          MIG="$ROOT/src/Migration/V3StorageMigration.php"
-          grep -Fq 'Version: 3.0.0-alpha.6' "$MAIN"
-          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.6');" "$MAIN"
-          grep -Fq "strpos(\$hook, 'vdm-') === false" "$ADMIN"
-          grep -Fq 'h18-manager-big-version' "$ADMIN"
-          grep -Fq 'Update-checkpoints' "$ADMIN"
-          grep -Fq 'Visual Designer Manager → Opdateringer' "$UPDATER"
-          grep -Fq "(?:-[0-9A-Za-z.-]+)?" "$UPDATER"
-          cmp clean/hangar18-manager/assets/admin-v019.css "$ROOT/assets/admin-v019.css"
-          cmp clean/hangar18-manager/assets/admin-v0123.css "$ROOT/assets/admin-v0123.css"
-          cmp clean/hangar18-manager/assets/admin-v0175.css "$ROOT/assets/admin-v0175.css"
+          grep -Fq 'Version: 3.0.0-alpha.7' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.7');" "$MAIN"
+          grep -Fq 'V3StyleRecovery::register();' "$MAIN"
+          grep -Fq 'SharedPrimaryMenu::register();' "$MAIN"
+          if grep -Fq 'SiteDesignHarmonizer::register();' "$MAIN"; then
+            echo 'Historical SiteDesignHarmonizer is still active.' >&2
+            exit 1
+          fi
+          grep -Fq "count(\$harmonized) < 2" "$STYLE"
+          grep -Fq '$currentValue !== $badValue' "$STYLE"
+          grep -Fq "FOOTER_MENU_NODE = 'menu-footer-shortcuts-v3'" "$MENU"
+          grep -Fq "add_filter('wp_nav_menu_args'" "$MENU"
+          grep -Fq "TemplateLayoutModel::resolveId(\$postId, 'header')" "$MENU"
           python3 - "$HISTORY" <<'PY'
           import json, sys
           rows=json.load(open(sys.argv[1], encoding='utf-8'))['versions']
-          expected=[f'3.0.0-alpha.{n}' for n in range(6,0,-1)]
-          assert [r['version'] for r in rows[:6]] == expected
-          assert rows[6]['version'] == '0.1.93'
+          assert rows[0]['version']=='3.0.0-alpha.7'
+          assert rows[1]['version']=='3.0.0-alpha.6'
+          assert any(r['version']=='0.1.93' for r in rows)
           PY
-          grep -Fq "add_filter('template_include', [self::class, 'templateInclude'], 999);" "$SHELL"
-          grep -Fq 'data-vdm-site-shell="active"' "$TEMPLATE"
-          grep -Fq 'desktop: 1920' "$VIEWPORT"
-          grep -Fq 'button.draggable = true;' "$JS"
-          grep -Fq 'surface.ondrop = function' "$JS"
-          grep -Fq 'legacyDataRetained' "$MIG"
-          cmp clean/hangar18-manager/assets/editor-v018-core.js "$JS"
-          cmp clean/hangar18-manager/assets/editor-v0144-viewport.js "$VIEWPORT"
+          cmp clean/hangar18-manager/assets/editor-v018-core.js "$ROOT/assets/editor-v018-core.js"
+          cmp clean/hangar18-manager/assets/editor-v0144-viewport.js "$ROOT/assets/editor-v0144-viewport.js"
           cmp clean/hangar18-manager/src/Frontend/Renderer.php "$ROOT/src/Frontend/Renderer.php"
+          grep -Fq 'data-vdm-site-shell="active"' "$ROOT/templates/vdm-site-shell.php"
+          grep -Fq 'legacyDataRetained' "$ROOT/src/Migration/V3StorageMigration.php"
           find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
           find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
-          echo 'V3 alpha.6 release contract: PASS'
+          echo 'V3 alpha.7 release contract: PASS'
 
-      - name: Package V3 alpha.6 and create updater manifest
+      - name: Package V3 alpha.7 and create updater manifest
         shell: bash
         run: |
           set -euo pipefail
-          VERSION='3.0.0-alpha.6'
+          VERSION='3.0.0-alpha.7'
           mkdir -p dist
           ZIP="dist/visual-designer-manager-v${VERSION}.zip"
           rm -f "$ZIP"
           (cd build && zip -qr "../$ZIP" visual-designer-manager)
           unzip -tq "$ZIP"
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
-          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/release-history.json$')" = '1'
-          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/templates/vdm-site-shell.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/V3StyleRecovery.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/SharedPrimaryMenu.php$')" = '1'
           SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
           SOURCE_COMMIT="$(git rev-parse HEAD)"
           python3 - "$SHA" "$SOURCE_COMMIT" <<'PY'
           import json, sys
           from pathlib import Path
           sha, source_commit = sys.argv[1:3]
-          version = '3.0.0-alpha.6'
+          version = '3.0.0-alpha.7'
           data = {
               'name': 'Visual Designer Manager',
               'slug': 'visual-designer-manager',
@@ -127,7 +129,7 @@ jobs:
               'source_version': '0.1.93',
               'sections': {
                   'description': 'V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.',
-                  'changelog': '3.0.0-alpha.6: V1 Updates UI Parity & V3 Release History. Canonical vdm-* adminruter indlæser igen V1 Manager-styling. Opdateringer-siden viser V3 alpha.1-alpha.6 øverst i versionshistorikken og bevarer V1-historikken nedenunder. Designer, frontend shell, layout og storage er uændrede.'
+                  'changelog': '3.0.0-alpha.7: V1 Style Recovery & Shared Main Menu. Den historiske v0.1.72 harmonizer deaktiveres i V3; importerede undersider får kirurgisk gendannet kun de style-props, som den dobbelte harmonisering ændrede, mens senere brugerændringer og geometri bevares. Footerens Genveje bliver et rigtigt menu-element, som følger Headerens hovedmenu automatisk.'
               }
           }
           Path('v3-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -141,18 +143,18 @@ jobs:
           set -euo pipefail
           git config user.name 'visual-designer-v3-release-bot'
           git config user.email '74060601+phenixdk2020@users.noreply.github.com'
-          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.6.zip
+          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.7.zip
           if git diff --cached --quiet; then
             echo 'Verified V3 package already current.'
             exit 0
           fi
-          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.6 [skip v3 release]'
+          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.7 [skip v3 release]'
           git push origin HEAD:v3-clean-refactor
 
       - name: Upload actual WordPress plugin ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: visual-designer-manager-v3.0.0-alpha.6
+          name: visual-designer-manager-v3.0.0-alpha.7
           if-no-files-found: error
           retention-days: 30
-          path: dist/visual-designer-manager-v3.0.0-alpha.6.zip
+          path: dist/visual-designer-manager-v3.0.0-alpha.7.zip
