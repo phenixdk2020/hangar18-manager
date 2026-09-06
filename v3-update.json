@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.5",
+  "version": "3.0.0-alpha.6",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.5.zip",
-  "sha256": "de672c3d7f2917708e668f7eb92b2c0feb1f7238a12e0028cd4deb11c6031fd6",
-  "source_commit": "b0dd0c3d4ee8f838d778d51e435b427348261478",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.6.zip",
+  "sha256": "353c3ba90e4776bab05dc872f3f727719bfe9075ee8994f4146ce465a28aa5aa",
+  "source_commit": "b73473c111d672fa469757b3d99c283a45f9ec64",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.",
-    "changelog": "3.0.0-alpha.5: True Site Shell & Designer/Live Parity. VDM-layouts overtager nu WordPress-template på VDM-sider, så temaets header, footer og sidetitel ikke længere omgiver VDM-indholdet. WordPress lifecycle hooks bevares. V1 Designerens 1920/1180/980/390 virtuelle viewport, Fit-zoom, renderer, layoutdata og Alpha.3 storage er uændrede."
+    "changelog": "3.0.0-alpha.6: V1 Updates UI Parity & V3 Release History. Canonical vdm-* adminruter indlæser igen V1 Manager-styling. Opdateringer-siden viser V3 alpha.1-alpha.6 øverst i versionshistorikken og bevarer V1-historikken nedenunder. Designer, frontend shell, layout og storage er uændrede."
   }
 }
