@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.12",
+  "version": "3.0.0-alpha.13",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.12.zip",
-  "sha256": "75f1fa05893112d041919f6c904056f189baebb59e396fa4db1459aaa2168175",
-  "source_commit": "4c000ef22ab4f4a022e2f02d200d6ff5c448c22a",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.13.zip",
+  "sha256": "98583d3cee4917df697b28adc4bd357127a2890c397832ffb9ab7f0f31bb4a79",
+  "source_commit": "35bba521b271f0f2f12a9450bab2a104f240615c",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.",
-    "changelog": "3.0.0-alpha.12: V1 Mobile Parity Reset. Alpha.10/11 grid-to-flex mobile workarounds are removed; event images use normal content sizing and line breaks are preserved in Program and other event fields."
+    "changelog": "3.0.0-alpha.13: V1 Mobile Geometry Recovery. Existing V3 pages/templates recover V1 geometry.mobile exactly for matching node ID+type, with backup/versioning and no new responsive workaround."
   }
 }
