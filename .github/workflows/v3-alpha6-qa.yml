@@ -90,6 +90,26 @@ jobs:
           grep -Fq '.h18-manager-badge.is-ok{' "$ROOT/assets/admin-v019.css"
           echo 'V1 Updates page UI parity: PASS'
 
+      - name: Validate V3 versions in release history
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
+          UPDATER="$ROOT/src/Update/GitHubUpdater.php"
+          HISTORY="$ROOT/release-history.json"
+          grep -Fq "(?:-[0-9A-Za-z.-]+)?" "$UPDATER"
+          python3 - "$HISTORY" <<'PY'
+          import json, sys
+          p = sys.argv[1]
+          rows = json.load(open(p, encoding='utf-8'))['versions']
+          expected = [f'3.0.0-alpha.{n}' for n in range(6, 0, -1)]
+          actual = [row['version'] for row in rows[:6]]
+          assert actual == expected, (actual, expected)
+          assert rows[6]['version'] == '0.1.93', rows[6]['version']
+          assert all(row.get('items') for row in rows[:6])
+          print('V3 alpha.1-alpha.6 history + retained V1 history: PASS')
+          PY
+
       - name: Re-prove Alpha.5 shell and V1 Designer/storage unchanged
         shell: bash
         run: |
@@ -139,5 +159,6 @@ jobs:
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/assets/admin-v019.css$')" = '1'
           test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Admin/AdminController.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/release-history.json$')" = '1'
           echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
           echo 'Installable ZIP: PASS'
