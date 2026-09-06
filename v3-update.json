@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.8",
+  "version": "3.0.0-alpha.9",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.8.zip",
-  "sha256": "f027fb0e6c860c925465ddbc3e819a3ba80043c04b23f31fe9ea5ed181e1d334",
-  "source_commit": "2054f1638922e0a39b8903edb2b5c9fc461e8ef3",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.9.zip",
+  "sha256": "3cc99d7d8379019486bee3876278d551a24b96f11aae1bb79579c4eb4c0456ce",
+  "source_commit": "5ec3c6ada95417dea76e24815682a543dcdcb8e3",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.",
-    "changelog": "3.0.0-alpha.8: Mobile Runtime Parity. Responsive runtime anvender nu de gemte breakpoint-geometrier på Header, side og Footer; shell-delene scopes separat, og mobil overflow begrænses uden at ændre layoutdata, Designer eller Renderer-markup."
+    "changelog": "3.0.0-alpha.9: Detail/Form/Gallery Parity. Eventdetalje gendannes fra den kendte V1-regression; sektioner får side-specifik padding; formular-preview matcher livebredder; galleriets dubletoverskrift fjernes; albumdetail får dynamisk indholdshøjde og Tilbage til album."
   }
 }
