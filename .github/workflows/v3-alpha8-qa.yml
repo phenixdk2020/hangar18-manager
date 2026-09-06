@@ -1,0 +1,149 @@
+name: V3 Alpha.8 Mobile Runtime Parity QA
+
+on:
+  push:
+    branches: [v3-alpha8-mobile-runtime-parity]
+    paths:
+      - '.github/scripts/build_v3_alpha8.py'
+      - '.github/workflows/v3-alpha8-qa.yml'
+      - '.github/workflows/v3-alpha1-release.yml'
+      - 'V3-ALPHA8.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha8-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --quiet "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 source runtime baseline: PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+          echo 'Retained V1 gates: PASS'
+
+      - name: Build Alpha.8 deterministically
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha8.py
+          python3 .github/scripts/build_v3_alpha8.py
+
+      - name: Validate Alpha.8 responsive shell contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RR="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          HISTORY="$ROOT/release-history.json"
+          grep -Fq 'Version: 3.0.0-alpha.8' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.8');" "$MAIN"
+          grep -Fq 'use VisualDesignerManager\Model\TemplateLayoutModel;' "$RR"
+          grep -Fq "ThemeShell::resolvedTemplateId(\$postId, \$part)" "$RR"
+          grep -Fq "TemplateLayoutModel::model(\$templateId)" "$RR"
+          grep -Fq "'.h18-vd-live-shell-header '" "$RR"
+          grep -Fq "'.h18-vd-live-shell-page '" "$RR"
+          grep -Fq "'.h18-vd-live-shell-footer '" "$RR"
+          grep -Fq 'private static function appendModelCss' "$RR"
+          grep -Fq 'public const MOBILE_MAX = 782;' "$RR"
+          grep -Fq '.h18-vd-live-shell{overflow-x:hidden;}' "$RR"
+          php -l "$RR"
+          python3 - "$HISTORY" <<'PY'
+          import json, sys
+          rows=json.load(open(sys.argv[1], encoding='utf-8'))['versions']
+          assert rows[0]['version']=='3.0.0-alpha.8'
+          assert rows[1]['version']=='3.0.0-alpha.7'
+          assert any(r['version']=='0.1.93' for r in rows)
+          PY
+          echo 'Alpha.8 responsive shell contract: PASS'
+
+      - name: Unit-test scoped mobile geometry generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/alpha8-responsive-test.php <<'PHP'
+          <?php
+          require 'build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php';
+          $model=['nodes'=>[
+            ['id'=>'section-test','type'=>'section','parentId'=>'','props'=>['padding'=>0],
+             'geometry'=>[
+               'desktop'=>['x'=>0,'y'=>0,'w'=>120,'h'=>16],
+               'laptop'=>['x'=>0,'y'=>0,'w'=>120,'h'=>16,'inheritDesktop'=>true],
+               'tablet'=>['x'=>0,'y'=>0,'w'=>120,'h'=>16,'inheritDesktop'=>true],
+               'mobile'=>['x'=>0,'y'=>0,'w'=>120,'h'=>14,'inheritDesktop'=>false],
+             ]],
+            ['id'=>'brand-test','type'=>'text','parentId'=>'section-test','props'=>[],
+             'geometry'=>[
+               'desktop'=>['x'=>8,'y'=>4,'w'=>44,'h'=>8],
+               'laptop'=>['x'=>8,'y'=>4,'w'=>44,'h'=>8,'inheritDesktop'=>true],
+               'tablet'=>['x'=>8,'y'=>4,'w'=>44,'h'=>8,'inheritDesktop'=>true],
+               'mobile'=>['x'=>20,'y'=>3,'w'=>72,'h'=>8,'inheritDesktop'=>false],
+             ]],
+          ]];
+          $m=new ReflectionMethod('VisualDesignerManager\\Frontend\\ResponsiveRenderer','appendModelCss');
+          $m->setAccessible(true);
+          $l=$t=$mo='';
+          $args=[$model,'.h18-vd-live-shell-header ',&$l,&$t,&$mo];
+          $m->invokeArgs(null,$args);
+          if (strpos($mo,'.h18-vd-live-shell-header #h18-clean-brand-test{grid-column:21/span 72!important;grid-row:4/span 8!important;')===false) {
+              fwrite(STDERR,$mo."\n"); exit(1);
+          }
+          if (strpos($mo,'.h18-vd-live-shell-header #h18-clean-section-test{grid-column:1/span 120!important;grid-row:1/span 14!important;')===false) {
+              fwrite(STDERR,$mo."\n"); exit(2);
+          }
+          echo "Scoped mobile geometry: PASS\n";
+          PHP
+          php /tmp/alpha8-responsive-test.php
+
+      - name: Re-prove non-responsive V3 runtime unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT='build/visual-designer-manager'
+          cmp clean/hangar18-manager/assets/editor-v018-core.js "$ROOT/assets/editor-v018-core.js"
+          cmp clean/hangar18-manager/assets/editor-v0144-viewport.js "$ROOT/assets/editor-v0144-viewport.js"
+          cmp clean/hangar18-manager/src/Frontend/Renderer.php "$ROOT/src/Frontend/Renderer.php"
+          grep -Fq 'data-vdm-site-shell="active"' "$ROOT/templates/vdm-site-shell.php"
+          grep -Fq 'V3StyleRecovery::register();' "$ROOT/visual-designer-manager.php"
+          grep -Fq 'SharedPrimaryMenu::register();' "$ROOT/visual-designer-manager.php"
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Designer/Renderer/storage/recovery preservation: PASS'
+
+      - name: Build and inspect installable ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.8'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo 'Installable ZIP: PASS'
