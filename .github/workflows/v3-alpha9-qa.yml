@@ -1,6 +1,7 @@
 name: V3 Alpha.9 Detail/Form/Gallery Parity QA
 
 on:
+  workflow_dispatch:
   push:
     branches: [v3-alpha9-parity]
     paths:
