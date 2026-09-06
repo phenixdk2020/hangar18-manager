@@ -1,0 +1,1 @@
+Release Visual Designer Manager V3 3.0.0-alpha.15 after PR #189 QA passed.
