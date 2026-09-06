@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.6",
+  "version": "3.0.0-alpha.7",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.6.zip",
-  "sha256": "353c3ba90e4776bab05dc872f3f727719bfe9075ee8994f4146ce465a28aa5aa",
-  "source_commit": "b73473c111d672fa469757b3d99c283a45f9ec64",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.7.zip",
+  "sha256": "71dda10c7b96fc43f4f0e219a1fd81fe67eb31fc53d22c2a09768c024706ecc8",
+  "source_commit": "2a16beda46a6dd40d35956eed9c0260481d49869",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "V3 clean-refactor af den gennemtestede Visual Designer Manager V1 0.1.93 runtime.",
-    "changelog": "3.0.0-alpha.6: V1 Updates UI Parity & V3 Release History. Canonical vdm-* adminruter indlæser igen V1 Manager-styling. Opdateringer-siden viser V3 alpha.1-alpha.6 øverst i versionshistorikken og bevarer V1-historikken nedenunder. Designer, frontend shell, layout og storage er uændrede."
+    "changelog": "3.0.0-alpha.7: V1 Style Recovery & Shared Main Menu. Den historiske v0.1.72 harmonizer deaktiveres i V3; importerede undersider får kirurgisk gendannet kun de style-props, som den dobbelte harmonisering ændrede, mens senere brugerændringer og geometri bevares. Footerens Genveje bliver et rigtigt menu-element, som følger Headerens hovedmenu automatisk."
   }
 }
