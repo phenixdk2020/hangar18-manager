@@ -1,0 +1,1 @@
+Trigger verified release for Visual Designer Manager V3 3.0.0-alpha.11 after PR #185 merge and green PR-head QA run 34040562074.
