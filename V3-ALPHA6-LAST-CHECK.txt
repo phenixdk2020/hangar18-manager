@@ -1,0 +1,1 @@
+No runtime source files under clean/hangar18-manager were modified. Alpha.6 remains a deterministic build-layer change.
