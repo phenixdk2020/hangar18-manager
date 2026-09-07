@@ -1,0 +1,140 @@
+name: V3 Alpha.20 Menu and Mobile Parity QA
+
+on:
+  push:
+    branches: [v3-alpha20-menu-mobile-parity]
+    paths:
+      - '.github/scripts/build_v3_alpha20.py'
+      - '.github/workflows/v3-alpha20-qa.yml'
+      - 'V3-ALPHA20.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha20-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove Alpha.19 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha19.py
+          ROOT='build/visual-designer-manager'
+          grep -Fq 'Version: 3.0.0-alpha.19' "$ROOT/visual-designer-manager.php"
+          grep -Fq 'private static function v1NestedMobileEdgeParityCss(' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq "add_action('admin_menu', [self::class, 'sortManagerSubmenu'], 999);" "$ROOT/src/Admin/AdminController.php"
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$ROOT/src/Frontend/Renderer.php"
+          grep -Fq 'repeat(auto-fit,minmax(min(100%,' "$ROOT/src/Frontend/Renderer.php"
+          echo 'Alpha.19 baseline build: PASS'
+
+      - name: Build and validate V3 3.0.0-alpha.20
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha20.py
+          python3 .github/scripts/build_v3_alpha20.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          ADMIN="$ROOT/src/Admin/AdminController.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          JS="$ROOT/assets/editor-v018-core.js"
+          HISTORY="$ROOT/release-history.json"
+
+          grep -Fq 'Version: 3.0.0-alpha.20' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.20');" "$MAIN"
+
+          # VDM Menu CRUD.
+          grep -Fq "add_action('admin_post_vdm_create_nav_menu', [self::class, 'createNavigationMenu']);" "$ADMIN"
+          grep -Fq "add_action('admin_post_vdm_delete_nav_menu', [self::class, 'deleteNavigationMenu']);" "$ADMIN"
+          grep -Fq 'public static function createNavigationMenu(): void' "$ADMIN"
+          grep -Fq 'public static function deleteNavigationMenu(): void' "$ADMIN"
+          grep -Fq 'wp_create_nav_menu($name)' "$ADMIN"
+          grep -Fq 'wp_delete_nav_menu($menuId)' "$ADMIN"
+          grep -Fq "check_admin_referer('vdm_create_nav_menu')" "$ADMIN"
+          grep -Fq "check_admin_referer('vdm_delete_nav_menu')" "$ADMIN"
+          grep -Fq "current_user_can('edit_theme_options')" "$ADMIN"
+          grep -Fq '>+ Ny menu<' "$ADMIN"
+          grep -Fq '>Slet</button>' "$ADMIN"
+
+          # Designer Header menu -> live Header parity.
+          grep -Fq '$menuId = self::resolveLiveMenuId($menuId);' "$RENDERER"
+          grep -Fq 'private static function resolveLiveMenuId(int $requested): int' "$RENDERER"
+          grep -Fq 'get_nav_menu_locations()' "$RENDERER"
+          grep -Fq 'wp_get_nav_menus()' "$RENDERER"
+          grep -Fq '.h18-vd-live-shell-header .h18-clean-front-menu{display:flex!important;visibility:visible!important;opacity:1!important' "$RENDERER"
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+
+          # Nested mobile full-width ancestor hardening.
+          grep -Fq 'private static function v1NestedMobileEdgeParityCss(' "$RESPONSIVE"
+          grep -Fq '$majorWrapperIds = [];' "$RESPONSIVE"
+          grep -Fq 'foreach ($ancestorChain($bandId) as $ancestorId)' "$RESPONSIVE"
+          grep -Fq 'padding-left:0!important;padding-right:0!important;overflow:visible!important;' "$RESPONSIVE"
+          grep -Fq "['Om foreningen', 'Køretøjer og materiel', 'Events', 'Billedgalleri', 'Bliv en del af foreningen', 'Kontakt os']" "$RESPONSIVE"
+
+          # Retained Alpha.19 / V1 parity behavior.
+          grep -Fq 'private static function v1MobileFlowCss(' "$RESPONSIVE"
+          grep -Fq 'private static function v1MobileVisualParityCss(' "$RESPONSIVE"
+          grep -Fq 'private static function v1MobileEdgeSpacingCss(' "$RESPONSIVE"
+          grep -Fq 'repeat(auto-fit,minmax(min(100%,' "$RENDERER"
+          grep -Fq 'eventMinCardWidth' "$JS"
+          grep -Fq '3.0.0-alpha.20' "$HISTORY"
+          ! grep -Fq 'const h18PaletteContainers = Array.from(' "$JS"
+          test ! -e "$ROOT/assets/v3-alpha10-mobile-reflow.js"
+          test ! -e "$ROOT/assets/v3-alpha11-mobile-reflow.js"
+          ! grep -Fq 'ResizeObserver' "$RESPONSIVE"
+          ! grep -Fq 'getBoundingClientRect' "$RESPONSIVE"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Alpha.20 menu CRUD + live Header + nested mobile parity contract: PASS'
+
+      - name: Package Alpha.20 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.20'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/Renderer.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Admin/AdminController.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.20-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.20.zip
+          if-no-files-found: error
