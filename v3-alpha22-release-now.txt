@@ -1,0 +1,1 @@
+Trigger verified Visual Designer Manager V3 3.0.0-alpha.22 release after PR #196 merged with green PR-head QA.
