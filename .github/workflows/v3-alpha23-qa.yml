@@ -5,6 +5,7 @@ on:
     branches: [v3-alpha23-v1-mobile-spacing]
     paths:
       - '.github/scripts/build_v3_alpha23.py'
+      - '.github/scripts/build_v3_alpha23_corrected.py'
       - '.github/workflows/v3-alpha23-qa.yml'
       - 'V3-ALPHA23.md'
   pull_request:
@@ -49,7 +50,7 @@ jobs:
           ROOT='build/visual-designer-manager'
           RENDERER="$ROOT/src/Frontend/Renderer.php"
           grep -Fq 'Version: 3.0.0-alpha.22' "$ROOT/visual-designer-manager.php"
-          grep -Fq 'h18-clean-front-menu-toggle' "$RENDERER"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
           grep -Fq 'is-open' "$RENDERER"
           ! grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
 
@@ -57,8 +58,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m py_compile .github/scripts/build_v3_alpha23.py
-          python3 .github/scripts/build_v3_alpha23.py
+          python3 -m py_compile .github/scripts/build_v3_alpha23_corrected.py
+          python3 .github/scripts/build_v3_alpha23_corrected.py
           ROOT='build/visual-designer-manager'
           MAIN="$ROOT/visual-designer-manager.php"
           MODEL="$ROOT/src/Model/LayoutModel.php"
@@ -89,7 +90,7 @@ jobs:
           grep -Fq 'height:160px!important' "$RESPONSIVE"
           grep -Fq 'var(--h18-vdm-page-section-gap,24px)' "$RESPONSIVE"
           grep -Fq 'var(--h18-vdm-page-element-gap,14px)' "$RESPONSIVE"
-          grep -Fq 'h18-clean-front-menu-toggle' "$RENDERER"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
           ! grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
           grep -Fq '3.0.0-alpha.23' "$HISTORY"
 
