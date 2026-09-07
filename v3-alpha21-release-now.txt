@@ -1,0 +1,1 @@
+Release Visual Designer Manager V3 3.0.0-alpha.21 after PR #195 exact-head QA passed.
