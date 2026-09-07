@@ -19,6 +19,8 @@ Alpha.21 renderede stadig Menu-elementet gennem et HTML `<details>`-element. Mob
 - `Website-menu` fra Alpha.21 er fortsat den kanoniske standarddatakilde.
 - V1 0.1.93 ændres ikke.
 
-## QA
+## QA og release
 
 Alpha.22 QA kontrollerer blandt andet, at `<details>` ikke længere bruges til Menu-elementet, at desktop-panelet ligger i normal DOM, at mobil-controlleren findes, at Alpha.21 Website-menu-binding er bevaret, samt at de eksisterende V1 regression gates fortsat er grønne.
+
+Releaseflowet bygger pakken igen fra den mergede `v3-clean-refactor`, kontrollerer samme menu-kontrakt og publicerer først derefter updater-manifest og plugin-ZIP.
