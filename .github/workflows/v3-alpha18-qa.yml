@@ -1,0 +1,129 @@
+name: V3 Alpha.18 Mobile Edge Spacing QA
+
+on:
+  push:
+    branches: [v3-alpha18-mobile-edge-spacing]
+    paths:
+      - '.github/scripts/build_v3_alpha18.py'
+      - '.github/workflows/v3-alpha18-qa.yml'
+      - 'V3-ALPHA18.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha18-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+
+      - name: Verify V1 mobile spacing reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "'MobileSectionSpacingPx' => 24" hangar18-manager.php
+          grep -Fq "'MobileHorizontalPaddingPx' => 18" hangar18-manager.php
+          grep -Fq '.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px)' hangar18-manager.php
+          echo 'V1 24px section gap / 18px content padding reference: PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove Alpha.17 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha17.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          JS="$ROOT/assets/editor-v018-core.js"
+          grep -Fq 'Version: 3.0.0-alpha.17' "$MAIN"
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          grep -Fq 'repeat(auto-fit,minmax(min(100%,' "$RENDERER"
+          grep -Fq 'eventMinCardWidth' "$JS"
+          grep -Fq 'private static function v1MobileVisualParityCss(' "$RESPONSIVE"
+          echo 'Alpha.17 event/menu/mobile baseline: PASS'
+
+      - name: Build and validate V3 3.0.0-alpha.18
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha18.py
+          python3 .github/scripts/build_v3_alpha18.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          JS="$ROOT/assets/editor-v018-core.js"
+          HISTORY="$ROOT/release-history.json"
+
+          grep -Fq 'Version: 3.0.0-alpha.18' "$MAIN"
+          grep -Fq 'private static function v1MobileEdgeSpacingCss(' "$RESPONSIVE"
+          grep -Fq 'width:100vw!important;max-width:100vw!important' "$RESPONSIVE"
+          grep -Fq 'margin-left:calc(50% - 50vw)!important' "$RESPONSIVE"
+          grep -Fq 'padding-left:18px!important;padding-right:18px!important' "$RESPONSIVE"
+          grep -Fq "($feature && $previousFeature) ? 14 : 24" "$RESPONSIVE"
+          grep -Fq "['Bevaring', 'Formidling', 'Fællesskab']" "$RESPONSIVE"
+          grep -Fq '.h18-clean-front-surface>.h18-clean-front-spacer{display:none!important' "$RESPONSIVE"
+          grep -Fq '. $v1MobileEdgeSpacing' "$RESPONSIVE"
+          grep -Fq '3.0.0-alpha.18' "$HISTORY"
+
+          # Alpha.17 Eventlist + current V3 menu must remain unchanged/present.
+          grep -Fq 'repeat(auto-fit,minmax(min(100%,' "$RENDERER"
+          grep -Fq 'eventMinCardWidth' "$JS"
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          grep -Fq 'private static function v1MobileFlowCss(' "$RESPONSIVE"
+          grep -Fq 'private static function v1MobileVisualParityCss(' "$RESPONSIVE"
+
+          test ! -e "$ROOT/assets/v3-alpha10-mobile-reflow.js"
+          test ! -e "$ROOT/assets/v3-alpha11-mobile-reflow.js"
+          ! grep -Fq 'ResizeObserver' "$RESPONSIVE"
+          ! grep -Fq 'getBoundingClientRect' "$RESPONSIVE"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Alpha.18 mobile edge-to-edge / single-gap contract: PASS'
+
+      - name: Package Alpha.18 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.18'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.18-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.18.zip
+          if-no-files-found: error
