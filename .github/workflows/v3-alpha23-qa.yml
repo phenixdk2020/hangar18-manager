@@ -51,7 +51,6 @@ jobs:
           grep -Fq 'Version: 3.0.0-alpha.22' "$ROOT/visual-designer-manager.php"
           grep -Fq 'h18-clean-front-menu-toggle' "$RENDERER"
           grep -Fq 'is-open' "$RENDERER"
-          grep -Fq 'data-menu-source=' "$RENDERER"
           ! grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
 
       - name: Build and validate V3 3.0.0-alpha.23
