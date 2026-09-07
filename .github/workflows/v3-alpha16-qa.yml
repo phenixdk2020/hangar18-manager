@@ -1,0 +1,137 @@
+name: V3 Alpha.16 V1 Mobile Visual Parity QA
+
+on:
+  push:
+    branches: [v3-alpha16-v1-mobile-visual-parity]
+    paths:
+      - '.github/scripts/build_v3_alpha16.py'
+      - '.github/workflows/v3-alpha16-qa.yml'
+      - 'V3-ALPHA16.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha16-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+
+      - name: Verify working V1 visual reference contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'clamp(2rem,5vw,var(--h18-font-h1-size' hangar18-manager.php
+          grep -Fq 'clamp(1.55rem,3.5vw,var(--h18-font-h2-size' hangar18-manager.php
+          grep -Fq 'clamp(1.2rem,2.5vw,var(--h18-font-h3-size' hangar18-manager.php
+          grep -Fq '.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)' hangar18-manager.php
+          grep -Fq '.h18-editor-grid-card{padding:var(--h18-card-mobile-pad,20px)' hangar18-manager.php
+          grep -Fq '.h18-imported-group .h18-editor-button{min-height:52px;padding:13px 24px' hangar18-manager.php
+          grep -Fq '$identity_base_factor = 0.70;' hangar18-manager.php
+          grep -Fq "'MobileSectionSpacingPx' => 24" hangar18-manager.php
+          grep -Fq "'MobileHorizontalPaddingPx' => 18" hangar18-manager.php
+          echo 'Working V1 typography/hero/card/button/header/spacing reference: PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove Alpha.15 structural mobile baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha15.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq 'Version: 3.0.0-alpha.15' "$MAIN"
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          grep -Fq 'private static function v1MobileFlowCss(' "$RESPONSIVE"
+          grep -Fq 'display:flex!important;flex-direction:column!important' "$RESPONSIVE"
+          grep -Fq 'grid-template-columns:1fr!important' "$RESPONSIVE"
+          echo 'Alpha.15 structural flow + Alpha.14 menu baseline: PASS'
+
+      - name: Build and validate V3 3.0.0-alpha.16
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha16.py
+          python3 .github/scripts/build_v3_alpha16.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          HEADER="$ROOT/src/Migration/LegacyHeaderConverter.php"
+          FOOTER="$ROOT/src/Migration/LegacyFooterConverter.php"
+          HISTORY="$ROOT/release-history.json"
+
+          grep -Fq 'Version: 3.0.0-alpha.16' "$MAIN"
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          grep -Fq 'private static function v1MobileVisualParityCss(' "$RESPONSIVE"
+          grep -Fq 'private static function v1HeaderMobileCss(' "$RESPONSIVE"
+          grep -Fq 'private static function v1FooterMobileCss(' "$RESPONSIVE"
+          grep -Fq 'private static function legacyPageModel(' "$RESPONSIVE"
+          grep -Fq 'private static function legacyTemplateModel(' "$RESPONSIVE"
+          grep -Fq 'font-size:32px!important' "$RESPONSIVE"
+          grep -Fq 'font-size:24.8px!important' "$RESPONSIVE"
+          grep -Fq 'font-size:19.2px!important' "$RESPONSIVE"
+          grep -Fq 'min-height:52px!important' "$RESPONSIVE"
+          grep -Fq 'height:220px!important' "$RESPONSIVE"
+          grep -Fq 'background:#c3ae83!important;color:#30382a!important' "$RESPONSIVE"
+          grep -Fq "['Bevaring', 'Formidling', 'Fællesskab']" "$RESPONSIVE"
+          grep -Fq 'flex:0 0 clamp(48px,15vw,60px)!important' "$RESPONSIVE"
+          grep -Fq 'padding:28px 16px 24px!important' "$RESPONSIVE"
+          grep -Fq '$identityBaseFactor = 0.70;' "$HEADER"
+          test "$(grep -Fo "'fontSize'=>16,'fontWeight'=>700" "$FOOTER" | wc -l)" -ge 2
+          grep -Fq '3.0.0-alpha.16' "$HISTORY"
+
+          test ! -e "$ROOT/assets/v3-alpha10-mobile-reflow.js"
+          test ! -e "$ROOT/assets/v3-alpha11-mobile-reflow.js"
+          ! grep -Fq 'ResizeObserver' "$RESPONSIVE"
+          ! grep -Fq 'getBoundingClientRect' "$RESPONSIVE"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Alpha.16 deterministic V1 mobile visual parity contract: PASS'
+
+      - name: Package Alpha.16 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.16'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.16-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.16.zip
+          if-no-files-found: error
