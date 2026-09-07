@@ -1,0 +1,1 @@
+Alpha.18 scope: approved Alpha.17 baseline + V1 mobile edge-to-edge bands + single 24px top-level spacing + 14px consecutive feature-card gap. V3 navigation/content remains authoritative.
