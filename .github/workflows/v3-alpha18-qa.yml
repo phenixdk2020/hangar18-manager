@@ -86,7 +86,7 @@ jobs:
           grep -Fq 'width:100vw!important;max-width:100vw!important' "$RESPONSIVE"
           grep -Fq 'margin-left:calc(50% - 50vw)!important' "$RESPONSIVE"
           grep -Fq 'padding-left:18px!important;padding-right:18px!important' "$RESPONSIVE"
-          grep -Fq "($feature && $previousFeature) ? 14 : 24" "$RESPONSIVE"
+          grep -Fq '($feature && $previousFeature) ? 14 : 24' "$RESPONSIVE"
           grep -Fq "['Bevaring', 'Formidling', 'Fællesskab']" "$RESPONSIVE"
           grep -Fq '.h18-clean-front-surface>.h18-clean-front-spacer{display:none!important' "$RESPONSIVE"
           grep -Fq '. $v1MobileEdgeSpacing' "$RESPONSIVE"
