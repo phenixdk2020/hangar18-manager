@@ -7,7 +7,8 @@ Alpha.18 bygger videre på den godkendte Alpha.17-baseline og retter de resteren
 - for meget samlet luft mellem top-level afsnit;
 - store V3-sidegutters omkring sektioner, som i V1 går til skærmkanten;
 - hero/image-band der stadig er indrykket af page-shell;
-- dobbelte/triple spacing-effekter fra gamle Spacer-noder, node margin og hero margin.
+- dobbelte/triple spacing-effekter fra gamle Spacer-noder, node margin og hero margin;
+- Designerens elementpalette sorteres alfabetisk efter den synlige danske titel.
 
 V1 bruges som visuel/responsiv reference. Den aktuelle V3-menu og V3-indhold er fortsat autoritative.
 
@@ -26,6 +27,12 @@ På konverterede V1-sider ved `<=782px`:
 - Alpha.17 Eventlistens 280–360 px kortformat og Designer-controls ændres ikke;
 - Alpha.14/16 mobilmenu/header/footer ændres ikke.
 
+## Designerpalette
+
+Elementknapper sorteres alfabetisk efter deres viste label med dansk sortering. Eksisterende grupper bevares, så kun rækkefølgen inde i hver gruppe ændres. Header/Footer-paletten sorteres tilsvarende.
+
+Eksempel: `Billede → Container/Kasse → Knap → Menu → Sektion → Spacer/Mellemrum → Tekst` afhængigt af den aktuelle visningstekst.
+
 ## Acceptance på test4
 
 Alpha.18 er visuelt godkendt når:
@@ -35,4 +42,5 @@ Alpha.18 er visuelt godkendt når:
 3. der ikke længere er dobbelte store hvide mellemrum mellem afsnit;
 4. normale sektioner har ca. 24 px separation;
 5. Bevaring/Formidling/Fællesskab fortsat fremstår som inset cards;
-6. Eventliste og menu fortsat fungerer som i Alpha.17.
+6. Eventliste og menu fortsat fungerer som i Alpha.17;
+7. elementpaletten vises alfabetisk inden for sine grupper.
