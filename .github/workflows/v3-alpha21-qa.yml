@@ -1,0 +1,148 @@
+name: V3 Alpha.21 Persistent Website Menu QA
+
+on:
+  push:
+    branches: [v3-alpha21-website-menu-binding]
+    paths:
+      - '.github/scripts/build_v3_alpha21.py'
+      - '.github/workflows/v3-alpha21-qa.yml'
+      - 'V3-ALPHA21.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha21-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+          echo 'V1 0.1.93 source runtime: byte-identical PASS'
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove Alpha.20 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha20.py
+          ROOT='build/visual-designer-manager'
+          grep -Fq 'Version: 3.0.0-alpha.20' "$ROOT/visual-designer-manager.php"
+          grep -Fq 'public static function createNavigationMenu(): void' "$ROOT/src/Admin/AdminController.php"
+          grep -Fq 'private static function resolveLiveMenuId(int $requested): int' "$ROOT/src/Frontend/Renderer.php"
+          grep -Fq 'private static function v1NestedMobileEdgeParityCss(' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          echo 'Alpha.20 baseline build: PASS'
+
+      - name: Build and validate V3 3.0.0-alpha.21
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha21.py
+          python3 .github/scripts/build_v3_alpha21.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          ADMIN="$ROOT/src/Admin/AdminController.php"
+          NAV="$ROOT/src/Admin/NavigationController.php"
+          LAYOUT="$ROOT/src/Model/LayoutModel.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          SHARED="$ROOT/src/Migration/SharedPrimaryMenu.php"
+          JS="$ROOT/assets/editor-v018-core.js"
+          HISTORY="$ROOT/release-history.json"
+
+          grep -Fq 'Version: 3.0.0-alpha.21' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.21');" "$MAIN"
+          grep -Fq "'websiteMenuId' => absint(get_option('vdm_website_menu_id', 0))" "$MAIN"
+
+          # One Menu admin owner only: Alpha.20 duplicate layer must be gone.
+          ! grep -Fq "[self::class, 'menus']" "$ADMIN"
+          ! grep -Fq 'public static function menus(): void' "$ADMIN"
+          ! grep -Fq 'vdm_create_nav_menu' "$ADMIN"
+          ! grep -Fq 'vdm_delete_nav_menu' "$ADMIN"
+          grep -Fq "'vdm-menu'," "$NAV"
+
+          # Persistent Website-menu vs edit-menu selection.
+          grep -Fq "private const WEBSITE_MENU_OPTION = 'vdm_website_menu_id';" "$NAV"
+          grep -Fq 'public static function saveWebsiteMenu(): void' "$NAV"
+          grep -Fq "check_admin_referer('h18_clean_nav_save_website')" "$NAV"
+          grep -Fq 'update_option(self::WEBSITE_MENU_OPTION, $menuId, false);' "$NAV"
+          grep -Fq '>Gem website-menu</button>' "$NAV"
+          grep -Fq '>Redigér menu</span>' "$NAV"
+          grep -Fq 'Det ændrer ikke website-menuen.' "$NAV"
+          grep -Fq 'Aktiv på website' "$NAV"
+          grep -Fq 'public static function deleteMenu(): void' "$NAV"
+          grep -Fq 'Den aktive website-menu kan ikke slettes' "$NAV"
+          grep -Fq "'websiteMenuId' => self::websiteMenuId()" "$NAV"
+
+          # Menu source is canonical and persistent in model/frontend/Designer.
+          grep -Fq "'menuSource' => \$menuSource" "$LAYOUT"
+          grep -Fq "(\$raw['menuSource'] ?? 'website')" "$LAYOUT"
+          grep -Fq "get_option('vdm_website_menu_id', null)" "$RENDERER"
+          grep -Fq "(\$props['menuSource'] ?? 'website')" "$RENDERER"
+          grep -Fq 'data-menu-source=' "$RENDERER"
+          grep -Fq 'data-menu-id=' "$RENDERER"
+          ! grep -Fq 'get_nav_menu_locations()' "$RENDERER"
+          ! grep -Fq 'wp_get_nav_menus()' "$RENDERER"
+          grep -Fq "get_option('vdm_website_menu_id', null)" "$SHARED"
+
+          grep -Fq "menuSource:'Menudatakilde'" "$JS"
+          grep -Fq 'data-field="menuSource"' "$JS"
+          grep -Fq '>Website-menu</option>' "$JS"
+          grep -Fq '>Specifik menu</option>' "$JS"
+          grep -Fq 'CFG.websiteMenuId' "$JS"
+
+          # Retained behavior.
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          grep -Fq 'private static function v1NestedMobileEdgeParityCss(' "$RESPONSIVE"
+          grep -Fq 'repeat(auto-fit,minmax(min(100%,' "$RENDERER"
+          grep -Fq 'eventMinCardWidth' "$JS"
+          grep -Fq '3.0.0-alpha.21' "$HISTORY"
+          ! grep -Fq 'const h18PaletteContainers = Array.from(' "$JS"
+          test ! -e "$ROOT/assets/v3-alpha10-mobile-reflow.js"
+          test ! -e "$ROOT/assets/v3-alpha11-mobile-reflow.js"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          echo 'Alpha.21 persistent Website-menu + Header binding contract: PASS'
+
+      - name: Package Alpha.21 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.21'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Admin/NavigationController.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/Renderer.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.21-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.21.zip
+          if-no-files-found: error
