@@ -142,6 +142,36 @@ if rr.count(anchor) != 1:
 rr = rr.replace(anchor, method + anchor, 1)
 write('src/Frontend/ResponsiveRenderer.php', rr)
 
+# Designer palette UX: sort rendered element buttons alphabetically by their
+# visible Danish label. Categories/groups stay intact; only the button order
+# inside each group (or the ungrouped Header/Footer palette) changes.
+editor_rel = 'assets/editor-v018-core.js'
+editor = read(editor_rel)
+palette_anchor = "        document.querySelectorAll('.h18-clean-add').forEach(function (button) {\n"
+palette_sort = r'''        const h18PaletteContainers = Array.from(document.querySelectorAll('.h18-vd-palette-group-items'));
+        if (!h18PaletteContainers.length) {
+            const palette = document.querySelector('.h18-clean-palette');
+            if (palette) { h18PaletteContainers.push(palette); }
+        }
+        h18PaletteContainers.forEach(function (container) {
+            const buttons = Array.from(container.children).filter(function (child) {
+                return child && child.classList && child.classList.contains('h18-clean-add');
+            });
+            buttons.sort(function (a, b) {
+                const left = String(a.textContent || '').replace(/^\s*\+\s*/, '').trim();
+                const right = String(b.textContent || '').replace(/^\s*\+\s*/, '').trim();
+                try { return left.localeCompare(right, 'da', { sensitivity: 'base' }); }
+                catch (ignore) { return left.toLowerCase().localeCompare(right.toLowerCase()); }
+            });
+            buttons.forEach(function (button) { container.appendChild(button); });
+        });
+
+'''
+if editor.count(palette_anchor) != 1:
+    raise SystemExit(f'Alpha.18 palette bind anchor mismatch: {editor.count(palette_anchor)}')
+editor = editor.replace(palette_anchor, palette_sort + palette_anchor, 1)
+write(editor_rel, editor)
+
 # Release history.
 history_path = DEST / 'release-history.json'
 history = json.loads(history_path.read_text(encoding='utf-8'))
@@ -156,6 +186,7 @@ alpha18 = {
         'Mobile section air is normalized to one 24 px V1 section gap; stacked spacer/node/hero margins can no longer multiply the distance.',
         'Bevaring, Formidling and Fællesskab remain intentionally inset with a compact 14 px gap between consecutive feature cards.',
         'The hero/image band becomes true full-bleed on mobile while preserving Alpha.16 image height/crop behavior.',
+        'Designer element palettes are alphabetically sorted by the visible Danish label while palette groups remain unchanged.',
         'Alpha.17 Eventlist sizing controls and the current V3 navigation remain unchanged.'
     ]
 }
@@ -164,6 +195,7 @@ history_path.write_text(json.dumps({'versions': [alpha18] + rows}, ensure_ascii=
 # Deterministic build contract.
 main = read('visual-designer-manager.php')
 rr = read('src/Frontend/ResponsiveRenderer.php')
+editor = read(editor_rel)
 history = json.loads(history_path.read_text(encoding='utf-8'))['versions']
 for token in [
     'Version: 3.0.0-alpha.18',
@@ -183,10 +215,18 @@ for token in [
 ]:
     if token not in rr:
         raise SystemExit(f'Alpha.18 responsive token missing: {token}')
+for token in [
+    'const h18PaletteContainers = Array.from(',
+    "left.localeCompare(right, 'da'",
+    "child.classList.contains('h18-clean-add')",
+]:
+    if token not in editor:
+        raise SystemExit(f'Alpha.18 palette sorting token missing: {token}')
 if history[0].get('version') != VERSION or history[1].get('version') != '3.0.0-alpha.17':
     raise SystemExit('Alpha.18 release-history ordering failed')
 
 print('V3 Alpha.18 mobile edge-to-edge + spacing contract: PASS')
 print('Top-level major bands: viewport full-bleed PASS')
 print('Single V1 section gap: 24px; feature-card gap: 14px PASS')
+print('Designer palette alphabetical order within groups: PASS')
 print('Alpha.17 Eventlist and V3 navigation preserved: PASS')
