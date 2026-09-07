@@ -1,0 +1,144 @@
+name: Visual Designer Manager V3 Alpha.16 Release
+
+on:
+  push:
+    branches: [v3-clean-refactor]
+    paths:
+      - 'v3-alpha16-release-now.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  v3-alpha16:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 runtime baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Verify working V1 mobile visual reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'clamp(2rem,5vw,var(--h18-font-h1-size' hangar18-manager.php
+          grep -Fq 'clamp(1.55rem,3.5vw,var(--h18-font-h2-size' hangar18-manager.php
+          grep -Fq 'clamp(1.2rem,2.5vw,var(--h18-font-h3-size' hangar18-manager.php
+          grep -Fq '.h18-editor-hero{min-height:var(--h18-mobile-hero-height,220px)' hangar18-manager.php
+          grep -Fq '.h18-imported-group .h18-editor-button{min-height:52px;padding:13px 24px' hangar18-manager.php
+          grep -Fq '$identity_base_factor = 0.70;' hangar18-manager.php
+
+      - name: Run retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Build and validate V3 3.0.0-alpha.16
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha16.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          HEADER="$ROOT/src/Migration/LegacyHeaderConverter.php"
+          FOOTER="$ROOT/src/Migration/LegacyFooterConverter.php"
+          grep -Fq 'Version: 3.0.0-alpha.16' "$MAIN"
+          grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          grep -Fq 'private static function v1MobileVisualParityCss(' "$RESPONSIVE"
+          grep -Fq 'private static function v1HeaderMobileCss(' "$RESPONSIVE"
+          grep -Fq 'private static function v1FooterMobileCss(' "$RESPONSIVE"
+          grep -Fq 'font-size:32px!important' "$RESPONSIVE"
+          grep -Fq 'height:220px!important' "$RESPONSIVE"
+          grep -Fq 'background:#c3ae83!important;color:#30382a!important' "$RESPONSIVE"
+          grep -Fq "['Bevaring', 'Formidling', 'Fællesskab']" "$RESPONSIVE"
+          grep -Fq 'padding:28px 16px 24px!important' "$RESPONSIVE"
+          grep -Fq '$identityBaseFactor = 0.70;' "$HEADER"
+          test "$(grep -Fo "'fontSize'=>16,'fontWeight'=>700" "$FOOTER" | wc -l)" -ge 2
+          test ! -e "$ROOT/assets/v3-alpha10-mobile-reflow.js"
+          test ! -e "$ROOT/assets/v3-alpha11-mobile-reflow.js"
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Package V3 alpha.16 and create updater manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.16'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          python3 - "$SHA" "$SOURCE_COMMIT" <<'PY'
+          import json, sys
+          from pathlib import Path
+          sha, source_commit = sys.argv[1:3]
+          version = '3.0.0-alpha.16'
+          data = {
+              'name': 'Visual Designer Manager',
+              'slug': 'visual-designer-manager',
+              'version': version,
+              'homepage': 'https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'tested': '6.8',
+              'package': f'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v{version}.zip',
+              'sha256': sha,
+              'source_commit': source_commit,
+              'source_baseline': 'dc3bad403c764f4ec123a526333a781d05dde491',
+              'source_version': '0.1.93',
+              'sections': {
+                  'description': 'Visual Designer Manager V3 med V1 som funktionel og visuel reference.',
+                  'changelog': '3.0.0-alpha.16: V1 Mobile Visual Parity. Restores the working V1 phone type scale, 220px hero, sand tagline, inset feature cards, compact header identity and natural vertical footer while preserving Alpha.15 page flow and Alpha.14 menu.'
+              }
+          }
+          Path('v3-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          echo "V3_PACKAGE_SHA256=$SHA" >> "$GITHUB_ENV"
+          echo "V3 package SHA-256: $SHA"
+
+      - name: Commit verified V3 package to V3 branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-v3-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.16.zip
+          if git diff --cached --quiet; then
+            echo 'Verified V3 package already current.'
+            exit 0
+          fi
+          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.16 [skip v3 release]'
+          git push origin HEAD:v3-clean-refactor
+
+      - name: Upload actual WordPress plugin ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.16
+          if-no-files-found: error
+          retention-days: 30
+          path: dist/visual-designer-manager-v3.0.0-alpha.16.zip
