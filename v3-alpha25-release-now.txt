@@ -1,0 +1,3 @@
+Release Visual Designer Manager V3 3.0.0-alpha.25.
+
+PR #199 merged after exact PR-head Alpha.25 QA success on 65e90f7af49dddbbe7a97c896a8401a974e64a58.
