@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.23",
+  "version": "3.0.0-alpha.24",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.23.zip",
-  "sha256": "4be6d7fbe9ef0f60bc087425140ace7fabc7dbb620ab80eb6c3576eb4da41dfd",
-  "source_commit": "02ba0b4f82966133f204d73b0a51a46b10591867",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.24.zip",
+  "sha256": "b0e947e7ad7984e8f183a96ef096ac1223279e08c28957f166d76b0b49260946",
+  "source_commit": "d43eb5f91ca474e9245211c8112940d636038997",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "Visual Designer Manager V3 med V1 som funktionel og visuel reference.",
-    "changelog": "3.0.0-alpha.23: V1 mobile rhythm + per-page responsive spacing. Compact V1-like mobile Header, full-bleed 160px hero, authoritative section/element gaps, and Sider → Sideindstillinger → Afstande with responsive section, element and Footer spacing. Alpha.22 Website-menu and menu rendering are preserved."
+    "changelog": "3.0.0-alpha.24: structural V1 mobile cascade cleanup. Header/Footer ID-specific min-height resets, measured V1 Header/Hero/Tagline/section/Footer values, single-level spacing/full-width ownership, single-surface feature cards, redundant heading BR cleanup, and responsive Afstand efter Header in page settings. Alpha.22 Website-menu rendering is preserved."
   }
 }
