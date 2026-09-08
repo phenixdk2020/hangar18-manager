@@ -1,0 +1,121 @@
+name: V3 Alpha.24 Mobile Cascade Cleanup QA
+
+on:
+  push:
+    branches: [v3-alpha24-mobile-cascade-cleanup]
+    paths:
+      - '.github/scripts/build_v3_alpha24.py'
+      - '.github/workflows/v3-alpha24-qa.yml'
+      - 'V3-ALPHA24.md'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha24-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove released Alpha.23 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha23_corrected.py
+          ROOT='build/visual-designer-manager'
+          grep -Fq 'Version: 3.0.0-alpha.23' "$ROOT/visual-designer-manager.php"
+          grep -Fq 'grid-template-columns:64px minmax(0,1fr) 48px' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq 'height:160px!important' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq 'h18-clean-front-menu-summary' "$ROOT/src/Frontend/Renderer.php"
+          grep -Fq 'is-open' "$ROOT/src/Frontend/Renderer.php"
+          ! grep -Fq '<details class="h18-clean-front-menu-details">' "$ROOT/src/Frontend/Renderer.php"
+
+      - name: Build and validate V3 3.0.0-alpha.24
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha24.py
+          python3 .github/scripts/build_v3_alpha24.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          MODEL="$ROOT/src/Model/LayoutModel.php"
+          EDITOR="$ROOT/src/Admin/EditorController.php"
+          JS="$ROOT/assets/editor-v018-core.js"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          HISTORY="$ROOT/release-history.json"
+
+          grep -Fq 'Version: 3.0.0-alpha.24' "$MAIN"
+          grep -Fq "'headerGap' =>" "$MODEL"
+          grep -Fq 'Afstand efter Header' "$EDITOR"
+          grep -Fq 'headerGap:{desktop:32,laptop:32,tablet:24,mobile:24}' "$JS"
+          grep -Fq -- '--h18-vdm-page-header-gap:' "$RESPONSIVE"
+          grep -Fq 'grid-template-columns:70px minmax(0,1fr) 44px' "$RESPONSIVE"
+          grep -Fq 'padding:7px 11px!important' "$RESPONSIVE"
+          grep -Fq 'font-size:17px!important;font-weight:750!important;line-height:1.15!important' "$RESPONSIVE"
+          grep -Fq 'height:155px!important' "$RESPONSIVE"
+          grep -Fq 'padding:12px 15px!important' "$RESPONSIVE"
+          grep -Fq 'font-size:16px!important;font-weight:650!important;line-height:1.35!important' "$RESPONSIVE"
+          grep -Fq 'padding:30px 15px!important' "$RESPONSIVE"
+          grep -Fq 'gap:16px!important' "$RESPONSIVE"
+          grep -Fq 'padding:32px 15px 20px!important' "$RESPONSIVE"
+          grep -Fq 'stale 656px/desktop heights cannot win' "$RESPONSIVE"
+          grep -Fq 'padding:18px!important;border-radius:8px!important' "$RESPONSIVE"
+          grep -Fq 'width:44px;height:44px;box-sizing:border-box;padding:0;border:1px solid var(--h18-menu-color);border-radius:6px' "$RENDERER"
+          grep -Fq "preg_replace('/^(?:(?:\\r\\n|\\r|\\n)|\\s*<br" "$RENDERER"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
+          grep -Fq 'is-open' "$RENDERER"
+          ! grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          ! grep -Fq 'calc(50% - 50vw)' "$RESPONSIVE"
+          ! grep -Fq 'width:100vw!important' "$RESPONSIVE"
+          ! grep -Fq 'height:160px!important' "$RESPONSIVE"
+          ! grep -Fq 'padding:28px 16px 24px!important' "$RESPONSIVE"
+          ! grep -Fq 'padding-top:min(var(--h18-vdm-pad-top,0px),38px)' "$RESPONSIVE"
+          grep -Fq '3.0.0-alpha.24' "$HISTORY"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Package Alpha.24 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.24'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.24-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.24.zip
+          if-no-files-found: error
