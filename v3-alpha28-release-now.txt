@@ -1,0 +1,1 @@
+Release Visual Designer Manager V3 3.0.0-alpha.28 after exact-head Alpha.28 QA success.
