@@ -1,0 +1,230 @@
+/* Alpha.33 – converted V1 pages: make Designer phone preview use the same
+   natural one-column contract as ResponsiveRenderer's frontend mobile flow. */
+body.h18-vd-v1-mobile-parity #h18-clean-canvas,
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-inner-surface{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow:visible!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:none!important;
+    grid-auto-rows:auto!important;
+    gap:var(--h18-vd-parity-element-gap,14px)!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas{
+    max-width:none!important;
+    padding-left:0!important;
+    padding-right:0!important;
+    gap:0!important;
+    overflow-x:clip!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node[data-node-id]{
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    grid-column:auto!important;
+    grid-row:auto!important;
+    order:var(--h18-vd-parity-order,0)!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    margin-top:var(--h18-vd-parity-node-gap,0px)!important;
+    margin-right:0!important;
+    margin-bottom:0!important;
+    margin-left:0!important;
+    box-sizing:border-box!important;
+    transform:none!important;
+    align-self:stretch!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node-preview{
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    box-sizing:border-box!important;
+    overflow:visible!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--section>.h18-clean-inner-surface,
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--container>.h18-clean-inner-surface{
+    padding:0!important;
+    overflow:visible!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--spacer{
+    display:none!important;
+    width:0!important;
+    height:0!important;
+    min-height:0!important;
+    flex:0 0 0!important;
+    margin:0!important;
+    padding:0!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--image>.h18-clean-node-preview--image,
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--image>.h18-clean-node-preview--image img{
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    border-radius:0!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--text>.h18-clean-node-preview--text{
+    height:auto!important;
+    min-height:0!important;
+    font-family:"Inter",Arial,sans-serif!important;
+    font-size:16px!important;
+    line-height:1.5!important;
+    overflow:visible!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--text>.h18-clean-node-preview--text h1.h18-clean-text-heading{font-size:32px!important;line-height:1.2!important}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--text>.h18-clean-node-preview--text h2.h18-clean-text-heading{font-size:25px!important;line-height:1.18!important}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--text>.h18-clean-node-preview--text h3.h18-clean-text-heading{font-size:19.2px!important;line-height:1.2!important}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--text>.h18-clean-node-preview--text h4.h18-clean-text-heading,
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--text>.h18-clean-node-preview--text h5.h18-clean-text-heading,
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--text>.h18-clean-node-preview--text h6.h18-clean-text-heading{font-size:18px!important;line-height:1.2!important}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-node--button .h18-clean-button-preview{
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:14px 18px!important;
+    font-size:16px!important;
+    line-height:1.2!important;
+    box-sizing:border-box!important;
+}
+
+/* Hero + tagline: exact V1 phone contract already used by frontend. */
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-structural-path{
+    width:100%!important;
+    max-width:100%!important;
+    margin-top:0!important;
+    margin-bottom:0!important;
+    padding:0!important;
+    overflow:visible!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-structural-path>.h18-clean-inner-surface{
+    padding:0!important;
+    gap:0!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-hero{
+    width:100%!important;
+    max-width:100%!important;
+    height:155px!important;
+    min-height:155px!important;
+    margin:0!important;
+    padding:0!important;
+    border-radius:0!important;
+    overflow:hidden!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-hero>.h18-clean-node-preview--image,
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-hero>.h18-clean-node-preview--image img{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:155px!important;
+    min-height:155px!important;
+    object-fit:cover!important;
+    object-position:50% 50%!important;
+    margin:0!important;
+    padding:0!important;
+    border-radius:0!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-tagline{
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    margin-top:var(--h18-vd-parity-section-gap,24px)!important;
+    margin-right:0!important;
+    margin-bottom:0!important;
+    margin-left:0!important;
+    padding:12px 15px!important;
+    border-radius:0!important;
+    box-sizing:border-box!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-tagline>.h18-clean-node-preview--text{
+    height:auto!important;
+    min-height:0!important;
+    padding:0!important;
+    text-align:center!important;
+    font-family:"Inter",Arial,sans-serif!important;
+    font-size:16px!important;
+    font-weight:650!important;
+    line-height:1.35!important;
+}
+
+/* Major V1 content bands. */
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-major-band{
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    margin-top:var(--h18-vd-parity-section-gap,24px)!important;
+    margin-right:0!important;
+    margin-bottom:0!important;
+    margin-left:0!important;
+    padding:30px 15px!important;
+    border-radius:0!important;
+    box-sizing:border-box!important;
+    overflow:visible!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-major-band>.h18-clean-inner-surface{
+    gap:var(--h18-vd-parity-element-gap,14px)!important;
+}
+
+/* V1 feature cards. */
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-feature-band{
+    width:calc(100% - 20px)!important;
+    max-width:calc(100% - 20px)!important;
+    height:auto!important;
+    min-height:0!important;
+    margin-left:10px!important;
+    margin-right:10px!important;
+    margin-bottom:0!important;
+    padding:18px!important;
+    border-radius:8px!important;
+    box-sizing:border-box!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-feature-bevaring{background:#f2f0e8!important;color:#30382a!important}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-feature-formidling{background:#c3ae83!important;color:#30382a!important}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-feature-faellesskab{background:#525a5f!important;color:#fff!important}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-feature-text{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    font-size:16px!important;
+    line-height:1.5!important;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-vd-parity-feature-text>.h18-clean-node-preview--text .h18-clean-text-heading{
+    font-size:19.2px!important;
+    margin-bottom:12px!important;
+}
+
+/* Frontend ignores stored mobile X/Y/H on converted V1 pages. Mirror that
+   contract in Designer instead of exposing controls that cannot affect live. */
+body.h18-vd-v1-mobile-parity .h18-clean-responsive-panel::after{
+    content:"V1 mobilflow er aktivt: Designer viser den samme automatiske mobil-flow som frontend. Mobil X/Y/bredde/højde bruges derfor ikke på denne konverterede side.";
+    display:block;
+    margin-top:10px;
+    padding:10px 12px;
+    border-left:4px solid #2271b1;
+    background:#f0f6fc;
+    color:#1d2327;
+    font-size:12px;
+    line-height:1.4;
+}
+body.h18-vd-v1-mobile-parity .h18-clean-responsive-panel>.h18-clean-checkbox,
+body.h18-vd-v1-mobile-parity .h18-clean-responsive-panel>.h18-clean-field-grid{
+    opacity:.45;
+    pointer-events:none;
+}
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-resize,
+body.h18-vd-v1-mobile-parity #h18-clean-canvas .h18-clean-move{
+    display:none!important;
+}
