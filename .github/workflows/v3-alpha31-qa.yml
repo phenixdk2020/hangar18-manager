@@ -44,7 +44,7 @@ jobs:
           grep -Fq "'footerGap' => self::clamp" "$MODEL"
           grep -Fq 'Afstand til Footer (px)' "$EDITOR"
           grep -Fq 'gælder både moduloversigten og modulets detaljesider' "$EDITOR"
-          grep -Fq '--h18-module-footer-gap:' "$COLLECTION"
+          grep -Fq -- '--h18-module-footer-gap:' "$COLLECTION"
           grep -Fq 'padding:36px 0 var(--h18-module-footer-gap)' "$COLLECTION"
           grep -Fq '$moduleFooterGap = self::detailModuleFooterGap($postId);' "$RESPONSIVE"
           grep -Fq 'private static function detailModuleFooterGap(' "$RESPONSIVE"
