@@ -1,0 +1,207 @@
+name: V3 Release Channel QA and Publish
+
+on:
+  push:
+    branches:
+      - 'v3-alpha*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v3-stable-release-channel
+  cancel-in-progress: true
+
+jobs:
+  validate-package-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve candidate version and builder
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ALPHA="$(printf '%s' "$GITHUB_REF_NAME" | sed -n 's/^v3-alpha\([0-9][0-9]*\).*/\1/p')"
+          test -n "$ALPHA"
+          VERSION="3.0.0-alpha.${ALPHA}"
+          BUILDER=".github/scripts/build_v3_alpha${ALPHA}.py"
+          test -f "$BUILDER"
+          echo "alpha=$ALPHA" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "builder=$BUILDER" >> "$GITHUB_OUTPUT"
+          echo "Candidate: $VERSION using $BUILDER"
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Build and validate candidate
+        shell: bash
+        env:
+          VERSION: ${{ steps.candidate.outputs.version }}
+          BUILDER: ${{ steps.candidate.outputs.builder }}
+        run: |
+          set -euo pipefail
+          python3 -m py_compile "$BUILDER"
+          python3 "$BUILDER"
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          UPDATER="$ROOT/src/Update/GitHubUpdater.php"
+
+          grep -Fq "Version: ${VERSION}" "$MAIN"
+          grep -Fq "define('VDM_VERSION', '${VERSION}');" "$MAIN"
+          grep -Fq 'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/v3-update.json' "$UPDATER"
+
+          # Retained Alpha.31 module Footer-gap contracts.
+          grep -Fq "'footerGap' => 64" "$ROOT/src/Model/ModuleDesignModel.php"
+          grep -Fq 'Afstand til Footer (px)' "$ROOT/src/Admin/EditorController.php"
+          grep -Fq -- '--h18-module-footer-gap:' "$ROOT/src/Frontend/CollectionPageRenderer.php"
+          grep -Fq '$moduleFooterGap = self::detailModuleFooterGap($postId);' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Package installer
+        id: package
+        shell: bash
+        env:
+          VERSION: ${{ steps.candidate.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Update/GitHubUpdater.php$')" = '1'
+          SHA256="$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "SHA-256: $SHA256"
+
+      - name: Compare with stable channel
+        id: guard
+        shell: bash
+        env:
+          VERSION: ${{ steps.candidate.outputs.version }}
+        run: |
+          set -euo pipefail
+          git fetch origin v3-clean-refactor
+          git show origin/v3-clean-refactor:v3-update.json > /tmp/current-v3-update.json
+          VERSION="$VERSION" python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, re
+          current = json.load(open('/tmp/current-v3-update.json', encoding='utf-8')).get('version', '')
+          candidate = os.environ['VERSION']
+          def key(v):
+              m = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)-alpha\.(\d+)', v)
+              if not m:
+                  raise SystemExit(f'Unsupported V3 alpha version: {v!r}')
+              return tuple(map(int, m.groups()))
+          publish = key(candidate) > key(current)
+          print(f'publish={str(publish).lower()}')
+          print(f'current={current}')
+          PY
+
+      - name: Build stable manifest candidate
+        if: steps.guard.outputs.publish == 'true'
+        shell: bash
+        env:
+          VERSION: ${{ steps.candidate.outputs.version }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          VERSION="$VERSION" SHA256="$SHA256" SOURCE_COMMIT="$GITHUB_SHA" python3 - <<'PY'
+          import json, os
+          version = os.environ['VERSION']
+          manifest = {
+              'name': 'Visual Designer Manager',
+              'slug': 'visual-designer-manager',
+              'version': version,
+              'homepage': 'https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'tested': '6.8',
+              'package': f'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v{version}.zip',
+              'sha256': os.environ['SHA256'],
+              'source_commit': os.environ['SOURCE_COMMIT'],
+              'source_baseline': 'dc3bad403c764f4ec123a526333a781d05dde491',
+              'source_version': '0.1.93',
+              'sections': {
+                  'description': 'Visual Designer Manager V3 med V1 som funktionel og visuel reference.',
+                  'changelog': f'{version}: Stable GitHub updater channel publishing repaired; Alpha.31 module Footer-gap behavior retained.'
+              }
+          }
+          with open('/tmp/v3-update.json', 'w', encoding='utf-8') as f:
+              json.dump(manifest, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          PY
+
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          manifest = json.load(open('/tmp/v3-update.json', encoding='utf-8'))
+          package = pathlib.Path('dist') / pathlib.Path(manifest['package']).name
+          digest = hashlib.sha256(package.read_bytes()).hexdigest()
+          assert digest == manifest['sha256'], (digest, manifest['sha256'])
+          assert manifest['version'] in manifest['package']
+          print('Manifest/package coherence: PASS')
+          PY
+
+      - name: Publish package and manifest atomically to stable channel
+        if: steps.guard.outputs.publish == 'true'
+        shell: bash
+        env:
+          VERSION: ${{ steps.candidate.outputs.version }}
+          ZIP: ${{ steps.package.outputs.zip }}
+        run: |
+          set -euo pipefail
+          RELEASE_DIR="$(mktemp -d)"
+          git worktree add "$RELEASE_DIR" origin/v3-clean-refactor
+          mkdir -p "$RELEASE_DIR/dist"
+          cp "$ZIP" "$RELEASE_DIR/dist/visual-designer-manager-v${VERSION}.zip"
+          cp /tmp/v3-update.json "$RELEASE_DIR/v3-update.json"
+
+          cd "$RELEASE_DIR"
+          git config user.name 'visual-designer-v3-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add "dist/visual-designer-manager-v${VERSION}.zip" v3-update.json
+          git diff --cached --check
+          git commit -m "Publish Visual Designer Manager V3 ${VERSION} [skip v3 release]"
+          git push origin HEAD:v3-clean-refactor
+
+      - name: Verify published stable channel
+        if: steps.guard.outputs.publish == 'true'
+        shell: bash
+        env:
+          VERSION: ${{ steps.candidate.outputs.version }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          git fetch origin v3-clean-refactor
+          git show origin/v3-clean-refactor:v3-update.json > /tmp/published-v3-update.json
+          git show "origin/v3-clean-refactor:dist/visual-designer-manager-v${VERSION}.zip" > /tmp/published.zip
+          test "$(sha256sum /tmp/published.zip | awk '{print $1}')" = "$SHA256"
+          VERSION="$VERSION" SHA256="$SHA256" python3 - <<'PY'
+          import json, os
+          m = json.load(open('/tmp/published-v3-update.json', encoding='utf-8'))
+          assert m['version'] == os.environ['VERSION']
+          assert m['sha256'] == os.environ['SHA256']
+          assert m['package'].endswith('/dist/visual-designer-manager-v' + os.environ['VERSION'] + '.zip')
+          print('Stable updater channel: PASS')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-${{ steps.candidate.outputs.version }}
+          if-no-files-found: error
+          retention-days: 30
+          path: ${{ steps.package.outputs.zip }}
