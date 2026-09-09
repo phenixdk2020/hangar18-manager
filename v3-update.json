@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.32",
+  "version": "3.0.0-alpha.33",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.32.zip",
-  "sha256": "9e901de6bd3a6b806cf147beca3ebe7c8a587cba5436ac6221338f23dc9aec10",
-  "source_commit": "ee33f2b46272857b904267973912b603ec4b66f7",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.33.zip",
+  "sha256": "574280cff6478046ddae0ce4d682e3899e3b85a501201fd30b82371b6fc640ba",
+  "source_commit": "8d96fa298ffbb42e128aedbbbbfe8234e45fb6cf",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "Visual Designer Manager V3 med V1 som funktionel og visuel reference.",
-    "changelog": "3.0.0-alpha.32: Stable GitHub updater channel publishing repaired; Alpha.31 module Footer-gap behavior retained."
+    "changelog": "3.0.0-alpha.33: Stable GitHub updater channel publishing repaired; Alpha.31 module Footer-gap behavior retained."
   }
 }
