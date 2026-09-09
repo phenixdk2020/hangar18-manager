@@ -1,0 +1,146 @@
+name: V3 Alpha.29 Event Detail + Footer Grouping QA
+
+on:
+  push:
+    branches: [v3-alpha29-event-footer]
+    paths:
+      - '.github/scripts/build_v3_alpha29.py'
+      - '.github/workflows/v3-alpha29-qa.yml'
+      - 'V3-ALPHA29.md'
+      - '.github/workflows/v3-alpha29-release.yml'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha29-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove Alpha.28 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha28.py
+          ROOT='build/visual-designer-manager'
+          grep -Fq 'Version: 3.0.0-alpha.28' "$ROOT/visual-designer-manager.php"
+          grep -Fq '$mobile = $desktop;' "$ROOT/src/Model/LayoutModel.php"
+          grep -Fq 'Mobile is a responsive projection of the Desktop Designer layout.' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$ROOT/src/Frontend/Renderer.php"
+
+      - name: Build and validate V3 3.0.0-alpha.29
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha29.py
+          python3 .github/scripts/build_v3_alpha29.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          EVENT_ADMIN="$ROOT/src/Admin/EventAdminController.php"
+          LAYOUT="$ROOT/src/Model/LayoutModel.php"
+          HISTORY="$ROOT/release-history.json"
+
+          grep -Fq 'Version: 3.0.0-alpha.29' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.29');" "$MAIN"
+          grep -Fq 'private static function renderEventProgramText(' "$RENDERER"
+          grep -Fq "\$key==='program'?self::renderEventProgramText" "$RENDERER"
+          grep -Fq "\$fieldKey==='program'?self::renderEventProgramText" "$RENDERER"
+          grep -Fq "preg_replace('/rn(?=" "$RENDERER"
+          grep -Fq 'Tilknyttet album' "$EVENT_ADMIN"
+          grep -Fq "'galleryRecordId'" "$EVENT_ADMIN"
+          grep -Fq 'private static function eventGalleryButton(' "$RENDERER"
+          grep -Fq 'Se billeder fra arrangementet' "$RENDERER"
+          grep -Fq "\$fieldKey==='practical'?self::eventGalleryButton(\$record):''" "$RENDERER"
+          grep -Fq '$footerStack = [' "$RESPONSIVE"
+          grep -Fq "'text-footer-brand-v0147' => [10, 0]" "$RESPONSIVE"
+          grep -Fq "'text-footer-description-v0147' => [20, 12]" "$RESPONSIVE"
+          grep -Fq "'text-footer-shortcuts-heading-v0147' => [30, 24]" "$RESPONSIVE"
+          grep -Fq "'menu-footer-shortcuts-v3' => [40, 8]" "$RESPONSIVE"
+          grep -Fq "'text-footer-association-heading-v0147' => [50, 24]" "$RESPONSIVE"
+          grep -Fq "'button-footer-join-v0147' => [60, 12]" "$RESPONSIVE"
+          grep -Fq "'button-footer-contact-v0147' => [70, 12]" "$RESPONSIVE"
+          grep -Fq "'text-footer-copyright-v0147' => [90, 16]" "$RESPONSIVE"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$RENDERER"
+          grep -Fq "\$props['menuSource'] = 'website';" "$RENDERER"
+          grep -Fq '$mobile = $desktop;' "$LAYOUT"
+          grep -Fq 'Mobile is a responsive projection of the Desktop Designer layout.' "$RESPONSIVE"
+          ! grep -Fq 'self::v1PaintCss($pageModel, $legacyPageModel, $pageScope)' "$RESPONSIVE"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
+          grep -Fq 'is-open' "$RENDERER"
+          grep -Fq '3.0.0-alpha.29' "$HISTORY"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Prove Program repair is narrow and Footer grouping complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          renderer = Path('build/visual-designer-manager/src/Frontend/Renderer.php').read_text()
+          responsive = Path('build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php').read_text()
+          assert "str_replace('rn'" not in renderer
+          expected = [
+              'text-footer-brand-v0147',
+              'text-footer-description-v0147',
+              'text-footer-shortcuts-heading-v0147',
+              'menu-footer-shortcuts-v3',
+              'text-footer-association-heading-v0147',
+              'button-footer-join-v0147',
+              'button-footer-contact-v0147',
+              'container-footer-divider-v0147',
+              'text-footer-copyright-v0147',
+          ]
+          positions = [responsive.index("'" + node + "' =>") for node in expected]
+          assert positions == sorted(positions)
+          print('PASS')
+          PY
+
+      - name: Package Alpha.29 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.29'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/Renderer.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.29-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.29.zip
+          if-no-files-found: error
