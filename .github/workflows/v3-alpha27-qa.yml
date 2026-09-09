@@ -1,0 +1,125 @@
+name: V3 Alpha.27 Responsive Paint Unification QA
+
+on:
+  push:
+    branches: [v3-alpha27-single-paint-source]
+    paths:
+      - '.github/scripts/build_v3_alpha27.py'
+      - '.github/workflows/v3-alpha27-qa.yml'
+      - 'V3-ALPHA27.md'
+      - '.github/workflows/v3-alpha27-release.yml'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha27-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove Alpha.26 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha26.py
+          ROOT='build/visual-designer-manager'
+          grep -Fq 'Version: 3.0.0-alpha.26' "$ROOT/visual-designer-manager.php"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$ROOT/src/Frontend/Renderer.php"
+          grep -Fq 'private static function templateSurfaceBackground(' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+
+      - name: Build and validate V3 3.0.0-alpha.27
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha27.py
+          python3 .github/scripts/build_v3_alpha27.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          MIGRATION="$ROOT/src/Migration/ResponsivePaintUnifier.php"
+          CONVERTER="$ROOT/src/Migration/VisualBlockConversionService.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+
+          grep -Fq 'Version: 3.0.0-alpha.27' "$MAIN"
+          grep -Fq 'ResponsivePaintUnifier.php' "$MAIN"
+          grep -Fq 'ResponsivePaintUnifier::register()' "$MAIN"
+          grep -Fq 'Paint is owned by the canonical model for every breakpoint.' "$RESPONSIVE"
+          grep -Fq 'foreach ([$model, $legacy] as $candidate)' "$RESPONSIVE"
+          ! grep -Fq 'self::v1PaintCss($pageModel, $legacyPageModel, $pageScope)' "$RESPONSIVE"
+          ! grep -Fq 'if ($legacy !== null) { $css .= self::v1PaintCss($model, $legacy, $scope); }' "$RESPONSIVE"
+          grep -Fq "private const OLIVE = '#30382a';" "$MIGRATION"
+          grep -Fq "private const SAND = '#c3ae83';" "$MIGRATION"
+          grep -Fq 'self::OLIVE);' "$CONVERTER"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$RENDERER"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Prove paint migration preserves layout and text
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -r '
+          function wp_strip_all_tags($s){ return strip_tags($s); }
+          require "build/visual-designer-manager/src/Migration/ResponsivePaintUnifier.php";
+          $g=["desktop"=>["x"=>0,"y"=>0,"w"=>120,"h"=>20]];
+          $m=["nodes"=>[
+            ["id"=>"hero-section","type"=>"section","parentId"=>"","order"=>10,"geometry"=>$g,"props"=>["background"=>"#ffffff","backgroundTransparent"=>false]],
+            ["id"=>"hero-image","type"=>"image","parentId"=>"hero-section","order"=>10,"geometry"=>$g,"props"=>[]],
+            ["id"=>"tagline-section","type"=>"section","parentId"=>"","order"=>20,"geometry"=>$g,"props"=>["background"=>"#30382a","backgroundTransparent"=>false]],
+            ["id"=>"tagline-text","type"=>"text","parentId"=>"tagline-section","order"=>10,"geometry"=>$g,"props"=>["heading"=>"","text"=>"Bevaring, restaurering og levende formidling af dansk militærhistorie.","background"=>"#30382a","backgroundTransparent"=>false,"textColor"=>"#ffffff"]]
+          ]];
+          $o=\VisualDesignerManager\Migration\ResponsivePaintUnifier::unifyModel($m);
+          if($o["nodes"][0]["props"]["background"]!=="#30382a") exit(11);
+          if($o["nodes"][2]["props"]["background"]!=="#c3ae83") exit(12);
+          if($o["nodes"][3]["props"]["backgroundTransparent"]!==true) exit(13);
+          if($o["nodes"][3]["props"]["textColor"]!=="#30382a") exit(14);
+          if($o["nodes"][3]["props"]["text"]!==$m["nodes"][3]["props"]["text"]) exit(15);
+          if($o["nodes"][1]["geometry"]!==$m["nodes"][1]["geometry"]) exit(16);
+          echo "PASS\n";
+          '
+
+      - name: Package Alpha.27 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.27'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/ResponsivePaintUnifier.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.27-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.27.zip
+          if-no-files-found: error
