@@ -1,0 +1,29 @@
+/* Alpha.34 – canonical responsive Designer projection for converted V1 pages.
+ * Laptop / Tablet / Mobile are rendered by the real frontend preview endpoint,
+ * inside an iframe whose viewport equals the real breakpoint width. */
+.h18-vd-canonical-responsive-preview[hidden]{display:none!important}
+.h18-vd-canonical-responsive-preview{width:100%;max-width:100%;box-sizing:border-box}
+.h18-vd-canonical-responsive-head{display:flex;align-items:center;gap:10px;min-height:38px;margin:0 0 8px;padding:7px 10px;border:1px solid #c3c4c7;border-left:4px solid #00a32a;border-radius:6px;background:#f6f7f7;color:#1d2327;font-size:12px;line-height:1.35;box-sizing:border-box}
+.h18-vd-canonical-responsive-head strong{font-size:13px;color:#0a4b1c}
+.h18-vd-canonical-responsive-head span{min-width:0;flex:1;color:#50575e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h18-vd-canonical-responsive-head .button{flex:0 0 auto}
+.h18-vd-canonical-responsive-scroll{width:100%;max-width:100%;overflow:auto;background:#dcdcde;padding:0;box-sizing:border-box}
+.h18-vd-canonical-responsive-stage{position:relative;min-width:1px;min-height:1px;margin:0 auto;background:#fff;overflow:visible;box-shadow:0 0 0 1px #c3c4c7}
+#h18-vd-canonical-responsive-frame{display:block;position:absolute;left:0;top:0;border:0;background:#fff;max-width:none;min-width:0}
+.h18-vd-canonical-responsive-preview.is-loading #h18-vd-canonical-responsive-frame{opacity:.62}
+.h18-vd-canonical-responsive-preview.is-loading .h18-vd-canonical-responsive-head::after{content:"Opdaterer…";font-weight:600;color:#2271b1}
+
+/* The old editor canvas is not a WYSIWYG renderer for V1 responsive views.
+   Hide it while the canonical frontend projection is active. Desktop remains
+   the editable master canvas. */
+body.h18-vd-canonical-responsive-active .h18-vd-viewport-stage{display:none!important}
+body.h18-vd-canonical-responsive-active #h18-clean-wide-canvas{display:none!important}
+body.h18-vd-canonical-responsive-active .h18-clean-canvas-column{overflow-x:hidden!important}
+
+/* Mobile geometry is intentionally Desktop-master since Alpha.28. Keep the
+   Inspector informative instead of pretending that phone X/Y/W/H is live. */
+body.h18-vd-canonical-responsive-active[data-h18-clean-device="mobile"] .h18-clean-responsive-panel::after{content:"Mobil er en kanonisk frontend-projektion af Desktop-layoutet. Mobil X/Y/bredde/højde er derfor ikke en separat layoutkilde.";display:block;margin-top:10px;padding:10px 12px;border-left:4px solid #2271b1;background:#f0f6fc;color:#1d2327;font-size:12px;line-height:1.4}
+body.h18-vd-canonical-responsive-active[data-h18-clean-device="mobile"] .h18-clean-responsive-panel>.h18-clean-checkbox,
+body.h18-vd-canonical-responsive-active[data-h18-clean-device="mobile"] .h18-clean-responsive-panel>.h18-clean-field-grid{opacity:.45;pointer-events:none}
+
+@media(max-width:782px){.h18-vd-canonical-responsive-head{align-items:flex-start;flex-wrap:wrap}.h18-vd-canonical-responsive-head span{flex-basis:100%;order:3;white-space:normal}.h18-vd-canonical-responsive-head .button{margin-left:auto}}
