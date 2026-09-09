@@ -1,0 +1,101 @@
+name: V3 Alpha.30 Footer Parity QA
+
+on:
+  push:
+    branches: [v3-alpha30-footer-parity]
+    paths:
+      - '.github/scripts/build_v3_alpha30.py'
+      - '.github/workflows/v3-alpha30-qa.yml'
+      - 'V3-ALPHA30.md'
+  workflow_dispatch:
+
+jobs:
+  alpha30-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Build V3 3.0.0-alpha.30
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha30.py
+          python3 .github/scripts/build_v3_alpha30.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          LAYOUT="$ROOT/src/Model/LayoutModel.php"
+
+          grep -Fq 'Version: 3.0.0-alpha.30' "$MAIN"
+          grep -Fq "'text-footer-description-v0147' => [20, 8]" "$RESPONSIVE"
+          grep -Fq "'menu-footer-shortcuts-v3' => [40, 6]" "$RESPONSIVE"
+          grep -Fq "'text-footer-copyright-v0147' => [90, 12]" "$RESPONSIVE"
+          grep -Fq '#h18-clean-menu-footer-shortcuts-v3 .h18-clean-front-menu-list{gap:6px!important' "$RESPONSIVE"
+          grep -Fq 'min-height:44px!important;padding:11px 16px!important;font-size:14px!important' "$RESPONSIVE"
+
+          # Regression locks outside Alpha.30 scope.
+          grep -Fq '$mobile = $desktop;' "$LAYOUT"
+          grep -Fq 'private static function renderEventProgramText(' "$RENDERER"
+          grep -Fq 'private static function eventGalleryButton(' "$RENDERER"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$RENDERER"
+          grep -Fq "\$props['menuSource'] = 'website';" "$RENDERER"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
+          grep -Fq 'is-open' "$RENDERER"
+          ! grep -Fq 'self::v1PaintCss($pageModel, $legacyPageModel, $pageScope)' "$RESPONSIVE"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Prove Alpha.30 change is Footer-scoped
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha29.py
+          cp build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php /tmp/alpha29-responsive.php
+          cp build/visual-designer-manager/src/Frontend/Renderer.php /tmp/alpha29-renderer.php
+          cp build/visual-designer-manager/src/Model/LayoutModel.php /tmp/alpha29-layout.php
+          python3 .github/scripts/build_v3_alpha30.py
+          cmp -s /tmp/alpha29-renderer.php build/visual-designer-manager/src/Frontend/Renderer.php
+          cmp -s /tmp/alpha29-layout.php build/visual-designer-manager/src/Model/LayoutModel.php
+          python3 - <<'PY'
+          from pathlib import Path
+          before = Path('/tmp/alpha29-responsive.php').read_text(encoding='utf-8')
+          after = Path('build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php').read_text(encoding='utf-8')
+          assert before != after
+          assert "'menu-footer-shortcuts-v3' => [40, 8]" in before
+          assert "'menu-footer-shortcuts-v3' => [40, 6]" in after
+          assert 'Alpha.30: V1 footer rhythm.' in after
+          print('PASS')
+          PY
+
+      - name: Package Alpha.30 WordPress plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.30'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          sha256sum "$ZIP"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.30
+          if-no-files-found: error
+          retention-days: 30
+          path: dist/visual-designer-manager-v3.0.0-alpha.30.zip
