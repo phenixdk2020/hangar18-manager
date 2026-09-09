@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.27",
+  "version": "3.0.0-alpha.28",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.27.zip",
-  "sha256": "48a68816c074a9cbdce31a1d16dfc576668576aae12eaa725d890440e8ecd409",
-  "source_commit": "184cdd1a64ae12392a5540d9a824b6ee3f75b7fb",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.28.zip",
+  "sha256": "88330e36e30f1fcd6d93f1bdb321c61f16899922d06a7f8b1623d98afb8c2aa9",
+  "source_commit": "dc3bb7b1e658d790bad609b13cc0977bbb88871d",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "Visual Designer Manager V3 med V1 som funktionel og visuel reference.",
-    "changelog": "3.0.0-alpha.27: Responsive Paint Unification. Desktop and mobile now share canonical model paint; mobile-only legacy paint overrides are removed. Existing converted Home hero/tagline paint is repaired in the model, future hero conversion uses canonical olive, and Alpha.26 Header/Footer/menu behavior is preserved."
+    "changelog": "3.0.0-alpha.28: Desktop Master Mobile Layout. Mobile placement/order now derives directly from the Desktop Designer node layout; historical mobile geometry is ignored, one-column flow stacks Desktop visual order, and Alpha.27 shared paint plus Alpha.26 Header/Footer/menu behavior are preserved."
   }
 }
