@@ -1,0 +1,108 @@
+name: V3 Alpha.31 Module Footer Gap QA
+
+on:
+  push:
+    branches: [v3-alpha31-module-footer-gap]
+    paths:
+      - '.github/scripts/build_v3_alpha31.py'
+      - '.github/workflows/v3-alpha31-qa.yml'
+      - 'V3-ALPHA31.md'
+  workflow_dispatch:
+
+jobs:
+  alpha31-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Build and validate V3 3.0.0-alpha.31
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha31.py
+          python3 .github/scripts/build_v3_alpha31.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          MODEL="$ROOT/src/Model/ModuleDesignModel.php"
+          EDITOR="$ROOT/src/Admin/EditorController.php"
+          COLLECTION="$ROOT/src/Frontend/CollectionPageRenderer.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+
+          grep -Fq 'Version: 3.0.0-alpha.31' "$MAIN"
+          grep -Fq "'footerGap' => 64" "$MODEL"
+          grep -Fq "'footerGap' => self::clamp" "$MODEL"
+          grep -Fq 'Afstand til Footer (px)' "$EDITOR"
+          grep -Fq 'gælder både moduloversigten og modulets detaljesider' "$EDITOR"
+          grep -Fq '--h18-module-footer-gap:' "$COLLECTION"
+          grep -Fq 'padding:36px 0 var(--h18-module-footer-gap)' "$COLLECTION"
+          grep -Fq '$moduleFooterGap = self::detailModuleFooterGap($postId);' "$RESPONSIVE"
+          grep -Fq 'private static function detailModuleFooterGap(' "$RESPONSIVE"
+          grep -Fq "'event-detalje' => 'events'" "$RESPONSIVE"
+          grep -Fq "'album-detalje' => 'billedgalleri'" "$RESPONSIVE"
+          grep -Fq "'koeretoej-detalje' => 'koeretoejer-og-materiel'" "$RESPONSIVE"
+          grep -Fq "padding-bottom:' . \$footer . 'px!important" "$RESPONSIVE"
+
+          # Retained Event + Footer contracts.
+          grep -Fq 'private static function renderEventProgramText(' "$RENDERER"
+          grep -Fq 'private static function eventGalleryButton(' "$RENDERER"
+          grep -Fq 'Se billeder fra arrangementet' "$RENDERER"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$RENDERER"
+          grep -Fq "\$props['menuSource'] = 'website';" "$RENDERER"
+          grep -Fq "'menu-footer-shortcuts-v3' => [40, 6]" "$RESPONSIVE"
+          grep -Fq 'Alpha.30: V1 footer rhythm.' "$RESPONSIVE"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Prove Module Design normalization and scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          model = Path('build/visual-designer-manager/src/Model/ModuleDesignModel.php').read_text(encoding='utf-8')
+          editor = Path('build/visual-designer-manager/src/Admin/EditorController.php').read_text(encoding='utf-8')
+          collection = Path('build/visual-designer-manager/src/Frontend/CollectionPageRenderer.php').read_text(encoding='utf-8')
+          responsive = Path('build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php').read_text(encoding='utf-8')
+          assert model.count("'footerGap' =>") >= 2
+          assert "0, 200, 64" in model
+          assert "'footerGap' => ['Afstand til Footer (px)', 0, 200, 1]" in editor
+          assert 'var(--h18-module-footer-gap)' in collection
+          assert "'event-detalje' => 'events'" in responsive
+          assert "'album-detalje' => 'billedgalleri'" in responsive
+          assert "'koeretoej-detalje' => 'koeretoejer-og-materiel'" in responsive
+          print('PASS')
+          PY
+
+      - name: Package Alpha.31 WordPress plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.31'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Model/ModuleDesignModel.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          sha256sum "$ZIP"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.31
+          if-no-files-found: error
+          retention-days: 30
+          path: dist/visual-designer-manager-v3.0.0-alpha.31.zip
