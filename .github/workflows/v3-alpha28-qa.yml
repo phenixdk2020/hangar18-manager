@@ -1,0 +1,129 @@
+name: V3 Alpha.28 Desktop Master Mobile Layout QA
+
+on:
+  push:
+    branches: [v3-alpha28-desktop-master-mobile-layout]
+    paths:
+      - '.github/scripts/build_v3_alpha28.py'
+      - '.github/workflows/v3-alpha28-qa.yml'
+      - 'V3-ALPHA28.md'
+      - '.github/workflows/v3-alpha28-release.yml'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha28-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove Alpha.27 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha27.py
+          ROOT='build/visual-designer-manager'
+          grep -Fq 'Version: 3.0.0-alpha.27' "$ROOT/visual-designer-manager.php"
+          grep -Fq 'Paint is owned by the canonical model for every breakpoint.' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          ! grep -Fq 'self::v1PaintCss($pageModel, $legacyPageModel, $pageScope)' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$ROOT/src/Frontend/Renderer.php"
+
+      - name: Build and validate V3 3.0.0-alpha.28
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha28.py
+          python3 .github/scripts/build_v3_alpha28.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          LAYOUT="$ROOT/src/Model/LayoutModel.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          EDITOR="$ROOT/assets/editor-v018-core.js"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          HISTORY="$ROOT/release-history.json"
+
+          grep -Fq 'Version: 3.0.0-alpha.28' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.28');" "$MAIN"
+          grep -Fq '$mobile = $desktop;' "$LAYOUT"
+          grep -Fq '$mobile['"'"'inheritDesktop'"'"'] = true;' "$LAYOUT"
+          grep -Fq 'Desktop is the mobile master layout' "$LAYOUT"
+          grep -Fq 'added.geometry.mobile = Object.assign({}, added.geometry.desktop, { inheritDesktop: true });' "$EDITOR"
+          grep -Fq 'mobile: Object.assign({}, desktop, { inheritDesktop: true })' "$EDITOR"
+          grep -Fq 'Mobile is a responsive projection of the Desktop Designer layout.' "$RESPONSIVE"
+          grep -Fq "self::effectiveGeometry(\$a, 'desktop')" "$RESPONSIVE"
+          grep -Fq "self::effectiveRows(\$id, 'desktop', \$byId, \$byParent, [])" "$RESPONSIVE"
+          ! grep -Fq "return !empty(\$mobileRaw['inheritDesktop']) ? \$tablet : self::geometry(\$mobileRaw, \$tablet);" "$RESPONSIVE"
+          ! grep -Fq 'self::v1PaintCss($pageModel, $legacyPageModel, $pageScope)' "$RESPONSIVE"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$RENDERER"
+          grep -Fq "\$props['menuSource'] = 'website';" "$RENDERER"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
+          grep -Fq 'is-open' "$RENDERER"
+          grep -Fq '3.0.0-alpha.28' "$HISTORY"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Prove mobile model has one Desktop placement source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          layout = Path('build/visual-designer-manager/src/Model/LayoutModel.php').read_text()
+          editor = Path('build/visual-designer-manager/assets/editor-v018-core.js').read_text()
+          responsive = Path('build/visual-designer-manager/src/Frontend/ResponsiveRenderer.php').read_text()
+          assert '$mobile = $desktop;' in layout
+          assert "$mobile['inheritDesktop'] = true;" in layout
+          assert 'added.geometry.mobile = Object.assign({}, added.geometry.desktop, { inheritDesktop: true });' in editor
+          assert "self::effectiveGeometry($a, 'desktop')" in responsive
+          assert "self::effectiveGeometry($b, 'desktop')" in responsive
+          assert "self::effectiveGeometry($node, 'desktop')" in responsive
+          assert "self::effectiveRows($id, 'desktop', $byId, $byParent, [])" in responsive
+          print('PASS')
+          PY
+
+      - name: Package Alpha.28 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.28'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Model/LayoutModel.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.28-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.28.zip
+          if-no-files-found: error
