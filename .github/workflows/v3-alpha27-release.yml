@@ -1,0 +1,133 @@
+name: Visual Designer Manager V3 Alpha.27 Release
+
+on:
+  push:
+    branches: [v3-clean-refactor]
+    paths:
+      - 'v3-alpha27-release-now.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  v3-alpha27:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 runtime baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Run retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Build and validate V3 3.0.0-alpha.27
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha27.py
+          python3 .github/scripts/build_v3_alpha27.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          MIGRATION="$ROOT/src/Migration/ResponsivePaintUnifier.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          SHARED="$ROOT/src/Migration/SharedPrimaryMenu.php"
+
+          grep -Fq 'Version: 3.0.0-alpha.27' "$MAIN"
+          grep -Fq 'ResponsivePaintUnifier::register()' "$MAIN"
+          grep -Fq 'Paint is owned by the canonical model for every breakpoint.' "$RESPONSIVE"
+          ! grep -Fq 'self::v1PaintCss($pageModel, $legacyPageModel, $pageScope)' "$RESPONSIVE"
+          grep -Fq "private const OLIVE = '#30382a';" "$MIGRATION"
+          grep -Fq "private const SAND = '#c3ae83';" "$MIGRATION"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$RENDERER"
+          grep -Fq "get_option('vdm_website_menu_id', null)" "$SHARED"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
+          grep -Fq 'is-open' "$RENDERER"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Package V3 alpha.27 and create updater manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.27'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/ResponsivePaintUnifier.php$')" = '1'
+          SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          python3 - "$SHA" "$SOURCE_COMMIT" <<'PY'
+          import json, sys
+          from pathlib import Path
+          sha, source_commit = sys.argv[1:3]
+          version = '3.0.0-alpha.27'
+          data = {
+              'name': 'Visual Designer Manager',
+              'slug': 'visual-designer-manager',
+              'version': version,
+              'homepage': 'https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'tested': '6.8',
+              'package': f'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v{version}.zip',
+              'sha256': sha,
+              'source_commit': source_commit,
+              'source_baseline': 'dc3bad403c764f4ec123a526333a781d05dde491',
+              'source_version': '0.1.93',
+              'sections': {
+                  'description': 'Visual Designer Manager V3 med V1 som funktionel og visuel reference.',
+                  'changelog': '3.0.0-alpha.27: Responsive Paint Unification. Desktop and mobile now share canonical model paint; mobile-only legacy paint overrides are removed. Existing converted Home hero/tagline paint is repaired in the model, future hero conversion uses canonical olive, and Alpha.26 Header/Footer/menu behavior is preserved.'
+              }
+          }
+          Path('v3-update.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          echo "V3_PACKAGE_SHA256=$SHA" >> "$GITHUB_ENV"
+          echo "V3 package SHA-256: $SHA"
+
+      - name: Commit verified V3 package to V3 branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'visual-designer-v3-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add v3-update.json dist/visual-designer-manager-v3.0.0-alpha.27.zip
+          if git diff --cached --quiet; then
+            echo 'Verified V3 package already current.'
+            exit 0
+          fi
+          git commit -m 'Publish Visual Designer Manager V3 3.0.0-alpha.27 [skip v3 release]'
+          git push origin HEAD:v3-clean-refactor
+
+      - name: Upload actual WordPress plugin ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.27
+          if-no-files-found: error
+          retention-days: 30
+          path: dist/visual-designer-manager-v3.0.0-alpha.27.zip
