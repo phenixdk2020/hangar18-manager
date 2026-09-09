@@ -1,0 +1,108 @@
+name: V3 Alpha.26 Header Footer Mobile Parity QA
+
+on:
+  push:
+    branches: [v3-alpha26-mobile-header-footer-parity]
+    paths:
+      - '.github/scripts/build_v3_alpha26.py'
+      - '.github/workflows/v3-alpha26-qa.yml'
+      - 'V3-ALPHA26.md'
+      - '.github/workflows/v3-alpha26-release.yml'
+  pull_request:
+    branches: [v3-clean-refactor]
+
+jobs:
+  alpha26-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lock V1 0.1.93 source runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE='dc3bad403c764f4ec123a526333a781d05dde491'
+          git cat-file -e "${BASELINE}^{commit}"
+          git diff --exit-code "$BASELINE" -- clean/hangar18-manager
+
+      - name: Retained V1 regression gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find clean/hangar18-manager -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find clean/hangar18-manager/assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 .github/scripts/v0192_export_integrity_qa.py
+          python3 .github/scripts/v0191_form_design_controls_qa.py
+          python3 .github/scripts/v0190_form_wysiwyg_parity_qa.py
+          python3 .github/scripts/v0189_manager_cleanup_export_all_qa.py
+          python3 .github/scripts/v0186_site_settings_qa.py
+          python3 .github/scripts/v0185_editor_live_box_qa.py
+          python3 .github/scripts/v0185_semantic_qa.py
+          python3 .github/scripts/v0184_portable_transfer_qa.py
+
+      - name: Re-prove Alpha.25 baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/build_v3_alpha25.py
+          ROOT='build/visual-designer-manager'
+          grep -Fq 'Version: 3.0.0-alpha.25' "$ROOT/visual-designer-manager.php"
+          grep -Fq 'display:contents!important' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq '<meta name="theme-color" content="#30382a">' "$ROOT/visual-designer-manager.php"
+          grep -Fq 'h18-clean-front-menu-summary' "$ROOT/src/Frontend/Renderer.php"
+
+      - name: Build and validate V3 3.0.0-alpha.26
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha26.py
+          python3 .github/scripts/build_v3_alpha26.py
+          ROOT='build/visual-designer-manager'
+          MAIN="$ROOT/visual-designer-manager.php"
+          RESPONSIVE="$ROOT/src/Frontend/ResponsiveRenderer.php"
+          RENDERER="$ROOT/src/Frontend/Renderer.php"
+          SHARED="$ROOT/src/Migration/SharedPrimaryMenu.php"
+          HISTORY="$ROOT/release-history.json"
+
+          grep -Fq 'Version: 3.0.0-alpha.26' "$MAIN"
+          grep -Fq "define('VDM_VERSION', '3.0.0-alpha.26');" "$MAIN"
+          grep -Fq 'private static function templateSurfaceBackground(' "$RESPONSIVE"
+          grep -Fq "background:' . \$surfaceBackground . '!important" "$RESPONSIVE"
+          grep -Fq '#h18-clean-text-footer-brand-v0147{font-size:18px!important' "$RESPONSIVE"
+          grep -Fq '#h18-clean-text-footer-copyright-v0147{font-size:11px!important' "$RESPONSIVE"
+          grep -Fq 'white-space:nowrap!important' "$RESPONSIVE"
+          grep -Fq "if (\$id === 'menu-footer-shortcuts-v3')" "$RENDERER"
+          grep -Fq "\$props['menuSource'] = 'website';" "$RENDERER"
+          grep -Fq "private const FOOTER_MENU_NODE = 'menu-footer-shortcuts-v3';" "$SHARED"
+          grep -Fq "get_option('vdm_website_menu_id', null)" "$SHARED"
+          grep -Fq "'menuSource' => 'website'" "$SHARED"
+          grep -Fq 'h18-clean-front-menu-summary' "$RENDERER"
+          grep -Fq 'is-open' "$RENDERER"
+          ! grep -Fq '<details class="h18-clean-front-menu-details">' "$RENDERER"
+          grep -Fq '3.0.0-alpha.26' "$HISTORY"
+
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Package Alpha.26 QA artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.26'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/visual-designer-manager.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Frontend/ResponsiveRenderer.php$')" = '1'
+          test "$(unzip -Z1 "$ZIP" | grep -c '^visual-designer-manager/src/Migration/SharedPrimaryMenu.php$')" = '1'
+          echo "SHA256=$(sha256sum "$ZIP" | awk '{print $1}')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-v3.0.0-alpha.26-qa
+          path: dist/visual-designer-manager-v3.0.0-alpha.26.zip
+          if-no-files-found: error
