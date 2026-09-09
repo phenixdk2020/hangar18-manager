@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.25",
+  "version": "3.0.0-alpha.26",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.25.zip",
-  "sha256": "e28a6021ee01a15446797d39cc0bc5d52767cd0e8c8dfd5179c710da202f359e",
-  "source_commit": "e5893a2690a8bb92e0f7090266793f5e40420b5b",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.26.zip",
+  "sha256": "41e267791a8af0ddbeae1a7bd0c120ab17021c8aa7870f697f46728bf286c588",
+  "source_commit": "6db503703a20c508d781c1b615ff8ccd7d850aa7",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "Visual Designer Manager V3 med V1 som funktionel og visuel reference.",
-    "changelog": "3.0.0-alpha.25: Mobile Natural Flow Reset. V1-converted sections/containers now reset desktop grid rows and fixed/min heights by ID, Header wrappers are flattened into one vertically centered flex row, spacers stop owning mobile spacing, Footer grid height inheritance is reset, and theme-color is #30382a. Alpha.24 V1 spacing/hero/card fixes and Alpha.22 menu behavior are preserved."
+    "changelog": "3.0.0-alpha.26: Header/Footer Mobile Parity. Header and Footer surfaces now own their template background after the Alpha.25 display:contents reset; Footer paints full-width, restores V1 mobile typography, and Genveje always mirrors the canonical Website-menu in WordPress menu order. Alpha.25 natural flow and Alpha.22 menu behavior are preserved."
   }
 }
