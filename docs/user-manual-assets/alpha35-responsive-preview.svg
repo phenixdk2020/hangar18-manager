@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">Visual Designer Manager Alpha.35 responsive preview</title>
+  <desc id="desc">Desktop er redigerbar master. Laptop 1100 px, Tablet 850 px og Mobil 390 px bruger den kanoniske frontend-renderer.</desc>
+  <rect width="1200" height="430" fill="#f7f6f2"/>
+  <text x="600" y="42" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" font-weight="700" fill="#30382a">Samme frontend-renderer – repræsentative previewbredder</text>
+  <g font-family="Arial,sans-serif" fill="#30382a" text-anchor="middle">
+    <text x="190" y="86" font-size="21" font-weight="700">DESKTOP</text><text x="190" y="108" font-size="15">Redigerbar master</text>
+    <text x="460" y="86" font-size="21" font-weight="700">LAPTOP</text><text x="460" y="108" font-size="15">1100 px</text>
+    <text x="735" y="86" font-size="21" font-weight="700">TABLET</text><text x="735" y="108" font-size="15">850 px</text>
+    <text x="1005" y="86" font-size="21" font-weight="700">MOBIL</text><text x="1005" y="108" font-size="15">390 px</text>
+  </g>
+  <g fill="#fff" stroke="#525a5f" stroke-width="3">
+    <rect x="90" y="130" width="200" height="210" rx="10"/><rect x="360" y="130" width="200" height="210" rx="10"/><rect x="655" y="130" width="160" height="210" rx="10"/><rect x="955" y="130" width="100" height="210" rx="10"/>
+  </g>
+  <g fill="#eaf3fb" stroke="#2271b1" stroke-width="2">
+    <rect x="105" y="148" width="170" height="44"/><rect x="375" y="148" width="170" height="44"/><rect x="670" y="148" width="130" height="44"/><rect x="968" y="148" width="74" height="44"/>
+  </g>
+  <g fill="#fffdf8" stroke="#b68a3a" stroke-width="2">
+    <rect x="105" y="208" width="77" height="110"/><rect x="190" y="208" width="85" height="110"/>
+    <rect x="375" y="208" width="77" height="110"/><rect x="460" y="208" width="85" height="110"/>
+    <rect x="670" y="208" width="130" height="48"/><rect x="670" y="270" width="130" height="48"/>
+    <rect x="968" y="208" width="74" height="48"/><rect x="968" y="270" width="74" height="48"/>
+  </g>
+  <rect x="90" y="365" width="965" height="45" rx="8" fill="#f2ead8" stroke="#b68a3a"/>
+  <text x="572" y="385" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#30382a">Desktop er master. Laptop, Tablet og Mobil viser den aktuelle usavede model gennem den kanoniske frontend-renderer.</text>
+  <text x="572" y="402" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#525a5f">Offentlige breakpoints er uændrede; 1100 / 850 / 390 px er repræsentative QA-bredder.</text>
+</svg>
