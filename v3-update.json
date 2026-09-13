@@ -7,12 +7,12 @@
   "requires_php": "8.0",
   "tested": "6.8",
   "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.37.zip",
-  "sha256": "dd04b4367fb65babdf984c99f6b1ad90085c257ec4c46f7248c12621d0b3330d",
-  "source_commit": "97daac1fdf0e3aba7a49c64cf41b2a7e7a71fbc5",
+  "sha256": "99e79438715add98d87d5aab172c8f096c76fded1a972df672fb2ffae02f5a34",
+  "source_commit": "3dbc8def80c2e385409050d1b5e26bbcd39a6ae3",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "Visual Designer Manager V3 med V1 som funktionel og visuel reference.",
-    "changelog": "3.0.0-alpha.37: Stable GitHub updater channel publishing repaired; Alpha.31 module Footer-gap behavior retained."
+    "changelog": "3.0.0-alpha.37: Responsive Designer viser siden uden global Header/Footer; Laptop/Tablet-knapper bevarer normal læsbar CTA-bredde og højde; valgt enhedsopløsning i Forhåndsvis bevares."
   }
 }
