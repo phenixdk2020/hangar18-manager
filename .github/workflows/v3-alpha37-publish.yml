@@ -1,0 +1,120 @@
+name: V3 Alpha.37 Independent QA and Publish
+
+on:
+  push:
+    branches: [v3-alpha37-designer-shell-button-parity]
+    paths:
+      - '.github/workflows/v3-alpha37-publish.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-package-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build and validate Alpha.37
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile .github/scripts/build_v3_alpha37.py
+          python3 .github/scripts/build_v3_alpha37.py
+          ROOT='build/visual-designer-manager'
+          grep -Fq 'Version: 3.0.0-alpha.37' "$ROOT/visual-designer-manager.php"
+          grep -Fq '.h18-vd-live-shell-header,.h18-vd-live-shell-footer{display:none!important}' "$ROOT/assets/editor-v0183-canonical-responsive-preview.js"
+          grep -Fq 'side uden Header/Footer' "$ROOT/assets/editor-v0183-canonical-responsive-preview.js"
+          grep -Fq 'width:max-content!important;min-width:120px!important' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq 'min-width:120px!important;min-height:44px!important;padding:10px 18px!important' "$ROOT/src/Frontend/ResponsiveRenderer.php"
+          grep -Fq "\$previewWidths = ['desktop' => 1920, 'laptop' => 1100, 'tablet' => 850, 'mobile' => 390];" "$ROOT/src/Admin/EditorController.php"
+          find "$ROOT" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          find "$ROOT/assets" -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Package Alpha.37
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.37'
+          mkdir -p dist
+          ZIP="dist/visual-designer-manager-v${VERSION}.zip"
+          rm -f "$ZIP"
+          (cd build && zip -qr "../$ZIP" visual-designer-manager)
+          unzip -tq "$ZIP"
+          SHA256="$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "Alpha.37 SHA-256: $SHA256"
+
+      - name: Publish Alpha.37 to stable updater channel
+        shell: bash
+        env:
+          ZIP: ${{ steps.package.outputs.zip }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          VERSION='3.0.0-alpha.37'
+          git fetch origin v3-clean-refactor
+          RELEASE_DIR="$(mktemp -d)"
+          git worktree add "$RELEASE_DIR" origin/v3-clean-refactor
+          mkdir -p "$RELEASE_DIR/dist"
+          cp "$ZIP" "$RELEASE_DIR/dist/visual-designer-manager-v${VERSION}.zip"
+          VERSION="$VERSION" SHA256="$SHA256" SOURCE_COMMIT="$GITHUB_SHA" python3 - <<'PY' > "$RELEASE_DIR/v3-update.json"
+          import json, os
+          version = os.environ['VERSION']
+          manifest = {
+              'name': 'Visual Designer Manager',
+              'slug': 'visual-designer-manager',
+              'version': version,
+              'homepage': 'https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor',
+              'requires': '6.4',
+              'requires_php': '8.0',
+              'tested': '6.8',
+              'package': f'https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v{version}.zip',
+              'sha256': os.environ['SHA256'],
+              'source_commit': os.environ['SOURCE_COMMIT'],
+              'source_baseline': 'dc3bad403c764f4ec123a526333a781d05dde491',
+              'source_version': '0.1.93',
+              'sections': {
+                  'description': 'Visual Designer Manager V3 med V1 som funktionel og visuel reference.',
+                  'changelog': '3.0.0-alpha.37: Responsive Designer viser siden uden global Header/Footer; Laptop/Tablet-knapper bevarer normal læsbar CTA-bredde og højde; valgt enhedsopløsning i Forhåndsvis bevares.'
+              }
+          }
+          print(json.dumps(manifest, ensure_ascii=False, indent=2))
+          PY
+          cd "$RELEASE_DIR"
+          git config user.name 'visual-designer-v3-release-bot'
+          git config user.email '74060601+phenixdk2020@users.noreply.github.com'
+          git add "dist/visual-designer-manager-v${VERSION}.zip" v3-update.json
+          git diff --cached --check
+          git commit -m "Publish Visual Designer Manager V3 ${VERSION} [skip v3 release]"
+          git push origin HEAD:v3-clean-refactor
+
+      - name: Verify stable Alpha.37
+        shell: bash
+        env:
+          SHA256: ${{ steps.package.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          git fetch origin v3-clean-refactor
+          git show origin/v3-clean-refactor:v3-update.json > /tmp/manifest.json
+          git show origin/v3-clean-refactor:dist/visual-designer-manager-v3.0.0-alpha.37.zip > /tmp/alpha37.zip
+          test "$(sha256sum /tmp/alpha37.zip | awk '{print $1}')" = "$SHA256"
+          SHA256="$SHA256" python3 - <<'PY'
+          import json, os
+          m=json.load(open('/tmp/manifest.json', encoding='utf-8'))
+          assert m['version']=='3.0.0-alpha.37'
+          assert m['sha256']==os.environ['SHA256']
+          print('Stable Alpha.37: PASS')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-designer-manager-3.0.0-alpha.37
+          retention-days: 30
+          if-no-files-found: error
+          path: dist/visual-designer-manager-v3.0.0-alpha.37.zip
