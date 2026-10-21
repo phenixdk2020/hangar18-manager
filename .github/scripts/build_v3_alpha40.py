@@ -59,7 +59,7 @@ replace_once(
         // all tab content is hidden. Moving the heading into a tab made the palette
         // impossible to reopen after it had been collapsed.
         const directHead = Array.prototype.slice.call(palette.children).find(function (child) {
-            return child.matches && child.matches(':scope > h2, :scope > .h18-clean-panel-head');
+            return child.matches && child.matches('h2, .h18-clean-panel-head');
         }) || null;
         const existing = Array.prototype.slice.call(palette.childNodes).filter(function (node) {
             return node !== directHead;
