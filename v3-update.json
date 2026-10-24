@@ -1,18 +1,18 @@
 {
   "name": "Visual Designer Manager",
   "slug": "visual-designer-manager",
-  "version": "3.0.0-alpha.41",
+  "version": "3.0.0-alpha.42",
   "homepage": "https://github.com/phenixdk2020/hangar18-manager/tree/v3-clean-refactor",
   "requires": "6.4",
   "requires_php": "8.0",
   "tested": "6.8",
-  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.41.zip",
-  "sha256": "e22e55d411e41ba4613f0a94a265d9a84b1891b3706242f7061066b6df91f8fc",
-  "source_commit": "e3c2f800e8b1a9ba8990f4270c8d5406656cbdc8",
+  "package": "https://raw.githubusercontent.com/phenixdk2020/hangar18-manager/v3-clean-refactor/dist/visual-designer-manager-v3.0.0-alpha.42.zip",
+  "sha256": "6ff3d8f72a4fcda5f461fb2db5f6d61441efe3a635d279a5f80092311b65d464",
+  "source_commit": "e33d581e406753b438519771d212c2ad7b45b837",
   "source_baseline": "dc3bad403c764f4ec123a526333a781d05dde491",
   "source_version": "0.1.93",
   "sections": {
     "description": "Visual Designer Manager V3 med V1 som funktionel og visuel reference.",
-    "changelog": "3.0.0-alpha.41: Retter Elementer-panelets manglende fold-ud-knap. Elementer/Lag-wrapperen bevarer nu den permanente panel-header/toggle som direkte barn, så venstre panel altid kan åbnes igen efter sammenfoldning. Alpha.39-fixes bevares."
+    "changelog": "3.0.0-alpha.42: Stable GitHub updater channel publishing repaired; Alpha.31 module Footer-gap behavior retained."
   }
 }
