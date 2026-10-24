@@ -177,7 +177,7 @@ replace_once(
                 const node = nodeById(selectedId);
                 const childCount = node ? descendants(node.id).length : 0;
                 const message = childCount > 0
-                    ? 'Dette element indeholder ' + childCount + ' under-element' + (childCount === 1 ? '' : 'er') + '.\n\nSlet element + alle under-elementer?'
+                    ? 'Dette element indeholder ' + childCount + ' under-element' + (childCount === 1 ? '' : 'er') + '.\\n\\nSlet element + alle under-elementer?'
                     : 'Slet det valgte element?';
                 if (window.confirm(message)) { deleteSelected(); }
             });
