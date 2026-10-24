@@ -462,6 +462,7 @@
         qa('.h18-vd-layer-item').forEach(function(item){
             var id=String(item.getAttribute('data-node-id')||'');if(!id)return;var n=nodeById(id,source);if(!n)return;var p=n.props||{},g=n.geometry&&n.geometry[dev]||{};
             item.setAttribute('data-suite-hidden',p.suiteHidden?'1':'0');item.setAttribute('data-suite-locked',p.suiteLocked?'1':'0');item.setAttribute('data-suite-override',dev==='desktop'||g.inheritDesktop===false?'1':'0');
+            var layerPick=q('.h18-vd-layer-pick',item);if(layerPick&&p.suiteLabel){layerPick.textContent=String(p.suiteLabel)+' · '+String(n.type||'element');layerPick.title='Vælg '+String(p.suiteLabel);}
             item.draggable=!p.suiteLocked;
             var actions=q('.h18-suite-layer-actions',item);if(!actions){actions=document.createElement('span');actions.className='h18-suite-layer-actions';actions.innerHTML='<button type="button" data-la="eye" title="Skjul/vis">👁</button><button type="button" data-la="lock" title="Lås/lås op">🔒</button><button type="button" data-la="rename" title="Omdøb">✎</button>';item.appendChild(actions);
                 actions.addEventListener('click',function(event){var b=event.target.closest('[data-la]');if(!b)return;event.stopPropagation();selected.clear();selected.add(id);if(b.dataset.la==='eye')toggleMeta('suiteHidden','Skjul/vis element');else if(b.dataset.la==='lock')toggleMeta('suiteLocked','Lås/lås op element');else renameSelected();});
