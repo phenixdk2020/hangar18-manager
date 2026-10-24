@@ -589,7 +589,7 @@
         installAutosave();
         installInspectorSearch();
         installCommandPalette();
-        installDeleteGuard();
+        // Delete protection is owned by the canonical core in Alpha.42 to avoid double-confirm dialogs.
         installObservers();
         bootstrapSuite();
         bootModel=model();
